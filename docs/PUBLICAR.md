@@ -36,15 +36,26 @@ El APK queda en `apps/forzudo/build/outputs/apk/release/`. Para comprobar la fir
 - **Por cable (lo más directo):** con la depuración USB activada en el teléfono, `adb install -r <apk>`. Actualiza encima sin perder datos.
 - **Por Syncthing:** copiar el APK como `~/Fogon/<App>-<versión>.apk`. La carpeta "Fogón" (id `fogon-apps`) solo envía desde el PC y está compartida con el S24. En el teléfono se abre el APK y se instala.
 
-## Publicar en GitHub (primera vez)
+## Publicar en GitHub
 
-El repo de trabajo (`~/Projects/fogon`) **no se sube tal cual**: sus commits viejos tienen las fotos que no son libres y la tabla de strengthlevel.com (ver `LEGAL.md` §6). El repo público empieza con un historial nuevo, hecho desde la versión actual.
+**Público desde el 21-10-2026:** [github.com/fogonapps/fogon](https://github.com/fogonapps/fogon). La organización `fogonapps` la creó Angel; él es admin.
 
-1. **Angel crea la organización** `fogonapps` (gratis) en github.com/account/organizations/new. GitHub no deja crearla por API. El nombre estaba libre el 20-10-2026.
-2. **Revisar la copia que se va a publicar.** `git archive HEAD` en una carpeta vacía, y buscar ahí: secretos (tokens, llaves, `clave.txt`), datos personales (correo, rutas `/home/...`), fotos y la tabla vieja. Revisión hecha el 20-10-2026 sobre `ff34d0f`: limpia (268 archivos, 9,6 MB).
-3. **Crear el repo público** `fogonapps/fogon` con un solo commit desde esa copia, y subirlo.
-4. **Primera versión:** `gh release create forzudo-v<versión> <apk> --repo fogonapps/fogon`. El nombre de la etiqueta lleva la app delante porque en el repo va a haber varias apps.
-5. **Obtainium en el S24:** agregar `github.com/fogonapps/fogon`. Como el repo tendrá varias apps, se filtra por la etiqueta (`forzudo-v`) para que solo siga a El Forzudo. Comprobarlo en el teléfono cuando exista la primera versión.
-6. **Después,** el repo de trabajo sigue en local y cada versión nueva se sube encima del repo público (ya sin historial viejo).
+El repo de trabajo (`~/Projects/fogon`, rama `main`) **no se sube**: sus commits viejos tienen las fotos que no son libres y la tabla de strengthlevel.com (ver `LEGAL.md` §6). Lo público sale de la rama `publico`, que empezó con un solo commit limpio y no comparte historial con `main`. El remoto `publico` está configurado para subir solo esa rama (`publico` → `main` en GitHub), así que `git push publico` nunca sube `main`.
+
+Los commits públicos van firmados con el correo privado de GitHub de Angel, `257926308+1015Angel@users.noreply.github.com`, para no mostrar su Gmail.
+
+**Subir una versión nueva:**
+1. Revisar lo que cambió desde la última vez (`git diff publico main --stat`): sin secretos, datos personales ni material sin licencia libre.
+2. Pasar a `publico` el estado de `main`:
+   ```
+   git checkout publico
+   git read-tree -u --reset main
+   git -c user.email=257926308+1015Angel@users.noreply.github.com commit -m "El Forzudo <versión>"
+   git push publico
+   git checkout main
+   ```
+3. Crear la versión con el APK firmado: `gh release create forzudo-v<versión> <apk> --repo fogonapps/fogon --target main --title "El Forzudo <versión>"`, con notas que incluyan el SHA-256 del APK y el del certificado. La etiqueta lleva la app delante porque en el repo va a haber varias apps.
+
+**Obtainium (en el teléfono):** Añadir aplicación → URL origen `https://github.com/fogonapps/fogon` → en "Filtrar por título de versión" poner `El Forzudo`, para que siga solo a esta app cuando haya otras en el repo.
 
 F-Droid va después de GitHub, con sus propios requisitos (ver `TECNOLOGIA.md`). Se revisan contra su documentación cuando llegue el momento.
