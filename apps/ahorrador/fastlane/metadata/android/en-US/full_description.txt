@@ -1,0 +1,18 @@
+<p>El Ahorrador helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, home-made apps: your attention is worth more than an ad.</p>
+
+<ul>
+<li><b>Log in seconds</b> with a big keypad: expenses, income, transfers between accounts and savings.</li>
+<li><b>Accounts:</b> cash, digital wallet, bank and credit card.</li>
+<li><b>Credit card:</b> what you owe, limit, statement and due dates, instalment purchases, and an estimate of the minimum payment and interest.</li>
+<li><b>Four ways to budget:</b> envelopes, the 50/30/20 rule, kakeibo (with a month wrap-up) or just tracking.</li>
+<li><b>Savings goals:</b> how much to set aside every two weeks to make it on time.</li>
+<li><b>Fixed payments</b> with a reminder before they’re due, logged automatically if you like.</li>
+<li><b>Owed to me and I owe,</b> with partial payments.</li>
+<li><b>Colombia’s 4×1000 tax</b> logged automatically, optional.</li>
+<li><b>Lock</b> with your fingerprint or phone lock.</li>
+<li><b>In Spanish and English.</b></li>
+</ul>
+
+<p><b>Your data is yours.</b> Everything stays on your phone, and the app doesn’t even have internet permission. Save a backup any time and export your entries to a spreadsheet.</p>
+
+<p>El Ahorrador isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>

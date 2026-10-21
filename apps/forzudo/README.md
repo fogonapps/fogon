@@ -121,6 +121,8 @@ Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su perso
 
 ## Pendiente
 
+- En la próxima versión: Android ya ofrece el inglés en Ajustes → Idioma de la app (`res/xml/locales_config.xml` lo incluye desde el 21-10-2026).
+
 - **Probar en el teléfono real la sincronización con el Gist** (con el token de verdad).
 - Dibujo para los 8 ejercicios sin lámina (lista y motivo de cada uno en `herramientas/laminas/ejercicios.py`). Everkinetic no tiene uno que sirva ni en su repositorio ni en Wikimedia Commons, y los hechos con IA no quedaron al nivel.
 

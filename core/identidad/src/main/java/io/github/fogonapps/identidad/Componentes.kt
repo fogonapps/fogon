@@ -220,6 +220,7 @@ fun AcercaDeFogon(
     onAbrirEnlace: (String) -> Unit,
     modifier: Modifier = Modifier,
     avisoSalud: String? = null,
+    avisoTitulo: String? = null,
 ) {
     val f = FogonTema.actual
     Column(
@@ -255,7 +256,7 @@ fun AcercaDeFogon(
             style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center,
         )
         avisoSalud?.let {
-            Text(stringResource(R.string.fogon_aviso_salud), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
+            Text(avisoTitulo ?: stringResource(R.string.fogon_aviso_salud), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
             Text(it, style = MaterialTheme.typography.bodyMedium, color = f.texto, textAlign = TextAlign.Center)
         }
     }

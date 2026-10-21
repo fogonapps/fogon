@@ -1,6 +1,6 @@
 # Publicar una app de Fogón
 
-Cómo se compila la versión firmada de una app y cómo llega al teléfono. Hoy aplica a El Forzudo; las próximas apps siguen lo mismo.
+Cómo se compila la versión firmada de una app y cómo llega al teléfono. Aplica a todas las apps (El Forzudo, El Ahorrador): cada una con su etiqueta (`forzudo-v…`, `ahorrador-v…`).
 
 ## La llave de firma
 
@@ -56,7 +56,7 @@ Los commits públicos van firmados con el correo privado de GitHub de Angel, `25
    ```
 3. Crear la versión con el APK firmado: `gh release create forzudo-v<versión> <apk> --repo fogonapps/fogon --target main --title "El Forzudo <versión>"`, con notas que incluyan el SHA-256 del APK y el del certificado. La etiqueta lleva la app delante porque en el repo va a haber varias apps.
 
-**Obtainium (en el teléfono):** Añadir aplicación → URL origen `https://github.com/fogonapps/fogon` → en "Filtrar por título de versión" poner `El Forzudo`, para que siga solo a esta app cuando haya otras en el repo.
+**Obtainium (en el teléfono):** Añadir aplicación → URL origen `https://github.com/fogonapps/fogon` → en "Filtrar por título de versión" poner el nombre de la app (`El Forzudo`, `El Ahorrador`), para que cada entrada siga solo a su app: todas viven en el mismo repo.
 
 ## F-Droid
 

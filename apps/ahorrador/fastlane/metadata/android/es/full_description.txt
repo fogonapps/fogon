@@ -1,0 +1,18 @@
+<p>El Ahorrador te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps hechas en casa: tu atención vale más que un anuncio.</p>
+
+<ul>
+<li><b>Anota en segundos</b> con un teclado grande: gastos, ingresos, plata que pasas entre cuentas y ahorros.</li>
+<li><b>Cuentas:</b> efectivo, billetera digital, banco y tarjeta de crédito.</li>
+<li><b>Tarjeta de crédito:</b> cuánto debes, cupo, corte, fecha de pago, compras a cuotas y un cálculo aproximado del mínimo y de los intereses.</li>
+<li><b>Cuatro formas de organizarte:</b> sobres, regla 50/30/20, kakeibo (con el cierre del mes) o solo anotar.</li>
+<li><b>Metas de ahorro:</b> cuánto guardar cada quincena para llegar a tiempo.</li>
+<li><b>Pagos fijos</b> con aviso antes de que venzan, y que se anotan solos si quieres.</li>
+<li><b>Me deben y debo,</b> con abonos.</li>
+<li><b>4×1000</b> automático, opcional.</li>
+<li><b>Candado</b> con tu huella o el bloqueo del teléfono.</li>
+<li><b>En español e inglés.</b></li>
+</ul>
+
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono, y la app ni siquiera tiene permiso de internet. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
+
+<p>El Ahorrador no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>

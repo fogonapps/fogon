@@ -32,7 +32,7 @@ Versiones exactas y dónde están instaladas: [`TECNOLOGIA.md`](TECNOLOGIA.md).
 
 ```
 fogon/
-├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, …)
+├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, apps:ahorrador)
 ├── gradle/libs.versions.toml← versiones de TODAS las bibliotecas, en un solo lugar
 ├── core/identidad/          ← lo que comparten todas las apps (biblioteca de Android)
 ├── apps/<app>/              ← una carpeta por app (aplicación de Android)
@@ -48,10 +48,10 @@ Es un **monorepo**: todas las apps viven juntas y comparten el módulo `core/ide
 |---------|-----------|
 | `Tintas.kt` | Las tintas riso de Fogón (`Tintas`) y la paleta de noche de cada app (`Paleta.Forzudo`, `Paleta.Ahorrador`, …): fondo, dos luces y acento. |
 | `Tema.kt` | `FogonTema(paleta) { … }`: envuelve la app en el estilo de noche (siempre oscuro) y da las letras (Bagel Fat One y Anton). Los colores se leen con `FogonTema.actual`. |
-| `Componentes.kt` | Piezas con la identidad: `fondoFogon` (el negro de la app con sus luces y el grano), `brillo`, `FormaRiso` (tarjetas) y `FormaPildora` (botones), `BotonRiso`, `BotonSecundario`, `Personaje`, `EstadoVacio`, `Logro`, el grano de papel (un *shader* AGSL, solo en Android 13 o superior) y `AcercaDeFogon`. Las reglas del estilo: `docs/IDENTIDAD.md` → Estilo de noche. |
+| `Componentes.kt` | Piezas con la identidad: `fondoFogon` (el negro de la app con sus luces y el grano), `brillo`, `FormaRiso` (tarjetas) y `FormaPildora` (botones), `BotonRiso`, `BotonSecundario`, `Personaje`, `EstadoVacio`, `Logro`, el grano de papel (un *shader* AGSL, solo en Android 13 o superior) y `AcercaDeFogon` (con un aviso opcional al final, de salud o de plata, y su título). Las reglas del estilo: `docs/IDENTIDAD.md` → Estilo de noche. |
 | `Manifiesto.kt` | El manifiesto, igual en todas las apps y sin internet. |
 | `Idioma.kt` | El idioma de las apps: el del teléfono o el elegido en la app, y `Idioma.envolver(contexto)` para aplicarlo. |
-| `Licencias.kt` | La pantalla de licencias. `licenciasFogon()` lista lo que llevan todas las apps; cada app suma lo suyo. Los textos completos están en `assets/licencias/`. |
+| `Licencias.kt` | La pantalla de licencias. `licenciasFogon()` lista lo que llevan todas las apps; cada app suma lo suyo. Una app sin internet pasa `conRed = false`, porque la Public Suffix List solo viene con OkHttp. Los textos completos están en `assets/licencias/`. |
 | `res/` | Letras, logotipo, chispa y los personajes de todas las apps. |
 
 ## El patrón de cada app

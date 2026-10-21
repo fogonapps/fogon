@@ -18,3 +18,4 @@ rootProject.name = "fogon"
 
 include(":core:identidad")
 include(":apps:forzudo")
+include(":apps:ahorrador")

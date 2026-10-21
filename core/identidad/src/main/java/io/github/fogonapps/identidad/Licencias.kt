@@ -31,19 +31,22 @@ import androidx.compose.ui.unit.sp
  */
 data class Licencia(val nombre: String, val detalle: String, val archivo: String? = null)
 
-/** Lo que llevan todas las apps de Fogón: el código propio, las letras y las bibliotecas. */
+/**
+ * Lo que llevan todas las apps de Fogón: el código propio, las letras y las bibliotecas.
+ * La Public Suffix List viene dentro de OkHttp: solo la llevan las apps que usan internet ([conRed]).
+ */
 @Composable
-fun licenciasFogon() = listOf(
+fun licenciasFogon(conRed: Boolean = true) = listOfNotNull(
     Licencia(stringResource(R.string.fogon_lic_app), stringResource(R.string.fogon_lic_app_texto), "gpl-3.0.txt"),
     Licencia("Anton", stringResource(R.string.fogon_lic_anton), "ofl-anton.txt"),
     Licencia("Bagel Fat One", stringResource(R.string.fogon_lic_bagel), "ofl-bagel-fat-one.txt"),
     Licencia(stringResource(R.string.fogon_lic_bibliotecas), stringResource(R.string.fogon_lic_bibliotecas_texto), "apache-2.0.txt"),
-    Licencia("Public Suffix List", stringResource(R.string.fogon_lic_psl), "mpl-2.0.txt"),
+    if (conRed) Licencia("Public Suffix List", stringResource(R.string.fogon_lic_psl), "mpl-2.0.txt") else null,
 )
 
 /** Lista de licencias; cada una muestra su texto completo al tocarla. */
 @Composable
-fun LicenciasFogon(propias: List<Licencia>, modifier: Modifier = Modifier) {
+fun LicenciasFogon(propias: List<Licencia>, modifier: Modifier = Modifier, conRed: Boolean = true) {
     val f = FogonTema.actual
     Column(modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(
@@ -56,7 +59,7 @@ fun LicenciasFogon(propias: List<Licencia>, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium, color = f.textoSuave,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
         )
-        val comunes = licenciasFogon()
+        val comunes = licenciasFogon(conRed)
         (comunes.take(1) + propias + comunes.drop(1)).forEach { FilaLicencia(it) }
     }
 }

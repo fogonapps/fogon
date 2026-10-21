@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name" translatable="false">El Ahorrador</string>
+  <string name="a_quien_debes">Who do you owe?</string>
+  <string name="abonar">Add money</string>
+  <string name="abonar_a">Add to %1$s</string>
+  <string name="abonar_texto">The money leaves an account and is set aside for this goal.</string>
+  <string name="abone">I paid part</string>
+  <string name="abonos">Payments</string>
+  <string name="acerca_de">About El Ahorrador</string>
+  <string name="acerca_de_corto">About</string>
+  <string name="activo">Active</string>
+  <string name="agregar_fijo">Add a fixed payment</string>
+  <string name="ahorrar">Set aside</string>
+  <string name="ahorro">Savings</string>
+  <string name="al_mes">Per month</string>
+  <string name="algo_falla">Something’s wrong</string>
+  <string name="anotar">Add entry</string>
+  <string name="anotar_solo">Log it automatically</string>
+  <string name="anotar_solo_pista">On the due day it’s logged as an expense by itself. Otherwise you only get a reminder.</string>
+  <string name="archivar_cuenta">Archive account</string>
+  <string name="archivar_pregunta">Archive %1$s?</string>
+  <string name="archivar_texto">It’s hidden, but its entries stay in your history.</string>
+  <string name="asignar_a">Envelope: %1$s</string>
+  <string name="asignar_texto">Left to assign this month: %1$s</string>
+  <string name="aviso_abono">Payment logged</string>
+  <string name="aviso_actualizado">Updated</string>
+  <string name="aviso_borrado">Deleted</string>
+  <string name="aviso_csv_guardado">Entries exported</string>
+  <string name="aviso_cubierto">Envelope covered</string>
+  <string name="aviso_deuda_saldada">Debt paid off!</string>
+  <string name="aviso_guardado">Saved</string>
+  <string name="aviso_importado">Backup restored</string>
+  <string name="aviso_meta_cumplida">Goal reached: %1$s!</string>
+  <string name="aviso_monto">Enter an amount</string>
+  <string name="aviso_no_es_respaldo">That file isn’t an El Ahorrador backup</string>
+  <string name="aviso_no_exportado">Couldn’t save the file</string>
+  <string name="aviso_otra_cuenta">Pick the account it goes to</string>
+  <string name="aviso_pago_linea">%1$s %2$s (%3$s)</string>
+  <string name="aviso_pagos_titulo">Payments coming up</string>
+  <string name="aviso_plata">El Ahorrador helps you keep track of your money; it isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</string>
+  <string name="aviso_plata_titulo">Notice</string>
+  <string name="aviso_reparto">The three must add up to 100</string>
+  <string name="aviso_respaldo_guardado">Backup saved</string>
+  <string name="aviso_sin_sobres_antes">Last month has no envelopes</string>
+  <string name="aviso_sobres_copiados">Envelopes copied</string>
+  <string name="aviso_una_cuenta">You need at least one account</string>
+  <string name="bloqueada">El Ahorrador is locked</string>
+  <string name="borrar">Delete</string>
+  <string name="borrar_deuda">Delete debt</string>
+  <string name="borrar_deuda_pregunta">Delete the debt with %1$s?</string>
+  <string name="borrar_fijo">Delete fixed payment</string>
+  <string name="borrar_fijo_pregunta">Delete %1$s?</string>
+  <string name="borrar_fijo_texto">Payments already logged stay.</string>
+  <string name="borrar_meta">Delete goal</string>
+  <string name="borrar_meta_pregunta">Delete the goal %1$s?</string>
+  <string name="borrar_meta_texto">What you added stays in your entries as savings.</string>
+  <string name="borrar_movimiento">Delete this entry?</string>
+  <string name="cada_dia">Day %1$d of every month</string>
+  <string name="cambiar_reparto">Change the split</string>
+  <string name="canal_pagos">Upcoming payments</string>
+  <string name="canal_pagos_detalle">A reminder at 9 a.m. when a fixed payment is due in 3 days or less.</string>
+  <string name="cancelar">Cancel</string>
+  <string name="candado">Lock</string>
+  <string name="candado_pista">Asks for your fingerprint or phone lock when you open the app.</string>
+  <string name="candado_titulo">Open El Ahorrador</string>
+  <string name="cargando">Loading</string>
+  <string name="cat_casa">Home</string>
+  <string name="cat_cesantias">Severance fund</string>
+  <string name="cat_comida">Eating out</string>
+  <string name="cat_compras">Shopping</string>
+  <string name="cat_cultura">Culture</string>
+  <string name="cat_deudas">Debt payments</string>
+  <string name="cat_estudio">Education</string>
+  <string name="cat_extra">Extra income</string>
+  <string name="cat_imprevistos">Unexpected</string>
+  <string name="cat_impuestos">Taxes</string>
+  <string name="cat_mercado">Groceries</string>
+  <string name="cat_otros">Other</string>
+  <string name="cat_prima">Bonus</string>
+  <string name="cat_salidas">Going out</string>
+  <string name="cat_salud">Health</string>
+  <string name="cat_servicios">Utilities</string>
+  <string name="cat_sueldo">Salary</string>
+  <string name="cat_transporte">Transport</string>
+  <string name="categoria">Category</string>
+  <string name="cierra_mes">Wrap up %1$s</string>
+  <string name="cierra_mes_pista">Four questions to see how it went.</string>
+  <string name="cierre_ahorraste">Left over (income minus spending)</string>
+  <string name="cierre_de">%1$s wrap-up</string>
+  <string name="cierre_del_mes">Month wrap-up</string>
+  <string name="cierre_donde">Where most of it went</string>
+  <string name="cierre_entro">How much came in?</string>
+  <string name="cierre_faltaron">%1$s short of your plan</string>
+  <string name="cierre_gastaste">How much did you spend?</string>
+  <string name="cierre_lo_lograste">You made it!</string>
+  <string name="cierre_mejorar">What will you do better next month?</string>
+  <string name="cierre_mejorar_pista">For example: fewer deliveries, bring lunch…</string>
+  <string name="cierre_pista">It comes from Japanese kakeibo: calmly looking back at the month helps more than any chart.</string>
+  <string name="cierre_querias">How much did you want to save?</string>
+  <string name="color">Color</string>
+  <string name="como_te_organizas">How you budget</string>
+  <string name="compras_a_cuotas">Instalment purchases</string>
+  <string name="copiar_sobres">Copy the %1$s envelopes</string>
+  <string name="corregir">Edit entry</string>
+  <string name="corte">Statement</string>
+  <string name="cuanto">How much?</string>
+  <string name="cubrir_con">You went %1$s over. Cover it with:</string>
+  <string name="cuenta_banco">Bank</string>
+  <string name="cuenta_billetera">Digital wallet</string>
+  <string name="cuenta_efectivo">Cash</string>
+  <string name="cuenta_sin_movimientos">No entries in this account yet.</string>
+  <string name="cuenta_tarjeta">Credit card</string>
+  <string name="cuentas">Accounts</string>
+  <string name="cuota_de">%1$d of %2$d instalments of %3$s paid</string>
+  <string name="cuotas">Instalments</string>
+  <string name="cuotas_opcional">Instalments (if it’s a loan)</string>
+  <string name="cupo">Credit limit</string>
+  <string name="cupo_disponible">Available: %1$s of %2$s</string>
+  <string name="de_x">of %1$s</string>
+  <string name="debes">You owe</string>
+  <string name="debo">I owe</string>
+  <string name="desbloquear">Unlock</string>
+  <string name="desde">Since</string>
+  <string name="deuda_hoy">How much do you owe today?</string>
+  <string name="deudas_pista">Loans between people, and credits. Card debt comes from the card accounts.</string>
+  <string name="deudas_titulo">Owed to me and I owe</string>
+  <string name="dia_corte">Statement day</string>
+  <string name="dia_del_mes">Day of the month</string>
+  <string name="dia_pago">Due day</string>
+  <string name="editar">Edit</string>
+  <string name="editar_cuenta">Edit account</string>
+  <string name="editar_deuda">Edit debt</string>
+  <string name="editar_fijo">Edit fixed payment</string>
+  <string name="editar_meta">Edit goal</string>
+  <string name="elegir_sistema">Choose how to budget</string>
+  <string name="en_mes">In %1$s</string>
+  <string name="en_metas">Saved in your goals</string>
+  <string name="en_que_se_fue">Where it went</string>
+  <string name="entra_a">Goes into</string>
+  <string name="entro">In</string>
+  <string name="entro_en">Income in %1$s</string>
+  <string name="enviar_correo">Send by email</string>
+  <string name="enviar_correo_pista">Your email app opens with the message ready, to %1$s.</string>
+  <string name="enviar_github">Send via GitHub</string>
+  <string name="enviar_github_pista">GitHub opens with the message ready. You need a GitHub account, and what you send is public: don’t include personal or money details.</string>
+  <string name="exportar_csv">Export entries (CSV)</string>
+  <string name="falta_x">%1$s left</string>
+  <string name="faltan">Remaining</string>
+  <string name="faltan_este_mes">Still due this month</string>
+  <string name="fecha">Date</string>
+  <string name="fijo_nombre">Name (rent, power, internet…)</string>
+  <string name="fijos_al_dia">Everything’s paid this month.</string>
+  <string name="fijos_pista">What you pay every month. You get a reminder 3 days before, at 9 a.m.</string>
+  <string name="fijos_vacio">Add rent, utilities or your phone plan and you’ll get a reminder before they’re due.</string>
+  <string name="fogon">Fogón</string>
+  <string name="gastado_de">Spent %1$s of %2$s</string>
+  <string name="gastado_x">Spent %1$s</string>
+  <string name="gastaste_igual">You spent the same as in %1$s.</string>
+  <string name="gastaste_mas">You spent %1$d%% more than in %2$s.</string>
+  <string name="gastaste_menos">You spent %1$d%% less than in %2$s.</string>
+  <string name="gasto">Expense</string>
+  <string name="gmf">4×1000 tax</string>
+  <string name="gmf_pista">Logs Colombia’s tax of 4 pesos per 1,000 leaving a bank account. Leave it off if your account is exempt.</string>
+  <string name="grupo_ahorro">Savings</string>
+  <string name="grupo_cultura">Culture</string>
+  <string name="grupo_gusto">Wants</string>
+  <string name="grupo_imprevisto">Unexpected</string>
+  <string name="grupo_necesidad">Needs</string>
+  <string name="guardar">Save</string>
+  <string name="guardar_respaldo">Save backup</string>
+  <string name="guardaste">Saved</string>
+  <string name="hola">Hi</string>
+  <string name="hola_nombre">Hi, %1$s</string>
+  <string name="icono">Icon</string>
+  <string name="idioma">Language</string>
+  <string name="idioma_telefono">Phone’s language</string>
+  <string name="igual_que_ultimo">Same as last: %1$s %2$s</string>
+  <string name="importar_si">Restore</string>
+  <string name="importar_titulo">Restore this backup?</string>
+  <string name="ingreso">Income</string>
+  <string name="intereses_si_minimo">If you pay only the minimum, next month’s interest would be about %1$s.</string>
+  <string name="kakeibo_pista">Log everything and, at the end of the month, answer the four wrap-up questions.</string>
+  <string name="licencias">Licenses</string>
+  <string name="listo">Done</string>
+  <string name="llega_a">Goes to</string>
+  <string name="llegas_en">At this pace you’ll get there in %1$s %2$d</string>
+  <string name="llevas_ahorrado">Left from your income: %1$s</string>
+  <string name="manifiesto">Manifesto</string>
+  <string name="mas_4x1000">+ %1$s of 4×1000 tax</string>
+  <string name="mas_en_metas">Plus %1$s set aside in goals</string>
+  <string name="me_abonaron">They paid part</string>
+  <string name="me_deben">Owed to me</string>
+  <string name="mes_anterior">Previous month</string>
+  <string name="mes_siguiente">Next month</string>
+  <string name="mes_sin_movimientos">No entries this month.</string>
+  <string name="meta_con_fecha">Has a deadline</string>
+  <string name="meta_cumplida">Goal reached!</string>
+  <string name="meta_nombre">What you’re saving for (trip, bike, emergency fund…)</string>
+  <string name="meta_objetivo">How much do you need?</string>
+  <string name="meta_para">By</string>
+  <string name="metas_vacio_texto">A goal with a date tells you how much to set aside every two weeks.</string>
+  <string name="metas_vacio_titulo">No goals yet</string>
+  <string name="minimo">Minimum</string>
+  <string name="minimo_pct">Minimum payment (percent)</string>
+  <string name="monto">Amount</string>
+  <string name="movimientos">Entries</string>
+  <string name="nadie_te_debe">Nobody owes you money.</string>
+  <string name="no_debes">You don’t owe anyone.</string>
+  <string name="nombre_cuenta">Account name</string>
+  <string name="nota">Note (optional)</string>
+  <string name="nueva_cuenta">New account</string>
+  <string name="nueva_meta">New goal</string>
+  <string name="nuevo_debo">Add something I owe</string>
+  <string name="nuevo_me_deben">Add something owed to me</string>
+  <string name="opciones">Options</string>
+  <string name="pagado">Paid</string>
+  <string name="pagar">Pay</string>
+  <string name="pagar_tarjeta">Pay the card</string>
+  <string name="pagaste_todo">All paid!</string>
+  <string name="pago_antes">Pay by</string>
+  <string name="pago_total_pista">Pay the full %1$s by the due date and you pay no interest on single-instalment purchases.</string>
+  <string name="pagos_fijos">Fixed payments</string>
+  <string name="para_meta">For the goal</string>
+  <string name="pasar">Transfer</string>
+  <string name="pasar_pista">Moving money between your accounts isn’t spending: your total stays the same. Paying the card is a transfer to it.</string>
+  <string name="paso_a">To %1$s</string>
+  <string name="pausado">paused</string>
+  <string name="perfil">Profile</string>
+  <string name="pestana_inicio">Home</string>
+  <string name="pestana_metas">Goals</string>
+  <string name="pestana_presupuesto">Budget</string>
+  <string name="pestana_resumen">Summary</string>
+  <string name="por_asignar">Left to assign</string>
+  <string name="por_asignar_pista">%1$s to assign</string>
+  <string name="por_asignar_texto">Money in your accounts that isn’t in an envelope yet. What’s left over each month comes back here.</string>
+  <string name="por_quincena">Set aside %1$s every two weeks to make it by %2$s</string>
+  <string name="preguntas_frecuentes">Frequently asked questions</string>
+  <string name="proximos_pagos">Upcoming payments</string>
+  <string name="que_paso">What happened and what you were doing</string>
+  <string name="queda">Left</string>
+  <string name="quien_te_debe">Who owes you?</string>
+  <string name="quiero_ahorrar">I want to save this month</string>
+  <string name="recuperar_pregunta">Restore a backup?</string>
+  <string name="recuperar_respaldo">Restore backup</string>
+  <string name="recuperar_texto">You’ll pick a file. You’ll see what’s in it before anything is replaced.</string>
+  <string name="regla_pista" formatted="false">Income is split: 50% for needs, 30% for wants and 20% for savings. Each category already belongs to a group.</string>
+  <string name="reparto_es">Split: %1$d / %2$d / %3$d</string>
+  <string name="reportar_boton">Report a problem or suggest something</string>
+  <string name="reportar_pista">Is something broken, or do you have an idea to improve the app? Tell us here. We read everything.</string>
+  <string name="reportar_titulo">Report or suggest</string>
+  <string name="respaldo">Backup</string>
+  <string name="respaldo_pista">Your data is only on this phone. Save a backup now and then on your computer and, if you like, also in your own cloud.</string>
+  <string name="saldo">Balance</string>
+  <string name="saldo_hoy">How much is in it today?</string>
+  <string name="sale_de">From</string>
+  <string name="salio">Out</string>
+  <string name="se_agrega">Added automatically: %1$s. Nothing else from your phone.</string>
+  <string name="se_anota_solo">logged automatically</string>
+  <string name="si_continuar">Yes, continue</string>
+  <string name="siguiente">Next</string>
+  <string name="sin_categoria">No category</string>
+  <string name="sin_meta">No goal</string>
+  <string name="sistema_503020">50/30/20 rule</string>
+  <string name="sistema_503020_texto" formatted="false">Income is split in three: 50% needs, 30% wants and 20% savings. Simple, no math.</string>
+  <string name="sistema_kakeibo">Kakeibo</string>
+  <string name="sistema_kakeibo_texto">The Japanese method: log everything in four groups (needs, wants, culture and unexpected) and answer four questions at the end of the month.</string>
+  <string name="sistema_sobres">Envelopes</string>
+  <string name="sistema_sobres_texto">Give every peso a job: split your income into envelopes (groceries, rent, going out…) and spend from each one.</string>
+  <string name="sistema_solo">Just track</string>
+  <string name="sistema_solo_texto">No budget: log what comes in and goes out and see where it goes.</string>
+  <string name="sobres_pista">Tap an envelope to put money in it.</string>
+  <string name="solo_anotar_pista">You’re on “Just track”: there’s no budget. If you want one, choose another method in Profile.</string>
+  <string name="suma_100">They add up to %1$d%% (must be 100)</string>
+  <string name="tarjeta_aproximado">The minimum and interest are estimates: every bank calculates them its own way. The exact figure is on your statement.</string>
+  <string name="tarjetas">Credit cards</string>
+  <string name="tasa_mensual">Monthly interest (percent)</string>
+  <string name="tasa_pista">Both are on your card statement. If you don’t know them, keep the defaults.</string>
+  <string name="te_pagaron">Paid in full!</string>
+  <string name="te_pasaste">Over by</string>
+  <string name="tengo_idea">I have an idea</string>
+  <string name="tienes">You have</string>
+  <string name="tienes_pista">Money in all your accounts, minus what you owe on cards.</string>
+  <string name="tipo_banco">Bank account</string>
+  <string name="tipo_billetera">Digital wallet</string>
+  <string name="tipo_credito">Credit card</string>
+  <string name="tipo_efectivo">Cash</string>
+  <string name="tu_idea">Your idea</string>
+  <string name="tu_plata">Your money</string>
+  <string name="tut_billetera">Digital wallet</string>
+  <string name="tut_deuda_tarjeta">How much do you owe on it today?</string>
+  <string name="tut_empezar">Start</string>
+  <string name="tut_hola">Hi, I’m El Ahorrador</string>
+  <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
+  <string name="tut_privado">Everything stays on this phone. The app has no internet access: nobody else sees your money.</string>
+  <string name="tut_saldos">What are you starting with?</string>
+  <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
+  <string name="tut_sistema">How do you want to budget?</string>
+  <string name="tut_sistema_texto">You can change it any time in Profile.</string>
+  <string name="tut_tengo_respaldo">I have a backup</string>
+  <string name="tut_tengo_tarjeta">I have a credit card</string>
+  <string name="tut_tu_nombre">What should I call you? (optional)</string>
+  <string name="ultimos">Latest entries</string>
+  <string name="vacio_texto">Tap + to log your first expense or income.</string>
+  <string name="vacio_titulo">Nothing here yet</string>
+  <string name="vence_el">Due %1$s</string>
+  <string name="vencio_el">Was due %1$s</string>
+  <string name="ver_todas">See all</string>
+  <string name="ver_todos">See all</string>
+  <string name="volver">Go back</string>
+  <plurals name="importar_texto">
+    <item quantity="one">This replaces the data on this phone with the backup (%d entry).</item>
+    <item quantity="other">This replaces the data on this phone with the backup (%d entries).</item>
+  </plurals>
+  <plurals name="fijos_anotados">
+    <item quantity="one">%d fixed payment logged</item>
+    <item quantity="other">%d fixed payments logged</item>
+  </plurals>
+  <string-array name="meses">
+    <item>Jan</item>
+    <item>Feb</item>
+    <item>Mar</item>
+    <item>Apr</item>
+    <item>May</item>
+    <item>Jun</item>
+    <item>Jul</item>
+    <item>Aug</item>
+    <item>Sep</item>
+    <item>Oct</item>
+    <item>Nov</item>
+    <item>Dec</item>
+  </string-array>
+  <string-array name="meses_largos">
+    <item>January</item>
+    <item>February</item>
+    <item>March</item>
+    <item>April</item>
+    <item>May</item>
+    <item>June</item>
+    <item>July</item>
+    <item>August</item>
+    <item>September</item>
+    <item>October</item>
+    <item>November</item>
+    <item>December</item>
+  </string-array>
+  <string-array name="creditos">
+    <item>Fonts: Bagel Fat One and Anton (SIL Open Font License).</item>
+    <item>Free-to-use budgeting ideas: the envelope method, the 50/30/20 rule and kakeibo.</item>
+  </string-array>
+  <string-array name="preguntas">
+    <item>Can it connect to my bank?</item>
+    <item>Where is my data?</item>
+    <item>Which method should I choose?</item>
+    <item>How do I log my credit card?</item>
+    <item>Why doesn’t the minimum payment match my statement?</item>
+    <item>What is the 4×1000?</item>
+    <item>What’s the difference between saving and a transfer?</item>
+  </string-array>
+  <string-array name="respuestas">
+    <item>No. In Colombia, open finance only covers regulated companies, and a free app with no server can’t connect. This way nobody has your passwords, either. Logging entries is quick with the app’s keypad.</item>
+    <item>Only on your phone. The app has no internet permission. Save backups from Profile → Backup.</item>
+    <item>For control, Envelopes. For something simple, the 50/30/20 rule. If you like writing and thinking about the month, kakeibo. If you only want to see where it goes, Just track. You can change it any time.</item>
+    <item>Card purchases are expenses from the card account (with their instalments). Paying the card is a transfer from your bank to the card: it isn’t another expense, you already counted it when you bought.</item>
+    <item>Because every bank calculates it its own way. The app estimates it with the percent you set on the account; the real figure is on your statement.</item>
+    <item>Colombia’s financial transactions tax: 4 pesos per 1,000 leaving a bank account. Turn it on in Profile and the app logs it for you. Many savings accounts have an exemption.</item>
+    <item>Saving sets money aside for a goal: it leaves this month’s available money and adds to the goal. A transfer just moves money between your accounts, and nothing else changes.</item>
+  </string-array>
+</resources>

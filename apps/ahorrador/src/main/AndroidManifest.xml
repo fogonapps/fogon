@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Sin permiso de internet: todo se queda en el teléfono. -->
+    <!-- Aviso de pagos fijos que están por vencer. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Candado con la huella o el bloqueo del teléfono (opcional). -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Volver a programar el aviso diario de pagos después de reiniciar el teléfono. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:name=".AhorradorApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/reglas_respaldo"
+        android:fullBackupContent="@xml/respaldo_antiguo"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Tema.Ahorrador"
+        android:localeConfig="@xml/locales_config"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Tema.Ahorrador.Arranque"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".AvisoPagos" android:exported="false" />
+        <!-- BOOT_COMPLETED solo lo envía el sistema. -->
+        <receiver android:name=".ArranqueTelefono" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

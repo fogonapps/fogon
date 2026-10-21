@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="a_quien_debes">¿A quién le debes?</string>
+  <string name="abonar">Abonar</string>
+  <string name="abonar_a">Abonar a %1$s</string>
+  <string name="abonar_texto">La plata sale de una cuenta y queda guardada para esta meta.</string>
+  <string name="abone">Pagué una parte</string>
+  <string name="abonos">Abonos</string>
+  <string name="acerca_de">Acerca de El Ahorrador</string>
+  <string name="acerca_de_corto">Acerca de</string>
+  <string name="activo">Activo</string>
+  <string name="agregar_fijo">Agregar pago fijo</string>
+  <string name="ahorrar">Ahorrar</string>
+  <string name="ahorro">Ahorro</string>
+  <string name="al_mes">Al mes</string>
+  <string name="algo_falla">Algo falla</string>
+  <string name="anotar">Anotar</string>
+  <string name="anotar_solo">Anotarlo solo</string>
+  <string name="anotar_solo_pista">El día del pago se anota como gasto sin que hagas nada. Si no, solo te aviso.</string>
+  <string name="archivar_cuenta">Archivar cuenta</string>
+  <string name="archivar_pregunta">¿Archivar %1$s?</string>
+  <string name="archivar_texto">Deja de verse, pero sus movimientos se quedan en el historial.</string>
+  <string name="asignar_a">Sobre: %1$s</string>
+  <string name="asignar_texto">Por asignar este mes: %1$s</string>
+  <string name="aviso_abono">Abono anotado</string>
+  <string name="aviso_actualizado">Actualizado</string>
+  <string name="aviso_borrado">Borrado</string>
+  <string name="aviso_csv_guardado">Movimientos exportados</string>
+  <string name="aviso_cubierto">Sobre cubierto</string>
+  <string name="aviso_deuda_saldada">¡Deuda saldada!</string>
+  <string name="aviso_guardado">Guardado</string>
+  <string name="aviso_importado">Respaldo recuperado</string>
+  <string name="aviso_meta_cumplida">¡Cumpliste la meta %1$s!</string>
+  <string name="aviso_monto">Escribe cuánto</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de El Ahorrador</string>
+  <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
+  <string name="aviso_otra_cuenta">Elige a qué cuenta va</string>
+  <string name="aviso_pago_linea">%1$s %2$s (%3$s)</string>
+  <string name="aviso_pagos_titulo">Pagos por vencer</string>
+  <string name="aviso_plata">El Ahorrador te ayuda a llevar tus cuentas; no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</string>
+  <string name="aviso_plata_titulo">Aviso</string>
+  <string name="aviso_reparto">Los tres tienen que sumar 100</string>
+  <string name="aviso_respaldo_guardado">Respaldo guardado</string>
+  <string name="aviso_sin_sobres_antes">El mes pasado no tiene sobres</string>
+  <string name="aviso_sobres_copiados">Sobres copiados</string>
+  <string name="aviso_una_cuenta">Necesitas al menos una cuenta</string>
+  <string name="bloqueada">El Ahorrador tiene candado</string>
+  <string name="borrar">Borrar</string>
+  <string name="borrar_deuda">Borrar deuda</string>
+  <string name="borrar_deuda_pregunta">¿Borrar lo de %1$s?</string>
+  <string name="borrar_fijo">Borrar pago fijo</string>
+  <string name="borrar_fijo_pregunta">¿Borrar %1$s?</string>
+  <string name="borrar_fijo_texto">Los pagos que ya anotaste se quedan.</string>
+  <string name="borrar_meta">Borrar meta</string>
+  <string name="borrar_meta_pregunta">¿Borrar la meta %1$s?</string>
+  <string name="borrar_meta_texto">Lo que abonaste se queda en tus movimientos como ahorro.</string>
+  <string name="borrar_movimiento">¿Borrar este movimiento?</string>
+  <string name="cada_dia">Día %1$d de cada mes</string>
+  <string name="cambiar_reparto">Cambiar el reparto</string>
+  <string name="canal_pagos">Pagos por vencer</string>
+  <string name="canal_pagos_detalle">Te aviso a las 9 de la mañana cuando un pago fijo vence en 3 días o menos.</string>
+  <string name="cancelar">Cancelar</string>
+  <string name="candado">Candado</string>
+  <string name="candado_pista">Pide tu huella o el bloqueo del teléfono al abrir la app.</string>
+  <string name="candado_titulo">Abrir El Ahorrador</string>
+  <string name="cargando">Cargando</string>
+  <string name="cat_casa">Casa</string>
+  <string name="cat_cesantias">Cesantías</string>
+  <string name="cat_comida">Comida afuera</string>
+  <string name="cat_compras">Compras</string>
+  <string name="cat_cultura">Cultura</string>
+  <string name="cat_deudas">Deudas</string>
+  <string name="cat_estudio">Estudio</string>
+  <string name="cat_extra">Extra</string>
+  <string name="cat_imprevistos">Imprevistos</string>
+  <string name="cat_impuestos">Impuestos</string>
+  <string name="cat_mercado">Mercado</string>
+  <string name="cat_otros">Otros</string>
+  <string name="cat_prima">Prima</string>
+  <string name="cat_salidas">Salidas</string>
+  <string name="cat_salud">Salud</string>
+  <string name="cat_servicios">Servicios</string>
+  <string name="cat_sueldo">Sueldo</string>
+  <string name="cat_transporte">Transporte</string>
+  <string name="categoria">Categoría</string>
+  <string name="cierra_mes">Cierra %1$s</string>
+  <string name="cierra_mes_pista">Cuatro preguntas para ver cómo te fue.</string>
+  <string name="cierre_ahorraste">Te quedó (lo que entró menos lo que gastaste)</string>
+  <string name="cierre_de">Cierre de %1$s</string>
+  <string name="cierre_del_mes">Cierre del mes</string>
+  <string name="cierre_donde">Donde más se fue</string>
+  <string name="cierre_entro">¿Cuánto entró?</string>
+  <string name="cierre_faltaron">Te faltaron %1$s para lo que querías</string>
+  <string name="cierre_gastaste">¿Cuánto gastaste?</string>
+  <string name="cierre_lo_lograste">¡Lo lograste!</string>
+  <string name="cierre_mejorar">¿Qué vas a mejorar el mes que viene?</string>
+  <string name="cierre_mejorar_pista">Por ejemplo: menos domicilios, llevar almuerzo…</string>
+  <string name="cierre_pista">Viene del kakeibo japonés: mirar el mes con calma ayuda más que cualquier gráfica.</string>
+  <string name="cierre_querias">¿Cuánto querías ahorrar?</string>
+  <string name="color">Color</string>
+  <string name="como_te_organizas">Cómo te organizas</string>
+  <string name="compras_a_cuotas">Compras a cuotas</string>
+  <string name="copiar_sobres">Copiar los sobres de %1$s</string>
+  <string name="corregir">Corregir</string>
+  <string name="corte">Corte</string>
+  <string name="cuanto">¿Cuánto?</string>
+  <string name="cubrir_con">Te pasaste %1$s. Cúbrelo con:</string>
+  <string name="cuenta_banco">Banco</string>
+  <string name="cuenta_billetera">Billetera digital</string>
+  <string name="cuenta_efectivo">Efectivo</string>
+  <string name="cuenta_sin_movimientos">Esta cuenta todavía no tiene movimientos.</string>
+  <string name="cuenta_tarjeta">Tarjeta de crédito</string>
+  <string name="cuentas">Cuentas</string>
+  <string name="cuota_de">Van %1$d de %2$d cuotas de %3$s</string>
+  <string name="cuotas">Cuotas</string>
+  <string name="cuotas_opcional">Cuotas (si es un crédito)</string>
+  <string name="cupo">Cupo</string>
+  <string name="cupo_disponible">Disponible: %1$s de %2$s</string>
+  <string name="de_x">de %1$s</string>
+  <string name="debes">Debes</string>
+  <string name="debo">Debo</string>
+  <string name="desbloquear">Desbloquear</string>
+  <string name="desde">Desde</string>
+  <string name="deuda_hoy">¿Cuánto debes hoy?</string>
+  <string name="deudas_pista">Préstamos entre personas y créditos. Lo de las tarjetas sale de sus cuentas.</string>
+  <string name="deudas_titulo">Me deben y debo</string>
+  <string name="dia_corte">Día de corte</string>
+  <string name="dia_del_mes">Día del mes</string>
+  <string name="dia_pago">Día de pago</string>
+  <string name="editar">Editar</string>
+  <string name="editar_cuenta">Editar cuenta</string>
+  <string name="editar_deuda">Editar deuda</string>
+  <string name="editar_fijo">Editar pago fijo</string>
+  <string name="editar_meta">Editar meta</string>
+  <string name="elegir_sistema">Elegir cómo organizarme</string>
+  <string name="en_mes">En %1$s</string>
+  <string name="en_metas">Guardado en tus metas</string>
+  <string name="en_que_se_fue">En qué se fue</string>
+  <string name="entra_a">Entra a</string>
+  <string name="entro">Entró</string>
+  <string name="entro_en">Entró en %1$s</string>
+  <string name="enviar_correo">Enviar por correo</string>
+  <string name="enviar_correo_pista">Se abre tu app de correo con el mensaje listo, para %1$s.</string>
+  <string name="enviar_github">Enviar por GitHub</string>
+  <string name="enviar_github_pista">Se abre GitHub con el mensaje listo. Necesitas una cuenta de GitHub, y lo que envíes queda público: no pongas datos personales ni de tu plata.</string>
+  <string name="exportar_csv">Exportar movimientos (CSV)</string>
+  <string name="falta_x">Falta %1$s</string>
+  <string name="faltan">Faltan</string>
+  <string name="faltan_este_mes">Falta pagar este mes</string>
+  <string name="fecha">Fecha</string>
+  <string name="fijo_nombre">Nombre (arriendo, luz, internet…)</string>
+  <string name="fijos_al_dia">Ya pagaste todo lo de este mes.</string>
+  <string name="fijos_pista">Lo que pagas cada mes. Te aviso 3 días antes, a las 9 de la mañana.</string>
+  <string name="fijos_vacio">Agrega el arriendo, los servicios o el plan del celular y te aviso antes de que venzan.</string>
+  <string name="fogon">Fogón</string>
+  <string name="gastado_de">Gastaste %1$s de %2$s</string>
+  <string name="gastado_x">Gastaste %1$s</string>
+  <string name="gastaste_igual">Gastaste lo mismo que en %1$s.</string>
+  <string name="gastaste_mas">Gastaste %1$d %% más que en %2$s.</string>
+  <string name="gastaste_menos">Gastaste %1$d %% menos que en %2$s.</string>
+  <string name="gasto">Gasto</string>
+  <string name="gmf">4×1000</string>
+  <string name="gmf_pista">Anota el impuesto de 4 pesos por cada 1.000 que salen de una cuenta de banco. Si tu cuenta está exenta, déjalo apagado.</string>
+  <string name="grupo_ahorro">Ahorro</string>
+  <string name="grupo_cultura">Cultura</string>
+  <string name="grupo_gusto">Gustos</string>
+  <string name="grupo_imprevisto">Imprevistos</string>
+  <string name="grupo_necesidad">Necesidades</string>
+  <string name="guardar">Guardar</string>
+  <string name="guardar_respaldo">Guardar respaldo</string>
+  <string name="guardaste">Guardaste</string>
+  <string name="hola">Hola</string>
+  <string name="hola_nombre">Hola, %1$s</string>
+  <string name="icono">Ícono</string>
+  <string name="idioma">Idioma</string>
+  <string name="idioma_telefono">El del teléfono</string>
+  <string name="igual_que_ultimo">Igual que el último: %1$s %2$s</string>
+  <string name="importar_si">Recuperar</string>
+  <string name="importar_titulo">¿Recuperar este respaldo?</string>
+  <string name="ingreso">Ingreso</string>
+  <string name="intereses_si_minimo">Si pagas solo el mínimo, el mes que viene serían unos %1$s de intereses.</string>
+  <string name="kakeibo_pista">Anota todo y, al final del mes, responde las cuatro preguntas del cierre.</string>
+  <string name="licencias">Licencias</string>
+  <string name="listo">Listo</string>
+  <string name="llega_a">Llega a</string>
+  <string name="llegas_en">A este paso llegas en %1$s de %2$d</string>
+  <string name="llevas_ahorrado">Te queda de lo que entró: %1$s</string>
+  <string name="manifiesto">Manifiesto</string>
+  <string name="mas_4x1000">+ %1$s de 4×1000</string>
+  <string name="mas_en_metas">Y %1$s guardados en tus metas</string>
+  <string name="me_abonaron">Me pagaron una parte</string>
+  <string name="me_deben">Me deben</string>
+  <string name="mes_anterior">Mes anterior</string>
+  <string name="mes_siguiente">Mes siguiente</string>
+  <string name="mes_sin_movimientos">Este mes no tiene movimientos.</string>
+  <string name="meta_con_fecha">Tiene fecha</string>
+  <string name="meta_cumplida">¡Meta cumplida!</string>
+  <string name="meta_nombre">Para qué ahorras (viaje, moto, colchón…)</string>
+  <string name="meta_objetivo">¿Cuánto necesitas?</string>
+  <string name="meta_para">Para el</string>
+  <string name="metas_vacio_texto">Una meta con fecha te dice cuánto guardar cada quincena.</string>
+  <string name="metas_vacio_titulo">Todavía no tienes metas</string>
+  <string name="minimo">Mínimo</string>
+  <string name="minimo_pct">Pago mínimo (porcentaje)</string>
+  <string name="monto">Monto</string>
+  <string name="movimientos">Movimientos</string>
+  <string name="nadie_te_debe">Nadie te debe plata.</string>
+  <string name="no_debes">No le debes a nadie.</string>
+  <string name="nombre_cuenta">Nombre de la cuenta</string>
+  <string name="nota">Nota (opcional)</string>
+  <string name="nueva_cuenta">Nueva cuenta</string>
+  <string name="nueva_meta">Nueva meta</string>
+  <string name="nuevo_debo">Anotar algo que debo</string>
+  <string name="nuevo_me_deben">Anotar algo que me deben</string>
+  <string name="opciones">Opciones</string>
+  <string name="pagado">Pagado</string>
+  <string name="pagar">Pagar</string>
+  <string name="pagar_tarjeta">Pagar la tarjeta</string>
+  <string name="pagaste_todo">¡Pagaste todo!</string>
+  <string name="pago_antes">Pagar antes del</string>
+  <string name="pago_total_pista">Si pagas los %1$s completos antes de la fecha, no pagas intereses en las compras a una cuota.</string>
+  <string name="pagos_fijos">Pagos fijos</string>
+  <string name="para_meta">Para la meta</string>
+  <string name="pasar">Pasar</string>
+  <string name="pasar_pista">Mover plata entre tus cuentas no es un gasto: tu total no cambia. Pagar la tarjeta es pasarle plata.</string>
+  <string name="paso_a">A %1$s</string>
+  <string name="pausado">pausado</string>
+  <string name="perfil">Perfil</string>
+  <string name="pestana_inicio">Inicio</string>
+  <string name="pestana_metas">Metas</string>
+  <string name="pestana_presupuesto">Presupuesto</string>
+  <string name="pestana_resumen">Resumen</string>
+  <string name="por_asignar">Por asignar</string>
+  <string name="por_asignar_pista">%1$s por asignar</string>
+  <string name="por_asignar_texto">La plata de tus cuentas que todavía no está en un sobre. Lo que sobra de un mes vuelve aquí.</string>
+  <string name="por_quincena">Guarda %1$s cada quincena para llegar el %2$s</string>
+  <string name="preguntas_frecuentes">Preguntas frecuentes</string>
+  <string name="proximos_pagos">Próximos pagos</string>
+  <string name="que_paso">Qué pasó y qué estabas haciendo</string>
+  <string name="queda">Queda</string>
+  <string name="quien_te_debe">¿Quién te debe?</string>
+  <string name="quiero_ahorrar">Quiero ahorrar este mes</string>
+  <string name="recuperar_pregunta">¿Recuperar un respaldo?</string>
+  <string name="recuperar_respaldo">Recuperar respaldo</string>
+  <string name="recuperar_texto">Vas a elegir un archivo. Antes de reemplazar nada te muestro qué trae.</string>
+  <string name="regla_pista" formatted="false">Lo que entra se parte: 50 % para lo necesario, 30 % para gustos y 20 % para ahorrar. Cada categoría ya trae su grupo.</string>
+  <string name="reparto_es">Reparto: %1$d / %2$d / %3$d</string>
+  <string name="reportar_boton">Reportar un fallo o sugerir algo</string>
+  <string name="reportar_pista">¿Algo falla o se te ocurre cómo mejorar la app? Cuéntalo aquí. Lo leemos todo.</string>
+  <string name="reportar_titulo">Reportar o sugerir</string>
+  <string name="respaldo">Respaldo</string>
+  <string name="respaldo_pista">Tus datos están solo en este teléfono. Guarda un respaldo de vez en cuando en tu computador y, si lo prefieres, también en tu propia nube.</string>
+  <string name="saldo">Saldo</string>
+  <string name="saldo_hoy">¿Cuánto tiene hoy?</string>
+  <string name="sale_de">Sale de</string>
+  <string name="salio">Salió</string>
+  <string name="se_agrega">Se agrega solo: %1$s. Nada más de tu teléfono.</string>
+  <string name="se_anota_solo">se anota solo</string>
+  <string name="si_continuar">Sí, continuar</string>
+  <string name="siguiente">Siguiente</string>
+  <string name="sin_categoria">Sin categoría</string>
+  <string name="sin_meta">Sin meta</string>
+  <string name="sistema_503020">Regla 50/30/20</string>
+  <string name="sistema_503020_texto" formatted="false">Lo que entra se parte en tres: 50 % necesidades, 30 % gustos y 20 % ahorro. Simple, sin hacer cuentas.</string>
+  <string name="sistema_kakeibo">Kakeibo</string>
+  <string name="sistema_kakeibo_texto">El método japonés: anotas todo en cuatro grupos (necesidades, gustos, cultura e imprevistos) y al final del mes respondes cuatro preguntas.</string>
+  <string name="sistema_sobres">Sobres</string>
+  <string name="sistema_sobres_texto">Le das un trabajo a cada peso: repartes lo que entra en sobres (mercado, arriendo, salidas…) y gastas de cada uno.</string>
+  <string name="sistema_solo">Solo anotar</string>
+  <string name="sistema_solo_texto">Sin presupuesto: anotas lo que entra y sale y ves en qué se va.</string>
+  <string name="sobres_pista">Toca un sobre para ponerle plata.</string>
+  <string name="solo_anotar_pista">Estás en «Solo anotar»: no hay presupuesto. Si quieres uno, elige otro sistema en Perfil.</string>
+  <string name="suma_100">Suman %1$d %% (tienen que ser 100)</string>
+  <string name="tarjeta_aproximado">El mínimo y los intereses son aproximados: cada banco los calcula a su manera. El valor exacto está en tu extracto.</string>
+  <string name="tarjetas">Tarjetas de crédito</string>
+  <string name="tasa_mensual">Interés mensual (porcentaje)</string>
+  <string name="tasa_pista">Los dos están en el extracto de la tarjeta. Si no los sabes, deja los que vienen.</string>
+  <string name="te_pagaron">¡Te pagaron todo!</string>
+  <string name="te_pasaste">Te pasaste</string>
+  <string name="tengo_idea">Tengo una idea</string>
+  <string name="tienes">Tienes</string>
+  <string name="tienes_pista">La plata de todas tus cuentas, menos lo que debes en tarjetas.</string>
+  <string name="tipo_banco">Cuenta de banco</string>
+  <string name="tipo_billetera">Billetera digital</string>
+  <string name="tipo_credito">Tarjeta de crédito</string>
+  <string name="tipo_efectivo">Efectivo</string>
+  <string name="tu_idea">Tu idea</string>
+  <string name="tu_plata">Tu plata</string>
+  <string name="tut_billetera">Billetera digital</string>
+  <string name="tut_deuda_tarjeta">¿Cuánto debes hoy en la tarjeta?</string>
+  <string name="tut_empezar">Empezar</string>
+  <string name="tut_hola">Hola, soy El Ahorrador</string>
+  <string name="tut_hola_texto">Te ayudo a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco.</string>
+  <string name="tut_privado">Todo queda en este teléfono. La app no tiene internet: nadie más ve tu plata.</string>
+  <string name="tut_saldos">¿Con cuánto empiezas?</string>
+  <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
+  <string name="tut_sistema">¿Cómo te quieres organizar?</string>
+  <string name="tut_sistema_texto">Lo puedes cambiar cuando quieras en Perfil.</string>
+  <string name="tut_tengo_respaldo">Ya tengo un respaldo</string>
+  <string name="tut_tengo_tarjeta">Tengo tarjeta de crédito</string>
+  <string name="tut_tu_nombre">¿Cómo te llamo? (opcional)</string>
+  <string name="ultimos">Últimos movimientos</string>
+  <string name="vacio_texto">Toca el + para anotar tu primer gasto o ingreso.</string>
+  <string name="vacio_titulo">Todavía no hay nada</string>
+  <string name="vence_el">Vence el %1$s</string>
+  <string name="vencio_el">Venció el %1$s</string>
+  <string name="ver_todas">Ver todas</string>
+  <string name="ver_todos">Ver todos</string>
+  <string name="volver">Volver</string>
+  <plurals name="importar_texto">
+    <item quantity="one">Esto reemplaza los datos de este teléfono con los del respaldo (%d movimiento).</item>
+    <item quantity="many">Esto reemplaza los datos de este teléfono con los del respaldo (%d movimientos).</item>
+    <item quantity="other">Esto reemplaza los datos de este teléfono con los del respaldo (%d movimientos).</item>
+  </plurals>
+  <plurals name="fijos_anotados">
+    <item quantity="one">Se anotó %d pago fijo</item>
+    <item quantity="many">Se anotaron %d pagos fijos</item>
+    <item quantity="other">Se anotaron %d pagos fijos</item>
+  </plurals>
+  <string-array name="meses">
+    <item>ene</item>
+    <item>feb</item>
+    <item>mar</item>
+    <item>abr</item>
+    <item>may</item>
+    <item>jun</item>
+    <item>jul</item>
+    <item>ago</item>
+    <item>sep</item>
+    <item>oct</item>
+    <item>nov</item>
+    <item>dic</item>
+  </string-array>
+  <string-array name="meses_largos">
+    <item>enero</item>
+    <item>febrero</item>
+    <item>marzo</item>
+    <item>abril</item>
+    <item>mayo</item>
+    <item>junio</item>
+    <item>julio</item>
+    <item>agosto</item>
+    <item>septiembre</item>
+    <item>octubre</item>
+    <item>noviembre</item>
+    <item>diciembre</item>
+  </string-array>
+  <string-array name="creditos">
+    <item>Letras: Bagel Fat One y Anton (SIL Open Font License).</item>
+    <item>Ideas de presupuesto de uso libre: el método de sobres, la regla 50/30/20 y el kakeibo.</item>
+  </string-array>
+  <string-array name="preguntas">
+    <item>¿Se puede conectar con mi banco?</item>
+    <item>¿Dónde quedan mis datos?</item>
+    <item>¿Qué sistema elijo?</item>
+    <item>¿Cómo anoto la tarjeta de crédito?</item>
+    <item>¿Por qué el pago mínimo no cuadra con mi extracto?</item>
+    <item>¿Qué es el 4×1000?</item>
+    <item>¿En qué se diferencia ahorrar de pasar plata?</item>
+  </string-array>
+  <string-array name="respuestas">
+    <item>No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.</item>
+    <item>Solo en tu teléfono. La app no tiene permiso de internet. Guarda respaldos desde Perfil → Respaldo.</item>
+    <item>Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.</item>
+    <item>Las compras con la tarjeta son gastos desde la cuenta de la tarjeta (con sus cuotas). Pagar la tarjeta es pasar plata del banco a la tarjeta: no es otro gasto, ya lo contaste al comprar.</item>
+    <item>Porque cada banco lo calcula a su manera. La app lo aproxima con el porcentaje que pongas en la cuenta; el valor real está en tu extracto.</item>
+    <item>El gravamen a los movimientos financieros: 4 pesos por cada 1.000 que salen de una cuenta de banco. Si lo activas en Perfil, la app lo anota sola. Muchas cuentas de ahorro tienen una exenta.</item>
+    <item>Ahorrar es guardar para una meta: la plata sale de lo disponible del mes y se suma a la meta. Pasar es mover plata entre tus cuentas, sin que cambie nada.</item>
+  </string-array>
+</resources>
