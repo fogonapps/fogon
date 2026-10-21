@@ -21,7 +21,7 @@ Binaries: https://github.com/fogonapps/fogon/releases/download/forzudo-v%v/ElFor
 Builds:
   - versionName: 1.4.2
     versionCode: 9
-    commit: HASH-COMPLETO-DE-forzudo-v1.4.2
+    commit: 4f6343dfbf0c4a9afeae445e9f46dde71a215c4e
     subdir: apps/forzudo
     gradle:
       - yes
