@@ -3,7 +3,7 @@
 Fogón son apps de Android libres (GPL-3.0-or-later), hechas con IA, sin anuncios ni rastreo. Lee primero:
 
 1. [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md): cómo está hecho todo.
-2. `apps/<app>/ARQUITECTURA.md`: la app que vas a tocar.
+2. `apps/<app>/ARQUITECTURA.md` (cómo está hecha) y `apps/<app>/GUIA.md` (cómo cambiar cosas y sacar versiones): la app que vas a tocar.
 3. [`docs/LEGAL.md`](docs/LEGAL.md) y [`docs/IDENTIDAD.md`](docs/IDENTIDAD.md) antes de agregar datos, imágenes, letras, bibliotecas o nombres.
 
 ## Reglas
@@ -16,7 +16,7 @@ Fogón son apps de Android libres (GPL-3.0-or-later), hechas con IA, sin anuncio
 - **No cambies un `applicationId` ya publicado,** ni el nombre del archivo del Gist de El Forzudo (`mi-gym-datos.json`).
 - **La llave de firma** está en `~/.fogon/firma/` y nunca entra al repositorio.
 - **Antes de dar algo por terminado:** compila, corre las pruebas y el lint, y pruébalo en el emulador `fogon-prueba` si cambia algo visible.
-- **Documenta en el mismo commit:** el `README.md` de la app (versiones y estado), su `ARQUITECTURA.md` si cambió cómo funciona, y `docs/` si cambió algo común.
+- **Documenta en el mismo commit:** el `README.md` de la app (versiones y estado), su `ARQUITECTURA.md` si cambió cómo funciona, su `GUIA.md` si cambió cómo se hace algo, y `docs/` si cambió algo común. Cada app nueva trae su `ARQUITECTURA.md` y su `GUIA.md`.
 - **Publicar (GitHub, F-Droid, releases) solo con el visto bueno de Angel.**
 
 ## Comandos

@@ -2,7 +2,11 @@
 
 Este documento es para cualquiera que quiera leer, arreglar o continuar el código: una persona que sabe programar, una que está aprendiendo o una IA. Explica lo que comparten **todas** las apps. Lo propio de cada una está en `apps/<app>/ARQUITECTURA.md`.
 
-> **Regla:** cada app nueva trae su `ARQUITECTURA.md` con las mismas secciones que el de El Forzudo (ver al final, "Plantilla"). Si cambias cómo funciona algo, actualizas ese archivo en el mismo commit.
+> **Regla:** cada app trae dos archivos propios:
+> - `ARQUITECTURA.md`: cómo está hecha por dentro, con las mismas secciones que el de El Forzudo (ver al final, "Plantilla").
+> - `GUIA.md`: cómo cambiar cosas y sacar versiones nuevas, a partir de [`apps/forzudo/GUIA.md`](../apps/forzudo/GUIA.md).
+>
+> Si cambias cómo funciona algo o cómo se hace, actualizas esos archivos en el mismo commit.
 
 ## En una frase
 

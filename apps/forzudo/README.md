@@ -4,7 +4,9 @@
 
 Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. La app y su personaje se llaman igual: **El Forzudo**. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
 
-Cómo está hecha por dentro: [`ARQUITECTURA.md`](ARQUITECTURA.md).
+- Cómo está hecha por dentro: [`ARQUITECTURA.md`](ARQUITECTURA.md).
+- Cómo cambiar cosas y sacar versiones nuevas: [`GUIA.md`](GUIA.md).
+- Descargar: [GitHub Releases](https://github.com/fogonapps/fogon/releases) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones). F-Droid, más adelante.
 
 ## Qué hace
 
@@ -15,7 +17,7 @@ Cómo está hecha por dentro: [`ARQUITECTURA.md`](ARQUITECTURA.md).
   - récords marcados con la chispa;
   - aviso cuando llevas 3 sesiones sin progresar, con alternativas.
 - **6 programas listos** (de 3 a 6 días) y **editor de rutinas** (series, repeticiones, descanso, orden, cambiar o quitar ejercicios).
-- **65 ejercicios** con fotos de inicio y final, técnica y enlace a videos.
+- **65 ejercicios** con técnica y enlace a videos; 57 con lámina de inicio y final.
 - **Rangos de fuerza** de Hierro a Diamante, por ejercicio, por músculo y general, con mapa del cuerpo. La tabla es propia, calibrada con OpenPowerlifting (ver [`ESTANDARES.md`](ESTANDARES.md)). También las series por músculo en la semana.
 - **Constancia:**
   - racha de semanas;
