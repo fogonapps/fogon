@@ -61,6 +61,8 @@ Los colores de cada grupo muscular, las fuentes de los dibujos y cómo se genera
 
 ## Colores (tintas riso)
 
+Son las tintas de los personajes, el logotipo y los dibujos, y de ellas salen las luces de cada app. Las versiones "para texto" sirven sobre papel (láminas, tarjetas de papel).
+
 | Tinta | Para formas | Para texto sobre papel (≥ 4,5:1) |
 |-------|-------------|----------------------------------|
 | Tinta (negro) | `#141210` | `#141210` (15,2:1) |
@@ -75,28 +77,54 @@ Los colores de cada grupo muscular, las fuentes de los dibujos y cómo se genera
 
 Sobre papel, **ninguna tinta pura llega a 4,5:1** para texto pequeño. Por eso cada tinta tiene su versión "para texto". Sobre fondo de tinta (modo oscuro), el amarillo, el rosa, el verde y el naranja sí sirven como texto, porque pasan de 6:1.
 
-## Tipografía
+## Estilo de noche: la interfaz de las apps
 
-| Uso | Fuente | Notas |
-|-----|--------|-------|
-| Logo, títulos de pantalla, nombres de personajes | **Bagel Fat One** | Con borde de tinta solo en títulos grandes |
-| Números grandes (kg, pesos, rachas, calorías) y carteles | **Anton** | En mayúsculas; aquí la app "grita" |
-| Texto para leer, botones, listas | **Letra del sistema** | Limpia, sin efectos |
+Desde el 21-10-2026 todas las apps usan el **estilo de noche** (decidido por Angel a partir de referencias de apps con luces difuminadas, vidrio y píldoras). Lo riso no desaparece: sigue en los personajes, el logotipo, la chispa, las láminas y el grano. Lo que cambia es la interfaz.
 
-Las dos fuentes van incluidas en `identidad/fuentes/` con licencia OFL, así las apps no las descargan de internet.
+Diseños de referencia: el lienzo https://claude.ai/artifact/9ed1LykdvoFCgPFyWf6dBx, página "De noche" (El Ahorrador y El Forzudo). El estilo anterior, riso sobre papel, quedó en su página "Riso de día".
 
-## Reglas para la interfaz de cada app
+### Paleta de cada app
 
-1. **Fondo de papel** `#EFE7DA` en modo claro y **fondo de tinta** `#141210` en modo oscuro. Nunca blanco puro ni negro puro.
-2. **La tinta de la app es el acento:** botones principales, gráficas, la pestaña activa. La segunda tinta es la sombra.
-3. **Sombra riso en vez de sombras difusas:** los botones y tarjetas destacadas llevan una sombra dura en la segunda tinta, corrida unos 4 px, sin desenfoque (`box-shadow: 4px 4px 0 <segunda tinta>`).
-4. **El personaje aparece** en la pantalla de arranque, en las pantallas vacías ("todavía no hay nada aquí"), en los logros y en "Acerca de".
-5. **La chispa marca los logros**: récords, rachas, metas cumplidas.
-6. **Títulos en Bagel Fat One y cifras en Anton.** El resto, en la letra del sistema.
-7. **Grano de papel** opcional en fondos grandes. Debe ser sutil y nunca va detrás de texto pequeño.
-8. **Pantalla "Acerca de" igual en todas:** el logotipo, el personaje, "Hecha en el Fogón · Sin anuncios · Sin rastreo · Código abierto", el enlace al código y los créditos.
-9. **Ícono en Android:** el personaje a dos tintas sobre una ficha de papel. Android exige fondo en los íconos. Para el ícono temático se usa la versión de una tinta.
-10. **Accesibilidad:** el texto siempre con contraste de 4,5:1 o más (ver la tabla de colores), botones de al menos 44 px, y nunca un color como única señal.
+**Cada app tiene su propia paleta; la tipografía es la misma en todas.** Cada paleta tiene un fondo casi negro con un matiz propio, dos luces y un acento.
+
+| App | Luz principal (`segunda`) | Segunda luz (`luz2`) | Acento (`tinta`) | Fondo | En el código |
+|-----|---------------------------|----------------------|------------------|-------|--------------|
+| El Forzudo | Violeta `#7B4DFF` | Azul `#2D5BFF` | Lima `#C8F560` | `#0C0A12` | `Paleta.Forzudo` |
+| El Ahorrador | Verde `#1FB45A` | Amarillo `#FFC93C` | Amarillo `#FFC93C` | `#0D0C0A` | `Paleta.Ahorrador` |
+| La Corredora (hábitos) | Naranja `#FF7A1A` | Rosa `#FF4FA3` | Naranja `#FF7A1A` | `#120B08` | por crear |
+| El Monje (sueño) | Azul `#2D5BFF` | Cian `#00A0E9` | Cian claro `#7FD8FF` | `#070A14` | por crear |
+| Alimentación (personaje pendiente) | Rosa `#FF4FA3` | Rojo `#E5332A` | Rosa claro `#FF8FC4` | `#120A0E` | provisional |
+| Fogón / La Minga | Rojo `#E5332A` | Amarillo `#FFC93C` | Coral `#FF5A4F` | `#120A08` | por crear |
+
+Dos apps no comparten acento. El texto sobre el acento va siempre en el fondo oscuro de la app (`sobreTinta`); sobre el fondo, el acento sirve también como color de texto (`textoEnTinta`), porque todos pasan de 6:1.
+
+### Tipografía (igual en todas las apps)
+
+| Uso | Fuente | Ejemplos |
+|-----|--------|----------|
+| Títulos de pantalla, nombres de tarjetas (rutina, cuenta, meta), botones grandes | **Bagel Fat One** | "Rangos", "Torso A", "Guardar gasto" |
+| Números grandes y encabezados de sección, en mayúsculas | **Anton** | "$ 842.300", "84 kg", "MIS RUTINAS" |
+| Todo lo demás | **Roboto** (la letra del sistema) | fechas, explicaciones, listas |
+
+Las dos primeras van incluidas en `identidad/fuentes/` (licencia OFL), así las apps no las descargan de internet.
+
+### Reglas de la interfaz
+
+1. **Fondo:** el negro de la app (nunca negro puro), con sus dos luces difuminadas, la principal arriba a la izquierda y la segunda a la derecha, más abajo. Encima, un grano muy sutil: el guiño riso. En código: `Modifier.fondoFogon(f)`.
+2. **Texto blanco**; el secundario, blanco al 68 %; las líneas, blanco al 16 %.
+3. **Tarjetas de vidrio:** blanco al 8 % con borde de 1 dp en blanco al 16 % y esquinas grandes (22 a 28 dp, `FormaRiso`). **Una tarjeta destacada por pantalla** (la racha, el disponible para gastar) va con degradado de las dos luces y brillo.
+4. **Botones en píldora** (`FormaPildora`):
+   - el principal, en el acento con texto oscuro y su brillo (`BotonRiso`);
+   - el secundario, de vidrio con contorno blanco al 35 % (`BotonSecundario`);
+   - las acciones rápidas, en círculos blancos con el ícono oscuro.
+5. **Brillo en vez de sombra dura:** una luz suave del color, alrededor de la forma (`Modifier.brillo`). La sombra corrida riso queda para los dibujos.
+6. **Navegación:** la pestaña activa va en una píldora del acento, con el ícono oscuro.
+7. **Lo riso va sobre papel:** las láminas y cualquier dibujo riso van sobre una tarjeta de papel `#EFE7DA`. Ese contraste entre el papel y la noche es parte del estilo.
+8. **El personaje aparece** en el arranque, en las pantallas vacías, en los logros y en "Acerca de", con un brillo de su luz. **La chispa** marca los logros: récords, rachas y metas cumplidas.
+9. **"Acerca de" igual en todas:** el logotipo, el personaje, "Hecha en el Fogón · Sin anuncios · Sin rastreo · Código abierto", el enlace al código y los créditos.
+10. **Ícono en Android:** el personaje a dos tintas sobre una ficha de papel. Android exige fondo en los íconos. Para el ícono temático se usa la versión de una tinta.
+11. **Accesibilidad:** texto con contraste de 4,5:1 o más (blanco y acentos sobre el fondo, fondo oscuro sobre el acento), botones de 48 dp o más, y nunca un color como única señal.
+12. **Siempre de noche:** las apps no cambian con el modo claro del teléfono (`FogonTema` usa oscuro por defecto). Las barras del sistema van con íconos claros.
 
 ## Voz
 
@@ -113,4 +141,4 @@ Las dos fuentes van incluidas en `identidad/fuentes/` con licencia OFL, así las
 
 - **Cada app lleva el nombre de su personaje** (decidido el 18-10-2026): El Forzudo (gimnasio), El Ahorrador (gastos), La Corredora (hábitos), El Monje (sueño). En tiendas y README: **"El Forzudo · Fogón"**.
 - Nunca el nombre de otra marca ni "alternativa a…" en el nombre o en el ícono.
-- **Identificador de paquete:** `io.github.fogonapps.<app>`, basado en la organización de GitHub `fogonapps`. Ese nombre está libre a 11 de octubre de 2026, pero todavía no se ha creado. Una vez publicada una app, su identificador no se puede cambiar.
+- **Identificador de paquete:** `io.github.fogonapps.<app>`, basado en la organización de GitHub `fogonapps`. La organización existe desde el 21-10-2026 (github.com/fogonapps). Una vez publicada una app, su identificador no se puede cambiar.

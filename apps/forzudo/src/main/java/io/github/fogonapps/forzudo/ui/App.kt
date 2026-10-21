@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo.ui
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -52,8 +53,8 @@ import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.forzudo.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
-import io.github.fogonapps.identidad.granoPapel
-import io.github.fogonapps.identidad.sombraRiso
+import io.github.fogonapps.identidad.fondoFogon
+import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.Pantalla
 import io.github.fogonapps.forzudo.Pestana
@@ -89,7 +90,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
     }
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
-        Box(Modifier.fillMaxSize().background(f.fondo).granoPapel(f.oscuro)) {
+        Box(Modifier.fillMaxSize().fondoFogon(f)) {
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
@@ -135,7 +136,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 
             // Pantallas encima de las pestañas
             pila.lastOrNull()?.let { p ->
-                Box(Modifier.fillMaxSize().background(f.fondo).granoPapel(f.oscuro).safeDrawingPadding().imePadding()) {
+                Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
                             is Pantalla.Vivo -> Vivo(vm, estado)
@@ -181,12 +182,12 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 private fun AvisoTinta(mensaje: String) {
     val record = mensaje.startsWith(io.github.fogonapps.forzudo.MARCA_RECORD)
     Row(
-        Modifier.fillMaxWidth().padding(12.dp).sombraRiso(FogonTema.actual.paleta.segunda)
-            .clip(io.github.fogonapps.identidad.FormaRiso).background(io.github.fogonapps.identidad.Tintas.Tinta).padding(16.dp),
+        Modifier.fillMaxWidth().padding(12.dp).brillo(FogonTema.actual.paleta.segunda.copy(alpha = 0.7f), io.github.fogonapps.identidad.FormaPildora)
+            .clip(io.github.fogonapps.identidad.FormaPildora).background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (record) io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
-        Text(mensaje.removePrefix(io.github.fogonapps.forzudo.MARCA_RECORD), color = io.github.fogonapps.identidad.Tintas.Papel, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
+        Text(mensaje.removePrefix(io.github.fogonapps.forzudo.MARCA_RECORD), color = io.github.fogonapps.identidad.Tintas.Tinta, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
     }
 }
 

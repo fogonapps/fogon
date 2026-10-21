@@ -143,7 +143,7 @@ Se cambian en `herramientas/estandares.py` y se regeneran con el comando de la s
 
 | Qué | Dónde |
 |-----|-------|
-| Colores de la app (azul y rosa de El Forzudo) | `core/identidad/.../Tintas.kt`, `Paleta.Forzudo`. Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
+| Colores de la app (luces violeta y azul, acento lima) | `core/identidad/.../Tintas.kt`, `Paleta.Forzudo`. Cada app tiene su paleta; todas comparten letras y reglas (`docs/IDENTIDAD.md` → Estilo de noche). Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
 | Colores de cada músculo en las láminas | `herramientas/laminas/laminas.py` (`MUSCULOS`, `ZONAS`) y su `README.md`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`; el fondo es el color `papel` de `res/values/colores.xml`. |
 | Muñequitos del tutorial y de la barra | `src/main/res/drawable-nodpi/munieco_*.webp`. Los originales están en `identidad/`. |

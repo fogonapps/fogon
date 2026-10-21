@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -40,7 +41,8 @@ class MainActivity : ComponentActivity() {
         val arranque = installSplashScreen()
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
-        enableEdgeToEdge()
+        // El estilo es de noche: barras del sistema siempre con íconos claros.
+        enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         setContent {
             FogonTema(Paleta.Forzudo) {
                 val pila by vm.pila.collectAsStateWithLifecycle()

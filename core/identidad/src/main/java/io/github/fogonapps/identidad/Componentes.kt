@@ -1,5 +1,9 @@
 package io.github.fogonapps.identidad
 
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.background
 import androidx.compose.ui.res.stringResource
 import android.graphics.RuntimeShader
 import android.os.Build
@@ -29,8 +33,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -38,14 +40,37 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-val FormaRiso = RoundedCornerShape(14.dp)
+/** Tarjetas: esquinas grandes y suaves. */
+val FormaRiso = RoundedCornerShape(22.dp)
 
-/** Sombra riso: una copia sólida de la forma, corrida y sin desenfoque. */
-fun Modifier.sombraRiso(color: Color, forma: Shape = FormaRiso, desplazamiento: Dp = 4.dp): Modifier =
-    drawBehind {
-        val d = desplazamiento.toPx()
-        translate(d, d) { drawOutline(forma.createOutline(size, layoutDirection, this), color) }
-    }
+/** Botones: píldora. */
+val FormaPildora = RoundedCornerShape(50)
+
+/**
+ * Brillo de color alrededor de una forma, como una luz que se escapa por los bordes.
+ * Reemplaza a la sombra riso del estilo de día. En Android 8 sale como sombra gris.
+ */
+fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.dp): Modifier =
+    shadow(intensidad, forma, clip = false, ambientColor = color, spotColor = color)
+
+/**
+ * Las luces difuminadas del fondo, con los colores de la app: una grande arriba a la izquierda
+ * ([Paleta.segunda]) y otra a la derecha, más abajo ([Paleta.luz2]).
+ */
+fun Modifier.luces(p: Paleta): Modifier = drawBehind {
+    val w = size.width; val h = size.height
+    drawRect(Brush.radialGradient(
+        listOf(p.segunda.copy(alpha = 0.55f), p.segunda.copy(alpha = 0.18f), Color.Transparent),
+        center = Offset(w * 0.05f, h * 0.06f), radius = w * 1.05f,
+    ))
+    drawRect(Brush.radialGradient(
+        listOf(p.luz2.copy(alpha = 0.32f), Color.Transparent),
+        center = Offset(w * 1.0f, h * 0.58f), radius = w * 0.8f,
+    ))
+}
+
+/** El fondo de cada pantalla: el negro de la app, sus luces y un grano muy sutil (el guiño riso). */
+fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).luces(f.paleta).granoPapel(f.oscuro, 0.035f)
 
 private const val GRANO_AGSL = """
 uniform float intensidad;
@@ -75,7 +100,7 @@ fun Modifier.granoPapel(oscuro: Boolean, intensidad: Float = 0.07f): Modifier =
         }
     }
 
-/** Botón principal: tinta de la app con sombra riso en la segunda tinta. */
+/** Botón principal: píldora del acento de la app, con su brillo. */
 @Composable
 fun BotonRiso(
     texto: String,
@@ -87,16 +112,16 @@ fun BotonRiso(
     Button(
         onClick = onClick,
         enabled = habilitado,
-        shape = FormaRiso,
+        shape = FormaPildora,
         colors = ButtonDefaults.buttonColors(containerColor = p.tinta, contentColor = p.sobreTinta),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
         modifier = modifier
-            .heightIn(min = 48.dp)
-            .then(if (habilitado) Modifier.sombraRiso(p.segunda) else Modifier),
+            .heightIn(min = 50.dp)
+            .then(if (habilitado) Modifier.brillo(p.tinta.copy(alpha = 0.6f), FormaPildora, 14.dp) else Modifier),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
-/** Botón secundario: contorno de tinta, sin sombra. */
+/** Botón secundario: píldora de vidrio con contorno claro. */
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -110,11 +135,11 @@ fun BotonSecundario(
     OutlinedButton(
         onClick = onClick,
         enabled = habilitado,
-        shape = FormaRiso,
-        border = BorderStroke(2.dp, color),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
-        modifier = modifier.heightIn(min = 48.dp),
+        shape = FormaPildora,
+        border = BorderStroke(1.5.dp, if (peligro) color else f.texto.copy(alpha = 0.35f)),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = f.superficie, contentColor = color),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        modifier = modifier.heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 

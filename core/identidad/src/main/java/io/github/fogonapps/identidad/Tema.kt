@@ -1,6 +1,5 @@
 package io.github.fogonapps.identidad
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,18 +40,22 @@ object FogonTema {
         @Composable @ReadOnlyComposable get() = LocalFogon.current
 }
 
+/**
+ * El tema de las apps de Fogón. El estilo es de noche (docs/IDENTIDAD.md → Estilo de noche), así que
+ * por defecto siempre es oscuro; el modo claro queda para pantallas de papel o una versión de día.
+ */
 @Composable
 fun FogonTema(
     paleta: Paleta,
-    oscuro: Boolean = isSystemInDarkTheme(),
+    oscuro: Boolean = true,
     contenido: @Composable () -> Unit,
 ) {
     val f = if (oscuro) {
         Fogon(
             paleta = paleta, oscuro = true,
-            fondo = Tintas.Tinta, superficie = Tintas.TintaSuave,
-            texto = Tintas.Papel, textoSuave = Tintas.GrisClaro,
-            linea = Tintas.TintaHonda, acentoTexto = paleta.textoEnTinta,
+            fondo = paleta.fondo, superficie = Color.White.copy(alpha = 0.08f),
+            texto = Color.White, textoSuave = Color.White.copy(alpha = 0.68f),
+            linea = Color.White.copy(alpha = 0.16f), acentoTexto = paleta.textoEnTinta,
         )
     } else {
         Fogon(
@@ -68,8 +72,11 @@ fun FogonTema(
             background = f.fondo, onBackground = f.texto,
             surface = f.fondo, onSurface = f.texto,
             surfaceVariant = f.superficie, onSurfaceVariant = f.textoSuave,
-            surfaceContainer = f.superficie, surfaceContainerHigh = Tintas.TintaHonda,
-            outline = f.textoSuave, outlineVariant = f.linea,
+            // Diálogos y menús: opacos, el vidrio se vería mal sobre otra pantalla.
+            surfaceContainer = lerp(paleta.fondo, Color.White, 0.08f),
+            surfaceContainerHigh = lerp(paleta.fondo, Color.White, 0.11f),
+            surfaceContainerHighest = lerp(paleta.fondo, Color.White, 0.14f),
+            outline = Color.White.copy(alpha = 0.32f), outlineVariant = f.linea,
             error = Color(0xFFFF8A80), onError = Tintas.Tinta,
         )
     } else {

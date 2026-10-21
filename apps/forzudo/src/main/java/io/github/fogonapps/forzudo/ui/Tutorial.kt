@@ -42,7 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.FogonTema
-import io.github.fogonapps.identidad.granoPapel
+import io.github.fogonapps.identidad.fondoFogon
 import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.R
 import kotlinx.coroutines.launch
@@ -68,7 +68,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
         if (nombre.isNotBlank() && nombre.trim() != nombreActual) vm.ponerNombre(nombre)
         vm.terminarTutorial()
     }
-    Box(Modifier.fillMaxSize().background(f.fondo).granoPapel(f.oscuro).safeDrawingPadding()) {
+    Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding()) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(terminar) { Text(stringResource(R.string.saltar), fontWeight = FontWeight.Bold, color = f.acentoTexto) }

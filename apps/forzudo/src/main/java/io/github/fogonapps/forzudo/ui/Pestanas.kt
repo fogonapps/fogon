@@ -62,7 +62,8 @@ import io.github.fogonapps.identidad.Chispa
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.R as RId
-import io.github.fogonapps.identidad.sombraRiso
+import io.github.fogonapps.identidad.brillo
+import androidx.compose.ui.graphics.Brush
 import io.github.fogonapps.forzudo.EstadoSync
 import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.Pantalla
@@ -100,7 +101,8 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     Column {
         // Racha
         Row(
-            Modifier.fillMaxWidth().padding(16.dp).sombraRiso(f.paleta.segunda, RoundedCornerShape(16.dp)).clip(RoundedCornerShape(16.dp)).background(f.superficie).padding(16.dp),
+            Modifier.fillMaxWidth().padding(16.dp).brillo(f.paleta.segunda, RoundedCornerShape(28.dp), 24.dp).clip(RoundedCornerShape(28.dp))
+                .background(Brush.linearGradient(listOf(f.paleta.segunda, f.paleta.luz2.copy(alpha = 0.85f)))).padding(18.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box {
@@ -196,8 +198,8 @@ private fun TarjetaEntreno(vm: GymViewModel, s: Sesion, dias: List<io.github.fog
     val f = FogonTema.actual
     val L = vm.L
     val v = L.volumen(s.entries); val n = L.series(s.entries)
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).sombraRiso(f.paleta.segunda.copy(alpha = 0.35f), desplazamiento = 3.dp)
-        .clip(RoundedCornerShape(14.dp)).background(f.superficie).padding(16.dp),
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        .clip(RoundedCornerShape(24.dp)).background(f.superficie).border(1.dp, f.linea, RoundedCornerShape(24.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(L.tituloRutina(s, dias), style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f))
