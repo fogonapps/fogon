@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Solo para la sincronización opcional con el Gist de la persona. Sin ella, la app no usa internet. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Aviso de "descanso terminado". -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Para que el aviso llegue a tiempo; si se niega, se usa una alarma aproximada. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".ForzudoApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/reglas_respaldo"
+        android:fullBackupContent="@xml/respaldo_antiguo"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Tema.Forzudo"
+        android:localeConfig="@xml/locales_config"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Tema.Forzudo.Arranque"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".AvisoDescanso" android:exported="false" />
+    </application>
+
+</manifest>

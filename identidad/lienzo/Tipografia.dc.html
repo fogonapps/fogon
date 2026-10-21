@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tipografía y color de Fogón</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&amp;family=Anton&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1200px; height: 700px; position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #EFE7DA; color: #141210; font-family: system-ui, sans-serif">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs><filter id="tinta" x="-10%" y="-20%" width="120%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="5"></feTurbulence><feDisplacementMap in="SourceGraphic" scale="7"></feDisplacementMap><feGaussianBlur stdDeviation="1.2"></feGaussianBlur><feComponentTransfer><feFuncA type="linear" slope="14" intercept="-6"></feFuncA></feComponentTransfer></filter><filter id="mancha" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="11"></feTurbulence><feDisplacementMap in="SourceGraphic" scale="18"></feDisplacementMap><feGaussianBlur stdDeviation="2"></feGaussianBlur><feComponentTransfer><feFuncA type="linear" slope="10" intercept="-4"></feFuncA></feComponentTransfer></filter><filter id="grano"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix></filter></defs></svg>
+  <div style="padding: 56px 48px 56px 64px; display: flex; flex-direction: column; gap: 34px; border-right: 2px solid #141210">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #E5332A">LOGO Y TÍTULOS · BAGEL FAT ONE</div>
+      <div style="font-family: 'Bagel Fat One', sans-serif; font-size: 76px; line-height: 1; filter: url(#tinta)">hecho en casa</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #E5332A">CARTELES Y GRITOS · ANTON</div>
+      <div style="font-family: 'Anton', sans-serif; font-size: 72px; line-height: 0.95; text-transform: uppercase; filter: url(#tinta)">Gratis de verdad</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #E5332A">TEXTO DENTRO DE LAS APPS · LETRA DEL SISTEMA</div>
+      <p style="margin: 0; font-size: 18px; line-height: 1.5; max-width: 460px">Para leer, la letra normal del teléfono, limpia y sin efectos. El ruido va solo en el logo, los títulos y los afiches.</p>
+    </div>
+    <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6B5F55">Bagel Fat One y Anton tienen licencia libre (OFL). El borde de tinta corrida se hace con un filtro, no viene en la fuente.</p>
+  </div>
+  <div style="padding: 56px 64px 56px 48px; display: flex; flex-direction: column; gap: 28px">
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #E5332A">TINTAS RISO</div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 18px">
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#141210"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Tinta</div><div style="font-size: 13px; color: #4A4039">#141210</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#E5332A"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Rojo chispa</div><div style="font-size: 13px; color: #4A4039">#E5332A</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#FFC93C"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Amarillo</div><div style="font-size: 13px; color: #4A4039">#FFC93C</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#FF4FA3"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Rosa chicle</div><div style="font-size: 13px; color: #4A4039">#FF4FA3</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#2D5BFF"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Azul riso</div><div style="font-size: 13px; color: #4A4039">#2D5BFF</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#1FB45A"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Verde</div><div style="font-size: 13px; color: #4A4039">#1FB45A</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#7B4DFF"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Violeta</div><div style="font-size: 13px; color: #4A4039">#7B4DFF</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#FF7A1A"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Naranja</div><div style="font-size: 13px; color: #4A4039">#FF7A1A</div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><svg viewBox="0 0 100 70" width="140" height="98" aria-hidden="true"><g filter="url(#mancha)"><rect x="6" y="6" width="88" height="58" rx="26" fill="#EFE7DA" stroke="#141210" stroke-width="2"></rect></g></svg><div style="font-size: 15px; font-weight: 700">Papel</div><div style="font-size: 13px; color: #4A4039">#EFE7DA</div></div>
+    </div>
+  </div>
+  <svg width="1200" height="700" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: 0.2"><rect width="1200" height="700" filter="url(#grano)"></rect></svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

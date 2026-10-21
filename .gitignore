@@ -1,0 +1,19 @@
+.gradle/
+.kotlin/
+build/
+local.properties
+*.iml
+.idea/
+/captures
+*.jks
+*.keystore
+
+# Llaves y secretos: nunca al repo (la de firma vive en ~/.fogon/firma)
+*.p12
+*.pem
+*.key
+.env
+clave.txt
+
+# Python
+__pycache__/

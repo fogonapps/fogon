@@ -1,0 +1,16 @@
+const fs=require('fs'), vm=require('vm');
+const html=fs.readFileSync(process.argv[2],'utf8'); const out=process.argv[3];
+const body=html.match(/<script id="body-model"[^>]*>([\s\S]*?)<\/script>/)[1];
+const photo=html.match(/<script id="photo-map"[^>]*>([\s\S]*?)<\/script>/)[1];
+const main=html.match(/<script>\s*\/\* ===== Rutina[\s\S]*?<\/script>/)[0].replace(/^<script>/,'').replace(/<\/script>$/,'');
+const grab=(name)=>{ const m=main.match(new RegExp('(?:const|let) '+name+'\\s*=([\\s\\S]*?);\\n')); return m[1]; };
+const ctx={}; vm.createContext(ctx);
+const get=n=>vm.runInContext('('+grab(n)+')',ctx);
+const LIB=get('LIB_RAW'), PROGRAMS=get('PROGRAMS'), TIERS=get('TIERS');
+const MUS=vm.runInContext('('+main.match(/const MUSCLES=(\[[\s\S]*?\]);\n/)[1]+')',ctx).map(m=>({id:m.id,n:m.n}));
+const keys=['id','n','g','m','f','eq','lo','hi','rest','cue','kind','std'];
+const ejercicios=LIB.map(a=>Object.fromEntries(keys.map((k,i)=>[k,a[i]])));
+const w=(f,o)=>fs.writeFileSync(out+'/'+f,JSON.stringify(o,null,1)+'\n');
+w('ejercicios.json',ejercicios); w('programas.json',PROGRAMS); w('rangos.json',TIERS); w('musculos.json',MUS);
+w('modelo-cuerpo.json',JSON.parse(body));
+console.log('ejercicios',ejercicios.length,'programas',PROGRAMS.length,'musculos',MUS.length,'fotos',Object.keys(JSON.parse(photo)).length);

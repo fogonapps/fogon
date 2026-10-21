@@ -1,0 +1,38 @@
+[
+ {
+  "id": "pecho",
+  "n": "Pecho"
+ },
+ {
+  "id": "espalda",
+  "n": "Espalda"
+ },
+ {
+  "id": "hombros",
+  "n": "Hombros"
+ },
+ {
+  "id": "biceps",
+  "n": "Bíceps"
+ },
+ {
+  "id": "triceps",
+  "n": "Tríceps"
+ },
+ {
+  "id": "cuads",
+  "n": "Cuádriceps"
+ },
+ {
+  "id": "femorales",
+  "n": "Femorales y glúteos"
+ },
+ {
+  "id": "pantorrillas",
+  "n": "Pantorrillas"
+ },
+ {
+  "id": "abdomen",
+  "n": "Abdomen"
+ }
+]

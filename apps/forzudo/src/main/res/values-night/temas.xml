@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Tema.Forzudo" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/tinta</item>
+    </style>
+    <style name="Tema.Forzudo.Arranque" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/tinta</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Tema.Forzudo</item>
+    </style>
+</resources>
