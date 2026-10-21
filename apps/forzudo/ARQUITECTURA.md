@@ -16,11 +16,13 @@ Código en `src/main/java/io/github/fogonapps/forzudo/`:
 |---------|----------|
 | `ForzudoApp.kt` | Arranca una sola vez por proceso: crea el almacén (DataStore), la caja fuerte del token, la biblioteca de datos fijos y el canal de notificaciones. |
 | `MainActivity.kt` | La única pantalla de Android. Monta el tema, conecta exportar/importar con el selector de archivos, pide el permiso de notificaciones al empezar el primer entreno, guarda al salir y sincroniza al volver. |
+| `Textos.kt` | Pasa los textos de `strings.xml` que usa la lógica al `Vocabulario`. |
 | `GymViewModel.kt` | El cerebro. Tiene el estado, la navegación (pestaña + pila de pantallas), el entreno en vivo, el descanso y la sincronización. Todo cambio pasa por `cambiar { }`. |
 | `Avisos.kt` | La notificación de "descanso terminado": alarma del sistema (`AlarmManager`) y un `BroadcastReceiver` que la muestra aunque la app esté cerrada. |
 | `datos/Modelo.kt` | Las clases de datos (`Estado`, `Sesion`, `Serie`, `Rutina`, …) y la configuración del JSON (`JsonGym`). |
 | `datos/Almacen.kt` | Guardar el estado en disco (`SerializadorEstado`, `crearAlmacen`) y la `CajaFuerte` del token cifrado. |
 | `datos/Biblioteca.kt` | Carga los datos fijos de `assets/datos/` y los tiene a mano (ejercicios por id, programas, músculos y qué ejercicios tienen lámina). |
+| `datos/Vocabulario.kt` | Las palabras de la lógica (meses, unidades, consejos). Por defecto en español, como la web; la app lo llena con el idioma en uso. |
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Clase `Logica(biblioteca)`, sin Android: se prueba en la JVM. |
 | `datos/Gist.kt` | `ClienteGist`: habla con la API de GitHub para buscar, crear, leer y escribir el Gist. |
 | `ui/App.kt` | El armazón: barra de pestañas, la pantalla de arriba de la pila, la barra del entreno en curso y la del descanso, avisos y tutorial. |
@@ -128,6 +130,8 @@ Los errores se muestran en palabras simples: token vencido, sin permiso o sin co
 - **`extraer.js` ya no escribe `estandares.json`.** La tabla sale solo de `estandares.py`.
 - **En mancuernas se anota el peso de una.** Los umbrales con `db: 1` están pensados así. Las máquinas (`m: 1`) son aproximadas.
 - **El APK tiene que salir idéntico** al compilarlo en otra máquina (F-Droid lo comprueba). No hay que meter en la compilación nada que cambie entre máquinas o entre repos: fechas, rutas, el commit (`vcsInfo.include = false`). Para comprobarlo, ver `docs/PUBLICAR.md` → F-Droid.
+- **La lógica no lee `strings.xml`:** usa `Vocabulario.actual`. Si agregas una palabra a la lógica, va en el `Vocabulario`, en `Textos.kt` y en los dos `strings.xml`. Así `EquivalenciaWebTest` sigue comparando en español contra la web.
+- **Al cambiar de idioma** se vuelven a armar la biblioteca y la lógica (`ForzudoApp.aplicarIdioma`) y se recrea la Activity. Las rutinas que la persona ya tiene guardadas conservan su nombre: son sus datos.
 - **`proguard-rules.pro`** protege las clases `@Serializable`. Si se mueve el paquete, hay que actualizarlo; si no, la versión firmada no lee los datos (la de prueba sí, y el error no se nota hasta publicar).
 - **Las fotos viejas (hasta la 1.3) no son libres y siguen en el historial de git.** El repo público se sube con un historial nuevo, sin ellas (ver `docs/PUBLICAR.md`).
 - **Una lámina nueva** se agrega en `herramientas/laminas/ejercicios.py` y se regenera con `laminas.py` sin lista de ids, para que también se actualice `laminas.json`. Si falta en `laminas.json`, la app no la muestra.

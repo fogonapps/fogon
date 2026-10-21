@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="fogon_lic_app">Esta app</string>
+  <string name="fogon_lic_app_texto">Código de Fogón, GPL-3.0 o posterior. Sin ninguna garantía (secciones 15 y 16).</string>
+  <string name="fogon_lic_anton">Letra. © 2020 The Anton Project Authors. SIL Open Font License 1.1.</string>
+  <string name="fogon_lic_bagel">Letra. © 2022 The Bagel Fat Project Authors. SIL Open Font License 1.1.</string>
+  <string name="fogon_lic_bibliotecas">Bibliotecas de Android, Kotlin, OkHttp y Okio</string>
+  <string name="fogon_lic_bibliotecas_texto">AndroidX y Jetpack Compose (Google), Kotlin y kotlinx (JetBrains), OkHttp y Okio (Square), Guava ListenableFuture y JSpecify. Apache License 2.0.</string>
+  <string name="fogon_lic_psl">Lista de dominios de Mozilla que trae OkHttp, sin cambios. Mozilla Public License 2.0. Código fuente: https://publicsuffix.org/list/</string>
+  <string name="fogon_lic_titulo">Mi código y el de otros</string>
+  <string name="fogon_lic_pista">Esta app está hecha con piezas libres de otras personas. Estas son sus licencias; toca una para leer el texto completo.</string>
+  <string name="fogon_ocultar_texto">Ocultar texto</string>
+  <string name="fogon_ver_texto">Ver texto completo</string>
+  <string name="fogon_lema">Tu atención vale más que un anuncio.</string>
+  <string name="fogon_man_pregunta">Si las herramientas de hoy nos permiten hacer nuestras propias apps, ¿por qué seguir regalando nuestra información y nuestra atención a apps llenas de anuncios y micropagos?</string>
+  <string name="fogon_man_p1">Durante años, tener una app en el teléfono significó aceptar un trato que nadie firmó de verdad: la app es \"gratis\", pero la pagamos con nuestros datos, nuestro tiempo y nuestra paciencia.</string>
+  <string name="fogon_man_p2">En el fogón de la casa nunca se cocinó para vender. Se cocinaba para los de la casa, con lo que había, y siempre alcanzaba para uno más. Fogón hace lo mismo con el software: apps cocinadas en casa, con ayuda de la inteligencia artificial, para resolver necesidades reales. No buscan ganar dinero, y se comparten con quien llegue.</string>
+  <string name="fogon_man_t1">No es la primera vez</string>
+  <string name="fogon_man_p3">La minga: vecinos que trabajan gratis por algo de todos. La rueca de Gandhi: hilar en casa en vez de comprar. Los pioneros de Rochdale: 28 trabajadores que abrieron su propia tienda. Linux: \"solo un pasatiempo\" que hoy mueve internet. Wikipedia: la enciclopedia más grande, sin un solo anuncio.</string>
+  <string name="fogon_man_p4">Gente común, herramientas sencillas, trabajo compartido y nadie contra nadie. Hoy, la herramienta sencilla es la inteligencia artificial.</string>
+  <string name="fogon_man_t2">Sin enemigos</string>
+  <string name="fogon_man_p5">Fogón no está contra nadie. No copiamos marcas, no atacamos empresas, no rompemos reglas. Solo encendemos el fogón y mostramos, con hechos, que existe otra manera.</string>
+  <string name="fogon_man_t3">Lo que prometemos</string>
+  <string name="fogon_man_cierre">Siempre alcanza para uno más.</string>
+  <string name="fogon_version">versión %1$s</string>
+  <string name="fogon_hecha">Hecha en el Fogón</string>
+  <string name="fogon_sin_anuncios">Sin anuncios · Sin rastreo · Código abierto</string>
+  <string name="fogon_leer_manifiesto">Leer el manifiesto</string>
+  <string name="fogon_licencias">Licencias</string>
+  <string name="fogon_ver_codigo">Ver el código</string>
+  <string name="fogon_licencia_gpl">Licencia GPL-3.0 o posterior.</string>
+  <string name="fogon_aviso_salud">Aviso de salud</string>
+  <string-array name="fogon_promesas">
+    <item>Nada de anuncios.</item>
+    <item>Nada de micropagos ni suscripciones: la app está completa desde el primer día.</item>
+    <item>Tus datos son tuyos: se guardan en tu teléfono y los puedes exportar cuando quieras.</item>
+    <item>Sin internet, si no hace falta.</item>
+    <item>Solo los permisos indispensables, y explicados.</item>
+    <item>Código abierto (GPL-3.0).</item>
+    <item>Hecha con IA, y lo decimos. Una persona la revisa y responde por ella.</item>
+  </string-array>
+</resources>

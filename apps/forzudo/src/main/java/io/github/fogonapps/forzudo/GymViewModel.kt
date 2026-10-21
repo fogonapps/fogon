@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo
 
+import io.github.fogonapps.identidad.Idioma
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -33,6 +34,9 @@ import java.time.LocalDate
 import kotlin.math.floor
 
 /** Pantallas que se abren encima de las pestañas. */
+/** Va al principio de los avisos de récord, que salen con la chispa (es invisible y no depende del idioma). */
+const val MARCA_RECORD = "\u200B"
+
 sealed interface Pantalla {
     data class Detalle(val id: String) : Pantalla
     data class Musculo(val id: String) : Pantalla
@@ -46,6 +50,7 @@ sealed interface Pantalla {
     data object Manifiesto : Pantalla
     data object Licencias : Pantalla
     data object Preguntas : Pantalla
+    data object Reporte : Pantalla
 }
 
 enum class ModoCambio { EDITAR, AGREGAR, VIVO, VIVO_AGREGAR }
@@ -65,8 +70,8 @@ data class Sync(val estado: EstadoSync, val mensaje: String? = null, val usuario
 
 class GymViewModel(app: Application) : AndroidViewModel(app) {
     private val gymApp = app as ForzudoApp
-    val bib = gymApp.biblioteca
-    val L = Logica(bib)
+    val bib get() = gymApp.biblioteca
+    val L get() = gymApp.logica
     private val caja = gymApp.caja
 
     private val _estado = MutableStateFlow<Estado?>(null)
@@ -88,6 +93,12 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     private val _tutorial = MutableStateFlow(!prefsUi.getBoolean("tutorial_visto", false))
     val tutorial: StateFlow<Boolean> = _tutorial.asStateFlow()
     fun verTutorial() { _tutorial.value = true }
+    /** Fija el idioma ("" = el del teléfono) y vuelve a armar datos y lógica; la Activity se recrea después. */
+    fun cambiarIdioma(codigo: String) {
+        Idioma.elegir(getApplication(), codigo)
+        gymApp.aplicarIdioma()
+    }
+
     fun terminarTutorial() { prefsUi.edit().putBoolean("tutorial_visto", true).apply(); _tutorial.value = false }
 
     private val _mensajes = Channel<String>(Channel.BUFFERED)
@@ -110,6 +121,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun hoy(): LocalDate = LocalDate.now()
     fun dias(): List<Dia> = _estado.value?.let { L.dias(it) } ?: emptyList()
     private fun avisar(m: String) { _mensajes.trySend(m) }
+    /** Un texto de strings.xml en el idioma de la app. */
+    fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
+    fun txPlural(id: Int, n: Int): String = Idioma.envolver(getApplication()).resources.getQuantityString(id, n, n)
 
     /* ----- Guardado ----- */
 
@@ -151,10 +165,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     fun registrarPeso(texto: String): Boolean {
         val v = io.github.fogonapps.forzudo.datos.numero(texto)
-        if (v == null || v < 25 || v > 250) { avisar("Escribe tu peso en kg, por ejemplo 55,5"); return false }
+        if (v == null || v < 25 || v > 250) { avisar(tx(R.string.aviso_peso_invalido)); return false }
         val d = iso(hoy())
         cambiar { e -> e.copy(body = e.body.filter { it.date != d } + PesoCorporal(d, v)) }
-        avisar("Peso guardado")
+        avisar(tx(R.string.aviso_peso_guardado))
         return true
     }
 
@@ -164,20 +178,20 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     fun fechaSesion(id: String, fecha: String) {
         cambiar { e -> e.copy(sessions = e.sessions.map { if (it.id == id) it.copy(date = fecha) else it }) }
-        avisar("Fecha actualizada")
+        avisar(tx(R.string.aviso_fecha))
     }
 
     /* ----- Programas y editor ----- */
 
     fun aplicarPrograma(key: String) {
         val p = bib.programas.firstOrNull { it.key == key } ?: return
-        if (_estado.value?.active != null) { avisar("Termina o descarta el entreno en curso primero"); return }
+        if (_estado.value?.active != null) { avisar(tx(R.string.aviso_termina_entreno)); return }
         cambiar { e ->
             val conTitulos = L.normalizar(e.copy(routines = e.routines))
             conTitulos.copy(routines = p.routines, program = key, progEdited = false)
         }
         _pila.value = emptyList(); _pestana.value = Pestana.ENTRENAR
-        avisar("Programa cambiado: ${p.name}")
+        avisar(tx(R.string.aviso_programa_cambiado, p.name))
     }
 
     private fun cambiarRutina(rid: String, f: (Rutina) -> Rutina) = cambiar { e ->
@@ -186,7 +200,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     fun rutina(rid: String): Rutina? = _estado.value?.routines?.firstOrNull { it.id == rid }
 
-    fun tituloRutina(rid: String, t: String) = cambiarRutina(rid) { it.copy(title = t.trim().ifEmpty { "Rutina" }.take(40)) }
+    fun tituloRutina(rid: String, t: String) = cambiarRutina(rid) { it.copy(title = t.trim().ifEmpty { tx(R.string.rutina_sin_nombre) }.take(40)) }
     fun diaRutina(rid: String, dow: Int?) = cambiarRutina(rid) { it.copy(dow = dow) }
 
     fun campoItem(rid: String, i: Int, campo: String, valor: Int) {
@@ -214,15 +228,15 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun quitarItem(rid: String, i: Int) = cambiarRutina(rid) { r -> r.copy(items = r.items.filterIndexed { k, _ -> k != i }) }
 
     fun nuevaRutina() {
-        val r = Rutina("r${System.currentTimeMillis()}", "Nueva rutina", null, null, emptyList())
+        val r = Rutina("r${System.currentTimeMillis()}", tx(R.string.rutina_nueva), null, null, emptyList())
         cambiar { e -> e.copy(routines = e.routines.orEmpty() + r, progEdited = true) }
         abrir(Pantalla.Editor(r.id))
     }
 
     fun eliminarRutina(rid: String) {
         val e = _estado.value ?: return
-        if (e.active?.day == rid) { avisar("Termina el entreno de esta rutina primero"); return }
-        if (e.routines.orEmpty().size <= 1) { avisar("Debes tener al menos una rutina"); return }
+        if (e.active?.day == rid) { avisar(tx(R.string.aviso_termina_rutina)); return }
+        if (e.routines.orEmpty().size <= 1) { avisar(tx(R.string.aviso_una_rutina)); return }
         cambiar { it.copy(routines = it.routines.orEmpty().filter { r -> r.id != rid }, progEdited = true) }
         _pila.value = _pila.value.filter { it !is Pantalla.Editor }
     }
@@ -236,16 +250,16 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                 cambiarRutina(p.rid!!) { r ->
                     r.copy(items = r.items.toMutableList().also { l -> l[p.idx] = Item(nid, l[p.idx].sets ?: 3) })
                 }
-                cerrar(); avisar("Cambiado por $nombre")
+                cerrar(); avisar(tx(R.string.aviso_cambiado, nombre))
             }
             ModoCambio.AGREGAR -> {
-                if (rutina(p.rid!!)?.items?.any { it.id == nid } == true) { avisar("Ya está en la rutina"); return }
+                if (rutina(p.rid!!)?.items?.any { it.id == nid } == true) { avisar(tx(R.string.aviso_ya_en_rutina)); return }
                 cambiarRutina(p.rid) { r -> r.copy(items = r.items + Item(nid, 3)) }
-                cerrar(); avisar("Agregado: $nombre")
+                cerrar(); avisar(tx(R.string.aviso_agregado, nombre))
             }
             ModoCambio.VIVO, ModoCambio.VIVO_AGREGAR -> {
                 val a = _estado.value?.active ?: return
-                if (a.items.any { it.id == nid }) { avisar("Ese ejercicio ya está en el entreno"); return }
+                if (a.items.any { it.id == nid }) { avisar(tx(R.string.aviso_ya_en_entreno)); return }
                 cambiar { e ->
                     val act = e.active!!
                     if (p.modo == ModoCambio.VIVO_AGREGAR) {
@@ -274,7 +288,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 }
                 cerrar()
-                avisar(if (p.modo == ModoCambio.VIVO_AGREGAR) "Agregado: $nombre" else "Cambiado por $nombre")
+                avisar(tx(if (p.modo == ModoCambio.VIVO_AGREGAR) R.string.aviso_agregado else R.string.aviso_cambiado, nombre))
             }
         }
     }
@@ -352,12 +366,12 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         val previa = L.anterior(e, id)?.getOrNull(i)
         var kg = s.kg ?: previa?.kg
         var reps = s.reps ?: previa?.reps
-        if (reps == null) { avisar("Escribe las " + if (c.e.kind == "s") "segundos" else "repeticiones"); return }
-        if (c.e.kind == "w" && kg == null) { avisar("Escribe el peso en kg"); return }
+        if (reps == null) { avisar(tx(if (c.e.kind == "s") R.string.aviso_escribe_segundos else R.string.aviso_escribe_reps)); return }
+        if (c.e.kind == "w" && kg == null) { avisar(tx(R.string.aviso_escribe_peso)); return }
         if (c.e.kind != "w") kg = s.kg
         val mk = L.maxKg(e, id); val mr = L.maxReps(e, id)
-        if (c.e.kind == "w" && mk != null && kg != null && kg > mk) avisar("Nuevo récord: ${fk(kg)} kg")
-        else if (c.e.kind != "w" && mr != null && reps > mr) avisar("Nuevo récord: ${fk(reps)} ${L.unidad(c.e)}")
+        if (c.e.kind == "w" && mk != null && kg != null && kg > mk) avisar(MARCA_RECORD + tx(R.string.aviso_record_kg, fk(kg)))
+        else if (c.e.kind != "w" && mr != null && reps > mr) avisar(MARCA_RECORD + tx(R.string.aviso_record, fk(reps), L.unidad(c.e)))
         cambiar { st ->
             val act = st.active!!
             val l = act.entries.getValue(id).toMutableList()
@@ -373,7 +387,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         val e = _estado.value ?: return
         val a = e.active ?: return
         val entries = a.entries.mapValues { (_, l) -> l.filter { it.done }.map { Serie(it.kg, it.reps, true) } }.filterValues { it.isNotEmpty() }
-        if (entries.isEmpty()) { avisar("Marca al menos una serie con ✓ para guardar"); return }
+        if (entries.isEmpty()) { avisar(tx(R.string.aviso_marca_serie)); return }
         val records = entries.mapNotNull { (k, l) ->
             val ej = bib.ex[k] ?: return@mapNotNull null
             if (ej.kind != "w") return@mapNotNull null
@@ -422,7 +436,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         descansoJob = viewModelScope.launch {
             delay(maxOf(0, d.fin - System.currentTimeMillis()))
             _descanso.value = null
-            avisar("Descanso terminado")
+            avisar(tx(R.string.descanso_terminado))
         }
     }
 
@@ -444,15 +458,15 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         val activo = _estado.value?.active
         val nombre = _estado.value?.nombre
         cambiar { L.normalizar(d).copy(active = activo, nombre = d.nombre ?: nombre) }
-        avisar("Datos importados")
+        avisar(tx(R.string.aviso_importado))
     }
 
     /* ----- Sincronización con GitHub ----- */
 
     fun conectar(token: String) {
         val t = token.trim()
-        if (t.length < 20) { avisar("Pega el token completo"); return }
-        avisar("Conectando…")
+        if (t.length < 20) { avisar(tx(R.string.aviso_token_corto)); return }
+        avisar(tx(R.string.aviso_conectando))
         viewModelScope.launch {
             try {
                 val u = ClienteGist(t).usuario()
@@ -460,9 +474,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                 _sync.value = Sync(EstadoSync.EN_NUBE, usuario = u)
                 sincronizar()
             } catch (e: ErrorGitHub) {
-                avisar(if (e.codigo == 401) "Ese token no es válido" else "No se pudo conectar con GitHub")
+                avisar(tx(if (e.codigo == 401) R.string.aviso_token_invalido else R.string.aviso_sin_github))
             } catch (e: Exception) {
-                avisar("No se pudo conectar con GitHub")
+                avisar(tx(R.string.aviso_sin_github))
             }
         }
     }
@@ -496,9 +510,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                 _sync.value = _sync.value.copy(
                     estado = EstadoSync.ERROR,
                     mensaje = when (e.codigo) {
-                        401 -> "El token no es válido o ya venció."
-                        403, 404 -> "El token no tiene permiso para gists."
-                        else -> "No se pudo conectar con GitHub."
+                        401 -> tx(R.string.sync_token_vencido)
+                        403, 404 -> tx(R.string.sync_sin_permiso)
+                        else -> tx(R.string.sync_sin_conexion)
                     },
                 )
             } catch (e: java.io.IOException) {

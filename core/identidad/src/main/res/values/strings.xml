@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="fogon_lic_app">This app</string>
+  <string name="fogon_lic_app_texto">Fogón code, GPL-3.0 or later. No warranty of any kind (sections 15 and 16).</string>
+  <string name="fogon_lic_anton">Font. © 2020 The Anton Project Authors. SIL Open Font License 1.1.</string>
+  <string name="fogon_lic_bagel">Font. © 2022 The Bagel Fat Project Authors. SIL Open Font License 1.1.</string>
+  <string name="fogon_lic_bibliotecas">Android, Kotlin, OkHttp and Okio libraries</string>
+  <string name="fogon_lic_bibliotecas_texto">AndroidX and Jetpack Compose (Google), Kotlin and kotlinx (JetBrains), OkHttp and Okio (Square), Guava ListenableFuture and JSpecify. Apache License 2.0.</string>
+  <string name="fogon_lic_psl">Mozilla’s domain list bundled with OkHttp, unchanged. Mozilla Public License 2.0. Source: https://publicsuffix.org/list/</string>
+  <string name="fogon_lic_titulo">My code and other people’s</string>
+  <string name="fogon_lic_pista">This app is built with free pieces made by other people. These are their licenses; tap one to read the full text.</string>
+  <string name="fogon_ocultar_texto">Hide text</string>
+  <string name="fogon_ver_texto">Show full text</string>
+  <string name="fogon_lema">Your attention is worth more than an ad.</string>
+  <string name="fogon_man_pregunta">If today’s tools let us make our own apps, why keep giving away our information and our attention to apps full of ads and microtransactions?</string>
+  <string name="fogon_man_p1">For years, having an app on your phone meant accepting a deal nobody really signed: the app is \"free\", but we pay for it with our data, our time and our patience.</string>
+  <string name="fogon_man_p2">At the home stove (the fogón) nobody ever cooked to sell. People cooked for the household, with whatever there was, and there was always enough for one more. Fogón does the same with software: apps cooked at home, with the help of artificial intelligence, to meet real needs. They aren’t out to make money, and they’re shared with whoever comes by.</string>
+  <string name="fogon_man_t1">It’s not the first time</string>
+  <string name="fogon_man_p3">The minga: neighbors working for free on something for everyone. Gandhi’s spinning wheel: spinning at home instead of buying. The Rochdale Pioneers: 28 workers who opened their own shop. Linux: \"just a hobby\" that now runs the internet. Wikipedia: the largest encyclopedia, without a single ad.</string>
+  <string name="fogon_man_p4">Ordinary people, simple tools, shared work and nobody against anybody. Today, the simple tool is artificial intelligence.</string>
+  <string name="fogon_man_t2">No enemies</string>
+  <string name="fogon_man_p5">Fogón isn’t against anyone. We don’t copy brands, we don’t attack companies, we don’t break rules. We just light the stove and show, with facts, that there’s another way.</string>
+  <string name="fogon_man_t3">What we promise</string>
+  <string name="fogon_man_cierre">There’s always enough for one more.</string>
+  <string name="fogon_version">version %1$s</string>
+  <string name="fogon_hecha">Made at the Fogón</string>
+  <string name="fogon_sin_anuncios">No ads · No tracking · Open source</string>
+  <string name="fogon_leer_manifiesto">Read the manifesto</string>
+  <string name="fogon_licencias">Licenses</string>
+  <string name="fogon_ver_codigo">See the code</string>
+  <string name="fogon_licencia_gpl">Licensed under GPL-3.0 or later.</string>
+  <string name="fogon_aviso_salud">Health notice</string>
+  <string-array name="fogon_promesas">
+    <item>No ads.</item>
+    <item>No microtransactions or subscriptions: the app is complete from day one.</item>
+    <item>Your data is yours: it’s stored on your phone and you can export it whenever you want.</item>
+    <item>No internet unless it’s needed.</item>
+    <item>Only the permissions that are essential, and explained.</item>
+    <item>Open source (GPL-3.0).</item>
+    <item>Made with AI, and we say so. A person reviews it and stands behind it.</item>
+  </string-array>
+</resources>

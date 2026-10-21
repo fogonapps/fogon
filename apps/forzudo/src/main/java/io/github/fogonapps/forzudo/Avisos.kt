@@ -1,6 +1,7 @@
 package io.github.fogonapps.forzudo
 
 import android.Manifest
+import io.github.fogonapps.identidad.Idioma
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -23,8 +24,8 @@ object Avisos {
     private const val ID = 1
 
     fun crearCanal(c: Context) {
-        val canal = NotificationChannel(CANAL, "Fin del descanso", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Avisa cuando termina el descanso entre series"
+        val canal = NotificationChannel(CANAL, c.getString(R.string.canal_descanso), NotificationManager.IMPORTANCE_HIGH).apply {
+            description = c.getString(R.string.canal_descanso_detalle)
             enableVibration(true)
         }
         c.getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
@@ -59,8 +60,8 @@ object Avisos {
         )
         val n = NotificationCompat.Builder(c, CANAL)
             .setSmallIcon(R.drawable.ic_notificacion)
-            .setContentTitle("Descanso terminado")
-            .setContentText("¡A la siguiente serie!")
+            .setContentTitle(Idioma.envolver(c).getString(R.string.descanso_terminado))
+            .setContentText(Idioma.envolver(c).getString(R.string.descanso_siguiente))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(abrir)

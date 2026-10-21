@@ -7,6 +7,7 @@
 <li><b>Rangos de fuerza</b> por músculo, de Hierro a Diamante, con un mapa del cuerpo y la próxima meta para subir.</li>
 <li><b>Láminas de cada ejercicio</b> con el inicio, el final y el músculo que trabaja marcado con su color.</li>
 <li><b>6 programas</b> listos y un editor para armar tus propias rutinas.</li>
+<li><b>En español e inglés.</b></li>
 </ul>
 
 <p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono y puedes exportar un respaldo cuando quieras. Si lo prefieres, también puedes guardarlo en tu propia nube: conectando tu cuenta de GitHub (opcional), los entrenos se copian a un Gist privado tuyo. Sin conectarla, la app no usa internet.</p>

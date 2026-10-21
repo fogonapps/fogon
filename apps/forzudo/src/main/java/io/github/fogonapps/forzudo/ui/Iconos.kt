@@ -29,6 +29,7 @@ object Iconos {
     val Persona = trazo("persona", 1.8f, "M16 8a4 4 0 1 1-8 0a4 4 0 1 1 8 0z", "M4 20.5c1.2-4 4.3-6 8-6s6.8 2 8 6")
     val Atras = trazo("atras", 2.2f, "M15 5l-7 7 7 7")
     val Abajo = trazo("abajo", 2.2f, "M6 9l6 6 6-6")
+    val Cerrar = trazo("cerrar", 2.2f, "M6 6l12 12M18 6L6 18")
     val Siguiente = trazo("siguiente", 2f, "M9 6l6 6-6 6")
     val Chulo = trazo("chulo", 3f, "M5 12.5l4.5 4.5L19 7.5")
     val Reloj = trazo("reloj", 2f, "M20 13a8 8 0 1 1-16 0a8 8 0 1 1 16 0z", "M12 9v4l2.5 2M9 2h6")

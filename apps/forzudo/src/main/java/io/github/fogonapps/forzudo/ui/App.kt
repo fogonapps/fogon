@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -48,6 +49,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
+import io.github.fogonapps.forzudo.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import io.github.fogonapps.identidad.granoPapel
 import io.github.fogonapps.identidad.sombraRiso
 import io.github.fogonapps.forzudo.GymViewModel
@@ -79,7 +83,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Personaje(RId.drawable.personaje_el_forzudo, "Cargando", tamano = 140.dp)
+            Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.cargando), tamano = 140.dp)
         }
         return
     }
@@ -91,13 +95,14 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
                 bottomBar = {
                     Column {
-                        if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: "Entreno", estado.active.start) { vm.abrir(Pantalla.Vivo) }
+                        val confirmar = LocalConfirmar.current
+                        if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmar, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
                         NavigationBar(containerColor = f.superficie) {
                             listOf(
-                                Triple(Pestana.INICIO, "Inicio", io.github.fogonapps.forzudo.R.drawable.munieco_nav_inicio),
-                                Triple(Pestana.ENTRENAR, "Entrenar", io.github.fogonapps.forzudo.R.drawable.munieco_nav_entrenar),
-                                Triple(Pestana.RANGOS, "Rangos", io.github.fogonapps.forzudo.R.drawable.munieco_nav_rangos),
-                                Triple(Pestana.PERFIL, "Perfil", io.github.fogonapps.forzudo.R.drawable.munieco_nav_perfil),
+                                Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), io.github.fogonapps.forzudo.R.drawable.munieco_nav_inicio),
+                                Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), io.github.fogonapps.forzudo.R.drawable.munieco_nav_entrenar),
+                                Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), io.github.fogonapps.forzudo.R.drawable.munieco_nav_rangos),
+                                Triple(Pestana.PERFIL, stringResource(R.string.pestana_perfil), io.github.fogonapps.forzudo.R.drawable.munieco_nav_perfil),
                             ).forEach { (p, t, ic) ->
                                 NavigationBarItem(
                                     selected = pestana == p, onClick = { vm.irA(p) },
@@ -115,7 +120,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba)
                 androidx.compose.runtime.key(pestana) { Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
                     Text(
-                        when (pestana) { Pestana.INICIO -> "Inicio"; Pestana.ENTRENAR -> "Entrenar"; Pestana.RANGOS -> "Rangos"; Pestana.PERFIL -> "Perfil" },
+                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos; Pestana.PERFIL -> R.string.pestana_perfil }),
                         style = MaterialTheme.typography.headlineLarge, color = f.texto,
                         modifier = Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp),
                     )
@@ -142,9 +147,10 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Cambiar -> Cambiar(vm, p)
                             is Pantalla.Zoom -> Zoom(vm, p.id, p.i)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
-                            is Pantalla.Manifiesto -> Column { Cabecera("Manifiesto", vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }
+                            is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }
                             is Pantalla.Licencias -> Licencias(vm)
                             is Pantalla.Preguntas -> Preguntas(vm)
+                            is Pantalla.Reporte -> Reporte(vm)
                         }
                     }
                     if (p is Pantalla.Vivo) Box(Modifier.align(Alignment.BottomCenter)) { BarraDescanso(vm, descanso) }
@@ -161,8 +167,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                     onDismissRequest = { pregunta = null },
                     title = { Text(q.titulo) },
                     text = q.texto?.let { { Text(it) } },
-                    confirmButton = { TextButton({ pregunta = null; q.si() }) { Text("Sí, continuar", fontWeight = FontWeight.Bold) } },
-                    dismissButton = { TextButton({ pregunta = null }) { Text("Cancelar") } },
+                    confirmButton = { TextButton({ pregunta = null; q.si() }) { Text(stringResource(R.string.si_continuar), fontWeight = FontWeight.Bold) } },
+                    dismissButton = { TextButton({ pregunta = null }) { Text(stringResource(R.string.volver)) } },
                 )
             }
         }
@@ -173,19 +179,19 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 /** Aviso con la identidad: tinta sobre papel invertido, y la chispa en los récords. */
 @Composable
 private fun AvisoTinta(mensaje: String) {
-    val record = mensaje.startsWith("Nuevo récord")
+    val record = mensaje.startsWith(io.github.fogonapps.forzudo.MARCA_RECORD)
     Row(
         Modifier.fillMaxWidth().padding(12.dp).sombraRiso(FogonTema.actual.paleta.segunda)
             .clip(io.github.fogonapps.identidad.FormaRiso).background(io.github.fogonapps.identidad.Tintas.Tinta).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (record) io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
-        Text(mensaje, color = io.github.fogonapps.identidad.Tintas.Papel, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
+        Text(mensaje.removePrefix(io.github.fogonapps.forzudo.MARCA_RECORD), color = io.github.fogonapps.identidad.Tintas.Papel, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
     }
 }
 
 @Composable
-private fun BarraEntreno(titulo: String, inicio: Long, onAbrir: () -> Unit) {
+private fun BarraEntreno(titulo: String, inicio: Long, onCancelar: () -> Unit, onAbrir: () -> Unit) {
     val f = FogonTema.actual
     var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { ahora = System.currentTimeMillis(); delay(1000) } }
@@ -193,8 +199,9 @@ private fun BarraEntreno(titulo: String, inicio: Long, onAbrir: () -> Unit) {
         Modifier.fillMaxWidth().background(f.paleta.tinta).clickable(onClick = onAbrir).heightIn(min = 52.dp).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("$titulo en curso", color = f.paleta.sobreTinta, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.entreno_en_curso, titulo), color = f.paleta.sobreTinta, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         Text(duracion(ahora - inicio), color = f.paleta.sobreTinta, style = MaterialTheme.typography.titleMedium)
+        IconButton(onCancelar) { Icon(Iconos.Cerrar, stringResource(R.string.cancelar_entreno), tint = f.paleta.sobreTinta) }
     }
 }
 
@@ -212,7 +219,7 @@ private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Desca
                 Text("${rest / 60}:${(rest % 60).toString().padStart(2, '0')}", style = MaterialTheme.typography.displaySmall, color = f.texto, modifier = Modifier.weight(1f))
                 TextButton({ vm.ajustarDescanso(-15) }) { Text("−15") }
                 TextButton({ vm.ajustarDescanso(15) }) { Text("+15") }
-                TextButton({ vm.pararDescanso() }) { Text("Saltar") }
+                TextButton({ vm.pararDescanso() }) { Text(stringResource(R.string.saltar)) }
             }
             Barra(if (dd.total > 0) rest.toFloat() / dd.total else 0f, f.paleta.tinta)
         }

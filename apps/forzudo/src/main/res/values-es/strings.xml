@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="voc_decimal">,</string>
+  <string name="voc_seg">seg</string>
+  <string name="voc_reps">reps</string>
+  <string name="voc_entreno">Entreno</string>
+  <string name="voc_meta">Meta %1$d × %2$s %3$s</string>
+  <string name="voc_mismo_peso">Usa el mismo peso y anota las reps</string>
+  <string name="voc_sube_peso">Sube el peso hoy</string>
+  <string name="voc_mas10s">Súbele 10 segundos</string>
+  <string name="voc_mas_lento">Hazlas más lentas o con peso</string>
+  <string name="voc_manten">Mantén %1$s kg</string>
+  <string name="voc_mas_una_rep">Busca +1 rep por serie</string>
+  <string-array name="meses">
+    <item>ene</item>
+    <item>feb</item>
+    <item>mar</item>
+    <item>abr</item>
+    <item>may</item>
+    <item>jun</item>
+    <item>jul</item>
+    <item>ago</item>
+    <item>sep</item>
+    <item>oct</item>
+    <item>nov</item>
+    <item>dic</item>
+  </string-array>
+  <string-array name="meses_largos">
+    <item>enero</item>
+    <item>febrero</item>
+    <item>marzo</item>
+    <item>abril</item>
+    <item>mayo</item>
+    <item>junio</item>
+    <item>julio</item>
+    <item>agosto</item>
+    <item>septiembre</item>
+    <item>octubre</item>
+    <item>noviembre</item>
+    <item>diciembre</item>
+  </string-array>
+  <string-array name="dias_largos">
+    <item>Domingo</item>
+    <item>Lunes</item>
+    <item>Martes</item>
+    <item>Miércoles</item>
+    <item>Jueves</item>
+    <item>Viernes</item>
+    <item>Sábado</item>
+  </string-array>
+  <string-array name="dias_cortos">
+    <item>D</item>
+    <item>L</item>
+    <item>M</item>
+    <item>X</item>
+    <item>J</item>
+    <item>V</item>
+    <item>S</item>
+  </string-array>
+  <string name="aviso_peso_invalido">Escribe tu peso en kg, por ejemplo 55,5</string>
+  <string name="aviso_peso_guardado">Peso guardado</string>
+  <string name="aviso_fecha">Fecha actualizada</string>
+  <string name="aviso_termina_entreno">Termina o cancela el entreno en curso primero</string>
+  <string name="aviso_programa_cambiado">Programa cambiado: %1$s</string>
+  <string name="rutina_sin_nombre">Rutina</string>
+  <string name="rutina_nueva">Nueva rutina</string>
+  <string name="aviso_termina_rutina">Termina el entreno de esta rutina primero</string>
+  <string name="aviso_una_rutina">Debes tener al menos una rutina</string>
+  <string name="aviso_cambiado">Cambiado por %1$s</string>
+  <string name="aviso_ya_en_rutina">Ya está en la rutina</string>
+  <string name="aviso_agregado">Agregado: %1$s</string>
+  <string name="aviso_ya_en_entreno">Ese ejercicio ya está en el entreno</string>
+  <string name="aviso_escribe_segundos">Escribe los segundos</string>
+  <string name="aviso_escribe_reps">Escribe las repeticiones</string>
+  <string name="aviso_escribe_peso">Escribe el peso en kg</string>
+  <string name="aviso_record_kg">Nuevo récord: %1$s kg</string>
+  <string name="aviso_record">Nuevo récord: %1$s %2$s</string>
+  <string name="aviso_marca_serie">Marca al menos una serie con ✓ para guardar</string>
+  <string name="descanso_terminado">Descanso terminado</string>
+  <string name="aviso_importado">Datos importados</string>
+  <string name="aviso_token_corto">Pega el token completo</string>
+  <string name="aviso_conectando">Conectando…</string>
+  <string name="aviso_token_invalido">Ese token no es válido</string>
+  <string name="aviso_sin_github">No se pudo conectar con GitHub</string>
+  <string name="sync_token_vencido">El token no es válido o ya venció.</string>
+  <string name="sync_sin_permiso">El token no tiene permiso para gists.</string>
+  <string name="sync_sin_conexion">No se pudo conectar con GitHub.</string>
+  <string name="canal_descanso">Fin del descanso</string>
+  <string name="canal_descanso_detalle">Avisa cuando termina el descanso entre series</string>
+  <string name="descanso_siguiente">¡A la siguiente serie!</string>
+  <string name="aviso_respaldo_guardado">Respaldo guardado</string>
+  <string name="aviso_no_exportado">No se pudo exportar</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de El Forzudo</string>
+  <string name="importar_titulo">¿Importar el respaldo?</string>
+  <string name="importar_si">Sí, importar</string>
+  <string name="cancelar">Cancelar</string>
+  <string name="cargando">Cargando</string>
+  <string name="pestana_inicio">Inicio</string>
+  <string name="pestana_entrenar">Entrenar</string>
+  <string name="pestana_rangos">Rangos</string>
+  <string name="pestana_perfil">Perfil</string>
+  <string name="manifiesto">Manifiesto</string>
+  <string name="si_continuar">Sí, continuar</string>
+  <string name="volver">Volver</string>
+  <string name="entreno_en_curso">%1$s en curso</string>
+  <string name="cancelar_entreno">Cancelar entreno</string>
+  <string name="saltar">Saltar</string>
+  <string name="sin_rango">Sin rango</string>
+  <string name="sin_datos">Sin datos todavía.</string>
+  <string name="grafica">Gráfica</string>
+  <string name="dias_entrenados">Días entrenados en %1$d</string>
+  <string name="listo">Listo</string>
+  <string name="tut_hola">¡Hola! Soy El Forzudo</string>
+  <string name="tut_hola_texto">Tu cuaderno de entrenos. Sin anuncios, sin rastreo y gratis de verdad. Tus datos se quedan en tu teléfono y, si lo prefieres, también en tu propia nube.</string>
+  <string name="tut_anota">Entrena y anota</string>
+  <string name="tut_anota_texto">En Entrenar escoge tu rutina y toca Empezar. Escribe el peso y las repeticiones de cada serie y márcala con ✓. Al marcarla arranca el descanso y te aviso cuando termine. Si tocas lo que hiciste la vez anterior, se copia solo.</string>
+  <string name="tut_racha">Tu racha es de verdad</string>
+  <string name="tut_racha_texto">Una semana cuenta cuando completas todas las rutinas de tu programa. No se puede marcar a mano: la racha la ganas entrenando.</string>
+  <string name="tut_rangos">Sube de rango</string>
+  <string name="tut_rangos_texto">Registra tu peso corporal en Perfil y verás tu rango en cada músculo, de Hierro a Diamante, con la próxima meta para subir. Los récords nuevos salen con la chispa.</string>
+  <string name="tut_cuerpo">Escucha a tu cuerpo</string>
+  <string name="tut_cuerpo_texto">Te ayudo a llevar la cuenta, pero no soy un médico ni un entrenador. Si tienes una lesión o una condición de salud, consulta a un profesional antes de empezar. Si sientes dolor, mareo o falta de aire, para.</string>
+  <string name="tut_datos">Tus datos son tuyos</string>
+  <string name="tut_datos_texto">Puedes exportar un respaldo cuando quieras. Si conectas tu GitHub (opcional), tus entrenos se guardan solos en un archivo privado de tu cuenta.</string>
+  <string name="tut_nombre">¿Cómo te llamas?</string>
+  <string name="tut_paso">Paso %1$d de %2$d</string>
+  <string name="tut_a_entrenar">¡A entrenar!</string>
+  <string name="siguiente">Siguiente</string>
+  <plurals name="importar_texto">
+    <item quantity="one">Esto reemplaza los datos de este teléfono con los del respaldo (%d entreno).</item>
+    <item quantity="other">Esto reemplaza los datos de este teléfono con los del respaldo (%d entrenos).</item>
+    <item quantity="many">Esto reemplaza los datos de este teléfono con los del respaldo (%d entrenos).</item>
+  </plurals>
+  <plurals name="entrenos">
+    <item quantity="one">%d entreno</item>
+    <item quantity="other">%d entrenos</item>
+    <item quantity="many">%d entrenos</item>
+  </plurals>
+  <string name="racha_cumpliendo">cumpliendo tu semana</string>
+  <string name="racha_empezar">Completa todos tus entrenos de la semana para empezar tu racha</string>
+  <string name="racha_mejor">Mejor racha: %1$d</string>
+  <string name="esta_semana">Esta semana: %1$d de %2$s</string>
+  <string name="dia_hecho">hecho</string>
+  <string name="dia_pendiente">pendiente</string>
+  <string name="semanas_de">Semanas de %1$s</string>
+  <string name="semana_completa">semana completa</string>
+  <string name="semana_incompleta">semana sin completar</string>
+  <string name="semana_corta">Sem %1$d</string>
+  <string name="pista_semanas">Una semana se pinta sola cuando completas todas las rutinas de tu programa. La racha se gana entrenando.</string>
+  <string name="meses_anteriores">Meses anteriores</string>
+  <string name="mes_resumen">%1$d de %2$s, %3$s</string>
+  <string name="titulo_entrenos">Entrenos</string>
+  <string name="sin_entrenos">Aún no tienes entrenos</string>
+  <string name="sin_entrenos_texto">Ve a Entrenar y empieza una rutina.</string>
+  <string name="borrar_entreno_pregunta">¿Borrar este entreno?</string>
+  <string name="tiempo">Tiempo</string>
+  <string name="volumen">Volumen</string>
+  <string name="series">Series</string>
+  <string name="fecha">Fecha</string>
+  <string name="borrar_entreno">Borrar entreno</string>
+  <string name="programa">Programa</string>
+  <string name="personalizado">Personalizado</string>
+  <string name="modificado">modificado</string>
+  <string name="cambiar">Cambiar</string>
+  <string name="mis_rutinas">Mis rutinas (%1$d)</string>
+  <string name="hoy">Hoy</string>
+  <string name="sin_ejercicios">Sin ejercicios todavía</string>
+  <string name="empezar">Empezar</string>
+  <string name="volver_al_entreno">Volver al entreno</string>
+  <string name="pasar_entreno">Pasar el entreno actual aquí</string>
+  <string name="pasar_entreno_pregunta">¿Cambiar el entreno en curso a %1$s?</string>
+  <string name="series_se_pierden">Las series ya marcadas de ejercicios que no están en esa rutina se pierden.</string>
+  <string name="editar">Editar</string>
+  <string name="mas_nueva_rutina">+ Nueva rutina</string>
+  <string name="rangos_falta_peso">Para calcular tus rangos necesito tu peso corporal, porque la fuerza se compara en relación a lo que pesas.</string>
+  <string name="registrar_peso">Registrar mi peso</string>
+  <string name="rango_general">Rango general</string>
+  <string name="sin_datos_aun">Sin datos aún</string>
+  <string name="completa_entreno">Completa un entreno anotando peso y repeticiones</string>
+  <string name="series_semana">Series esta semana</string>
+  <string name="vista_frente">Vista de frente</string>
+  <string name="frente">Frente</string>
+  <string name="vista_espalda">Vista de espalda</string>
+  <string name="espalda">Espalda</string>
+  <string name="pista_series">Más intenso = más series. Para ganar músculo, apunta a unas 10 series por músculo a la semana.</string>
+  <string name="rango_por_musculo">Rango por músculo</string>
+  <string name="series_por_musculo">Series por músculo esta semana</string>
+  <string name="falta_peso">Falta tu peso corporal</string>
+  <string name="abdomen_crunch">Se mide con el crunch en polea</string>
+  <string name="sin_registros_todavia">Sin registros todavía</string>
+  <string name="proxima_meta">Próxima meta: %1$s kg × %2$d en %3$s</string>
+  <string name="rango_maximo">¡Rango máximo!</string>
+  <string name="creditos_rangos">Estándares: modelo de Fogón con datos de OpenPowerlifting (dominio público) · Dibujos: Everkinetic (CC BY-SA) · Modelo muscular: react-body-highlighter (licencia MIT). Detalles en Perfil → Acerca de El Forzudo → Licencias</string>
+  <string name="sin_nombre">Sin nombre</string>
+  <string name="cambiar_nombre">Cambiar nombre</string>
+  <string name="volumen_total">Volumen total</string>
+  <string name="peso">Peso</string>
+  <string name="peso_corporal_titulo">Peso corporal (1 vez por semana, en ayunas)</string>
+  <string name="tu_peso_kg">Tu peso en kg</string>
+  <string name="peso_corporal_kg">Peso corporal en kg</string>
+  <string name="guardar">Guardar</string>
+  <string name="meta_peso">Meta: subir de 0,25 a 0,5 kg por semana.</string>
+  <string name="constancia">Constancia</string>
+  <string name="pista_mapa_anual">Cada cuadrito es un día; los de color son días que entrenaste.</string>
+  <string name="sync_titulo">Sincronización en la nube</string>
+  <string name="respaldo_titulo">Respaldo de tus datos</string>
+  <string name="exportar">Exportar</string>
+  <string name="importar">Importar</string>
+  <string name="pista_respaldo">Copia manual extra. Exporta un archivo y guárdalo donde quieras; si algún día lo necesitas, lo importas.</string>
+  <string name="ejercicios">Ejercicios</string>
+  <string name="record_kg">Récord: %1$s kg</string>
+  <string name="record">Récord: %1$s %2$s</string>
+  <string name="sin_registros">Sin registros</string>
+  <string name="ver_tutorial">Ver el tutorial</string>
+  <string name="manifiesto_fogon">Manifiesto de Fogón</string>
+  <string name="preguntas_frecuentes">Preguntas frecuentes</string>
+  <string name="reportar_boton">Reportar un fallo o sugerir algo</string>
+  <string name="acerca_de">Acerca de El Forzudo</string>
+  <string name="sync_explica">Conecta tu GitHub y tus entrenos se guardan solos en un archivo privado de tu cuenta (un Gist secreto). Si cambias de teléfono o reinstalas la app, se recuperan. Es opcional: sin esto, la app no usa internet.</string>
+  <string name="sync_pasos">1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.</string>
+  <string name="crear_token">Crear token</string>
+  <string name="pega_token">Pega aquí tu token (ghp_…)</string>
+  <string name="conectar">Conectar</string>
+  <string name="sincronizando">Sincronizando…</string>
+  <string name="sin_conexion">Sin conexión</string>
+  <string name="error_sync">Error al sincronizar</string>
+  <string name="conectado">Conectado.</string>
+  <string name="conectado_como">Conectado como %1$s.</string>
+  <string name="ultima_sync">Última sincronización: %1$s.</string>
+  <string name="sincronizar_ahora">Sincronizar ahora</string>
+  <string name="desconectar">Desconectar</string>
+  <string name="desconectar_pregunta">¿Desconectar la sincronización?</string>
+  <string name="desconectar_texto">Tus datos siguen en el teléfono y en tu Gist.</string>
+  <string name="hace_nunca">nunca</string>
+  <string name="hace_momento">hace un momento</string>
+  <string name="hace_min">hace %1$d min</string>
+  <string name="hace_h">hace %1$d h</string>
+  <string name="tu_nombre">Tu nombre</string>
+  <plurals name="semanas_seguidas">
+    <item quantity="one">semana seguida</item>
+    <item quantity="other">semanas seguidas</item>
+    <item quantity="many">semanas seguidas</item>
+  </plurals>
+  <plurals name="semanas">
+    <item quantity="one">%d semana</item>
+    <item quantity="other">%d semanas</item>
+    <item quantity="many">%d semanas</item>
+  </plurals>
+  <plurals name="ejercicios_mas">
+    <item quantity="one">%d ejercicio más</item>
+    <item quantity="other">%d ejercicios más</item>
+    <item quantity="many">%d ejercicios más</item>
+  </plurals>
+  <plurals name="dias">
+    <item quantity="one">%d día</item>
+    <item quantity="other">%d días</item>
+    <item quantity="many">%d días</item>
+  </plurals>
+  <plurals name="rutinas">
+    <item quantity="one">%d rutina</item>
+    <item quantity="other">%d rutinas</item>
+    <item quantity="many">%d rutinas</item>
+  </plurals>
+  <plurals name="promedio_grupos">
+    <item quantity="one">Promedio de %1$d grupo muscular · peso corporal %2$s kg</item>
+    <item quantity="other">Promedio de %1$d grupos musculares · peso corporal %2$s kg</item>
+    <item quantity="many">Promedio de %1$d grupos musculares · peso corporal %2$s kg</item>
+  </plurals>
+  <plurals name="entrenos_guardados">
+    <item quantity="one">%d entreno guardado</item>
+    <item quantity="other">%d entrenos guardados</item>
+    <item quantity="many">%d entrenos guardados</item>
+  </plurals>
+  <plurals name="hace_dias">
+    <item quantity="one">hace %d día</item>
+    <item quantity="other">hace %d días</item>
+    <item quantity="many">hace %d días</item>
+  </plurals>
+  <string name="como_se_calcula">¿Cómo se calcula?</string>
+  <string-array name="como_se_calcula_pasos">
+    <item>1. De cada ejercicio tomo tu mejor serie y estimo tu máximo de 1 repetición (fórmula de Epley).</item>
+    <item>2. Lo comparo con la tabla de fuerza de Fogón, ajustada a tu peso corporal. Banca, sentadilla y peso muerto se calibraron con miles de resultados de competencias de powerlifting (OpenPowerlifting); el resto de ejercicios se estima a partir de esos tres.</item>
+    <item>3. Rangos: Hierro (empezando) · Bronce (principiante) · Plata (novato) · Oro (intermedio) · Platino (avanzado, al nivel de quien empieza a competir) · Diamante (élite, más fuerte que ~3 de cada 4 competidores). Cada rango tiene 3 divisiones: III, II y I.</item>
+    <item>4. El rango de cada músculo es el promedio de sus 2 mejores ejercicios, y el general es el promedio de todos tus músculos.</item>
+    <item>5. En mancuernas anota el peso de una mancuerna. En máquinas y poleas el rango es aproximado, porque el peso marcado cambia según la máquina. Plancha, elevaciones y zancadas sin peso no cuentan.</item>
+  </string-array>
+  <string name="videos_busqueda">%1$s técnica correcta</string>
+  <string name="sin_series">No marcaste ninguna serie</string>
+  <string name="sin_series_texto">¿Cancelar el entreno? No se guarda nada.</string>
+  <string name="terminar">Terminar</string>
+  <string name="terminar_guardar">Terminar y guardar</string>
+  <string name="duracion">Duración</string>
+  <string name="cambiar_rutina_pregunta">¿Cambiar de rutina?</string>
+  <string name="mas_agregar_ejercicio">+ Agregar ejercicio</string>
+  <string name="cancelar_entreno_pregunta">¿Cancelar el entreno?</string>
+  <string name="tecnica_abierta">técnica abierta</string>
+  <string name="tecnica_cerrada">técnica cerrada</string>
+  <string name="toca_nombre">Toca el nombre para ver los dibujos y la técnica</string>
+  <string name="estancado">Sin progreso en tus últimas 3 sesiones. Prueba una variante o baja un poco el peso y vuelve a subir.</string>
+  <string name="ver_alternativas">Ver alternativas</string>
+  <string name="ver_videos">▶ Ver videos de técnica</string>
+  <string name="peso_una_mancuerna">Anota el peso de una mancuerna</string>
+  <string name="descanso_de">Descanso: %1$s</string>
+  <string name="col_serie">SERIE</string>
+  <string name="col_anterior">ANTERIOR</string>
+  <string name="col_kg_cada">KG C/U</string>
+  <string name="col_kg">KG</string>
+  <string name="col_seg">SEG</string>
+  <string name="col_reps">REPS</string>
+  <string name="serie_completa">completa</string>
+  <string name="copiar_anterior">Copiar valores anteriores</string>
+  <string name="marcar_serie">Marcar serie %1$d completa</string>
+  <string name="kg_serie">Kg serie %1$d</string>
+  <string name="segundos_serie">Segundos serie %1$d</string>
+  <string name="reps_serie">Repeticiones serie %1$d</string>
+  <string name="mas_agregar_serie">+ Agregar serie</string>
+  <string name="paso_inicio">1 · Inicio</string>
+  <string name="paso_final">2 · Final</string>
+  <string name="posicion_inicial">%1$s: posición inicial</string>
+  <string name="posicion_final">%1$s: posición final</string>
+  <string name="entreno_guardado">Entreno guardado</string>
+  <string name="buen_trabajo">¡Buen trabajo!</string>
+  <string name="buen_trabajo_nombre">¡Buen trabajo, %1$s!</string>
+  <string name="subiste_rango">Subiste de rango</string>
+  <string name="records_nuevos">Récords nuevos</string>
+  <string name="volver_inicio">Volver al inicio</string>
+  <string name="por_defecto">por defecto %1$s %2$s, descanso %3$s</string>
+  <string name="peso_alto_sesion">Peso más alto por sesión (kg)</string>
+  <string name="segundos_sesion">Segundos totales por sesión</string>
+  <string name="reps_sesion">Repeticiones totales por sesión</string>
+  <string name="records">Récords</string>
+  <string name="peso_mas_alto">Peso más alto</string>
+  <string name="maximo_serie">Máximo en una serie</string>
+  <string name="rm_estimado">1RM estimado</string>
+  <string name="mejor_serie">Mejor serie</string>
+  <string name="sesiones">Sesiones</string>
+  <string name="historial">Historial</string>
+  <string name="sin_historial">Todavía no has hecho este ejercicio.</string>
+  <string name="rango">Rango</string>
+  <string name="rango_aproximado">Rango (aproximado)</string>
+  <string name="rango_falta_peso_ej">Registra tu peso corporal en Perfil para ver tu rango en este ejercicio.</string>
+  <string name="rango_anota_serie">Anota una serie con peso y repeticiones para ver tu rango.</string>
+  <string name="siguiente_rango">Siguiente (%1$s): %2$s kg × %3$d</string>
+  <string name="oro_para_tu_peso">Intermedio (Oro) para tu peso</string>
+  <string name="promedio_2_mejores">Promedio de tus 2 mejores ejercicios de este grupo</string>
+  <string name="siguiente_meta">Siguiente: %1$s kg × %2$d</string>
+  <string name="no_cuenta_rango">No cuenta para el rango</string>
+  <string name="programas">Programas</string>
+  <string name="pista_programas">Escoge según tu objetivo y los días que puedes ir. Tu historial, récords y rangos se conservan: solo cambian tus rutinas, y después puedes editarlas.</string>
+  <string name="programa_actual">Programa actual</string>
+  <string name="programa_actual_modificado">Programa actual (modificado)</string>
+  <string name="usar_programa">Usar este programa</string>
+  <string name="usar_programa_pregunta">¿Usar “%1$s”?</string>
+  <string name="usar_programa_texto">Esto reemplaza tus rutinas. Tu historial, récords y rangos se conservan.</string>
+  <string name="editar_rutina">Editar rutina</string>
+  <string name="nombre">Nombre</string>
+  <string name="dia_semana">Día de la semana:</string>
+  <string name="sin_dia_fijo">Sin día fijo</string>
+  <string name="ejercicios_n">Ejercicios (%1$d)</string>
+  <string name="rutina_vacia">Rutina vacía</string>
+  <string name="rutina_vacia_texto">Agrega tu primer ejercicio.</string>
+  <string name="reps_min">Reps mín.</string>
+  <string name="reps_max">Reps máx.</string>
+  <string name="descanso_s">Descanso (s)</string>
+  <string name="campo_de">%1$s de %2$s</string>
+  <string name="subir">↑ Subir</string>
+  <string name="bajar">↓ Bajar</string>
+  <string name="quitar_pregunta">¿Quitar %1$s de la rutina?</string>
+  <string name="su_historial">Su historial se conserva.</string>
+  <string name="quitar">Quitar</string>
+  <string name="eliminar_rutina">Eliminar esta rutina</string>
+  <string name="eliminar_rutina_pregunta">¿Eliminar esta rutina?</string>
+  <string name="tu_historial">Tu historial se conserva.</string>
+  <string name="cambiar_ejercicio">Cambiar ejercicio</string>
+  <string name="agregar_ejercicio">Agregar ejercicio</string>
+  <string name="actual">Actual</string>
+  <string name="guardar_en_rutina">Guardar el cambio también en la rutina (si no, solo aplica hoy)</string>
+  <string name="buscar_ejercicio">Buscar ejercicio…</string>
+  <string name="lo_mismo">Lo mismo, de otra forma</string>
+  <string name="lo_mismo_pista">Mismo movimiento con otro equipo o agarre</string>
+  <string name="relacionados">Ejercicios relacionados</string>
+  <string name="relacionados_pista">Trabajan el mismo músculo con otro movimiento</string>
+  <string name="buscas_otro">¿Buscas otro? Escribe arriba para ver toda la biblioteca.</string>
+  <string name="no_encontrado">No encontré ese ejercicio.</string>
+  <string name="cerrar">Cerrar</string>
+  <string name="acerca_de_corto">Acerca de</string>
+  <string name="aviso_salud">El Forzudo es un cuaderno de entrenos, no un consejo médico. Las rutinas, metas y rangos son guías generales que no conocen tu salud. Si tienes una lesión, una enfermedad o hace mucho que no entrenas, consulta a un profesional de la salud antes de empezar. Si sientes dolor, mareo o falta de aire, detente. Usas la app bajo tu propia responsabilidad.</string>
+  <string name="licencias">Licencias</string>
+  <string name="lic_modelo">Modelo muscular</string>
+  <string name="lic_modelo_texto">Dibujo del cuerpo de react-body-highlighter (© 2020 GV79), que lo tomó de react-native-body-highlighter (© 2022 ELABBASSI Hicham). Licencia MIT.</string>
+  <string name="lic_rnbh">© 2022 ELABBASSI Hicham. Licencia MIT.</string>
+  <string name="lic_opl">Esta app usa datos del proyecto OpenPowerlifting, https://www.openpowerlifting.org. Puedes descargar una copia de los datos en https://gitlab.com/openpowerlifting/opl-data. Dominio público.</string>
+  <string name="lic_everkinetic">Ilustraciones de los ejercicios, de github.com/everkinetic/data (CC BY-SA 4.0) y, las de aperturas y press de hombro en máquina, de Wikimedia Commons (CC BY-SA 3.0, creativecommons.org/licenses/by-sa/3.0, que permite compartir la modificación con la 4.0). Fogón las modificó (lámina riso); las láminas se comparten con la misma licencia. Creative Commons Atribución-CompartirIgual 4.0.</string>
+  <string name="reportar_titulo">Reportar o sugerir</string>
+  <string name="reportar_pista">¿Algo falla o se te ocurre cómo mejorar la app? Cuéntalo aquí. Lo leemos todo.</string>
+  <string name="algo_falla">Algo falla</string>
+  <string name="tengo_idea">Tengo una idea</string>
+  <string name="que_paso">Qué pasó y qué estabas haciendo</string>
+  <string name="tu_idea">Tu idea</string>
+  <string name="se_agrega">Se agrega solo: %1$s. Nada más de tu teléfono.</string>
+  <string name="enviar_github">Enviar por GitHub</string>
+  <string name="enviar_github_pista">Se abre GitHub con el mensaje listo. Necesitas una cuenta de GitHub, y lo que envíes queda público: no pongas datos personales.</string>
+  <string name="enviar_correo">Enviar por correo</string>
+  <string name="enviar_correo_pista">Se abre tu app de correo con el mensaje listo, para %1$s.</string>
+  <plurals name="se_borran_series">
+    <item quantity="one">Se borra la serie que marcaste.</item>
+    <item quantity="other">Se borran las %d series que marcaste.</item>
+    <item quantity="many">Se borran las %d series que marcaste.</item>
+  </plurals>
+  <plurals name="motos">
+    <item quantity="one">Levantaste el equivalente a una moto de 150 kg.</item>
+    <item quantity="other">Levantaste el equivalente a %d motos de 150 kg.</item>
+    <item quantity="many">Levantaste el equivalente a %d motos de 150 kg.</item>
+  </plurals>
+  <plurals name="n_ejercicios">
+    <item quantity="one">%d ejercicio</item>
+    <item quantity="other">%d ejercicios</item>
+    <item quantity="many">%d ejercicios</item>
+  </plurals>
+  <string-array name="creditos">
+    <item>Dibujos de ejercicios: Everkinetic (CC BY-SA), pasados a lámina riso por Fogón.</item>
+    <item>Modelo muscular: react-body-highlighter y react-native-body-highlighter (licencia MIT).</item>
+    <item>Estándares de fuerza: modelo propio de Fogón, calibrado con OpenPowerlifting (dominio público).</item>
+    <item>Letras: Bagel Fat One y Anton (SIL Open Font License).</item>
+  </string-array>
+  <string-array name="preguntas">
+    <item>¿Por qué los dibujos solo tienen figuras de hombre?</item>
+    <item>¿Por qué algunos ejercicios no tienen dibujo?</item>
+    <item>¿Por qué no hay fotos?</item>
+    <item>¿Qué significan los colores?</item>
+    <item>¿De dónde salen los rangos de fuerza?</item>
+    <item>¿Mis datos salen del teléfono?</item>
+    <item>¿Por qué antes se llamaba Mi Gym?</item>
+  </string-array>
+  <string-array name="respuestas">
+    <item>Los dibujos salen de Everkinetic, un banco de ilustraciones de ejercicios con licencia libre, y todas sus figuras son de hombre. No encontramos ilustraciones libres con figuras de mujer. Probamos generarlas con inteligencia artificial, pero no quedaban al mismo nivel ni en el mismo estilo, y preferimos no poner algo a medias. El ejercicio y el músculo que trabaja son los mismos para todas las personas. Si alguien quiere dibujar las versiones de mujer con licencia libre, son bienvenidas.</item>
+    <item>Usamos solo dibujos con licencia clara, y para esos ejercicios todavía no hay uno. Van a llegar en una actualización.</item>
+    <item>Las fotos que usaba la app venían de un banco que se presentaba como libre, pero en realidad eran fotos sacadas de internet sin permiso de sus dueños. Por eso se cambiaron por dibujos con licencia clara.</item>
+    <item>Cada grupo muscular tiene su color, el mismo en toda la app: la mancha del dibujo marca el músculo que trabaja. La sombra del dibujo dice la zona: rosa para el tren superior, amarillo para los brazos y azul para las piernas.</item>
+    <item>De una tabla propia de Fogón, calibrada con resultados reales de competencias de powerlifting (OpenPowerlifting, de dominio público). Los demás ejercicios se estiman a partir de banca, sentadilla y peso muerto, así que en máquinas el rango es aproximado.</item>
+    <item>No. Todo se guarda en el teléfono. Solo si conectas tu propio GitHub, los entrenos se copian a un archivo privado de tu cuenta.</item>
+    <item>Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su personaje, El Forzudo, como todas las apps de Fogón.</item>
+  </string-array>
+  <string name="idioma">Idioma</string>
+  <string name="idioma_telefono">El del teléfono</string>
+</resources>

@@ -37,29 +37,45 @@ class Biblioteca(
     }
 
     fun dias(rutinas: List<Rutina>): List<Dia> =
-        rutinas.map { r -> Dia(r, r.dow?.let { DIAS_LARGOS[it] } ?: "", r.items.map(::cfg)) }
+        rutinas.map { r -> Dia(r, r.dow?.let { Vocabulario.actual.diasLargos[it] } ?: "", r.items.map(::cfg)) }
 
     /** Ruta de la lámina (i = 0 inicio, 1 final) dentro de assets, o null si el ejercicio no tiene. */
     fun foto(id: String, i: Int): String? = if (id in laminas) "laminas/$id-${i + 1}.webp" else null
 
     companion object {
-        val DIAS_CORTOS = listOf("D", "L", "M", "X", "J", "V", "S")
-        val DIAS_LARGOS = listOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
-        val MESES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
-        val MESES_LARGOS = listOf(
-            "enero", "febrero", "marzo", "abril", "mayo", "junio",
-            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-        )
-
-        /** Carga la biblioteca a partir de una función que lee archivos de assets/datos. */
-        fun cargar(leer: (String) -> String): Biblioteca = Biblioteca(
-            ejercicios = JsonGym.decodeFromString(leer("ejercicios.json")),
-            programas = JsonGym.decodeFromString(leer("programas.json")),
-            estandares = JsonGym.decodeFromString(leer("estandares.json")),
-            niveles = JsonGym.decodeFromString(leer("rangos.json")),
-            musculos = JsonGym.decodeFromString(leer("musculos.json")),
-            cuerpo = JsonGym.decodeFromString(leer("modelo-cuerpo.json")),
-            laminas = JsonGym.decodeFromString<List<String>>(leer("laminas.json")).toSet(),
-        )
+        /**
+         * Carga la biblioteca a partir de una función que lee archivos de assets/datos.
+         * Con [idioma] distinto de "es" pone encima las traducciones de `datos/<idioma>/textos.json`
+         * (nombres, técnica, equipo, músculos, rangos y programas); lo que no esté traducido queda en español.
+         */
+        fun cargar(idioma: String = "es", leer: (String) -> String): Biblioteca {
+            var ejercicios = JsonGym.decodeFromString<List<Ejercicio>>(leer("ejercicios.json"))
+            var programas = JsonGym.decodeFromString<List<Programa>>(leer("programas.json"))
+            var niveles = JsonGym.decodeFromString<List<Nivel>>(leer("rangos.json"))
+            var musculos = JsonGym.decodeFromString<List<Musculo>>(leer("musculos.json"))
+            val t = if (idioma == "es") null else runCatching { JsonGym.decodeFromString<Traduccion>(leer("$idioma/textos.json")) }.getOrNull()
+            if (t != null) {
+                ejercicios = ejercicios.map { e ->
+                    val x = t.ejercicios[e.id]
+                    e.copy(n = x?.n ?: e.n, cue = x?.cue ?: e.cue, eq = t.equipos[e.eq] ?: e.eq)
+                }
+                programas = programas.map { p ->
+                    val x = t.programas[p.key] ?: return@map p
+                    p.copy(name = x.name ?: p.name, level = x.level ?: p.level, goal = x.goal ?: p.goal, desc = x.desc ?: p.desc,
+                        routines = p.routines.map { r -> r.copy(title = x.rutinas[r.id] ?: r.title) })
+                }
+                niveles = niveles.mapIndexed { i, n -> n.copy(n = t.rangos.getOrNull(i) ?: n.n) }
+                musculos = musculos.map { m -> m.copy(n = t.musculos[m.id] ?: m.n) }
+            }
+            return Biblioteca(
+                ejercicios = ejercicios,
+                programas = programas,
+                estandares = JsonGym.decodeFromString(leer("estandares.json")),
+                niveles = niveles,
+                musculos = musculos,
+                cuerpo = JsonGym.decodeFromString(leer("modelo-cuerpo.json")),
+                laminas = JsonGym.decodeFromString<List<String>>(leer("laminas.json")).toSet(),
+            )
+        }
     }
 }

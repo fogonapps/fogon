@@ -1,5 +1,6 @@
 package io.github.fogonapps.identidad
 
+import androidx.compose.ui.res.stringResource
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.DrawableRes
@@ -203,38 +204,40 @@ fun AcercaDeFogon(
     ) {
         Personaje(personaje, nombrePersonaje, tamano = 150.dp)
         Text(nombreApp, style = MaterialTheme.typography.headlineMedium, color = f.texto)
-        Text(if (nombrePersonaje == nombreApp) "versión $version" else "$nombrePersonaje · versión $version", style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        Text(if (nombrePersonaje == nombreApp) stringResource(R.string.fogon_version, version) else "$nombrePersonaje · " + stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(
             painterResource(if (f.oscuro) R.drawable.fogon_logotipo_claro else R.drawable.fogon_logotipo),
-            contentDescription = "Hecha en el Fogón",
+            contentDescription = stringResource(R.string.fogon_hecha),
             modifier = Modifier.padding(top = 8.dp).size(width = 180.dp, height = 82.dp),
         )
-        Text("Hecha en el Fogón", style = MaterialTheme.typography.titleLarge, color = f.texto)
+        Text(stringResource(R.string.fogon_hecha), style = MaterialTheme.typography.titleLarge, color = f.texto)
         Text(
-            "Sin anuncios · Sin rastreo · Código abierto",
+            stringResource(R.string.fogon_sin_anuncios),
             style = MaterialTheme.typography.labelLarge, color = f.acentoTexto, textAlign = TextAlign.Center,
         )
         Text(
-            "Tu atención vale más que un anuncio.",
+            stringResource(R.string.fogon_lema),
             style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, textAlign = TextAlign.Center,
         )
-        BotonRiso("Leer el manifiesto", onVerManifiesto)
-        BotonSecundario("Licencias", onVerLicencias)
-        // El enlace al código aparece cuando exista el repositorio público.
-        URL_CODIGO?.let { url -> BotonSecundario("Ver el código", { onAbrirEnlace(url) }) }
+        BotonRiso(stringResource(R.string.fogon_leer_manifiesto), onVerManifiesto)
+        BotonSecundario(stringResource(R.string.fogon_licencias), onVerLicencias)
+        URL_CODIGO?.let { url -> BotonSecundario(stringResource(R.string.fogon_ver_codigo), { onAbrirEnlace(url) }) }
         creditos.forEach {
             Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
         }
         Text(
-            "Licencia GPL-3.0 o posterior.",
+            stringResource(R.string.fogon_licencia_gpl),
             style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center,
         )
         avisoSalud?.let {
-            Text("Aviso de salud", style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
+            Text(stringResource(R.string.fogon_aviso_salud), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
             Text(it, style = MaterialTheme.typography.bodyMedium, color = f.texto, textAlign = TextAlign.Center)
         }
     }
 }
 
-/** Dirección del código público. Null mientras no exista la organización en GitHub. */
-val URL_CODIGO: String? = null
+/** Dirección del código público (null si una app todavía no lo tiene). */
+val URL_CODIGO: String? = "https://github.com/fogonapps/fogon"
+
+/** Correo de Fogón para reportes y sugerencias. Null hasta que exista: sin él, las apps solo ofrecen GitHub. */
+val CORREO_FOGON: String? = null

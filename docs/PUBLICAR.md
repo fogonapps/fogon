@@ -74,7 +74,7 @@ Revisado contra la documentación de F-Droid el 21-10-2026 (Inclusion Policy, Qu
   PATH=~/Android/Sdk/build-tools/37.0.0:$PATH apksigcopier compare <apk firmado> --unsigned apps/forzudo/build/outputs/apk/release/forzudo-release-unsigned.apk
   ```
   Si no imprime nada y termina con código 0, coinciden.
-- **Ficha de la app** en `apps/forzudo/fastlane/metadata/android/`: textos en `es` y `en-US` (el idioma que F-Droid muestra si no hay otro), ícono, 5 capturas (sacadas del emulador con datos de prueba, no reales) y `changelogs/<versionCode>.txt` de máximo 500 caracteres. Para cada versión nueva hay que agregar su changelog en los dos idiomas.
+- **Ficha de la app** en `apps/forzudo/fastlane/metadata/android/`: textos en `es` y `en-US` (el idioma que F-Droid muestra si no hay otro), ícono, capturas en español (`es`, 5) y en inglés (`en-US`, 4), sacadas del emulador con datos de prueba, no reales y `changelogs/<versionCode>.txt` de máximo 500 caracteres. Para cada versión nueva hay que agregar su changelog en los dos idiomas.
 - **Receta** (borrador): `apps/forzudo/fdroid/io.github.fogonapps.forzudo.yml`. Categorías `Workout` y `Sports & Health`, `Binaries` apuntando a GitHub Releases, `AllowedAPKSigningKeys` con nuestro certificado y actualizaciones automáticas por las etiquetas `forzudo-v*`.
 - **Java:** el servidor de F-Droid usa Debian trixie, que trae Java 21 por defecto, la misma versión que usamos.
 

@@ -1,6 +1,8 @@
 package io.github.fogonapps.forzudo.ui
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,21 +47,15 @@ import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.R
 import kotlinx.coroutines.launch
 
-private data class Paso(@DrawableRes val dibujo: Int, val titulo: String, val texto: String)
+private data class Paso(@DrawableRes val dibujo: Int, @StringRes val titulo: Int, @StringRes val texto: Int)
 
 private val pasos = listOf(
-    Paso(R.drawable.munieco_tut_hola, "¡Hola! Soy El Forzudo",
-        "Tu cuaderno de entrenos. Sin anuncios, sin rastreo y gratis de verdad. Tus datos se quedan en tu teléfono y, si lo prefieres, también en tu propia nube."),
-    Paso(R.drawable.munieco_tut_anota, "Entrena y anota",
-        "En Entrenar escoge tu rutina y toca Empezar. Escribe el peso y las repeticiones de cada serie y márcala con ✓. Al marcarla arranca el descanso y te aviso cuando termine. Si tocas lo que hiciste la vez anterior, se copia solo."),
-    Paso(R.drawable.munieco_tut_racha, "Tu racha es de verdad",
-        "Una semana cuenta cuando completas todas las rutinas de tu programa. No se puede marcar a mano: la racha la ganas entrenando."),
-    Paso(R.drawable.munieco_tut_rangos, "Sube de rango",
-        "Registra tu peso corporal en Perfil y verás tu rango en cada músculo, de Hierro a Diamante, con la próxima meta para subir. Los récords nuevos salen con la chispa."),
-    Paso(R.drawable.munieco_tut_hola, "Escucha a tu cuerpo",
-        "Te ayudo a llevar la cuenta, pero no soy un médico ni un entrenador. Si tienes una lesión o una condición de salud, consulta a un profesional antes de empezar. Si sientes dolor, mareo o falta de aire, para."),
-    Paso(R.drawable.munieco_tut_datos, "Tus datos son tuyos",
-        "Puedes exportar un respaldo cuando quieras. Si conectas tu GitHub (opcional), tus entrenos se guardan solos en un archivo privado de tu cuenta."),
+    Paso(R.drawable.munieco_tut_hola, R.string.tut_hola, R.string.tut_hola_texto),
+    Paso(R.drawable.munieco_tut_anota, R.string.tut_anota, R.string.tut_anota_texto),
+    Paso(R.drawable.munieco_tut_racha, R.string.tut_racha, R.string.tut_racha_texto),
+    Paso(R.drawable.munieco_tut_rangos, R.string.tut_rangos, R.string.tut_rangos_texto),
+    Paso(R.drawable.munieco_tut_hola, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
+    Paso(R.drawable.munieco_tut_datos, R.string.tut_datos, R.string.tut_datos_texto),
 )
 
 @Composable
@@ -75,7 +71,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
     Box(Modifier.fillMaxSize().background(f.fondo).granoPapel(f.oscuro).safeDrawingPadding()) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
-                TextButton(terminar) { Text("Saltar", fontWeight = FontWeight.Bold, color = f.acentoTexto) }
+                TextButton(terminar) { Text(stringResource(R.string.saltar), fontWeight = FontWeight.Bold, color = f.acentoTexto) }
             }
             HorizontalPager(estado, Modifier.weight(1f)) { i ->
                 val p = pasos[i]
@@ -84,13 +80,14 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     Image(painterResource(p.dibujo), null, Modifier.size(220.dp))
-                    Text(p.titulo, style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
-                    Text(p.texto, style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
-                    if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text("¿Cómo te llamas?") }, modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(p.titulo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
+                    Text(stringResource(p.texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
+                    if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())
                 }
             }
+            val paso = stringResource(R.string.tut_paso, estado.currentPage + 1, pasos.size)
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 12.dp).semantics { contentDescription = "Paso ${estado.currentPage + 1} de ${pasos.size}" },
+                Modifier.fillMaxWidth().padding(vertical = 12.dp).semantics { contentDescription = paso },
                 horizontalArrangement = Arrangement.Center,
             ) {
                 pasos.indices.forEach { i ->
@@ -100,7 +97,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
             }
             val ultimo = estado.currentPage == pasos.lastIndex
             BotonRiso(
-                if (ultimo) "¡A entrenar!" else "Siguiente",
+                stringResource(if (ultimo) R.string.tut_a_entrenar else R.string.siguiente),
                 { if (ultimo) terminar() else alcance.launch { estado.animateScrollToPage(estado.currentPage + 1) } },
                 Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             )

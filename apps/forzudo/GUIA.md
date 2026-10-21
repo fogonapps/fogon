@@ -43,18 +43,32 @@ Cada cambio que llega al teléfono es una versión nueva. Hay que seguir el orde
 
 Obtainium avisa solo en el teléfono cuando aparece la versión en GitHub.
 
-## Cambiar textos
+## Cambiar textos e idiomas
 
-| Texto | Dónde |
-|-------|-------|
-| Pasos del tutorial | `ui/Tutorial.kt`, lista `pasos`. |
-| Preguntas frecuentes | `ui/Pantallas.kt`, lista `PREGUNTAS`. **También en el `README.md`** → "Preguntas frecuentes": si cambia una, se cambia en los dos. |
-| Aviso de salud | `ui/Pantallas.kt`, `AVISO_SALUD`. |
-| Créditos y licencias de la app | `ui/Pantallas.kt`, función `Licencias` (los comunes a todas las apps están en `core/identidad/.../Licencias.kt`). |
-| Técnica de cada ejercicio | `src/main/assets/datos/ejercicios.json`, campo `cue`. |
-| Pestañas (Inicio, Entrenar, Rangos, Perfil) | `ui/Pestanas.kt`. |
-| Manifiesto | `core/identidad/.../Manifiesto.kt` (es el mismo en todas las apps). |
+La app está en **español e inglés**. Ningún texto que se vea en pantalla va escrito en el código: todos están en los archivos de idioma.
+
+| Qué | Dónde |
+|-----|-------|
+| Textos de la app | `src/main/res/values-es/strings.xml` (español) y `src/main/res/values/strings.xml` (inglés, el que Android usa si el teléfono está en otro idioma). Cada texto tiene un nombre (`<string name="tut_hola">`) y se cambia **en los dos archivos**. |
+| Textos comunes a todas las apps (Manifiesto, Acerca de, Licencias) | `core/identidad/src/main/res/values{,-es}/strings.xml`. Todos empiezan con `fogon_`, para no chocar con los de una app. |
+| Preguntas frecuentes | Arreglos `preguntas` y `respuestas` de `strings.xml`. **También en el `README.md`** → "Preguntas frecuentes": si cambia una, se cambia en los dos lados. |
+| Nombre y técnica de cada ejercicio, equipos, músculos, rangos y programas | En español en `src/main/assets/datos/*.json`; en inglés, en `src/main/assets/datos/en/textos.json`. |
+| Palabras de la lógica (meses, "reps", consejos de cada serie) | Textos `voc_*` y arreglos `meses`, `dias_*` de `strings.xml`. `Textos.kt` los pasa al `Vocabulario` que usa `Logica.kt`. |
 | Descripción en F-Droid | `fastlane/metadata/android/{es,en-US}/` (`title.txt`, `short_description.txt` de máximo 80 caracteres y sin punto final, `full_description.txt`). |
+
+**Reglas de los textos:**
+- **Los datos variables** van como `%1$s` (texto) o `%1$d` (número), en el mismo orden de los dos idiomas.
+- **Lo que depende de la cantidad** ("1 entreno", "3 entrenos") va como `<plurals>`. En español lleva `one`, `many` y `other`.
+- **Apóstrofes y comillas** se escriben `\'` y `\"`. En inglés se usa `’`, que no necesita escaparse.
+- **En pantalla** se leen con `stringResource(R.string.x)` (o `pluralStringResource`, `stringArrayResource`). Dentro de una acción (por ejemplo, al tocar un botón) se usa `vm.tx(R.string.x)`, nunca `LocalContext.current.getString`, porque no se entera del cambio de idioma y lint lo marca como error.
+- **La prueba `TraduccionTest`** falla si un texto está en un idioma y no en el otro, si las dos versiones tienen distintos datos variables, o si a un ejercicio le falta la traducción.
+
+**Agregar un idioma** (por ejemplo, portugués):
+1. Crear `values-pt/strings.xml` en la app y en `core/identidad`, con todos los textos.
+2. Crear `assets/datos/pt/textos.json` con la misma forma que el de inglés.
+3. Agregarlo a `Idioma.DISPONIBLES` (`core/identidad/.../Idioma.kt`).
+4. Agregar en `Textos.kt` cómo se escriben los números en ese idioma (si no, usa los del código del idioma).
+5. Ampliar `TraduccionTest` para que revise el idioma nuevo, y agregar su ficha en `fastlane/metadata/android/<código>/`.
 
 El código de la app está en `src/main/java/io/github/fogonapps/forzudo/`.
 
@@ -77,7 +91,7 @@ Están en `src/main/assets/datos/ejercicios.json`. Cada ejercicio:
 | `std` | Clave en la tabla de fuerza (`estandares.json`), o `null` si no cuenta para rangos. | `"bench"` |
 
 **Agregar uno:**
-1. Agregar la entrada en `ejercicios.json`.
+1. Agregar la entrada en `ejercicios.json`, y su nombre y técnica en inglés en `datos/en/textos.json` (la prueba `TraduccionTest` falla si falta).
 2. Si cuenta para rangos, agregar su clave a `herramientas/estandares.py` (en `DERIVADOS`: ejercicio base, razón y si es mancuerna o máquina) y regenerar la tabla:
    ```
    python3 apps/forzudo/herramientas/estandares.py apps/forzudo/src/main/assets/datos/estandares.json
@@ -161,7 +175,7 @@ Se cambian en `herramientas/estandares.py` y se regeneran con el comando de la s
 - **Instalar siempre encima** de la versión anterior: así se prueba que no se borran los datos.
 - **Al final, `logcat -b crash -d` no debe mostrar nada.**
 - **Datos de prueba sin usar los de nadie:** `node herramientas/datos-prueba.js src/main/assets/datos <salida.json>`, desde `apps/forzudo`, da un estado con unos 100 entrenos inventados. Se toma lo que está bajo `"estado"` (sin `active`) y se importa desde Perfil → Importar.
-- **Capturas limpias** (para F-Droid): con el modo demo de Android (`settings put global sysui_demo_allowed 1` y `am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000`), y `adb exec-out screencap -p`. Van en `fastlane/metadata/android/en-US/images/phoneScreenshots/` como JPEG, porque en PNG el grano del papel pesa varios MB.
+- **Capturas limpias** (para F-Droid): con el modo demo de Android (`settings put global sysui_demo_allowed 1` y `am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000`), y `adb exec-out screencap -p`. Van en `fastlane/metadata/android/<idioma>/images/phoneScreenshots/` (`es` con la app en español, `en-US` en inglés) como JPEG, porque en PNG el grano del papel pesa varios MB.
 
 ## Probar en el teléfono
 

@@ -35,22 +35,22 @@ fun semanasDelMes(mes: String): List<String> {
 
 fun etiquetaSemana(ws: String): String {
     val a = fecha(ws); val b = a.plusDays(6)
-    return "${a.dayOfMonth}–${b.dayOfMonth} ${Biblioteca.MESES[b.monthValue - 1]}"
+    return "${a.dayOfMonth}–${b.dayOfMonth} ${Vocabulario.actual.meses[b.monthValue - 1]}"
 }
 
-fun fechaCorta(s: String): String { val d = fecha(s); return "${d.dayOfMonth} ${Biblioteca.MESES[d.monthValue - 1]}" }
+fun fechaCorta(s: String): String { val d = fecha(s); return "${d.dayOfMonth} ${Vocabulario.actual.meses[d.monthValue - 1]}" }
 
 /* ----- Formatos ----- */
 
-/** Número con coma decimal y máximo 2 decimales (como fk() en la web). */
+/** Número con máximo 2 decimales y el separador decimal del idioma (como fk() en la web, que usa coma). */
 fun fk(n: Double?): String {
     if (n == null) return "–"
     val r = Math.round(n * 100) / 100.0
     val s = if (r == floor(r)) r.toLong().toString() else r.toString()
-    return s.replace(".", ",")
+    return s.replace('.', Vocabulario.actual.decimal)
 }
 
-fun fmtVol(n: Double): String = "%,d kg".format(java.util.Locale.forLanguageTag("es-CO"), n.roundToLong())
+fun fmtVol(n: Double): String = "%,d kg".format(Vocabulario.actual.numeros, n.roundToLong())
 
 fun duracion(ms: Long): String {
     val s = max(0, ms / 1000); val h = s / 3600; val m = s % 3600 / 60; val x = s % 60
@@ -98,7 +98,7 @@ class Logica(val b: Biblioteca) {
     }
 
     fun tituloRutina(s: Sesion, dias: List<Dia>): String =
-        s.title ?: dias.firstOrNull { it.id == s.day }?.title ?: "Entreno"
+        s.title ?: dias.firstOrNull { it.id == s.day }?.title ?: Vocabulario.actual.entreno
 
     /* Semanas y constancia */
 
@@ -142,28 +142,29 @@ class Logica(val b: Biblioteca) {
     fun maxReps(e: Estado, id: String): Double? =
         e.sessions.flatMap { it.entries[id].orEmpty() }.mapNotNull { it.reps }.maxOrNull()
 
-    fun unidad(ej: Ejercicio) = if (ej.kind == "s") "seg" else "reps"
+    fun unidad(ej: Ejercicio) = if (ej.kind == "s") Vocabulario.actual.seg else Vocabulario.actual.reps
 
     /** Meta de la serie y el consejo (lo que va en negrita en la web). */
     fun meta(e: Estado, c: EjercicioCfg): Pair<String, String?> {
         val p = anterior(e, c.id)
         val r = "${c.lo}" + if (c.hi != c.lo) "–${c.hi}" else ""
+        val v = Vocabulario.actual
         var t: String? = null
         if (p != null) {
             val reps = p.mapNotNull { it.reps }
             val kg = p.firstOrNull { it.kg != null }?.kg
             t = when {
-                reps.isEmpty() -> "Usa el mismo peso y anota las reps"
+                reps.isEmpty() -> v.mismoPeso
                 reps.size >= c.sets && reps.all { it >= c.hi } -> when (c.e.kind) {
-                    "w" -> "Sube el peso hoy"
-                    "s" -> "Súbele 10 segundos"
-                    else -> "Hazlas más lentas o con peso"
+                    "w" -> v.subePeso
+                    "s" -> v.mas10s
+                    else -> v.masLento
                 }
-                reps.any { it < c.lo } -> "Mantén ${fk(kg)} kg"
-                else -> "Busca +1 rep por serie"
+                reps.any { it < c.lo } -> v.manten.format(fk(kg))
+                else -> v.masUnaRep
             }
         }
-        return "Meta ${c.sets} × $r ${unidad(c.e)}" to t
+        return v.meta.format(c.sets, r, unidad(c.e)) to t
     }
 
     /* Rangos de fuerza */

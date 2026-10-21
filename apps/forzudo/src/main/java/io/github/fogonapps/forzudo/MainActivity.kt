@@ -23,6 +23,8 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.forzudo.datos.Estado
@@ -31,6 +33,8 @@ import io.github.fogonapps.forzudo.ui.App
 
 class MainActivity : ComponentActivity() {
     private val vm: GymViewModel by viewModels()
+
+    override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(io.github.fogonapps.identidad.Idioma.envolver(base))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val arranque = installSplashScreen()
@@ -47,7 +51,7 @@ class MainActivity : ComponentActivity() {
                 val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
                     if (uri != null) runCatching {
                         contentResolver.openOutputStream(uri)?.use { it.write(vm.textoRespaldo().encodeToByteArray()) }
-                    }.onSuccess { aviso("Respaldo guardado") }.onFailure { aviso("No se pudo exportar") }
+                    }.onSuccess { aviso(getString(R.string.aviso_respaldo_guardado)) }.onFailure { aviso(getString(R.string.aviso_no_exportado)) }
                 }
                 var porImportar by remember { mutableStateOf<Estado?>(null) }
                 val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -60,16 +64,16 @@ class MainActivity : ComponentActivity() {
                             }
                         }.getOrNull()
                         val d = texto?.let { vm.leerRespaldo(it) }
-                        if (d == null) aviso("Ese archivo no es un respaldo de El Forzudo") else porImportar = d
+                        if (d == null) aviso(getString(R.string.aviso_no_es_respaldo)) else porImportar = d
                     }
                 }
                 porImportar?.let { d ->
                     AlertDialog(
                         onDismissRequest = { porImportar = null },
-                        title = { Text("¿Importar el respaldo?") },
-                        text = { Text("Esto reemplaza los datos de este teléfono con los del respaldo (${d.sessions.size} entrenos).") },
-                        confirmButton = { TextButton({ vm.importar(d); porImportar = null }) { Text("Sí, importar") } },
-                        dismissButton = { TextButton({ porImportar = null }) { Text("Cancelar") } },
+                        title = { Text(stringResource(R.string.importar_titulo)) },
+                        text = { Text(pluralStringResource(R.plurals.importar_texto, d.sessions.size, d.sessions.size)) },
+                        confirmButton = { TextButton({ vm.importar(d); porImportar = null }) { Text(stringResource(R.string.importar_si)) } },
+                        dismissButton = { TextButton({ porImportar = null }) { Text(stringResource(R.string.cancelar)) } },
                     )
                 }
 

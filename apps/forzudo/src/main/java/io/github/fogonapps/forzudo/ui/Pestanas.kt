@@ -1,5 +1,12 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.Idioma
+import androidx.compose.material3.FilterChip
+import io.github.fogonapps.forzudo.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,6 +68,7 @@ import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.Pantalla
 import io.github.fogonapps.forzudo.Pestana
 import io.github.fogonapps.forzudo.Sync
+import io.github.fogonapps.forzudo.datos.Vocabulario
 import io.github.fogonapps.forzudo.datos.Biblioteca
 import io.github.fogonapps.forzudo.datos.ClienteGist
 import io.github.fogonapps.forzudo.datos.Estado
@@ -103,22 +111,23 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("${racha.actual}", style = MaterialTheme.typography.displayLarge, color = f.acentoTexto)
                     Text(
-                        (if (racha.actual == 1) "semana seguida" else "semanas seguidas").uppercase(),
+                        pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(),
                         style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.sp, lineHeight = 20.sp), color = f.texto,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
                 Text(
-                    (if (racha.actual > 0) "cumpliendo tu semana" else "Completa todos tus entrenos de la semana para empezar tu racha") +
-                        " · Mejor racha: ${racha.mejor}",
+                    stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar) +
+                        " · " + stringResource(R.string.racha_mejor, racha.mejor),
                     style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
                 )
             }
         }
 
-        Seccion("Esta semana: ${hechos.size} de ${plural(dias.size, "entreno")}") {
+        Seccion(stringResource(R.string.esta_semana, hechos.size, pluralStringResource(R.plurals.entrenos, dias.size, dias.size))) {
             val hoyId = L.diaDeHoy(dias, hoy)
             FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val estHecho = stringResource(R.string.dia_hecho); val estPendiente = stringResource(R.string.dia_pendiente)
                 dias.forEachIndexed { i, d ->
                     val hecho = d.id in hechos
                     Column(
@@ -126,55 +135,56 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                             .background(if (hecho) f.paleta.tinta else f.superficie)
                             .then(if (d.id == hoyId) Modifier.border(2.dp, f.paleta.segunda, RoundedCornerShape(12.dp)) else Modifier)
                             .padding(vertical = 8.dp, horizontal = 4.dp)
-                            .semantics { stateDescription = if (hecho) "hecho" else "pendiente" },
+                            .semantics { stateDescription = if (hecho) estHecho else estPendiente },
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         val c = if (hecho) f.paleta.sobreTinta else f.texto
-                        Text(d.dow?.let { Biblioteca.DIAS_CORTOS[it] } ?: "${i + 1}", style = MaterialTheme.typography.labelLarge, color = c)
+                        Text(d.dow?.let { Vocabulario.actual.diasCortos[it] } ?: "${i + 1}", style = MaterialTheme.typography.labelLarge, color = c)
                         Text(d.title, style = MaterialTheme.typography.labelSmall, color = c, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
         }
 
-        Seccion("Semanas de ${Biblioteca.MESES_LARGOS[mes.takeLast(2).toInt() - 1]}") {
+        Seccion(stringResource(R.string.semanas_de, Vocabulario.actual.mesesLargos[mes.takeLast(2).toInt() - 1])) {
             FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val estCompleta = stringResource(R.string.semana_completa); val estIncompleta = stringResource(R.string.semana_incompleta)
                 semanasDelMes(mes).forEachIndexed { i, w ->
                     val hecha = L.semanaHecha(e, w, dias)
                     Column(
                         Modifier.clip(RoundedCornerShape(12.dp))
                             .background(if (hecha) f.paleta.tinta else f.superficie)
-                            .semantics { stateDescription = if (hecha) "semana completa" else "semana sin completar" }
+                            .semantics { stateDescription = if (hecha) estCompleta else estIncompleta }
                             .heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
                         val c = if (hecha) f.paleta.sobreTinta else f.texto
-                        Text("Sem ${i + 1}", style = MaterialTheme.typography.labelLarge, color = c)
+                        Text(stringResource(R.string.semana_corta, i + 1), style = MaterialTheme.typography.labelLarge, color = c)
                         Text(etiquetaSemana(w), style = MaterialTheme.typography.labelSmall, color = c)
                     }
                 }
             }
-            Pista("Una semana se pinta sola cuando completas todas las rutinas de tu programa. La racha se gana entrenando.")
+            Pista(stringResource(R.string.pista_semanas))
         }
 
         val meses = (e.sessions.map { it.date.take(7) } + e.weekMarks.keys.map { it.take(7) }).toSortedSet().toList().asReversed().filter { it != mes }
-        if (meses.isNotEmpty()) Seccion("Meses anteriores") {
+        if (meses.isNotEmpty()) Seccion(stringResource(R.string.meses_anteriores)) {
             meses.forEach { m ->
                 val w = semanasDelMes(m)
                 val dn = w.count { L.semanaHecha(e, it, dias) }
                 val n = e.sessions.count { it.date.startsWith(m) }
                 Fila {
-                    Text("${Biblioteca.MESES_LARGOS[m.takeLast(2).toInt() - 1].replaceFirstChar { it.uppercase() }} ${m.take(4)}", Modifier.weight(1f), color = f.texto)
-                    Text("$dn de ${plural(w.size, "semana")}, ${plural(n, "entreno")}", fontWeight = FontWeight.Bold, color = f.texto, style = MaterialTheme.typography.bodyMedium)
+                    Text("${Vocabulario.actual.mesesLargos[m.takeLast(2).toInt() - 1].replaceFirstChar { it.uppercase() }} ${m.take(4)}", Modifier.weight(1f), color = f.texto)
+                    Text(stringResource(R.string.mes_resumen, dn, pluralStringResource(R.plurals.semanas, w.size, w.size), pluralStringResource(R.plurals.entrenos, n, n)), fontWeight = FontWeight.Bold, color = f.texto, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
 
-        Seccion("Entrenos") {
+        Seccion(stringResource(R.string.titulo_entrenos)) {
             val lista = e.sessions.sortedByDescending { it.date }
             if (lista.isEmpty()) {
-                EstadoVacio(RId.drawable.personaje_el_forzudo, "Aún no tienes entrenos", "Ve a Entrenar y empieza una rutina.")
+                EstadoVacio(RId.drawable.personaje_el_forzudo, stringResource(R.string.sin_entrenos), stringResource(R.string.sin_entrenos_texto))
             } else lista.forEach { s ->
-                TarjetaEntreno(vm, s, dias) { confirmar("¿Borrar este entreno?", null) { vm.borrarSesion(s.id) } }
+                TarjetaEntreno(vm, s, dias) { confirmar(vm.tx(R.string.borrar_entreno_pregunta), null) { vm.borrarSesion(s.id) } }
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -194,18 +204,18 @@ private fun TarjetaEntreno(vm: GymViewModel, s: Sesion, dias: List<io.github.fog
             Text(fechaCorta(s.date), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            s.ms?.let { Dato("Tiempo", duracionPalabras(it)) }
-            Dato("Volumen", if (v > 0) fmtVol(v) else "–")
-            Dato("Series", "$n")
+            s.ms?.let { Dato(stringResource(R.string.tiempo), duracionPalabras(it)) }
+            Dato(stringResource(R.string.volumen), if (v > 0) fmtVol(v) else "–")
+            Dato(stringResource(R.string.series), "$n")
         }
         val ents = s.entries.entries.toList()
         ents.take(4).forEach { (k, a) ->
             Text("${a.size} × ${vm.bib.ex[k]?.n ?: k}", style = MaterialTheme.typography.bodyMedium, color = f.texto)
         }
-        if (ents.size > 4) Text("${ents.size - 4} ejercicios más", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        if (ents.size > 4) Text(pluralStringResource(R.plurals.ejercicios_mas, ents.size - 4, ents.size - 4), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BotonFecha("Fecha", s.date, vm.hoy(), { vm.fechaSesion(s.id, it) }, Modifier.weight(1f))
-            TextButton(onBorrar) { Text("Borrar entreno", color = MaterialTheme.colorScheme.error) }
+            BotonFecha(stringResource(R.string.fecha), s.date, vm.hoy(), { vm.fechaSesion(s.id, it) }, Modifier.weight(1f))
+            TextButton(onBorrar) { Text(stringResource(R.string.borrar_entreno), color = MaterialTheme.colorScheme.error) }
         }
     }
 }
@@ -229,46 +239,46 @@ fun Entrenar(vm: GymViewModel, e: Estado) {
     val prog = vm.bib.programas.firstOrNull { it.key == e.program }
     val confirmar = LocalConfirmar.current
     Column {
-        Seccion("Programa") {
+        Seccion(stringResource(R.string.programa)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text((prog?.name ?: "Personalizado") + if (prog != null && e.progEdited) " · modificado" else "",
+                    Text((prog?.name ?: stringResource(R.string.personalizado)) + if (prog != null && e.progEdited) " · " + stringResource(R.string.modificado) else "",
                         style = MaterialTheme.typography.titleLarge, color = f.texto)
-                    Text(prog?.let { "${it.level} · ${it.goal} · ${dias.size} días" } ?: "${dias.size} rutinas",
+                    Text(prog?.let { "${it.level} · ${it.goal} · " + pluralStringResource(R.plurals.dias, dias.size, dias.size) } ?: pluralStringResource(R.plurals.rutinas, dias.size, dias.size),
                         style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 }
-                BotonSecundario("Cambiar", { vm.abrir(Pantalla.Programas) })
+                BotonSecundario(stringResource(R.string.cambiar), { vm.abrir(Pantalla.Programas) })
             }
         }
-        Seccion("Mis rutinas (${dias.size})") {
+        Seccion(stringResource(R.string.mis_rutinas, dias.size)) {
             dias.forEach { d ->
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(14.dp))
                     .background(f.superficie).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(d.title, style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f))
-                        if (hoyId == d.id) Etiqueta("Hoy", f.paleta.tinta, f.paleta.sobreTinta)
-                        else if (d.dow != null) Text(Biblioteca.DIAS_LARGOS[d.dow!!], style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                        if (hoyId == d.id) Etiqueta(stringResource(R.string.hoy), f.paleta.tinta, f.paleta.sobreTinta)
+                        else if (d.dow != null) Text(Vocabulario.actual.diasLargos[d.dow!!], style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }
-                    Text(d.ejercicios.joinToString(", ") { it.e.n }.ifEmpty { "Sin ejercicios todavía" },
+                    Text(d.ejercicios.joinToString(", ") { it.e.n }.ifEmpty { stringResource(R.string.sin_ejercicios) },
                         style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         val a = e.active
                         when {
-                            a == null -> BotonRiso("Empezar", { vm.empezar(d.id) }, Modifier.weight(1f), habilitado = d.ejercicios.isNotEmpty())
-                            a.day == d.id -> BotonRiso("Volver al entreno", { vm.abrir(Pantalla.Vivo) }, Modifier.weight(1f))
-                            else -> BotonSecundario("Pasar el entreno actual aquí", {
+                            a == null -> BotonRiso(stringResource(R.string.empezar), { vm.empezar(d.id) }, Modifier.weight(1f), habilitado = d.ejercicios.isNotEmpty())
+                            a.day == d.id -> BotonRiso(stringResource(R.string.volver_al_entreno), { vm.abrir(Pantalla.Vivo) }, Modifier.weight(1f))
+                            else -> BotonSecundario(stringResource(R.string.pasar_entreno), {
                                 val perdidas = vm.seriesQueSePierden(d.id)
-                                confirmar("¿Cambiar el entreno en curso a ${d.title}?",
-                                    if (perdidas > 0) "Las series ya marcadas de ejercicios que no están en esa rutina se pierden." else null) {
+                                confirmar(vm.tx(R.string.pasar_entreno_pregunta, d.title),
+                                    if (perdidas > 0) vm.tx(R.string.series_se_pierden) else null) {
                                     vm.cambiarRutinaActiva(d.id); vm.abrir(Pantalla.Vivo)
                                 }
                             }, Modifier.weight(1f))
                         }
-                        BotonSecundario("Editar", { vm.abrir(Pantalla.Editor(d.id)) })
+                        BotonSecundario(stringResource(R.string.editar), { vm.abrir(Pantalla.Editor(d.id)) })
                     }
                 }
             }
-            Box(Modifier.padding(16.dp)) { BotonSecundario("+ Nueva rutina", { vm.nuevaRutina() }, Modifier.fillMaxWidth()) }
+            Box(Modifier.padding(16.dp)) { BotonSecundario(stringResource(R.string.mas_nueva_rutina), { vm.nuevaRutina() }, Modifier.fillMaxWidth()) }
         }
     }
 }
@@ -293,35 +303,35 @@ fun Rangos(vm: GymViewModel, e: Estado) {
     Column {
         if (bw == null) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Para calcular tus rangos necesito tu peso corporal, porque la fuerza se compara en relación a lo que pesas.", color = f.texto)
-                BotonRiso("Registrar mi peso", { vm.irA(Pestana.PERFIL) })
+                Text(stringResource(R.string.rangos_falta_peso), color = f.texto)
+                BotonRiso(stringResource(R.string.registrar_peso), { vm.irA(Pestana.PERFIL) })
             }
         } else {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Insignia(ov?.rango, 62.dp)
                 Column {
-                    Text("Rango general", style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                    Text(ov?.rango?.nombre ?: "Sin datos aún", style = MaterialTheme.typography.headlineSmall,
+                    Text(stringResource(R.string.rango_general), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                    Text(ov?.rango?.nombre ?: stringResource(R.string.sin_datos_aun), style = MaterialTheme.typography.headlineSmall,
                         color = ov?.rango?.let { colorHex(it.color) } ?: f.textoSuave)
-                    Text(ov?.let { "Promedio de ${plural(it.cuenta, "grupo muscular", "grupos musculares")} · peso corporal ${fk(bw)} kg" }
-                        ?: "Completa un entreno anotando peso y repeticiones", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    Text(ov?.let { pluralStringResource(R.plurals.promedio_grupos, it.cuenta, it.cuenta, fk(bw)) }
+                        ?: stringResource(R.string.completa_entreno), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 }
             }
         }
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            SegmentedButton(modo == "rango", { modo = "rango" }, SegmentedButtonDefaults.itemShape(0, 2), colors = coloresSegmento()) { Text("Rangos") }
-            SegmentedButton(modo == "semana", { modo = "semana" }, SegmentedButtonDefaults.itemShape(1, 2), colors = coloresSegmento()) { Text("Series esta semana") }
+            SegmentedButton(modo == "rango", { modo = "rango" }, SegmentedButtonDefaults.itemShape(0, 2), colors = coloresSegmento()) { Text(stringResource(R.string.pestana_rangos)) }
+            SegmentedButton(modo == "semana", { modo = "semana" }, SegmentedButtonDefaults.itemShape(1, 2), colors = coloresSegmento()) { Text(stringResource(R.string.series_semana)) }
         }
         val relleno: (String) -> Color? = if (modo == "rango") { g -> mr[g]?.rango?.let { colorHex(it.color) } }
         else { g -> ws[g]?.let { n -> f.paleta.tinta.copy(alpha = if (n >= 10) 1f else if (n >= 5) 0.62f else 0.32f) } }
         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                MapaCuerpo(vm.bib.cuerpo.front, relleno, "Vista de frente", Modifier.fillMaxWidth())
-                Text("Frente", style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                MapaCuerpo(vm.bib.cuerpo.front, relleno, stringResource(R.string.vista_frente), Modifier.fillMaxWidth())
+                Text(stringResource(R.string.frente), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
             }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                MapaCuerpo(vm.bib.cuerpo.back, relleno, "Vista de espalda", Modifier.fillMaxWidth())
-                Text("Espalda", style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                MapaCuerpo(vm.bib.cuerpo.back, relleno, stringResource(R.string.vista_espalda), Modifier.fillMaxWidth())
+                Text(stringResource(R.string.espalda), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
             }
         }
         if (modo == "rango") {
@@ -333,9 +343,9 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                     }
                 }
             }
-        } else Pista("Más intenso = más series. Para ganar músculo, apunta a unas 10 series por músculo a la semana.", centro = true)
+        } else Pista(stringResource(R.string.pista_series), centro = true)
 
-        Seccion(if (modo == "rango") "Rango por músculo" else "Series por músculo esta semana") {
+        Seccion(stringResource(if (modo == "rango") R.string.rango_por_musculo else R.string.series_por_musculo)) {
             vm.bib.musculos.forEach { m ->
                 if (modo == "semana") {
                     val n = ws[m.id] ?: 0
@@ -352,7 +362,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                         Insignia(null, 34.dp)
                         Column(Modifier.weight(1f)) {
                             Text(m.n, fontWeight = FontWeight.Bold, color = f.texto)
-                            Text(when { bw == null -> "Falta tu peso corporal"; m.id == "abdomen" -> "Se mide con el crunch en polea"; else -> "Sin registros todavía" },
+                            Text(stringResource(when { bw == null -> R.string.falta_peso; m.id == "abdomen" -> R.string.abdomen_crunch; else -> R.string.sin_registros_todavia }),
                                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         }
                     } else Fila({ vm.abrir(Pantalla.Musculo(m.id)) }) {
@@ -361,7 +371,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                             Text(m.n, fontWeight = FontWeight.Bold, color = f.texto)
                             Text(r.rango.nombre, color = colorHex(r.rango.color), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
                             Barra(L.progresoDivision(r.rango.s).toFloat(), colorHex(r.rango.color))
-                            Text(r.consejo?.let { "Próxima meta: ${fk(it.kg)} kg × ${it.reps} en ${vm.bib.ex[it.id]?.n}" } ?: "¡Rango máximo!",
+                            Text(r.consejo?.let { stringResource(R.string.proxima_meta, fk(it.kg), it.reps, vm.bib.ex[it.id]?.n ?: "") } ?: stringResource(R.string.rango_maximo),
                                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         }
                         Icon(Iconos.Siguiente, null, tint = f.textoSuave)
@@ -369,15 +379,9 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 }
             }
         }
-        Seccion("¿Cómo se calcula?") {
-            listOf(
-                "1. De cada ejercicio tomo tu mejor serie y estimo tu máximo de 1 repetición (fórmula de Epley).",
-                "2. Lo comparo con la tabla de fuerza de Fogón, ajustada a tu peso corporal. Banca, sentadilla y peso muerto se calibraron con miles de resultados de competencias de powerlifting (OpenPowerlifting); el resto de ejercicios se estima a partir de esos tres.",
-                "3. Rangos: Hierro (empezando) · Bronce (principiante) · Plata (novato) · Oro (intermedio) · Platino (avanzado, al nivel de quien empieza a competir) · Diamante (élite, más fuerte que ~3 de cada 4 competidores). Cada rango tiene 3 divisiones: III, II y I.",
-                "4. El rango de cada músculo es el promedio de sus 2 mejores ejercicios, y el general es el promedio de todos tus músculos.",
-                "5. En mancuernas anota el peso de una mancuerna. En máquinas y poleas el rango es aproximado, porque el peso marcado cambia según la máquina. Plancha, elevaciones y zancadas sin peso no cuentan.",
-            ).forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
-            Pista("Estándares: modelo de Fogón con datos de OpenPowerlifting (dominio público) · Dibujos: Everkinetic (CC BY-SA 4.0) · Modelo muscular: react-body-highlighter (licencia MIT). Detalles en Perfil → Acerca de El Forzudo → Licencias")
+        Seccion(stringResource(R.string.como_se_calcula)) {
+            stringArrayResource(R.array.como_se_calcula_pasos).forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            Pista(stringResource(R.string.creditos_rangos))
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -407,23 +411,23 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
                 Text((e.nombre ?: "?").take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = f.paleta.sobreTinta)
             }
             Column(Modifier.weight(1f)) {
-                Text(e.nombre ?: "Sin nombre", style = MaterialTheme.typography.headlineSmall, color = f.texto)
-                Text(plural(e.sessions.size, "entreno guardado", "entrenos guardados"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text(e.nombre ?: stringResource(R.string.sin_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+                Text(pluralStringResource(R.plurals.entrenos_guardados, e.sessions.size, e.sessions.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
-            TextButton({ editandoNombre = true }) { Text("Cambiar nombre") }
+            TextButton({ editandoNombre = true }) { Text(stringResource(R.string.cambiar_nombre)) }
         }
         if (editandoNombre) DialogoNombre(e.nombre ?: "", { vm.ponerNombre(it); editandoNombre = false }) { editandoNombre = false }
-        Trio("Entrenos" to "${e.sessions.size}", "Volumen total" to (if (total > 0) fmtVol(total) else "–"), "Peso" to (pesos.lastOrNull()?.let { fk(it.kg) + " kg" } ?: "–"))
+        Trio(stringResource(R.string.titulo_entrenos) to "${e.sessions.size}", stringResource(R.string.volumen_total) to (if (total > 0) fmtVol(total) else "–"), stringResource(R.string.peso) to (pesos.lastOrNull()?.let { fk(it.kg) + " kg" } ?: "–"))
 
-        Seccion("Peso corporal (1 vez por semana, en ayunas)") {
+        Seccion(stringResource(R.string.peso_corporal_titulo)) {
             var texto by remember { mutableStateOf("") }
             // Cambia cada vez que se guarda, para que el campo quede vacío.
             var guardados by remember { mutableIntStateOf(0) }
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                key(guardados) { CampoNumero("", "Tu peso en kg", "Peso corporal en kg", true, { texto = it }, Modifier.weight(1f)) }
-                BotonRiso("Guardar", { if (vm.registrarPeso(texto)) { texto = ""; guardados++ } })
+                key(guardados) { CampoNumero("", stringResource(R.string.tu_peso_kg), stringResource(R.string.peso_corporal_kg), true, { texto = it }, Modifier.weight(1f)) }
+                BotonRiso(stringResource(R.string.guardar), { if (vm.registrarPeso(texto)) { texto = ""; guardados++ } })
             }
-            if (pesos.isEmpty()) Pista("Meta: subir de 0,25 a 0,5 kg por semana.")
+            if (pesos.isEmpty()) Pista(stringResource(R.string.meta_peso))
             else {
                 Grafica(pesos.map { it.date to it.kg })
                 pesos.reversed().take(5).forEach { p ->
@@ -432,26 +436,28 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
             }
         }
 
-        Seccion("Constancia") {
+        Seccion(stringResource(R.string.constancia)) {
             val anioHoy = vm.hoy().year
             val desde = minOf(anioHoy, e.sessions.minOfOrNull { it.date.take(4).toInt() } ?: anioHoy)
             val dias = e.sessions.map { it.date }.toSet()
             for (a in anioHoy downTo desde) MapaAnual(a, dias, vm.hoy())
-            Pista("Cada cuadrito es un día; los de color son días que entrenaste.")
+            Pista(stringResource(R.string.pista_mapa_anual))
         }
 
-        Seccion("Sincronización en la nube") { CajaSync(vm, sync, confirmar) }
+        Seccion(stringResource(R.string.idioma)) { SelectorIdioma(vm) }
 
-        Seccion("Respaldo de tus datos") {
+        Seccion(stringResource(R.string.sync_titulo)) { CajaSync(vm, sync, confirmar) }
+
+        Seccion(stringResource(R.string.respaldo_titulo)) {
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                BotonSecundario("Exportar", onExportar, Modifier.weight(1f))
-                BotonSecundario("Importar", onImportar, Modifier.weight(1f))
+                BotonSecundario(stringResource(R.string.exportar), onExportar, Modifier.weight(1f))
+                BotonSecundario(stringResource(R.string.importar), onImportar, Modifier.weight(1f))
             }
-            Pista("Copia manual extra. Exporta un archivo y guárdalo donde quieras; si algún día lo necesitas, lo importas.")
+            Pista(stringResource(R.string.pista_respaldo))
         }
 
         val usados = (L.dias(e).flatMap { d -> d.rutina.items.map { it.id } } + e.sessions.flatMap { it.entries.keys }).toSet()
-        Seccion("Ejercicios") {
+        Seccion(stringResource(R.string.ejercicios)) {
             vm.bib.ejercicios.filter { it.id in usados }.forEach { ej ->
                 val mk = L.maxKg(e, ej.id); val mxr = L.maxReps(e, ej.id); val r = L.rangoEjercicio(e, ej.id)
                 Fila({ vm.abrir(Pantalla.Detalle(ej.id)) }) {
@@ -461,8 +467,8 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
                         Row {
                             r?.let { Text(it.rango.nombre + " · ", color = colorHex(it.rango.color), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall) }
                             Text(
-                                if (ej.kind == "w") mk?.let { "Récord: ${fk(it)} kg" } ?: "Sin registros"
-                                else mxr?.let { "Récord: ${fk(it)} ${L.unidad(ej)}" } ?: "Sin registros",
+                                if (ej.kind == "w") mk?.let { stringResource(R.string.record_kg, fk(it)) } ?: stringResource(R.string.sin_registros)
+                                else mxr?.let { stringResource(R.string.record, fk(it), L.unidad(ej)) } ?: stringResource(R.string.sin_registros),
                                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
                             )
                         }
@@ -472,12 +478,30 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
             }
         }
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            BotonSecundario("Ver el tutorial", { vm.verTutorial() }, Modifier.fillMaxWidth())
-            BotonSecundario("Manifiesto de Fogón", { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
-            BotonSecundario("Preguntas frecuentes", { vm.abrir(Pantalla.Preguntas) }, Modifier.fillMaxWidth())
-            BotonSecundario("Acerca de El Forzudo", { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.ver_tutorial), { vm.verTutorial() }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.manifiesto_fogon), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.preguntas_frecuentes), { vm.abrir(Pantalla.Preguntas) }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun SelectorIdioma(vm: GymViewModel) {
+    val ctx = LocalContext.current
+    val elegido = remember { Idioma.elegido(ctx) }
+    val opciones = listOf("" to stringResource(R.string.idioma_telefono)) + Idioma.DISPONIBLES
+    FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        opciones.forEach { (codigo, nombre) ->
+            FilterChip(codigo == elegido, {
+                if (codigo != elegido) {
+                    vm.cambiarIdioma(codigo)
+                    (ctx as? android.app.Activity)?.recreate()
+                }
+            }, { Text(nombre) })
+        }
     }
 }
 
@@ -487,42 +511,44 @@ private fun CajaSync(vm: GymViewModel, s: Sync, confirmar: Confirmar) {
     val uri = LocalUriHandler.current
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (s.estado == EstadoSync.APAGADA) {
-            Text("Conecta tu GitHub y tus entrenos se guardan solos en un archivo privado de tu cuenta (un Gist secreto). Si cambias de teléfono o reinstalas la app, se recuperan. Es opcional: sin esto, la app no usa internet.",
+            Text(stringResource(R.string.sync_explica),
                 style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            Text("1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.",
+            Text(stringResource(R.string.sync_pasos),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            BotonSecundario("Crear token", { uri.openUri(ClienteGist.URL_TOKEN) })
+            BotonSecundario(stringResource(R.string.crear_token), { uri.openUri(ClienteGist.URL_TOKEN) })
             var token by remember { mutableStateOf("") }
-            OutlinedTextField(token, { token = it.trim() }, label = { Text("Pega aquí tu token (ghp_…)") },
+            OutlinedTextField(token, { token = it.trim() }, label = { Text(stringResource(R.string.pega_token)) },
                 singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-            BotonRiso("Conectar", { vm.conectar(token) })
+            BotonRiso(stringResource(R.string.conectar), { vm.conectar(token) })
         } else {
             val txt = when (s.estado) {
-                EstadoSync.SINCRONIZANDO -> "Sincronizando…"
-                EstadoSync.SIN_CONEXION -> "Sin conexión"
-                EstadoSync.ERROR -> s.mensaje ?: "Error al sincronizar"
-                else -> "Conectado" + (s.usuario?.let { " como $it" } ?: "") + ". Última sincronización: ${hace(s.ultima)}."
+                EstadoSync.SINCRONIZANDO -> stringResource(R.string.sincronizando)
+                EstadoSync.SIN_CONEXION -> stringResource(R.string.sin_conexion)
+                EstadoSync.ERROR -> s.mensaje ?: stringResource(R.string.error_sync)
+                else -> (s.usuario?.let { stringResource(R.string.conectado_como, it) } ?: stringResource(R.string.conectado)) + " " + stringResource(R.string.ultima_sync, hace(s.ultima))
             }
             Text(txt, style = MaterialTheme.typography.bodyMedium,
                 color = if (s.estado == EstadoSync.ERROR) MaterialTheme.colorScheme.error else f.texto)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                BotonSecundario("Sincronizar ahora", { vm.sincronizar() })
-                BotonSecundario("Desconectar", {
-                    confirmar("¿Desconectar la sincronización?", "Tus datos siguen en el teléfono y en tu Gist.") { vm.desconectar() }
+                BotonSecundario(stringResource(R.string.sincronizar_ahora), { vm.sincronizar() })
+                BotonSecundario(stringResource(R.string.desconectar), {
+                    confirmar(vm.tx(R.string.desconectar_pregunta), vm.tx(R.string.desconectar_texto)) { vm.desconectar() }
                 }, peligro = true)
             }
         }
     }
 }
 
+@Composable
 fun hace(t: Long): String {
-    if (t == 0L) return "nunca"
+    if (t == 0L) return stringResource(R.string.hace_nunca)
     val m = Math.round((System.currentTimeMillis() - t) / 60000.0)
-    if (m < 1) return "hace un momento"
-    if (m < 60) return "hace $m min"
+    if (m < 1) return stringResource(R.string.hace_momento)
+    if (m < 60) return stringResource(R.string.hace_min, m)
     val h = Math.round(m / 60.0)
-    if (h < 24) return "hace $h h"
-    return "hace ${Math.round(h / 24.0)} días"
+    if (h < 24) return stringResource(R.string.hace_h, h)
+    val d = Math.round(h / 24.0).toInt()
+    return pluralStringResource(R.plurals.hace_dias, d, d)
 }
 
 @Composable
@@ -530,10 +556,10 @@ fun DialogoNombre(actual: String, onListo: (String) -> Unit, onCerrar: () -> Uni
     var t by remember { mutableStateOf(actual) }
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onCerrar,
-        title = { Text("¿Cómo te llamas?") },
-        text = { OutlinedTextField(t, { t = it.take(30) }, singleLine = true, label = { Text("Tu nombre") }) },
-        confirmButton = { TextButton({ onListo(t) }) { Text("Guardar") } },
-        dismissButton = { TextButton(onCerrar) { Text("Cancelar") } },
+        title = { Text(stringResource(R.string.tut_nombre)) },
+        text = { OutlinedTextField(t, { t = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tu_nombre)) }) },
+        confirmButton = { TextButton({ onListo(t) }) { Text(stringResource(R.string.guardar)) } },
+        dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.cancelar)) } },
     )
 }
 

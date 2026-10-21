@@ -50,7 +50,8 @@ Es un **monorepo**: todas las apps viven juntas y comparten el módulo `core/ide
 | `Tema.kt` | `FogonTema(paleta) { … }`: envuelve la app, elige claro u oscuro y da las letras (Bagel Fat One y Anton). Los colores se leen con `FogonTema.actual`. |
 | `Componentes.kt` | Piezas con la identidad: `BotonRiso` (sombra corrida), `BotonSecundario`, `Personaje`, `EstadoVacio`, `Logro`, el grano de papel (un *shader* AGSL, solo en Android 13 o superior) y `AcercaDeFogon`. |
 | `Manifiesto.kt` | El manifiesto, igual en todas las apps y sin internet. |
-| `Licencias.kt` | La pantalla de licencias. `LICENCIAS_FOGON` lista lo que llevan todas las apps; cada app suma lo suyo. Los textos completos están en `assets/licencias/`. |
+| `Idioma.kt` | El idioma de las apps: el del teléfono o el elegido en la app, y `Idioma.envolver(contexto)` para aplicarlo. |
+| `Licencias.kt` | La pantalla de licencias. `licenciasFogon()` lista lo que llevan todas las apps; cada app suma lo suyo. Los textos completos están en `assets/licencias/`. |
 | `res/` | Letras, logotipo, chispa y los personajes de todas las apps. |
 
 ## El patrón de cada app
@@ -71,7 +72,7 @@ Pantallas (Compose)  ──lee──▶  ViewModel  ──usa──▶  Lógica 
 3. **El `ViewModel` manda.** Es el único que cambia el estado. Cada cambio pasa por una función `cambiar { … }` que actualiza la memoria, guarda en disco 300 ms después (para no escribir con cada tecla) y avisa a las pantallas por `StateFlow`.
 4. **Navegación propia y simple.** Unas pestañas abajo y una pila de pantallas (`List<Pantalla>`): abrir es agregar a la pila y atrás es quitar. No se usa Navigation Compose.
 5. **Datos fijos en `assets/datos/*.json`.** Lo que no es de la persona (ejercicios, programas, tablas) va en JSON dentro de la app, no escrito en el código. Así se puede revisar y cambiar sin tocar Kotlin.
-6. **Textos en español, en el código.** Por ahora solo hay español. Cuando llegue el inglés, los textos pasan a `strings.xml`.
+6. **Textos en archivos de idioma.** Nada de lo que se ve en pantalla va escrito en el código: está en `res/values-es/strings.xml` (español) y `res/values/strings.xml` (inglés, el que Android usa si el teléfono está en un idioma que la app no tiene). El idioma sigue al teléfono o se fija en la app (`Idioma.kt`, en `core/identidad`). Los datos fijos se traducen aparte (`assets/datos/<idioma>/`). Cómo se hace: la `GUIA.md` de cada app → "Cambiar textos e idiomas".
 
 ## Privacidad y seguridad (en todas)
 

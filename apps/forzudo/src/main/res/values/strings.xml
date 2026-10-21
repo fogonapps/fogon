@@ -1,4 +1,434 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">El Forzudo</string>
+  <string name="app_name" translatable="false">El Forzudo</string>
+  <string name="voc_decimal">.</string>
+  <string name="voc_seg">sec</string>
+  <string name="voc_reps">reps</string>
+  <string name="voc_entreno">Workout</string>
+  <string name="voc_meta">Goal %1$d × %2$s %3$s</string>
+  <string name="voc_mismo_peso">Use the same weight and log the reps</string>
+  <string name="voc_sube_peso">Add weight today</string>
+  <string name="voc_mas10s">Add 10 seconds</string>
+  <string name="voc_mas_lento">Go slower or add weight</string>
+  <string name="voc_manten">Stay at %1$s kg</string>
+  <string name="voc_mas_una_rep">Go for +1 rep per set</string>
+  <string-array name="meses">
+    <item>Jan</item>
+    <item>Feb</item>
+    <item>Mar</item>
+    <item>Apr</item>
+    <item>May</item>
+    <item>Jun</item>
+    <item>Jul</item>
+    <item>Aug</item>
+    <item>Sep</item>
+    <item>Oct</item>
+    <item>Nov</item>
+    <item>Dec</item>
+  </string-array>
+  <string-array name="meses_largos">
+    <item>January</item>
+    <item>February</item>
+    <item>March</item>
+    <item>April</item>
+    <item>May</item>
+    <item>June</item>
+    <item>July</item>
+    <item>August</item>
+    <item>September</item>
+    <item>October</item>
+    <item>November</item>
+    <item>December</item>
+  </string-array>
+  <string-array name="dias_largos">
+    <item>Sunday</item>
+    <item>Monday</item>
+    <item>Tuesday</item>
+    <item>Wednesday</item>
+    <item>Thursday</item>
+    <item>Friday</item>
+    <item>Saturday</item>
+  </string-array>
+  <string-array name="dias_cortos">
+    <item>Su</item>
+    <item>M</item>
+    <item>Tu</item>
+    <item>W</item>
+    <item>Th</item>
+    <item>F</item>
+    <item>Sa</item>
+  </string-array>
+  <string name="aviso_peso_invalido">Enter your weight in kg, for example 55.5</string>
+  <string name="aviso_peso_guardado">Weight saved</string>
+  <string name="aviso_fecha">Date updated</string>
+  <string name="aviso_termina_entreno">Finish or cancel the current workout first</string>
+  <string name="aviso_programa_cambiado">Program changed: %1$s</string>
+  <string name="rutina_sin_nombre">Routine</string>
+  <string name="rutina_nueva">New routine</string>
+  <string name="aviso_termina_rutina">Finish this routine’s workout first</string>
+  <string name="aviso_una_rutina">You need at least one routine</string>
+  <string name="aviso_cambiado">Swapped for %1$s</string>
+  <string name="aviso_ya_en_rutina">It’s already in the routine</string>
+  <string name="aviso_agregado">Added: %1$s</string>
+  <string name="aviso_ya_en_entreno">That exercise is already in the workout</string>
+  <string name="aviso_escribe_segundos">Enter the seconds</string>
+  <string name="aviso_escribe_reps">Enter the reps</string>
+  <string name="aviso_escribe_peso">Enter the weight in kg</string>
+  <string name="aviso_record_kg">New record: %1$s kg</string>
+  <string name="aviso_record">New record: %1$s %2$s</string>
+  <string name="aviso_marca_serie">Tick at least one set with ✓ to save</string>
+  <string name="descanso_terminado">Rest is over</string>
+  <string name="aviso_importado">Data imported</string>
+  <string name="aviso_token_corto">Paste the full token</string>
+  <string name="aviso_conectando">Connecting…</string>
+  <string name="aviso_token_invalido">That token isn’t valid</string>
+  <string name="aviso_sin_github">Couldn’t connect to GitHub</string>
+  <string name="sync_token_vencido">The token is invalid or has expired.</string>
+  <string name="sync_sin_permiso">The token doesn’t have permission for gists.</string>
+  <string name="sync_sin_conexion">Couldn’t connect to GitHub.</string>
+  <string name="canal_descanso">End of rest</string>
+  <string name="canal_descanso_detalle">Tells you when the rest between sets is over</string>
+  <string name="descanso_siguiente">On to the next set!</string>
+  <string name="aviso_respaldo_guardado">Backup saved</string>
+  <string name="aviso_no_exportado">Couldn’t export</string>
+  <string name="aviso_no_es_respaldo">That file isn’t an El Forzudo backup</string>
+  <string name="importar_titulo">Import the backup?</string>
+  <string name="importar_si">Yes, import</string>
+  <string name="cancelar">Cancel</string>
+  <string name="cargando">Loading</string>
+  <string name="pestana_inicio">Home</string>
+  <string name="pestana_entrenar">Train</string>
+  <string name="pestana_rangos">Ranks</string>
+  <string name="pestana_perfil">Profile</string>
+  <string name="manifiesto">Manifesto</string>
+  <string name="si_continuar">Yes, continue</string>
+  <string name="volver">Go back</string>
+  <string name="entreno_en_curso">%1$s in progress</string>
+  <string name="cancelar_entreno">Cancel workout</string>
+  <string name="saltar">Skip</string>
+  <string name="sin_rango">No rank</string>
+  <string name="sin_datos">No data yet.</string>
+  <string name="grafica">Chart</string>
+  <string name="dias_entrenados">Days trained in %1$d</string>
+  <string name="listo">Done</string>
+  <string name="tut_hola">Hi! I’m El Forzudo</string>
+  <string name="tut_hola_texto">Your workout notebook. No ads, no tracking and truly free. Your data stays on your phone and, if you prefer, in your own cloud too.</string>
+  <string name="tut_anota">Train and log</string>
+  <string name="tut_anota_texto">In Train, pick your routine and tap Start. Enter the weight and reps for each set and tick it with ✓. Ticking it starts the rest timer and I’ll let you know when it’s over. Tap what you did last time and it’s copied over.</string>
+  <string name="tut_racha">Your streak is real</string>
+  <string name="tut_racha_texto">A week counts when you complete every routine in your program. It can’t be ticked by hand: you earn your streak by training.</string>
+  <string name="tut_rangos">Rank up</string>
+  <string name="tut_rangos_texto">Log your body weight in Profile and you’ll see your rank for each muscle, from Iron to Diamond, with your next goal. New records come with the spark.</string>
+  <string name="tut_cuerpo">Listen to your body</string>
+  <string name="tut_cuerpo_texto">I help you keep track, but I’m not a doctor or a coach. If you have an injury or a health condition, see a professional before you start. If you feel pain, dizziness or shortness of breath, stop.</string>
+  <string name="tut_datos">Your data is yours</string>
+  <string name="tut_datos_texto">You can export a backup whenever you want. If you connect your GitHub (optional), your workouts are saved automatically to a private file in your account.</string>
+  <string name="tut_nombre">What’s your name?</string>
+  <string name="tut_paso">Step %1$d of %2$d</string>
+  <string name="tut_a_entrenar">Let’s train!</string>
+  <string name="siguiente">Next</string>
+  <plurals name="importar_texto">
+    <item quantity="one">This replaces the data on this phone with the backup’s (%d workout).</item>
+    <item quantity="other">This replaces the data on this phone with the backup’s (%d workouts).</item>
+  </plurals>
+  <plurals name="entrenos">
+    <item quantity="one">%d workout</item>
+    <item quantity="other">%d workouts</item>
+  </plurals>
+  <string name="racha_cumpliendo">completing your week</string>
+  <string name="racha_empezar">Complete all your workouts this week to start your streak</string>
+  <string name="racha_mejor">Best streak: %1$d</string>
+  <string name="esta_semana">This week: %1$d of %2$s</string>
+  <string name="dia_hecho">done</string>
+  <string name="dia_pendiente">pending</string>
+  <string name="semanas_de">Weeks of %1$s</string>
+  <string name="semana_completa">week completed</string>
+  <string name="semana_incompleta">week not completed</string>
+  <string name="semana_corta">Wk %1$d</string>
+  <string name="pista_semanas">A week fills in by itself when you complete every routine in your program. You earn the streak by training.</string>
+  <string name="meses_anteriores">Previous months</string>
+  <string name="mes_resumen">%1$d of %2$s, %3$s</string>
+  <string name="titulo_entrenos">Workouts</string>
+  <string name="sin_entrenos">No workouts yet</string>
+  <string name="sin_entrenos_texto">Go to Train and start a routine.</string>
+  <string name="borrar_entreno_pregunta">Delete this workout?</string>
+  <string name="tiempo">Time</string>
+  <string name="volumen">Volume</string>
+  <string name="series">Sets</string>
+  <string name="fecha">Date</string>
+  <string name="borrar_entreno">Delete workout</string>
+  <string name="programa">Program</string>
+  <string name="personalizado">Custom</string>
+  <string name="modificado">edited</string>
+  <string name="cambiar">Change</string>
+  <string name="mis_rutinas">My routines (%1$d)</string>
+  <string name="hoy">Today</string>
+  <string name="sin_ejercicios">No exercises yet</string>
+  <string name="empezar">Start</string>
+  <string name="volver_al_entreno">Back to workout</string>
+  <string name="pasar_entreno">Move the current workout here</string>
+  <string name="pasar_entreno_pregunta">Switch the current workout to %1$s?</string>
+  <string name="series_se_pierden">Sets already ticked for exercises not in that routine will be lost.</string>
+  <string name="editar">Edit</string>
+  <string name="mas_nueva_rutina">+ New routine</string>
+  <string name="rangos_falta_peso">To work out your ranks I need your body weight, because strength is compared relative to what you weigh.</string>
+  <string name="registrar_peso">Log my weight</string>
+  <string name="rango_general">Overall rank</string>
+  <string name="sin_datos_aun">No data yet</string>
+  <string name="completa_entreno">Complete a workout logging weight and reps</string>
+  <string name="series_semana">Sets this week</string>
+  <string name="vista_frente">Front view</string>
+  <string name="frente">Front</string>
+  <string name="vista_espalda">Back view</string>
+  <string name="espalda">Back</string>
+  <string name="pista_series">Darker = more sets. To build muscle, aim for about 10 sets per muscle per week.</string>
+  <string name="rango_por_musculo">Rank by muscle</string>
+  <string name="series_por_musculo">Sets per muscle this week</string>
+  <string name="falta_peso">Your body weight is missing</string>
+  <string name="abdomen_crunch">Measured with the cable crunch</string>
+  <string name="sin_registros_todavia">Nothing logged yet</string>
+  <string name="proxima_meta">Next goal: %1$s kg × %2$d on %3$s</string>
+  <string name="rango_maximo">Top rank!</string>
+  <string name="creditos_rangos">Standards: Fogón model with OpenPowerlifting data (public domain) · Drawings: Everkinetic (CC BY-SA) · Muscle model: react-body-highlighter (MIT license). Details in Profile → About El Forzudo → Licenses</string>
+  <string name="sin_nombre">No name</string>
+  <string name="cambiar_nombre">Change name</string>
+  <string name="volumen_total">Total volume</string>
+  <string name="peso">Weight</string>
+  <string name="peso_corporal_titulo">Body weight (once a week, before eating)</string>
+  <string name="tu_peso_kg">Your weight in kg</string>
+  <string name="peso_corporal_kg">Body weight in kg</string>
+  <string name="guardar">Save</string>
+  <string name="meta_peso">Goal: gain 0.25 to 0.5 kg per week.</string>
+  <string name="constancia">Consistency</string>
+  <string name="pista_mapa_anual">Each square is a day; the colored ones are days you trained.</string>
+  <string name="sync_titulo">Cloud sync</string>
+  <string name="respaldo_titulo">Back up your data</string>
+  <string name="exportar">Export</string>
+  <string name="importar">Import</string>
+  <string name="pista_respaldo">An extra manual copy. Export a file and keep it wherever you like; if you ever need it, import it.</string>
+  <string name="ejercicios">Exercises</string>
+  <string name="record_kg">Record: %1$s kg</string>
+  <string name="record">Record: %1$s %2$s</string>
+  <string name="sin_registros">Nothing logged</string>
+  <string name="ver_tutorial">See the tutorial</string>
+  <string name="manifiesto_fogon">Fogón manifesto</string>
+  <string name="preguntas_frecuentes">Frequently asked questions</string>
+  <string name="reportar_boton">Report a problem or suggest something</string>
+  <string name="acerca_de">About El Forzudo</string>
+  <string name="sync_explica">Connect your GitHub and your workouts are saved automatically to a private file in your account (a secret Gist). If you change phones or reinstall the app, they come back. It’s optional: without it, the app doesn’t use the internet.</string>
+  <string name="sync_pasos">1. Tap Create token (GitHub opens with everything set).\n2. Under Expiration choose No expiration or 1 year.\n3. Scroll down, tap Generate token, copy it and paste it here.</string>
+  <string name="crear_token">Create token</string>
+  <string name="pega_token">Paste your token here (ghp_…)</string>
+  <string name="conectar">Connect</string>
+  <string name="sincronizando">Syncing…</string>
+  <string name="sin_conexion">Offline</string>
+  <string name="error_sync">Sync error</string>
+  <string name="conectado">Connected.</string>
+  <string name="conectado_como">Connected as %1$s.</string>
+  <string name="ultima_sync">Last sync: %1$s.</string>
+  <string name="sincronizar_ahora">Sync now</string>
+  <string name="desconectar">Disconnect</string>
+  <string name="desconectar_pregunta">Disconnect sync?</string>
+  <string name="desconectar_texto">Your data stays on the phone and in your Gist.</string>
+  <string name="hace_nunca">never</string>
+  <string name="hace_momento">just now</string>
+  <string name="hace_min">%1$d min ago</string>
+  <string name="hace_h">%1$d h ago</string>
+  <string name="tu_nombre">Your name</string>
+  <plurals name="semanas_seguidas">
+    <item quantity="one">week in a row</item>
+    <item quantity="other">weeks in a row</item>
+  </plurals>
+  <plurals name="semanas">
+    <item quantity="one">%d week</item>
+    <item quantity="other">%d weeks</item>
+  </plurals>
+  <plurals name="ejercicios_mas">
+    <item quantity="one">%d more exercise</item>
+    <item quantity="other">%d more exercises</item>
+  </plurals>
+  <plurals name="dias">
+    <item quantity="one">%d day</item>
+    <item quantity="other">%d days</item>
+  </plurals>
+  <plurals name="rutinas">
+    <item quantity="one">%d routine</item>
+    <item quantity="other">%d routines</item>
+  </plurals>
+  <plurals name="promedio_grupos">
+    <item quantity="one">Average of %1$d muscle group · body weight %2$s kg</item>
+    <item quantity="other">Average of %1$d muscle groups · body weight %2$s kg</item>
+  </plurals>
+  <plurals name="entrenos_guardados">
+    <item quantity="one">%d saved workout</item>
+    <item quantity="other">%d saved workouts</item>
+  </plurals>
+  <plurals name="hace_dias">
+    <item quantity="one">%d day ago</item>
+    <item quantity="other">%d days ago</item>
+  </plurals>
+  <string name="como_se_calcula">How is it calculated?</string>
+  <string-array name="como_se_calcula_pasos">
+    <item>1. For each exercise I take your best set and estimate your one-rep max (Epley formula).</item>
+    <item>2. I compare it with Fogón’s strength table, scaled to your body weight. Bench press, squat and deadlift were calibrated with thousands of powerlifting meet results (OpenPowerlifting); the other exercises are estimated from those three.</item>
+    <item>3. Ranks: Iron (starting out) · Bronze (beginner) · Silver (novice) · Gold (intermediate) · Platinum (advanced, the level of someone starting to compete) · Diamond (elite, stronger than ~3 in 4 competitors). Each rank has 3 divisions: III, II and I.</item>
+    <item>4. Each muscle’s rank is the average of its 2 best exercises, and the overall rank is the average of all your muscles.</item>
+    <item>5. For dumbbells, log the weight of one dumbbell. On machines and cables the rank is approximate, because the marked weight varies between machines. Planks, raises and bodyweight lunges don’t count.</item>
+  </string-array>
+  <string name="videos_busqueda">%1$s proper form</string>
+  <string name="sin_series">You haven’t ticked any sets</string>
+  <string name="sin_series_texto">Cancel the workout? Nothing will be saved.</string>
+  <string name="terminar">Finish</string>
+  <string name="terminar_guardar">Finish and save</string>
+  <string name="duracion">Duration</string>
+  <string name="cambiar_rutina_pregunta">Switch routine?</string>
+  <string name="mas_agregar_ejercicio">+ Add exercise</string>
+  <string name="cancelar_entreno_pregunta">Cancel the workout?</string>
+  <string name="tecnica_abierta">technique shown</string>
+  <string name="tecnica_cerrada">technique hidden</string>
+  <string name="toca_nombre">Tap the name to see the drawings and technique</string>
+  <string name="estancado">No progress in your last 3 sessions. Try a variation, or drop the weight a little and build back up.</string>
+  <string name="ver_alternativas">See alternatives</string>
+  <string name="ver_videos">▶ Watch technique videos</string>
+  <string name="peso_una_mancuerna">Log the weight of one dumbbell</string>
+  <string name="descanso_de">Rest: %1$s</string>
+  <string name="col_serie">SET</string>
+  <string name="col_anterior">PREVIOUS</string>
+  <string name="col_kg_cada">KG EACH</string>
+  <string name="col_kg">KG</string>
+  <string name="col_seg">SEC</string>
+  <string name="col_reps">REPS</string>
+  <string name="serie_completa">done</string>
+  <string name="copiar_anterior">Copy previous values</string>
+  <string name="marcar_serie">Mark set %1$d done</string>
+  <string name="kg_serie">Kg set %1$d</string>
+  <string name="segundos_serie">Seconds set %1$d</string>
+  <string name="reps_serie">Reps set %1$d</string>
+  <string name="mas_agregar_serie">+ Add set</string>
+  <string name="paso_inicio">1 · Start</string>
+  <string name="paso_final">2 · End</string>
+  <string name="posicion_inicial">%1$s: starting position</string>
+  <string name="posicion_final">%1$s: end position</string>
+  <string name="entreno_guardado">Workout saved</string>
+  <string name="buen_trabajo">Great work!</string>
+  <string name="buen_trabajo_nombre">Great work, %1$s!</string>
+  <string name="subiste_rango">You ranked up</string>
+  <string name="records_nuevos">New records</string>
+  <string name="volver_inicio">Back to home</string>
+  <string name="por_defecto">default %1$s %2$s, rest %3$s</string>
+  <string name="peso_alto_sesion">Heaviest weight per session (kg)</string>
+  <string name="segundos_sesion">Total seconds per session</string>
+  <string name="reps_sesion">Total reps per session</string>
+  <string name="records">Records</string>
+  <string name="peso_mas_alto">Heaviest weight</string>
+  <string name="maximo_serie">Most in one set</string>
+  <string name="rm_estimado">Estimated 1RM</string>
+  <string name="mejor_serie">Best set</string>
+  <string name="sesiones">Sessions</string>
+  <string name="historial">History</string>
+  <string name="sin_historial">You haven’t done this exercise yet.</string>
+  <string name="rango">Rank</string>
+  <string name="rango_aproximado">Rank (approximate)</string>
+  <string name="rango_falta_peso_ej">Log your body weight in Profile to see your rank on this exercise.</string>
+  <string name="rango_anota_serie">Log a set with weight and reps to see your rank.</string>
+  <string name="siguiente_rango">Next (%1$s): %2$s kg × %3$d</string>
+  <string name="oro_para_tu_peso">Intermediate (Gold) for your weight</string>
+  <string name="promedio_2_mejores">Average of your 2 best exercises in this group</string>
+  <string name="siguiente_meta">Next: %1$s kg × %2$d</string>
+  <string name="no_cuenta_rango">Doesn’t count toward rank</string>
+  <string name="programas">Programs</string>
+  <string name="pista_programas">Choose by your goal and the days you can train. Your history, records and ranks are kept: only your routines change, and you can edit them afterwards.</string>
+  <string name="programa_actual">Current program</string>
+  <string name="programa_actual_modificado">Current program (edited)</string>
+  <string name="usar_programa">Use this program</string>
+  <string name="usar_programa_pregunta">Use “%1$s”?</string>
+  <string name="usar_programa_texto">This replaces your routines. Your history, records and ranks are kept.</string>
+  <string name="editar_rutina">Edit routine</string>
+  <string name="nombre">Name</string>
+  <string name="dia_semana">Day of the week:</string>
+  <string name="sin_dia_fijo">No fixed day</string>
+  <string name="ejercicios_n">Exercises (%1$d)</string>
+  <string name="rutina_vacia">Empty routine</string>
+  <string name="rutina_vacia_texto">Add your first exercise.</string>
+  <string name="reps_min">Min reps</string>
+  <string name="reps_max">Max reps</string>
+  <string name="descanso_s">Rest (s)</string>
+  <string name="campo_de">%1$s for %2$s</string>
+  <string name="subir">↑ Up</string>
+  <string name="bajar">↓ Down</string>
+  <string name="quitar_pregunta">Remove %1$s from the routine?</string>
+  <string name="su_historial">Its history is kept.</string>
+  <string name="quitar">Remove</string>
+  <string name="eliminar_rutina">Delete this routine</string>
+  <string name="eliminar_rutina_pregunta">Delete this routine?</string>
+  <string name="tu_historial">Your history is kept.</string>
+  <string name="cambiar_ejercicio">Swap exercise</string>
+  <string name="agregar_ejercicio">Add exercise</string>
+  <string name="actual">Current</string>
+  <string name="guardar_en_rutina">Also save the change to the routine (otherwise it only applies today)</string>
+  <string name="buscar_ejercicio">Search exercise…</string>
+  <string name="lo_mismo">Same thing, another way</string>
+  <string name="lo_mismo_pista">Same movement with other equipment or grip</string>
+  <string name="relacionados">Related exercises</string>
+  <string name="relacionados_pista">Work the same muscle with another movement</string>
+  <string name="buscas_otro">Looking for another? Type above to see the whole library.</string>
+  <string name="no_encontrado">I couldn’t find that exercise.</string>
+  <string name="cerrar">Close</string>
+  <string name="acerca_de_corto">About</string>
+  <string name="aviso_salud">El Forzudo is a workout notebook, not medical advice. The routines, goals and ranks are general guides that don’t know your health. If you have an injury, an illness or haven’t trained in a long time, see a health professional before you start. If you feel pain, dizziness or shortness of breath, stop. You use the app at your own risk.</string>
+  <string name="licencias">Licenses</string>
+  <string name="lic_modelo">Muscle model</string>
+  <string name="lic_modelo_texto">Body drawing from react-body-highlighter (© 2020 GV79), which took it from react-native-body-highlighter (© 2022 ELABBASSI Hicham). MIT license.</string>
+  <string name="lic_rnbh">© 2022 ELABBASSI Hicham. MIT license.</string>
+  <string name="lic_opl">This app uses data from the OpenPowerlifting project, https://www.openpowerlifting.org. You can download a copy of the data at https://gitlab.com/openpowerlifting/opl-data. Public domain.</string>
+  <string name="lic_everkinetic">Exercise illustrations from github.com/everkinetic/data (CC BY-SA 4.0) and, for the pec deck fly and machine shoulder press, from Wikimedia Commons (CC BY-SA 3.0, creativecommons.org/licenses/by-sa/3.0, which allows sharing the adaptation under 4.0). Fogón modified them (riso plate); the plates are shared under the same license. Creative Commons Attribution-ShareAlike 4.0.</string>
+  <string name="reportar_titulo">Report or suggest</string>
+  <string name="reportar_pista">Is something broken, or do you have an idea to improve the app? Tell us here. We read everything.</string>
+  <string name="algo_falla">Something’s wrong</string>
+  <string name="tengo_idea">I have an idea</string>
+  <string name="que_paso">What happened and what you were doing</string>
+  <string name="tu_idea">Your idea</string>
+  <string name="se_agrega">Added automatically: %1$s. Nothing else from your phone.</string>
+  <string name="enviar_github">Send via GitHub</string>
+  <string name="enviar_github_pista">GitHub opens with the message ready. You need a GitHub account, and what you send is public: don’t include personal data.</string>
+  <string name="enviar_correo">Send by email</string>
+  <string name="enviar_correo_pista">Your email app opens with the message ready, to %1$s.</string>
+  <plurals name="se_borran_series">
+    <item quantity="one">The set you ticked will be deleted.</item>
+    <item quantity="other">The %d sets you ticked will be deleted.</item>
+  </plurals>
+  <plurals name="motos">
+    <item quantity="one">You lifted the equivalent of one 150 kg motorbike.</item>
+    <item quantity="other">You lifted the equivalent of %d 150 kg motorbikes.</item>
+  </plurals>
+  <plurals name="n_ejercicios">
+    <item quantity="one">%d exercise</item>
+    <item quantity="other">%d exercises</item>
+  </plurals>
+  <string-array name="creditos">
+    <item>Exercise drawings: Everkinetic (CC BY-SA), turned into riso plates by Fogón.</item>
+    <item>Muscle model: react-body-highlighter and react-native-body-highlighter (MIT license).</item>
+    <item>Strength standards: Fogón’s own model, calibrated with OpenPowerlifting (public domain).</item>
+    <item>Fonts: Bagel Fat One and Anton (SIL Open Font License).</item>
+  </string-array>
+  <string-array name="preguntas">
+    <item>Why do the drawings only show male figures?</item>
+    <item>Why do some exercises have no drawing?</item>
+    <item>Why are there no photos?</item>
+    <item>What do the colors mean?</item>
+    <item>Where do the strength ranks come from?</item>
+    <item>Does my data leave the phone?</item>
+    <item>Why was it called Mi Gym before?</item>
+  </string-array>
+  <string-array name="respuestas">
+    <item>The drawings come from Everkinetic, a freely licensed bank of exercise illustrations, and all its figures are male. We found no free illustrations with female figures. We tried generating them with artificial intelligence, but they weren’t at the same level or in the same style, and we’d rather not ship something half-done. The exercise and the muscle it works are the same for everyone. If anyone wants to draw the female versions under a free license, they’re welcome.</item>
+    <item>We only use drawings with a clear license, and those exercises don’t have one yet. They’ll come in an update.</item>
+    <item>The photos the app used came from a bank that presented itself as free, but they were actually photos taken from the internet without their owners’ permission. So they were replaced with clearly licensed drawings.</item>
+    <item>Each muscle group has its own color, the same throughout the app: the patch on the drawing marks the muscle being worked. The drawing’s shadow tells the area: pink for the upper body, yellow for the arms and blue for the legs.</item>
+    <item>From Fogón’s own table, calibrated with real powerlifting meet results (OpenPowerlifting, public domain). The other exercises are estimated from bench press, squat and deadlift, so on machines the rank is approximate.</item>
+    <item>No. Everything is stored on the phone. Only if you connect your own GitHub are your workouts copied to a private file in your account.</item>
+    <item>It had that name up to version 1.2.1. Since 1.3 it carries the name of its character, El Forzudo, like all Fogón apps.</item>
+  </string-array>
+  <string name="idioma">Language</string>
+  <string name="idioma_telefono">Phone’s language</string>
 </resources>

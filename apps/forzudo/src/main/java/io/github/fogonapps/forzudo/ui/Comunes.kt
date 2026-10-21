@@ -1,5 +1,8 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.forzudo.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.LruCache
@@ -69,6 +72,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.heading
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.forzudo.datos.Vocabulario
 import io.github.fogonapps.forzudo.datos.Biblioteca
 import io.github.fogonapps.forzudo.datos.Ejercicio
 import io.github.fogonapps.forzudo.datos.ParteCuerpo
@@ -81,8 +85,6 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** "1 entreno", "3 entrenos". */
-fun plural(n: Int, uno: String, varios: String = uno + "s") = "$n " + if (n == 1) uno else varios
 
 fun colorHex(h: String): Color = Color(android.graphics.Color.parseColor(h))
 
@@ -192,7 +194,8 @@ fun Insignia(r: Rango?, tamano: Dp = 40.dp) {
     val medidor = rememberTextMeasurer()
     val texto = r?.div?.ifEmpty { "★" } ?: "?"
     val color = r?.let { colorHex(it.color) } ?: f.linea
-    Canvas(Modifier.size(tamano).semantics { contentDescription = r?.nombre ?: "Sin rango" }) {
+    val descripcion = r?.nombre ?: stringResource(R.string.sin_rango)
+    Canvas(Modifier.size(tamano).semantics { contentDescription = descripcion }) {
         val s = size.width / 40f
         scale(s, s, pivot = Offset.Zero) {
             drawPath(escudo, color)
@@ -209,10 +212,11 @@ fun Insignia(r: Rango?, tamano: Dp = 40.dp) {
 fun Grafica(puntos: List<Pair<String, Double?>>, modifier: Modifier = Modifier) {
     val pts = puntos.mapNotNull { (d, v) -> v?.let { d to it } }
     val f = FogonTema.actual
-    if (pts.isEmpty()) { Pista("Sin datos todavía."); return }
+    if (pts.isEmpty()) { Pista(stringResource(R.string.sin_datos)); return }
     val medidor = rememberTextMeasurer()
     val acento = f.paleta.tinta
-    Canvas(modifier.fillMaxWidth().aspectRatio(2f).padding(horizontal = 16.dp, vertical = 8.dp).semantics { contentDescription = "Gráfica" }) {
+    val grafica = stringResource(R.string.grafica)
+    Canvas(modifier.fillMaxWidth().aspectRatio(2f).padding(horizontal = 16.dp, vertical = 8.dp).semantics { contentDescription = grafica }) {
         val L = 40.dp.toPx(); val R = 8.dp.toPx(); val T = 12.dp.toPx(); val B = 22.dp.toPx()
         var mn = pts.minOf { it.second }; var mx = pts.maxOf { it.second }
         if (mn == mx) { mn -= 1; mx += 1 }
@@ -281,8 +285,9 @@ fun MapaAnual(anio: Int, dias: Set<String>, hoy: LocalDate) {
     val cols = (desfase + total + 6) / 7
     val n = dias.count { it.startsWith("$anio") }
     Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-        Text("$anio · ${plural(n, "entreno")}", style = MaterialTheme.typography.labelLarge, color = f.texto)
-        Canvas(Modifier.fillMaxWidth().aspectRatio(cols / 8.2f).semantics { contentDescription = "Días entrenados en $anio" }) {
+        Text("$anio · " + pluralStringResource(R.plurals.entrenos, n, n), style = MaterialTheme.typography.labelLarge, color = f.texto)
+        val descripcion = stringResource(R.string.dias_entrenados, anio)
+        Canvas(Modifier.fillMaxWidth().aspectRatio(cols / 8.2f).semantics { contentDescription = descripcion }) {
             val c = size.width / cols
             val estilo = TextStyle(color = f.textoSuave, fontSize = 8.sp)
             for (i in 0 until total) {
@@ -294,7 +299,7 @@ fun MapaAnual(anio: Int, dias: Set<String>, hoy: LocalDate) {
                     androidx.compose.ui.geometry.Size(c * 0.84f, c * 0.84f),
                     androidx.compose.ui.geometry.CornerRadius(c * 0.2f), alpha = if (d.isAfter(hoy)) 0.45f else 1f,
                 )
-                if (d.dayOfMonth == 1) drawText(medidor.measure(Biblioteca.MESES[d.monthValue - 1], estilo), topLeft = Offset(x, 0f))
+                if (d.dayOfMonth == 1) drawText(medidor.measure(Vocabulario.actual.meses[d.monthValue - 1], estilo), topLeft = Offset(x, 0f))
             }
         }
     }
@@ -353,9 +358,9 @@ fun SelectorFecha(actual: String, hoy: LocalDate, onElegir: (String) -> Unit, on
             TextButton({
                 estado.selectedDateMillis?.let { onElegir(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString()) }
                 onCerrar()
-            }) { Text("Listo") }
+            }) { Text(stringResource(R.string.listo)) }
         },
-        dismissButton = { TextButton(onCerrar) { Text("Cancelar") } },
+        dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.cancelar)) } },
     ) { DatePicker(estado) }
 }
 

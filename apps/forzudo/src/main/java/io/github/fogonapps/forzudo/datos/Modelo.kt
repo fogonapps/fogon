@@ -117,6 +117,25 @@ data class Nivel(val n: String, val c: String)
 @Serializable
 data class Musculo(val id: String, val n: String)
 
+/** Traducción de los datos fijos a otro idioma (assets/datos/<idioma>/textos.json). */
+@Serializable
+data class Traduccion(
+    val ejercicios: Map<String, TraduccionEjercicio> = emptyMap(),
+    val equipos: Map<String, String> = emptyMap(),
+    val musculos: Map<String, String> = emptyMap(),
+    val rangos: List<String> = emptyList(),
+    val programas: Map<String, TraduccionPrograma> = emptyMap(),
+)
+
+@Serializable
+data class TraduccionEjercicio(val n: String? = null, val cue: String? = null)
+
+@Serializable
+data class TraduccionPrograma(
+    val name: String? = null, val level: String? = null, val goal: String? = null, val desc: String? = null,
+    val rutinas: Map<String, String> = emptyMap(),
+)
+
 @Serializable
 data class ParteCuerpo(val g: String? = null, val p: List<String>)
 
