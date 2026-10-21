@@ -1,0 +1,16 @@
+<p>El Forzudo es un cuaderno de entrenos de gimnasio. Sin anuncios, sin rastreo y gratis de verdad. Es parte de <b>Fogón</b>, apps hechas en casa: tu atención vale más que un anuncio.</p>
+
+<ul>
+<li><b>Entrena y anota:</b> escoge tu rutina, anota peso y repeticiones de cada serie y márcala. Al marcarla arranca el descanso y te avisa cuando termina.</li>
+<li><b>Metas en cada serie:</b> según lo que hiciste la vez anterior te dice si subir el peso, buscar una repetición más o mantener.</li>
+<li><b>Racha de verdad:</b> una semana cuenta cuando completas todas las rutinas de tu programa. No se puede marcar a mano.</li>
+<li><b>Rangos de fuerza</b> por músculo, de Hierro a Diamante, con un mapa del cuerpo y la próxima meta para subir.</li>
+<li><b>Láminas de cada ejercicio</b> con el inicio, el final y el músculo que trabaja marcado con su color.</li>
+<li><b>6 programas</b> listos y un editor para armar tus propias rutinas.</li>
+</ul>
+
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono y puedes exportar un respaldo cuando quieras. Si lo prefieres, también puedes guardarlo en tu propia nube: conectando tu cuenta de GitHub (opcional), los entrenos se copian a un Gist privado tuyo. Sin conectarla, la app no usa internet.</p>
+
+<p>La app no reemplaza a un médico ni a un entrenador. Si tienes una lesión o una condición de salud, consulta a un profesional antes de empezar.</p>
+
+<p>Dibujos de los ejercicios: Everkinetic (CC BY-SA 4.0). Rangos de fuerza calibrados con datos de OpenPowerlifting (dominio público).</p>

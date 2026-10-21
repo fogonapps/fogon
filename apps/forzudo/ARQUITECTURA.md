@@ -41,6 +41,8 @@ Otros lugares:
 | `src/test/` | `EquivalenciaWebTest`: corre la lógica con datos de prueba para compararla con la web. |
 | `herramientas/` | Scripts del PC (ver sección 7). `herramientas/laminas/` genera las láminas riso. |
 | `ESTANDARES.md` | De dónde salen los números de los rangos de fuerza. |
+| `fastlane/metadata/android/` | La ficha de la app para F-Droid: textos, ícono, capturas y novedades de cada versión. |
+| `fdroid/` | Borrador de la receta de F-Droid (ver `docs/PUBLICAR.md`). |
 
 ## 3. Los datos
 
@@ -125,6 +127,7 @@ Los errores se muestran en palabras simples: token vencido, sin permiso o sin co
 - **Cambiar el identificador crea una app nueva.** Por eso Mi Gym → El Forzudo necesitó exportar e importar. Con la app ya publicada, no se vuelve a cambiar.
 - **`extraer.js` ya no escribe `estandares.json`.** La tabla sale solo de `estandares.py`.
 - **En mancuernas se anota el peso de una.** Los umbrales con `db: 1` están pensados así. Las máquinas (`m: 1`) son aproximadas.
+- **El APK tiene que salir idéntico** al compilarlo en otra máquina (F-Droid lo comprueba). No hay que meter en la compilación nada que cambie entre máquinas o entre repos: fechas, rutas, el commit (`vcsInfo.include = false`). Para comprobarlo, ver `docs/PUBLICAR.md` → F-Droid.
 - **`proguard-rules.pro`** protege las clases `@Serializable`. Si se mueve el paquete, hay que actualizarlo; si no, la versión firmada no lee los datos (la de prueba sí, y el error no se nota hasta publicar).
 - **Las fotos viejas (hasta la 1.3) no son libres y siguen en el historial de git.** El repo público se sube con un historial nuevo, sin ellas (ver `docs/PUBLICAR.md`).
 - **Una lámina nueva** se agrega en `herramientas/laminas/ejercicios.py` y se regenera con `laminas.py` sin lista de ids, para que también se actualice `laminas.json`. Si falta en `laminas.json`, la app no la muestra.

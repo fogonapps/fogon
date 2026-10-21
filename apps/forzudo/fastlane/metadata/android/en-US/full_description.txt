@@ -1,0 +1,16 @@
+<p>El Forzudo ("The Strongman") is a gym workout log with no ads, no tracking and no cost. The app is in Spanish. It is part of <b>Fogón</b>, home-made apps: your attention is worth more than an ad.</p>
+
+<ul>
+<li><b>Train and log:</b> pick a routine, enter weight and reps for each set and tick it. Ticking a set starts the rest timer, with a notification when it ends.</li>
+<li><b>Per-set targets:</b> based on your last session it tells you to add weight, go for one more rep, or hold.</li>
+<li><b>An honest streak:</b> a week counts when you complete every routine in your program. It cannot be ticked by hand.</li>
+<li><b>Strength ranks</b> per muscle, from Iron to Diamond, with a body map and your next goal.</li>
+<li><b>Exercise plates</b> showing start, end and the working muscle in its color.</li>
+<li><b>6 ready-made programs</b> and an editor for your own routines.</li>
+</ul>
+
+<p><b>Your data is yours.</b> Everything is stored on your phone and you can export a backup at any time. If you prefer, you can also keep it in your own cloud: by connecting your GitHub account (optional), workouts are copied to a private Gist of yours. Without it, the app does not use the internet.</p>
+
+<p>The app does not replace a doctor or a coach.</p>
+
+<p>Exercise drawings: Everkinetic (CC BY-SA 4.0). Strength ranks calibrated with OpenPowerlifting data (public domain).</p>

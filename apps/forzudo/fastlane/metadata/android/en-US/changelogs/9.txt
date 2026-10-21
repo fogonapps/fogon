@@ -1,0 +1,1 @@
+First F-Droid release. Plate for the Bulgarian split squat (55 exercises with plates). Exercise search ignores accents. The tutorial mentions you can also keep your data in your own cloud.

@@ -49,7 +49,7 @@ private data class Paso(@DrawableRes val dibujo: Int, val titulo: String, val te
 
 private val pasos = listOf(
     Paso(R.drawable.munieco_tut_hola, "¡Hola! Soy El Forzudo",
-        "Tu cuaderno de entrenos. Sin anuncios, sin rastreo y gratis de verdad. Tus datos se quedan en tu teléfono."),
+        "Tu cuaderno de entrenos. Sin anuncios, sin rastreo y gratis de verdad. Tus datos se quedan en tu teléfono y, si lo prefieres, también en tu propia nube."),
     Paso(R.drawable.munieco_tut_anota, "Entrena y anota",
         "En Entrenar escoge tu rutina y toca Empezar. Escribe el peso y las repeticiones de cada serie y márcala con ✓. Al marcarla arranca el descanso y te aviso cuando termine. Si tocas lo que hiciste la vez anterior, se copia solo."),
     Paso(R.drawable.munieco_tut_racha, "Tu racha es de verdad",
