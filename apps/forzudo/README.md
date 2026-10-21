@@ -30,7 +30,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
   - exportar e importar en JSON;
   - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
-- **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub con el mensaje listo (y el correo de Fogón, cuando exista).
+- **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 
 ## Permisos (y por qué)
 
@@ -79,6 +79,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.4.2 | 2026-10-21 | Primera versión reproducible (lista para F-Droid): el APK ya no lleva el commit dentro. El tutorial dice que los datos también se pueden guardar en tu propia nube. Ficha para F-Droid en `fastlane/`. Probada en el emulador instalada desde cero: tutorial, importar respaldo, entreno con láminas, rangos y 0 cierres inesperados. |
 | 1.4.3 | 2026-10-21 | Láminas de aperturas y press de hombro en máquina, de dibujos de Everkinetic que están en Wikimedia Commons (57 ejercicios con lámina; quedan 8 con su ícono). Probada en el emulador encima de la 1.4.2: lámina de aperturas en el entreno y 0 cierres inesperados. |
 | 1.5 | 2026-10-21 | **Inglés**, además del español: sigue el idioma del teléfono y se cambia en Perfil → Idioma (textos en `strings.xml`, datos en `assets/datos/en/textos.json`). **Cancelar o terminar el entreno** en cualquier momento: botones arriba del entreno y una X en la barra del entreno en curso; sin series marcadas, cancelar no pregunta y Terminar ofrece cancelar. **Reportar un fallo o sugerir algo** (Perfil), por GitHub. Enlace al código en Acerca de. Probada en el emulador encima de la 1.4.3: inglés por defecto (emulador en inglés), cambio a español y de vuelta sin reiniciar, cancelar y terminar en sus 4 casos, reportes, Acerca de y Manifiesto en inglés, 0 cierres inesperados. La lógica sigue igual a la web (comparación completa: solo difieren los rangos, como desde la 1.2). |
+| 1.5.1 | 2026-10-21 | Reportes también por correo, a fogonapps@gmail.com. Contacto en los README. Probada en el emulador: aparecen los dos botones de envío, 0 cierres inesperados. |
 
 **1.1.1** se probó completa en el emulador con la versión firmada:
 - tutorial y registro de peso;
@@ -121,6 +122,10 @@ Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su perso
 
 - **Probar en el teléfono real la sincronización con el Gist** (con el token de verdad).
 - Dibujo para los 8 ejercicios sin lámina (lista y motivo de cada uno en `herramientas/laminas/ejercicios.py`). Everkinetic no tiene uno que sirva ni en su repositorio ni en Wikimedia Commons, y los hechos con IA no quedaron al nivel.
+
+## Contacto
+
+Fallos o ideas: desde la app (Perfil → Reportar un fallo o sugerir algo), en [GitHub](https://github.com/fogonapps/fogon/issues) o a **fogonapps@gmail.com**.
 
 ## Créditos
 

@@ -50,7 +50,7 @@ Fogón no está *contra* nadie. No copiamos marcas, no atacamos empresas, no rom
 
 | App | Qué hace | Estado |
 |-----|----------|--------|
-| [El Forzudo](apps/forzudo/) | Registro de entrenos, rutinas, récords y rangos de fuerza (antes "Mi Gym") | En pruebas; se publica cuando tenga dibujos propios de los ejercicios |
+| [El Forzudo](apps/forzudo/) | Registro de entrenos, rutinas, récords y rangos de fuerza (antes "Mi Gym") | Publicada: [descargar](https://github.com/fogonapps/fogon/releases) (con Obtainium llegan solas las actualizaciones). F-Droid, desde enero de 2027. |
 | Alimentación | Calorías, macros y planes de comida | Siguiente |
 | Gastos · El Ahorrador | Gastos, presupuestos y ahorro | Planeada |
 | Hábitos · La Corredora | Hábitos, rachas y organizar el día | Planeada |
@@ -65,6 +65,10 @@ Cada app vive en su propia carpeta dentro de `apps/`. Por ahora todas son para *
 - [docs/IDENTIDAD.md](docs/IDENTIDAD.md): logo, colores, íconos y voz de las apps.
 - [docs/TECNOLOGIA.md](docs/TECNOLOGIA.md): con qué se construyen las apps y por qué.
 - [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): cómo están hechas por dentro (para quien quiera leer o cambiar el código, persona o IA). Cada app tiene además su propio `ARQUITECTURA.md`.
+
+## Contacto
+
+Fallos, ideas o ganas de ayudar: [GitHub](https://github.com/fogonapps/fogon/issues) o **fogonapps@gmail.com**.
 
 ## Licencia
 

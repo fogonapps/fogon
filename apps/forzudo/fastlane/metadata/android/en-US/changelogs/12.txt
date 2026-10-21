@@ -1,0 +1,1 @@
+Reports and suggestions can now also be sent by email.

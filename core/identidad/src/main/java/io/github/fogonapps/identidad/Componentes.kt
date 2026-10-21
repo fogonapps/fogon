@@ -239,5 +239,5 @@ fun AcercaDeFogon(
 /** Dirección del código público (null si una app todavía no lo tiene). */
 val URL_CODIGO: String? = "https://github.com/fogonapps/fogon"
 
-/** Correo de Fogón para reportes y sugerencias. Null hasta que exista: sin él, las apps solo ofrecen GitHub. */
-val CORREO_FOGON: String? = null
+/** Correo de Fogón para reportes y sugerencias (null = las apps solo ofrecen GitHub). */
+val CORREO_FOGON: String? = "fogonapps@gmail.com"
