@@ -64,7 +64,7 @@ Que una app sea gratis no cambia nada: el derecho de autor y las licencias aplic
 - **Imágenes generadas con IA:** si alguna vez se usan, se descarta cualquiera que traiga texto o marcas de agua (en una prueba salió una con la marca de un banco de imágenes, aprendida de memoria por el modelo).
 - **Estándares de fuerza:** desde la versión 1.2 (Mi Gym, hoy El Forzudo) son propios, calibrados con OpenPowerlifting (dominio público). Ver `apps/forzudo/ESTANDARES.md`.
 - **Textos de licencia dentro de la app:** OFL (letras), MIT (modelo muscular), Apache 2.0 (bibliotecas) y MPL 2.0 (la Public Suffix List que trae OkHttp) exigen que el texto vaya con la app. Cada app tiene la pantalla **Acerca de → Licencias**, que viene de `core/identidad` (`Licencias.kt`, textos en `assets/licencias/`). Al agregar una biblioteca, revisar su licencia en el POM y sumarla a la lista.
-- **Historial de git:** los commits viejos tienen las fotos y la tabla de strengthlevel.com. **Antes de publicar el repo**, hacerlo con un historial limpio (por ejemplo, un primer commit nuevo) para no redistribuirlas.
+- **Historial de git:** los commits viejos tienen las fotos y la tabla de strengthlevel.com. Por eso el repo público (`fogonapps/fogon`, desde el 21-10-2026) empezó con un commit nuevo, sin ese historial, y nunca se sube la rama `main` del repo de trabajo (ver `PUBLICAR.md`).
 
 ## 7. Aviso de salud
 
