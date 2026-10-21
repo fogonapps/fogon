@@ -11,13 +11,20 @@ Cada entrada: id del ejercicio (de assets/datos/ejercicios.json) → par(...):
 El grupo muscular (y con él el color y la zona) sale de ejercicios.json.
 Las coordenadas se pusieron mirando cada SVG con una cuadrícula encima (ver README.md).
 
-Ejercicios sin dibujo (Everkinetic no tiene uno que sirva): aperturas en máquina, press de
-hombro en máquina, elevaciones laterales en polea, face pull, sentadilla goblet, sentadilla
+Ejercicios sin dibujo (Everkinetic no tiene uno que sirva, ni en su repositorio ni en Wikimedia
+Commons; revisado el 21-10-2026): elevaciones laterales en polea, face pull, sentadilla goblet, sentadilla
 hack (el dibujo no se entiende), curl femoral sentado (el dibujo es de frente: no se ven los
 femorales ni el rodillo), hip thrust, plancha y elevaciones colgado.
 La sentadilla búlgara usa la sentadilla a una pierna con barra (0147): el pie de atrás va en un
 banco, igual que la búlgara; cambia solo la carga (barra en vez de mancuernas).
 """
+
+
+def commons(nombre, uno, dos):
+    """Dibujo de Everkinetic que está en Wikimedia Commons pero no en su repositorio:
+    commons/<nombre con _>_1.svg (paso 1) y _2.svg (paso 2)."""
+    base = 'commons/' + nombre.replace(' ', '_')
+    return [(base + '_1', list(uno), []), (base + '_2', list(dos), [])]
 
 
 def par(ek, rel, ten, orden='rt', huecos_rel=(), huecos_ten=()):
@@ -31,6 +38,7 @@ EJERCICIOS = {
     'press-banca': par('0042', [(138, 140, 24, 12, -18)], [(132, 138, 24, 12, -18)], huecos_ten=[(113, 89)]),
     'press-banca-ligero': par('0042', [(138, 140, 24, 12, -18)], [(132, 138, 24, 12, -18)], huecos_ten=[(113, 89)]),
     'press-banca-mancuernas': par('0055', [(110, 105, 20, 10, -10)], [(92, 108, 18, 9, -15)]),
+    'aperturas': commons('Butterfly machine', [(212, 266, 32, 20, -8), (277, 262, 32, 20, 8)], [(198, 285, 30, 18, -8), (258, 280, 30, 18, 8)]),
     'press-pecho-maquina': par('0066', [(125, 72, 20, 10, 0)], [(138, 70, 16, 9, 0)]),
     'press-inclinado': par('0061', [(135, 105, 20, 9, -20)], [(135, 105, 18, 9, -20)]),
     'press-inclinado-barra': par('0043', [(145, 108, 18, 9, -20)], [(135, 102, 18, 9, -20)]),
@@ -50,6 +58,7 @@ EJERCICIOS = {
     'pullover-polea': par('0092', [(115, 100, 10, 18, 0)], [(115, 100, 10, 18, 0)]),
     # Hombros
     'press-hombro-mancuernas': par('0038', [(75, 112, 10, 9, 0), (135, 112, 10, 9, 0)], [(65, 115, 10, 9, 0), (135, 115, 10, 9, 0)]),
+    'press-hombro': commons('Seated shoulder press machine', [(198, 290, 22, 24, 0), (402, 284, 22, 24, 0)], [(240, 282, 20, 24, 0), (392, 278, 20, 24, 0)]),
     'press-militar': par('0004', [(88, 108, 9, 8, 0), (132, 108, 9, 8, 0)], [(82, 80, 8, 8, 0), (118, 78, 8, 8, 0)]),
     'laterales': par('0018', [(92, 82, 8, 8, 0), (143, 82, 8, 8, 0)], [(103, 88, 8, 8, 0), (155, 88, 8, 8, 0)]),
     'pajaros': par('0032', [(120, 70, 10, 8, 0), (175, 60, 10, 8, 0)], [(105, 75, 10, 8, 0), (140, 70, 10, 8, 0)]),

@@ -72,6 +72,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.4 | 2026-10-18 | Láminas riso propias en lugar de las fotos (54 ejercicios; los otros 11 quedan sin dibujo por ahora). Licencias: Everkinetic CC BY-SA 4.0. Tope de 10 MB al importar y sin tráfico sin cifrar. Preguntas frecuentes dentro de la app (Perfil). Probada en el emulador el 20-10-2026: instalada encima de la 1.3 sin perder datos, láminas completas en el detalle, ejercicio sin lámina con su ícono, preguntas frecuentes y 0 cierres inesperados. |
 | 1.4.1 | 2026-10-20 | Lámina de la sentadilla búlgara (55 ejercicios con lámina; quedan 10 sin dibujo). La búsqueda de ejercicios ya no depende de las tildes ("jalon" encuentra "Jalón"). Probada en el emulador encima de la 1.4: lámina nueva en el entreno, búsqueda y 0 cierres inesperados. |
 | 1.4.2 | 2026-10-21 | Primera versión reproducible (lista para F-Droid): el APK ya no lleva el commit dentro. El tutorial dice que los datos también se pueden guardar en tu propia nube. Ficha para F-Droid en `fastlane/`. Probada en el emulador instalada desde cero: tutorial, importar respaldo, entreno con láminas, rangos y 0 cierres inesperados. |
+| 1.4.3 | 2026-10-21 | Láminas de aperturas y press de hombro en máquina, de dibujos de Everkinetic que están en Wikimedia Commons (57 ejercicios con lámina; quedan 8 con su ícono). Probada en el emulador encima de la 1.4.2: lámina de aperturas en el entreno y 0 cierres inesperados. |
 
 **1.1.1** se probó completa en el emulador con la versión firmada:
 - tutorial y registro de peso;
@@ -113,12 +114,12 @@ Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su perso
 ## Pendiente
 
 - **Probar en el teléfono real la sincronización con el Gist** (con el token de verdad).
-- Dibujo para los 10 ejercicios sin lámina (lista y motivo de cada uno en `herramientas/laminas/ejercicios.py`). Everkinetic no tiene uno que sirva: hace falta un dibujo propio con licencia libre.
+- Dibujo para los 8 ejercicios sin lámina (lista y motivo de cada uno en `herramientas/laminas/ejercicios.py`). Everkinetic no tiene uno que sirva ni en su repositorio ni en Wikimedia Commons, y los hechos con IA no quedaron al nivel.
 
 ## Créditos
 
 - Estándares de fuerza: modelo de Fogón con datos de [OpenPowerlifting](https://www.openpowerlifting.org) (dominio público).
-- Dibujos de los ejercicios: [Everkinetic](https://github.com/everkinetic/data) (CC BY-SA 4.0), pasados a lámina riso por Fogón; las láminas también son CC BY-SA 4.0. Hasta la 1.3 la app usaba fotos de free-exercise-db, que no eran libres (ver `docs/LEGAL.md` §6).
+- Dibujos de los ejercicios: [Everkinetic](https://github.com/everkinetic/data) (CC BY-SA 4.0; aperturas y press de hombro en máquina desde [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:Weight_training_diagrams), CC BY-SA 3.0), pasados a lámina riso por Fogón; las láminas también son CC BY-SA 4.0. Hasta la 1.3 la app usaba fotos de free-exercise-db, que no eran libres (ver `docs/LEGAL.md` §6).
 - Modelo muscular: [react-body-highlighter](https://github.com/giavinh79/react-body-highlighter) (MIT, © 2020 GV79), que tomó el dibujo de [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT, © 2022 ELABBASSI Hicham).
 - Letras: Bagel Fat One y Anton (SIL Open Font License).
 - Licencia del código: GPL-3.0 o posterior.

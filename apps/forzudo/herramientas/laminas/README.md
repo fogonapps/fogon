@@ -33,9 +33,11 @@ La guía de colores en la app es el mapa del cuerpo de Rangos pintado con estos 
 - las láminas, que son una modificación, también quedan **CC BY-SA 4.0**;
 - hay que dar crédito a Everkinetic en la pantalla de Licencias y en el README.
 
+Algunos dibujos de Everkinetic no están en su repositorio pero sí en [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:Weight_training_diagrams), con **CC BY-SA 3.0** (que permite compartir la modificación con la 4.0). De ahí salen las aperturas y el press de hombro en máquina: van en `commons/` dentro de la carpeta de SVG (`commons('<nombre>', ...)` en `ejercicios.py`).
+
 Todas las figuras de Everkinetic son de hombre. Se probó generar versiones de mujer con IA (Stable Diffusion 1.5 + ControlNet, en el PC), pero no quedaban al nivel ni en el mismo estilo, y Angel decidió dejar solo las de hombre. Está explicado en las preguntas frecuentes del README de la app.
 
-Cubre 55 de nuestros 65 ejercicios. Los 10 que faltan, y por qué, están al principio de `ejercicios.py`: Everkinetic no tiene un dibujo que sirva (se revisó todo el banco el 20-10-2026). Necesitan un dibujo propio con licencia libre.
+Cubre 57 de nuestros 65 ejercicios. Los 8 que faltan, y por qué, están al principio de `ejercicios.py`: Everkinetic no tiene un dibujo que sirva, ni en su repositorio ni en Commons (revisado el 20 y el 21-10-2026). Se probó dibujarlos con IA local (SD 1.5 img2img + OpenPose a partir de poses escritas a mano) y Angel los rechazó el 21-10-2026.
 
 ## Cómo se generan
 
@@ -45,6 +47,8 @@ git clone --depth 1 https://github.com/everkinetic/data everkinetic
 # 2. Generar las láminas de los ejercicios de ejercicios.py
 python3 laminas.py everkinetic/dist/svg ../../src/main/assets/laminas
 ```
+
+Antes del paso 2, bajar los de Commons a `everkinetic/dist/svg/commons/` (por ejemplo `Butterfly_machine_1.svg` desde `https://commons.wikimedia.org/wiki/Special:FilePath/Butterfly_machine_1.svg`).
 
 Sin lista de ids regenera todas y escribe `assets/datos/laminas.json`, la lista que lee la app. Con una lista (`... bulgara,press-banca`) genera solo esas y no toca `laminas.json`.
 

@@ -7,6 +7,9 @@ línea en tinta y el número del paso (1 inicio, 2 final) en Anton con la chispa
 
 Uso: python3 laminas.py <carpeta con los SVG de Everkinetic> ../../src/main/assets/laminas [id1,id2,...]
 
+La carpeta lleva también una subcarpeta commons/ con los dibujos de Everkinetic que solo están en
+Wikimedia Commons (ver README.md, "De dónde salen los dibujos").
+
 Sin la lista de ids genera todas y escribe también assets/datos/laminas.json.
 
 Necesita rsvg-convert, Pillow y numpy. Ver README.md de esta carpeta.
@@ -105,7 +108,9 @@ def lamina(svg_txt, manchas, musculo, paso, ancho=900, huecos=()):
     vb = [float(x) for x in re.search(r'viewBox="([^"]+)"', svg_txt).group(1).split()]
     esc = ancho / vb[2]
     # La línea es el grupo que no es blanco (casi siempre #333; algunos dibujos usan otro gris oscuro).
-    lineas = next(m.group(2) for m in re.finditer(r'<g fill="(#[0-9a-fA-F]+)">(.*?)</g>', svg_txt, re.S) if m.group(1).lower() not in ('#fff', '#ffffff'))
+    # Los dibujos de Everkinetic subidos a Wikimedia Commons no tienen ese grupo: son una sola capa negra.
+    grupos = [m.group(2) for m in re.finditer(r'<g fill="(#[0-9a-fA-F]+)">(.*?)</g>', svg_txt, re.S) if m.group(1).lower() not in ('#fff', '#ffffff')]
+    lineas = grupos[0] if grupos else re.search(r'<svg[^>]*>(.*)</svg>', svg_txt, re.S).group(1)
     caja = ' '.join(map(str, vb))
     L = rasterizar(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{caja}"><g fill="#000">{lineas}</g></svg>', ancho).split()[3]
     W, H = L.size

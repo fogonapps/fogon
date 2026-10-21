@@ -618,7 +618,7 @@ fun Licencias(vm: GymViewModel) {
                     "OpenPowerlifting",
                     "Esta app usa datos del proyecto OpenPowerlifting, https://www.openpowerlifting.org. Puedes descargar una copia de los datos en https://gitlab.com/openpowerlifting/opl-data. Dominio público.",
                 ),
-                Licencia("Everkinetic", "Ilustraciones de los ejercicios, de github.com/everkinetic/data. Fogón las modificó (lámina riso); las láminas se comparten con la misma licencia. Creative Commons Atribución-CompartirIgual 4.0.", "cc-by-sa-4.0.txt"),
+                Licencia("Everkinetic", "Ilustraciones de los ejercicios, de github.com/everkinetic/data (CC BY-SA 4.0) y, las de aperturas y press de hombro en máquina, de Wikimedia Commons (CC BY-SA 3.0, creativecommons.org/licenses/by-sa/3.0, que permite compartir la modificación con la 4.0). Fogón las modificó (lámina riso); las láminas se comparten con la misma licencia. Creative Commons Atribución-CompartirIgual 4.0.", "cc-by-sa-4.0.txt"),
             ),
         )
         Spacer(Modifier.height(40.dp))
