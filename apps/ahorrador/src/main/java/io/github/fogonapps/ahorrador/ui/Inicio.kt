@@ -1,5 +1,7 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -96,7 +98,7 @@ fun FilaMovimiento(e: Estado, m: Movimiento, onClick: () -> Unit) {
     val cuenta = e.cuentas.firstOrNull { it.id == m.cuenta }?.nombre.orEmpty()
     val meta = e.metas.firstOrNull { it.id == m.meta }
     val (color, icono: ImageVector, titulo) = when (m.tipo) {
-        TipoMovimiento.TRASPASO -> Triple(Color.White, Iconos.Pasar, stringResource(R.string.paso_a, e.cuentas.firstOrNull { it.id == m.aCuenta }?.nombre.orEmpty()))
+        TipoMovimiento.TRASPASO -> Triple(Tintas.GrisClaro, Iconos.Pasar, stringResource(R.string.paso_a, e.cuentas.firstOrNull { it.id == m.aCuenta }?.nombre.orEmpty()))
         TipoMovimiento.AHORRO -> Triple(meta?.let { colorDe(it.color) } ?: Tintas.Verde, Iconos.de(meta?.icono ?: "moneda"), meta?.nombre ?: stringResource(R.string.ahorro))
         else -> Triple(cat?.let { colorDe(it.color) } ?: Tintas.GrisClaro, Iconos.de(cat?.icono ?: "otros"), cat?.nombre ?: stringResource(R.string.sin_categoria))
     }
@@ -135,16 +137,16 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
             Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
                 fontFamily = Bagel, fontSize = 28.sp, color = f.texto, maxLines = 1)
         }
-        Box(Modifier.size(48.dp).clip(CircleShape).background(Color.White).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
-            Icon(Iconos.Persona, stringResource(R.string.perfil), tint = Tintas.Tinta, modifier = Modifier.size(24.dp))
+        Box(Modifier.size(48.dp).clip(CircleShape).background(FogonTema.actual.pildora).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
+            Icon(Iconos.Persona, stringResource(R.string.perfil), tint = FogonTema.actual.sobrePildora, modifier = Modifier.size(24.dp))
         }
     }
 
     // La tarjeta grande: lo que queda para gastar este mes.
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-        Pesos(L.patrimonio(e), 46.sp, Color.White)
-        Text(stringResource(R.string.en_mes, Formato.mes(mes)), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f),
+        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        Pesos(L.patrimonio(e), 46.sp, FogonTema.actual.sobreDestacada)
+        Text(stringResource(R.string.en_mes, Formato.mes(mes)), style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f),
             modifier = Modifier.padding(top = 4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             MiniDato(stringResource(R.string.entro), L.ingresos(e, mes))
@@ -153,8 +155,8 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         }
         if (e.sistema == Sistema.SOBRES && L.porAsignar(e, mes) > 0) {
             Text(stringResource(R.string.por_asignar_pista, Formato.pesos(L.porAsignar(e, mes))), style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold, color = Tintas.Tinta,
-                modifier = Modifier.padding(top = 6.dp).clip(RoundedCornerShape(50)).background(Color.White).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
+                fontWeight = FontWeight.Bold, color = FogonTema.actual.sobrePildora,
+                modifier = Modifier.padding(top = 6.dp).clip(FormaPildora).background(FogonTema.actual.pildora).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
                     .padding(horizontal = 14.dp, vertical = 6.dp))
         }
     }
@@ -163,7 +165,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         AccionRedonda(Iconos.Gasto, stringResource(R.string.gasto), { vm.abrir(Pantalla.Anotar(TipoMovimiento.GASTO)) })
         AccionRedonda(Iconos.Ingreso, stringResource(R.string.ingreso), { vm.abrir(Pantalla.Anotar(TipoMovimiento.INGRESO)) })
         AccionRedonda(Iconos.Pasar, stringResource(R.string.pasar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.TRASPASO)) })
-        AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) }, f.paleta.tinta)
+        AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) }, acento = true)
     }
 
     // En los primeros días del mes, invita a cerrar el anterior (el kakeibo lo hace siempre).
@@ -206,8 +208,8 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Pesos(fijo.monto, 16.sp)
-                Text(stringResource(R.string.pagar), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Tintas.Tinta,
-                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(50)).background(f.paleta.tinta).clickable { vm.pagarFijo(fijo) }
+                Text(stringResource(R.string.pagar), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = FogonTema.actual.paleta.sobreTinta,
+                    modifier = Modifier.padding(top = 4.dp).clip(FormaPildora).background(f.paleta.tinta).clickable { vm.pagarFijo(fijo) }
                         .padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
@@ -236,8 +238,8 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
 @Composable
 private fun MiniDato(etiqueta: String, n: Long) {
     Column {
-        Text(etiqueta, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
-        Pesos(n, 15.sp, Color.White)
+        Text(etiqueta, style = MaterialTheme.typography.labelSmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.8f))
+        Pesos(n, 15.sp, FogonTema.actual.sobreDestacada)
     }
 }
 
@@ -287,7 +289,7 @@ fun Resumen(vm: AhorradorViewModel, e: Estado) {
         Seccion(stringResource(R.string.en_que_se_fue))
         val total = porCat.sumOf { it.second }.coerceAtLeast(1)
         // Una barra con los colores de cada categoría, del tamaño de lo que se gastó.
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(14.dp).clip(RoundedCornerShape(7.dp))) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(14.dp).clip(forma(7.dp))) {
             porCat.forEach { (c, n) -> Box(Modifier.weight(n.toFloat() / total).fillMaxHeight().background(colorDe(c.color))) }
         }
         porCat.forEach { (c, n) ->

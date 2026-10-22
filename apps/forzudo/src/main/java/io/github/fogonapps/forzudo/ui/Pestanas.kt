@@ -1,5 +1,14 @@
 package io.github.fogonapps.forzudo.ui
 
+import androidx.compose.foundation.Image
+import io.github.fogonapps.identidad.Anton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.drawBehind
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.identidad.Idioma
 import androidx.compose.material3.FilterChip
 import io.github.fogonapps.forzudo.R
@@ -99,31 +108,40 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     val confirmar = LocalConfirmar.current
 
     Column {
-        // Racha
-        Row(
-            Modifier.fillMaxWidth().padding(16.dp).brillo(f.paleta.segunda, RoundedCornerShape(28.dp), 24.dp).clip(RoundedCornerShape(28.dp))
-                .background(Brush.linearGradient(listOf(f.paleta.segunda, f.paleta.luz2.copy(alpha = 0.85f)))).padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        // Cabecera con el ADN de Fogón (docs/IDENTIDAD.md): etiquetas técnicas, la racha gigante y la figura-calcomanía.
+        val semana = hoy.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
+            Text("${fechaCorta(td).uppercase()} · ${stringResource(R.string.semana_corta, semana).uppercase()}",
+                style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+            Text("FZ — ${e.sessions.size.toString().padStart(3, '0')}", style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+        }
+        Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
+            style = MaterialTheme.typography.headlineLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp))
+        val acento = f.acentoTexto
+        Box(
+            Modifier.fillMaxWidth().height(262.dp).drawBehind {
+                // Dos líneas finas que cruzan, como en los pósters.
+                drawLine(acento.copy(alpha = 0.45f), Offset(-20f, size.height * 0.92f), Offset(size.width + 20f, size.height * 0.45f), 2f)
+                drawLine(f.texto.copy(alpha = 0.18f), Offset(size.width * 0.3f, 0f), Offset(size.width * 0.55f, size.height), 2f)
+            },
         ) {
-            Box {
-                io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, tamano = 72.dp)
-                if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopEnd), tamano = 22.dp)
-            }
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${racha.actual}", style = MaterialTheme.typography.displayLarge, color = f.acentoTexto)
-                    Text(
-                        pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(),
-                        style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.sp, lineHeight = 20.sp), color = f.texto,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
+            Text("${racha.actual}", fontFamily = Anton, fontSize = 200.sp, lineHeight = 170.sp, color = f.numero,
+                modifier = Modifier.padding(start = 14.dp).semantics { contentDescription = "${racha.actual}" })
+            Column(Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = 10.dp), horizontalAlignment = Alignment.End) {
+                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(), fontFamily = Anton, fontSize = 15.sp,
+                    letterSpacing = 1.5.sp, color = acento, textAlign = TextAlign.End, modifier = Modifier.width(110.dp))
+                Box {
+                    io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, Modifier.rotate(7f), tamano = 128.dp)
+                    if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 22.dp)
                 }
-                Text(
-                    stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar) +
-                        " · " + stringResource(R.string.racha_mejor, racha.mejor),
-                    style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
-                )
             }
+        }
+        Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.racha_mejor, racha.mejor), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                color = f.paleta.sobreTinta, modifier = Modifier.clip(FormaPildora).background(f.paleta.tinta).padding(horizontal = 12.dp, vertical = 6.dp))
+            Text(stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar),
+                style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
         }
 
         Seccion(stringResource(R.string.esta_semana, hechos.size, pluralStringResource(R.plurals.entrenos, dias.size, dias.size))) {
@@ -133,9 +151,9 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 dias.forEachIndexed { i, d ->
                     val hecho = d.id in hechos
                     Column(
-                        Modifier.width(64.dp).clip(RoundedCornerShape(12.dp))
-                            .background(if (hecho) f.paleta.tinta else f.superficie)
-                            .then(if (d.id == hoyId) Modifier.border(2.dp, f.paleta.segunda, RoundedCornerShape(12.dp)) else Modifier)
+                        Modifier.width(64.dp)
+                            .then(if (hecho) Modifier.clip(forma(12.dp)).background(f.paleta.tinta) else Modifier.tarjetaFogon(forma(12.dp)))
+                            .then(if (d.id == hoyId) Modifier.border(2.dp, f.acentoTexto, forma(12.dp)) else Modifier)
                             .padding(vertical = 8.dp, horizontal = 4.dp)
                             .semantics { stateDescription = if (hecho) estHecho else estPendiente },
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -154,8 +172,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 semanasDelMes(mes).forEachIndexed { i, w ->
                     val hecha = L.semanaHecha(e, w, dias)
                     Column(
-                        Modifier.clip(RoundedCornerShape(12.dp))
-                            .background(if (hecha) f.paleta.tinta else f.superficie)
+                        Modifier.then(if (hecha) Modifier.clip(forma(12.dp)).background(f.paleta.tinta) else Modifier.tarjetaFogon(forma(12.dp)))
                             .semantics { stateDescription = if (hecha) estCompleta else estIncompleta }
                             .heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
@@ -199,7 +216,7 @@ private fun TarjetaEntreno(vm: GymViewModel, s: Sesion, dias: List<io.github.fog
     val L = vm.L
     val v = L.volumen(s.entries); val n = L.series(s.entries)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-        .clip(RoundedCornerShape(24.dp)).background(f.superficie).border(1.dp, f.linea, RoundedCornerShape(24.dp)).padding(16.dp),
+        .tarjetaFogon(forma(24.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(L.tituloRutina(s, dias), style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f))
@@ -254,8 +271,7 @@ fun Entrenar(vm: GymViewModel, e: Estado) {
         }
         Seccion(stringResource(R.string.mis_rutinas, dias.size)) {
             dias.forEach { d ->
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(14.dp))
-                    .background(f.superficie).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(d.title, style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f))
                         if (hoyId == d.id) Etiqueta(stringResource(R.string.hoy), f.paleta.tinta, f.paleta.sobreTinta)
@@ -288,7 +304,7 @@ fun Entrenar(vm: GymViewModel, e: Estado) {
 @Composable
 fun Etiqueta(texto: String, fondo: Color, color: Color) {
     Text(texto, style = MaterialTheme.typography.labelMedium, color = color,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(fondo).padding(horizontal = 10.dp, vertical = 4.dp))
+        modifier = Modifier.clip(FormaPildora).background(fondo).padding(horizontal = 10.dp, vertical = 4.dp))
 }
 
 /* =================== Rangos =================== */
@@ -305,18 +321,31 @@ fun Rangos(vm: GymViewModel, e: Estado) {
     Column {
         if (bw == null) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.pestana_rangos), style = MaterialTheme.typography.headlineLarge, color = f.texto)
                 Text(stringResource(R.string.rangos_falta_peso), color = f.texto)
                 BotonRiso(stringResource(R.string.registrar_peso), { vm.irA(Pestana.PERFIL) })
             }
         } else {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Insignia(ov?.rango, 62.dp)
-                Column {
-                    Text(stringResource(R.string.rango_general), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                    Text(ov?.rango?.nombre ?: stringResource(R.string.sin_datos_aun), style = MaterialTheme.typography.headlineSmall,
-                        color = ov?.rango?.let { colorHex(it.color) } ?: f.textoSuave)
-                    Text(ov?.let { pluralStringResource(R.plurals.promedio_grupos, it.cuenta, it.cuenta, fk(bw)) }
-                        ?: stringResource(R.string.completa_entreno), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            // Cabecera con el ADN: el nombre del rango gigante, en su color, y la figura-calcomanía.
+            val colorRango = ov?.rango?.let { colorHex(it.color) } ?: f.textoSuave
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
+                Text(stringResource(R.string.rango_general).uppercase(), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+                ov?.rango?.let { r -> vm.bib.niveles.indexOfFirst { it.n == r.nombre }.takeIf { it >= 0 } }?.let { i -> Text("${i + 1} / ${vm.bib.niveles.size}", style = MaterialTheme.typography.labelSmall, color = f.textoSuave) }
+            }
+            Box(Modifier.fillMaxWidth().height(214.dp)) {
+                val palabra = (ov?.rango?.nombre ?: stringResource(R.string.sin_datos_aun)).uppercase()
+                // Lo más grande que quepa a lo ancho: Anton mide unos 0,47 em por letra.
+                val tam = if (ov == null) 44f else minOf(120f, 340f / (0.47f * palabra.length.coerceAtLeast(1)))
+                Text(palabra, fontFamily = Anton, fontSize = tam.sp,
+                    lineHeight = tam.sp, color = colorRango, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip,
+                    modifier = Modifier.padding(start = 14.dp, top = 4.dp))
+                Image(androidx.compose.ui.res.painterResource(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos), null,
+                    Modifier.align(Alignment.BottomEnd).padding(end = 16.dp).size(120.dp).rotate(-5f))
+                Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Insignia(ov?.rango, 40.dp)
+                    Text(ov?.let { pluralStringResource(R.plurals.promedio_grupos, it.cuenta, it.cuenta, fk(bw)) } ?: stringResource(R.string.completa_entreno),
+                        style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.width(190.dp))
                 }
             }
         }
@@ -481,6 +510,7 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
         }
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             BotonSecundario(stringResource(R.string.ver_tutorial), { vm.verTutorial() }, Modifier.fillMaxWidth())
+            BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.manifiesto_fogon), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.preguntas_frecuentes), { vm.abrir(Pantalla.Preguntas) }, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())

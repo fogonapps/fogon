@@ -33,7 +33,8 @@ object Tintas {
  * - [textoEnTinta]: el acento cuando es texto sobre el fondo oscuro.
  * - [segunda] y [luz2]: las dos luces difuminadas del fondo y el brillo de las tarjetas destacadas.
  * - [fondo]: el negro de la app, con un matiz de su color.
- * - [textoEnPapel]: el acento sobre papel claro (láminas, tarjetas de papel).
+ * - [textoEnPapel]: el acento sobre papel claro (láminas, tarjetas de papel). En el estilo Riso es la primera tinta.
+ * - [segundaTinta]: la segunda tinta del estilo Riso (Apariencia), la que va corrida.
  */
 data class Paleta(
     val tinta: Color,
@@ -43,6 +44,7 @@ data class Paleta(
     val segunda: Color,
     val luz2: Color,
     val fondo: Color,
+    val segundaTinta: Color = tinta,
 ) {
     companion object {
         /** Violeta y azul con acento lima. */
@@ -54,6 +56,7 @@ data class Paleta(
             segunda = Tintas.Violeta,
             luz2 = Tintas.Azul,
             fondo = Color(0xFF0C0A12),
+            segundaTinta = Tintas.Rosa,
         )
 
         /** Verde y amarillo con acento amarillo (la moneda). */
@@ -65,6 +68,7 @@ data class Paleta(
             segunda = Tintas.Verde,
             luz2 = Tintas.Amarillo,
             fondo = Color(0xFF0D0C0A),
+            segundaTinta = Tintas.Amarillo,
         )
     }
 }

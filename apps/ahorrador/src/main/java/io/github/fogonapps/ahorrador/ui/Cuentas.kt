@@ -42,11 +42,11 @@ fun Cuentas(vm: AhorradorViewModel, e: Estado) {
     val L = vm.L
     Cabecera(stringResource(R.string.cuentas), vm::cerrar)
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-        Pesos(L.patrimonio(e), 40.sp, Color.White)
+        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        Pesos(L.patrimonio(e), 40.sp, FogonTema.actual.sobreDestacada)
         val enMetas = e.metas.sumOf { L.ahorradoEn(e, it.id) }
-        if (enMetas > 0) Text(stringResource(R.string.mas_en_metas, Formato.pesos(enMetas)), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.9f))
-        Text(stringResource(R.string.tienes_pista), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+        if (enMetas > 0) Text(stringResource(R.string.mas_en_metas, Formato.pesos(enMetas)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
+        Text(stringResource(R.string.tienes_pista), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
     }
     e.cuentas.filter { !it.archivada }.forEach { c ->
         FilaVidrio({ vm.abrir(Pantalla.Cuenta(c.id)) }) {
@@ -78,11 +78,11 @@ fun CuentaPantalla(vm: AhorradorViewModel, e: Estado, id: String) {
     val t = L.tarjeta(e, id, hoy)
     if (c.tipo == TipoCuenta.CREDITO && t != null) {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.debes), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-            Pesos(t.deuda, 42.sp, Color.White)
+            Text(stringResource(R.string.debes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+            Pesos(t.deuda, 42.sp, FogonTema.actual.sobreDestacada)
             if (t.cupo > 0) {
-                Barra(t.usado.toFloat(), Color.White)
-                Text(stringResource(R.string.cupo_disponible, Formato.pesos(t.disponible), Formato.pesos(t.cupo)), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.9f))
+                Barra(t.usado.toFloat(), FogonTema.actual.sobreDestacada)
+                Text(stringResource(R.string.cupo_disponible, Formato.pesos(t.disponible), Formato.pesos(t.cupo)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -115,8 +115,8 @@ fun CuentaPantalla(vm: AhorradorViewModel, e: Estado, id: String) {
         Pista(stringResource(R.string.tarjeta_aproximado), Modifier.padding(top = 8.dp))
     } else {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp)) {
-            Text(stringResource(R.string.saldo), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-            Pesos(L.saldo(e, id), 42.sp, Color.White)
+            Text(stringResource(R.string.saldo), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+            Pesos(L.saldo(e, id), 42.sp, FogonTema.actual.sobreDestacada)
         }
     }
     Seccion(stringResource(R.string.movimientos))

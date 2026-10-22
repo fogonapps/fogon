@@ -80,7 +80,7 @@ En `Avisos.kt`: la hora (9:00) está en `programar()` y los días de anticipaci�
 
 | Qué | Dónde |
 |-----|-------|
-| Colores de la app (luces verde y amarilla, acento amarillo) | `core/identidad/.../Tintas.kt`, `Paleta.Ahorrador`. Letras y reglas comunes en `docs/IDENTIDAD.md` → Estilo de noche. |
+| Colores de la app (luces verde y amarilla, acento amarillo) y los cinco estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Ahorrador`) y `Apariencia.kt`. Las pantallas nunca usan colores fijos: blanco de los botones = `pildora`/`sobrePildora`, letras de la tarjeta grande = `sobreDestacada`, letras sobre el acento = `paleta.sobreTinta`. Ver `docs/IDENTIDAD.md` → Apariencia. |
 | Tinta de cada categoría | `Categorias.kt`. Colores para metas: `COLORES_META` en `ui/Presupuesto.kt`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`, hechos de `identidad/png/el-ahorrador.png` y `identidad/una-tinta/el-ahorrador.svg`. |
 | Ícono de la notificación | `src/main/res/drawable/ic_notificacion.xml` (la chispa). |

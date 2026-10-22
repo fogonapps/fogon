@@ -143,10 +143,10 @@ Se cambian en `herramientas/estandares.py` y se regeneran con el comando de la s
 
 | Qué | Dónde |
 |-----|-------|
-| Colores de la app (luces violeta y azul, acento lima) | `core/identidad/.../Tintas.kt`, `Paleta.Forzudo`. Cada app tiene su paleta; todas comparten letras y reglas (`docs/IDENTIDAD.md` → Estilo de noche). Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
+| Colores de la app (luces violeta y azul, acento lima) y los cinco estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Forzudo`) y `Apariencia.kt` (`colorBase` de cada estilo). Las pantallas nunca usan colores fijos: todo sale de `FogonTema.actual`. Cada app tiene su paleta; todas comparten letras y reglas (`docs/IDENTIDAD.md` → Estilo de noche). Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
 | Colores de cada músculo en las láminas | `herramientas/laminas/laminas.py` (`MUSCULOS`, `ZONAS`) y su `README.md`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`; el fondo es el color `papel` de `res/values/colores.xml`. |
-| Muñequitos del tutorial y de la barra | `src/main/res/drawable-nodpi/munieco_*.webp`. Los originales están en `identidad/`. |
+| Muñequitos del tutorial y de la barra | `src/main/res/drawable-nodpi/munieco_*.webp`. Los del tutorial llevan borde de calcomanía (papel y sombra de tinta); los originales sin borde están en `identidad/`. Para ponerle el borde a uno nuevo: agrandar el canal alfa de la figura unos 16 px con un filtro de máximo (PIL `ImageFilter.MaxFilter`), pintarlo de papel `#EFE7DA`, poner debajo la misma forma en tinta corrida 8 px, y la figura encima. |
 | Ícono de F-Droid | `fastlane/metadata/android/en-US/images/icon.png` (512 × 512, el mismo ícono sobre el papel). |
 
 ## Agregar una pantalla
@@ -173,6 +173,8 @@ Se cambian en `herramientas/estandares.py` y se regeneran con el comando de la s
 ```
 
 - **Instalar siempre encima** de la versión anterior: así se prueba que no se borran los datos.
+- **Si el emulador se cae** (el proceso termina con código 139 y su registro dice `Failed to find ColorBuffer`): arrancarlo en frío y con gráfico por software, `emulator -avd fogon-prueba -no-snapshot -gpu swiftshader_indirect`. El 21-10-2026 se caía al dibujar degradados radiales grandes junto con el grano; por eso los orbes se dibujan con círculos (`orbe()` en `Componentes.kt`). Hay un segundo emulador limpio, `fogon-prueba2`, por si el primero se daña.
+- **Probar un estilo sin tocar la pantalla:** escribir `shared_prefs/apariencia.xml` con `run-as` (`<string name="estilo">RISO</string>`, y por estilo `RISO.FONDO`, `RISO.transparencia`…).
 - **Al final, `logcat -b crash -d` no debe mostrar nada.**
 - **Datos de prueba sin usar los de nadie:** `node herramientas/datos-prueba.js src/main/assets/datos <salida.json>`, desde `apps/forzudo`, da un estado con unos 100 entrenos inventados. Se toma lo que está bajo `"estado"` (sin `active`) y se importa desde Perfil → Importar.
 - **Capturas limpias** (para F-Droid): con el modo demo de Android (`settings put global sysui_demo_allowed 1` y `am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000`), y `adb exec-out screencap -p`. Van en `fastlane/metadata/android/<idioma>/images/phoneScreenshots/` (`es` con la app en español, `en-US` en inglés) como JPEG, porque en PNG el grano del papel pesa varios MB.

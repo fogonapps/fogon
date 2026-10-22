@@ -128,6 +128,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
                             is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
+                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Ahorrador, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             is Pantalla.Licencias -> Licencias(vm)
                             is Pantalla.Preguntas -> Preguntas(vm)
@@ -164,7 +165,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
     )
     Row(
         modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth()
-            .clip(FormaPildora).background(androidx.compose.ui.graphics.lerp(p.fondo, Color.White, 0.12f).copy(alpha = 0.94f))
+            .clip(FormaPildora).background(androidx.compose.ui.graphics.lerp(p.fondo, f.texto, 0.12f).copy(alpha = 0.94f))
             .border(1.dp, f.linea, FormaPildora).padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -183,10 +184,10 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
 private fun BotonPestana(icono: ImageVector, texto: String, elegida: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(50.dp).clip(CircleShape).background(if (elegida) Color.White else Color.Transparent)
+        Modifier.size(50.dp).clip(CircleShape).background(if (elegida) f.pildora else Color.Transparent)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
-    ) { Icon(icono, null, tint = if (elegida) Tintas.Tinta else f.textoSuave, modifier = Modifier.size(22.dp)) }
+    ) { Icon(icono, null, tint = if (elegida) f.sobrePildora else f.textoSuave, modifier = Modifier.size(22.dp)) }
 }
 
 /** Aviso con la identidad: píldora blanca, y la chispa en los logros (meta cumplida, deuda saldada). */
@@ -195,11 +196,11 @@ private fun AvisoTinta(mensaje: String) {
     val logro = mensaje.startsWith(MARCA_LOGRO)
     Row(
         Modifier.fillMaxWidth().padding(12.dp).brillo(FogonTema.actual.paleta.segunda.copy(alpha = 0.7f), FormaPildora)
-            .clip(FormaPildora).background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+            .clip(FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (logro) Chispa(tamano = 22.dp)
-        Text(mensaje.removePrefix(MARCA_LOGRO), color = Tintas.Tinta, fontWeight = if (logro) FontWeight.Bold else FontWeight.Normal)
+        Text(mensaje.removePrefix(MARCA_LOGRO), color = FogonTema.actual.sobrePildora, fontWeight = if (logro) FontWeight.Bold else FontWeight.Normal)
     }
 }
 

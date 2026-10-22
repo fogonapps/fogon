@@ -29,6 +29,7 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
 - **4×1000:** si lo activas, la app anota sola el impuesto al sacar plata de una cuenta de banco.
 - **Candado:** pide la huella o el bloqueo del teléfono al abrir (Android 10 o más, y solo si el teléfono tiene bloqueo).
 - **Tus datos son tuyos:** respaldo y recuperación en JSON, y exportar los movimientos en CSV para una hoja de cálculo.
+- **Apariencia:** cinco estilos (Noche, Riso, Rebelde, Aura, Contraste) con todos sus colores cambiables, y opciones de comodidad.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 
@@ -64,6 +65,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | Versión | Fecha | Qué cambió |
 |---------|-------|------------|
 | 1.0 | 2026-10-21 | Primera versión: anotar con teclado propio, cuentas, tarjeta de crédito (mínimo, intereses, cuotas), sobres, 50/30/20, kakeibo con cierre del mes, metas, pagos fijos con aviso, me deben y debo, 4×1000, candado, respaldo JSON y CSV, español e inglés. Estilo de noche con luces verde y amarilla. Probada en el emulador (Android 16, en inglés y en español): tutorial, anotar un gasto, sobre asignado, tarjeta, meta con abono, pago fijo con su notificación, candado con PIN y sin bloqueo en el teléfono, cambio de idioma sin reiniciar, 0 cierres inesperados. 12 pruebas de la lógica y la traducción. Reproducible: un clon limpio compilado sin llave da el mismo APK que el firmado (`apksigcopier compare`). |
+| 1.1 | 2026-10-21 | **Apariencia** (Perfil → Opciones → Apariencia), la misma de El Forzudo: cinco estilos con todos sus colores cambiables, transparencia, textura, esquinas y comodidad (tamaño de letra, menos movimiento, más contraste). En Rebelde la tarjeta grande es una caja negra; en Riso, una tinta plana. Personaje con borde de calcomanía. Probada en el emulador en los cinco estilos. |
 
 ## Preguntas frecuentes
 

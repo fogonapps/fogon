@@ -9,6 +9,7 @@ Fogón son apps de Android libres (GPL-3.0-or-later), hechas con IA, sin anuncio
 ## Reglas
 
 - **Todo en español:** código (nombres de clases, funciones y variables), comentarios y documentos. Imita el estilo del archivo que estás tocando.
+- **Nunca colores fijos en las pantallas** (`Color.White`, `Tintas.Tinta`…): todo sale de `FogonTema.actual`, para que funcionen los cinco estilos de la Apariencia. Esquinas con `forma(…)`, tarjetas con `tarjetaFogon()`. Ver `docs/IDENTIDAD.md` → ADN visual y Apariencia.
 - **Textos de la app en español e inglés**, siempre en `strings.xml` (`values-es` y `values`) y nunca escritos en el código. Todo texto nuevo va en los dos idiomas; `TraduccionTest` lo comprueba. Ver la `GUIA.md` de la app → "Cambiar textos e idiomas".
 - **Nada de Google Play Services, Firebase, analíticas ni SDKs privativos.** Solo bibliotecas libres compatibles con la GPL-3.0. Si agregas una, súmala a la pantalla de licencias (`licenciasFogon()` o la lista de la app) con su texto en `assets/licencias/`.
 - **Nada de otros sin licencia clara:** imágenes, datos, letras o textos. Que algo esté en internet o se diga "dominio público" no basta; revisa de dónde salió (ver el caso de las fotos en `docs/LEGAL.md` §6).

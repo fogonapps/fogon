@@ -6,6 +6,35 @@ La identidad se inspira en el punk, el Y2K, la impresión riso y los fanzines: t
 
 Lienzo de diseño original: https://claude.ai/artifact/DTDCyymJ6YJFRS69Anp2b8 (privado). Su código está archivado en `identidad/lienzo/`.
 
+## Lo más importante: el ADN visual
+
+**Esta sección manda sobre todo lo demás.** Angel la pidió el 21-10-2026: una app de Fogón no puede verse genérica. Antes de diseñar o cambiar una pantalla, se revisa que tenga al menos tres de estas marcas.
+
+Salen de las referencias que eligió Angel (pósters y apps, de otros autores; por eso no se guardan en el repo, solo se describen):
+
+| Referencia | Qué tomamos |
+|------------|-------------|
+| Póster de burbuja sobre rojo, con foto en blanco y negro y semitono | Letras gigantes de burbuja (Bagel Fat One) recortadas por el borde, grano de fotocopia, figura recortada encima. |
+| Portada de cómic "BOOM!" en rojo, negro y blanco | Rayos que salen de un punto, cajas negras con texto, tipografía gigante que se sale de la pantalla. |
+| Póster deconstruido con líneas rojas finas | Líneas finas que cruzan la pantalla desde la figura; letras en ángulo. |
+| Pósters de orbes de color difuminados, con etiquetas de catálogo | Orbes cromáticos en lugar de una luz en la esquina; etiquetas técnicas pequeñas ("FZ — 012", "SEM 43", "21 — 10 — 2026"). |
+| App de salud oscura con medidor de marcas y figura 3D | Medidores con marcas finas (descanso), números grandes en Anton, filas de vidrio con ícono en círculo, botón blanco en píldora. |
+| App oscura con acento lima, días en píldoras y trofeo 3D | Días de la semana en píldoras con punto, el día de hoy con contorno de acento, tarjetas con un objeto que se sale. |
+| App de bienestar con panel blanco y foto con estela | Contraste entre un panel claro y el fondo oscuro; formas suaves que brillan dentro de las tarjetas. |
+
+**Las marcas del ADN:**
+
+1. **Un número o una palabra gigante** por pantalla (la racha, el rango, el monto), en Anton o Bagel, tan grande que se recorta.
+2. **Etiquetas técnicas** pequeñas en mayúsculas con espaciado (código, semana, fecha), como un catálogo.
+3. **La figura como calcomanía:** todo personaje o muñequito lleva un borde de papel y una sombra de tinta corrida, para que se lea sobre cualquier fondo. Nunca una figura del mismo color que la luz de detrás.
+4. **Orbes de color difuminados**, no una mancha en la esquina.
+5. **Líneas finas o rayos** que cruzan la composición.
+6. **Las láminas siempre sobre papel**, como un recorte pegado.
+7. **Grano** (de papel o de fotocopia), aunque sea muy suave.
+8. **Botones en píldora** blanca o del acento; nunca un botón gris genérico.
+
+Propuesta de diseño con estas marcas, los estilos y la pantalla de Apariencia: https://claude.ai/artifact/MDA52AGbTrQ1iaLDSfHQRy (privado).
+
 ## Archivos
 
 | Ruta | Qué es |
@@ -52,6 +81,7 @@ Reglas:
 - Un personaje por app, que no cambia nunca. Es su ícono, su pantalla de arranque y su mascota.
 - Los cuerpos se arman con trazos gruesos de punta redonda y se funden con el filtro "goo". La cabeza siempre va separada del cuerpo.
 - Los objetos (la moneda, el lápiz) van en la segunda tinta y con transparencia (`multiply`).
+- **Dentro de las apps, los personajes y muñequitos son calcomanías:** borde de papel y sombra de tinta corrida, para que se lean sobre cualquier fondo y en cualquier estilo (21-10-2026: el muñeco azul se perdía sobre la luz azul). Los `personaje_*.webp` de `core/identidad` y los `munieco_tut_*.webp` de El Forzudo ya lo traen; los originales sin borde siguen en `identidad/png/`. El borde se hace con un script de PIL que agranda el canal alfa (ver `apps/forzudo/GUIA.md` → Colores, letras, ícono y muñequitos).
 
 ## Dibujos de ejercicios: la lámina riso
 
@@ -97,6 +127,24 @@ Diseños de referencia: el lienzo https://claude.ai/artifact/9ed1LykdvoFCgPFyWf6
 | Fogón / La Minga | Rojo `#E5332A` | Amarillo `#FFC93C` | Coral `#FF5A4F` | `#120A08` | por crear |
 
 Dos apps no comparten acento. El texto sobre el acento va siempre en el fondo oscuro de la app (`sobreTinta`); sobre el fondo, el acento sirve también como color de texto (`textoEnTinta`), porque todos pasan de 6:1.
+
+### Apariencia: cinco estilos que la persona elige
+
+Desde el 21-10-2026 (El Forzudo 1.7, El Ahorrador 1.1) cada app tiene **Perfil → Apariencia**, igual en todas. Angel lo pidió así: "que cada estilo se le pueda cambiar los colores al fondo, a las letras o a los degradados, a todo en general, pero que cada uno tenga uno por defecto". Diseño: https://claude.ai/artifact/MDA52AGbTrQ1iaLDSfHQRy.
+
+| Estilo | Cómo se ve | Fondo detrás | Tarjetas | Grano | Esquinas |
+|--------|------------|--------------|----------|-------|----------|
+| **Noche** (el de siempre) | El fondo casi negro de la app, sus dos luces y su acento | Orbes difuminados | Vidrio (92 % de transparencia) | Suave | Redondas |
+| **Riso** | Papel, la primera tinta de la app (`textoEnPapel`) y su segunda tinta corrida (`segundaTinta`) | Círculo de trama de puntos | Blancas, sólidas, con borde y sombra dura | Fuerte | Redondas |
+| **Rebelde** | Rojo `#F03E33`, negro y crema | Rayos de cómic | Crema, sólidas, con borde; la destacada es una caja negra | Fuerte | Rectas |
+| **Aura** | Gris claro, letras casi negras | Orbe cromático grande con las dos luces | Vidrio claro (45 %) | Suave | Redondas |
+| **Contraste** | Negro y blanco, el acento de la app | Nada | Negras con borde blanco | Nada | Redondas |
+
+- **Todo color se puede cambiar, en cada estilo por separado:** fondo, tarjetas, letras, letras suaves, acento, letras sobre el acento, degradado 1, degradado 2, números grandes y bordes. También la transparencia (0 a 100 %), la textura (nada, suave, fuerte) y las esquinas. "Volver a como viene" deja el estilo como estaba. Si los colores elegidos se leen mal, la pantalla avisa.
+- **Comodidad, para todos los estilos:** tamaño de las letras (4 tamaños, sobre el que ya tenga el teléfono), menos movimiento (sin brillos ni animaciones) y más contraste (bordes marcados y todas las letras del color principal).
+- **Lo que no cambia:** las letras (Bagel Fat One, Anton y Roboto), los personajes, la chispa y el ADN visual. Las láminas siempre van sobre papel.
+- **Cada estilo se lee:** la prueba `AparienciaTest` (en `core/identidad`) comprueba que los colores por defecto de los cinco estilos pasen 4,5:1 en todas las apps. Si se agrega un estilo o una app, la prueba los cubre sola.
+- **Las pantallas nunca usan colores fijos:** todo sale de `FogonTema.actual` (fondo, texto, `pildora`, `sobreDestacada`, `numero`…). Un `Color.White` en una pantalla rompe los estilos claros.
 
 ### Tipografía (igual en todas las apps)
 

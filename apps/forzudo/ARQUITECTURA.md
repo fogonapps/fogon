@@ -25,8 +25,8 @@ Código en `src/main/java/io/github/fogonapps/forzudo/`:
 | `datos/Vocabulario.kt` | Las palabras de la lógica (meses, unidades, consejos). Por defecto en español, como la web; la app lo llena con el idioma en uso. |
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Clase `Logica(biblioteca)`, sin Android: se prueba en la JVM. |
 | `datos/Gist.kt` | `ClienteGist`: habla con la API de GitHub para buscar, crear, leer y escribir el Gist. |
-| `ui/App.kt` | El armazón: barra de pestañas, la pantalla de arriba de la pila, la barra del entreno en curso y la del descanso, avisos y tutorial. |
-| `ui/Pestanas.kt` | Las 4 pestañas: Inicio (racha, semana, historial), Entrenar (rutinas), Rangos (mapa del cuerpo, rangos por músculo) y Perfil (peso, datos, sincronización, ajustes). |
+| `ui/App.kt` | El armazón: barra de pestañas, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), la barra del entreno en curso, la del descanso con su medidor (`MedidorDescanso`), avisos y tutorial. |
+| `ui/Pestanas.kt` | Las 4 pestañas: Inicio (cabecera con la racha gigante, semana, historial), Entrenar (rutinas), Rangos (el rango general gigante, mapa del cuerpo, rangos por músculo) y Perfil (peso, datos, sincronización, Apariencia, ajustes). Inicio y Rangos ponen su propia cabecera; las otras dos llevan el título que pone `App.kt`. |
 | `ui/Pantallas.kt` | Las pantallas que se abren encima: entreno en vivo, resumen, detalle de ejercicio, músculo, programas, editor de rutinas, cambiar ejercicio, lámina en grande, Acerca de, Licencias y Preguntas frecuentes. |
 | `ui/Comunes.kt` | Piezas de interfaz propias de esta app: secciones, filas, gráficas, insignias de rango, mapa del cuerpo, mapa anual, campos de número y fecha. |
 | `ui/Tutorial.kt` | Los 6 pasos del primer arranque. |
@@ -64,6 +64,7 @@ Otros lugares:
 
 - **Si el archivo se daña,** se guarda una copia `estado-dañado-<hora>.json` y se empieza de cero, sin cerrar la app.
 - **El token de GitHub** no va en el `Estado`: va cifrado en las preferencias `sincronizacion`, con la llave `forzudo-token` del Keystore.
+- **La Apariencia** (estilo, colores, comodidad) va en las preferencias `apariencia`, la maneja `core/identidad` y no viaja en el respaldo.
 - **Preferencias de interfaz** (por ejemplo, si ya vio el tutorial): en las preferencias `ui`.
 
 ## 4. Cómo fluye todo

@@ -1,5 +1,7 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -115,7 +117,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
                 TextButton({
                     monto = ultimo.monto.toString(); categoria = ultimo.categoria; nota = ultimo.nota
                     if (activas.any { it.id == ultimo.cuenta }) cuenta = ultimo.cuenta
-                }, Modifier.vidrio(RoundedCornerShape(50))) {
+                }, Modifier.vidrio(FormaPildora)) {
                     Icon(Iconos.Repetir, null, tint = f.texto, modifier = Modifier.padding(end = 6.dp))
                     Text(stringResource(R.string.igual_que_ultimo, catU, Formato.pesos(ultimo.monto)), color = f.texto, maxLines = 1)
                 }
@@ -129,8 +131,8 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
                         fila.forEach { c ->
                             val elegida = c.id == categoria
                             Column(
-                                Modifier.weight(1f).clip(RoundedCornerShape(16.dp))
-                                    .then(if (elegida) Modifier.background(f.superficie).border(1.5.dp, colorDe(c.color), RoundedCornerShape(16.dp)) else Modifier)
+                                Modifier.weight(1f).clip(forma(16.dp))
+                                    .then(if (elegida) Modifier.background(f.superficie).border(1.5.dp, colorDe(c.color), forma(16.dp)) else Modifier)
                                     .clickable { categoria = c.id }.semantics { selected = elegida; role = Role.RadioButton }.padding(vertical = 8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
@@ -198,13 +200,13 @@ private fun Teclado(onDigito: (String) -> Unit, onBorrar: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 fila.forEach { t ->
                     Box(
-                        Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(16.dp)).background(f.superficie)
+                        Modifier.weight(1f).height(48.dp).clip(forma(16.dp)).background(f.superficie)
                             .clickable { if (t == "⌫") onBorrar() else onDigito(t) }
                             .then(if (t == "⌫") Modifier.semantics { contentDescription = borrar } else Modifier),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (t == "⌫") Icon(Iconos.Borrar, null, tint = f.texto)
-                        else Text(t, fontFamily = Anton, fontSize = 24.sp, color = if (t == "000") f.textoSuave else Tintas.Papel)
+                        else Text(t, fontFamily = Anton, fontSize = 24.sp, color = if (t == "000") f.textoSuave else f.texto)
                     }
                 }
             }

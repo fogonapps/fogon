@@ -52,10 +52,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         bloqueada.value = vm.candado.value && candadoDisponible()
-        // El estilo es de noche: barras del sistema siempre con íconos claros.
-        enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         setContent {
-            FogonTema(Paleta.Ahorrador) {
+            val apariencia by io.github.fogonapps.identidad.AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
+            // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
+            val oscuro = io.github.fogonapps.identidad.fogonDe(Paleta.Ahorrador, apariencia).oscuro
+            LaunchedEffect(oscuro) {
+                val t = android.graphics.Color.TRANSPARENT
+                val barra = if (oscuro) SystemBarStyle.dark(t) else SystemBarStyle.light(t, t)
+                enableEdgeToEdge(barra, barra)
+            }
+            FogonTema(Paleta.Ahorrador, apariencia) {
                 val pila by vm.pila.collectAsStateWithLifecycle()
                 val pestana by vm.pestana.collectAsStateWithLifecycle()
                 val estado by vm.estado.collectAsStateWithLifecycle()

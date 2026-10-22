@@ -29,6 +29,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
   - se guardan en el teléfono;
   - exportar e importar en JSON;
   - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub.
+- **Apariencia:** cinco estilos (Noche, Riso, Rebelde, Aura, Contraste) con todos sus colores cambiables, transparencia, textura, esquinas, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 
@@ -81,6 +82,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.5 | 2026-10-21 | **Inglés**, además del español: sigue el idioma del teléfono y se cambia en Perfil → Idioma (textos en `strings.xml`, datos en `assets/datos/en/textos.json`). **Cancelar o terminar el entreno** en cualquier momento: botones arriba del entreno y una X en la barra del entreno en curso; sin series marcadas, cancelar no pregunta y Terminar ofrece cancelar. **Reportar un fallo o sugerir algo** (Perfil), por GitHub. Enlace al código en Acerca de. Probada en el emulador encima de la 1.4.3: inglés por defecto (emulador en inglés), cambio a español y de vuelta sin reiniciar, cancelar y terminar en sus 4 casos, reportes, Acerca de y Manifiesto en inglés, 0 cierres inesperados. La lógica sigue igual a la web (comparación completa: solo difieren los rangos, como desde la 1.2). |
 | 1.5.1 | 2026-10-21 | Reportes también por correo, a fogonapps@gmail.com. Contacto en los README. Probada en el emulador: aparecen los dos botones de envío, 0 cierres inesperados. |
 | 1.6 | 2026-10-21 | **Estilo de noche:** fondo oscuro con luces violeta y azul, tarjetas de vidrio, botones en píldora y acento lima (ver `docs/IDENTIDAD.md` → Estilo de noche). Las láminas van sobre tarjetas de papel. La app queda siempre de noche. Probada en el emulador en inglés y en español: todas las pestañas, entreno, tutorial y 0 cierres inesperados. |
+| 1.7 | 2026-10-21 | **Apariencia** (Perfil → Apariencia): cinco estilos (Noche, Riso, Rebelde, Aura y Contraste); en cada uno se cambian todos los colores (fondo, tarjetas, letras, acento, degradados, números, bordes), la transparencia, la textura y las esquinas, y cada uno trae los suyos por defecto. Comodidad: tamaño de letra, menos movimiento y más contraste. **Menos genérico** (ver `docs/IDENTIDAD.md` → ADN visual): Inicio con la racha en un número gigante, etiquetas técnicas y líneas; Rangos con el nombre del rango gigante; el descanso como un medidor con marcas; muñequitos y personaje con borde de calcomanía (antes el azul se perdía sobre la luz azul). Probada en el emulador con 104 entrenos de prueba en los cinco estilos y en Apariencia. |
 
 **1.1.1** se probó completa en el emulador con la versión firmada:
 - tutorial y registro de peso;
@@ -121,7 +123,6 @@ Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su perso
 
 ## Pendiente
 
-- En la próxima versión: Android ya ofrece el inglés en Ajustes → Idioma de la app (`res/xml/locales_config.xml` lo incluye desde el 21-10-2026).
 
 - **Probar en el teléfono real la sincronización con el Gist** (con el token de verdad).
 - Dibujo para los 8 ejercicios sin lámina (lista y motivo de cada uno en `herramientas/laminas/ejercicios.py`). Everkinetic no tiene uno que sirva ni en su repositorio ni en Wikimedia Commons, y los hechos con IA no quedaron al nivel.

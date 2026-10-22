@@ -1,5 +1,8 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,16 +72,16 @@ fun colorDe(c: Long) = Color(c.toInt())
 /** Tarjeta de vidrio: blanco al 8 %, borde fino y esquinas grandes. */
 @Composable
 fun Modifier.vidrio(forma: androidx.compose.ui.graphics.Shape = FormaRiso): Modifier {
-    val f = FogonTema.actual
-    return clip(forma).background(f.superficie).border(1.dp, f.linea, forma)
+    return tarjetaFogon(forma)
 }
 
 /** La tarjeta destacada de cada pantalla: degradado de las dos luces de la app, con brillo. */
 @Composable
 fun Modifier.destacada(): Modifier {
-    val p = FogonTema.actual.paleta
-    val forma = RoundedCornerShape(28.dp)
-    return brillo(p.segunda, forma, 24.dp).clip(forma).background(Brush.linearGradient(listOf(p.segunda, p.luz2.copy(alpha = 0.85f))))
+    val f = FogonTema.actual
+    val forma = forma(28.dp)
+    return brillo(f.paleta.segunda, forma, 24.dp).clip(forma).background(Brush.linearGradient(f.destacada))
+        .then(if (f.borde > 1.dp) Modifier.border(f.borde, f.linea, forma) else Modifier)
 }
 
 /** Plata en Anton. */
@@ -133,29 +136,32 @@ fun FilaVidrio(onClick: (() -> Unit)? = null, modifier: Modifier = Modifier, con
 @Composable
 fun PildoraPesos(n: Long, relleno: Boolean = false) {
     val f = FogonTema.actual
-    val forma = RoundedCornerShape(50)
+    val forma = FormaPildora
     Box(
-        Modifier.clip(forma).then(if (relleno) Modifier.background(Color.White) else Modifier.border(1.dp, f.texto.copy(alpha = 0.35f), forma))
+        Modifier.clip(forma).then(if (relleno) Modifier.background(f.pildora) else Modifier.border(1.dp, f.texto.copy(alpha = 0.35f), forma))
             .padding(horizontal = 12.dp, vertical = 5.dp),
-    ) { Pesos(n, 16.sp, if (relleno) Color(0xFF0D0C0A) else f.texto) }
+    ) { Pesos(n, 16.sp, if (relleno) f.sobrePildora else f.texto) }
 }
 
 /** Barra de progreso redondeada. */
 @Composable
 fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    Box(modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(f.linea)) {
-        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(color))
+    Box(modifier.fillMaxWidth().height(8.dp).clip(forma(4.dp)).background(f.linea)) {
+        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).fillMaxHeight().clip(forma(4.dp)).background(color))
     }
 }
 
 /** Botón redondo blanco con ícono oscuro (acciones rápidas). */
 @Composable
-fun AccionRedonda(icono: ImageVector, texto: String, onClick: () -> Unit, fondo: Color = Color.White) {
+fun AccionRedonda(icono: ImageVector, texto: String, onClick: () -> Unit, acento: Boolean = false) {
+    val f = FogonTema.actual
+    val fondo = if (acento) f.paleta.tinta else f.pildora
+    val tinta = if (acento) f.paleta.sobreTinta else f.sobrePildora
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(4.dp)) {
+        modifier = Modifier.clip(forma(16.dp)).clickable(onClick = onClick).padding(4.dp)) {
         Box(Modifier.size(62.dp).clip(CircleShape).background(fondo), contentAlignment = Alignment.Center) {
-            Icon(icono, null, tint = Color(0xFF0D0C0A), modifier = Modifier.size(24.dp))
+            Icon(icono, null, tint = tinta, modifier = Modifier.size(24.dp))
         }
         Text(texto, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.texto)
     }
@@ -193,7 +199,7 @@ fun <T> Selector(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> U
     val f = FogonTema.actual
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         opciones.forEach { (v, t) ->
-            FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = RoundedCornerShape(50),
+            FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = FormaPildora,
                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
         }
     }
@@ -205,7 +211,7 @@ fun <T> Selector(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> U
 fun BotonFecha(fecha: String, onElegir: (String) -> Unit, hoy: LocalDate, hastaHoy: Boolean = true) {
     var abierto by remember { mutableStateOf(false) }
     val f = FogonTema.actual
-    TextButton({ abierto = true }, Modifier.vidrio(RoundedCornerShape(50))) { Text(Formato.fechaCorta(fecha), color = f.texto) }
+    TextButton({ abierto = true }, Modifier.vidrio(FormaPildora)) { Text(Formato.fechaCorta(fecha), color = f.texto) }
     if (abierto) {
         val ms = LocalDate.parse(fecha).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
         val tope = hoy.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
@@ -233,8 +239,8 @@ fun BotonFecha(fecha: String, onElegir: (String) -> Unit, hoy: LocalDate, hastaH
 fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: ImageVector = Iconos.Atras, derecha: @Composable () -> Unit = {}) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (onAtras != null) Box(Modifier.size(46.dp).clip(CircleShape).background(Color.White).clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
-            Icon(icono, stringResource(R.string.volver), tint = Color(0xFF0D0C0A), modifier = Modifier.size(20.dp))
+        if (onAtras != null) Box(Modifier.size(46.dp).clip(CircleShape).background(FogonTema.actual.pildora).clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
+            Icon(icono, stringResource(R.string.volver), tint = FogonTema.actual.sobrePildora, modifier = Modifier.size(20.dp))
         }
         Text(titulo, fontFamily = Bagel, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 1, modifier = Modifier.weight(1f))
         derecha()
@@ -253,7 +259,7 @@ fun Dato(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
 @Composable
 fun Etiqueta(texto: String, fondo: Color, color: Color) {
     Text(texto, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(fondo).padding(horizontal = 10.dp, vertical = 3.dp))
+        modifier = Modifier.clip(FormaPildora).background(fondo).padding(horizontal = 10.dp, vertical = 3.dp))
 }
 
 @Composable

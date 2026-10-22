@@ -1,5 +1,7 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.forzudo.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -159,7 +161,7 @@ private fun SelectorRutina(vm: GymViewModel, actual: String, onElegir: (String) 
         Text(stringResource(R.string.rutina_sin_nombre), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
         Box {
             Text(dias.firstOrNull { it.id == actual }?.title ?: "—", style = MaterialTheme.typography.bodyLarge, color = f.acentoTexto,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { abierto = true }.padding(horizontal = 10.dp, vertical = 8.dp))
+                modifier = Modifier.clip(forma(8.dp)).clickable { abierto = true }.padding(horizontal = 10.dp, vertical = 8.dp))
             DropdownMenu(abierto, { abierto = false }) {
                 dias.forEach { d -> DropdownMenuItem({ Text(d.title) }, { abierto = false; onElegir(d.id) }) }
             }
@@ -188,7 +190,7 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
             TextButton({ vm.abrir(Pantalla.Cambiar(c.id, ModoCambio.VIVO, a.day)) }) { Text(stringResource(R.string.cambiar)) }
         }
         if (L.estancado(e, c.id)) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(10.dp)).background(f.paleta.segunda.copy(alpha = 0.18f)).padding(10.dp)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(forma(10.dp)).background(f.paleta.segunda.copy(alpha = 0.18f)).padding(10.dp)) {
                 Text(stringResource(R.string.estancado), style = MaterialTheme.typography.bodySmall, color = f.texto)
                 TextButton({ vm.abrir(Pantalla.Cambiar(c.id, ModoCambio.VIVO, a.day)) }) { Text(stringResource(R.string.ver_alternativas)) }
             }
@@ -235,7 +237,7 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
                 CampoNumero(s.reps?.let { fk(it) } ?: "", p?.reps?.let { fk(it) } ?: "${c.lo}", stringResource(if (c.e.kind == "s") R.string.segundos_serie else R.string.reps_serie, i + 1), false,
                     { vm.escribir(c.id, i, "reps", it) }, Modifier.weight(1f))
                 Box(
-                    Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))
+                    Modifier.size(44.dp).clip(forma(10.dp))
                         .background(if (s.done) f.paleta.tinta else f.superficie)
                         .clickable { vm.marcar(c.id, i) }
                         .semantics { contentDescription = descMarcar; stateDescription = if (s.done) descCompleta else descPendiente },
@@ -255,7 +257,7 @@ private fun FotosEjercicio(vm: GymViewModel, e: Ejercicio) {
         listOf(0 to stringResource(R.string.paso_inicio), 1 to stringResource(R.string.paso_final)).forEach { (i, t) ->
             Column(Modifier.weight(1f)) {
                 FotoAsset(vm.bib.foto(e.id, i), stringResource(if (i == 0) R.string.posicion_inicial else R.string.posicion_final, e.n),
-                    Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).clickable { vm.abrir(Pantalla.Zoom(e.id, i)) },
+                    Modifier.fillMaxWidth().aspectRatio(1f).clip(forma(10.dp)).clickable { vm.abrir(Pantalla.Zoom(e.id, i)) },
                     ContentScale.Fit)
                 Text(t, style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
             }
@@ -431,7 +433,7 @@ fun Programas(vm: GymViewModel, e: Estado) {
         Cabecera(stringResource(R.string.programas), vm::cerrar)
         Pista(stringResource(R.string.pista_programas))
         vm.bib.programas.forEach { p ->
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(14.dp)).background(f.superficie).padding(16.dp),
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(p.level, p.goal, pluralStringResource(R.plurals.dias, p.routines.size, p.routines.size)).forEach { Etiqueta(it, f.linea, f.texto) }
@@ -478,7 +480,7 @@ fun Editor(vm: GymViewModel, e: Estado, rid: String) {
             if (r.items.isEmpty()) EstadoVacio(RId.drawable.personaje_el_forzudo, stringResource(R.string.rutina_vacia), stringResource(R.string.rutina_vacia_texto))
             r.items.forEachIndexed { i, it ->
                 val c = vm.bib.cfg(it)
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(14.dp)).background(f.superficie).padding(12.dp),
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon(forma(14.dp)).padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Miniatura(c.e, vm.bib)

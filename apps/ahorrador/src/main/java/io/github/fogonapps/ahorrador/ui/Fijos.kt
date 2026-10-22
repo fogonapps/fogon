@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.FormaPildora
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -76,8 +77,8 @@ fun Fijos(vm: AhorradorViewModel, e: Estado) {
                 if (pagado) Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Iconos.Chulo, null, tint = f.acentoTexto, modifier = Modifier.padding(end = 4.dp).heightIn(max = 14.dp))
                     Text(stringResource(R.string.pagado), style = MaterialTheme.typography.labelSmall, color = f.acentoTexto)
-                } else if (fijo.activo) Text(stringResource(R.string.pagar), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Tintas.Tinta,
-                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(50)).background(f.paleta.tinta).clickable { vm.pagarFijo(fijo) }
+                } else if (fijo.activo) Text(stringResource(R.string.pagar), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = FogonTema.actual.paleta.sobreTinta,
+                    modifier = Modifier.padding(top = 4.dp).clip(FormaPildora).background(f.paleta.tinta).clickable { vm.pagarFijo(fijo) }
                         .padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
@@ -173,8 +174,8 @@ fun Deudas(vm: AhorradorViewModel, e: Estado) {
                 if (d.monto > 0) Barra(1f - pend.toFloat() / d.monto, if (meDeben) Tintas.Verde else Tintas.Naranja)
                 if (pend == 0L) Logro(stringResource(if (meDeben) R.string.te_pagaron else R.string.pagaste_todo))
                 else Text(stringResource(if (meDeben) R.string.me_abonaron else R.string.abone), style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold, color = Tintas.Tinta,
-                    modifier = Modifier.clip(RoundedCornerShape(50)).background(f.paleta.tinta).clickable { abonando = d }.padding(horizontal = 16.dp, vertical = 7.dp))
+                    fontWeight = FontWeight.Bold, color = FogonTema.actual.paleta.sobreTinta,
+                    modifier = Modifier.clip(FormaPildora).background(f.paleta.tinta).clickable { abonando = d }.padding(horizontal = 16.dp, vertical = 7.dp))
             }
         }
         BotonSecundario(stringResource(if (meDeben) R.string.nuevo_me_deben else R.string.nuevo_debo), { vm.abrir(Pantalla.EditarDeuda(null, meDeben)) },
@@ -257,11 +258,11 @@ fun CierrePantalla(vm: AhorradorViewModel, e: Estado, mes: String) {
         c.ahorroPlaneado?.let { Pregunta(stringResource(R.string.cierre_querias), Formato.pesos(it)) }
         Pregunta(stringResource(R.string.cierre_gastaste), Formato.pesos(c.gastos))
         Column(Modifier.fillMaxWidth().destacada().padding(20.dp)) {
-            Text(stringResource(R.string.cierre_ahorraste), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-            Pesos(c.ahorrado, 38.sp, Color.White)
+            Text(stringResource(R.string.cierre_ahorraste), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+            Pesos(c.ahorrado, 38.sp, FogonTema.actual.sobreDestacada)
             c.ahorroPlaneado?.let { plan ->
                 Text(if (c.ahorrado >= plan) stringResource(R.string.cierre_lo_lograste) else stringResource(R.string.cierre_faltaron, Formato.pesos(plan - c.ahorrado)),
-                    style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    style = MaterialTheme.typography.bodyMedium, color = FogonTema.actual.sobreDestacada)
             }
         }
         vm.L.porCategoria(e, mes).take(3).takeIf { it.isNotEmpty() }?.let { top ->

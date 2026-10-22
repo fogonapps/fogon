@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.FormaPildora
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -149,9 +150,9 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
     val sobres = e.categorias.filter { !it.ingreso }.map { Sobre(it.id, it.nombre, it.color, it.icono, asignados[it.id] ?: 0, L.gastadoEn(e, mes, it.id)) }
 
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.por_asignar), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-        Pesos(L.porAsignar(e, mes), 40.sp, Color.White)
-        Text(stringResource(R.string.por_asignar_texto), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+        Text(stringResource(R.string.por_asignar), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        Pesos(L.porAsignar(e, mes), 40.sp, FogonTema.actual.sobreDestacada)
+        Text(stringResource(R.string.por_asignar_texto), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
     }
     if (asignados.isEmpty() && e.sobres[mesAnterior(mes)].orEmpty().isNotEmpty()) {
         BotonSecundario(stringResource(R.string.copiar_sobres, Formato.mes(mesAnterior(mes))), { vm.copiarSobresAnteriores(mes) },
@@ -171,7 +172,7 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
                 Text(stringResource(R.string.cubrir_con, Formato.pesos(exceso)), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     conPlata.forEach { o ->
-                        TextButton({ vm.cubrir(mes, o.clave, s.clave, minOf(exceso, o.queda ?: 0)); editando = null }, Modifier.vidrio(RoundedCornerShape(50))) {
+                        TextButton({ vm.cubrir(mes, o.clave, s.clave, minOf(exceso, o.queda ?: 0)); editando = null }, Modifier.vidrio(FormaPildora)) {
                             Text(o.nombre + " · " + Formato.pesos(o.queda ?: 0), color = f.texto)
                         }
                     }
@@ -186,9 +187,9 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
 private fun Regla(vm: AhorradorViewModel, e: Estado, mes: String) {
     var cambiando by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.entro_en, Formato.mes(mes)), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-        Pesos(vm.L.ingresos(e, mes), 40.sp, Color.White)
-        Text(stringResource(R.string.reparto_es, e.reparto[0], e.reparto[1], e.reparto[2]), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+        Text(stringResource(R.string.entro_en, Formato.mes(mes)), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        Pesos(vm.L.ingresos(e, mes), 40.sp, FogonTema.actual.sobreDestacada)
+        Text(stringResource(R.string.reparto_es, e.reparto[0], e.reparto[1], e.reparto[2]), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
     }
     vm.L.sobres(e, mes).forEach { s -> TarjetaSobre(s, stringResource(nombreGrupo(s.clave)), null) }
     Pista(stringResource(R.string.regla_pista))
@@ -229,10 +230,10 @@ private fun Kakeibo(vm: AhorradorViewModel, e: Estado, mes: String) {
     var meta by remember { mutableStateOf(false) }
     val ahorro = L.ingresos(e, mes) - L.gastos(e, mes)
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().clickable { meta = true }.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.quiero_ahorrar), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-        Pesos(e.metaAhorroMes ?: 0, 40.sp, Color.White)
-        Text(stringResource(R.string.llevas_ahorrado, Formato.pesos(ahorro)), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.9f))
-        if (e.metaAhorroMes != null && e.metaAhorroMes > 0) Barra(ahorro.toFloat() / e.metaAhorroMes, Color.White, Modifier.padding(top = 6.dp))
+        Text(stringResource(R.string.quiero_ahorrar), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        Pesos(e.metaAhorroMes ?: 0, 40.sp, FogonTema.actual.sobreDestacada)
+        Text(stringResource(R.string.llevas_ahorrado, Formato.pesos(ahorro)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
+        if (e.metaAhorroMes != null && e.metaAhorroMes > 0) Barra(ahorro.toFloat() / e.metaAhorroMes, FogonTema.actual.sobreDestacada, Modifier.padding(top = 6.dp))
     }
     L.sobres(e, mes).forEach { s -> TarjetaSobre(s, stringResource(nombreGrupo(s.clave)), null) }
     Pista(stringResource(R.string.kakeibo_pista))
@@ -255,8 +256,8 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
         EstadoVacio(RId.drawable.personaje_el_ahorrador, stringResource(R.string.metas_vacio_titulo), stringResource(R.string.metas_vacio_texto))
     } else {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(R.string.en_metas), style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
-            Pesos(e.metas.sumOf { L.ahorradoEn(e, it.id) }, 40.sp, Color.White)
+            Text(stringResource(R.string.en_metas), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+            Pesos(e.metas.sumOf { L.ahorradoEn(e, it.id) }, 40.sp, FogonTema.actual.sobreDestacada)
         }
         e.metas.forEach { m ->
             val ahorrado = L.ahorradoEn(e, m.id)
@@ -284,8 +285,8 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
                         L.llegaEn(e, m, hoy)?.let {
                             Text(stringResource(R.string.llegas_en, Formato.mesesLargos[it.monthValue - 1], it.year), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         }
-                        Text(stringResource(R.string.abonar), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Tintas.Tinta,
-                            modifier = Modifier.clip(RoundedCornerShape(50)).background(f.paleta.tinta).clickable { abonando = m }.padding(horizontal = 18.dp, vertical = 8.dp))
+                        Text(stringResource(R.string.abonar), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = FogonTema.actual.paleta.sobreTinta,
+                            modifier = Modifier.clip(FormaPildora).background(f.paleta.tinta).clickable { abonando = m }.padding(horizontal = 18.dp, vertical = 8.dp))
                     }
                 }
             }
@@ -337,7 +338,7 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             COLORES_META.forEach { c ->
                 val valor = c.toArgb().toLong() and 0xFFFFFFFFL
-                Box(Modifier.size(40.dp).clip(CircleShape).background(c).then(if (valor == color) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
+                Box(Modifier.size(40.dp).clip(CircleShape).background(c).then(if (valor == color) Modifier.border(3.dp, FogonTema.actual.texto, CircleShape) else Modifier)
                     .clickable { color = valor }.semantics { selected = valor == color })
             }
         }

@@ -21,7 +21,7 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `datos/Almacen.kt` | Guardar el estado en disco (`SerializadorEstado`, `crearAlmacen`). |
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Sin Android: se prueba en la JVM. |
 | `datos/Formato.kt` | Cómo se escriben la plata y las fechas ("$ 842.300", "21 oct") en cada idioma. |
-| `ui/App.kt` | El armazón: la barra flotante con el botón de anotar, la pantalla de arriba de la pila, avisos, confirmaciones y la pantalla con candado. |
+| `ui/App.kt` | El armazón: la barra flotante con el botón de anotar, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), avisos, confirmaciones y la pantalla con candado. |
 | `ui/Tutorial.kt` | Los 3 pasos del primer arranque: nombre, sistema y saldos. |
 | `ui/Inicio.kt` | Pestañas Inicio y Resumen, y piezas que usan varias pantallas (fila de movimiento, selector de mes). |
 | `ui/Presupuesto.kt` | Pestaña Presupuesto (según el sistema), pestaña Metas y crear o editar una meta. |
@@ -57,6 +57,7 @@ Otros lugares:
 | `gmf` | Si se anota el 4×1000. |
 
 - **Si el archivo se daña,** se guarda una copia y se empieza de cero, sin cerrar la app.
+- **La Apariencia** (estilo, colores, comodidad) va en las preferencias `apariencia`, la maneja `core/identidad` y no viaja en el respaldo.
 - **El candado y el idioma** van en las preferencias `ui`, no en el `Estado`: no viajan en el respaldo.
 
 ## 4. Cómo fluye todo

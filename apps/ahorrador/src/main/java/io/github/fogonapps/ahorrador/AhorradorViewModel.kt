@@ -45,6 +45,7 @@ sealed interface Pantalla {
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
     data object Manifiesto : Pantalla
+    data object Apariencia : Pantalla
     data object Licencias : Pantalla
     data object Preguntas : Pantalla
     data object Reporte : Pantalla

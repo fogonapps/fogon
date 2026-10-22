@@ -431,4 +431,7 @@
   </string-array>
   <string name="idioma">Language</string>
   <string name="idioma_telefono">Phone’s language</string>
+  <string name="hola">Hi!</string>
+  <string name="hola_nombre">Hi, %1$s</string>
+  <string name="descanso_queda">Rest: %1$s left</string>
 </resources>

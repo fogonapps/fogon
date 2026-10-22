@@ -81,6 +81,7 @@ fun Perfil(
 
     Seccion(stringResource(R.string.opciones))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
         Interruptor(stringResource(R.string.gmf), stringResource(R.string.gmf_pista), e.gmf, vm::cambiarGmf)
         if (candadoDisponible) Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, vm::cambiarCandado)
         Text(stringResource(R.string.idioma), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.textoSuave)

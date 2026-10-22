@@ -1,5 +1,7 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.forzudo.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -111,7 +113,7 @@ fun FotoAsset(ruta: String?, descripcion: String?, modifier: Modifier = Modifier
 fun Miniatura(e: Ejercicio, bib: Biblioteca, tamano: Dp = 46.dp) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(tamano).clip(RoundedCornerShape(10.dp)).background(f.superficie),
+        Modifier.size(tamano).tarjetaFogon(forma(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Iconos.Grupo[e.g] ?: Iconos.Pesa, null, tint = f.textoSuave, modifier = Modifier.size(tamano * 0.5f))
@@ -164,7 +166,7 @@ fun Pista(texto: String, modifier: Modifier = Modifier, centro: Boolean = false)
 @Composable
 fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(f.linea)) {
+    Box(modifier.fillMaxWidth().height(6.dp).clip(forma(3.dp)).background(f.linea)) {
         Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).height(6.dp).background(color))
     }
 }
@@ -328,9 +330,8 @@ fun CampoNumero(
         cursorBrush = SolidColor(f.paleta.tinta),
         modifier = modifier
             .heightIn(min = 44.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(f.superficie)
-            .border(1.5.dp, f.linea, RoundedCornerShape(10.dp))
+            .tarjetaFogon(forma(10.dp))
+            .border(1.5.dp, f.linea, forma(10.dp))
             .semantics { contentDescription = descripcion },
         decorationBox = { campo ->
             Box(Modifier.padding(horizontal = 6.dp, vertical = 11.dp), contentAlignment = Alignment.Center) {
@@ -374,8 +375,8 @@ fun BotonFecha(etiqueta: String, fecha: String, hoy: LocalDate, onElegir: (Strin
         Text(
             fechaCorta(fecha) + " " + fecha.take(4),
             style = MaterialTheme.typography.bodyLarge, color = f.acentoTexto,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { abierto = true }
-                .border(1.dp, f.linea, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.clip(forma(8.dp)).clickable { abierto = true }
+                .border(1.dp, f.linea, forma(8.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
         )
     }
     if (abierto) SelectorFecha(fecha, hoy, onElegir) { abierto = false }
