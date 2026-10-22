@@ -20,8 +20,8 @@ Binaries: https://github.com/fogonapps/fogon/releases/download/forzudo-v%v/ElFor
 
 Builds:
   - versionName: "1.6"
-    versionCode: 13
-    commit: 38485e343871cd1c4a3d8b5811af7c26f991911b
+    versionCode: 14
+    commit: 5c8051e906bfbc3482ef739efc087bf89b343342
     subdir: apps/forzudo
     gradle:
       - yes
@@ -31,4 +31,4 @@ AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a
 AutoUpdateMode: Version forzudo-v%v
 UpdateCheckMode: Tags ^forzudo-v
 CurrentVersion: "1.6"
-CurrentVersionCode: 13
+CurrentVersionCode: 14
