@@ -72,6 +72,7 @@ import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.identidad.brillo
+import io.github.fogonapps.identidad.NumeroRiso
 import androidx.compose.ui.graphics.Brush
 import io.github.fogonapps.forzudo.EstadoSync
 import io.github.fogonapps.forzudo.GymViewModel
@@ -119,15 +120,9 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             style = MaterialTheme.typography.headlineLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp))
         val acento = f.acentoTexto
-        Box(
-            Modifier.fillMaxWidth().height(262.dp).drawBehind {
-                // Dos líneas finas que cruzan, como en los pósters.
-                drawLine(acento.copy(alpha = 0.45f), Offset(-20f, size.height * 0.92f), Offset(size.width + 20f, size.height * 0.45f), 2f)
-                drawLine(f.texto.copy(alpha = 0.18f), Offset(size.width * 0.3f, 0f), Offset(size.width * 0.55f, size.height), 2f)
-            },
-        ) {
-            Text("${racha.actual}", fontFamily = Anton, fontSize = 200.sp, lineHeight = 170.sp, color = f.numero,
-                modifier = Modifier.padding(start = 14.dp).semantics { contentDescription = "${racha.actual}" })
+        // La racha impresa en dos pasadas (la segunda tinta corrida), la figura-calcomanía y el sello de la mejor racha.
+        Box(Modifier.fillMaxWidth().height(262.dp)) {
+            NumeroRiso("${racha.actual}", 200.sp, Modifier.padding(start = 14.dp).semantics { contentDescription = "${racha.actual}" }, alto = 170.sp)
             Column(Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = 10.dp), horizontalAlignment = Alignment.End) {
                 Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(), fontFamily = Anton, fontSize = 15.sp,
                     letterSpacing = 1.5.sp, color = acento, textAlign = TextAlign.End, modifier = Modifier.width(110.dp))
@@ -136,13 +131,11 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                     if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 22.dp)
                 }
             }
+            Sello(stringResource(R.string.racha_sello, racha.mejor), stringResource(R.string.racha_mejor, racha.mejor),
+                Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 4.dp))
         }
-        Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.racha_mejor, racha.mejor), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
-                color = f.paleta.sobreTinta, modifier = Modifier.clip(FormaPildora).background(f.paleta.tinta).padding(horizontal = 12.dp, vertical = 6.dp))
-            Text(stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar),
-                style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
-        }
+        Text(stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar),
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 20.dp))
 
         Seccion(stringResource(R.string.esta_semana, hechos.size, pluralStringResource(R.plurals.entrenos, dias.size, dias.size))) {
             val hoyId = L.diaDeHoy(dias, hoy)
@@ -152,13 +145,15 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                     val hecho = d.id in hechos
                     Column(
                         Modifier.width(64.dp)
-                            .then(if (hecho) Modifier.clip(forma(12.dp)).background(f.paleta.tinta) else Modifier.tarjetaFogon(forma(12.dp)))
-                            .then(if (d.id == hoyId) Modifier.border(2.dp, f.acentoTexto, forma(12.dp)) else Modifier)
+                            .then(if (hecho) Modifier.brillo(f.tinta1, forma(12.dp)).clip(forma(12.dp)).background(f.tinta1).border(f.borde, f.linea, forma(12.dp))
+                                else Modifier.tarjetaFogon(forma(12.dp), sombra = false))
+                            .then(if (d.id == hoyId) Modifier.border(3.dp, f.acentoTexto, forma(12.dp)) else Modifier)
                             .padding(vertical = 8.dp, horizontal = 4.dp)
                             .semantics { stateDescription = if (hecho) estHecho else estPendiente },
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        val c = if (hecho) f.paleta.sobreTinta else f.texto
+                        val c = if (hecho) f.sobreTinta1 else f.texto
+                        if (hecho) io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = c, corrida = null)
                         Text(d.dow?.let { Vocabulario.actual.diasCortos[it] } ?: "${i + 1}", style = MaterialTheme.typography.labelLarge, color = c)
                         Text(d.title, style = MaterialTheme.typography.labelSmall, color = c, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
@@ -172,11 +167,12 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 semanasDelMes(mes).forEachIndexed { i, w ->
                     val hecha = L.semanaHecha(e, w, dias)
                     Column(
-                        Modifier.then(if (hecha) Modifier.clip(forma(12.dp)).background(f.paleta.tinta) else Modifier.tarjetaFogon(forma(12.dp)))
+                        Modifier.then(if (hecha) Modifier.clip(forma(12.dp)).background(f.tinta1).border(f.borde, f.linea, forma(12.dp))
+                            else Modifier.tarjetaFogon(forma(12.dp), sombra = false))
                             .semantics { stateDescription = if (hecha) estCompleta else estIncompleta }
                             .heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
-                        val c = if (hecha) f.paleta.sobreTinta else f.texto
+                        val c = if (hecha) f.sobreTinta1 else f.texto
                         Text(stringResource(R.string.semana_corta, i + 1), style = MaterialTheme.typography.labelLarge, color = c)
                         Text(etiquetaSemana(w), style = MaterialTheme.typography.labelSmall, color = c)
                     }
@@ -336,9 +332,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 val palabra = (ov?.rango?.nombre ?: stringResource(R.string.sin_datos_aun)).uppercase()
                 // Lo más grande que quepa a lo ancho: Anton mide unos 0,47 em por letra.
                 val tam = if (ov == null) 44f else minOf(120f, 340f / (0.47f * palabra.length.coerceAtLeast(1)))
-                Text(palabra, fontFamily = Anton, fontSize = tam.sp,
-                    lineHeight = tam.sp, color = colorRango, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip,
-                    modifier = Modifier.padding(start = 14.dp, top = 4.dp))
+                NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
                 Image(androidx.compose.ui.res.painterResource(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos), null,
                     Modifier.align(Alignment.BottomEnd).padding(end = 16.dp).size(120.dp).rotate(-5f))
                 Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
@@ -405,7 +399,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                             Text(r.consejo?.let { stringResource(R.string.proxima_meta, fk(it.kg), it.reps, vm.bib.ex[it.id]?.n ?: "") } ?: stringResource(R.string.rango_maximo),
                                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         }
-                        Icon(Iconos.Siguiente, null, tint = f.textoSuave)
+                        io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, null, tamano = 20.dp, tinta = f.textoSuave, corrida = null)
                     }
                 }
             }
@@ -421,8 +415,8 @@ fun Rangos(vm: GymViewModel, e: Estado) {
 @Composable
 private fun coloresSegmento() = FogonTema.actual.let { f ->
     SegmentedButtonDefaults.colors(
-        activeContainerColor = f.paleta.tinta, activeContentColor = f.paleta.sobreTinta, activeBorderColor = f.texto,
-        inactiveContainerColor = androidx.compose.ui.graphics.Color.Transparent, inactiveContentColor = f.texto, inactiveBorderColor = f.texto,
+        activeContainerColor = f.tinta1, activeContentColor = f.sobreTinta1, activeBorderColor = f.linea,
+        inactiveContainerColor = f.superficie, inactiveContentColor = f.texto, inactiveBorderColor = f.linea,
     )
 }
 
@@ -504,7 +498,7 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
                             )
                         }
                     }
-                    Icon(Iconos.Siguiente, null, tint = f.textoSuave)
+                    io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, null, tamano = 20.dp, tinta = f.textoSuave, corrida = null)
                 }
             }
         }
@@ -595,3 +589,26 @@ fun DialogoNombre(actual: String, onListo: (String) -> Unit, onCerrar: () -> Uni
     )
 }
 
+
+/**
+ * Un sello de goma: círculo de línea cortada, un poco girado, con la llama de la racha y un texto corto.
+ * [descripcion] es lo que dicen los lectores de pantalla.
+ */
+@Composable
+private fun Sello(texto: String, descripcion: String, modifier: Modifier = Modifier) {
+    val f = FogonTema.actual
+    val tinta = f.acentoTexto
+    Column(
+        modifier.rotate(-14f).size(78.dp).clip(CircleShape).background(f.fondo)
+            .drawBehind {
+                val ancho = 2.5.dp.toPx()
+                drawCircle(tinta, size.minDimension / 2 - ancho, style = androidx.compose.ui.graphics.drawscope.Stroke(ancho,
+                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 3.dp.toPx()))))
+            }
+            .semantics(mergeDescendants = true) { contentDescription = descripcion },
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        io.github.fogonapps.identidad.IconoRiso(Iconos.Racha, null, tamano = 26.dp, tinta = f.tinta1)
+        Text(texto.uppercase(), fontFamily = Anton, fontSize = 11.sp, letterSpacing = 1.4.sp, color = tinta, maxLines = 1)
+    }
+}

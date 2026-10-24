@@ -75,7 +75,7 @@ fun Fijos(vm: AhorradorViewModel, e: Estado) {
             Column(horizontalAlignment = Alignment.End) {
                 Pesos(fijo.monto, 16.sp)
                 if (pagado) Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Iconos.Chulo, null, tint = f.acentoTexto, modifier = Modifier.padding(end = 4.dp).heightIn(max = 14.dp))
+                    io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, Modifier.padding(end = 4.dp), tamano = 14.dp, tinta = f.acentoTexto, corrida = null)
                     Text(stringResource(R.string.pagado), style = MaterialTheme.typography.labelSmall, color = f.acentoTexto)
                 } else if (fijo.activo) Text(stringResource(R.string.pagar), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = FogonTema.actual.paleta.sobreTinta,
                     modifier = Modifier.padding(top = 4.dp).clip(FormaPildora).background(f.paleta.tinta).clickable { vm.pagarFijo(fijo) }

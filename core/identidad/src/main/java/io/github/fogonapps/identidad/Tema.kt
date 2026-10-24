@@ -28,40 +28,50 @@ val Anton = FontFamily(Font(R.font.anton))
 /**
  * Lo que cada pantalla necesita saber de la identidad, más allá de Material. Sale de la paleta de la
  * app y de la [Apariencia] que eligió la persona: las pantallas leen siempre de aquí, nunca colores fijos.
+ * Todo se "imprime" con un papel ([fondo], [superficie]) y dos tintas: [tinta1] y [tinta2], la corrida
+ * (ver docs/IDENTIDAD.md → Sistema riso).
  */
 @Immutable
 data class Fogon(
-    /** La paleta en uso: la de la app con los colores del estilo y los que cambió la persona. */
+    /** La paleta en uso: tinta = [tinta1], sobreTinta = [sobreTinta1], segunda y luz2 = [tinta2]. */
     val paleta: Paleta,
     val oscuro: Boolean,
+    /** El papel de las pantallas. */
     val fondo: Color,
-    /** Fondo de las tarjetas, ya con su transparencia. */
+    /** El papel de las tarjetas, ya con su transparencia. */
     val superficie: Color,
     val texto: Color,
     val textoSuave: Color,
+    /** El color de los bordes (son de tinta, como en un dibujo). */
     val linea: Color,
-    /** El acento cuando es texto sobre el fondo. */
+    /** La primera tinta cuando es texto sobre el papel (o el texto, si la tinta no se lee ahí). */
     val acentoTexto: Color,
     val estilo: Estilo = Estilo.NOCHE,
+    /** La primera tinta: botones, pestaña activa, días cumplidos. Lo de encima va en [sobreTinta1]. */
+    val tinta1: Color = paleta.tinta,
+    val sobreTinta1: Color = paleta.sobreTinta,
+    /** La segunda tinta, la que va corrida: sombras, el número fantasma, la trama, el fondo de los íconos. */
+    val tinta2: Color = paleta.segunda,
+    /** Cuánto se corre la segunda tinta. 0 = sin corrimiento (Contraste). */
+    val desfase: Dp = 3.dp,
     /** Color de los números y palabras gigantes. */
     val numero: Color = texto,
-    /** Botones y círculos "de contraste" (blanco en los estilos oscuros, tinta en los claros) y lo que va encima. */
+    /** Píldoras "de contraste" (la tinta del texto) y lo que va encima: chips elegidos, avisos. */
     val pildora: Color = texto,
     val sobrePildora: Color = fondo,
-    /** Los dos colores de la tarjeta destacada (el degradado) y el texto que va encima. */
-    val destacada: List<Color> = listOf(paleta.segunda, paleta.luz2),
-    val sobreDestacada: Color = Color.White,
-    /** Grosor del borde de las tarjetas. */
-    val borde: Dp = 1.dp,
-    /** Sombra dura corrida (Riso) en lugar del brillo de color. */
-    val sombraDura: Boolean = false,
-    /** Brillo de color alrededor de botones y tarjetas destacadas. */
-    val conBrillo: Boolean = true,
-    val decoracion: Decoracion = Decoracion.ORBES,
+    /** La tarjeta destacada: un bloque lleno de la primera tinta. Se deja como lista por compatibilidad. */
+    val destacada: List<Color> = listOf(tinta1, tinta1),
+    val sobreDestacada: Color = sobreTinta1,
+    /** Grosor de los bordes de tinta. */
+    val borde: Dp = 2.dp,
+    val decoracion: Decoracion = Decoracion.TRAMA,
     val grano: Float = 0.035f,
     val rectas: Boolean = false,
     val menosMovimiento: Boolean = false,
-)
+) {
+    /** El corrimiento de los íconos: menos que el de las tarjetas, para que se lean. */
+    val desfaseIcono: Dp get() = desfase * 0.45f
+}
 
 val LocalFogon = staticCompositionLocalOf<Fogon> { error("Falta FogonTema") }
 
@@ -77,50 +87,37 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
     val fondo = c(Ranura.FONDO)
     val oscuro = fondo.luminance() < 0.4f
     val texto = c(Ranura.TEXTO)
-    val acento = c(Ranura.ACENTO)
-    val luz1 = c(Ranura.DEGRADADO_1); val luz2 = c(Ranura.DEGRADADO_2)
+    val t1 = c(Ranura.TINTA_1); val t2 = c(Ranura.TINTA_2)
+    val sobreT1 = c(Ranura.SOBRE_TINTA_1)
     val opacidad = 1f - a.transparencia() / 100f
     val superficie = c(Ranura.TARJETAS).copy(alpha = opacidad.coerceIn(0.04f, 1f))
-    val conBorde = e == Estilo.RISO || e == Estilo.REBELDE || e == Estilo.CONTRASTE || a.masContraste
-    val bordes = c(Ranura.BORDES)
     val textoSuave = if (a.masContraste) texto else c(Ranura.TEXTO_SUAVE)
-    val acentoTexto = legibleSobre(fondo, listOf(acento, luz1, texto))
-    val pildora = if (e == Estilo.REBELDE) Tintas.Tinta else texto
-    // Rebelde: caja negra de cómic; Contraste: negro con borde. Los demás: el degradado de las dos luces.
-    val destacada = when (e) {
-        Estilo.REBELDE -> listOf(Tintas.Tinta, Tintas.Tinta)
-        Estilo.CONTRASTE -> listOf(fondo, fondo)
-        Estilo.RISO -> listOf(luz2, luz2)
-        else -> listOf(luz1, luz2.copy(alpha = 0.85f))
-    }
-    val mitad = lerp(destacada[0], destacada[1].copy(alpha = 1f), 0.5f)
+    val acentoTexto = legibleSobre(fondo, listOf(t1, texto))
     val ef = paleta.copy(
-        tinta = acento, sobreTinta = c(Ranura.SOBRE_ACENTO), textoEnTinta = acentoTexto,
-        segunda = luz1, luz2 = luz2, fondo = fondo,
+        tinta = t1, sobreTinta = sobreT1, textoEnTinta = acentoTexto,
+        segunda = t2, luz2 = t2, fondo = fondo,
     )
     val granos = when (a.grano()) {
         Grano.NADA -> 0f
-        Grano.SUAVE -> if (oscuro) 0.035f else 0.05f
-        Grano.FUERTE -> if (oscuro) 0.08f else 0.12f
+        Grano.SUAVE -> if (oscuro) 0.04f else 0.06f
+        Grano.FUERTE -> if (oscuro) 0.08f else 0.13f
     }
     return Fogon(
         paleta = ef, oscuro = oscuro, fondo = fondo, superficie = superficie,
-        texto = texto, textoSuave = textoSuave,
-        linea = if (conBorde) bordes else bordes.copy(alpha = if (oscuro) 0.16f else 0.7f),
-        acentoTexto = acentoTexto, estilo = e, numero = c(Ranura.NUMERO),
-        pildora = pildora, sobrePildora = legibleSobre(pildora, listOf(fondo, Color.White, Tintas.Tinta)),
-        destacada = destacada,
-        sobreDestacada = legibleSobre(mitad, listOf(Color.White, Tintas.Papel, Tintas.Tinta)),
-        borde = if (conBorde) 2.dp else 1.dp,
-        sombraDura = e == Estilo.RISO,
-        conBrillo = (e == Estilo.NOCHE || e == Estilo.AURA) && !a.menosMovimiento,
-        decoracion = e.decoracion, grano = granos, rectas = a.rectas(), menosMovimiento = a.menosMovimiento,
+        texto = texto, textoSuave = textoSuave, linea = c(Ranura.BORDES),
+        acentoTexto = acentoTexto, estilo = e,
+        tinta1 = t1, sobreTinta1 = sobreT1, tinta2 = t2, desfase = a.desfase().dp,
+        numero = c(Ranura.NUMERO),
+        pildora = texto, sobrePildora = legibleSobre(texto, listOf(fondo, Color.White, Tintas.Tinta)),
+        destacada = listOf(t1, t1), sobreDestacada = sobreT1,
+        borde = if (a.masContraste) 3.dp else 2.dp,
+        decoracion = a.adorno(), grano = granos, rectas = a.rectas(), menosMovimiento = a.menosMovimiento,
     )
 }
 
 /**
- * El tema de las apps de Fogón. Por defecto, el estilo Noche con los colores de la app
- * (docs/IDENTIDAD.md → Estilo de noche); con [apariencia], lo que eligió la persona en Perfil → Apariencia.
+ * El tema de las apps de Fogón. Por defecto, el estilo Noche con las tintas de la app
+ * (docs/IDENTIDAD.md → Sistema riso); con [apariencia], lo que eligió la persona en Perfil → Apariencia.
  */
 @Composable
 fun FogonTema(
@@ -129,11 +126,10 @@ fun FogonTema(
     contenido: @Composable () -> Unit,
 ) {
     val f = fogonDe(paleta, apariencia)
-    val p = f.paleta
     val esquema = if (f.oscuro) {
         darkColorScheme(
-            primary = f.acentoTexto, onPrimary = legibleSobre(f.acentoTexto, listOf(p.sobreTinta, Color.White, Tintas.Tinta)),
-            secondary = p.segunda, onSecondary = legibleSobre(p.segunda, listOf(Color.White, Tintas.Tinta)),
+            primary = f.acentoTexto, onPrimary = legibleSobre(f.acentoTexto, listOf(f.sobreTinta1, Color.White, Tintas.Tinta)),
+            secondary = f.tinta2, onSecondary = legibleSobre(f.tinta2, listOf(Color.White, Tintas.Tinta)),
             background = f.fondo, onBackground = f.texto,
             surface = f.fondo, onSurface = f.texto,
             surfaceVariant = f.superficie, onSurfaceVariant = f.textoSuave,
@@ -141,20 +137,20 @@ fun FogonTema(
             surfaceContainer = lerp(f.fondo, f.texto, 0.08f),
             surfaceContainerHigh = lerp(f.fondo, f.texto, 0.11f),
             surfaceContainerHighest = lerp(f.fondo, f.texto, 0.14f),
-            outline = f.texto.copy(alpha = 0.32f), outlineVariant = f.linea,
+            outline = f.texto.copy(alpha = 0.32f), outlineVariant = f.linea.copy(alpha = 0.25f),
             error = Color(0xFFFF8A80), onError = Tintas.Tinta,
         )
     } else {
         lightColorScheme(
-            primary = f.acentoTexto, onPrimary = legibleSobre(f.acentoTexto, listOf(p.sobreTinta, Color.White, Tintas.Tinta)),
-            secondary = p.segunda, onSecondary = legibleSobre(p.segunda, listOf(Color.White, Tintas.Tinta)),
+            primary = f.acentoTexto, onPrimary = legibleSobre(f.acentoTexto, listOf(f.sobreTinta1, Color.White, Tintas.Tinta)),
+            secondary = f.tinta2, onSecondary = legibleSobre(f.tinta2, listOf(Color.White, Tintas.Tinta)),
             background = f.fondo, onBackground = f.texto,
             surface = f.fondo, onSurface = f.texto,
             surfaceVariant = lerp(f.fondo, f.texto, 0.06f), onSurfaceVariant = f.textoSuave,
             surfaceContainer = lerp(f.fondo, Color.White, 0.6f),
             surfaceContainerHigh = lerp(f.fondo, Color.White, 0.75f),
             surfaceContainerHighest = Color.White,
-            outline = f.texto.copy(alpha = 0.5f), outlineVariant = f.linea,
+            outline = f.texto.copy(alpha = 0.5f), outlineVariant = f.linea.copy(alpha = 0.25f),
             error = if (f.estilo == Estilo.REBELDE) Tintas.Tinta else Color(0xFFB3261E), onError = Color.White,
         )
     }

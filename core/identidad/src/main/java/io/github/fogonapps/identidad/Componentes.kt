@@ -1,13 +1,18 @@
 package io.github.fogonapps.identidad
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
 import androidx.compose.ui.res.stringResource
@@ -59,122 +64,131 @@ val FormaPildora: Shape
 fun forma(radio: Dp): Shape = RoundedCornerShape(if (FogonTema.actual.rectas) minOf(radio, 4.dp) else radio)
 
 /**
- * Brillo de color alrededor de una forma, como una luz que se escapa por los bordes. Cambia con el
- * estilo: en Riso es una sombra dura de tinta corrida; en Rebelde y Contraste, y con "menos
- * movimiento", no hay brillo. En Android 8 el brillo sale como sombra gris.
+ * La mancha de tinta: una forma redonda pero torcida, como una gota que cayó en el papel. Marca la pestaña
+ * activa y el botón del perfil (en lugar del círculo perfecto de siempre).
  */
-@Composable
-fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.dp): Modifier {
-    val f = FogonTema.actual
-    return when {
-        f.sombraDura -> sombraDura(forma)
-        f.conBrillo -> resplandor(color, forma, intensidad)
-        else -> this
-    }
+val FormaMancha: Shape = GenericShape { tam, _ ->
+    val sx = tam.width / 100f; val sy = tam.height / 100f
+    moveTo(52f * sx, 4f * sy)
+    cubicTo(72f * sx, 5f * sy, 92f * sx, 17f * sy, 95f * sx, 38f * sy)
+    cubicTo(98f * sx, 57f * sy, 89f * sx, 78f * sy, 70f * sx, 89f * sy)
+    cubicTo(53f * sx, 98f * sy, 31f * sx, 96f * sy, 17f * sx, 83f * sy)
+    cubicTo(3f * sx, 71f * sy, (-2f) * sx, 50f * sy, 6f * sx, 32f * sy)
+    cubicTo(13f * sx, 14f * sy, 31f * sx, 3f * sy, 52f * sx, 4f * sy)
+    close()
 }
 
 /**
- * El brillo dibujado a mano: la misma forma, cada vez un poco más grande y más transparente.
- * No usa las sombras de elevación de Android (en Android 8 salen grises y en el emulador tumbaban
- * el gráfico), así que se ve igual en todos los teléfonos.
+ * Antes era un brillo de color; en el sistema riso es la segunda tinta corrida detrás de la forma, como
+ * cuando la imprenta no calza las dos pasadas. [color] e [intensidad] se ignoran (quedan por compatibilidad).
+ * Con corrimiento 0 (Contraste) no dibuja nada.
  */
-fun Modifier.resplandor(color: Color, forma: Shape, intensidad: Dp): Modifier = drawBehind {
-    val capas = 6
-    val total = intensidad.toPx() * 0.6f
-    for (i in capas downTo 1) {
-        val d = total * i / capas
-        val tam = androidx.compose.ui.geometry.Size(size.width + d * 2, size.height + d * 2)
-        translate(-d, -d) {
-            drawOutline(forma.createOutline(tam, layoutDirection, this), color.copy(alpha = color.alpha * 0.16f * (1f - (i - 1f) / capas)))
-        }
-    }
+@Suppress("UNUSED_PARAMETER")
+@Composable
+fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.dp): Modifier {
+    val f = FogonTema.actual
+    return if (f.desfase > 0.dp) sombraDura(forma, f.desfase, f.tinta2) else this
 }
 
-/** Sombra riso: la misma forma en tinta, corrida abajo a la derecha. */
+/** La sombra riso: la misma forma, en [color], corrida abajo a la derecha. */
 fun Modifier.sombraDura(forma: Shape, desplazamiento: Dp = 4.dp, color: Color = Tintas.Tinta): Modifier = drawBehind {
     val d = desplazamiento.toPx()
     translate(d, d) { drawOutline(forma.createOutline(size, layoutDirection, this), color) }
 }
 
-/** Tarjeta de la identidad: fondo de tarjeta, borde y, en Riso, sombra dura. */
+/** Tarjeta de la identidad: papel de tarjeta, borde de tinta y, si [sombra], la segunda tinta corrida detrás. */
 @Composable
-fun Modifier.tarjetaFogon(forma: Shape = FormaRiso): Modifier {
+fun Modifier.tarjetaFogon(forma: Shape = FormaRiso, sombra: Boolean = true): Modifier {
     val f = FogonTema.actual
-    return then(if (f.sombraDura) Modifier.sombraDura(forma) else Modifier)
+    return then(if (sombra && f.desfase > 0.dp) Modifier.sombraDura(forma, f.desfase, f.tinta2) else Modifier)
         .clip(forma).background(f.superficie).border(f.borde, f.linea, forma)
 }
 
 /**
- * Lo que dibuja cada estilo detrás de las pantallas, con los dos colores de degradado
- * ([Paleta.segunda] y [Paleta.luz2]) y el acento:
- * - Noche: orbes difuminados (uno grande arriba a la derecha, otro abajo a la izquierda);
- * - Aura: un orbe cromático grande arriba y uno cálido abajo;
- * - Riso: un círculo de trama de puntos (semitono) en la segunda tinta;
- * - Rebelde: rayos de cómic que salen de arriba a la derecha.
+ * La tarjeta destacada de cada pantalla: un bloque lleno de la primera tinta, con su borde y la segunda
+ * tinta bien corrida detrás. Lo de encima va en [Fogon.sobreTinta1].
+ */
+@Composable
+fun Modifier.tarjetaDestacada(forma: Shape = FormaRiso): Modifier {
+    val f = FogonTema.actual
+    return then(if (f.desfase > 0.dp) Modifier.sombraDura(forma, f.desfase * 2, f.tinta2) else Modifier)
+        .clip(forma).background(f.tinta1).border(f.borde, f.linea, forma)
+}
+
+/** El destello de cuatro puntas del estilo Chicle (24×24). */
+private const val DESTELLO = "M12 1.5c.8 6.2 3.9 9.6 10.5 10.5-6.6.9-9.7 4.3-10.5 10.5-.8-6.2-3.9-9.6-10.5-10.5C8.1 11.1 11.2 7.7 12 1.5z"
+
+/** Dónde van los destellos: x (fracción del ancho), y (dp desde arriba), tamaño (dp), si van en la primera tinta. */
+private val DESTELLOS = listOf(
+    listOf(0.08f, 210f, 22f, 1f), listOf(0.85f, 70f, 16f, 0f), listOf(0.46f, 120f, 12f, 1f),
+    listOf(0.9f, 300f, 20f, 1f), listOf(0.05f, 630f, 14f, 0f), listOf(0.91f, 640f, 12f, 1f),
+)
+
+/**
+ * Lo que imprime cada estilo detrás de las pantallas (nunca degradados):
+ * - Trama (Noche y Riso): un círculo de puntos en la segunda tinta, gordos al centro y finos al borde,
+ *   como el semitono de una riso;
+ * - Rayos (Rebelde): rayos de cómic en la primera tinta, que se van apagando;
+ * - Destellos (Chicle): la trama y destellos de cuatro puntas en las dos tintas.
  */
 fun Modifier.decoracion(f: Fogon): Modifier = drawWithCache {
     val w = size.width; val h = size.height
-    val p = f.paleta
-    val puntos = if (f.decoracion == Decoracion.SEMITONO) {
-        val paso = 9.dp.toPx(); val r = 2.6.dp.toPx()
-        val c = Offset(w * 0.92f, h * 0.16f); val radio = w * 0.42f
+    val conTrama = f.decoracion == Decoracion.TRAMA || f.decoracion == Decoracion.ESTRELLAS
+    val trama = if (conTrama) {
+        val paso = (if (f.oscuro) 10 else 9).dp.toPx()
+        val radio = 145.dp.toPx()
+        val c = Offset(w - 70.dp.toPx(), minOf(h * 0.22f, 175.dp.toPx()))
+        val maximo = paso * 0.46f
         buildList {
             var y = c.y - radio
             while (y < c.y + radio) {
                 var x = c.x - radio
-                while (x < c.x + radio) { if ((Offset(x, y) - c).getDistance() < radio) add(Offset(x, y)); x += paso }
+                while (x < c.x + radio) {
+                    val t = 1f - (Offset(x, y) - c).getDistance() / radio
+                    if (t > 0.04f) add(Offset(x, y) to maximo * kotlin.math.sqrt(minOf(1f, t * 1.6f)))
+                    x += paso
+                }
                 y += paso
-            }
-        } to r
-    } else null
-    val rayos = if (f.decoracion == Decoracion.RAYOS) {
-        val c = Offset(w * 0.78f, h * 0.2f); val largo = maxOf(w, h) * 1.5f
-        (0 until 24).map { i ->
-            val a0 = Math.toRadians(i * 15.0); val a1 = Math.toRadians(i * 15.0 + 4.0)
-            Path().apply {
-                moveTo(c.x, c.y)
-                lineTo(c.x + (largo * kotlin.math.cos(a0)).toFloat(), c.y + (largo * kotlin.math.sin(a0)).toFloat())
-                lineTo(c.x + (largo * kotlin.math.cos(a1)).toFloat(), c.y + (largo * kotlin.math.sin(a1)).toFloat())
-                close()
             }
         }
     } else emptyList()
-    onDrawBehind {
-        when (f.decoracion) {
-            Decoracion.ORBES -> {
-                orbe(Offset(w * 0.95f, h * 0.05f), w * 0.85f, listOf(p.tinta.copy(alpha = 0.32f), p.segunda.copy(alpha = 0.5f), p.luz2.copy(alpha = 0.22f)))
-                orbe(Offset(0f, h * 0.62f), w * 0.8f, listOf(p.luz2.copy(alpha = 0.28f)))
+    val rayos = if (f.decoracion == Decoracion.RAYOS) {
+        val c = Offset(w * 0.74f, minOf(h * 0.24f, 190.dp.toPx())); val largo = 300.dp.toPx()
+        val tramos = 8
+        (0 until 24).flatMap { i ->
+            val a0 = Math.toRadians(i * 15.0); val a1 = Math.toRadians(i * 15.0 + 3.0)
+            (0 until tramos).map { k ->
+                val r0 = largo * k / tramos; val r1 = largo * (k + 1) / tramos
+                val alfa = if (k < 2) 0.5f else 0.5f * (1f - (k - 1f) / (tramos - 1f))
+                fun p(r: Float, a: Double) = Offset(c.x + (r * kotlin.math.cos(a)).toFloat(), c.y + (r * kotlin.math.sin(a)).toFloat())
+                Path().apply {
+                    val q0 = p(r0, a0); moveTo(q0.x, q0.y)
+                    p(r1, a0).let { lineTo(it.x, it.y) }; p(r1, a1).let { lineTo(it.x, it.y) }; p(r0, a1).let { lineTo(it.x, it.y) }
+                    close()
+                } to alfa
             }
-            Decoracion.AURA -> {
-                orbe(Offset(w * 0.55f, h * 0.18f), w * 0.7f, listOf(p.luz2.copy(alpha = 0.8f), p.segunda.copy(alpha = 0.6f), Tintas.Rosa.copy(alpha = 0.3f)))
-                orbe(Offset(0f, h * 0.8f), w * 0.6f, listOf(Tintas.Naranja.copy(alpha = 0.35f)))
-            }
-            Decoracion.SEMITONO -> puntos?.let { (lista, r) -> lista.forEach { drawCircle(p.luz2.copy(alpha = 0.5f), r, it) } }
-            Decoracion.RAYOS -> rayos.forEach { drawPath(it, p.segunda.copy(alpha = 0.22f)) }
-            Decoracion.NADA -> Unit
         }
+    } else emptyList()
+    val destellos = if (f.decoracion == Decoracion.ESTRELLAS) {
+        val base = PathParser().parsePathString(DESTELLO).toPath()
+        DESTELLOS.map { (x, y, t, primera) ->
+            val escala = t.dp.toPx() / 24f
+            Path().apply {
+                addPath(base)
+                transform(androidx.compose.ui.graphics.Matrix().apply { scale(escala, escala) })
+                translate(Offset(w * x, minOf(y.dp.toPx(), h - t.dp.toPx())))
+            } to (if (primera > 0f) f.tinta1 else f.tinta2)
+        }
+    } else emptyList()
+    onDrawBehind {
+        // Suave, para que las letras que caigan encima se sigan leyendo.
+        trama.forEach { (o, r) -> drawCircle(f.tinta2.copy(alpha = 0.6f), r, o) }
+        rayos.forEach { (camino, alfa) -> drawPath(camino, f.tinta1.copy(alpha = alfa)) }
+        destellos.forEach { (camino, c) -> drawPath(camino, c) }
     }
 }
 
-/**
- * Un orbe difuminado: círculos concéntricos de color sólido, del borde al centro, que van tomando los
- * [colores] (del centro hacia afuera) y se desvanecen hacia el borde. Se dibuja así, y no con un degradado
- * radial, porque el degradado grande junto con el grano tumbaba el gráfico del emulador.
- */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.orbe(centro: Offset, radio: Float, colores: List<Color>) {
-    val pasos = 64
-    for (k in 0 until pasos) {
-        val t = k / (pasos - 1f) // 0 = borde, 1 = centro
-        val r = radio * (1f - t * 0.97f)
-        val pos = (1f - t) * (colores.size) // de qué color va: el centro toma el primero
-        val i = pos.toInt().coerceIn(0, colores.size - 1)
-        val c = if (i + 1 < colores.size) androidx.compose.ui.graphics.lerp(colores[i], colores[i + 1], pos - i) else colores[i]
-        // Cada círculo suma un poco: el borde queda casi transparente y el centro con el color pedido.
-        drawCircle(c.copy(alpha = c.alpha * 2.2f / pasos), r, centro)
-    }
-}
-
-/** El fondo de cada pantalla: el color de fondo del estilo, su decoración y el grano. */
+/** El fondo de cada pantalla: el papel del estilo, su adorno impreso y el grano. */
 fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).decoracion(f).granoPapel(f.oscuro, f.grano)
 
 private const val GRANO_AGSL = """
@@ -205,7 +219,33 @@ fun Modifier.granoPapel(oscuro: Boolean, intensidad: Float = 0.07f): Modifier =
         }
     }
 
-/** Botón principal: del acento, con su brillo (o su sombra dura en Riso). */
+/**
+ * Un número o palabra gigante impreso en dos pasadas: la segunda tinta corrida detrás y [color] encima.
+ * El corrimiento crece con el tamaño de la letra. [fantasma] = false lo deja en una sola tinta.
+ */
+@Composable
+fun NumeroRiso(
+    texto: String,
+    tamano: TextUnit,
+    modifier: Modifier = Modifier,
+    color: Color = FogonTema.actual.numero,
+    familia: FontFamily = Anton,
+    alto: TextUnit = tamano * 0.86f,
+    fantasma: Boolean = true,
+    maxLineas: Int = 1,
+) {
+    val f = FogonTema.actual
+    val corre = f.desfase * (tamano.value / 108f)
+    Box(modifier) {
+        if (fantasma && corre > 0.dp) Text(
+            texto, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = f.tinta2, maxLines = maxLineas, softWrap = maxLineas > 1,
+            modifier = Modifier.offset(corre * 1.1f, corre).clearAndSetSemantics { },
+        )
+        Text(texto, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = color, maxLines = maxLineas, softWrap = maxLineas > 1)
+    }
+}
+
+/** Botón principal: de la primera tinta, con borde de tinta y la segunda tinta corrida detrás. */
 @Composable
 fun BotonRiso(
     texto: String,
@@ -214,22 +254,21 @@ fun BotonRiso(
     habilitado: Boolean = true,
 ) {
     val f = FogonTema.actual
-    val p = f.paleta
     val forma = FormaPildora
     Button(
         onClick = onClick,
         enabled = habilitado,
         shape = forma,
-        colors = ButtonDefaults.buttonColors(containerColor = p.tinta, contentColor = p.sobreTinta),
-        border = if (f.borde > 1.dp) BorderStroke(f.borde, f.linea) else null,
+        colors = ButtonDefaults.buttonColors(containerColor = f.tinta1, contentColor = f.sobreTinta1),
+        border = BorderStroke(f.borde, f.linea),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
         modifier = modifier
             .heightIn(min = 50.dp)
-            .then(if (habilitado) Modifier.brillo(p.tinta.copy(alpha = 0.6f), forma, 14.dp) else Modifier),
+            .then(if (habilitado) Modifier.brillo(f.tinta1, forma) else Modifier),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
-/** Botón secundario: con el fondo de las tarjetas y contorno. */
+/** Botón secundario: papel de tarjeta con borde de tinta. */
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -244,7 +283,7 @@ fun BotonSecundario(
         onClick = onClick,
         enabled = habilitado,
         shape = FormaPildora,
-        border = BorderStroke(if (f.borde > 1.dp) f.borde else 1.5.dp, if (peligro) color else if (f.borde > 1.dp) f.linea else f.texto.copy(alpha = 0.35f)),
+        border = BorderStroke(f.borde, if (peligro) color else f.linea),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = f.superficie, contentColor = color),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         modifier = modifier.heightIn(min = 50.dp),

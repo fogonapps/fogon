@@ -27,12 +27,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -104,23 +103,15 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                     Column {
                         val confirmar = LocalConfirmar.current
                         if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmar, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
-                        NavigationBar(containerColor = f.superficie) {
+                        BarraPestanas(
                             listOf(
-                                Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), io.github.fogonapps.forzudo.R.drawable.munieco_nav_inicio),
-                                Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), io.github.fogonapps.forzudo.R.drawable.munieco_nav_entrenar),
-                                Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), io.github.fogonapps.forzudo.R.drawable.munieco_nav_rangos),
-                                Triple(Pestana.PERFIL, stringResource(R.string.pestana_perfil), io.github.fogonapps.forzudo.R.drawable.munieco_nav_perfil),
-                            ).forEach { (p, t, ic) ->
-                                NavigationBarItem(
-                                    selected = pestana == p, onClick = { vm.irA(p) },
-                                    icon = { Icon(androidx.compose.ui.res.painterResource(ic), null, Modifier.size(30.dp)) }, label = { Text(t) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = f.paleta.sobreTinta, indicatorColor = f.paleta.tinta,
-                                        selectedTextColor = f.acentoTexto, unselectedIconColor = f.textoSuave, unselectedTextColor = f.textoSuave,
-                                    ),
-                                )
-                            }
-                        }
+                                Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), Iconos.Inicio),
+                                Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), Iconos.Pesa),
+                                Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), Iconos.Rango),
+                                Triple(Pestana.PERFIL, stringResource(R.string.pestana_perfil), Iconos.Persona),
+                            ),
+                            pestana, vm::irA,
+                        )
                     }
                 },
             ) { pad ->
@@ -185,6 +176,39 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 }
 
 
+/**
+ * La barra de pestañas, impresa como una tarjeta: íconos en dos tintas y, en la activa, una mancha de la
+ * primera tinta con el ícono encima en una sola tinta.
+ */
+@Composable
+private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonapps.identidad.Dibujo>>, actual: T, onElegir: (T) -> Unit) {
+    val f = FogonTema.actual
+    val forma = forma(24.dp)
+    Row(
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 16.dp, top = 6.dp, bottom = 10.dp)
+            .tarjetaFogon(forma).selectableGroup().padding(horizontal = 4.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+    ) {
+        pestanas.forEach { (p, nombre, icono) ->
+            val activa = p == actual
+            Column(
+                Modifier.weight(1f).clip(forma(16.dp))
+                    .selectable(activa, role = androidx.compose.ui.semantics.Role.Tab) { onElegir(p) }
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Box(Modifier.size(width = 54.dp, height = 40.dp), contentAlignment = Alignment.Center) {
+                    if (activa) Box(Modifier.size(width = 54.dp, height = 40.dp).clip(io.github.fogonapps.identidad.FormaMancha).background(f.tinta1))
+                    io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 26.dp,
+                        tinta = if (activa) f.sobreTinta1 else f.texto, corrida = if (activa) null else f.tinta2)
+                }
+                Text(nombre, style = MaterialTheme.typography.labelSmall, fontWeight = if (activa) FontWeight.Bold else FontWeight.Normal,
+                    color = if (activa) f.acentoTexto else f.textoSuave, maxLines = 1)
+            }
+        }
+    }
+}
+
 /** Aviso con la identidad: tinta sobre papel invertido, y la chispa en los récords. */
 @Composable
 private fun AvisoTinta(mensaje: String) {
@@ -210,7 +234,7 @@ private fun BarraEntreno(titulo: String, inicio: Long, onCancelar: () -> Unit, o
     ) {
         Text(stringResource(R.string.entreno_en_curso, titulo), color = f.paleta.sobreTinta, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         Text(duracion(ahora - inicio), color = f.paleta.sobreTinta, style = MaterialTheme.typography.titleMedium)
-        IconButton(onCancelar) { Icon(Iconos.Cerrar, stringResource(R.string.cancelar_entreno), tint = f.paleta.sobreTinta) }
+        IconButton(onCancelar) { io.github.fogonapps.identidad.IconoRiso(Iconos.Cerrar, stringResource(R.string.cancelar_entreno), tinta = f.sobreTinta1, corrida = null) }
     }
 }
 

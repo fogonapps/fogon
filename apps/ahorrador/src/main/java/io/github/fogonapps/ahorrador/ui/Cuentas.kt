@@ -73,7 +73,7 @@ fun CuentaPantalla(vm: AhorradorViewModel, e: Estado, id: String) {
     val c = e.cuentas.firstOrNull { it.id == id } ?: run { vm.cerrar(); return }
     val hoy = vm.hoy()
     Cabecera(c.nombre, vm::cerrar) {
-        IconButton({ vm.abrir(Pantalla.EditarCuenta(c.id)) }) { Icon(Iconos.Lapiz, stringResource(R.string.editar), tint = f.texto) }
+        IconButton({ vm.abrir(Pantalla.EditarCuenta(c.id)) }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Lapiz, stringResource(R.string.editar)) }
     }
     val t = L.tarjeta(e, id, hoy)
     if (c.tipo == TipoCuenta.CREDITO && t != null) {

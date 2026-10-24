@@ -27,11 +27,12 @@ object Tintas {
 }
 
 /**
- * Colores de una app, en el estilo "de noche" (ver docs/IDENTIDAD.md → Estilo de noche).
+ * Tintas de una app. En el estilo Noche se imprime con [tinta] y [segunda]; en el Riso, con
+ * [textoEnPapel] y [segundaTinta] (ver docs/IDENTIDAD.md → Sistema riso).
  *
  * - [tinta]: el acento. Botones principales, pestaña activa, barras de progreso. Va con texto [sobreTinta].
  * - [textoEnTinta]: el acento cuando es texto sobre el fondo oscuro.
- * - [segunda] y [luz2]: las dos luces difuminadas del fondo y el brillo de las tarjetas destacadas.
+ * - [segunda]: la segunda tinta del estilo Noche, la que va corrida. [luz2]: un color de apoyo.
  * - [fondo]: el negro de la app, con un matiz de su color.
  * - [textoEnPapel]: el acento sobre papel claro (láminas, tarjetas de papel). En el estilo Riso es la primera tinta.
  * - [segundaTinta]: la segunda tinta del estilo Riso (Apariencia), la que va corrida.
@@ -57,6 +58,18 @@ data class Paleta(
             luz2 = Tintas.Azul,
             fondo = Color(0xFF0C0A12),
             segundaTinta = Tintas.Rosa,
+        )
+
+        /** Rojo y amarillo con acento coral: la casa de las apps (La Minga). */
+        val Minga = Paleta(
+            tinta = Color(0xFFFF5A4F),
+            sobreTinta = Color(0xFF120A08),
+            textoEnPapel = Color(0xFFC92118),
+            textoEnTinta = Color(0xFFFF5A4F),
+            segunda = Tintas.Amarillo,
+            luz2 = Tintas.Rojo,
+            fondo = Color(0xFF120A08),
+            segundaTinta = Tintas.Amarillo,
         )
 
         /** Verde y amarillo con acento amarillo (la moneda). */

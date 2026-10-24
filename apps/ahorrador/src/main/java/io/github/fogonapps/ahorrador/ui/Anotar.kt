@@ -93,7 +93,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
         Cabecera(stringResource(if (viejo == null) R.string.anotar else R.string.corregir), vm::cerrar, Iconos.Cerrar) {
             if (viejo != null) IconButton({
                 confirmar(vm.tx(R.string.borrar_movimiento), null) { vm.borrarMovimiento(viejo.id); vm.cerrar() }
-            }) { Icon(Iconos.Borrar, stringResource(R.string.borrar), tint = f.texto) }
+            }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Borrar, stringResource(R.string.borrar)) }
         }
         // Tipo de movimiento (al corregir no se cambia: sería otro movimiento)
         if (viejo == null) Selector(TipoMovimiento.entries.map { it to stringResource(it.nombre) }, tipo, {
@@ -118,7 +118,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
                     monto = ultimo.monto.toString(); categoria = ultimo.categoria; nota = ultimo.nota
                     if (activas.any { it.id == ultimo.cuenta }) cuenta = ultimo.cuenta
                 }, Modifier.vidrio(FormaPildora)) {
-                    Icon(Iconos.Repetir, null, tint = f.texto, modifier = Modifier.padding(end = 6.dp))
+                    io.github.fogonapps.identidad.IconoRiso(Iconos.Repetir, null, Modifier.padding(end = 6.dp), corrida = null)
                     Text(stringResource(R.string.igual_que_ultimo, catU, Formato.pesos(ultimo.monto)), color = f.texto, maxLines = 1)
                 }
             }
@@ -205,7 +205,7 @@ private fun Teclado(onDigito: (String) -> Unit, onBorrar: () -> Unit) {
                             .then(if (t == "⌫") Modifier.semantics { contentDescription = borrar } else Modifier),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (t == "⌫") Icon(Iconos.Borrar, null, tint = f.texto)
+                        if (t == "⌫") io.github.fogonapps.identidad.IconoRiso(Iconos.Borrar, null)
                         else Text(t, fontFamily = Anton, fontSize = 24.sp, color = if (t == "000") f.textoSuave else f.texto)
                     }
                 }

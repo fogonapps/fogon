@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.tarjetaFogon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -156,7 +157,6 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
 @Composable
 private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: () -> Unit, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    val p = f.paleta
     val pestanas = listOf(
         Triple(Pestana.INICIO, Iconos.Inicio, R.string.pestana_inicio),
         Triple(Pestana.RESUMEN, Iconos.Resumen, R.string.pestana_resumen),
@@ -165,29 +165,29 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
     )
     Row(
         modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth()
-            .clip(FormaPildora).background(androidx.compose.ui.graphics.lerp(p.fondo, f.texto, 0.12f).copy(alpha = 0.94f))
-            .border(1.dp, f.linea, FormaPildora).padding(horizontal = 8.dp, vertical = 8.dp),
+            .tarjetaFogon(FormaPildora).padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.size(56.dp).brillo(p.tinta.copy(alpha = 0.7f), CircleShape, 14.dp).clip(CircleShape).background(p.tinta)
+            Modifier.size(58.dp).brillo(f.tinta1, io.github.fogonapps.identidad.FormaMancha).clip(io.github.fogonapps.identidad.FormaMancha).background(f.tinta1)
+                .border(f.borde, f.linea, io.github.fogonapps.identidad.FormaMancha)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
-        ) { Icon(Iconos.Mas, null, tint = p.sobreTinta, modifier = Modifier.size(26.dp)) }
+        ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 26.dp, tinta = f.sobreTinta1, corrida = null) }
         pestanas.drop(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
     }
 }
 
 @Composable
-private fun BotonPestana(icono: ImageVector, texto: String, elegida: Boolean, onClick: () -> Unit) {
+private fun BotonPestana(icono: io.github.fogonapps.identidad.Dibujo, texto: String, elegida: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(50.dp).clip(CircleShape).background(if (elegida) f.pildora else Color.Transparent)
+        Modifier.size(52.dp).clip(io.github.fogonapps.identidad.FormaMancha).background(if (elegida) f.texto else Color.Transparent)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
-    ) { Icon(icono, null, tint = if (elegida) f.sobrePildora else f.textoSuave, modifier = Modifier.size(22.dp)) }
+    ) { io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 26.dp, tinta = if (elegida) f.sobrePildora else f.texto, corrida = if (elegida) null else f.tinta2) }
 }
 
 /** Aviso con la identidad: píldora blanca, y la chispa en los logros (meta cumplida, deuda saldada). */
@@ -213,7 +213,7 @@ fun Bloqueada(onDesbloquear: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
         Personaje(RId.drawable.personaje_el_ahorrador, null, tamano = 150.dp)
-        Icon(Iconos.Candado, null, tint = f.texto, modifier = Modifier.size(32.dp))
+        io.github.fogonapps.identidad.IconoRiso(Iconos.Candado, null, tamano = 34.dp)
         Text(stringResource(R.string.bloqueada), style = MaterialTheme.typography.headlineSmall, color = f.texto)
         BotonRiso(stringResource(R.string.desbloquear), onDesbloquear)
     }

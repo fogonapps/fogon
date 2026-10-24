@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.background
@@ -32,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -97,7 +97,7 @@ fun FilaMovimiento(e: Estado, m: Movimiento, onClick: () -> Unit) {
     val cat = e.categorias.firstOrNull { it.id == m.categoria }
     val cuenta = e.cuentas.firstOrNull { it.id == m.cuenta }?.nombre.orEmpty()
     val meta = e.metas.firstOrNull { it.id == m.meta }
-    val (color, icono: ImageVector, titulo) = when (m.tipo) {
+    val (color, icono: io.github.fogonapps.identidad.Dibujo, titulo) = when (m.tipo) {
         TipoMovimiento.TRASPASO -> Triple(Tintas.GrisClaro, Iconos.Pasar, stringResource(R.string.paso_a, e.cuentas.firstOrNull { it.id == m.aCuenta }?.nombre.orEmpty()))
         TipoMovimiento.AHORRO -> Triple(meta?.let { colorDe(it.color) } ?: Tintas.Verde, Iconos.de(meta?.icono ?: "moneda"), meta?.nombre ?: stringResource(R.string.ahorro))
         else -> Triple(cat?.let { colorDe(it.color) } ?: Tintas.GrisClaro, Iconos.de(cat?.icono ?: "otros"), cat?.nombre ?: stringResource(R.string.sin_categoria))
@@ -137,8 +137,9 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
             Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
                 fontFamily = Bagel, fontSize = 28.sp, color = f.texto, maxLines = 1)
         }
-        Box(Modifier.size(48.dp).clip(CircleShape).background(FogonTema.actual.pildora).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
-            Icon(Iconos.Persona, stringResource(R.string.perfil), tint = FogonTema.actual.sobrePildora, modifier = Modifier.size(24.dp))
+        Box(Modifier.size(52.dp).brillo(f.tinta1, io.github.fogonapps.identidad.FormaMancha).clip(io.github.fogonapps.identidad.FormaMancha)
+            .background(f.tinta1).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.perfil), tamano = 26.dp, tinta = f.sobreTinta1, corrida = null)
         }
     }
 
@@ -177,7 +178,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
                 Text(stringResource(R.string.cierra_mes, Formato.mes(anterior)), style = MaterialTheme.typography.titleSmall, color = f.texto)
                 Text(stringResource(R.string.cierra_mes_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
-            Icon(Iconos.Siguiente, null, tint = f.textoSuave)
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, null, tamano = 20.dp, tinta = f.textoSuave, corrida = null)
         }
     }
 
@@ -319,11 +320,11 @@ fun SelectorMes(mes: String, onCambio: (String) -> Unit, hasta: String) {
     val f = FogonTema.actual
     val ym = YearMonth.parse(mes)
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton({ onCambio(ym.minusMonths(1).toString()) }) { Icon(Iconos.Atras, stringResource(R.string.mes_anterior), tint = f.texto) }
+        IconButton({ onCambio(ym.minusMonths(1).toString()) }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Atras, stringResource(R.string.mes_anterior), corrida = null) }
         Text(Formato.nombreMes(mes) + " " + ym.year, fontFamily = Bagel, fontSize = 18.sp, color = f.texto,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
         IconButton({ onCambio(ym.plusMonths(1).toString()) }, enabled = mes < hasta) {
-            Icon(Iconos.Siguiente, stringResource(R.string.mes_siguiente), tint = if (mes < hasta) f.texto else f.linea)
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, stringResource(R.string.mes_siguiente), tinta = if (mes < hasta) f.texto else f.textoSuave.copy(alpha = 0.4f), corrida = null)
         }
     }
 }

@@ -30,7 +30,7 @@ Código en `src/main/java/io/github/fogonapps/forzudo/`:
 | `ui/Pantallas.kt` | Las pantallas que se abren encima: entreno en vivo, resumen, detalle de ejercicio, músculo, programas, editor de rutinas, cambiar ejercicio, lámina en grande, Acerca de, Licencias y Preguntas frecuentes. |
 | `ui/Comunes.kt` | Piezas de interfaz propias de esta app: secciones, filas, gráficas, insignias de rango, mapa del cuerpo, mapa anual, campos de número y fecha. |
 | `ui/Tutorial.kt` | Los 6 pasos del primer arranque. |
-| `ui/Iconos.kt` | Íconos dibujados en código. |
+| `ui/Iconos.kt` | Íconos gordos para imprimir en dos tintas (`Dibujo`, se pintan con `IconoRiso`), también los de los grupos musculares. Los comunes salen de `IconosFogon`. |
 
 Otros lugares:
 

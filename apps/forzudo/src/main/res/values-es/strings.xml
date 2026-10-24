@@ -138,6 +138,7 @@
   </plurals>
   <string name="racha_cumpliendo">cumpliendo tu semana</string>
   <string name="racha_empezar">Completa todos tus entrenos de la semana para empezar tu racha</string>
+  <string name="racha_sello">Mejor %1$d</string>
   <string name="racha_mejor">Mejor racha: %1$d</string>
   <string name="esta_semana">Esta semana: %1$d de %2$s</string>
   <string name="dia_hecho">hecho</string>

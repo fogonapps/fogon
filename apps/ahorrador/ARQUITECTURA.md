@@ -29,8 +29,8 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `ui/Cuentas.kt` | Todas las cuentas, una cuenta (con su tarjeta de crédito) y crear o editar una cuenta. |
 | `ui/Fijos.kt` | Pagos fijos, me deben y debo, y el cierre del mes. |
 | `ui/Perfil.kt` | Perfil y ajustes, Acerca de, Licencias, Preguntas frecuentes y Reportar. |
-| `ui/Comunes.kt` | Piezas de interfaz: tarjetas de vidrio, tarjeta destacada, fichas de color, campos de plata, selectores, fecha. |
-| `ui/Iconos.kt` | Íconos de trazo dibujados en código, también los de las categorías (`Iconos.de(nombre)`). |
+| `ui/Comunes.kt` | Piezas de interfaz: tarjetas de las filas (`vidrio()`, sin sombra), tarjeta destacada (`tarjetaDestacada`), fichas de categoría en una mancha de su tinta, campos de plata, selectores, fecha. |
+| `ui/Iconos.kt` | Íconos gordos para imprimir en dos tintas (`Dibujo`, se pintan con `IconoRiso`), también los de las categorías (`Iconos.de(nombre)`). Los comunes salen de `IconosFogon`. |
 
 Otros lugares:
 

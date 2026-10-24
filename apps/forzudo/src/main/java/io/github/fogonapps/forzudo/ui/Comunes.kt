@@ -113,10 +113,10 @@ fun FotoAsset(ruta: String?, descripcion: String?, modifier: Modifier = Modifier
 fun Miniatura(e: Ejercicio, bib: Biblioteca, tamano: Dp = 46.dp) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(tamano).tarjetaFogon(forma(10.dp)),
+        Modifier.size(tamano).tarjetaFogon(forma(10.dp), sombra = false),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Iconos.Grupo[e.g] ?: Iconos.Pesa, null, tint = f.textoSuave, modifier = Modifier.size(tamano * 0.5f))
+        io.github.fogonapps.identidad.IconoRiso(Iconos.Grupo[e.g] ?: Iconos.Pesa, null, tamano = tamano * 0.5f, tinta = f.texto)
         FotoAsset(bib.foto(e.id, 1), null, Modifier.fillMaxSize())
     }
 }
@@ -150,7 +150,7 @@ fun Fila(onClick: (() -> Unit)? = null, modifier: Modifier = Modifier, contenido
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             content = contenido,
         )
-        HorizontalDivider(color = FogonTema.actual.linea, modifier = Modifier.padding(start = 16.dp))
+        HorizontalDivider(color = FogonTema.actual.linea.copy(alpha = 0.22f), modifier = Modifier.padding(start = 16.dp))
     }
 }
 
@@ -166,8 +166,8 @@ fun Pista(texto: String, modifier: Modifier = Modifier, centro: Boolean = false)
 @Composable
 fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    Box(modifier.fillMaxWidth().height(6.dp).clip(forma(3.dp)).background(f.linea)) {
-        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).height(6.dp).background(color))
+    Box(modifier.fillMaxWidth().height(10.dp).clip(forma(5.dp)).background(f.superficie).border(1.5.dp, f.linea, forma(5.dp))) {
+        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).height(10.dp).clip(forma(5.dp)).background(color))
     }
 }
 
@@ -226,7 +226,7 @@ fun Grafica(puntos: List<Pair<String, Double?>>, modifier: Modifier = Modifier) 
         fun y(v: Double) = (T + (1 - (v - mn) / (mx - mn)) * (size.height - T - B)).toFloat()
         val estilo = TextStyle(color = f.textoSuave, fontSize = 11.sp)
         listOf(mx, (mx + mn) / 2, mn).forEach { t ->
-            drawLine(f.linea, Offset(L, y(t)), Offset(size.width - R, y(t)), 1.dp.toPx())
+            drawLine(f.linea.copy(alpha = 0.22f), Offset(L, y(t)), Offset(size.width - R, y(t)), 1.dp.toPx())
             val m = medidor.measure(fk(Math.round(t * 10) / 10.0), estilo)
             drawText(m, topLeft = Offset(L - 6.dp.toPx() - m.size.width, y(t) - m.size.height / 2))
         }
@@ -262,7 +262,7 @@ private fun poligono(pts: String): Path = cachePoligonos.getOrPut(pts) {
 @Composable
 fun MapaCuerpo(partes: List<ParteCuerpo>, relleno: (String) -> Color?, descripcion: String, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    val vacio = f.linea
+    val vacio = f.texto.copy(alpha = 0.16f)
     val neutro = if (f.oscuro) Color(0xFF3A332D) else Color(0xFFCFC3B1)
     Canvas(modifier.aspectRatio(0.5f).semantics { contentDescription = descripcion }) {
         val s = size.width / 1000f
@@ -330,8 +330,7 @@ fun CampoNumero(
         cursorBrush = SolidColor(f.paleta.tinta),
         modifier = modifier
             .heightIn(min = 44.dp)
-            .tarjetaFogon(forma(10.dp))
-            .border(1.5.dp, f.linea, forma(10.dp))
+            .tarjetaFogon(forma(10.dp), sombra = false)
             .semantics { contentDescription = descripcion },
         decorationBox = { campo ->
             Box(Modifier.padding(horizontal = 6.dp, vertical = 11.dp), contentAlignment = Alignment.Center) {

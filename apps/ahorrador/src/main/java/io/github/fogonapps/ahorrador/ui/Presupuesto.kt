@@ -347,7 +347,7 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
             ICONOS_META.forEach { i ->
                 Box(Modifier.size(46.dp).clip(CircleShape).background(if (i == icono) colorDe(color) else f.superficie).clickable { icono = i }
                     .semantics { selected = i == icono; contentDescription = i }, contentAlignment = Alignment.Center) {
-                    Icon(Iconos.de(i), null, tint = if (i == icono) Tintas.Tinta else f.texto, modifier = Modifier.size(22.dp))
+                    io.github.fogonapps.identidad.IconoRiso(Iconos.de(i), null, tamano = 22.dp, tinta = if (i == icono) io.github.fogonapps.identidad.legibleSobre(colorDe(color), listOf(f.texto, f.fondo)) else f.texto, corrida = null)
                 }
             }
         }

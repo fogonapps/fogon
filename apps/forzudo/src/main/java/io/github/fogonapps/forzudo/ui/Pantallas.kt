@@ -1,5 +1,7 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.brillo
+import androidx.compose.foundation.border
 import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.forzudo.R
@@ -94,11 +96,17 @@ import java.text.Normalizer
 /* ----- Barra superior de las pantallas ----- */
 
 @Composable
-fun Cabecera(titulo: String, onAtras: (() -> Unit)?, iconoAtras: androidx.compose.ui.graphics.vector.ImageVector = Iconos.Atras, derecha: @Composable () -> Unit = {}) {
+fun Cabecera(titulo: String, onAtras: (() -> Unit)?, iconoAtras: io.github.fogonapps.identidad.Dibujo = Iconos.Atras, derecha: @Composable () -> Unit = {}) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(56.dp)) {
-            if (onAtras != null) IconButton(onAtras) { Icon(iconoAtras, stringResource(R.string.volver), tint = f.texto) }
+            if (onAtras != null) Box(
+                Modifier.padding(start = 8.dp).size(46.dp).brillo(f.tinta1, androidx.compose.foundation.shape.CircleShape)
+                    .clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie)
+                    .border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape)
+                    .clickable(onClickLabel = null, role = androidx.compose.ui.semantics.Role.Button, onClick = onAtras),
+                contentAlignment = Alignment.Center,
+            ) { io.github.fogonapps.identidad.IconoRiso(iconoAtras, stringResource(R.string.volver), tamano = 22.dp, corrida = null) }
         }
         Text(titulo, style = MaterialTheme.typography.titleLarge, color = f.texto, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         Box(Modifier.width(96.dp), contentAlignment = Alignment.CenterEnd) { derecha() }
@@ -205,7 +213,7 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
         consejo?.let { Text(it, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = f.acentoTexto, modifier = Modifier.padding(horizontal = 16.dp)) }
         if (std?.mancuerna == true) Pista(stringResource(R.string.peso_una_mancuerna))
         Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Iconos.Reloj, null, tint = f.textoSuave, modifier = Modifier.size(16.dp))
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Reloj, null, tamano = 16.dp, tinta = f.textoSuave, corrida = null)
             Text(stringResource(R.string.descanso_de, "${c.rest / 60}min" + if (c.rest % 60 > 0) " ${c.rest % 60}s" else ""), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
         // Encabezado de la tabla
@@ -242,7 +250,7 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
                         .clickable { vm.marcar(c.id, i) }
                         .semantics { contentDescription = descMarcar; stateDescription = if (s.done) descCompleta else descPendiente },
                     contentAlignment = Alignment.Center,
-                ) { Icon(Iconos.Chulo, null, tint = if (s.done) f.paleta.sobreTinta else f.textoSuave, modifier = Modifier.size(22.dp)) }
+                ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 22.dp, tinta = if (s.done) f.sobreTinta1 else f.textoSuave, corrida = null) }
             }
         }
         TextButton({ vm.agregarSerie(c.id) }, Modifier.padding(horizontal = 8.dp)) { Text(stringResource(R.string.mas_agregar_serie)) }

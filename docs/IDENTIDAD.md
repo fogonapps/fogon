@@ -24,16 +24,18 @@ Salen de las referencias que eligió Angel (pósters y apps, de otros autores; p
 
 **Las marcas del ADN:**
 
-1. **Un número o una palabra gigante** por pantalla (la racha, el rango, el monto), en Anton o Bagel, tan grande que se recorta.
-2. **Etiquetas técnicas** pequeñas en mayúsculas con espaciado (código, semana, fecha), como un catálogo.
-3. **La figura como calcomanía:** todo personaje o muñequito lleva un borde de papel y una sombra de tinta corrida, para que se lea sobre cualquier fondo. Nunca una figura del mismo color que la luz de detrás.
-4. **Orbes de color difuminados**, no una mancha en la esquina.
-5. **Líneas finas o rayos** que cruzan la composición.
-6. **Las láminas siempre sobre papel**, como un recorte pegado.
-7. **Grano** (de papel o de fotocopia), aunque sea muy suave.
-8. **Botones en píldora** blanca o del acento; nunca un botón gris genérico.
+1. **Dos tintas, la segunda corrida.** Todo se "imprime" como una riso: botones, tarjetas, números e íconos llevan detrás la segunda tinta un poco movida. Es el mismo truco de los personajes. Ver [Sistema riso](#sistema-riso-la-interfaz-de-las-apps).
+2. **Un número o una palabra gigante** por pantalla (la racha, el rango, el monto), en Anton o Bagel, impreso en las dos tintas y tan grande que se recorta.
+3. **Íconos líquidos** como los personajes: gordos, llenos y de puntas redondas. Nunca íconos de línea fina.
+4. **Trama de puntos en lugar de degradados.** Ningún degradado ni orbe difuminado en la interfaz.
+5. **La figura como calcomanía:** todo personaje o muñequito lleva un borde de papel. Nunca una figura del mismo color que lo de detrás.
+6. **Etiquetas técnicas** pequeñas en mayúsculas con espaciado (código, semana, fecha), como un catálogo, y **sellos de goma** para los logros.
+7. **Grano** (de papel o de fotocopia), aunque sea muy suave, y **las láminas siempre sobre papel**.
+8. **Bordes de tinta y manchas:** tarjetas y botones con borde de tinta; la pestaña activa y el perfil en una mancha torcida, no en un círculo perfecto.
 
-Propuesta de diseño con estas marcas, los estilos y la pantalla de Apariencia: https://claude.ai/artifact/MDA52AGbTrQ1iaLDSfHQRy (privado).
+**El 22-10-2026 Angel rechazó en el teléfono la primera versión** (El Forzudo 1.7, El Ahorrador 1.1): "diseño muy pobre, íconos sin estilizar, degradados feos, el estilo no va con el personaje… quiero todo muy estilizado y personalizable y sobre todo nada genérico". La lección: fondo oscuro con orbes difuminados, vidrio e íconos de línea fina es la moda de cualquier app, no Fogón. De ahí salió el sistema riso.
+
+Diseño (lienzo privado): https://claude.ai/artifact/MDA52AGbTrQ1iaLDSfHQRy, página "Sistema riso (nuevo)". La página "Primera propuesta" es la versión rechazada.
 
 ## Archivos
 
@@ -107,44 +109,45 @@ Son las tintas de los personajes, el logotipo y los dibujos, y de ellas salen la
 
 Sobre papel, **ninguna tinta pura llega a 4,5:1** para texto pequeño. Por eso cada tinta tiene su versión "para texto". Sobre fondo de tinta (modo oscuro), el amarillo, el rosa, el verde y el naranja sí sirven como texto, porque pasan de 6:1.
 
-## Estilo de noche: la interfaz de las apps
+## Sistema riso: la interfaz de las apps
 
-Desde el 21-10-2026 todas las apps usan el **estilo de noche** (decidido por Angel a partir de referencias de apps con luces difuminadas, vidrio y píldoras). Lo riso no desaparece: sigue en los personajes, el logotipo, la chispa, las láminas y el grano. Lo que cambia es la interfaz.
+Desde el 23-10-2026 (El Forzudo 1.8, El Ahorrador 1.2) **toda la interfaz se imprime como una riso**: un papel y dos tintas, con la segunda corrida. Lo que fija la identidad es la forma de imprimir; lo que cambia de un estilo a otro (y lo que la persona puede cambiar) son el papel, las tintas y cuánto se corren. Así se puede personalizar todo sin dejar de ser Fogón.
 
-Diseños de referencia: el lienzo https://claude.ai/artifact/9ed1LykdvoFCgPFyWf6dBx, página "De noche" (El Ahorrador y El Forzudo). El estilo anterior, riso sobre papel, quedó en su página "Riso de día".
+Antes: hasta el 22-10-2026 las apps usaron un "estilo de noche" de luces difuminadas y vidrio (lienzo https://claude.ai/artifact/9ed1LykdvoFCgPFyWf6dBx); Angel lo rechazó por genérico.
 
-### Paleta de cada app
+### Las tintas de cada app
 
-**Cada app tiene su propia paleta; la tipografía es la misma en todas.** Cada paleta tiene un fondo casi negro con un matiz propio, dos luces y un acento.
+**Cada app imprime con sus tintas; la tipografía es la misma en todas.** En el código, `Paleta.<App>`.
 
-| App | Luz principal (`segunda`) | Segunda luz (`luz2`) | Acento (`tinta`) | Fondo | En el código |
-|-----|---------------------------|----------------------|------------------|-------|--------------|
-| El Forzudo | Violeta `#7B4DFF` | Azul `#2D5BFF` | Lima `#C8F560` | `#0C0A12` | `Paleta.Forzudo` |
-| El Ahorrador | Verde `#1FB45A` | Amarillo `#FFC93C` | Amarillo `#FFC93C` | `#0D0C0A` | `Paleta.Ahorrador` |
-| La Corredora (hábitos) | Naranja `#FF7A1A` | Rosa `#FF4FA3` | Naranja `#FF7A1A` | `#120B08` | por crear |
-| El Monje (sueño) | Azul `#2D5BFF` | Cian `#00A0E9` | Cian claro `#7FD8FF` | `#070A14` | por crear |
-| Alimentación (personaje pendiente) | Rosa `#FF4FA3` | Rojo `#E5332A` | Rosa claro `#FF8FC4` | `#120A0E` | provisional |
-| Fogón / La Minga | Rojo `#E5332A` | Amarillo `#FFC93C` | Coral `#FF5A4F` | `#120A08` | por crear |
+| App | Noche: primera / segunda tinta, papel | Riso: primera / segunda tinta (sobre papel `#EFE7DA`) |
+|-----|---------------------------------------|-------------------------------------------------------|
+| El Forzudo | Lima `#C8F560` / Violeta `#7B4DFF`, `#0C0A12` | Violeta `#6C39FF` / Rosa `#FF4FA3` |
+| El Ahorrador | Amarillo `#FFC93C` / Verde `#1FB45A`, `#0D0C0A` | Verde `#14753A` / Amarillo `#FFC93C` |
+| La Minga | Coral `#FF5A4F` / Amarillo `#FFC93C`, `#120A08` | Rojo `#C92118` / Amarillo `#FFC93C` |
+| La Corredora (hábitos) | Naranja `#FF7A1A` / Rosa `#FF4FA3` | por crear |
+| El Monje (sueño) | Cian claro `#7FD8FF` / Azul `#2D5BFF` | por crear |
 
-Dos apps no comparten acento. El texto sobre el acento va siempre en el fondo oscuro de la app (`sobreTinta`); sobre el fondo, el acento sirve también como color de texto (`textoEnTinta`), porque todos pasan de 6:1.
+Dos apps no comparten primera tinta en Noche. En la `Paleta`: `tinta` y `segunda` son las de Noche; `textoEnPapel` y `segundaTinta`, las de Riso.
 
 ### Apariencia: cinco estilos que la persona elige
 
-Desde el 21-10-2026 (El Forzudo 1.7, El Ahorrador 1.1) cada app tiene **Perfil → Apariencia**, igual en todas. Angel lo pidió así: "que cada estilo se le pueda cambiar los colores al fondo, a las letras o a los degradados, a todo en general, pero que cada uno tenga uno por defecto". Diseño: https://claude.ai/artifact/MDA52AGbTrQ1iaLDSfHQRy.
+Cada app tiene **Perfil → Apariencia**, igual en todas (`PantallaApariencia` en `core/identidad`). Angel lo pidió así: "que cada estilo se le pueda cambiar los colores al fondo, a las letras…, a todo en general, pero que cada uno tenga uno por defecto", y luego "que cada estilo tenga sus cosas pero que sigan un estilo para no perder la identidad de fogón".
 
-| Estilo | Cómo se ve | Fondo detrás | Tarjetas | Grano | Esquinas |
-|--------|------------|--------------|----------|-------|----------|
-| **Noche** (el de siempre) | El fondo casi negro de la app, sus dos luces y su acento | Orbes difuminados | Vidrio (92 % de transparencia) | Suave | Redondas |
-| **Riso** | Papel, la primera tinta de la app (`textoEnPapel`) y su segunda tinta corrida (`segundaTinta`) | Círculo de trama de puntos | Blancas, sólidas, con borde y sombra dura | Fuerte | Redondas |
-| **Rebelde** | Rojo `#F03E33`, negro y crema | Rayos de cómic | Crema, sólidas, con borde; la destacada es una caja negra | Fuerte | Rectas |
-| **Aura** | Gris claro, letras casi negras | Orbe cromático grande con las dos luces | Vidrio claro (45 %) | Suave | Redondas |
-| **Contraste** | Negro y blanco, el acento de la app | Nada | Negras con borde blanco | Nada | Redondas |
+| Estilo | Papel | Primera tinta | Segunda tinta | Corrimiento | Adorno | Grano | Esquinas |
+|--------|-------|---------------|---------------|-------------|--------|-------|----------|
+| **Noche** (el de siempre) | El negro de la app | La de la app (neón) | La de la app | 3 dp | Trama de puntos | Suave | Redondas |
+| **Riso** | Crema `#EFE7DA` | La de la app para papel | La segunda de la app | 3 dp | Trama de puntos | Fuerte | Redondas |
+| **Rebelde** | Rojo `#F03E33` | Negro | Crema | 4 dp | Rayos de cómic | Fuerte | Rectas |
+| **Chicle** (Y2K, reemplazó a Aura) | Rosa `#FFE1EE` | Azul `#2D5BFF` | Amarillo flúor `#FFB020` | 3 dp | Trama y destellos | Suave | Redondas |
+| **Contraste** | Negro | Blanco | La primera tinta de Noche de la app | 0 (sin corrimiento) | Nada | Nada | Redondas |
 
-- **Todo color se puede cambiar, en cada estilo por separado:** fondo, tarjetas, letras, letras suaves, acento, letras sobre el acento, degradado 1, degradado 2, números grandes y bordes. También la transparencia (0 a 100 %), la textura (nada, suave, fuerte) y las esquinas. "Volver a como viene" deja el estilo como estaba. Si los colores elegidos se leen mal, la pantalla avisa.
-- **Comodidad, para todos los estilos:** tamaño de las letras (4 tamaños, sobre el que ya tenga el teléfono), menos movimiento (sin brillos ni animaciones) y más contraste (bordes marcados y todas las letras del color principal).
-- **Lo que no cambia:** las letras (Bagel Fat One, Anton y Roboto), los personajes, la chispa y el ADN visual. Las láminas siempre van sobre papel.
-- **Cada estilo se lee:** la prueba `AparienciaTest` (en `core/identidad`) comprueba que los colores por defecto de los cinco estilos pasen 4,5:1 en todas las apps. Si se agrega un estilo o una app, la prueba los cubre sola.
-- **Las pantallas nunca usan colores fijos:** todo sale de `FogonTema.actual` (fondo, texto, `pildora`, `sobreDestacada`, `numero`…). Un `Color.White` en una pantalla rompe los estilos claros.
+- **Arriba, lo rápido:** papel, primera tinta y segunda tinta en muestras (más "otro color"), y el corrimiento de la tinta (0 a 6 dp). Luego el adorno (trama, rayos, destellos o nada).
+- **Todos los colores, en cada estilo por separado:** papel, papel de las tarjetas, letras, letras suaves, primera tinta, letras sobre la primera tinta, segunda tinta, números grandes y bordes. También la textura, las esquinas y la transparencia de las tarjetas (0 % por defecto). "Volver a como viene" deja el estilo como estaba. Si los colores se leen mal, la pantalla avisa.
+- **Lo que se acomoda solo:** si la persona cambia la primera tinta, el número gigante la sigue (en Riso y Chicle) y las letras sobre ella se eligen para que se lean; si la tinta no se lee como texto sobre el papel, el acento pasa al color de las letras. Los bordes siguen a las letras.
+- **Comodidad, para todos los estilos:** tamaño de las letras (4 tamaños, sobre el que ya tenga el teléfono), menos movimiento (sin animaciones) y más contraste (bordes más gruesos y todas las letras del color principal).
+- **Lo que no cambia:** la forma de imprimir (dos tintas, íconos líquidos, trama, grano, bordes de tinta), las letras (Bagel Fat One, Anton y Roboto), los personajes y la chispa. Las láminas siempre van sobre papel.
+- **Cada estilo se lee:** la prueba `AparienciaTest` comprueba que los cinco estilos pasen 4,5:1 en todas las apps (letras, letras suaves, tarjetas, la primera tinta y el acento) y que cambiar la primera tinta no deje nada ilegible.
+- **Al pasar a este sistema** (preferencias versión 2), los colores que la persona había cambiado en la versión anterior vuelven a los del estilo, porque ya no significan lo mismo; el estilo elegido y la comodidad se quedan. Quien tenía Aura queda en Chicle.
 
 ### Tipografía (igual en todas las apps)
 
@@ -158,21 +161,20 @@ Las dos primeras van incluidas en `identidad/fuentes/` (licencia OFL), así las 
 
 ### Reglas de la interfaz
 
-1. **Fondo:** el negro de la app (nunca negro puro), con sus dos luces difuminadas, la principal arriba a la izquierda y la segunda a la derecha, más abajo. Encima, un grano muy sutil: el guiño riso. En código: `Modifier.fondoFogon(f)`.
-2. **Texto blanco**; el secundario, blanco al 68 %; las líneas, blanco al 16 %.
-3. **Tarjetas de vidrio:** blanco al 8 % con borde de 1 dp en blanco al 16 % y esquinas grandes (22 a 28 dp, `FormaRiso`). **Una tarjeta destacada por pantalla** (la racha, el disponible para gastar) va con degradado de las dos luces y brillo.
-4. **Botones en píldora** (`FormaPildora`):
-   - el principal, en el acento con texto oscuro y su brillo (`BotonRiso`);
-   - el secundario, de vidrio con contorno blanco al 35 % (`BotonSecundario`);
-   - las acciones rápidas, en círculos blancos con el ícono oscuro.
-5. **Brillo en vez de sombra dura:** una luz suave del color, alrededor de la forma (`Modifier.brillo`). La sombra corrida riso queda para los dibujos.
-6. **Navegación:** la pestaña activa va en una píldora del acento, con el ícono oscuro.
-7. **Lo riso va sobre papel:** las láminas y cualquier dibujo riso van sobre una tarjeta de papel `#EFE7DA`. Ese contraste entre el papel y la noche es parte del estilo.
-8. **El personaje aparece** en el arranque, en las pantallas vacías, en los logros y en "Acerca de", con un brillo de su luz. **La chispa** marca los logros: récords, rachas y metas cumplidas.
-9. **"Acerca de" igual en todas:** el logotipo, el personaje, "Hecha en el Fogón · Sin anuncios · Sin rastreo · Código abierto", el enlace al código y los créditos.
-10. **Ícono en Android:** el personaje a dos tintas sobre una ficha de papel. Android exige fondo en los íconos. Para el ícono temático se usa la versión de una tinta.
-11. **Accesibilidad:** texto con contraste de 4,5:1 o más (blanco y acentos sobre el fondo, fondo oscuro sobre el acento), botones de 48 dp o más, y nunca un color como única señal.
-12. **Siempre de noche:** las apps no cambian con el modo claro del teléfono (`FogonTema` usa oscuro por defecto). Las barras del sistema van con íconos claros.
+En el código todo sale de `FogonTema.actual` (`core/identidad`): nunca un color fijo en una pantalla.
+
+1. **Fondo:** el papel del estilo, su adorno impreso y el grano: `Modifier.fondoFogon(f)`. El adorno es una trama de puntos de la segunda tinta (gordos al centro, finos al borde, como un semitono), rayos de cómic en la primera tinta o destellos de cuatro puntas.
+2. **Tarjetas:** papel de tarjeta con borde de tinta de 2 dp y la segunda tinta corrida detrás (`tarjetaFogon()`; en listas y campos, `tarjetaFogon(sombra = false)` para que no haya ruido). **Una tarjeta destacada por pantalla** (el disponible para gastar, el saldo) es un bloque lleno de la primera tinta con la segunda bien corrida detrás (`tarjetaDestacada()`), y lo de encima va en `sobreTinta1`.
+3. **Botones en píldora** (`FormaPildora`) con borde de tinta: el principal de la primera tinta con la segunda corrida detrás (`BotonRiso`); el secundario, de papel de tarjeta (`BotonSecundario`). `Modifier.brillo()` ya no es un brillo: es la segunda tinta corrida (`f.desfase`).
+4. **Números y palabras gigantes:** `NumeroRiso(…)` los imprime dos veces, la segunda tinta corrida detrás (el corrimiento crece con la letra).
+5. **Íconos:** `IconoRiso(dibujo, …)` con un `Dibujo` de 24×24 hecho de rellenos, trazos gordos (2,6 a 3,6) y huecos que dejan ver el papel. La segunda tinta va corrida detrás (`f.desfaseIcono`, menos que en las tarjetas). Sobre una tinta llena (botón, pestaña activa) el ícono va en una sola tinta (`corrida = null`). Los comunes están en `IconosFogon`; cada app suma los suyos en su `Iconos`.
+6. **Navegación:** la pestaña activa lleva una mancha de la primera tinta (`FormaMancha`) con el ícono encima en una sola tinta; las demás, el ícono en dos tintas. La barra es una tarjeta impresa.
+7. **Sin degradados ni orbes:** donde haría falta un degradado va trama de puntos o un bloque lleno. Las líneas finas (divisores, rejillas) van en la tinta de las letras al 22 %.
+8. **Lo riso va sobre papel:** las láminas y cualquier dibujo riso van sobre una tarjeta de papel `#EFE7DA`.
+9. **El personaje aparece** en el arranque, en las pantallas vacías, en los logros y en "Acerca de", como calcomanía. **La chispa** marca los logros (récords, rachas y metas) y la mejor racha va en un **sello de goma**.
+10. **"Acerca de" igual en todas:** el logotipo, el personaje, "Hecha en el Fogón · Sin anuncios · Sin rastreo · Código abierto", el enlace al código y los créditos.
+11. **Ícono en Android:** el personaje a dos tintas sobre una ficha de papel. Android exige fondo en los íconos. Para el ícono temático se usa la versión de una tinta.
+12. **Accesibilidad:** texto con contraste de 4,5:1 o más en todos los estilos (`AparienciaTest`), botones de 48 dp o más, y nunca un color como única señal (los días cumplidos llevan además un chulo).
 
 ## Voz
 

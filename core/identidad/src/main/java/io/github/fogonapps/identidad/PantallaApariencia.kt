@@ -60,7 +60,7 @@ val Estilo.nombre get() = when (this) {
     Estilo.NOCHE -> R.string.fogon_estilo_noche
     Estilo.RISO -> R.string.fogon_estilo_riso
     Estilo.REBELDE -> R.string.fogon_estilo_rebelde
-    Estilo.AURA -> R.string.fogon_estilo_aura
+    Estilo.CHICLE -> R.string.fogon_estilo_chicle
     Estilo.CONTRASTE -> R.string.fogon_estilo_contraste
 }
 
@@ -68,7 +68,7 @@ val Estilo.explicacion get() = when (this) {
     Estilo.NOCHE -> R.string.fogon_estilo_noche_texto
     Estilo.RISO -> R.string.fogon_estilo_riso_texto
     Estilo.REBELDE -> R.string.fogon_estilo_rebelde_texto
-    Estilo.AURA -> R.string.fogon_estilo_aura_texto
+    Estilo.CHICLE -> R.string.fogon_estilo_chicle_texto
     Estilo.CONTRASTE -> R.string.fogon_estilo_contraste_texto
 }
 
@@ -77,10 +77,9 @@ val Ranura.nombre get() = when (this) {
     Ranura.TARJETAS -> R.string.fogon_color_tarjetas
     Ranura.TEXTO -> R.string.fogon_color_texto
     Ranura.TEXTO_SUAVE -> R.string.fogon_color_texto_suave
-    Ranura.ACENTO -> R.string.fogon_color_acento
-    Ranura.SOBRE_ACENTO -> R.string.fogon_color_sobre_acento
-    Ranura.DEGRADADO_1 -> R.string.fogon_color_degradado_1
-    Ranura.DEGRADADO_2 -> R.string.fogon_color_degradado_2
+    Ranura.TINTA_1 -> R.string.fogon_color_tinta_1
+    Ranura.SOBRE_TINTA_1 -> R.string.fogon_color_sobre_tinta_1
+    Ranura.TINTA_2 -> R.string.fogon_color_tinta_2
     Ranura.NUMERO -> R.string.fogon_color_numero
     Ranura.BORDES -> R.string.fogon_color_bordes
 }
@@ -88,9 +87,14 @@ val Ranura.nombre get() = when (this) {
 /** Los colores que se ofrecen de una vez: las tintas riso y unos neutros. */
 private val MUESTRAS = listOf(
     Tintas.Rojo, Tintas.Naranja, Tintas.Amarillo, Tintas.Lima, Tintas.Verde, Tintas.Cian, Tintas.Azul, Tintas.Violeta, Tintas.Rosa,
-    Color(0xFFF03E33), Color(0xFF5CE1E6), Color(0xFF9D7BFF), Color(0xFFFF7A5C), Color(0xFFE2B33C),
-    Color.White, Tintas.Papel, Color(0xFFF1F0EE), Color(0xFFB9B5C0), Tintas.Gris, Color(0xFF2E2823), Color(0xFF0C0A12), Tintas.Tinta, Color.Black,
+    Color(0xFFF03E33), Color(0xFF5B2FD6), Color(0xFF8B5CFF), Color(0xFFFFB020), Color(0xFF2FC1B2),
+    Color.White, Tintas.Papel, Color(0xFFFBF7F0), Color(0xFFFFE1EE), Color(0xFFB9B5C0), Tintas.Gris, Color(0xFF2E2823), Color(0xFF100D16), Tintas.Tinta, Color.Black,
 )
+
+/** Las muestras rápidas de papel y de cada tinta (como en una imprenta: pocas y buenas). */
+private val PAPELES = listOf(Tintas.Papel, Color(0xFFFBF7F0), Color(0xFFFFE1EE), Color(0xFFDDEBFF), Color(0xFFE4F5C8), Color(0xFFF03E33), Color(0xFF100D16), Color(0xFF1B2A1F))
+private val PRIMERAS = listOf(Color(0xFF5B2FD6), Tintas.Azul, Tintas.Verde, Tintas.Rojo, Tintas.Naranja, Tintas.Lima, Tintas.Tinta, Color(0xFFF3EEE6))
+private val SEGUNDAS = listOf(Tintas.Rosa, Tintas.Amarillo, Color(0xFFFFB020), Tintas.Cian, Color(0xFF2FC1B2), Color(0xFF8B5CFF), Tintas.Papel, Tintas.Tinta)
 
 /**
  * Perfil → Apariencia, igual en todas las apps. Los cambios se ven al momento en toda la app, porque
@@ -103,12 +107,13 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
     val f = FogonTema.actual
     val e = a.estilo
     var editando by remember { mutableStateOf<Ranura?>(null) }
+    var todos by remember { mutableStateOf(false) }
 
     Column(modifier.fillMaxWidth().padding(bottom = 32.dp)) {
         VistaPrevia()
 
         Encabezado(stringResource(R.string.fogon_ap_estilo))
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Estilo.entries.forEach { s ->
                 MuestraEstilo(fogonDe(paleta, a.copy(estilo = s)), stringResource(s.nombre), s == e, Modifier.weight(1f)) { almacen.elegirEstilo(s) }
             }
@@ -116,26 +121,57 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
         Text(stringResource(e.explicacion), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
 
-        Encabezado(stringResource(R.string.fogon_ap_colores, stringResource(e.nombre)))
-        val poco = contraste(f.texto, f.fondo) < 4.5 || contraste(f.paleta.sobreTinta, f.paleta.tinta) < 4.5
+        Encabezado(stringResource(R.string.fogon_ap_tintas))
+        val poco = contraste(f.texto, f.fondo) < 4.5 || contraste(f.sobreTinta1, f.tinta1) < 4.5
         if (poco) Text(stringResource(R.string.fogon_ap_poco_contraste), style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        listOf(Ranura.FONDO to PAPELES, Ranura.TINTA_1 to PRIMERAS, Ranura.TINTA_2 to SEGUNDAS).forEach { (r, lista) ->
+            FilaMuestras(stringResource(r.nombre), a.color(paleta, r), (listOf(e.colorBase(paleta, r)) + lista).distinct(),
+                onElegir = { almacen.ponerColor(e, r, if (it == e.colorBase(paleta, r)) null else it) }, onOtro = { editando = r })
+        }
+
+        Encabezado(stringResource(R.string.fogon_ap_corrimiento))
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.fogon_ap_corrimiento_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+                Text("%.1f dp".format(a.desfase()).replace(".0 ", " "), fontFamily = Anton, fontSize = 18.sp, color = f.acentoTexto)
+            }
+            var d by remember(e, a.desfase()) { mutableFloatStateOf(a.desfase()) }
+            Slider(d, { d = it }, onValueChangeFinished = { almacen.ponerDesfase(e, d) }, valueRange = 0f..6f, steps = 11)
+        }
+
+        Encabezado(stringResource(R.string.fogon_ap_adorno))
+        Opciones(listOf(
+            Decoracion.TRAMA to stringResource(R.string.fogon_ap_trama), Decoracion.RAYOS to stringResource(R.string.fogon_ap_rayos),
+            Decoracion.ESTRELLAS to stringResource(R.string.fogon_ap_destellos), Decoracion.NADA to stringResource(R.string.fogon_ap_nada),
+        ), a.adorno()) { almacen.ponerAdorno(e, it) }
+
+        Encabezado(stringResource(R.string.fogon_ap_colores, stringResource(e.nombre)))
+        BotonSecundario(stringResource(if (todos) R.string.fogon_ap_ocultar_colores else R.string.fogon_ap_ver_colores), { todos = !todos },
+            Modifier.padding(horizontal = 16.dp))
+        if (todos) Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Ranura.entries.forEach { r ->
                 val c = a.color(paleta, r)
                 val cambiado = r in a.de().colores
                 Row(
-                    Modifier.fillMaxWidth().tarjetaFogon(forma(18.dp)).clickable { editando = r }.heightIn(min = 52.dp)
+                    Modifier.fillMaxWidth().tarjetaFogon(forma(16.dp), sombra = false).clickable { editando = r }.heightIn(min = 52.dp)
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(1.dp, f.texto.copy(alpha = 0.4f), CircleShape))
+                    Box(Modifier.size(30.dp).clip(FormaMancha).background(c).border(2.dp, f.linea, FormaMancha))
                     Text(stringResource(r.nombre), color = f.texto, modifier = Modifier.weight(1f))
                     if (cambiado) Text(stringResource(R.string.fogon_ap_cambiado), style = MaterialTheme.typography.labelSmall, color = f.acentoTexto)
                     Text(hex(c), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
                 }
             }
         }
+
+        Encabezado(stringResource(R.string.fogon_ap_textura))
+        Opciones(Grano.entries.map { it to stringResource(when (it) { Grano.NADA -> R.string.fogon_ap_nada; Grano.SUAVE -> R.string.fogon_ap_suave; Grano.FUERTE -> R.string.fogon_ap_fuerte }) },
+            a.grano()) { almacen.ponerGrano(e, it) }
+
+        Encabezado(stringResource(R.string.fogon_ap_esquinas))
+        Opciones(listOf(false to stringResource(R.string.fogon_ap_redondas), true to stringResource(R.string.fogon_ap_rectas)), a.rectas()) { almacen.ponerRectas(e, it) }
 
         Encabezado(stringResource(R.string.fogon_ap_transparencia))
         Column(Modifier.padding(horizontal = 20.dp)) {
@@ -147,18 +183,11 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
             Slider(t, { t = it }, onValueChangeFinished = { almacen.ponerTransparencia(e, t.toInt()) }, valueRange = 0f..100f, steps = 19)
         }
 
-        Encabezado(stringResource(R.string.fogon_ap_textura))
-        Opciones(Grano.entries.map { it to stringResource(when (it) { Grano.NADA -> R.string.fogon_ap_nada; Grano.SUAVE -> R.string.fogon_ap_suave; Grano.FUERTE -> R.string.fogon_ap_fuerte }) },
-            a.grano()) { almacen.ponerGrano(e, it) }
-
-        Encabezado(stringResource(R.string.fogon_ap_esquinas))
-        Opciones(listOf(false to stringResource(R.string.fogon_ap_redondas), true to stringResource(R.string.fogon_ap_rectas)), a.rectas()) { almacen.ponerRectas(e, it) }
-
         BotonSecundario(stringResource(R.string.fogon_ap_restablecer, stringResource(e.nombre)), { almacen.restablecer(e) },
             Modifier.fillMaxWidth().padding(16.dp))
 
         Encabezado(stringResource(R.string.fogon_ap_comodidad))
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(Modifier.fillMaxWidth().tarjetaFogon(forma(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.fogon_ap_tamano_texto), color = f.texto)
                 val nombres = listOf(R.string.fogon_ap_pequeno, R.string.fogon_ap_normal, R.string.fogon_ap_grande, R.string.fogon_ap_muy_grande).map { stringResource(it) }
@@ -166,11 +195,11 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
                     nombres.forEachIndexed { i, n ->
                         val elegido = a.tamanoTexto == i
                         Box(
-                            Modifier.weight(1f).height(48.dp).clip(forma(14.dp)).background(if (elegido) f.pildora else f.superficie)
-                                .border(1.dp, f.linea, forma(14.dp)).clickable { almacen.ponerTamanoTexto(i) }
+                            Modifier.weight(1f).height(48.dp).clip(forma(14.dp)).background(if (elegido) f.tinta1 else f.superficie)
+                                .border(f.borde, f.linea, forma(14.dp)).clickable { almacen.ponerTamanoTexto(i) }
                                 .semantics { contentDescription = n; selected = elegido; role = Role.RadioButton },
                             contentAlignment = Alignment.Center,
-                        ) { Text("A", fontWeight = FontWeight.Bold, fontSize = listOf(13, 16, 20, 24)[i].sp, color = if (elegido) f.sobrePildora else f.texto) }
+                        ) { Text("A", fontWeight = FontWeight.Bold, fontSize = listOf(13, 16, 20, 24)[i].sp, color = if (elegido) f.sobreTinta1 else f.texto) }
                     }
                 }
             }
@@ -190,48 +219,81 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
 @Composable
 private fun Encabezado(texto: String) {
     Text(texto.uppercase(), fontFamily = Anton, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
-        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp).semantics { heading() })
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 8.dp).semantics { heading() })
 }
 
-/** La vista previa: un número gigante, una tarjeta y el botón, con los colores en uso. */
+/** Una fila de muestras de un color (papel o tinta): manchas de tinta y una más para elegir cualquier otro. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FilaMuestras(titulo: String, actual: Color, lista: List<Color>, onElegir: (Color) -> Unit, onOtro: () -> Unit) {
+    val f = FogonTema.actual
+    val elegidoTexto = stringResource(R.string.fogon_ap_elegido)
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(titulo, style = MaterialTheme.typography.labelLarge, color = f.texto)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val enLista = actual in lista
+            (if (enLista) lista else listOf(actual) + lista).forEach { c ->
+                val elegido = c == actual
+                Box(
+                    Modifier.size(40.dp).then(if (elegido) Modifier.sombraDura(FormaMancha, 3.dp, f.linea) else Modifier)
+                        .clip(FormaMancha).background(c).border(if (elegido) 3.dp else 2.dp, f.linea, FormaMancha)
+                        .clickable { onElegir(c) }
+                        .semantics { contentDescription = hex(c) + if (elegido) ", $elegidoTexto" else ""; selected = elegido; role = Role.RadioButton },
+                )
+            }
+            val otro = stringResource(R.string.fogon_ap_otro_color)
+            Box(
+                Modifier.size(40.dp).clip(FormaMancha).background(f.superficie).border(2.dp, f.linea, FormaMancha).clickable(onClick = onOtro)
+                    .semantics { contentDescription = otro; role = Role.Button },
+                contentAlignment = Alignment.Center,
+            ) { IconoRiso(IconosFogon.Mas, null, tamano = 18.dp, corrida = null) }
+        }
+    }
+}
+
+/** La vista previa: el número corrido, el adorno del estilo, una tarjeta, el botón y los íconos. */
 @Composable
 private fun VistaPrevia() {
     val f = FogonTema.actual
-    Box(Modifier.fillMaxWidth().padding(16.dp).height(170.dp).tarjetaFogon(forma(26.dp)).fondoFogon(f)) {
+    Box(Modifier.fillMaxWidth().padding(16.dp).height(206.dp).tarjetaFogon(forma(26.dp)).fondoFogon(f)) {
         Text(stringResource(R.string.fogon_ap_vista_previa).uppercase(), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
             modifier = Modifier.padding(14.dp))
-        Text("12", fontFamily = Anton, fontSize = 120.sp, lineHeight = 120.sp, color = f.numero, modifier = Modifier.padding(start = 12.dp, top = 22.dp))
+        NumeroRiso("12", 104.sp, Modifier.padding(start = 12.dp, top = 30.dp))
+        Row(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(IconosFogon.Inicio, IconosFogon.Racha, IconosFogon.Tinta, IconosFogon.Perfil).forEach { IconoRiso(it, null, tamano = 26.dp) }
+        }
         Column(
-            Modifier.align(Alignment.CenterEnd).padding(end = 14.dp).width(170.dp).tarjetaFogon(forma(18.dp)).padding(12.dp),
+            Modifier.align(Alignment.CenterEnd).padding(end = 18.dp).width(168.dp).tarjetaFogon(forma(18.dp)).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(stringResource(R.string.fogon_ap_muestra_titulo), fontFamily = Bagel, fontSize = 18.sp, color = f.texto)
             Text(stringResource(R.string.fogon_ap_muestra_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            Box(Modifier.brillo(f.paleta.tinta.copy(alpha = 0.6f), FormaPildora, 10.dp).clip(FormaPildora).background(f.paleta.tinta)
+            Box(Modifier.padding(top = 2.dp).brillo(f.tinta1, FormaPildora).clip(FormaPildora).background(f.tinta1).border(f.borde, f.linea, FormaPildora)
                 .padding(horizontal = 14.dp, vertical = 7.dp)) {
-                Text(stringResource(R.string.fogon_ap_muestra_boton), style = MaterialTheme.typography.labelLarge, color = f.paleta.sobreTinta)
+                Text(stringResource(R.string.fogon_ap_muestra_boton), style = MaterialTheme.typography.labelLarge, color = f.sobreTinta1)
             }
         }
     }
 }
 
-/** Miniatura de un estilo, con sus propios colores. */
+/** Miniatura de un estilo, impresa con sus propias tintas: su papel y dos manchas, la segunda corrida. */
 @Composable
 private fun MuestraEstilo(m: Fogon, nombre: String, elegido: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val f = FogonTema.actual
+    val forma = forma(14.dp)
     Column(
-        modifier.clip(forma(16.dp)).border(if (elegido) 2.dp else 1.dp, if (elegido) f.acentoTexto else f.linea, forma(16.dp))
-            .clickable(onClick = onClick).semantics { selected = elegido; role = Role.RadioButton }.padding(6.dp),
+        modifier.semantics(mergeDescendants = true) { selected = elegido; role = Role.RadioButton }.clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(if (m.rectas) 2.dp else 10.dp)).background(m.fondo)) {
-            Box(Modifier.offset(18.dp, (-10).dp).size(44.dp).clip(CircleShape)
-                .background(Brush.radialGradient(listOf(m.paleta.segunda, m.paleta.luz2, m.fondo))))
-            Box(Modifier.align(Alignment.BottomStart).padding(5.dp).size(width = 26.dp, height = 10.dp)
-                .clip(RoundedCornerShape(if (m.rectas) 1.dp else 5.dp)).background(m.paleta.tinta))
-            Text("A", fontFamily = Anton, fontSize = 16.sp, color = m.numero, modifier = Modifier.align(Alignment.TopStart).padding(start = 5.dp))
+        Box(
+            Modifier.fillMaxWidth().height(62.dp).then(if (elegido) Modifier.sombraDura(forma, 4.dp, f.tinta2) else Modifier)
+                .clip(forma).background(m.fondo).border(if (elegido) 3.dp else 2.dp, f.linea, forma),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.offset(x = 6.dp, y = 4.dp).size(28.dp).clip(FormaMancha).background(m.tinta2))
+            Box(Modifier.offset(x = (-6).dp, y = (-3).dp).size(28.dp).clip(FormaMancha).background(m.tinta1).border(1.5.dp, m.linea, FormaMancha))
         }
-        Text(nombre, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1)
+        Text(nombre, style = MaterialTheme.typography.labelSmall, fontWeight = if (elegido) FontWeight.Bold else FontWeight.Normal, color = f.texto, maxLines = 1)
     }
 }
 
@@ -242,7 +304,8 @@ private fun <T> Opciones(opciones: List<Pair<T, String>>, elegido: T, onElegir: 
     FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         opciones.forEach { (v, t) ->
             FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = FormaPildora,
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.pildora, selectedLabelColor = f.sobrePildora, labelColor = f.texto))
+                colors = FilterChipDefaults.filterChipColors(containerColor = f.superficie, selectedContainerColor = f.tinta1, selectedLabelColor = f.sobreTinta1, labelColor = f.texto),
+                border = FilterChipDefaults.filterChipBorder(true, v == elegido, borderColor = f.linea, selectedBorderColor = f.linea, borderWidth = f.borde, selectedBorderWidth = f.borde))
         }
     }
 }
@@ -251,7 +314,7 @@ private fun <T> Opciones(opciones: List<Pair<T, String>>, elegido: T, onElegir: 
 private fun Interruptor(titulo: String, pista: String, valor: Boolean, onCambio: (Boolean) -> Unit) {
     val f = FogonTema.actual
     Row(
-        Modifier.fillMaxWidth().tarjetaFogon(forma(18.dp)).clickable { onCambio(!valor) }.padding(horizontal = 14.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().tarjetaFogon(forma(18.dp), sombra = false).clickable { onCambio(!valor) }.padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f).padding(end = 10.dp)) {

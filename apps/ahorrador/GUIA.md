@@ -53,7 +53,7 @@ Están en `Categorias.kt`. Cada una tiene `id` (**no se cambia una vez publicado
 
 ## Íconos
 
-`ui/Iconos.kt` dibuja cada ícono con trazos SVG de 24 × 24 (`trazo(nombre, grosor, "M…")`). Para uno nuevo de categoría o meta, agregarlo a `porNombre` y, si es para metas, a `ICONOS_META` en `ui/Presupuesto.kt`.
+`ui/Iconos.kt` dibuja cada ícono como un `Dibujo` de 24 × 24 hecho de rellenos (`relleno("M…")`), trazos gordos (`trazo("M…", 2.6f)`) y huecos que dejan ver el papel (`hueco`, `huecoTrazo`); se pinta con `IconoRiso`, que pone la segunda tinta corrida detrás (ver `docs/IDENTIDAD.md` → Sistema riso → Reglas). Para uno nuevo de categoría o meta, agregarlo a `porNombre` y, si es para metas, a `ICONOS_META` en `ui/Presupuesto.kt`. Los comunes (atrás, más, perfil…) están en `IconosFogon`.
 
 ## Sistemas de presupuesto
 
