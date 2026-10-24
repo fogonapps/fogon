@@ -134,12 +134,9 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     val hoy = vm.hoy()
     val mes = mesDe(hoy)
 
-    // Cabecera: el personaje en una ficha de vidrio, el saludo y el perfil.
+    // Cabecera: el saludo y el perfil.
     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-            io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_ahorrador, null, tamano = 40.dp)
-        }
         Column(Modifier.weight(1f)) {
             Text(Formato.fechaCorta(hoy) + " " + hoy.year, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),

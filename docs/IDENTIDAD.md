@@ -27,7 +27,7 @@ Salen de las referencias que eligió Angel (pósters y apps, de otros autores; p
 1. **Un número grande de puntos** por pantalla (la racha, el saldo, el volumen), en la letra Doto, sobre un **halo de puntos** que se apaga hacia el borde: la trama riso de Fogón convertida en luz. Solo uno por pantalla.
 2. **Una sola letra para todo:** Bricolage Grotesque. Nada de mezclar letras.
 3. **Vidrio sobre una sola luz:** tarjetas transparentes con borde fino sobre el papel del tema, y arriba una luz suave de su color. Nada más brilla.
-4. **El personaje en las tintas del tema:** el cuerpo en la primera tinta, la sombra en la segunda y la chispa roja siempre. Va en la cabecera (en una ficha de vidrio), en la tarjeta grande y en los vacíos. Nunca girado.
+4. **El personaje en las tintas del tema:** el cuerpo en la primera tinta, la sombra en la segunda y la chispa roja siempre. Va en la tarjeta grande, en los vacíos y en el tutorial, una sola vez por pantalla. Nunca girado, repetido ni en un circulito de la cabecera (Angel, 24-10-2026: "innecesario, no cumple ninguna función").
 5. **Íconos de línea redonda**, todos iguales, casi siempre dentro de una ficha de vidrio redonda. Ninguno relleno de negro ni con recortes blancos.
 6. **Píldoras:** botones, días de la semana, la barra de pestañas flotante y los logros. La pestaña activa es una píldora llena con su nombre.
 7. **Frases, no carteles:** títulos y etiquetas en minúsculas como una frase; nada en mayúsculas ni girado.
