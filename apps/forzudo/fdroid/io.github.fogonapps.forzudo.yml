@@ -9,14 +9,14 @@ License: GPL-3.0-or-later
 AuthorName: Fogón
 SourceCode: https://github.com/fogonapps/fogon
 IssueTracker: https://github.com/fogonapps/fogon/issues
-Changelog: https://github.com/fogonapps/fogon/releases
+Changelog: https://github.com/fogonapps/el-forzudo/releases
 
 AutoName: El Forzudo
 
 RepoType: git
 Repo: https://github.com/fogonapps/fogon.git
 # F-Droid compila desde el código y publica nuestro APK firmado solo si sale idéntico.
-Binaries: https://github.com/fogonapps/fogon/releases/download/forzudo-v%v/ElForzudo-%v.apk
+Binaries: https://github.com/fogonapps/el-forzudo/releases/download/v%v/ElForzudo-%v.apk
 
 Builds:
   - versionName: "1.8"

@@ -29,7 +29,7 @@ Código en `src/main/java/io/github/fogonapps/forzudo/`:
 | `ui/Pestanas.kt` | Las 4 pestañas: Inicio (cabecera con la racha gigante, semana, historial), Entrenar (rutinas), Rangos (el rango general gigante, mapa del cuerpo, rangos por músculo) y Perfil (peso, datos, sincronización, Apariencia, ajustes). Inicio y Rangos ponen su propia cabecera; las otras dos llevan el título que pone `App.kt`. |
 | `ui/Pantallas.kt` | Las pantallas que se abren encima: entreno en vivo, resumen, detalle de ejercicio, músculo, programas, editor de rutinas, cambiar ejercicio, lámina en grande, Acerca de, Licencias y Preguntas frecuentes. |
 | `ui/Comunes.kt` | Piezas de interfaz propias de esta app: secciones, filas, gráficas, insignias de rango, mapa del cuerpo, mapa anual, campos de número y fecha. |
-| `ui/Tutorial.kt` | Los 6 pasos del primer arranque. |
+| `ui/Tutorial.kt` | Los 6 pasos del primer arranque y, al final, "¡Dale vida!" (`PasoDaleVida` de `core/identidad`) para elegir el estilo. |
 | `ui/Iconos.kt` | Íconos gordos para imprimir en dos tintas (`Dibujo`, se pintan con `IconoRiso`), también los de los grupos musculares. Los comunes salen de `IconosFogon`. |
 
 Otros lugares:

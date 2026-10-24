@@ -128,7 +128,7 @@ fun Seccion(titulo: String?, modifier: Modifier = Modifier, contenido: @Composab
     val f = FogonTema.actual
     Column(modifier.fillMaxWidth().padding(top = 18.dp)) {
         if (titulo != null) {
-            // Títulos de sección en Anton, como un cartel
+            // Títulos de sección en la letra de las cifras, como un cartel
             Text(
                 titulo.uppercase(), style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.02.em),
                 color = f.texto, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() },

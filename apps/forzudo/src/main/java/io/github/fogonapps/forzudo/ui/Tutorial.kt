@@ -34,14 +34,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.PasoDaleVida
 import io.github.fogonapps.identidad.fondoFogon
 import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.R
@@ -58,10 +62,13 @@ private val pasos = listOf(
     Paso(R.drawable.munieco_tut_datos, R.string.tut_datos, R.string.tut_datos_texto),
 )
 
+/** Los pasos con dibujo y, al final, "¡Dale vida!": la app viene en Neutro y aquí se elige el estilo. */
 @Composable
 fun Tutorial(vm: GymViewModel, nombreActual: String?) {
     val f = FogonTema.actual
-    val estado = rememberPagerState { pasos.size }
+    val total = pasos.size + 1
+    val estado = rememberPagerState { total }
+    val almacen = AlmacenApariencia.de(LocalContext.current)
     val alcance = rememberCoroutineScope()
     var nombre by remember { mutableStateOf(nombreActual ?: "") }
     val terminar = {
@@ -74,6 +81,10 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                 TextButton(terminar) { Text(stringResource(R.string.saltar), fontWeight = FontWeight.Bold, color = f.acentoTexto) }
             }
             HorizontalPager(estado, Modifier.weight(1f)) { i ->
+                if (i == pasos.size) {
+                    PasoDaleVida(Paleta.Forzudo, almacen, Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 8.dp, bottom = 16.dp))
+                    return@HorizontalPager
+                }
                 val p = pasos[i]
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
@@ -85,17 +96,17 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())
                 }
             }
-            val paso = stringResource(R.string.tut_paso, estado.currentPage + 1, pasos.size)
+            val paso = stringResource(R.string.tut_paso, estado.currentPage + 1, total)
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 12.dp).semantics { contentDescription = paso },
                 horizontalArrangement = Arrangement.Center,
             ) {
-                pasos.indices.forEach { i ->
+                repeat(total) { i ->
                     Box(Modifier.padding(4.dp).size(if (i == estado.currentPage) 12.dp else 8.dp).clip(CircleShape)
                         .background(if (i == estado.currentPage) f.paleta.tinta else f.linea))
                 }
             }
-            val ultimo = estado.currentPage == pasos.lastIndex
+            val ultimo = estado.currentPage == total - 1
             BotonRiso(
                 stringResource(if (ultimo) R.string.tut_a_entrenar else R.string.siguiente),
                 { if (ultimo) terminar() else alcance.launch { estado.animateScrollToPage(estado.currentPage + 1) } },

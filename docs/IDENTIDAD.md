@@ -129,13 +129,16 @@ Antes: hasta el 22-10-2026 las apps usaron un "estilo de noche" de luces difumin
 
 Dos apps no comparten primera tinta en Noche. En la `Paleta`: `tinta` y `segunda` son las de Noche; `textoEnPapel` y `segundaTinta`, las de Riso.
 
-### Apariencia: cinco estilos que la persona elige
+### Apariencia: seis estilos que la persona elige
 
 Cada app tiene **Perfil → Apariencia**, igual en todas (`PantallaApariencia` en `core/identidad`). Angel lo pidió así: "que cada estilo se le pueda cambiar los colores al fondo, a las letras…, a todo en general, pero que cada uno tenga uno por defecto", y luego "que cada estilo tenga sus cosas pero que sigan un estilo para no perder la identidad de fogón".
 
+**Las apps vienen en Neutro** (24-10-2026, pedido de Angel: "que el aspecto por defecto sea muy neutro en las dos apps", con Tailscale como referencia): papel casi blanco, tarjetas blancas con borde gris fino, botones casi negros, la letra del teléfono y nada de adornos. El color lo pone la persona: el último paso del tutorial, **"¡Dale vida!"** (`PasoDaleVida`), muestra los seis estilos (se ven al momento) y "Más opciones" abre el resto de la Apariencia. Los personajes y la chispa siguen ahí, con sus tintas: son lo que mantiene la identidad en Neutro.
+
 | Estilo | Papel | Primera tinta | Segunda tinta | Corrimiento | Adorno | Grano | Esquinas |
 |--------|-------|---------------|---------------|-------------|--------|-------|----------|
-| **Noche** (el de siempre) | El negro de la app | La de la app (neón) | La de la app | 3 dp | Trama de puntos | Suave | Redondas |
+| **Neutro** (por defecto) | Casi blanco `#F6F5F3`, tarjetas blancas | Casi negro `#1F1E1D` | Gris `#DCD8D5` (bordes de 1 dp) | 0 | Nada | Nada | Redondas |
+| **Noche** | El negro de la app | La de la app (neón) | La de la app | 3 dp | Trama de puntos | Suave | Redondas |
 | **Riso** | Crema `#EFE7DA` | La de la app para papel | La segunda de la app | 3 dp | Trama de puntos | Fuerte | Redondas |
 | **Rebelde** | Rojo `#F03E33` | Negro | Crema | 4 dp | Rayos de cómic | Fuerte | Rectas |
 | **Chicle** (Y2K, reemplazó a Aura) | Rosa `#FFE1EE` | Azul `#2D5BFF` | Amarillo flúor `#FFB020` | 3 dp | Trama y destellos | Suave | Redondas |
@@ -145,11 +148,13 @@ Cada app tiene **Perfil → Apariencia**, igual en todas (`PantallaApariencia` e
 - **Todos los colores, en cada estilo por separado:** papel, papel de las tarjetas, letras, letras suaves, primera tinta, letras sobre la primera tinta, segunda tinta, números grandes y bordes. También la textura, las esquinas y la transparencia de las tarjetas (0 % por defecto). "Volver a como viene" deja el estilo como estaba. Si los colores se leen mal, la pantalla avisa.
 - **Lo que se acomoda solo:** si la persona cambia la primera tinta, el número gigante la sigue (en Riso y Chicle) y las letras sobre ella se eligen para que se lean; si la tinta no se lee como texto sobre el papel, el acento pasa al color de las letras. Los bordes siguen a las letras.
 - **Comodidad, para todos los estilos:** tamaño de las letras (4 tamaños, sobre el que ya tenga el teléfono), menos movimiento (sin animaciones) y más contraste (bordes más gruesos y todas las letras del color principal).
-- **Lo que no cambia:** la forma de imprimir (dos tintas, íconos líquidos, trama, grano, bordes de tinta), las letras (Bagel Fat One, Anton y Roboto), los personajes y la chispa. Las láminas siempre van sobre papel.
-- **Cada estilo se lee:** la prueba `AparienciaTest` comprueba que los cinco estilos pasen 4,5:1 en todas las apps (letras, letras suaves, tarjetas, la primera tinta y el acento) y que cambiar la primera tinta no deje nada ilegible.
+- **Lo que no cambia:** la forma de imprimir (dos tintas, íconos líquidos, trama, grano, bordes de tinta), las letras (Bagel Fat One, Anton y Roboto; en Neutro, solo la del teléfono), los personajes y la chispa. Las láminas siempre van sobre papel.
+- **Cada estilo se lee:** la prueba `AparienciaTest` comprueba que los seis estilos pasen 4,5:1 en todas las apps (letras, letras suaves, tarjetas, la primera tinta y el acento) y que cambiar la primera tinta no deje nada ilegible.
 - **Al pasar a este sistema** (preferencias versión 2), los colores que la persona había cambiado en la versión anterior vuelven a los del estilo, porque ya no significan lo mismo; el estilo elegido y la comodidad se quedan. Quien tenía Aura queda en Chicle.
 
 ### Tipografía (igual en todas las apps)
+
+En el código las pantallas no nombran la letra: usan `FogonTema.actual.titulos` (Bagel Fat One) y `FogonTema.actual.cifras` (Anton). En el estilo Neutro las dos son la letra del teléfono en grosor medio (`Sencilla`), y `anchoCifra` dice cuánto mide una mayúscula para que las palabras gigantes quepan.
 
 | Uso | Fuente | Ejemplos |
 |-----|--------|----------|

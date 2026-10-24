@@ -41,11 +41,17 @@
   </string-array>
   <string name="fogon_ap_titulo">Appearance</string>
   <string name="fogon_ap_estilo">Style</string>
+  <string name="fogon_estilo_neutro">Neutral</string>
+  <string name="fogon_estilo_neutro_texto">Light paper, black text and nothing distracting. How the apps come.</string>
+  <string name="fogon_dale_vida">Bring it to life!</string>
+  <string name="fogon_dale_vida_texto">The app comes calm, in Neutral. Want more character? Pick a style and see it right away. You can change it anytime in Appearance, inside Profile.</string>
+  <string name="fogon_mas_opciones">More options</string>
+  <string name="fogon_menos_opciones">Fewer options</string>
   <string name="fogon_estilo_noche">Night</string>
   <string name="fogon_estilo_riso">Riso</string>
   <string name="fogon_estilo_rebelde">Rebel</string>
   <string name="fogon_estilo_contraste">Contrast</string>
-  <string name="fogon_estilo_noche_texto">Neon inks on black paper, with halftone dots. The default.</string>
+  <string name="fogon_estilo_noche_texto">Neon inks on black paper, with halftone dots.</string>
   <string name="fogon_estilo_riso_texto">Retro: cream paper and two misregistered inks, like a riso print.</string>
   <string name="fogon_estilo_rebelde_texto">Punk photocopy: red, black and cream, comic rays and square corners.</string>
   <string name="fogon_estilo_contraste_texto">Black and white, no misregistration or decoration: the easiest to read.</string>

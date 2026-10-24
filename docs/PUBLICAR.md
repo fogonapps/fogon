@@ -54,15 +54,16 @@ Los commits públicos van firmados con el correo privado de GitHub de Angel, `25
    git push publico
    git checkout main
    ```
-3. Crear la versión con el APK firmado: `gh release create forzudo-v<versión> <apk> --repo fogonapps/fogon --target main --title "El Forzudo <versión>"`, con notas que incluyan el SHA-256 del APK y el del certificado. La etiqueta lleva la app delante porque en el repo va a haber varias apps.
+3. Etiquetar el código de esa versión en el repo público (la etiqueta lleva la app delante porque ahí viven todas): `git tag forzudo-v<versión> publico` y `git push publico forzudo-v<versión>`. F-Droid busca las versiones nuevas por estas etiquetas.
+4. Subir el APK firmado al **repo de descargas** de la app: `gh release create v<versión> ~/Fogon/ElForzudo-<versión>.apk --repo fogonapps/el-forzudo --title "El Forzudo <versión>"`, con notas que digan qué cambió, la URL para Obtainium, el enlace al código (`fogonapps/fogon` en la etiqueta del paso 3) y el SHA-256 del APK y del certificado.
 
-**Obtainium (en el teléfono):** Añadir aplicación → URL origen `https://github.com/fogonapps/fogon` → en "Filtrar por título de versión" poner el nombre de la app (`El Forzudo`, `El Ahorrador`), para que cada entrada siga solo a su app: todas viven en el mismo repo.
+**Repos de descargas (desde el 24-10-2026):** cada app tiene uno, solo con un README (copia en `docs/descargas/`) y sus versiones: [`fogonapps/el-forzudo`](https://github.com/fogonapps/el-forzudo) y [`fogonapps/el-ahorrador`](https://github.com/fogonapps/el-ahorrador), sin issues (los problemas van a `fogonapps/fogon`). Así Obtainium no necesita filtros: Añadir aplicación → pegar `https://github.com/fogonapps/el-forzudo` → Añadir. Hasta la 1.8 / 1.2 las versiones se subían a `fogonapps/fogon/releases`, con un filtro por título en Obtainium; esas quedan ahí como historial.
 
 ## F-Droid
 
 Revisado contra la documentación de F-Droid el 21-10-2026 (Inclusion Policy, Quick Start Guide, Reproducible Builds, Build Metadata Reference, Anti-Features).
 
-**Cómo va a funcionar:** F-Droid compila la app desde el código del repo público y la compara con nuestro APK de GitHub Releases. Si salen idénticos, publica **nuestro APK, con nuestra firma**. Así da igual si la persona instaló desde GitHub, Obtainium o F-Droid: las actualizaciones de cualquiera se instalan encima. Si no salen idénticos, esa versión no se publica en F-Droid.
+**Cómo va a funcionar:** F-Droid compila la app desde el código del repo público y la compara con nuestro APK del repo de descargas. Si salen idénticos, publica **nuestro APK, con nuestra firma**. Así da igual si la persona instaló desde GitHub, Obtainium o F-Droid: las actualizaciones de cualquiera se instalan encima. Si no salen idénticos, esa versión no se publica en F-Droid.
 
 **Ya está listo:**
 - **Compilación reproducible.** Probado el 21-10-2026: dos clones limpios en carpetas distintas dan el mismo APK sin firmar, byte a byte, y `apksigcopier compare` confirma que el firmado con nuestra llave es ese mismo APK más la firma. Para eso el APK no lleva el commit dentro (`vcsInfo.include = false`) ni el bloque de dependencias de Google (`dependenciesInfo`). La 1.4.1 todavía llevaba el commit, así que la primera versión que sirve para F-Droid es la 1.4.2. **Comprobado con la 1.4.2 tal como lo hará F-Droid:** clon del repo público en la etiqueta `forzudo-v1.4.2`, compilado sin llave y comparado con el APK descargado de GitHub Releases → coinciden.
@@ -75,7 +76,7 @@ Revisado contra la documentación de F-Droid el 21-10-2026 (Inclusion Policy, Qu
   ```
   Si no imprime nada y termina con código 0, coinciden.
 - **Ficha de la app** en `apps/forzudo/fastlane/metadata/android/`: textos en `es` y `en-US` (el idioma que F-Droid muestra si no hay otro), ícono, capturas en español (`es`, 5) y en inglés (`en-US`, 5), sacadas del emulador con datos de prueba, no reales y `changelogs/<versionCode>.txt` de máximo 500 caracteres. Para cada versión nueva hay que agregar su changelog en los dos idiomas.
-- **Receta** (borrador): `apps/forzudo/fdroid/io.github.fogonapps.forzudo.yml`. Categorías `Workout` y `Sports & Health`, `Binaries` apuntando a GitHub Releases, `AllowedAPKSigningKeys` con nuestro certificado y actualizaciones automáticas por las etiquetas `forzudo-v*`.
+- **Receta** (borrador): `apps/forzudo/fdroid/io.github.fogonapps.forzudo.yml`. Categorías `Workout` y `Sports & Health`, `Binaries` apuntando al repo de descargas (`fogonapps/el-forzudo`), `AllowedAPKSigningKeys` con nuestro certificado y actualizaciones automáticas por las etiquetas `forzudo-v*`.
 - **Java:** el servidor de F-Droid usa Debian trixie, que trae Java 21 por defecto, la misma versión que usamos.
 
 **Falta:**

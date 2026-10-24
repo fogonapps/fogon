@@ -6,7 +6,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
 
 - Cómo está hecha por dentro: [`ARQUITECTURA.md`](ARQUITECTURA.md).
 - Cómo cambiar cosas y sacar versiones nuevas: [`GUIA.md`](GUIA.md).
-- Descargar: [GitHub Releases](https://github.com/fogonapps/fogon/releases) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones). F-Droid, más adelante.
+- Descargar: [fogonapps/el-forzudo](https://github.com/fogonapps/el-forzudo/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-forzudo`). F-Droid, más adelante.
 
 ## Qué hace
 
@@ -29,7 +29,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
   - se guardan en el teléfono;
   - exportar e importar en JSON;
   - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub.
-- **Apariencia:** todo se imprime como una riso (dos tintas, la segunda corrida). Cinco estilos (Noche, Riso, Rebelde, Chicle, Contraste); en cada uno se eligen el papel, las tintas, cuánto se corre la tinta, el adorno y todos los colores, además de textura, esquinas, transparencia, tamaño de letra, menos movimiento y más contraste.
+- **Apariencia:** todo se imprime como una riso (dos tintas, la segunda corrida). Viene en Neutro, tranquilo y sin adornos, y al final del tutorial ("¡Dale vida!") se elige otro estilo: Noche, Riso, Rebelde, Chicle o Contraste; en cada uno se eligen el papel, las tintas, cuánto se corre la tinta, el adorno y todos los colores, además de textura, esquinas, transparencia, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 
@@ -84,6 +84,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.6 | 2026-10-21 | **Estilo de noche:** fondo oscuro con luces violeta y azul, tarjetas de vidrio, botones en píldora y acento lima (ver `docs/IDENTIDAD.md` → Estilo de noche). Las láminas van sobre tarjetas de papel. La app queda siempre de noche. Probada en el emulador en inglés y en español: todas las pestañas, entreno, tutorial y 0 cierres inesperados. |
 | 1.7 | 2026-10-21 | **Apariencia** (Perfil → Apariencia): cinco estilos (Noche, Riso, Rebelde, Aura y Contraste); en cada uno se cambian todos los colores (fondo, tarjetas, letras, acento, degradados, números, bordes), la transparencia, la textura y las esquinas, y cada uno trae los suyos por defecto. Comodidad: tamaño de letra, menos movimiento y más contraste. **Menos genérico** (ver `docs/IDENTIDAD.md` → ADN visual): Inicio con la racha en un número gigante, etiquetas técnicas y líneas; Rangos con el nombre del rango gigante; el descanso como un medidor con marcas; muñequitos y personaje con borde de calcomanía (antes el azul se perdía sobre la luz azul). Probada en el emulador con 104 entrenos de prueba en los cinco estilos y en Apariencia, y la versión firmada instalada encima de la 1.6. Reproducible desde la etiqueta pública `forzudo-v1.7`. |
 | 1.8 | 2026-10-23 | **Sistema riso** (Angel rechazó la 1.7 por genérica; ver `docs/IDENTIDAD.md` → Sistema riso): todo se imprime con un papel y dos tintas, la segunda corrida. Íconos gordos y en dos tintas (la barra deja los muñequitos y usa íconos, con la pestaña activa en una mancha de tinta), trama de puntos en lugar de orbes y degradados, la racha y el rango impresos en dos pasadas, sello de goma para la mejor racha, bordes de tinta en tarjetas y botones. Apariencia: Chicle reemplaza a Aura; papel, primera y segunda tinta en muestras, corrimiento de la tinta y adorno; los colores cambiados en la 1.7 vuelven a los del estilo. Probada en el emulador en los cinco estilos (Inicio, Entrenar, Rangos, Perfil, Apariencia y tutorial), y la versión firmada instalada encima de la 1.7: Aura pasa a Chicle y la comodidad se conserva. Reproducible desde la etiqueta pública `forzudo-v1.8`. |
+| 1.9 | 2026-10-24 | **Viene en Neutro** (pedido de Angel, con Tailscale de referencia): papel casi blanco, tarjetas blancas con borde gris fino, botones casi negros, la letra del teléfono y sin adornos. **"¡Dale vida!"**, último paso del tutorial: los seis estilos se prueban al momento y "Más opciones" abre el resto de la Apariencia. Quien ya había elegido un estilo lo conserva. Probada en el emulador desde una instalación limpia. |
 
 **1.1.1** se probó completa en el emulador con la versión firmada:
 - tutorial y registro de peso;

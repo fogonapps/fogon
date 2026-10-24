@@ -11,13 +11,14 @@ import kotlinx.coroutines.flow.StateFlow
 
 /*
  * La Apariencia: cómo quiere ver la app cada persona. Todo en Fogón se "imprime" como una riso: un papel,
- * dos tintas y la segunda corrida (ver docs/IDENTIDAD.md → Sistema riso). Hay cinco estilos, cada uno con
- * su papel, sus tintas, su corrimiento y su adorno; la persona puede cambiar cualquiera de ellos y lo que
+ * dos tintas y la segunda corrida (ver docs/IDENTIDAD.md → Sistema riso). Hay seis estilos, cada uno con
+ * su papel, sus tintas, su corrimiento y su adorno; las apps vienen en Neutro, el más tranquilo, y la
+ * persona le "da vida" eligiendo otro. Puede cambiar cualquiera de ellos y lo que
  * cambia queda guardado para ese estilo. Lo de comodidad (tamaño del texto, menos movimiento, más
  * contraste) vale para todos los estilos.
  */
 
-enum class Estilo { NOCHE, RISO, REBELDE, CHICLE, CONTRASTE }
+enum class Estilo { NEUTRO, NOCHE, RISO, REBELDE, CHICLE, CONTRASTE }
 
 enum class Grano { NADA, SUAVE, FUERTE }
 
@@ -39,7 +40,7 @@ data class AjustesEstilo(
 )
 
 data class Apariencia(
-    val estilo: Estilo = Estilo.NOCHE,
+    val estilo: Estilo = Estilo.NEUTRO,
     val ajustes: Map<Estilo, AjustesEstilo> = emptyMap(),
     /** 0 pequeño, 1 normal, 2 grande, 3 muy grande. */
     val tamanoTexto: Int = 1,
@@ -76,10 +77,19 @@ data class Apariencia(
 }
 
 /**
- * Lo que trae cada estilo. Noche y Riso imprimen con las tintas de la app; Rebelde, Chicle y Contraste son
- * iguales en todas las apps (Contraste toma de la app solo su segunda tinta).
+ * Lo que trae cada estilo. Noche y Riso imprimen con las tintas de la app; Neutro, Rebelde, Chicle y
+ * Contraste son iguales en todas las apps (Contraste toma de la app solo su segunda tinta).
  */
 fun Estilo.colorBase(p: Paleta, r: Ranura): Color = when (this) {
+    // Neutro: papel casi blanco, tarjetas blancas, tinta casi negra y líneas grises. Sin color de la app.
+    Estilo.NEUTRO -> when (r) {
+        Ranura.FONDO -> Color(0xFFF6F5F3)
+        Ranura.TARJETAS, Ranura.SOBRE_TINTA_1 -> Color.White
+        Ranura.TEXTO, Ranura.TINTA_1, Ranura.NUMERO -> Color(0xFF1F1E1D)
+        Ranura.TEXTO_SUAVE -> Color(0xFF6B6866)
+        Ranura.TINTA_2 -> Color(0xFFDCD8D5)
+        Ranura.BORDES -> Color(0xFFDCD8D5)
+    }
     Estilo.NOCHE -> when (r) {
         Ranura.FONDO -> p.fondo
         Ranura.TARJETAS -> lerp(p.fondo, Color.White, 0.07f)
@@ -127,13 +137,13 @@ private val Estilo.tarjetaDelPapel get() = this == Estilo.CONTRASTE
 
 val Estilo.desfaseBase get() = when (this) {
     Estilo.REBELDE -> 4f
-    Estilo.CONTRASTE -> 0f
+    Estilo.NEUTRO, Estilo.CONTRASTE -> 0f
     else -> 3f
 }
 
 val Estilo.granoBase get() = when (this) {
     Estilo.RISO, Estilo.REBELDE -> Grano.FUERTE
-    Estilo.CONTRASTE -> Grano.NADA
+    Estilo.NEUTRO, Estilo.CONTRASTE -> Grano.NADA
     else -> Grano.SUAVE
 }
 
@@ -143,7 +153,7 @@ val Estilo.decoracion get() = when (this) {
     Estilo.NOCHE, Estilo.RISO -> Decoracion.TRAMA
     Estilo.REBELDE -> Decoracion.RAYOS
     Estilo.CHICLE -> Decoracion.ESTRELLAS
-    Estilo.CONTRASTE -> Decoracion.NADA
+    Estilo.NEUTRO, Estilo.CONTRASTE -> Decoracion.NADA
 }
 
 /* ----- Contraste (WCAG) ----- */
@@ -201,7 +211,7 @@ class AlmacenApariencia private constructor(c: Context) {
             )
         }.filterValues { it != AjustesEstilo() }
         return Apariencia(
-            estilo = prefs.getString("estilo", null)?.let { s -> Estilo.entries.firstOrNull { it.name == s } } ?: Estilo.NOCHE,
+            estilo = prefs.getString("estilo", null)?.let { s -> Estilo.entries.firstOrNull { it.name == s } } ?: Estilo.NEUTRO,
             ajustes = ajustes,
             tamanoTexto = prefs.getInt("tamanoTexto", 1),
             menosMovimiento = prefs.getBoolean("menosMovimiento", false),

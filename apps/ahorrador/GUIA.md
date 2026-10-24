@@ -14,8 +14,8 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`). En fi
 |-------|---------|
 | `~/Projects/fogon` (rama `main`) | El repo de trabajo. **No se sube a internet** (ver la guía de El Forzudo). |
 | Rama `publico` → [github.com/fogonapps/fogon](https://github.com/fogonapps/fogon) | Lo público. |
-| [GitHub Releases](https://github.com/fogonapps/fogon/releases) | Cada versión con su APK firmado. Etiquetas `ahorrador-v<versión>`. |
-| Obtainium | Sigue las versiones de GitHub filtrando por el título "El Ahorrador". |
+| [fogonapps/el-ahorrador](https://github.com/fogonapps/el-ahorrador/releases) | El repo de descargas: cada versión con su APK firmado (etiquetas `v<versión>`). El código de cada versión lleva la etiqueta `ahorrador-v<versión>` en `fogonapps/fogon`. Hasta la 1.2, las versiones estaban en `fogonapps/fogon/releases`. |
+| Obtainium | Sigue `https://github.com/fogonapps/el-ahorrador`, sin filtros. |
 | `~/Fogon/ElAhorrador-<versión>.apk` | La última versión firmada, que llega al teléfono por Syncthing. |
 | `~/.fogon/firma/` | La llave de firma, la misma de todas las apps de Fogón. **Nunca entra al repo.** |
 
@@ -80,7 +80,7 @@ En `Avisos.kt`: la hora (9:00) está en `programar()` y los días de anticipaci�
 
 | Qué | Dónde |
 |-----|-------|
-| Colores de la app (luces verde y amarilla, acento amarillo) y los cinco estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Ahorrador`) y `Apariencia.kt`. Las pantallas nunca usan colores fijos: blanco de los botones = `pildora`/`sobrePildora`, letras de la tarjeta grande = `sobreDestacada`, letras sobre el acento = `paleta.sobreTinta`. Ver `docs/IDENTIDAD.md` → Apariencia. |
+| Colores de la app (luces verde y amarilla, acento amarillo) y los seis estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Ahorrador`) y `Apariencia.kt`. Las pantallas nunca usan colores fijos: blanco de los botones = `pildora`/`sobrePildora`, letras de la tarjeta grande = `sobreDestacada`, letras sobre el acento = `paleta.sobreTinta`. Ver `docs/IDENTIDAD.md` → Apariencia. |
 | Tinta de cada categoría | `Categorias.kt`. Colores para metas: `COLORES_META` en `ui/Presupuesto.kt`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`, hechos de `identidad/png/el-ahorrador.png` y `identidad/una-tinta/el-ahorrador.svg`. |
 | Ícono de la notificación | `src/main/res/drawable/ic_notificacion.xml` (la chispa). |

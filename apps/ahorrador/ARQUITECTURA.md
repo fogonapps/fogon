@@ -22,7 +22,7 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Sin Android: se prueba en la JVM. |
 | `datos/Formato.kt` | Cómo se escriben la plata y las fechas ("$ 842.300", "21 oct") en cada idioma. |
 | `ui/App.kt` | El armazón: la barra flotante con el botón de anotar, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), avisos, confirmaciones y la pantalla con candado. |
-| `ui/Tutorial.kt` | Los 3 pasos del primer arranque: nombre, sistema y saldos. |
+| `ui/Tutorial.kt` | Los 4 pasos del primer arranque: nombre, sistema, saldos y "¡Dale vida!" (`PasoDaleVida` de `core/identidad`) para elegir el estilo. |
 | `ui/Inicio.kt` | Pestañas Inicio y Resumen, y piezas que usan varias pantallas (fila de movimiento, selector de mes). |
 | `ui/Presupuesto.kt` | Pestaña Presupuesto (según el sistema), pestaña Metas y crear o editar una meta. |
 | `ui/Anotar.kt` | Anotar o corregir un movimiento, con su teclado. |

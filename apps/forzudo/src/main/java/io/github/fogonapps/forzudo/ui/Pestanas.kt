@@ -1,7 +1,6 @@
 package io.github.fogonapps.forzudo.ui
 
 import androidx.compose.foundation.Image
-import io.github.fogonapps.identidad.Anton
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.rotate
@@ -124,8 +123,8 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         Box(Modifier.fillMaxWidth().height(262.dp)) {
             NumeroRiso("${racha.actual}", 200.sp, Modifier.padding(start = 14.dp).semantics { contentDescription = "${racha.actual}" }, alto = 170.sp)
             Column(Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = 10.dp), horizontalAlignment = Alignment.End) {
-                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(), fontFamily = Anton, fontSize = 15.sp,
-                    letterSpacing = 1.5.sp, color = acento, textAlign = TextAlign.End, modifier = Modifier.width(110.dp))
+                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 15.sp,
+                    letterSpacing = 1.5.sp, color = acento, textAlign = TextAlign.End, modifier = Modifier.width((110f * f.anchoCifra / 0.47f).dp))
                 Box {
                     io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, Modifier.rotate(7f), tamano = 128.dp)
                     if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 22.dp)
@@ -330,8 +329,8 @@ fun Rangos(vm: GymViewModel, e: Estado) {
             }
             Box(Modifier.fillMaxWidth().height(214.dp)) {
                 val palabra = (ov?.rango?.nombre ?: stringResource(R.string.sin_datos_aun)).uppercase()
-                // Lo más grande que quepa a lo ancho: Anton mide unos 0,47 em por letra.
-                val tam = if (ov == null) 44f else minOf(120f, 340f / (0.47f * palabra.length.coerceAtLeast(1)))
+                // Lo más grande que quepa a lo ancho: cada mayúscula mide unos [Fogon.anchoCifra] em.
+                val tam = if (ov == null) 44f else minOf(120f, 340f / (f.anchoCifra * palabra.length.coerceAtLeast(1)))
                 NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
                 Image(androidx.compose.ui.res.painterResource(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos), null,
                     Modifier.align(Alignment.BottomEnd).padding(end = 16.dp).size(120.dp).rotate(-5f))
@@ -609,6 +608,6 @@ private fun Sello(texto: String, descripcion: String, modifier: Modifier = Modif
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
         io.github.fogonapps.identidad.IconoRiso(Iconos.Racha, null, tamano = 26.dp, tinta = f.tinta1)
-        Text(texto.uppercase(), fontFamily = Anton, fontSize = 11.sp, letterSpacing = 1.4.sp, color = tinta, maxLines = 1)
+        Text(texto.uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 11.sp, letterSpacing = 1.4.sp, color = tinta, maxLines = 1)
     }
 }

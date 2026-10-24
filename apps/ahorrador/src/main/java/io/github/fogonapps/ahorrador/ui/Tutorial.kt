@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -35,11 +36,13 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.R
 import io.github.fogonapps.ahorrador.datos.Sistema
-import io.github.fogonapps.identidad.Bagel
+import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaRiso
+import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.PasoDaleVida
 import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
 
@@ -58,7 +61,7 @@ val Sistema.explicacion get() = when (this) {
     Sistema.SOLO_ANOTAR -> R.string.sistema_solo_texto
 }
 
-/** Tarjeta para elegir un sistema: nombre en Bagel y su explicación. */
+/** Tarjeta para elegir un sistema: nombre en la letra de los títulos y su explicación. */
 @Composable
 fun TarjetaSistema(s: Sistema, elegido: Boolean, onElegir: () -> Unit) {
     val f = FogonTema.actual
@@ -67,12 +70,15 @@ fun TarjetaSistema(s: Sistema, elegido: Boolean, onElegir: () -> Unit) {
             .clickable(onClick = onElegir).semantics { selected = elegido; role = Role.RadioButton }.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(stringResource(s.nombre), fontFamily = Bagel, fontSize = 18.sp, color = if (elegido) f.acentoTexto else f.texto)
+        Text(stringResource(s.nombre), fontFamily = FogonTema.actual.titulos, fontSize = 18.sp, color = if (elegido) f.acentoTexto else f.texto)
         Text(stringResource(s.explicacion), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
     }
 }
 
-/** Primera vez: bienvenida y nombre, cómo quiere organizarse y con cuánta plata empieza. */
+/**
+ * Primera vez: bienvenida y nombre, cómo quiere organizarse, con cuánta plata empieza y, al final,
+ * "¡Dale vida!": la app viene en Neutro y ahí se elige el estilo.
+ */
 @Composable
 fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
     val f = FogonTema.actual
@@ -109,7 +115,7 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
                     BotonRiso(stringResource(R.string.siguiente), { paso = 2 }, Modifier.weight(1f))
                 }
             }
-            else -> {
+            2 -> {
                 Text(stringResource(R.string.tut_saldos), style = MaterialTheme.typography.headlineMedium, color = f.texto)
                 Text(stringResource(R.string.tut_saldos_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
                 CampoPesos(efectivo, { efectivo = it }, stringResource(R.string.cuenta_efectivo))
@@ -123,6 +129,13 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     BotonSecundario(stringResource(R.string.volver), { paso = 1 }, Modifier.weight(1f))
+                    BotonRiso(stringResource(R.string.siguiente), { paso = 3 }, Modifier.weight(1f))
+                }
+            }
+            else -> {
+                PasoDaleVida(Paleta.Ahorrador, AlmacenApariencia.de(LocalContext.current))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BotonSecundario(stringResource(R.string.volver), { paso = 2 }, Modifier.weight(1f))
                     BotonRiso(stringResource(R.string.tut_empezar), {
                         vm.empezar(nombre, sistema, efectivo.toLongOrNull() ?: 0, banco.toLongOrNull() ?: 0, billetera.toLongOrNull() ?: 0,
                             if (conTarjeta) deudaTarjeta.toLongOrNull() ?: 0 else null)
@@ -132,7 +145,7 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
         }
         // Puntos del paso actual
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            repeat(3) { i ->
+            repeat(4) { i ->
                 androidx.compose.foundation.layout.Box(
                     Modifier.padding(2.dp).then(Modifier.background(if (i == paso) f.paleta.tinta else f.linea, androidx.compose.foundation.shape.CircleShape))
                         .padding(4.dp),

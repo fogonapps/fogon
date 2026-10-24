@@ -61,8 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.fogonapps.ahorrador.R
 import io.github.fogonapps.ahorrador.datos.Formato
-import io.github.fogonapps.identidad.Anton
-import io.github.fogonapps.identidad.Bagel
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaRiso
 import io.github.fogonapps.identidad.brillo
@@ -83,23 +81,23 @@ fun Modifier.vidrio(forma: androidx.compose.ui.graphics.Shape = FormaRiso): Modi
 @Composable
 fun Modifier.destacada(): Modifier = tarjetaDestacada(forma(28.dp))
 
-/** Plata en Anton. */
+/** Plata en la letra de las cifras. */
 @Composable
 fun Pesos(n: Long, tamano: TextUnit = 18.sp, color: Color = FogonTema.actual.texto, modifier: Modifier = Modifier) {
-    Text(Formato.pesos(n), fontFamily = Anton, fontSize = tamano, color = color, modifier = modifier, maxLines = 1)
+    Text(Formato.pesos(n), fontFamily = FogonTema.actual.cifras, fontSize = tamano, color = color, modifier = modifier, maxLines = 1)
 }
 
-/** Nombre de tarjeta (cuenta, sobre, meta) en Bagel Fat One. */
+/** Nombre de tarjeta (cuenta, sobre, meta) en la letra de los títulos. */
 @Composable
 fun Nombre(texto: String, tamano: TextUnit = 15.sp, color: Color = FogonTema.actual.texto, modifier: Modifier = Modifier) {
-    Text(texto, fontFamily = Bagel, fontSize = tamano, color = color, modifier = modifier, maxLines = 1)
+    Text(texto, fontFamily = FogonTema.actual.titulos, fontSize = tamano, color = color, modifier = modifier, maxLines = 1)
 }
 
-/** Encabezado de sección en Anton, en mayúsculas. */
+/** Encabezado de sección en la letra de las cifras, en mayúsculas. */
 @Composable
 fun Seccion(titulo: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}) {
     Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(titulo.uppercase(), fontFamily = Anton, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
+        Text(titulo.uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
             modifier = Modifier.weight(1f).semantics { heading() })
         derecha()
     }
@@ -244,17 +242,17 @@ fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atra
             .clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
             IconoRiso(icono, stringResource(R.string.volver), tamano = 22.dp, corrida = null)
         }
-        Text(titulo, fontFamily = Bagel, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 1, modifier = Modifier.weight(1f))
+        Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 1, modifier = Modifier.weight(1f))
         derecha()
     }
 }
 
-/** Dato pequeño: etiqueta arriba, valor en Anton. */
+/** Dato pequeño: etiqueta arriba, valor en la letra de las cifras. */
 @Composable
 fun Dato(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.textoSuave)
-        Text(valor, fontFamily = Anton, fontSize = 20.sp, color = FogonTema.actual.texto, maxLines = 1)
+        Text(valor, fontFamily = FogonTema.actual.cifras, fontSize = 20.sp, color = FogonTema.actual.texto, maxLines = 1)
     }
 }
 

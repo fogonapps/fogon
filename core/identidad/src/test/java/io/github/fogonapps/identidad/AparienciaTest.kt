@@ -26,7 +26,7 @@ class AparienciaTest {
     @Test
     fun loQueCambiaLaPersonaGanaYSeRestablece() {
         val rojo = androidx.compose.ui.graphics.Color(0xFFE5332A)
-        val a = Apariencia(ajustes = mapOf(Estilo.NOCHE to AjustesEstilo(colores = mapOf(Ranura.FONDO to rojo), transparencia = 10, desfase = 5f)))
+        val a = Apariencia(estilo = Estilo.NOCHE, ajustes = mapOf(Estilo.NOCHE to AjustesEstilo(colores = mapOf(Ranura.FONDO to rojo), transparencia = 10, desfase = 5f)))
         assertEquals(rojo, a.color(Paleta.Forzudo, Ranura.FONDO))
         assertEquals(10, a.transparencia())
         assertEquals(5f, a.desfase())
@@ -35,6 +35,18 @@ class AparienciaTest {
         assertEquals(0, a.transparencia(Estilo.RISO))
         assertEquals(Estilo.RISO.desfaseBase, a.desfase(Estilo.RISO))
         assertTrue(Apariencia().rectas(Estilo.REBELDE))
+    }
+
+    @Test
+    fun lasAppsVienenEnNeutroSinAdornos() {
+        val f = fogonDe(Paleta.Forzudo, Apariencia())
+        assertEquals(Estilo.NEUTRO, f.estilo)
+        assertEquals(0f, f.desfase.value)
+        assertEquals(Decoracion.NADA, f.decoracion)
+        assertEquals(0f, f.grano)
+        assertEquals(Sencilla, f.titulos)
+        // Neutro es igual en todas las apps.
+        assertEquals(f.tinta1, fogonDe(Paleta.Ahorrador, Apariencia()).tinta1)
     }
 
     @Test

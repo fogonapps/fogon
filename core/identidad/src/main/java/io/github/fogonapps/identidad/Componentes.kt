@@ -229,7 +229,7 @@ fun NumeroRiso(
     tamano: TextUnit,
     modifier: Modifier = Modifier,
     color: Color = FogonTema.actual.numero,
-    familia: FontFamily = Anton,
+    familia: FontFamily = FogonTema.actual.cifras,
     alto: TextUnit = tamano * 0.86f,
     fantasma: Boolean = true,
     maxLineas: Int = 1,
@@ -290,7 +290,7 @@ fun BotonSecundario(
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
-/** Título de sección en Bagel Fat One. */
+/** Título de sección en la letra de los títulos. */
 @Composable
 fun Titulo(texto: String, modifier: Modifier = Modifier) {
     Text(
@@ -312,7 +312,7 @@ fun Etiqueta(texto: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Cifra grande en Anton. */
+/** Cifra grande, en la letra de las cifras. */
 @Composable
 fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     Column(modifier) {

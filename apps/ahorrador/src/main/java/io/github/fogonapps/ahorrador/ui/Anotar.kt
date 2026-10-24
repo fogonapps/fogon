@@ -47,7 +47,6 @@ import io.github.fogonapps.ahorrador.datos.Movimiento
 import io.github.fogonapps.ahorrador.datos.TipoCuenta
 import io.github.fogonapps.ahorrador.datos.TipoMovimiento
 import io.github.fogonapps.ahorrador.datos.gmf
-import io.github.fogonapps.identidad.Anton
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Tintas
@@ -105,7 +104,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
         // El monto, grande
         Text(
             if (monto.isEmpty()) Formato.pesos(0) else Formato.pesos(monto.toLong()),
-            fontFamily = Anton, fontSize = 48.sp, maxLines = 1, textAlign = TextAlign.Center,
+            fontFamily = FogonTema.actual.cifras, fontSize = 48.sp, maxLines = 1, textAlign = TextAlign.Center,
             color = if (monto.isEmpty()) f.textoSuave else if (tipo == TipoMovimiento.INGRESO) f.acentoTexto else f.texto,
             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         )
@@ -206,7 +205,7 @@ private fun Teclado(onDigito: (String) -> Unit, onBorrar: () -> Unit) {
                         contentAlignment = Alignment.Center,
                     ) {
                         if (t == "⌫") io.github.fogonapps.identidad.IconoRiso(Iconos.Borrar, null)
-                        else Text(t, fontFamily = Anton, fontSize = 24.sp, color = if (t == "000") f.textoSuave else f.texto)
+                        else Text(t, fontFamily = FogonTema.actual.cifras, fontSize = 24.sp, color = if (t == "000") f.textoSuave else f.texto)
                     }
                 }
             }

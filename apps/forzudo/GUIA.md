@@ -14,8 +14,8 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`), salvo
 |-------|---------|
 | `~/Projects/fogon` (rama `main`) | El repo de trabajo, con todo el historial. **No se sube a internet**: tiene commits viejos con material sin licencia libre. |
 | Rama `publico` → [github.com/fogonapps/fogon](https://github.com/fogonapps/fogon) | Lo público. Historial propio, empezó limpio el 21-10-2026. |
-| [GitHub Releases](https://github.com/fogonapps/fogon/releases) | Cada versión con su APK firmado. Etiquetas `forzudo-v<versión>`. |
-| Obtainium (en el S24) | Sigue las versiones de GitHub filtrando por el título "El Forzudo". |
+| [fogonapps/el-forzudo](https://github.com/fogonapps/el-forzudo/releases) | El repo de descargas: cada versión con su APK firmado (etiquetas `v<versión>`). El código de cada versión lleva la etiqueta `forzudo-v<versión>` en `fogonapps/fogon`. Hasta la 1.8, las versiones estaban en `fogonapps/fogon/releases`. |
+| Obtainium (en el S24) | Sigue `https://github.com/fogonapps/el-forzudo`, sin filtros. |
 | F-Droid | Todavía no. Se pide desde el 11-01-2027 (ver más abajo). |
 | `~/Fogon/ElForzudo-<versión>.apk` | La última versión firmada, que llega al teléfono por Syncthing. |
 | `~/.fogon/firma/` | La llave de firma. **Nunca entra al repo.** Si se pierde, las actualizaciones dejan de instalarse encima. |
@@ -143,7 +143,7 @@ Se cambian en `herramientas/estandares.py` y se regeneran con el comando de la s
 
 | Qué | Dónde |
 |-----|-------|
-| Tintas de la app (Noche: lima y violeta; Riso: violeta y rosa) y los cinco estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Forzudo`) y `Apariencia.kt` (`colorBase` de cada estilo). Las pantallas nunca usan colores fijos: todo sale de `FogonTema.actual` (`tinta1`, `tinta2`, `desfase`…). Cada app tiene sus tintas; todas comparten letras y reglas (`docs/IDENTIDAD.md` → Sistema riso). Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
+| Tintas de la app (Noche: lima y violeta; Riso: violeta y rosa) y los seis estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Forzudo`) y `Apariencia.kt` (`colorBase` de cada estilo). Las pantallas nunca usan colores fijos: todo sale de `FogonTema.actual` (`tinta1`, `tinta2`, `desfase`…). Cada app tiene sus tintas; todas comparten letras y reglas (`docs/IDENTIDAD.md` → Sistema riso). Las reglas de la identidad están en `docs/IDENTIDAD.md`. |
 | Colores de cada músculo en las láminas | `herramientas/laminas/laminas.py` (`MUSCULOS`, `ZONAS`) y su `README.md`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`; el fondo es el color `papel` de `res/values/colores.xml`. |
 | Íconos (también los de la barra de pestañas) | `ui/Iconos.kt`: un `Dibujo` de 24 × 24 hecho de rellenos, trazos gordos y huecos, pintado con `IconoRiso` (dos tintas, la segunda corrida). Los comunes están en `IconosFogon` (`core/identidad`). |

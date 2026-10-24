@@ -286,6 +286,6 @@ private fun MedidorDescanso(falta: Float, texto: String) {
             val a = Math.toRadians(360.0 * falta.coerceIn(0f, 1f) - 90)
             drawCircle(bola, 5.dp.toPx(), androidx.compose.ui.geometry.Offset(c.x + kotlin.math.cos(a).toFloat() * ri, c.y + kotlin.math.sin(a).toFloat() * ri))
         }
-        Text(texto, fontFamily = io.github.fogonapps.identidad.Anton, fontSize = 26.sp, color = f.texto)
+        Text(texto, fontFamily = FogonTema.actual.cifras, fontSize = 26.sp, color = f.texto)
     }
 }

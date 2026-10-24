@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 val Estilo.nombre get() = when (this) {
+    Estilo.NEUTRO -> R.string.fogon_estilo_neutro
     Estilo.NOCHE -> R.string.fogon_estilo_noche
     Estilo.RISO -> R.string.fogon_estilo_riso
     Estilo.REBELDE -> R.string.fogon_estilo_rebelde
@@ -65,6 +66,7 @@ val Estilo.nombre get() = when (this) {
 }
 
 val Estilo.explicacion get() = when (this) {
+    Estilo.NEUTRO -> R.string.fogon_estilo_neutro_texto
     Estilo.NOCHE -> R.string.fogon_estilo_noche_texto
     Estilo.RISO -> R.string.fogon_estilo_riso_texto
     Estilo.REBELDE -> R.string.fogon_estilo_rebelde_texto
@@ -98,11 +100,12 @@ private val SEGUNDAS = listOf(Tintas.Rosa, Tintas.Amarillo, Color(0xFFFFB020), T
 
 /**
  * Perfil → Apariencia, igual en todas las apps. Los cambios se ven al momento en toda la app, porque
- * la Activity escucha [AlmacenApariencia.estado]. Cada app pone su barra de arriba.
+ * la Activity escucha [AlmacenApariencia.estado]. Cada app pone su barra de arriba. Con [conEstilo] = false
+ * no muestra la vista previa ni los estilos (el paso "¡Dale vida!" del tutorial ya los tiene arriba).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier) {
+fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier, conEstilo: Boolean = true) {
     val a by almacen.estado.collectAsState()
     val f = FogonTema.actual
     val e = a.estilo
@@ -110,16 +113,11 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
     var todos by remember { mutableStateOf(false) }
 
     Column(modifier.fillMaxWidth().padding(bottom = 32.dp)) {
-        VistaPrevia()
-
-        Encabezado(stringResource(R.string.fogon_ap_estilo))
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Estilo.entries.forEach { s ->
-                MuestraEstilo(fogonDe(paleta, a.copy(estilo = s)), stringResource(s.nombre), s == e, Modifier.weight(1f)) { almacen.elegirEstilo(s) }
-            }
+        if (conEstilo) {
+            VistaPrevia()
+            Encabezado(stringResource(R.string.fogon_ap_estilo))
+            SelectorEstilos(paleta, almacen)
         }
-        Text(stringResource(e.explicacion), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
 
         Encabezado(stringResource(R.string.fogon_ap_tintas))
         val poco = contraste(f.texto, f.fondo) < 4.5 || contraste(f.sobreTinta1, f.tinta1) < 4.5
@@ -134,7 +132,7 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
         Column(Modifier.padding(horizontal = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.fogon_ap_corrimiento_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
-                Text("%.1f dp".format(a.desfase()).replace(".0 ", " "), fontFamily = Anton, fontSize = 18.sp, color = f.acentoTexto)
+                Text("%.1f dp".format(a.desfase()).replace(".0 ", " "), fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, color = f.acentoTexto)
             }
             var d by remember(e, a.desfase()) { mutableFloatStateOf(a.desfase()) }
             Slider(d, { d = it }, onValueChangeFinished = { almacen.ponerDesfase(e, d) }, valueRange = 0f..6f, steps = 11)
@@ -177,7 +175,7 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
         Column(Modifier.padding(horizontal = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.fogon_ap_transparencia_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
-                Text("${a.transparencia()} %", fontFamily = Anton, fontSize = 18.sp, color = f.acentoTexto)
+                Text("${a.transparencia()} %", fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, color = f.acentoTexto)
             }
             var t by remember(e, a.transparencia()) { mutableFloatStateOf(a.transparencia().toFloat()) }
             Slider(t, { t = it }, onValueChangeFinished = { almacen.ponerTransparencia(e, t.toInt()) }, valueRange = 0f..100f, steps = 19)
@@ -216,9 +214,48 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
     }
 }
 
+/** Los estilos en dos filas de tres, cada uno impreso con sus tintas, y la explicación del elegido. */
+@Composable
+fun SelectorEstilos(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier) {
+    val a by almacen.estado.collectAsState()
+    val f = FogonTema.actual
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Estilo.entries.chunked(3).forEach { fila ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                fila.forEach { s ->
+                    MuestraEstilo(fogonDe(paleta, a.copy(estilo = s)), stringResource(s.nombre), s == a.estilo, Modifier.weight(1f)) { almacen.elegirEstilo(s) }
+                }
+            }
+        }
+        Text(stringResource(a.estilo.explicacion), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
+            modifier = Modifier.padding(horizontal = 4.dp))
+    }
+}
+
+/**
+ * El último paso del tutorial: las apps vienen en Neutro y aquí la persona les da vida eligiendo un estilo.
+ * Se ve al momento en toda la app. "Más opciones" abre lo demás de la Apariencia (tintas, texto, comodidad).
+ */
+@Composable
+fun PasoDaleVida(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier) {
+    val f = FogonTema.actual
+    var mas by remember { mutableStateOf(false) }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(stringResource(R.string.fogon_dale_vida), style = MaterialTheme.typography.headlineMedium, color = f.texto,
+            modifier = Modifier.padding(horizontal = 20.dp).semantics { heading() })
+        Text(stringResource(R.string.fogon_dale_vida_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,
+            modifier = Modifier.padding(horizontal = 20.dp))
+        SelectorEstilos(paleta, almacen)
+        TextButton({ mas = !mas }, Modifier.padding(horizontal = 8.dp)) {
+            Text(stringResource(if (mas) R.string.fogon_menos_opciones else R.string.fogon_mas_opciones), color = f.acentoTexto, fontWeight = FontWeight.Bold)
+        }
+        if (mas) PantallaApariencia(paleta, almacen, conEstilo = false)
+    }
+}
+
 @Composable
 private fun Encabezado(texto: String) {
-    Text(texto.uppercase(), fontFamily = Anton, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
+    Text(texto.uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 8.dp).semantics { heading() })
 }
 
@@ -266,7 +303,7 @@ private fun VistaPrevia() {
             Modifier.align(Alignment.CenterEnd).padding(end = 18.dp).width(168.dp).tarjetaFogon(forma(18.dp)).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(stringResource(R.string.fogon_ap_muestra_titulo), fontFamily = Bagel, fontSize = 18.sp, color = f.texto)
+            Text(stringResource(R.string.fogon_ap_muestra_titulo), fontFamily = FogonTema.actual.titulos, fontSize = 18.sp, color = f.texto)
             Text(stringResource(R.string.fogon_ap_muestra_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             Box(Modifier.padding(top = 2.dp).brillo(f.tinta1, FormaPildora).clip(FormaPildora).background(f.tinta1).border(f.borde, f.linea, FormaPildora)
                 .padding(horizontal = 14.dp, vertical = 7.dp)) {

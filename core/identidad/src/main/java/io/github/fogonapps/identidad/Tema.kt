@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.DeviceFontFamilyName
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
@@ -24,6 +25,9 @@ import androidx.compose.ui.unit.sp
 
 val Bagel = FontFamily(Font(R.font.bagel_fat_one))
 val Anton = FontFamily(Font(R.font.anton))
+
+/** La letra del teléfono en grosor medio: títulos y cifras del estilo Neutro. */
+val Sencilla = FontFamily(Font(DeviceFontFamilyName("sans-serif-medium")))
 
 /**
  * Lo que cada pantalla necesita saber de la identidad, más allá de Material. Sale de la paleta de la
@@ -46,7 +50,7 @@ data class Fogon(
     val linea: Color,
     /** La primera tinta cuando es texto sobre el papel (o el texto, si la tinta no se lee ahí). */
     val acentoTexto: Color,
-    val estilo: Estilo = Estilo.NOCHE,
+    val estilo: Estilo = Estilo.NEUTRO,
     /** La primera tinta: botones, pestaña activa, días cumplidos. Lo de encima va en [sobreTinta1]. */
     val tinta1: Color = paleta.tinta,
     val sobreTinta1: Color = paleta.sobreTinta,
@@ -68,6 +72,12 @@ data class Fogon(
     val grano: Float = 0.035f,
     val rectas: Boolean = false,
     val menosMovimiento: Boolean = false,
+    /** Letra de los títulos y nombres (Bagel Fat One; en Neutro, la del teléfono). */
+    val titulos: FontFamily = Bagel,
+    /** Letra de las cifras y palabras gigantes (Anton; en Neutro, la del teléfono). */
+    val cifras: FontFamily = Anton,
+    /** Cuánto mide de ancho una mayúscula de [cifras], en em: para que una palabra gigante quepa. */
+    val anchoCifra: Float = 0.47f,
 ) {
     /** El corrimiento de los íconos: menos que el de las tarjetas, para que se lean. */
     val desfaseIcono: Dp get() = desfase * 0.45f
@@ -110,13 +120,20 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
         numero = c(Ranura.NUMERO),
         pildora = texto, sobrePildora = legibleSobre(texto, listOf(fondo, Color.White, Tintas.Tinta)),
         destacada = listOf(t1, t1), sobreDestacada = sobreT1,
-        borde = if (a.masContraste) 3.dp else 2.dp,
+        borde = when {
+            e == Estilo.NEUTRO -> if (a.masContraste) 2.dp else 1.dp
+            a.masContraste -> 3.dp
+            else -> 2.dp
+        },
         decoracion = a.adorno(), grano = granos, rectas = a.rectas(), menosMovimiento = a.menosMovimiento,
+        titulos = if (e == Estilo.NEUTRO) Sencilla else Bagel,
+        cifras = if (e == Estilo.NEUTRO) Sencilla else Anton,
+        anchoCifra = if (e == Estilo.NEUTRO) 0.64f else 0.47f,
     )
 }
 
 /**
- * El tema de las apps de Fogón. Por defecto, el estilo Noche con las tintas de la app
+ * El tema de las apps de Fogón. Por defecto, el estilo Neutro
  * (docs/IDENTIDAD.md → Sistema riso); con [apariencia], lo que eligió la persona en Perfil → Apariencia.
  */
 @Composable
@@ -156,13 +173,13 @@ fun FogonTema(
     }
     val base = Typography()
     val tipografia = Typography(
-        displayLarge = TextStyle(fontFamily = Anton, fontSize = 56.sp, lineHeight = 56.sp),
-        displayMedium = TextStyle(fontFamily = Anton, fontSize = 40.sp, lineHeight = 42.sp),
-        displaySmall = TextStyle(fontFamily = Anton, fontSize = 30.sp, lineHeight = 32.sp),
-        headlineLarge = TextStyle(fontFamily = Bagel, fontSize = 32.sp, lineHeight = 36.sp),
-        headlineMedium = TextStyle(fontFamily = Bagel, fontSize = 26.sp, lineHeight = 30.sp),
-        headlineSmall = TextStyle(fontFamily = Bagel, fontSize = 22.sp, lineHeight = 26.sp),
-        titleLarge = TextStyle(fontFamily = Bagel, fontSize = 20.sp, lineHeight = 24.sp),
+        displayLarge = TextStyle(fontFamily = f.cifras, fontSize = 56.sp, lineHeight = 56.sp),
+        displayMedium = TextStyle(fontFamily = f.cifras, fontSize = 40.sp, lineHeight = 42.sp),
+        displaySmall = TextStyle(fontFamily = f.cifras, fontSize = 30.sp, lineHeight = 32.sp),
+        headlineLarge = TextStyle(fontFamily = f.titulos, fontSize = 32.sp, lineHeight = 36.sp),
+        headlineMedium = TextStyle(fontFamily = f.titulos, fontSize = 26.sp, lineHeight = 30.sp),
+        headlineSmall = TextStyle(fontFamily = f.titulos, fontSize = 22.sp, lineHeight = 26.sp),
+        titleLarge = TextStyle(fontFamily = f.titulos, fontSize = 20.sp, lineHeight = 24.sp),
         titleMedium = base.titleMedium,
         titleSmall = base.titleSmall,
         bodyLarge = base.bodyLarge,

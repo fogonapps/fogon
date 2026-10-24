@@ -49,8 +49,6 @@ import io.github.fogonapps.ahorrador.datos.TipoCuenta
 import io.github.fogonapps.ahorrador.datos.TipoMovimiento
 import io.github.fogonapps.ahorrador.datos.mesAnterior
 import io.github.fogonapps.ahorrador.datos.mesDe
-import io.github.fogonapps.identidad.Anton
-import io.github.fogonapps.identidad.Bagel
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
@@ -114,7 +112,7 @@ fun FilaMovimiento(e: Estado, m: Movimiento, onClick: () -> Unit) {
             Text(detalle, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
         }
         val signo = when (m.tipo) { TipoMovimiento.INGRESO -> "+ "; TipoMovimiento.TRASPASO -> ""; else -> "− " }
-        Text(signo + Formato.pesos(m.monto), fontFamily = Anton, fontSize = 17.sp,
+        Text(signo + Formato.pesos(m.monto), fontFamily = FogonTema.actual.cifras, fontSize = 17.sp,
             color = if (m.tipo == TipoMovimiento.INGRESO) f.acentoTexto else f.texto, maxLines = 1)
     }
 }
@@ -135,7 +133,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         Column(Modifier.weight(1f)) {
             Text(Formato.fechaCorta(hoy) + " " + hoy.year, style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
-                fontFamily = Bagel, fontSize = 28.sp, color = f.texto, maxLines = 1)
+                fontFamily = FogonTema.actual.titulos, fontSize = 28.sp, color = f.texto, maxLines = 1)
         }
         Box(Modifier.size(52.dp).brillo(f.tinta1, io.github.fogonapps.identidad.FormaMancha).clip(io.github.fogonapps.identidad.FormaMancha)
             .background(f.tinta1).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
@@ -321,7 +319,7 @@ fun SelectorMes(mes: String, onCambio: (String) -> Unit, hasta: String) {
     val ym = YearMonth.parse(mes)
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton({ onCambio(ym.minusMonths(1).toString()) }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Atras, stringResource(R.string.mes_anterior), corrida = null) }
-        Text(Formato.nombreMes(mes) + " " + ym.year, fontFamily = Bagel, fontSize = 18.sp, color = f.texto,
+        Text(Formato.nombreMes(mes) + " " + ym.year, fontFamily = FogonTema.actual.titulos, fontSize = 18.sp, color = f.texto,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
         IconButton({ onCambio(ym.plusMonths(1).toString()) }, enabled = mes < hasta) {
             io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, stringResource(R.string.mes_siguiente), tinta = if (mes < hasta) f.texto else f.textoSuave.copy(alpha = 0.4f), corrida = null)

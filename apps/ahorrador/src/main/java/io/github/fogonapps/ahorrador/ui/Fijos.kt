@@ -289,6 +289,6 @@ private fun Pregunta(texto: String, valor: String) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().vidrio().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f).padding(end = 8.dp))
-        Text(valor, fontFamily = io.github.fogonapps.identidad.Anton, fontSize = 18.sp, color = f.texto)
+        Text(valor, fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, color = f.texto)
     }
 }

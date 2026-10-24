@@ -41,11 +41,17 @@
   </string-array>
   <string name="fogon_ap_titulo">Apariencia</string>
   <string name="fogon_ap_estilo">Estilo</string>
+  <string name="fogon_estilo_neutro">Neutro</string>
+  <string name="fogon_estilo_neutro_texto">Papel claro, letra negra y nada que distraiga. Así vienen las apps.</string>
+  <string name="fogon_dale_vida">¡Dale vida!</string>
+  <string name="fogon_dale_vida_texto">La app viene tranquila, en Neutro. Si la quieres con más carácter, elige un estilo: se ve al momento. Lo puedes cambiar cuando quieras en Apariencia, dentro de Perfil.</string>
+  <string name="fogon_mas_opciones">Más opciones</string>
+  <string name="fogon_menos_opciones">Menos opciones</string>
   <string name="fogon_estilo_noche">Noche</string>
   <string name="fogon_estilo_riso">Riso</string>
   <string name="fogon_estilo_rebelde">Rebelde</string>
   <string name="fogon_estilo_contraste">Contraste</string>
-  <string name="fogon_estilo_noche_texto">Tintas neón sobre papel negro, con trama de puntos. El de siempre.</string>
+  <string name="fogon_estilo_noche_texto">Tintas neón sobre papel negro, con trama de puntos.</string>
   <string name="fogon_estilo_riso_texto">Retro: papel crema y dos tintas corridas, como una impresión riso.</string>
   <string name="fogon_estilo_rebelde_texto">Fotocopia punk: rojo, negro y crema, rayos de cómic y esquinas rectas.</string>
   <string name="fogon_estilo_contraste_texto">Negro y blanco, sin tinta corrida ni adornos: lo más fácil de leer.</string>
