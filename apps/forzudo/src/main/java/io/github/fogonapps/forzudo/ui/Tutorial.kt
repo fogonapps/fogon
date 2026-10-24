@@ -54,12 +54,12 @@ import kotlinx.coroutines.launch
 private data class Paso(@DrawableRes val dibujo: Int, @StringRes val titulo: Int, @StringRes val texto: Int)
 
 private val pasos = listOf(
-    Paso(R.drawable.munieco_tut_hola, R.string.tut_hola, R.string.tut_hola_texto),
-    Paso(R.drawable.munieco_tut_anota, R.string.tut_anota, R.string.tut_anota_texto),
-    Paso(R.drawable.munieco_tut_racha, R.string.tut_racha, R.string.tut_racha_texto),
-    Paso(R.drawable.munieco_tut_rangos, R.string.tut_rangos, R.string.tut_rangos_texto),
-    Paso(R.drawable.munieco_tut_hola, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
-    Paso(R.drawable.munieco_tut_datos, R.string.tut_datos, R.string.tut_datos_texto),
+    Paso(R.drawable.munieco_tut_hola_t1, R.string.tut_hola, R.string.tut_hola_texto),
+    Paso(R.drawable.munieco_tut_anota_t1, R.string.tut_anota, R.string.tut_anota_texto),
+    Paso(R.drawable.munieco_tut_racha_t1, R.string.tut_racha, R.string.tut_racha_texto),
+    Paso(R.drawable.munieco_tut_rangos_t1, R.string.tut_rangos, R.string.tut_rangos_texto),
+    Paso(R.drawable.munieco_tut_hola_t1, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
+    Paso(R.drawable.munieco_tut_datos_t1, R.string.tut_datos, R.string.tut_datos_texto),
 )
 
 /** Los pasos con dibujo y, al final, "¡Dale vida!": la app viene en Neutro y aquí se elige el estilo. */
@@ -90,7 +90,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Image(painterResource(p.dibujo), null, Modifier.size(220.dp))
+                    Munieco(p.dibujo, tamano = 220.dp)
                     Text(stringResource(p.titulo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
                     Text(stringResource(p.texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
                     if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())

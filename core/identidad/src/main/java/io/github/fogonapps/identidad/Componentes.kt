@@ -42,6 +42,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.res.painterResource
@@ -51,22 +56,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** Tarjetas: esquinas grandes y suaves, o casi rectas si la Apariencia lo pide. */
+/** Tarjetas: esquinas grandes y suaves. */
 val FormaRiso: Shape
-    @Composable @ReadOnlyComposable get() = forma(22.dp)
+    @Composable @ReadOnlyComposable get() = forma(24.dp)
 
-/** Botones: píldora (o casi rectos en el estilo Rebelde y con esquinas rectas). */
+/** Botones: píldora. */
 val FormaPildora: Shape
-    @Composable @ReadOnlyComposable get() = if (FogonTema.actual.rectas) RoundedCornerShape(4.dp) else RoundedCornerShape(50)
+    @Composable @ReadOnlyComposable get() = RoundedCornerShape(50)
 
-/** Una esquina redondeada de [radio] que respeta la Apariencia: con esquinas rectas se queda en 4 dp. */
+/** Una esquina redondeada de [radio]. */
 @Composable @ReadOnlyComposable
-fun forma(radio: Dp): Shape = RoundedCornerShape(if (FogonTema.actual.rectas) minOf(radio, 4.dp) else radio)
+fun forma(radio: Dp): Shape = RoundedCornerShape(radio)
 
-/**
- * La mancha de tinta: una forma redonda pero torcida, como una gota que cayó en el papel. Marca la pestaña
- * activa y el botón del perfil (en lugar del círculo perfecto de siempre).
- */
+/** Una forma redonda pero un poco torcida, como una gota. Se usa en las fichas de las categorías. */
 val FormaMancha: Shape = GenericShape { tam, _ ->
     val sx = tam.width / 100f; val sy = tam.height / 100f
     moveTo(52f * sx, 4f * sy)
@@ -78,174 +80,87 @@ val FormaMancha: Shape = GenericShape { tam, _ ->
     close()
 }
 
-/**
- * Antes era un brillo de color; en el sistema riso es la segunda tinta corrida detrás de la forma, como
- * cuando la imprenta no calza las dos pasadas. [color] e [intensidad] se ignoran (quedan por compatibilidad).
- * Con corrimiento 0 (Contraste) no dibuja nada.
- */
-@Suppress("UNUSED_PARAMETER")
+/** Antes era la tinta corrida detrás de las formas; en el vidrio no dibuja nada (queda por compatibilidad). */
+@Suppress("UNUSED_PARAMETER", "UnusedReceiverParameter")
 @Composable
-fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.dp): Modifier {
-    val f = FogonTema.actual
-    return if (f.desfase > 0.dp) sombraDura(forma, f.desfase, f.tinta2) else this
-}
+fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.dp): Modifier = this
 
-/** La sombra riso: la misma forma, en [color], corrida abajo a la derecha. */
+/** Una sombra plana de la misma forma, corrida abajo a la derecha. */
 fun Modifier.sombraDura(forma: Shape, desplazamiento: Dp = 4.dp, color: Color = Tintas.Tinta): Modifier = drawBehind {
     val d = desplazamiento.toPx()
     translate(d, d) { drawOutline(forma.createOutline(size, layoutDirection, this), color) }
 }
 
-/** Tarjeta de la identidad: papel de tarjeta, borde de tinta y, si [sombra], la segunda tinta corrida detrás. */
+/** Tarjeta de vidrio: blanco con poca opacidad sobre el papel y un borde fino. [sombra] ya no hace nada. */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun Modifier.tarjetaFogon(forma: Shape = FormaRiso, sombra: Boolean = true): Modifier {
     val f = FogonTema.actual
-    return then(if (sombra && f.desfase > 0.dp) Modifier.sombraDura(forma, f.desfase, f.tinta2) else Modifier)
-        .clip(forma).background(f.superficie).border(f.borde, f.linea, forma)
+    return clip(forma).background(f.superficie).border(f.borde, f.linea, forma)
 }
 
-/**
- * La tarjeta destacada de cada pantalla: un bloque lleno de la primera tinta, con su borde y la segunda
- * tinta bien corrida detrás. Lo de encima va en [Fogon.sobreTinta1].
- */
+/** La tarjeta destacada de cada pantalla: un bloque lleno de la primera tinta. Lo de encima va en [Fogon.sobreTinta1]. */
 @Composable
 fun Modifier.tarjetaDestacada(forma: Shape = FormaRiso): Modifier {
     val f = FogonTema.actual
-    return then(if (f.desfase > 0.dp) Modifier.sombraDura(forma, f.desfase * 2, f.tinta2) else Modifier)
-        .clip(forma).background(f.tinta1).border(f.borde, f.linea, forma)
+    return clip(forma).background(f.tinta1)
 }
-
-/** El destello de cuatro puntas del estilo Chicle (24×24). */
-private const val DESTELLO = "M12 1.5c.8 6.2 3.9 9.6 10.5 10.5-6.6.9-9.7 4.3-10.5 10.5-.8-6.2-3.9-9.6-10.5-10.5C8.1 11.1 11.2 7.7 12 1.5z"
-
-/** Dónde van los destellos: x (fracción del ancho), y (dp desde arriba), tamaño (dp), si van en la primera tinta. */
-private val DESTELLOS = listOf(
-    listOf(0.08f, 210f, 22f, 1f), listOf(0.85f, 70f, 16f, 0f), listOf(0.46f, 120f, 12f, 1f),
-    listOf(0.9f, 300f, 20f, 1f), listOf(0.05f, 630f, 14f, 0f), listOf(0.91f, 640f, 12f, 1f),
-)
 
 /**
- * Lo que imprime cada estilo detrás de las pantallas (nunca degradados):
- * - Trama (Noche y Riso): un círculo de puntos en la segunda tinta, gordos al centro y finos al borde,
- *   como el semitono de una riso;
- * - Rayos (Rebelde): rayos de cómic en la primera tinta, que se van apagando;
- * - Destellos (Chicle): la trama y destellos de cuatro puntas en las dos tintas.
+ * La luz del tema: un círculo suave de [Fogon.brillo] arriba de la pantalla, que se apaga hacia afuera. Es
+ * la única luz de cada pantalla; con "Menos adornos" o en Contraste no hay.
  */
-fun Modifier.decoracion(f: Fogon): Modifier = drawWithCache {
-    val w = size.width; val h = size.height
-    val conTrama = f.decoracion == Decoracion.TRAMA || f.decoracion == Decoracion.ESTRELLAS
-    val trama = if (conTrama) {
-        val paso = (if (f.oscuro) 10 else 9).dp.toPx()
-        val radio = 145.dp.toPx()
-        val c = Offset(w - 70.dp.toPx(), minOf(h * 0.22f, 175.dp.toPx()))
-        val maximo = paso * 0.46f
-        buildList {
-            var y = c.y - radio
-            while (y < c.y + radio) {
-                var x = c.x - radio
-                while (x < c.x + radio) {
-                    val t = 1f - (Offset(x, y) - c).getDistance() / radio
-                    if (t > 0.04f) add(Offset(x, y) to maximo * kotlin.math.sqrt(minOf(1f, t * 1.6f)))
-                    x += paso
-                }
-                y += paso
-            }
-        }
-    } else emptyList()
-    val rayos = if (f.decoracion == Decoracion.RAYOS) {
-        val c = Offset(w * 0.74f, minOf(h * 0.24f, 190.dp.toPx())); val largo = 300.dp.toPx()
-        val tramos = 8
-        (0 until 24).flatMap { i ->
-            val a0 = Math.toRadians(i * 15.0); val a1 = Math.toRadians(i * 15.0 + 3.0)
-            (0 until tramos).map { k ->
-                val r0 = largo * k / tramos; val r1 = largo * (k + 1) / tramos
-                val alfa = if (k < 2) 0.5f else 0.5f * (1f - (k - 1f) / (tramos - 1f))
-                fun p(r: Float, a: Double) = Offset(c.x + (r * kotlin.math.cos(a)).toFloat(), c.y + (r * kotlin.math.sin(a)).toFloat())
-                Path().apply {
-                    val q0 = p(r0, a0); moveTo(q0.x, q0.y)
-                    p(r1, a0).let { lineTo(it.x, it.y) }; p(r1, a1).let { lineTo(it.x, it.y) }; p(r0, a1).let { lineTo(it.x, it.y) }
-                    close()
-                } to alfa
-            }
-        }
-    } else emptyList()
-    val destellos = if (f.decoracion == Decoracion.ESTRELLAS) {
-        val base = PathParser().parsePathString(DESTELLO).toPath()
-        DESTELLOS.map { (x, y, t, primera) ->
-            val escala = t.dp.toPx() / 24f
-            Path().apply {
-                addPath(base)
-                transform(androidx.compose.ui.graphics.Matrix().apply { scale(escala, escala) })
-                translate(Offset(w * x, minOf(y.dp.toPx(), h - t.dp.toPx())))
-            } to (if (primera > 0f) f.tinta1 else f.tinta2)
-        }
-    } else emptyList()
-    onDrawBehind {
-        // Suave, para que las letras que caigan encima se sigan leyendo.
-        trama.forEach { (o, r) -> drawCircle(f.tinta2.copy(alpha = 0.6f), r, o) }
-        rayos.forEach { (camino, alfa) -> drawPath(camino, f.tinta1.copy(alpha = alfa)) }
-        destellos.forEach { (camino, c) -> drawPath(camino, c) }
-    }
+fun Modifier.decoracion(f: Fogon): Modifier = if (f.brillo.alpha <= 0f) this else drawWithCache {
+    val centro = Offset(size.width * 0.5f, -size.width * 0.15f)
+    val radio = size.width * 1.05f
+    val pincel = Brush.radialGradient(listOf(f.brillo, f.brillo.copy(alpha = 0f)), centro, radio)
+    onDrawBehind { drawRect(pincel) }
 }
 
-/** El fondo de cada pantalla: el papel del estilo, su adorno impreso y el grano. */
-fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).decoracion(f).granoPapel(f.oscuro, f.grano)
-
-private const val GRANO_AGSL = """
-uniform float intensidad;
-uniform float claro;
-half4 main(float2 p) {
-    float n = fract(sin(dot(floor(p), float2(12.9898, 78.233))) * 43758.5453);
-    if (claro > 0.5) {
-        half v = half(1.0 - intensidad * n);
-        return half4(v, v, v, 1.0);
-    }
-    half w = half(intensidad * n);
-    return half4(w, w, w, 1.0);
-}
-"""
-
-/** Grano de papel (Android 13+). En versiones anteriores, o con intensidad 0, no hace nada. */
-fun Modifier.granoPapel(oscuro: Boolean, intensidad: Float = 0.07f): Modifier =
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || intensidad <= 0f) this
-    else drawWithCache {
-        val shader = RuntimeShader(GRANO_AGSL)
-        shader.setFloatUniform("intensidad", intensidad)
-        shader.setFloatUniform("claro", if (oscuro) 0f else 1f)
-        val pincel = ShaderBrush(shader)
-        onDrawWithContent {
-            drawContent()
-            drawRect(pincel, blendMode = if (oscuro) BlendMode.Screen else BlendMode.Multiply)
-        }
-    }
+/** El fondo de cada pantalla: el papel del tema y su luz. */
+fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).decoracion(f)
 
 /**
- * Un número o palabra gigante impreso en dos pasadas: la segunda tinta corrida detrás y [color] encima.
- * El corrimiento crece con el tamaño de la letra. [fantasma] = false lo deja en una sola tinta.
+ * El halo de puntos: una trama que se apaga hacia el borde, detrás del número grande. Es la trama riso de
+ * Fogón convertida en luz. [centro] en fracciones del ancho y del alto.
  */
+fun Modifier.haloPuntos(color: Color, paso: Dp = 10.dp, centro: Offset = Offset(0.35f, 0.45f)): Modifier = drawWithCache {
+    val p = paso.toPx(); val r = p * 0.15f
+    val ancho = size.width; val alto = size.height
+    val c = Offset(ancho * centro.x, alto * centro.y)
+    val alcance = maxOf(ancho, alto) * 0.6f
+    val puntos = buildList {
+        var y = p / 2
+        while (y < alto) {
+            var x = p / 2
+            while (x < ancho) {
+                val t = 1f - (Offset(x, y) - c).getDistance() / alcance
+                if (t > 0f) add(Offset(x, y) to t)
+                x += p
+            }
+            y += p
+        }
+    }
+    onDrawBehind { puntos.forEach { (o, t) -> drawCircle(color.copy(alpha = color.alpha * 0.55f * t), r, o) } }
+}
+
+/** Un número o palabra grande, hecho de puntos (Doto). [fantasma] queda por compatibilidad. */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun NumeroRiso(
     texto: String,
     tamano: TextUnit,
     modifier: Modifier = Modifier,
     color: Color = FogonTema.actual.numero,
-    familia: FontFamily = FogonTema.actual.cifras,
-    alto: TextUnit = tamano * 0.86f,
+    familia: FontFamily = FogonTema.actual.puntos,
+    alto: TextUnit = tamano * 0.95f,
     fantasma: Boolean = true,
     maxLineas: Int = 1,
 ) {
-    val f = FogonTema.actual
-    val corre = f.desfase * (tamano.value / 108f)
-    Box(modifier) {
-        if (fantasma && corre > 0.dp) Text(
-            texto, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = f.tinta2, maxLines = maxLineas, softWrap = maxLineas > 1,
-            modifier = Modifier.offset(corre * 1.1f, corre).clearAndSetSemantics { },
-        )
-        Text(texto, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = color, maxLines = maxLineas, softWrap = maxLineas > 1)
-    }
+    Text(texto, modifier, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = color, maxLines = maxLineas, softWrap = maxLineas > 1)
 }
 
-/** Botón principal: de la primera tinta, con borde de tinta y la segunda tinta corrida detrás. */
+/** Botón principal: una píldora llena de la primera tinta. */
 @Composable
 fun BotonRiso(
     texto: String,
@@ -254,21 +169,17 @@ fun BotonRiso(
     habilitado: Boolean = true,
 ) {
     val f = FogonTema.actual
-    val forma = FormaPildora
     Button(
         onClick = onClick,
         enabled = habilitado,
-        shape = forma,
+        shape = FormaPildora,
         colors = ButtonDefaults.buttonColors(containerColor = f.tinta1, contentColor = f.sobreTinta1),
-        border = BorderStroke(f.borde, f.linea),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
-        modifier = modifier
-            .heightIn(min = 50.dp)
-            .then(if (habilitado) Modifier.brillo(f.tinta1, forma) else Modifier),
+        modifier = modifier.heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
-/** Botón secundario: papel de tarjeta con borde de tinta. */
+/** Botón secundario: una píldora de vidrio con borde fino. */
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -283,7 +194,7 @@ fun BotonSecundario(
         onClick = onClick,
         enabled = habilitado,
         shape = FormaPildora,
-        border = BorderStroke(f.borde, if (peligro) color else f.linea),
+        border = BorderStroke(f.borde, if (peligro) color.copy(alpha = 0.6f) else f.linea),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = f.superficie, contentColor = color),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         modifier = modifier.heightIn(min = 50.dp),
@@ -301,12 +212,12 @@ fun Titulo(texto: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Etiqueta pequeña en mayúsculas, con la tinta de la app. */
+/** Etiqueta pequeña, con la tinta de la app. */
 @Composable
 fun Etiqueta(texto: String, modifier: Modifier = Modifier) {
     Text(
-        texto.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
+        texto,
+        style = MaterialTheme.typography.labelMedium,
         color = FogonTema.actual.acentoTexto,
         modifier = modifier,
     )
@@ -321,9 +232,64 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     }
 }
 
+/** Los personajes que tienen capas para teñir: cuerpo (primera tinta), sombra y moneda (segunda) y lo fijo. */
+private val CAPAS = mapOf(
+    R.drawable.personaje_el_forzudo to Triple(R.drawable.personaje_el_forzudo_t1, R.drawable.personaje_el_forzudo_t2, R.drawable.personaje_el_forzudo_fijo),
+    R.drawable.personaje_el_ahorrador to Triple(R.drawable.personaje_el_ahorrador_t1, R.drawable.personaje_el_ahorrador_t2, R.drawable.personaje_el_ahorrador_fijo),
+)
+
+/**
+ * El personaje de la app. Si tiene capas (identidad/vidrio/capas), toma las tintas del tema: el cuerpo en la
+ * primera tinta (o en las letras, si la tinta no se distingue del papel) y la sombra en la segunda.
+ */
 @Composable
 fun Personaje(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp) {
-    Image(painterResource(recurso), contentDescription = descripcion, modifier = modifier.size(tamano))
+    val capas = CAPAS[recurso]
+    if (capas == null) {
+        Image(painterResource(recurso), contentDescription = descripcion, modifier = modifier.size(tamano))
+        return
+    }
+    PersonajeTenido(capas.first, capas.second, capas.third, descripcion, modifier, tamano)
+}
+
+/**
+ * Una figura en capas (identidad/vidrio/capas), teñida con las tintas del tema: el cuerpo ([t1]) en la
+ * primera tinta (o en las letras, si la tinta no se distingue del papel), la sombra ([t2]) en la segunda y
+ * lo [fijo] (la chispa, los detalles) con su color.
+ */
+@Composable
+fun PersonajeTenido(
+    @DrawableRes t1: Int, @DrawableRes t2: Int, @DrawableRes fijo: Int,
+    descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp,
+) {
+    val f = FogonTema.actual
+    val cuerpo = if (contraste(f.tinta1, f.fondo) >= 2.0) f.tinta1 else f.texto
+    val sombra = if (contraste(f.tinta2, cuerpo) >= 1.25) f.tinta2 else lerp(cuerpo, f.fondo, 0.55f)
+    val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion } else Modifier
+    Box(modifier.size(tamano).then(sem)) {
+        Image(painterResource(t2), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(sombra))
+        Image(painterResource(t1), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(cuerpo))
+        Image(painterResource(fijo), null, Modifier.matchParentSize())
+    }
+}
+
+/**
+ * Una ilustración 3D (identidad/vidrio/ilustraciones): viene en gris y se tiñe con [tinta], así la misma imagen
+ * sirve en todos los temas. Las luces del gris quedan como brillos de la tinta.
+ */
+@Composable
+fun Ilustracion(@DrawableRes recurso: Int, modifier: Modifier = Modifier, tamano: Dp = 120.dp, tinta: Color = FogonTema.actual.tinta1) {
+    // Cada canal = el gris por la tinta; a las tintas oscuras se les suma algo de gris para que no pierdan
+    // las luces y se siga viendo el volumen.
+    val extra = (1f - tinta.luminance()) * 0.35f
+    fun c(v: Float) = v * 1.3f + extra
+    val matriz = androidx.compose.ui.graphics.ColorMatrix(floatArrayOf(
+        c(tinta.red), 0f, 0f, 0f, 0f,
+        0f, c(tinta.green), 0f, 0f, 0f,
+        0f, 0f, c(tinta.blue), 0f, 0f,
+        0f, 0f, 0f, 1f, 0f,
+    ))
+    Image(painterResource(recurso), null, modifier.size(tamano), colorFilter = ColorFilter.colorMatrix(matriz))
 }
 
 @Composable

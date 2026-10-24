@@ -55,6 +55,9 @@
   <string name="borrar_meta_pregunta">¿Borrar la meta %1$s?</string>
   <string name="borrar_meta_texto">Lo que abonaste se queda en tus movimientos como ahorro.</string>
   <string name="borrar_movimiento">¿Borrar este movimiento?</string>
+  <string name="borrar_sobre">Borrar sobre</string>
+  <string name="borrar_sobre_pregunta">¿Borrar el sobre %1$s?</string>
+  <string name="borrar_sobre_texto">Lo que le asignaste en cada mes vuelve a quedar por asignar.</string>
   <string name="cada_dia">Día %1$d de cada mes</string>
   <string name="cambiar_reparto">Cambiar el reparto</string>
   <string name="canal_pagos">Pagos por vencer</string>
@@ -132,6 +135,7 @@
   <string name="editar_deuda">Editar deuda</string>
   <string name="editar_fijo">Editar pago fijo</string>
   <string name="editar_meta">Editar meta</string>
+  <string name="editar_sobre">Editar sobre</string>
   <string name="elegir_sistema">Elegir cómo organizarme</string>
   <string name="en_mes">En %1$s</string>
   <string name="en_metas">Guardado en tus metas</string>
@@ -178,6 +182,8 @@
   <string name="importar_si">Recuperar</string>
   <string name="importar_titulo">¿Recuperar este respaldo?</string>
   <string name="ingreso">Ingreso</string>
+  <string name="inicio_mes">En %1$s entró %2$s y salió %3$s</string>
+  <string name="inicio_meta">Meta: %1$s</string>
   <string name="intereses_si_minimo">Si pagas solo el mínimo, el mes que viene serían unos %1$s de intereses.</string>
   <string name="kakeibo_pista">Anota todo y, al final del mes, responde las cuatro preguntas del cierre.</string>
   <string name="licencias">Licencias</string>
@@ -212,6 +218,7 @@
   <string name="nueva_meta">Nueva meta</string>
   <string name="nuevo_debo">Anotar algo que debo</string>
   <string name="nuevo_me_deben">Anotar algo que me deben</string>
+  <string name="nuevo_sobre">Nuevo sobre</string>
   <string name="opciones">Opciones</string>
   <string name="pagado">Pagado</string>
   <string name="pagar">Pagar</string>
@@ -268,6 +275,9 @@
   <string name="sistema_sobres_texto">Le das un trabajo a cada peso: repartes lo que entra en sobres (mercado, arriendo, salidas…) y gastas de cada uno.</string>
   <string name="sistema_solo">Solo anotar</string>
   <string name="sistema_solo_texto">Sin presupuesto: anotas lo que entra y sale y ves en qué se va.</string>
+  <string name="sobre_en_uso">Este sobre tiene gastos o pagos fijos, así que no se puede borrar. Puedes cambiarle el nombre, el color o el ícono.</string>
+  <string name="sobre_grupo">Grupo (para 50/30/20 y kakeibo)</string>
+  <string name="sobre_nombre">Nombre del sobre</string>
   <string name="sobres_pista">Toca un sobre para ponerle plata.</string>
   <string name="solo_anotar_pista">Estás en «Solo anotar»: no hay presupuesto. Si quieres uno, elige otro sistema en Perfil.</string>
   <string name="suma_100">Suman %1$d %% (tienen que ser 100)</string>

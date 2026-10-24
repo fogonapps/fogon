@@ -1,10 +1,7 @@
 package io.github.fogonapps.forzudo.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.drawBehind
 import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.forma
@@ -69,6 +66,7 @@ import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.Chispa
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.identidad.NumeroRiso
@@ -107,57 +105,101 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     val racha = L.racha(e, dias, hoy)
     val confirmar = LocalConfirmar.current
 
-    Column {
-        // Cabecera con el ADN de Fogón (docs/IDENTIDAD.md): etiquetas técnicas, la racha gigante y la figura-calcomanía.
+    Column(Modifier.fillMaxWidth()) {
+        // Cabecera: el personaje en una ficha de vidrio, el saludo y el botón para entrenar.
         val semana = hoy.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
-            Text("${fechaCorta(td).uppercase()} · ${stringResource(R.string.semana_corta, semana).uppercase()}",
-                style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.weight(1f))
-            Text("FZ — ${e.sessions.size.toString().padStart(3, '0')}", style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
+                io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, tamano = 40.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.inicio_fecha, semana, fechaCorta(td)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
+                    style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
+                .clickable(onClickLabel = stringResource(R.string.pestana_entrenar)) { vm.irA(Pestana.ENTRENAR) }, contentAlignment = Alignment.Center) {
+                io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, stringResource(R.string.pestana_entrenar), tamano = 22.dp)
+            }
         }
-        Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
-            style = MaterialTheme.typography.headlineLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp))
-        val acento = f.acentoTexto
-        // La racha impresa en dos pasadas (la segunda tinta corrida), la figura-calcomanía y el sello de la mejor racha.
-        Box(Modifier.fillMaxWidth().height(262.dp)) {
-            NumeroRiso("${racha.actual}", 200.sp, Modifier.padding(start = 14.dp).semantics { contentDescription = "${racha.actual}" }, alto = 170.sp)
-            Column(Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = 10.dp), horizontalAlignment = Alignment.End) {
-                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 15.sp,
-                    letterSpacing = 1.5.sp, color = acento, textAlign = TextAlign.End, modifier = Modifier.width((110f * f.anchoCifra / 0.47f).dp))
-                Box {
-                    io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, Modifier.rotate(7f), tamano = 128.dp)
-                    if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 22.dp)
+
+        // La semana del calendario: los días con entreno van llenos de la primera tinta; hoy, con borde.
+        val lunes = java.time.LocalDate.parse(ws)
+        val fechasHechas = e.sessions.map { it.date }.toSet()
+        val estHecho = stringResource(R.string.dia_hecho); val estPendiente = stringResource(R.string.dia_pendiente)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            (0 until 7).forEach { i ->
+                val d = lunes.plusDays(i.toLong())
+                val hecho = iso(d) in fechasHechas
+                val esHoy = d == hoy
+                val forma = io.github.fogonapps.identidad.FormaPildora
+                Column(
+                    Modifier.weight(1f).height(72.dp).clip(forma)
+                        .then(if (hecho) Modifier.background(f.tinta1) else Modifier.background(f.superficie))
+                        .border(if (esHoy) 1.5.dp else f.borde, if (esHoy) f.acentoTexto else if (hecho) f.tinta1 else f.linea, forma)
+                        .semantics(mergeDescendants = true) { stateDescription = if (hecho) estHecho else estPendiente },
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                ) {
+                    val c = if (hecho) f.sobreTinta1 else if (esHoy) f.texto else f.textoSuave
+                    Box(Modifier.height(16.dp), contentAlignment = Alignment.Center) {
+                        if (hecho) io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 14.dp, tinta = c)
+                        else Box(Modifier.size(5.dp).clip(CircleShape).background(if (esHoy) f.acentoTexto else f.linea))
+                    }
+                    Text(Vocabulario.actual.diasCortos[d.dayOfWeek.value % 7], style = MaterialTheme.typography.labelSmall, color = c)
+                    Text("${d.dayOfMonth}", style = MaterialTheme.typography.titleSmall, color = c)
                 }
             }
-            Sello(stringResource(R.string.racha_sello, racha.mejor), stringResource(R.string.racha_mejor, racha.mejor),
-                Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = 4.dp))
+        }
+
+        // La racha: el número de puntos sobre su halo, la mejor racha en una píldora y el personaje.
+        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(230.dp).tarjetaFogon(forma(30.dp))) {
+            Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 1f else 0.7f), centro = androidx.compose.ui.geometry.Offset(0.28f, 0.5f)))
+            Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+                NumeroRiso("${racha.actual}", 104.sp, Modifier.semantics { contentDescription = "${racha.actual}" })
+                MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
+            }
+            Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)) {
+                io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, tamano = 168.dp)
+                if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 20.dp)
+            }
         }
         Text(stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar),
-            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 20.dp))
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
 
-        Seccion(stringResource(R.string.esta_semana, hechos.size, pluralStringResource(R.plurals.entrenos, dias.size, dias.size))) {
-            val hoyId = L.diaDeHoy(dias, hoy)
-            FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val estHecho = stringResource(R.string.dia_hecho); val estPendiente = stringResource(R.string.dia_pendiente)
-                dias.forEachIndexed { i, d ->
-                    val hecho = d.id in hechos
-                    Column(
-                        Modifier.width(64.dp)
-                            .then(if (hecho) Modifier.brillo(f.tinta1, forma(12.dp)).clip(forma(12.dp)).background(f.tinta1).border(f.borde, f.linea, forma(12.dp))
-                                else Modifier.tarjetaFogon(forma(12.dp), sombra = false))
-                            .then(if (d.id == hoyId) Modifier.border(3.dp, f.acentoTexto, forma(12.dp)) else Modifier)
-                            .padding(vertical = 8.dp, horizontal = 4.dp)
-                            .semantics { stateDescription = if (hecho) estHecho else estPendiente },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        val c = if (hecho) f.sobreTinta1 else f.texto
-                        if (hecho) io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = c, corrida = null)
-                        Text(d.dow?.let { Vocabulario.actual.diasCortos[it] } ?: "${i + 1}", style = MaterialTheme.typography.labelLarge, color = c)
-                        Text(d.title, style = MaterialTheme.typography.labelSmall, color = c, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
+        // Esta semana y el volumen, lado a lado.
+        val deLaSemana = e.sessions.filter { inicioSemana(it.date) == ws }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f).tarjetaFogon(forma(24.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.inicio_esta_semana), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text(stringResource(R.string.inicio_de, hechos.size, dias.size), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    dias.forEach { d -> Box(Modifier.size(8.dp).clip(CircleShape).background(if (d.id in hechos) f.tinta1 else f.linea)) }
                 }
             }
+            Column(Modifier.weight(1f).tarjetaFogon(forma(24.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.inicio_volumen), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text(fmtVol(deLaSemana.sumOf { L.volumen(it.entries) }),
+                    style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1)
+                Text(pluralStringResource(R.plurals.entrenos, deLaSemana.size, deLaSemana.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+        }
+
+        // Lo que toca: la rutina de hoy (o la siguiente sin hacer esta semana) y el botón para empezarla.
+        val toca = dias.firstOrNull { it.id == L.diaDeHoy(dias, hoy) && it.id !in hechos } ?: dias.firstOrNull { it.id !in hechos }
+        if (toca != null) Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon(forma(24.dp)).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_mancuerna, tamano = 64.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.inicio_hoy_toca), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text(toca.title, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(pluralStringResource(R.plurals.n_ejercicios, toca.ejercicios.size, toca.ejercicios.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+            if (e.active == null)
+                BotonRiso(stringResource(R.string.empezar), { vm.empezar(toca.id) }, habilitado = toca.ejercicios.isNotEmpty())
         }
 
         Seccion(stringResource(R.string.semanas_de, Vocabulario.actual.mesesLargos[mes.takeLast(2).toInt() - 1])) {
@@ -324,7 +366,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
             // Cabecera con el ADN: el nombre del rango gigante, en su color, y la figura-calcomanía.
             val colorRango = ov?.rango?.let { colorHex(it.color) } ?: f.textoSuave
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
-                Text(stringResource(R.string.rango_general).uppercase(), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.rango_general), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.weight(1f))
                 ov?.rango?.let { r -> vm.bib.niveles.indexOfFirst { it.n == r.nombre }.takeIf { it >= 0 } }?.let { i -> Text("${i + 1} / ${vm.bib.niveles.size}", style = MaterialTheme.typography.labelSmall, color = f.textoSuave) }
             }
             Box(Modifier.fillMaxWidth().height(214.dp)) {
@@ -332,8 +374,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 // Lo más grande que quepa a lo ancho: cada mayúscula mide unos [Fogon.anchoCifra] em.
                 val tam = if (ov == null) 44f else minOf(120f, 340f / (f.anchoCifra * palabra.length.coerceAtLeast(1)))
                 NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
-                Image(androidx.compose.ui.res.painterResource(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos), null,
-                    Modifier.align(Alignment.BottomEnd).padding(end = 16.dp).size(120.dp).rotate(-5f))
+                Munieco(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_t1, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), tamano = 120.dp)
                 Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Insignia(ov?.rango, 40.dp)
@@ -589,25 +630,15 @@ fun DialogoNombre(actual: String, onListo: (String) -> Unit, onCerrar: () -> Uni
 }
 
 
-/**
- * Un sello de goma: círculo de línea cortada, un poco girado, con la llama de la racha y un texto corto.
- * [descripcion] es lo que dicen los lectores de pantalla.
- */
+/** La mejor racha en una píldora: el ícono de la racha y el número, sin girar. */
 @Composable
-private fun Sello(texto: String, descripcion: String, modifier: Modifier = Modifier) {
+private fun MejorRacha(texto: String) {
     val f = FogonTema.actual
-    val tinta = f.acentoTexto
-    Column(
-        modifier.rotate(-14f).size(78.dp).clip(CircleShape).background(f.fondo)
-            .drawBehind {
-                val ancho = 2.5.dp.toPx()
-                drawCircle(tinta, size.minDimension / 2 - ancho, style = androidx.compose.ui.graphics.drawscope.Stroke(ancho,
-                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 3.dp.toPx()))))
-            }
-            .semantics(mergeDescendants = true) { contentDescription = descripcion },
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    Row(
+        Modifier.clip(FormaPildora).background(f.tinta2.copy(alpha = 0.35f)).padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        io.github.fogonapps.identidad.IconoRiso(Iconos.Racha, null, tamano = 26.dp, tinta = f.tinta1)
-        Text(texto.uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 11.sp, letterSpacing = 1.4.sp, color = tinta, maxLines = 1)
+        io.github.fogonapps.identidad.IconoRiso(Iconos.Racha, null, tamano = 16.dp, tinta = f.texto, corrida = null)
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 1)
     }
 }

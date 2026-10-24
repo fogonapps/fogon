@@ -36,7 +36,7 @@ object Iconos {
     val Lapiz = IconosFogon.Lapiz
     val Candado = IconosFogon.Candado
 
-    /** Íconos de cuentas y categorías, por nombre (el que se guarda en Categoria.icono). */
+    /** Íconos de cuentas, categorías y metas, por nombre (el que se guarda en Categoria.icono y Meta.icono). */
     val porNombre: Map<String, Dibujo> = mapOf(
         "efectivo" to dibujo("efectivo", relleno("M2.6 6.6h18.8v10.8H2.6z"), hueco("M14.6 12a2.6 2.6 0 1 1-5.2 0a2.6 2.6 0 1 1 5.2 0z")),
         "billetera" to dibujo("billetera", relleno("M3.5 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15z"), relleno("M3.5 7 15 3.6V7z"), hueco("M15 12.2h5.5v3.6H15z")),
@@ -60,8 +60,16 @@ object Iconos {
         "prima" to dibujo("prima", relleno("M4.4 10.4h15.2v10H4.4z"), relleno("M3 7h18v3.4H3z"), huecoTrazo("M12 10.4v10", 2f), trazo("M12 7C10 3 7 4 8 6M12 7c2-4 5-3 4-1", 2.4f)),
         "extra" to dibujo("extra", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z")),
         "moneda" to Moneda,
-        "viaje" to gordo("viaje", 2.6f, "M3 18c3-1 5-1 9 0s6 1 9 0M12 4c3 2 4 5 3 9M12 4c-3 2-4 5-3 9M12 4v14"),
+        "viaje" to dibujo("viaje", relleno("M20.6 3.4c-.9-.9-2.4-.7-3.4.3l-3.3 3.3-8.4-2.4-1.8 1.8 6.8 4-3.3 3.3-2.5-.4-1.4 1.4 3.3 1.9 1.9 3.3 1.4-1.4-.4-2.5 3.3-3.3 4 6.8 1.8-1.8-2.4-8.4 3.3-3.3c1-1 1.2-2.5.3-3.4z")),
         "celular" to dibujo("celular", relleno("M6.4 2.6h11.2a1.6 1.6 0 0 1 1.6 1.6v15.6a1.6 1.6 0 0 1-1.6 1.6H6.4a1.6 1.6 0 0 1-1.6-1.6V4.2a1.6 1.6 0 0 1 1.6-1.6z"), huecoTrazo("M10.5 18h3", 2f)),
+        "mascota" to dibujo("mascota", relleno("M12 11.6c3 0 5.4 2.6 5.4 5 0 1.7-1.4 2.6-2.8 2.6-1.1 0-1.7-.5-2.6-.5s-1.5.5-2.6.5c-1.4 0-2.8-.9-2.8-2.6 0-2.4 2.4-5 5.4-5z"), relleno("M3.8 10.4a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0z"), relleno("M7.3 6.4a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0 -3.8 0z"), relleno("M12.9 6.4a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0 -3.8 0z"), relleno("M16.6 10.4a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0z")),
+        "ejercicio" to dibujo("ejercicio", relleno("M3.6 9.6h2.6v4.8H3.6z"), relleno("M17.8 9.6h2.6v4.8h-2.6z"), relleno("M6.2 7h2.8v10H6.2z"), relleno("M15 7h2.8v10H15z"), trazo("M9 12h6", 2.6f)),
+        "cafe" to dibujo("cafe", relleno("M4.4 9h11v5.4a4.6 4.6 0 0 1-4.6 4.6H9a4.6 4.6 0 0 1-4.6-4.6z"), trazo("M15.4 10.6h1.4a2.5 2.5 0 0 1 0 5h-1.6", 2.4f), trazo("M8.4 3.6c-.8 1 .8 2 0 3M12 3.6c-.8 1 .8 2 0 3", 2f)),
+        "ropa" to dibujo("ropa", relleno("M8.6 3.8 3.4 6.6l1.8 3.6 2.6-1V20.2h8.4V9.2l2.6 1 1.8-3.6-5.2-2.8c-.5 1.4-1.8 2.2-3.4 2.2s-2.9-.8-3.4-2.2z")),
+        "internet" to dibujo("internet", trazo("M3.6 9.4a12 12 0 0 1 16.8 0M6.6 12.7a7.6 7.6 0 0 1 10.8 0M9.6 16a3.4 3.4 0 0 1 4.8 0", 2.6f), relleno("M10.6 19.4a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0z")),
+        "musica" to dibujo("musica", relleno("M5.2 17.6a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0z"), relleno("M14.4 15.6a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0z"), trazo("M10.4 17.6V5.8l9.2-2.2v12", 2.4f)),
+        "juegos" to dibujo("juegos", relleno("M7.2 7.8h9.6a4.6 4.6 0 0 1 4.4 5.9l-1 3.4a2.2 2.2 0 0 1-3.8.8L14.6 16H9.4l-1.8 1.9a2.2 2.2 0 0 1-3.8-.8l-1-3.4a4.6 4.6 0 0 1 4.4-5.9z"), huecoTrazo("M7.6 10.6v3.2M6 12.2h3.2", 1.8f), hueco("M15.1 12.2a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0z")),
+        "regalo" to dibujo("regalo", relleno("M4.4 10.4h15.2v10H4.4z"), relleno("M3 7h18v3.4H3z"), huecoTrazo("M12 7v13.4", 2f), trazo("M12 7C10 3 7 4 8 6M12 7c2-4 5-3 4-1", 2.4f)),
     )
 
     fun de(nombre: String): Dibujo = porNombre[nombre] ?: Moneda

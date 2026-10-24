@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name" translatable="false">El Forzudo</string>
+  <string name="inicio_de">%1$d of %2$d</string>
+  <string name="inicio_esta_semana">This week</string>
+  <string name="inicio_fecha">Week %1$d, %2$s</string>
+  <string name="inicio_hoy_toca">Up next</string>
+  <string name="inicio_volumen">Volume</string>
   <string name="voc_decimal">.</string>
   <string name="voc_seg">sec</string>
   <string name="voc_reps">reps</string>
@@ -137,7 +142,6 @@
   </plurals>
   <string name="racha_cumpliendo">completing your week</string>
   <string name="racha_empezar">Complete all your workouts this week to start your streak</string>
-  <string name="racha_sello">Best %1$d</string>
   <string name="racha_mejor">Best streak: %1$d</string>
   <string name="esta_semana">This week: %1$d of %2$s</string>
   <string name="dia_hecho">done</string>

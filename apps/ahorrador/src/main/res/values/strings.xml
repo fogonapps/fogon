@@ -56,6 +56,9 @@
   <string name="borrar_meta_pregunta">Delete the goal %1$s?</string>
   <string name="borrar_meta_texto">What you added stays in your entries as savings.</string>
   <string name="borrar_movimiento">Delete this entry?</string>
+  <string name="borrar_sobre">Delete envelope</string>
+  <string name="borrar_sobre_pregunta">Delete the envelope %1$s?</string>
+  <string name="borrar_sobre_texto">What you assigned to it each month goes back to unassigned.</string>
   <string name="cada_dia">Day %1$d of every month</string>
   <string name="cambiar_reparto">Change the split</string>
   <string name="canal_pagos">Upcoming payments</string>
@@ -133,6 +136,7 @@
   <string name="editar_deuda">Edit debt</string>
   <string name="editar_fijo">Edit fixed payment</string>
   <string name="editar_meta">Edit goal</string>
+  <string name="editar_sobre">Edit envelope</string>
   <string name="elegir_sistema">Choose how to budget</string>
   <string name="en_mes">In %1$s</string>
   <string name="en_metas">Saved in your goals</string>
@@ -179,6 +183,8 @@
   <string name="importar_si">Restore</string>
   <string name="importar_titulo">Restore this backup?</string>
   <string name="ingreso">Income</string>
+  <string name="inicio_mes">In %1$s, %2$s in and %3$s out</string>
+  <string name="inicio_meta">Goal: %1$s</string>
   <string name="intereses_si_minimo">If you pay only the minimum, next month’s interest would be about %1$s.</string>
   <string name="kakeibo_pista">Log everything and, at the end of the month, answer the four wrap-up questions.</string>
   <string name="licencias">Licenses</string>
@@ -213,6 +219,7 @@
   <string name="nueva_meta">New goal</string>
   <string name="nuevo_debo">Add something I owe</string>
   <string name="nuevo_me_deben">Add something owed to me</string>
+  <string name="nuevo_sobre">New envelope</string>
   <string name="opciones">Options</string>
   <string name="pagado">Paid</string>
   <string name="pagar">Pay</string>
@@ -269,6 +276,9 @@
   <string name="sistema_sobres_texto">Give every peso a job: split your income into envelopes (groceries, rent, going out…) and spend from each one.</string>
   <string name="sistema_solo">Just track</string>
   <string name="sistema_solo_texto">No budget: log what comes in and goes out and see where it goes.</string>
+  <string name="sobre_en_uso">This envelope has expenses or recurring payments, so it can’t be deleted. You can change its name, color or icon.</string>
+  <string name="sobre_grupo">Group (for 50/30/20 and kakeibo)</string>
+  <string name="sobre_nombre">Envelope name</string>
   <string name="sobres_pista">Tap an envelope to put money in it.</string>
   <string name="solo_anotar_pista">You’re on “Just track”: there’s no budget. If you want one, choose another method in Profile.</string>
   <string name="suma_100">They add up to %1$d%% (must be 100)</string>

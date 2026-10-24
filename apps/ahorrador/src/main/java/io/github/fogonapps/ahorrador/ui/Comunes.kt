@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import io.github.fogonapps.identidad.contraste
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,10 +45,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import io.github.fogonapps.identidad.Dibujo
 import io.github.fogonapps.identidad.FormaMancha
 import io.github.fogonapps.identidad.IconoRiso
-import io.github.fogonapps.identidad.legibleSobre
 import io.github.fogonapps.identidad.tarjetaDestacada
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -93,11 +94,11 @@ fun Nombre(texto: String, tamano: TextUnit = 15.sp, color: Color = FogonTema.act
     Text(texto, fontFamily = FogonTema.actual.titulos, fontSize = tamano, color = color, modifier = modifier, maxLines = 1)
 }
 
-/** Encabezado de sección en la letra de las cifras, en mayúsculas. */
+/** Encabezado de sección, como una frase. */
 @Composable
 fun Seccion(titulo: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}) {
     Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(titulo.uppercase(), fontFamily = FogonTema.actual.cifras, fontSize = 18.sp, letterSpacing = 0.06.sp * 10, color = FogonTema.actual.texto,
+        Text(titulo, style = MaterialTheme.typography.titleLarge, color = FogonTema.actual.texto,
             modifier = Modifier.weight(1f).semantics { heading() })
         derecha()
     }
@@ -110,12 +111,17 @@ fun Pista(texto: String, modifier: Modifier = Modifier, centro: Boolean = false)
         modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp))
 }
 
-/** Ficha de una categoría o cuenta: una mancha de su tinta, con borde, y su ícono encima en la tinta que se lea. */
+/**
+ * Ficha de una categoría o cuenta, igual en todas: un círculo de vidrio teñido de su color y el ícono de
+ * línea en ese color (aclarado u oscurecido para que se distinga del papel).
+ */
 @Composable
 fun Ficha(color: Color, icono: Dibujo, tamano: Dp = 44.dp, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    Box(modifier.size(tamano).clip(FormaMancha).background(color).border(f.borde, f.linea, FormaMancha), contentAlignment = Alignment.Center) {
-        IconoRiso(icono, null, tamano = tamano * 0.5f, tinta = legibleSobre(color, listOf(f.texto, f.fondo, Color.Black, Color.White)), corrida = null)
+    val linea = if (contraste(color, f.fondo) >= 3.0) color else lerp(color, f.texto, 0.45f)
+    Box(modifier.size(tamano).clip(CircleShape).background(color.copy(alpha = if (f.oscuro) 0.18f else 0.14f)).border(f.borde, f.linea, CircleShape),
+        contentAlignment = Alignment.Center) {
+        IconoRiso(icono, null, tamano = tamano * 0.5f, tinta = linea)
     }
 }
 
@@ -150,18 +156,17 @@ fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Botón redondo blanco con ícono oscuro (acciones rápidas). */
+/** Acción rápida: un círculo de vidrio con su ícono, o lleno de la primera tinta si es la principal ([acento]). */
 @Composable
 fun AccionRedonda(icono: Dibujo, texto: String, onClick: () -> Unit, acento: Boolean = false) {
     val f = FogonTema.actual
-    val fondo = if (acento) f.tinta1 else f.superficie
-    val tinta = if (acento) f.sobreTinta1 else f.texto
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.clip(forma(16.dp)).clickable(onClick = onClick).padding(4.dp)) {
-        Box(Modifier.size(62.dp).brillo(fondo, FormaMancha).clip(FormaMancha).background(fondo).border(f.borde, f.linea, FormaMancha), contentAlignment = Alignment.Center) {
-            IconoRiso(icono, null, tamano = 26.dp, tinta = tinta, corrida = if (acento) null else f.tinta2)
+        Box(Modifier.size(56.dp).clip(CircleShape).background(if (acento) f.tinta1 else f.superficie)
+            .border(f.borde, if (acento) f.tinta1 else f.linea, CircleShape), contentAlignment = Alignment.Center) {
+            IconoRiso(icono, null, tamano = 24.dp, tinta = if (acento) f.sobreTinta1 else f.texto)
         }
-        Text(texto, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.texto)
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = f.texto)
     }
 }
 

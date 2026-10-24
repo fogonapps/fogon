@@ -60,6 +60,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -67,6 +68,8 @@ import io.github.fogonapps.identidad.CORREO_FOGON
 import io.github.fogonapps.identidad.URL_CODIGO
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.NumeroRiso
+import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
 import io.github.fogonapps.identidad.Logro
@@ -280,10 +283,15 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     val f = FogonTema.actual
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
-        Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.app_name), tamano = 150.dp)
-            Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
-            Text("${r.titulo}, ${fechaCorta(r.fecha)}", color = f.textoSuave)
+        // La tarjeta del final: el saludo, el volumen en puntos sobre su halo y el personaje.
+        Box(Modifier.fillMaxWidth().padding(16.dp).height(220.dp).tarjetaFogon(forma(30.dp))) {
+            Box(Modifier.matchParentSize().haloPuntos(f.tinta2, centro = androidx.compose.ui.geometry.Offset(0.85f, 0.25f)))
+            Column(Modifier.padding(22.dp).fillMaxWidth(0.6f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+                Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+            NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
+            Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
         }
         Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}")
         if (r.volumen >= 150) {
@@ -299,8 +307,16 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
                 }
             }
         }
-        if (r.records.isNotEmpty()) Seccion(stringResource(R.string.records_nuevos)) {
-            r.records.forEach { Logro(it, Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) }
+        // Los récords nuevos, en una tarjeta con el trofeo.
+        if (r.records.isNotEmpty()) Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(26.dp)).padding(start = 18.dp, top = 16.dp, bottom = 16.dp, end = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.records_nuevos), style = MaterialTheme.typography.titleLarge, color = f.texto)
+                r.records.forEach { Logro(it) }
+            }
+            io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_trofeo, tamano = 110.dp)
         }
         Box(Modifier.padding(16.dp)) { BotonRiso(stringResource(R.string.volver_inicio), vm::cerrar, Modifier.fillMaxWidth()) }
     }

@@ -43,8 +43,10 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.R
+import io.github.fogonapps.ahorrador.datos.Categoria
 import io.github.fogonapps.ahorrador.datos.Estado
 import io.github.fogonapps.ahorrador.datos.Formato
+import io.github.fogonapps.ahorrador.datos.Grupo
 import io.github.fogonapps.ahorrador.datos.Meta
 import io.github.fogonapps.ahorrador.datos.Sistema
 import io.github.fogonapps.ahorrador.datos.Sobre
@@ -54,6 +56,7 @@ import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.FormaMancha
 import io.github.fogonapps.identidad.Logro
 import io.github.fogonapps.identidad.Tintas
 import io.github.fogonapps.identidad.R as RId
@@ -149,10 +152,15 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
     val asignados = e.sobres[mes].orEmpty()
     val sobres = e.categorias.filter { !it.ingreso }.map { Sobre(it.id, it.nombre, it.color, it.icono, asignados[it.id] ?: 0, L.gastadoEn(e, mes, it.id)) }
 
-    Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.por_asignar), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        Pesos(L.porAsignar(e, mes), 40.sp, FogonTema.actual.sobreDestacada)
-        Text(stringResource(R.string.por_asignar_texto), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+    Row(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(start = 22.dp, top = 22.dp, bottom = 22.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.por_asignar), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+            io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(L.porAsignar(e, mes)), 40.sp, color = FogonTema.actual.sobreDestacada)
+            Text(stringResource(R.string.por_asignar_texto), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
+        }
+        io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.ahorrador.R.drawable.ilustracion_sobre, tamano = 96.dp,
+            // Blanco sobre la tarjeta si se distingue; si la tarjeta es clara, del color del papel.
+            tinta = if (io.github.fogonapps.identidad.contraste(androidx.compose.ui.graphics.Color.White, FogonTema.actual.tinta1) >= 3.0) androidx.compose.ui.graphics.Color.White else FogonTema.actual.fondo)
     }
     if (asignados.isEmpty() && e.sobres[mesAnterior(mes)].orEmpty().isNotEmpty()) {
         BotonSecundario(stringResource(R.string.copiar_sobres, Formato.mes(mesAnterior(mes))), { vm.copiarSobresAnteriores(mes) },
@@ -160,6 +168,7 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
     }
     Pista(stringResource(R.string.sobres_pista))
     sobres.sortedByDescending { (it.asignado ?: 0) + it.gastado }.forEach { s -> TarjetaSobre(s, s.nombre) { editando = s } }
+    BotonSecundario(stringResource(R.string.nuevo_sobre), { vm.abrir(Pantalla.EditarSobre(null)) }, Modifier.fillMaxWidth().padding(16.dp))
 
     editando?.let { s ->
         val exceso = -(s.queda ?: 0)
@@ -178,6 +187,9 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
                     }
                 }
             }
+            TextButton({ editando = null; vm.abrir(Pantalla.EditarSobre(s.clave)) }) {
+                Text(stringResource(R.string.editar_sobre), color = f.acentoTexto, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -188,7 +200,7 @@ private fun Regla(vm: AhorradorViewModel, e: Estado, mes: String) {
     var cambiando by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(R.string.entro_en, Formato.mes(mes)), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        Pesos(vm.L.ingresos(e, mes), 40.sp, FogonTema.actual.sobreDestacada)
+        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(vm.L.ingresos(e, mes)), 40.sp, color = FogonTema.actual.sobreDestacada)
         Text(stringResource(R.string.reparto_es, e.reparto[0], e.reparto[1], e.reparto[2]), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
     }
     vm.L.sobres(e, mes).forEach { s -> TarjetaSobre(s, stringResource(nombreGrupo(s.clave)), null) }
@@ -231,7 +243,7 @@ private fun Kakeibo(vm: AhorradorViewModel, e: Estado, mes: String) {
     val ahorro = L.ingresos(e, mes) - L.gastos(e, mes)
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().clickable { meta = true }.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(R.string.quiero_ahorrar), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        Pesos(e.metaAhorroMes ?: 0, 40.sp, FogonTema.actual.sobreDestacada)
+        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(e.metaAhorroMes ?: 0), 40.sp, color = FogonTema.actual.sobreDestacada)
         Text(stringResource(R.string.llevas_ahorrado, Formato.pesos(ahorro)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
         if (e.metaAhorroMes != null && e.metaAhorroMes > 0) Barra(ahorro.toFloat() / e.metaAhorroMes, FogonTema.actual.sobreDestacada, Modifier.padding(top = 6.dp))
     }
@@ -257,7 +269,7 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
     } else {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.en_metas), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-            Pesos(e.metas.sumOf { L.ahorradoEn(e, it.id) }, 40.sp, FogonTema.actual.sobreDestacada)
+            io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(e.metas.sumOf { L.ahorradoEn(e, it.id) }), 40.sp, color = FogonTema.actual.sobreDestacada)
         }
         e.metas.forEach { m ->
             val ahorrado = L.ahorradoEn(e, m.id)
@@ -361,6 +373,66 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
         if (m != null) BotonSecundario(stringResource(R.string.borrar_meta), {
             confirmar(vm.tx(R.string.borrar_meta_pregunta, m.nombre), vm.tx(R.string.borrar_meta_texto)) { vm.borrarMeta(m.id) }
         }, Modifier.fillMaxWidth(), peligro = true)
+    }
+    Espacio(40.dp)
+}
+
+/** Íconos para los sobres: todos los de categorías, sin los de cuentas. */
+val ICONOS_SOBRE = Iconos.porNombre.keys.filter { it !in setOf("efectivo", "billetera", "banco", "tarjeta", "moneda", "prima") }
+
+/** Grupos de un sobre de gasto: los usan la regla 50/30/20 y el kakeibo. */
+private val GRUPOS_SOBRE = listOf(Grupo.NECESIDAD, Grupo.GUSTO, Grupo.CULTURA, Grupo.IMPREVISTO)
+
+/** Crear o cambiar un sobre: nombre, grupo, color e ícono. Se borra solo si no tiene gastos ni pagos fijos. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EditarSobre(vm: AhorradorViewModel, e: Estado, id: String?) {
+    val f = FogonTema.actual
+    val confirmar = LocalConfirmar.current
+    val c = e.categorias.firstOrNull { it.id == id }
+    var nombre by rememberSaveable { mutableStateOf(c?.nombre.orEmpty()) }
+    var grupo by rememberSaveable { mutableStateOf(c?.grupo ?: Grupo.GUSTO) }
+    var color by rememberSaveable { mutableLongStateOf(c?.color ?: (COLORES_META[e.categorias.size % COLORES_META.size].toArgb().toLong() and 0xFFFFFFFFL)) }
+    var icono by rememberSaveable { mutableStateOf(c?.icono ?: "otros") }
+    val colores = (listOfNotNull(c?.color) + COLORES_META.map { it.toArgb().toLong() and 0xFFFFFFFFL }).distinct()
+
+    Cabecera(stringResource(if (c == null) R.string.nuevo_sobre else R.string.editar_sobre), vm::cerrar)
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Ficha(colorDe(color), Iconos.de(icono), 56.dp)
+            Nombre(nombre.ifBlank { stringResource(R.string.sobre_nombre) }, 20.sp)
+        }
+        CampoTexto(nombre, { nombre = it.take(30) }, stringResource(R.string.sobre_nombre))
+        Text(stringResource(R.string.sobre_grupo), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+        Selector(GRUPOS_SOBRE.map { it to stringResource(nombreGrupo(it.name)) }, grupo, { grupo = it })
+        Text(stringResource(R.string.color), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            colores.forEach { valor ->
+                Box(Modifier.size(40.dp).clip(CircleShape).background(colorDe(valor)).then(if (valor == color) Modifier.border(3.dp, f.texto, CircleShape) else Modifier)
+                    .clickable { color = valor }.semantics { selected = valor == color })
+            }
+        }
+        Text(stringResource(R.string.icono), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ICONOS_SOBRE.forEach { i ->
+                Box(Modifier.size(48.dp).clip(FormaMancha).then(if (i == icono) Modifier.border(3.dp, f.texto, FormaMancha) else Modifier)
+                    .clickable { icono = i }.semantics { selected = i == icono; contentDescription = i }, contentAlignment = Alignment.Center) {
+                    Ficha(colorDe(if (i == icono) color else f.superficie.toArgb().toLong() and 0xFFFFFFFFL), Iconos.de(i), 44.dp)
+                }
+            }
+        }
+        BotonRiso(stringResource(R.string.guardar), {
+            if (nombre.isNotBlank()) {
+                vm.guardarCategoria((c ?: Categoria("", "", color, icono)).copy(nombre = nombre.trim(), color = color, icono = icono, grupo = grupo))
+                vm.cerrar()
+            }
+        }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank())
+        if (c != null) {
+            if (vm.categoriaEnUso(e, c.id)) Pista(stringResource(R.string.sobre_en_uso))
+            else BotonSecundario(stringResource(R.string.borrar_sobre), {
+                confirmar(vm.tx(R.string.borrar_sobre_pregunta, c.nombre), vm.tx(R.string.borrar_sobre_texto)) { vm.borrarCategoria(c.id) }
+            }, Modifier.fillMaxWidth(), peligro = true)
+        }
     }
     Espacio(40.dp)
 }

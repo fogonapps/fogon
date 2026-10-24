@@ -25,6 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
+import io.github.fogonapps.identidad.haloPuntos
+import io.github.fogonapps.identidad.NumeroRiso
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.border
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -129,42 +134,65 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     val hoy = vm.hoy()
     val mes = mesDe(hoy)
 
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(Formato.fechaCorta(hoy) + " " + hoy.year, style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-            Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
-                fontFamily = FogonTema.actual.titulos, fontSize = 28.sp, color = f.texto, maxLines = 1)
+    // Cabecera: el personaje en una ficha de vidrio, el saludo y el perfil.
+    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
+            io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_ahorrador, null, tamano = 40.dp)
         }
-        Box(Modifier.size(52.dp).brillo(f.tinta1, io.github.fogonapps.identidad.FormaMancha).clip(io.github.fogonapps.identidad.FormaMancha)
-            .background(f.tinta1).clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
-            io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.perfil), tamano = 26.dp, tinta = f.sobreTinta1, corrida = null)
+        Column(Modifier.weight(1f)) {
+            Text(Formato.fechaCorta(hoy) + " " + hoy.year, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
+                style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1)
+        }
+        Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
+            .clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.perfil), tamano = 22.dp)
         }
     }
 
-    // La tarjeta grande: lo que queda para gastar este mes.
-    Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        Pesos(L.patrimonio(e), 46.sp, FogonTema.actual.sobreDestacada)
-        Text(stringResource(R.string.en_mes, Formato.mes(mes)), style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f),
-            modifier = Modifier.padding(top = 4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            MiniDato(stringResource(R.string.entro), L.ingresos(e, mes))
-            MiniDato(stringResource(R.string.salio), L.gastos(e, mes))
-            MiniDato(stringResource(R.string.guardaste), L.ahorrado(e, mes))
-        }
+    // Lo que tienes: el número de puntos sobre su halo, y el mes en una línea.
+    Column(
+        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).height(150.dp)
+            .haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 0.9f else 0.6f), centro = androidx.compose.ui.geometry.Offset(0.5f, 0.45f)),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        val total = Formato.pesos(L.patrimonio(e))
+        NumeroRiso(total, (if (total.length <= 10) 50 else if (total.length <= 13) 40 else 32).sp, color = f.texto)
+        Text(stringResource(R.string.inicio_mes, Formato.mes(mes), Formato.pesos(L.ingresos(e, mes)), Formato.pesos(L.gastos(e, mes))),
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp))
         if (e.sistema == Sistema.SOBRES && L.porAsignar(e, mes) > 0) {
             Text(stringResource(R.string.por_asignar_pista, Formato.pesos(L.porAsignar(e, mes))), style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold, color = FogonTema.actual.sobrePildora,
-                modifier = Modifier.padding(top = 6.dp).clip(FormaPildora).background(FogonTema.actual.pildora).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
+                color = f.sobreTinta1,
+                modifier = Modifier.padding(top = 8.dp).clip(FormaPildora).background(f.tinta1).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
                     .padding(horizontal = 14.dp, vertical = 6.dp))
         }
     }
 
-    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-        AccionRedonda(Iconos.Gasto, stringResource(R.string.gasto), { vm.abrir(Pantalla.Anotar(TipoMovimiento.GASTO)) })
+    // Las acciones, en una tarjeta de vidrio.
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio().padding(vertical = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        AccionRedonda(Iconos.Gasto, stringResource(R.string.gasto), { vm.abrir(Pantalla.Anotar(TipoMovimiento.GASTO)) }, acento = true)
         AccionRedonda(Iconos.Ingreso, stringResource(R.string.ingreso), { vm.abrir(Pantalla.Anotar(TipoMovimiento.INGRESO)) })
         AccionRedonda(Iconos.Pasar, stringResource(R.string.pasar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.TRASPASO)) })
-        AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) }, acento = true)
+        AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) })
+    }
+
+    // La meta que va más cerca, con el personaje empujando su moneda.
+    e.metas.maxByOrNull { L.progreso(e, it) }?.let { m ->
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio().clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.METAS) }
+                .padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.inicio_meta, m.nombre), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
+                Text(Formato.pesos(L.ahorradoEn(e, m.id)) + " " + stringResource(R.string.de_x, Formato.pesos(m.objetivo)), style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1)
+                Barra(L.progreso(e, m).toFloat(), f.tinta2)
+            }
+            io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.ahorrador.R.drawable.ilustracion_monedas, tamano = 88.dp,
+                tinta = if (f.tinta2.luminance() > 0.3f) f.tinta2 else f.tinta1)
+        }
     }
 
     // En los primeros días del mes, invita a cerrar el anterior (el kakeibo lo hace siempre).

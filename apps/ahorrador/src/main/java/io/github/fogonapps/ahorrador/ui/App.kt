@@ -126,6 +126,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.Deudas -> Deudas(vm, estado)
                             is Pantalla.EditarDeuda -> EditarDeuda(vm, estado, p.id, p.meDeben)
                             is Pantalla.EditarMeta -> EditarMeta(vm, estado, p.id)
+                            is Pantalla.EditarSobre -> EditarSobre(vm, estado, p.id)
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
                             is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
@@ -164,30 +165,30 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
         Triple(Pestana.METAS, Iconos.Moneda, R.string.pestana_metas),
     )
     Row(
-        modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth()
-            .tarjetaFogon(FormaPildora).padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
+        modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth()
+            .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.size(58.dp).brillo(f.tinta1, io.github.fogonapps.identidad.FormaMancha).clip(io.github.fogonapps.identidad.FormaMancha).background(f.tinta1)
-                .border(f.borde, f.linea, io.github.fogonapps.identidad.FormaMancha)
+            Modifier.size(52.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
-        ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 26.dp, tinta = f.sobreTinta1, corrida = null) }
+        ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
         pestanas.drop(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
     }
 }
 
+/** Una pestaña: solo el ícono; la elegida, en una píldora de vidrio más clara con el ícono en la primera tinta. */
 @Composable
 private fun BotonPestana(icono: io.github.fogonapps.identidad.Dibujo, texto: String, elegida: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(52.dp).clip(io.github.fogonapps.identidad.FormaMancha).background(if (elegida) f.texto else Color.Transparent)
+        Modifier.size(48.dp).clip(CircleShape).background(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
-    ) { io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 26.dp, tinta = if (elegida) f.sobrePildora else f.texto, corrida = if (elegida) null else f.tinta2) }
+    ) { io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (elegida) f.acentoTexto else f.textoSuave) }
 }
 
 /** Aviso con la identidad: píldora blanca, y la chispa en los logros (meta cumplida, deuda saldada). */
@@ -195,8 +196,7 @@ private fun BotonPestana(icono: io.github.fogonapps.identidad.Dibujo, texto: Str
 private fun AvisoTinta(mensaje: String) {
     val logro = mensaje.startsWith(MARCA_LOGRO)
     Row(
-        Modifier.fillMaxWidth().padding(12.dp).brillo(FogonTema.actual.paleta.segunda.copy(alpha = 0.7f), FormaPildora)
-            .clip(FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(12.dp).clip(FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (logro) Chispa(tamano = 22.dp)

@@ -38,6 +38,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.border
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -177,33 +179,29 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 
 
 /**
- * La barra de pestañas, impresa como una tarjeta: íconos en dos tintas y, en la activa, una mancha de la
- * primera tinta con el ícono encima en una sola tinta.
+ * La barra de pestañas: una píldora de vidrio que flota. La activa es una píldora de la primera tinta con su
+ * ícono y su nombre; las demás, solo el ícono (el nombre lo dicen los lectores de pantalla).
  */
 @Composable
 private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonapps.identidad.Dibujo>>, actual: T, onElegir: (T) -> Unit) {
     val f = FogonTema.actual
-    val forma = forma(24.dp)
+    val forma = io.github.fogonapps.identidad.FormaPildora
     Row(
-        Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 12.dp, end = 16.dp, top = 6.dp, bottom = 10.dp)
-            .tarjetaFogon(forma).selectableGroup().padding(horizontal = 4.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 12.dp)
+            .clip(forma).background(f.barra).border(f.borde, f.linea, forma).selectableGroup().padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.forEach { (p, nombre, icono) ->
             val activa = p == actual
-            Column(
-                Modifier.weight(1f).clip(forma(16.dp))
+            Row(
+                Modifier.height(48.dp).clip(forma).then(if (activa) Modifier.background(f.tinta1) else Modifier)
                     .selectable(activa, role = androidx.compose.ui.semantics.Role.Tab) { onElegir(p) }
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp),
+                    .semantics { contentDescription = nombre }
+                    .padding(horizontal = if (activa) 16.dp else 13.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Box(Modifier.size(width = 54.dp, height = 40.dp), contentAlignment = Alignment.Center) {
-                    if (activa) Box(Modifier.size(width = 54.dp, height = 40.dp).clip(io.github.fogonapps.identidad.FormaMancha).background(f.tinta1))
-                    io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 26.dp,
-                        tinta = if (activa) f.sobreTinta1 else f.texto, corrida = if (activa) null else f.tinta2)
-                }
-                Text(nombre, style = MaterialTheme.typography.labelSmall, fontWeight = if (activa) FontWeight.Bold else FontWeight.Normal,
-                    color = if (activa) f.acentoTexto else f.textoSuave, maxLines = 1)
+                io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (activa) f.sobreTinta1 else f.textoSuave)
+                if (activa) Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.sobreTinta1, maxLines = 1)
             }
         }
     }
@@ -214,8 +212,7 @@ private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonap
 private fun AvisoTinta(mensaje: String) {
     val record = mensaje.startsWith(io.github.fogonapps.forzudo.MARCA_RECORD)
     Row(
-        Modifier.fillMaxWidth().padding(12.dp).brillo(FogonTema.actual.paleta.segunda.copy(alpha = 0.7f), io.github.fogonapps.identidad.FormaPildora)
-            .clip(io.github.fogonapps.identidad.FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(12.dp).clip(io.github.fogonapps.identidad.FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (record) io.github.fogonapps.identidad.Chispa(tamano = 22.dp)

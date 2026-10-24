@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -28,9 +27,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /*
- * Los íconos de Fogón se dibujan como los personajes: formas gordas, llenas y de puntas redondas, impresas
- * en dos tintas con la segunda corrida (ver docs/IDENTIDAD.md → Sistema riso → Íconos). Cada ícono es un
- * [Dibujo] de 24×24 hecho de partes: rellenos, trazos y huecos (los huecos dejan ver el papel).
+ * Los íconos de Fogón son de línea redonda, todos igual (ver docs/IDENTIDAD.md → Vidrio y puntos → Íconos):
+ * el contorno de cada parte, de punta redonda, y nada relleno, salvo que se pida un [relleno] suave. Suelen
+ * ir dentro de una ficha de vidrio redonda. Cada ícono es un [Dibujo] de 24×24 hecho de partes: rellenos
+ * (se dibuja su contorno), trazos (líneas), huecos (contorno) y trazos de hueco (detalles).
  */
 
 /** Una parte de un dibujo. [ancho] es el grosor del trazo, en unidades del dibujo (de 24). */
@@ -45,20 +45,37 @@ class Dibujo(val nombre: String, val partes: List<Parte>) {
     internal val caminos: List<Path> by lazy { partes.map { PathParser().parsePathString(it.d).toPath() } }
     private val conHuecos = partes.any { it.tipo == Parte.Tipo.HUECO || it.tipo == Parte.Tipo.HUECO_TRAZO }
 
-    /** Pinta el dibujo en [color] (ya escalado a 24). Los huecos se recortan dentro de una capa propia. */
-    internal fun DrawScope.pintar(color: Color, lado: Float) {
+    /** El cuerpo (ya escalado a 24): rellenos y trazos en [color], con los huecos recortados en una capa propia. */
+    internal fun DrawScope.pintarCuerpo(color: Color, lado: Float) {
         if (conHuecos) drawIntoCanvas { it.saveLayer(Rect(-4f, -4f, lado + 4f, lado + 4f), Paint()) }
         partes.forEachIndexed { i, p ->
             val c = caminos[i]
             when (p.tipo) {
-                // Los rellenos llevan además un trazo fino redondo: así las esquinas quedan blandas, como de tinta.
-                Parte.Tipo.RELLENO -> { drawPath(c, color, style = Fill); drawPath(c, color, style = Stroke(1.6f, join = StrokeJoin.Round)) }
+                Parte.Tipo.RELLENO -> drawPath(c, color, style = Fill)
                 Parte.Tipo.TRAZO -> drawPath(c, color, style = Stroke(p.ancho, cap = StrokeCap.Round, join = StrokeJoin.Round))
                 Parte.Tipo.HUECO -> drawPath(c, Color.Black, style = Fill, blendMode = BlendMode.Clear)
-                Parte.Tipo.HUECO_TRAZO -> drawPath(c, Color.Black, style = Stroke(p.ancho, cap = StrokeCap.Round, join = StrokeJoin.Round), blendMode = BlendMode.Clear)
+                Parte.Tipo.HUECO_TRAZO -> Unit
             }
         }
         if (conHuecos) drawIntoCanvas { it.restore() }
+    }
+
+    /** El contorno de tinta: rellenos y huecos por el borde, trazos y detalles como líneas redondas. */
+    internal fun DrawScope.pintarContorno(color: Color) {
+        partes.forEachIndexed { i, p ->
+            val ancho = when (p.tipo) {
+                Parte.Tipo.RELLENO, Parte.Tipo.HUECO, Parte.Tipo.HUECO_TRAZO -> CONTORNO
+                Parte.Tipo.TRAZO -> p.ancho.coerceAtMost(TRAZO_MAX)
+            }
+            drawPath(caminos[i], color, style = Stroke(ancho, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
+    }
+
+    private companion object {
+        /** Grosor del contorno, en unidades del dibujo (de 24). */
+        const val CONTORNO = 1.9f
+        /** Las líneas sueltas (flechas, cruces) no pasan de este grosor, para que pesen como los contornos. */
+        const val TRAZO_MAX = 2.2f
     }
 }
 
@@ -69,9 +86,11 @@ fun huecoTrazo(d: String, ancho: Float = 1.8f) = Parte(d, Parte.Tipo.HUECO_TRAZO
 fun dibujo(nombre: String, vararg partes: Parte) = Dibujo(nombre, partes.toList())
 
 /**
- * Un ícono impreso: [corrida] detrás, movida [desfase], y [tinta] encima. Con [corrida] null, o en el estilo
- * Contraste (corrimiento 0), sale en una sola tinta. Si lleva [descripcion], los lectores de pantalla la dicen.
+ * Un ícono de línea en [tinta]. Con [relleno], el cuerpo va detrás en ese color (suave, para fichas de
+ * categoría). [corrida] y [desfase] quedan por compatibilidad: ya no hay tinta corrida.
+ * Si lleva [descripcion], los lectores de pantalla la dicen.
  */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun IconoRiso(
     dibujo: Dibujo,
@@ -79,16 +98,16 @@ fun IconoRiso(
     modifier: Modifier = Modifier,
     tamano: Dp = 24.dp,
     tinta: Color = FogonTema.actual.texto,
-    corrida: Color? = FogonTema.actual.tinta2,
-    desfase: Dp = FogonTema.actual.desfaseIcono,
+    corrida: Color? = null,
+    desfase: Dp = 0.dp,
+    relleno: Color? = null,
 ) {
     val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion; role = Role.Image } else Modifier
     Canvas(modifier.size(tamano).then(sem)) {
         val escala = size.minDimension / 24f
-        val d = desfase.toPx()
         with(dibujo) {
-            if (corrida != null && d > 0f) translate(d, d) { scale(escala, escala, Offset.Zero) { pintar(corrida, 24f) } }
-            scale(escala, escala, Offset.Zero) { pintar(tinta, 24f) }
+            if (relleno != null) scale(escala, escala, Offset.Zero) { pintarCuerpo(relleno, 24f) }
+            scale(escala, escala, Offset.Zero) { pintarContorno(tinta) }
         }
     }
 }

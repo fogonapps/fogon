@@ -24,13 +24,13 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `ui/App.kt` | El armazón: la barra flotante con el botón de anotar, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), avisos, confirmaciones y la pantalla con candado. |
 | `ui/Tutorial.kt` | Los 4 pasos del primer arranque: nombre, sistema, saldos y "¡Dale vida!" (`PasoDaleVida` de `core/identidad`) para elegir el estilo. |
 | `ui/Inicio.kt` | Pestañas Inicio y Resumen, y piezas que usan varias pantallas (fila de movimiento, selector de mes). |
-| `ui/Presupuesto.kt` | Pestaña Presupuesto (según el sistema), pestaña Metas y crear o editar una meta. |
+| `ui/Presupuesto.kt` | Pestaña Presupuesto (según el sistema), pestaña Metas, crear o editar una meta y crear o editar un sobre (`EditarSobre`). |
 | `ui/Anotar.kt` | Anotar o corregir un movimiento, con su teclado. |
 | `ui/Cuentas.kt` | Todas las cuentas, una cuenta (con su tarjeta de crédito) y crear o editar una cuenta. |
 | `ui/Fijos.kt` | Pagos fijos, me deben y debo, y el cierre del mes. |
 | `ui/Perfil.kt` | Perfil y ajustes, Acerca de, Licencias, Preguntas frecuentes y Reportar. |
 | `ui/Comunes.kt` | Piezas de interfaz: tarjetas de las filas (`vidrio()`, sin sombra), tarjeta destacada (`tarjetaDestacada`), fichas de categoría en una mancha de su tinta, campos de plata, selectores, fecha. |
-| `ui/Iconos.kt` | Íconos gordos para imprimir en dos tintas (`Dibujo`, se pintan con `IconoRiso`), también los de las categorías (`Iconos.de(nombre)`). Los comunes salen de `IconosFogon`. |
+| `ui/Iconos.kt` | Íconos de contorno de tinta y cuerpo de la segunda tinta (`Dibujo`, se pintan con `IconoRiso`), también los de las categorías (`Iconos.de(nombre)`). Los comunes salen de `IconosFogon`. |
 
 Otros lugares:
 

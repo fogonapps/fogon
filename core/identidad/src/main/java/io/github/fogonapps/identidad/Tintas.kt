@@ -1,5 +1,6 @@
 package io.github.fogonapps.identidad
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 
 /** Tintas riso de Fogón. Ver docs/IDENTIDAD.md. */
@@ -27,15 +28,15 @@ object Tintas {
 }
 
 /**
- * Tintas de una app. En el estilo Noche se imprime con [tinta] y [segunda]; en el Riso, con
- * [textoEnPapel] y [segundaTinta] (ver docs/IDENTIDAD.md → Sistema riso).
+ * Tintas de una app (ver docs/IDENTIDAD.md → Vidrio y puntos). Con ellas se arma el tema propio de la app
+ * ([nombreTema]: Gimnasio, Vino…); en Grafito, Claro y Contraste la app solo pone su [tinta] como acento.
  *
- * - [tinta]: el acento. Botones principales, pestaña activa, barras de progreso. Va con texto [sobreTinta].
- * - [textoEnTinta]: el acento cuando es texto sobre el fondo oscuro.
- * - [segunda]: la segunda tinta del estilo Noche, la que va corrida. [luz2]: un color de apoyo.
- * - [fondo]: el negro de la app, con un matiz de su color.
- * - [textoEnPapel]: el acento sobre papel claro (láminas, tarjetas de papel). En el estilo Riso es la primera tinta.
- * - [segundaTinta]: la segunda tinta del estilo Riso (Apariencia), la que va corrida.
+ * - [tinta]: el acento. Botones principales, pestaña activa, el número grande. Va con texto [sobreTinta].
+ * - [segunda]: la segunda tinta: la sombra del personaje, barras de metas, el halo de puntos.
+ * - [fondo]: el papel oscuro del tema propio, con un matiz de su color.
+ * - [brillo]: la luz suave que va arriba en el tema propio.
+ * - [textoEnPapel]: el acento sobre papel claro (tema Claro, láminas).
+ * - [textoEnTinta], [luz2], [segundaTinta]: se quedan por compatibilidad; las pantallas leen de FogonTema.
  */
 data class Paleta(
     val tinta: Color,
@@ -45,22 +46,25 @@ data class Paleta(
     val segunda: Color,
     val luz2: Color,
     val fondo: Color,
-    val segundaTinta: Color = tinta,
+    val segundaTinta: Color = segunda,
+    val brillo: Color = segunda,
+    @StringRes val nombreTema: Int = R.string.fogon_estilo_marca,
 ) {
     companion object {
-        /** Violeta y azul con acento lima. */
+        /** Gimnasio: lima sobre verde oliva casi negro. */
         val Forzudo = Paleta(
-            tinta = Tintas.Lima,
-            sobreTinta = Color(0xFF0C0A12),
-            textoEnPapel = Color(0xFF6C39FF),
-            textoEnTinta = Tintas.Lima,
-            segunda = Tintas.Violeta,
-            luz2 = Tintas.Azul,
-            fondo = Color(0xFF0C0A12),
-            segundaTinta = Tintas.Rosa,
+            tinta = Color(0xFFCDEB3A),
+            sobreTinta = Color(0xFF141609),
+            textoEnPapel = Color(0xFF4E6312),
+            textoEnTinta = Color(0xFFCDEB3A),
+            segunda = Color(0xFF5C7A12),
+            luz2 = Color(0xFF5C7A12),
+            fondo = Color(0xFF0C0D09),
+            brillo = Color(0xFF8CAA1E),
+            nombreTema = R.string.fogon_tema_gimnasio,
         )
 
-        /** Rojo y amarillo con acento coral: la casa de las apps (La Minga). */
+        /** Brasa: coral y amarillo sobre casi negro rojizo (La Minga). */
         val Minga = Paleta(
             tinta = Color(0xFFFF5A4F),
             sobreTinta = Color(0xFF120A08),
@@ -69,19 +73,21 @@ data class Paleta(
             segunda = Tintas.Amarillo,
             luz2 = Tintas.Rojo,
             fondo = Color(0xFF120A08),
-            segundaTinta = Tintas.Amarillo,
+            brillo = Color(0xFFB0301F),
+            nombreTema = R.string.fogon_tema_brasa,
         )
 
-        /** Verde y amarillo con acento amarillo (la moneda). */
+        /** Vino: rojo con ámbar sobre casi negro vinotinto. */
         val Ahorrador = Paleta(
-            tinta = Tintas.Amarillo,
-            sobreTinta = Color(0xFF0D0C0A),
-            textoEnPapel = Color(0xFF14753A),
-            textoEnTinta = Tintas.Amarillo,
-            segunda = Tintas.Verde,
-            luz2 = Tintas.Amarillo,
-            fondo = Color(0xFF0D0C0A),
-            segundaTinta = Tintas.Amarillo,
+            tinta = Color(0xFFF2384D),
+            sobreTinta = Color(0xFFFFFFFF),
+            textoEnPapel = Color(0xFFC21F35),
+            textoEnTinta = Color(0xFFFF6B7B),
+            segunda = Color(0xFFF5B547),
+            luz2 = Color(0xFFF5B547),
+            fondo = Color(0xFF0D0809),
+            brillo = Color(0xFFAA1830),
+            nombreTema = R.string.fogon_tema_vino,
         )
     }
 }

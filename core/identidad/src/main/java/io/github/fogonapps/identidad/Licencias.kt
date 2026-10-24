@@ -38,8 +38,8 @@ data class Licencia(val nombre: String, val detalle: String, val archivo: String
 @Composable
 fun licenciasFogon(conRed: Boolean = true) = listOfNotNull(
     Licencia(stringResource(R.string.fogon_lic_app), stringResource(R.string.fogon_lic_app_texto), "gpl-3.0.txt"),
-    Licencia("Anton", stringResource(R.string.fogon_lic_anton), "ofl-anton.txt"),
-    Licencia("Bagel Fat One", stringResource(R.string.fogon_lic_bagel), "ofl-bagel-fat-one.txt"),
+    Licencia("Bricolage Grotesque", stringResource(R.string.fogon_lic_bricolage), "ofl-bricolage-grotesque.txt"),
+    Licencia("Doto", stringResource(R.string.fogon_lic_doto), "ofl-doto.txt"),
     Licencia(stringResource(R.string.fogon_lic_bibliotecas), stringResource(R.string.fogon_lic_bibliotecas_texto), "apache-2.0.txt"),
     if (conRed) Licencia("Public Suffix List", stringResource(R.string.fogon_lic_psl), "mpl-2.0.txt") else null,
 )

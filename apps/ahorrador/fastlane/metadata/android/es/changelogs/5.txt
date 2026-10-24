@@ -1,0 +1,1 @@
+Diseño nuevo, Vidrio y puntos: el saldo hecho de puntos, tarjetas de vidrio y barra flotante. Viene en Grafito; también Vino, Claro y Contraste, y el personaje toma los colores del tema. Fichas de sobres iguales. Ahora puedes editar y crear sobres (nombre, grupo, color e ícono), con íconos nuevos.

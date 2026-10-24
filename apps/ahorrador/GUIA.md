@@ -53,13 +53,14 @@ Están en `Categorias.kt`. Cada una tiene `id` (**no se cambia una vez publicado
 
 ## Íconos
 
-`ui/Iconos.kt` dibuja cada ícono como un `Dibujo` de 24 × 24 hecho de rellenos (`relleno("M…")`), trazos gordos (`trazo("M…", 2.6f)`) y huecos que dejan ver el papel (`hueco`, `huecoTrazo`); se pinta con `IconoRiso`, que pone la segunda tinta corrida detrás (ver `docs/IDENTIDAD.md` → Sistema riso → Reglas). Para uno nuevo de categoría o meta, agregarlo a `porNombre` y, si es para metas, a `ICONOS_META` en `ui/Presupuesto.kt`. Los comunes (atrás, más, perfil…) están en `IconosFogon`.
+`ui/Iconos.kt` dibuja cada ícono como un `Dibujo` de 24 × 24 hecho de rellenos (`relleno("M…")`), trazos (`trazo("M…", 2.6f)`), huecos (`hueco`) y detalles (`huecoTrazo`); `IconoRiso` dibuja el contorno de cada parte en línea redonda (ver `docs/IDENTIDAD.md` → Sistema riso → Reglas). Para uno nuevo, agregarlo a `porNombre`: aparece solo en el editor de sobres (`ICONOS_SOBRE`, todos menos los de cuentas) y, si es para metas, se suma a `ICONOS_META` en `ui/Presupuesto.kt`. Para verlos todos juntos antes de compilar sirve dibujarlos en SVG, como en la hoja de muestras del 24-10-2026. Los comunes (atrás, más, perfil…) están en `IconosFogon`.
 
 ## Sistemas de presupuesto
 
 - **Cuál hay:** el enum `Sistema` en `datos/Modelo.kt`. Su nombre y explicación están en `ui/Tutorial.kt` (`Sistema.nombre`, `Sistema.explicacion`) y en `strings.xml` (`sistema_*`).
 - **Cómo calcula cada uno:** `Logica.sobres()` y `Logica.porAsignar()` (ver `ARQUITECTURA.md` → La lógica). Si se cambia, se ajusta `LogicaTest` → `sobresSegunElSistema`.
 - **Cómo se ve:** `ui/Presupuesto.kt` (`Sobres`, `Regla`, `Kakeibo`).
+- **Editar o crear sobres:** en el sistema Sobres, tocar un sobre → "Editar sobre", o "Nuevo sobre" al final de la lista (`EditarSobre`, `vm.guardarCategoria`). Se cambian nombre, grupo, color e ícono. Un sobre con gastos o pagos fijos no se borra (`categoriaEnUso`); al borrar uno, se quita también lo asignado en cada mes.
 
 ## Tarjeta de crédito y 4×1000
 
@@ -80,7 +81,7 @@ En `Avisos.kt`: la hora (9:00) está en `programar()` y los días de anticipaci�
 
 | Qué | Dónde |
 |-----|-------|
-| Colores de la app (luces verde y amarilla, acento amarillo) y los seis estilos de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Ahorrador`) y `Apariencia.kt`. Las pantallas nunca usan colores fijos: blanco de los botones = `pildora`/`sobrePildora`, letras de la tarjeta grande = `sobreDestacada`, letras sobre el acento = `paleta.sobreTinta`. Ver `docs/IDENTIDAD.md` → Apariencia. |
+| Colores de la app (Vino: rojo y ámbar) y los cuatro temas de la Apariencia | `core/identidad/.../Tintas.kt` (`Paleta.Ahorrador`) y `Apariencia.kt`. Las pantallas nunca usan colores fijos: lo de la tarjeta grande va en `sobreDestacada`, lo de los botones llenos en `sobreTinta1`. Ver `docs/IDENTIDAD.md` → Vidrio y puntos. |
 | Tinta de cada categoría | `Categorias.kt`. Colores para metas: `COLORES_META` en `ui/Presupuesto.kt`. |
 | Ícono de la app | `src/main/res/mipmap-*/ic_launcher_foreground.webp` y `ic_launcher_monochrome.webp`, hechos de `identidad/png/el-ahorrador.png` y `identidad/una-tinta/el-ahorrador.svg`. |
 | Ícono de la notificación | `src/main/res/drawable/ic_notificacion.xml` (la chispa). |

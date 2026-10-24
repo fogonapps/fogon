@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.fogonapps.ahorrador.datos.Abono
+import io.github.fogonapps.ahorrador.datos.Categoria
 import io.github.fogonapps.ahorrador.datos.Cuenta
 import io.github.fogonapps.ahorrador.datos.Deuda
 import io.github.fogonapps.ahorrador.datos.Estado
@@ -41,6 +42,7 @@ sealed interface Pantalla {
     data object Deudas : Pantalla
     data class EditarDeuda(val id: String?, val meDeben: Boolean = true) : Pantalla
     data class EditarMeta(val id: String?) : Pantalla
+    data class EditarSobre(val id: String?) : Pantalla
     data class Cierre(val mes: String) : Pantalla
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
@@ -243,6 +245,24 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             })
         }
         avisar(txPlural(R.plurals.fijos_anotados, pend.size))
+    }
+
+    /* ----- Sobres (las categorías de gasto) ----- */
+
+    fun guardarCategoria(c: Categoria) {
+        cambiar { e ->
+            if (c.id.isEmpty()) e.copy(categorias = e.categorias + c.copy(id = nuevoId("c")))
+            else e.copy(categorias = e.categorias.map { if (it.id == c.id) c else it })
+        }
+        avisar(tx(R.string.aviso_guardado))
+    }
+
+    /** Un sobre con gastos o pagos fijos no se borra: se perderían de qué fueron. */
+    fun categoriaEnUso(e: Estado, id: String) = e.movimientos.any { it.categoria == id } || e.fijos.any { it.categoria == id }
+
+    fun borrarCategoria(id: String) {
+        cambiar { e -> e.copy(categorias = e.categorias.filter { it.id != id }, sobres = e.sobres.mapValues { (_, m) -> m - id }) }
+        cerrar()
     }
 
     /* ----- Metas ----- */

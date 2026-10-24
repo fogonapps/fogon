@@ -30,7 +30,7 @@ fun ManifiestoFogon(modifier: Modifier = Modifier) {
     }
     val titulo: @Composable (String) -> Unit = {
         Text(
-            it.uppercase(), style = MaterialTheme.typography.displaySmall.copy(fontSize = 22.sp, lineHeight = 26.sp), color = f.texto,
+            it, style = MaterialTheme.typography.headlineSmall, color = f.texto,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).semantics { heading() },
         )
     }
@@ -40,8 +40,8 @@ fun ManifiestoFogon(modifier: Modifier = Modifier) {
             Modifier.align(Alignment.CenterHorizontally).size(width = 220.dp, height = 100.dp),
         )
         Text(
-            stringResource(R.string.fogon_lema).uppercase(),
-            style = MaterialTheme.typography.displayMedium, color = f.acentoTexto, textAlign = TextAlign.Center,
+            stringResource(R.string.fogon_lema),
+            style = MaterialTheme.typography.headlineMedium, color = f.acentoTexto, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         )
         Text(
