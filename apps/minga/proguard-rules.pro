@@ -1,4 +1,0 @@
--keepattributes *Annotation*, InnerClasses
--keep,includedescriptorclasses class io.github.fogonapps.minga.**$$serializer { *; }
--keepclassmembers class io.github.fogonapps.minga.** { *** Companion; }
--keepclasseswithmembers class io.github.fogonapps.minga.** { kotlinx.serialization.KSerializer serializer(...); }
