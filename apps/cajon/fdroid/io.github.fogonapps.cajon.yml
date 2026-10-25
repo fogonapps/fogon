@@ -23,7 +23,7 @@ Binaries: https://github.com/fogonapps/el-cajon/releases/download/v%v/ElCajon-%v
 Builds:
   - versionName: "1.0"
     versionCode: 1
-    commit: PENDIENTE  # el hash de la etiqueta cajon-v1.0
+    commit: 336f1da3899b68c71d10d3022e6cfe5e6176c34f
     subdir: apps/cajon
     gradle:
       - yes
