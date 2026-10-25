@@ -113,14 +113,14 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
                         when (p) {
                             Pestana.INICIO -> Inicio(vm, estado)
-                            Pestana.CAJON -> Cajon(vm, estado)
-                            Pestana.LISTAS -> Listas(vm, estado)
-                            Pestana.TU -> Tu(vm, estado)
+                            Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
+                            Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)
+                            Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
                         }
                         Espacio(120.dp)
                     }
                 }
-                BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Buscar(Tipos.PELICULA)) }, Modifier.align(Alignment.BottomCenter))
+                BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
                 SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
             }
 
@@ -142,6 +142,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.EditarLista -> EditarLista(vm, estado, p.id)
                             is Pantalla.AgregarALista -> AgregarALista(vm, estado, p.obra)
                             Pantalla.Diario -> Diario(vm, estado)
+                            Pantalla.Listas -> Listas(vm, estado)
+                            Pantalla.Cifras -> Tu(vm, estado)
                             Pantalla.Artistas -> Artistas(vm, estado)
                             Pantalla.Retos -> Retos(vm, estado)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
@@ -180,9 +182,9 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAgregar: (
     val f = FogonTema.actual
     val pestanas = listOf(
         Triple(Pestana.INICIO, Iconos.Inicio, R.string.pestana_inicio),
-        Triple(Pestana.CAJON, Iconos.Cajon, R.string.pestana_cajon),
-        Triple(Pestana.LISTAS, Iconos.Lista, R.string.pestana_listas),
-        Triple(Pestana.TU, Iconos.Cifras, R.string.pestana_tu),
+        Triple(Pestana.CINE, Iconos.Pelicula, R.string.seccion_cine),
+        Triple(Pestana.MUSICA, Iconos.Disco, R.string.seccion_musica),
+        Triple(Pestana.LIBROS, Iconos.Libro, R.string.seccion_libros),
     )
     Row(
         modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth()
@@ -190,7 +192,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAgregar: (
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
-        val agregar = stringResource(R.string.agregar)
+        val agregar = stringResource(R.string.buscar_y_agregar)
         Box(
             Modifier.rebote(0.9f).size(52.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAgregar).semantics { contentDescription = agregar; role = Role.Button },

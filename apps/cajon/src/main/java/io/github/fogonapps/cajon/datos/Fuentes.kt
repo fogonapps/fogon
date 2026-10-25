@@ -43,11 +43,13 @@ data class Encontrado(
     val detalle: String = "",
 )
 
-/** Un artista encontrado en MusicBrainz. */
-data class ArtistaEncontrado(val mbid: String, val nombre: String, val pais: String, val desde: Int?, val tipo: String, val detalle: String)
+/** Un artista encontrado en MusicBrainz ([foto] la pone después [Wikimedia]). */
+data class ArtistaEncontrado(val mbid: String, val nombre: String, val pais: String, val desde: Int?, val tipo: String, val detalle: String, val foto: String = "")
 
 class SinRed : IOException()
 class ClaveMala : IOException()
+/** El servicio pidió esperar (503 o 429): se reintenta. */
+class Ocupado : IOException()
 
 private const val AGENTE = "ElCajon-Fogon/1.0 (fogonapps@gmail.com)"
 private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
@@ -58,10 +60,11 @@ private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emp
     try {
         http.newCall(req).execute().use { r ->
             if (r.code == 401) throw ClaveMala()
+            if (r.code == 503 || r.code == 429) throw Ocupado()
             if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
             JsonCajon.parseToJsonElement(r.body.string())
         }
-    } catch (e: ClaveMala) { throw e } catch (e: IOException) { throw SinRed() }
+    } catch (e: ClaveMala) { throw e } catch (e: Ocupado) { throw e } catch (e: IOException) { throw SinRed() }
 }
 
 private fun JsonElement?.texto(): String = (this as? JsonPrimitive)?.contentOrNull ?: ""
@@ -197,13 +200,16 @@ object MusicBrainz {
     private var ultima = 0L
 
     private suspend fun pedir(ruta: String, vararg params: Pair<String, String>): JsonObject = turno.withLock {
-        val espera = 1100 - (System.currentTimeMillis() - ultima)
-        if (espera > 0) delay(espera)
-        try {
-            val u = base.newBuilder().addPathSegments(ruta).apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
-                .addQueryParameter("fmt", "json").build()
-            pedirJson(u).jsonObject
-        } finally { ultima = System.currentTimeMillis() }
+        val u = base.newBuilder().addPathSegments(ruta).apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
+            .addQueryParameter("fmt", "json").build()
+        // Si dice que está ocupado (cuando le llegan muchas consultas, también de otras apps), se espera y se reintenta.
+        for (intento in 0..3) {
+            val espera = (1100 + intento * 1500) - (System.currentTimeMillis() - ultima)
+            if (espera > 0) delay(espera)
+            try { return@withLock pedirJson(u).jsonObject } catch (_: Ocupado) {
+            } finally { ultima = System.currentTimeMillis() }
+        }
+        throw SinRed()
     }
 
     fun caratula(mbid: String, t: Int = 500) = "https://coverartarchive.org/release-group/$mbid/front-$t"
@@ -215,14 +221,17 @@ object MusicBrainz {
             caratula(g["id"].texto(), 250), "mb:rg:" + g["id"].texto(), tipos.filter { it.isNotBlank() }.joinToString(" · "))
     }
 
-    /** Ordena por relevancia y, entre los igual de relevantes, por cuántas ediciones tiene (lo conocido primero). */
+    /** Ordena por relevancia; entre los igual de relevantes, los álbumes antes que los sencillos y lo conocido (más ediciones) primero. */
     suspend fun buscarAlbumes(texto: String): List<Encontrado> =
         pedir("release-group", "query" to texto, "limit" to "40").arr("release-groups").map { it.jsonObject }
-            .sortedWith(compareByDescending<JsonObject> { (it["score"].entero() ?: 0) / 10 }.thenByDescending { it["count"].entero() ?: 0 })
+            .sortedWith(compareByDescending<JsonObject> { (it["score"].entero() ?: 0) / 10 }
+                .thenBy { when (it["primary-type"].texto()) { "Album" -> 0; "EP" -> 1; "Single" -> 3; else -> 2 } }
+                .thenByDescending { it["count"].entero() ?: 0 })
             .take(25).map { deGrupo(it) }
 
+    /** Los artistas parecidos de verdad (MusicBrainz da un puntaje de 0 a 100; los de menos de 70 casi nunca son). */
     suspend fun buscarArtistas(texto: String): List<ArtistaEncontrado> =
-        pedir("artist", "query" to texto, "limit" to "20").arr("artists").map { it.jsonObject }.map { a ->
+        pedir("artist", "query" to texto, "limit" to "20").arr("artists").map { it.jsonObject }.filter { (it["score"].entero() ?: 0) >= 70 }.map { a ->
             ArtistaEncontrado(a["id"].texto(), a["name"].texto(), a["country"].texto(),
                 anioDe((a["life-span"] as? JsonObject)?.get("begin").texto()), a["type"].texto(), a["disambiguation"].texto())
         }
@@ -252,5 +261,45 @@ object MusicBrainz {
         )
         // De paso, el artista (la app lo suma a Artistas con su fuente: "mb:artist:<id>").
         .copy(artista = artista?.let { "mb:artist:" + it["id"].texto() })
+    }
+}
+
+/* =================== Wikimedia (fotos de artistas) =================== */
+
+/**
+ * Las fotos de los artistas: Wikidata une el artista de MusicBrainz (propiedad P434) con su imagen (P18) en
+ * Wikimedia Commons, donde cada foto tiene licencia libre (CC BY, CC BY-SA, dominio público…) y su autor.
+ * El crédito se guarda con la foto y se muestra en la ficha del artista.
+ */
+object Wikimedia {
+    private val sparql = "https://query.wikidata.org/sparql".toHttpUrl()
+    private val commons = "https://commons.wikimedia.org/w/api.php".toHttpUrl()
+
+    /** mbid → dirección de la foto (400 px de ancho). Una sola consulta para varios artistas. */
+    suspend fun fotos(mbids: List<String>): Map<String, String> {
+        val ids = mbids.filter { it.matches(Regex("[0-9a-f-]{36}")) }.distinct().take(50)
+        if (ids.isEmpty()) return emptyMap()
+        val q = "SELECT ?mbid ?img WHERE { VALUES ?mbid { ${ids.joinToString(" ") { "\"$it\"" }} } ?a wdt:P434 ?mbid ; wdt:P18 ?img . }"
+        val u = sparql.newBuilder().addQueryParameter("query", q).addQueryParameter("format", "json").build()
+        val r = pedirJson(u, mapOf("Accept" to "application/sparql-results+json")).jsonObject
+        val filas = (r["results"] as? JsonObject)?.arr("bindings") ?: return emptyMap()
+        val m = LinkedHashMap<String, String>()
+        filas.map { it.jsonObject }.forEach { b ->
+            val id = (b["mbid"] as? JsonObject)?.get("value").texto()
+            val img = (b["img"] as? JsonObject)?.get("value").texto()
+            if (id.isNotBlank() && img.isNotBlank() && id !in m) m[id] = img.replace("http://", "https://") + "?width=400"
+        }
+        return m
+    }
+
+    /** El crédito de una foto de Commons: "Autor · Licencia · Wikimedia Commons" (sin HTML). */
+    suspend fun credito(foto: String): String {
+        val archivo = java.net.URLDecoder.decode(foto.substringAfter("Special:FilePath/").substringBefore("?"), "UTF-8")
+        val u = commons.newBuilder().addQueryParameter("action", "query").addQueryParameter("format", "json")
+            .addQueryParameter("prop", "imageinfo").addQueryParameter("iiprop", "extmetadata").addQueryParameter("titles", "File:$archivo").build()
+        val paginas = pedirJson(u).jsonObject["query"]?.jsonObject?.get("pages") as? JsonObject ?: return ""
+        val meta = paginas.values.firstOrNull()?.jsonObject?.arr("imageinfo")?.firstOrNull()?.jsonObject?.get("extmetadata") as? JsonObject ?: return ""
+        fun v(k: String) = (meta[k] as? JsonObject)?.get("value").texto().replace(Regex("<[^>]+>"), "").replace("&amp;", "&").trim()
+        return listOf(v("Artist"), v("LicenseShortName"), "Wikimedia Commons").filter { it.isNotBlank() }.joinToString(" · ")
     }
 }

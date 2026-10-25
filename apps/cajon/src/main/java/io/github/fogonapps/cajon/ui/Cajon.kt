@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,63 +29,147 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
+import io.github.fogonapps.cajon.Secciones
+import io.github.fogonapps.cajon.datos.Artista
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Estados
 import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.Orden
 import io.github.fogonapps.cajon.datos.Tipos
+import io.github.fogonapps.cajon.datos.normal
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
+import io.github.fogonapps.identidad.NumeroRiso
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
+import io.github.fogonapps.identidad.haloPuntos
 
+/** Un apartado de la app: Cine, Música o Libros, con sus cifras, lo que está en curso y su cajón. */
 @Composable
-fun Cajon(vm: CajonViewModel, e: Estado) {
+fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     val f = FogonTema.actual
-    var tipo by rememberSaveable { mutableStateOf<String?>(null) }
-    var estado by rememberSaveable { mutableStateOf<String?>(null) }
-    var texto by rememberSaveable { mutableStateOf("") }
-    var orden by rememberSaveable { mutableStateOf(Orden.RECIENTES) }
-    val obras = remember(e, tipo, estado, texto, orden) { vm.L.filtrar(e, tipo, estado, texto, orden) }
+    val tipos = Secciones.tipos(seccion)
+    val musica = seccion == Secciones.MUSICA
+    // En Cine se elige entre películas, series y animes; en Música, entre álbumes y artistas.
+    var tipo by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
+    var artistas by rememberSaveable(seccion) { mutableStateOf(false) }
+    var estado by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
+    var texto by rememberSaveable(seccion) { mutableStateOf("") }
+    var orden by rememberSaveable(seccion) { mutableStateOf(Orden.RECIENTES) }
+    if (musica) LaunchedEffect(Unit) { vm.completarFotos() }
 
-    Seccion(stringResource(R.string.pestana_cajon), Modifier.padding(top = 12.dp)) {
-        Pildora(stringResource(R.string.tipo_artistas), Iconos.Artista) { vm.abrir(Pantalla.Artistas) }
+    Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp)) {
+        Pildora(stringResource(R.string.buscar), Iconos.Buscar, acento = true) { vm.abrir(Pantalla.Buscar(seccion)) }
     }
 
+    // Las cifras del apartado: lo terminado este año en grande, y lo demás al lado.
+    val anio = vm.hoy().year
+    val delAnio = vm.L.cifras(e, anio)
+    val obras = e.vivas.filter { it.tipo in tipos }
+    val terminadasAnio = tipos.sumOf { delAnio.porTipo[it] ?: 0 }
+    Row(Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio(forma(24.dp))
+        .haloPuntos(f.tinta2.copy(alpha = 0.3f), centro = androidx.compose.ui.geometry.Offset(0.2f, 0.5f)).padding(18.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.weight(1f)) {
+            NumeroRiso("$terminadasAnio", 48.sp)
+            Text(stringResource(when (seccion) { Secciones.MUSICA -> R.string.escuchados_en; Secciones.LIBROS -> R.string.leidos_en; else -> R.string.vistas_en }, anio),
+                style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            MiniDato(stringResource(R.string.en_curso), obras.count { it.estado == Estados.EN_CURSO })
+            MiniDato(stringResource(R.string.pendientes), obras.count { it.estado == Estados.QUIERO })
+            if (musica) MiniDato(nombreTipo(CajonViewModel.TIPO_ARTISTA), e.artistasVivos.size)
+            else MiniDato(stringResource(R.string.siempre), obras.count { it.estado == Estados.TERMINADO })
+        }
+    }
+
+    val enCurso = obras.filter { it.estado == Estados.EN_CURSO }.sortedByDescending { it.cambio }
+    if (enCurso.isNotEmpty()) {
+        Seccion(stringResource(R.string.en_curso))
+        Carrusel(enCurso, vm, conProgreso = true)
+    }
+
+    Seccion(stringResource(R.string.tu_cajon))
+    if (musica) Chips(listOf(false to nombreTipo(Tipos.ALBUM), true to nombreTipo(CajonViewModel.TIPO_ARTISTA)), artistas) { artistas = it }
+    else if (seccion == Secciones.CINE) Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + tipos.map { it to nombreTipo(it) }, tipo) { tipo = it }
+
     OutlinedTextField(
-        texto, { texto = it.take(40) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        texto, { texto = it.take(40) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         placeholder = { Text(stringResource(R.string.buscar_en_cajon)) }, singleLine = true, shape = FormaPildora,
         leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) },
     )
 
-    // Filtros: tipo (en una fila que se desliza) y estado.
-    Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Tipos.TODOS.map { it to nombreTipo(it) }, tipo) { tipo = it }
-    Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipo) }, estado) { estado = it }
+    if (musica && artistas) { CajonArtistas(vm, e, texto); return }
 
+    val tipoEstados = tipo ?: tipos.first()
+    Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipoEstados) }, estado) { estado = it }
+    val lista = remember(e, tipos, tipo, estado, texto, orden) {
+        vm.L.filtrar(e, null, estado, texto, orden).filter { it.tipo in tipos && (tipo == null || it.tipo == tipo) }
+    }
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(pluralStringResource(R.plurals.obras_n, obras.size, obras.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+        Text(pluralStringResource(R.plurals.obras_n, lista.size, lista.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
         val siguiente = Orden.entries[(orden.ordinal + 1) % Orden.entries.size]
         Pildora(stringResource(nombreOrden(orden)), Iconos.Ordenar) { orden = siguiente }
     }
-
-    if (obras.isEmpty()) {
-        Pista(stringResource(if (e.vivas.isEmpty()) R.string.cajon_vacio else R.string.cajon_nada), centro = true, modifier = Modifier.padding(top = 24.dp))
+    if (lista.isEmpty()) {
+        Pista(stringResource(if (obras.isEmpty()) R.string.apartado_vacio else R.string.cajon_nada), centro = true, modifier = Modifier.padding(top = 16.dp))
         return
     }
-    Cuadricula(obras, vm)
+    Cuadricula(lista, vm)
+}
+
+@Composable
+private fun MiniDato(etiqueta: String, n: Int) {
+    val f = FogonTema.actual
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("$n", fontFamily = f.cifras, fontSize = 16.sp, color = f.texto)
+        Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    }
+}
+
+/** Los artistas en cuadrícula, con su foto redonda y su nota. */
+@Composable
+private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String) {
+    val f = FogonTema.actual
+    val lista = e.artistasVivos.filter { texto.isBlank() || normal(texto) in normal(it.nombre) }
+        .sortedWith(compareByDescending<Artista> { it.favorito }.thenByDescending { it.nota }.thenBy { normal(it.nombre) })
+    if (lista.isEmpty()) {
+        Pista(stringResource(R.string.artistas_vacio), centro = true, modifier = Modifier.padding(top = 16.dp))
+        return
+    }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        lista.chunked(3).forEachIndexed { fila, grupo ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                grupo.forEachIndexed { k, a ->
+                    val albumes = e.vivas.count { it.artista == a.id }
+                    Column(Modifier.weight(1f).aparecer((fila * 3 + k).coerceAtMost(12)).clip(forma(12.dp)).clickable { vm.abrir(Pantalla.VerArtista(a.id)) },
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) { FotoArtista(a.foto, a.nombre, 96.dp) }
+                        Text(a.nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                        if (a.nota > 0) Estrellas(a.nota, 12.sp)
+                        else Text(pluralStringResource(R.plurals.albumes_n, albumes, albumes), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+                    }
+                }
+                repeat(3 - grupo.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
 }
 
 /** Las portadas en cuadrícula de tres, con sus estrellas y el corazón. */
 @Composable
 fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false) {
     val f = FogonTema.actual
+    // Si son solo discos, marcos cuadrados; si hay de todo, verticales (los discos se apoyan abajo).
+    val marco = if (obras.all { it.tipo == Tipos.ALBUM }) 1f else 2f / 3f
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         obras.chunked(3).forEachIndexed { fila, grupo ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -93,7 +178,7 @@ fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false)
                     Column(Modifier.weight(1f).aparecer(n.coerceAtMost(12)).clip(forma(12.dp)).clickable { vm.abrir(Pantalla.Ficha(o.id)) },
                         verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         // Todas en el mismo marco vertical; los discos (cuadrados) se apoyan abajo, así los títulos quedan parejos.
-                        Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f), contentAlignment = Alignment.BottomCenter) {
+                        Box(Modifier.fillMaxWidth().aspectRatio(marco), contentAlignment = Alignment.BottomCenter) {
                             Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
                             if (numerada) Text("${n + 1}", fontFamily = f.cifras, fontSize = 15.sp, color = f.sobrePildora,
                                 modifier = Modifier.align(Alignment.TopStart).padding(6.dp).clip(FormaPildora).background(f.pildora).padding(horizontal = 8.dp, vertical = 2.dp))

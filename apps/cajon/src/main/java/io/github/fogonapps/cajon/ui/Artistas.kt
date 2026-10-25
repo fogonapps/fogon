@@ -41,7 +41,7 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     var texto by rememberSaveable { mutableStateOf("") }
     Cabecera(stringResource(R.string.tipo_artistas), vm::cerrar) {
-        BotonIcono(Iconos.Buscar, stringResource(R.string.buscar_artista), grande = true) { vm.abrir(Pantalla.Buscar(CajonViewModel.TIPO_ARTISTA)) }
+        BotonIcono(Iconos.Buscar, stringResource(R.string.buscar_artista), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.MUSICA)) }
     }
     OutlinedTextField(texto, { texto = it.take(60) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), singleLine = true, shape = FormaPildora,
         placeholder = { Text(stringResource(R.string.buscar_o_nuevo_artista)) },
@@ -54,7 +54,7 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     lista.forEachIndexed { i, a ->
         val albumes = e.vivas.count { it.artista == a.id }
         FilaVidrio({ vm.abrir(Pantalla.VerArtista(a.id)) }, Modifier.aparecer(i.coerceAtMost(10))) {
-            Ficha(if (a.favorito) f.tinta1 else f.tinta2, Iconos.Artista)
+            FotoArtista(a.foto, a.nombre, 46.dp)
             Column(Modifier.weight(1f)) {
                 Text(a.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(pluralStringResource(R.plurals.albumes_n, albumes, albumes), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -70,9 +70,10 @@ fun PreviaArtista(vm: CajonViewModel, p: Pantalla.PreviaArtista) {
     val f = FogonTema.actual
     val a = p.artista
     Cabecera(stringResource(R.string.tipo_artista), vm::cerrar)
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        FotoArtista(a.foto, a.nombre, 150.dp)
         Text(a.nombre, fontFamily = f.titulos, fontSize = 26.sp, color = f.texto)
-        Text(listOf(a.tipo, a.pais, a.desde?.toString() ?: "", a.detalle).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        Text(listOf(tipoArtista(a.tipo), a.pais, a.desde?.toString() ?: "", a.detalle).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         BotonRiso(stringResource(R.string.guardar_artista), { vm.guardarArtista(a) }, Modifier.fillMaxWidth())
         Pista(stringResource(R.string.fuente_musicbrainz), adentro = true)
     }
@@ -92,8 +93,15 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
         BotonIcono(Iconos.Estrella, stringResource(if (a.favorito) R.string.quitar_favorita else R.string.poner_favorita), grande = true,
             tinta = if (a.favorito) f.acentoTexto else f.textoSuave) { vm.cambiarArtista(a.id) { it.copy(favorito = !it.favorito) } }
     }
-    val datos = listOf(a.tipo, a.pais, a.desde?.let { stringResource(R.string.desde_anio, it) } ?: "").filter { it.isNotBlank() }
-    if (datos.isNotEmpty()) Pista(datos.joinToString(" · "))
+    LaunchedEffect(a.id, a.foto) { vm.completarCredito(a.id) }
+    // La foto grande, con su crédito (autor y licencia de Wikimedia Commons) debajo.
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        FotoArtista(a.foto, a.nombre, 150.dp)
+        if (a.foto.isNotBlank() && a.fotoCredito.isNotBlank()) Text(stringResource(R.string.foto_de, a.fotoCredito), style = MaterialTheme.typography.labelSmall,
+            color = f.textoSuave, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
+        val datos = listOf(tipoArtista(a.tipo), a.pais, a.desde?.let { stringResource(R.string.desde_anio, it) } ?: "").filter { it.isNotBlank() }
+        if (datos.isNotEmpty()) Text(datos.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+    }
 
     Column(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
@@ -123,7 +131,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
             else -> lista.forEach { r ->
                 val ya = vm.L.porFuente(e, r.fuente) != null
                 FilaVidrio({ vm.abrirEncontrado(r) }) {
-                    Portada(r.portada, r.tipo, r.titulo, Modifier.width(44.dp), esquina = 6.dp)
+                    Portada(r.portada, r.tipo, r.titulo, Modifier.width(44.dp), esquina = 6.dp, conTitulo = false)
                     Column(Modifier.weight(1f)) {
                         Text(r.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(listOfNotNull(r.anio?.toString(), r.detalle.takeIf { it.isNotBlank() }).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)

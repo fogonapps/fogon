@@ -235,6 +235,7 @@ fun Licencias(vm: CajonViewModel) {
             Licencia("TMDB", stringResource(R.string.lic_tmdb)),
             Licencia("Open Library", stringResource(R.string.lic_open_library)),
             Licencia("MusicBrainz · Cover Art Archive", stringResource(R.string.lic_musicbrainz)),
+            Licencia("Wikimedia Commons · Wikidata", stringResource(R.string.lic_wikimedia)),
             Licencia("Coil", stringResource(R.string.lic_coil), "apache-2.0.txt"),
         ))
     }

@@ -311,4 +311,52 @@
     <item>Libros: Open Library.</item>
     <item>Música: MusicBrainz y Cover Art Archive.</item>
   </string-array>
+  <string name="buscar">Buscar</string>
+  <string name="buscar_y_agregar">Buscar y agregar</string>
+  <string name="borrar_texto">Borrar el texto</string>
+  <string name="ver_mas">Ver más</string>
+  <string name="fuentes_busqueda">Cine: TMDB (con tu clave). Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library.</string>
+  <string name="seccion_cine">Cine</string>
+  <string name="seccion_musica">Música</string>
+  <string name="seccion_libros">Libros</string>
+  <string name="seccion_cine_pista">Películas, series y animes</string>
+  <string name="seccion_musica_pista">Álbumes y artistas</string>
+  <string name="seccion_libros_pista">Novelas, cuentos, ensayos, poesía…</string>
+  <string name="vistas_en">vistas en %1$d</string>
+  <string name="leidos_en">leídos en %1$d</string>
+  <string name="escuchados_en">escuchados en %1$d</string>
+  <string name="tu_cajon">Tu cajón</string>
+  <string name="apartado_vacio">Todavía no hay nada aquí. Toca Buscar para agregar.</string>
+  <string name="todo_tu_cajon">Todo tu cajón</string>
+  <string name="tus_cifras">Tus cifras</string>
+  <string name="foto_de">Foto: %1$s</string>
+  <string name="lic_wikimedia">Fotos de artistas de Wikimedia Commons, encontradas por Wikidata (datos CC0). Cada foto tiene su propia licencia libre y su autor, que se muestran en la ficha del artista.</string>
+  <plurals name="peliculas_vistas">
+    <item quantity="one">película vista</item>
+    <item quantity="other">películas vistas</item>
+  </plurals>
+  <plurals name="series_vistas">
+    <item quantity="one">serie vista</item>
+    <item quantity="other">series vistas</item>
+  </plurals>
+  <plurals name="animes_vistos">
+    <item quantity="one">anime visto</item>
+    <item quantity="other">animes vistos</item>
+  </plurals>
+  <plurals name="albumes_escuchados">
+    <item quantity="one">álbum escuchado</item>
+    <item quantity="other">álbumes escuchados</item>
+  </plurals>
+  <plurals name="artistas_guardados">
+    <item quantity="one">artista</item>
+    <item quantity="other">artistas</item>
+  </plurals>
+  <plurals name="libros_leidos">
+    <item quantity="one">libro leído</item>
+    <item quantity="other">libros leídos</item>
+  </plurals>
+  <string name="artista_persona">Persona</string>
+  <string name="artista_grupo">Grupo</string>
+  <string name="artista_orquesta">Orquesta</string>
+  <string name="artista_coro">Coro</string>
 </resources>

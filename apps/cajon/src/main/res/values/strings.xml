@@ -312,4 +312,52 @@
     <item>Books: Open Library.</item>
     <item>Music: MusicBrainz and Cover Art Archive.</item>
   </string-array>
+  <string name="buscar">Search</string>
+  <string name="buscar_y_agregar">Search and add</string>
+  <string name="borrar_texto">Clear text</string>
+  <string name="ver_mas">See more</string>
+  <string name="fuentes_busqueda">Film: TMDB (with your key). Music: MusicBrainz, covers from the Cover Art Archive and photos from Wikimedia Commons. Books: Open Library.</string>
+  <string name="seccion_cine">Film</string>
+  <string name="seccion_musica">Music</string>
+  <string name="seccion_libros">Books</string>
+  <string name="seccion_cine_pista">Films, series and anime</string>
+  <string name="seccion_musica_pista">Albums and artists</string>
+  <string name="seccion_libros_pista">Novels, stories, essays, poetry…</string>
+  <string name="vistas_en">watched in %1$d</string>
+  <string name="leidos_en">read in %1$d</string>
+  <string name="escuchados_en">listened in %1$d</string>
+  <string name="tu_cajon">Your cajón</string>
+  <string name="apartado_vacio">Nothing here yet. Tap Search to add something.</string>
+  <string name="todo_tu_cajon">Your whole cajón</string>
+  <string name="tus_cifras">Your stats</string>
+  <string name="foto_de">Photo: %1$s</string>
+  <string name="lic_wikimedia">Artist photos from Wikimedia Commons, found through Wikidata (CC0 data). Each photo has its own free license and author, shown on the artist’s page.</string>
+  <plurals name="peliculas_vistas">
+    <item quantity="one">film watched</item>
+    <item quantity="other">films watched</item>
+  </plurals>
+  <plurals name="series_vistas">
+    <item quantity="one">series watched</item>
+    <item quantity="other">series watched</item>
+  </plurals>
+  <plurals name="animes_vistos">
+    <item quantity="one">anime watched</item>
+    <item quantity="other">anime watched</item>
+  </plurals>
+  <plurals name="albumes_escuchados">
+    <item quantity="one">album listened</item>
+    <item quantity="other">albums listened</item>
+  </plurals>
+  <plurals name="artistas_guardados">
+    <item quantity="one">artist</item>
+    <item quantity="other">artists</item>
+  </plurals>
+  <plurals name="libros_leidos">
+    <item quantity="one">book read</item>
+    <item quantity="other">books read</item>
+  </plurals>
+  <string name="artista_persona">Person</string>
+  <string name="artista_grupo">Group</string>
+  <string name="artista_orquesta">Orchestra</string>
+  <string name="artista_coro">Choir</string>
 </resources>

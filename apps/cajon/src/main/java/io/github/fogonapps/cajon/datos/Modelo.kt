@@ -134,6 +134,9 @@ data class Artista(
     val notas: String = "",
     val nota: Int = 0,
     val favorito: Boolean = false,
+    /** La foto (de Wikimedia Commons, por Wikidata) y su crédito: autor y licencia, que se muestran con ella. */
+    val foto: String = "",
+    val fotoCredito: String = "",
     val cambio: Long = 0,
     val borrada: Boolean = false,
 )

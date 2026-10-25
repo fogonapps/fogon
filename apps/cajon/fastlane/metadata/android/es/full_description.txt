@@ -7,7 +7,8 @@
 <li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
 <li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
 <li><b>Progreso:</b> episodios por temporada en series y animes, páginas en libros, y cada canción de un álbum con su nota y su corazón.</li>
-<li><b>Artistas</b> con su discografía para sumar discos con un toque.</li>
+<li><b>Cine, Música y Libros</b>, cada uno con su apartado, y un Inicio con todo lo que has visto, escuchado y leído.</li>
+<li><b>Artistas</b> con su foto y su discografía para sumar discos con un toque.</li>
 <li><b>Listas propias</b>, con ranking si quieres, y tus cuatro favoritas en el perfil.</li>
 <li><b>Tus cifras:</b> lo terminado en el año, horas de cine, episodios, páginas, canciones, tus notas, meses, géneros y creadores. Y retos del año.</li>
 <li><b>Comparte</b> una reseña o una lista como imagen.</li>

@@ -40,7 +40,7 @@ fun obrasDe(e: Estado, l: Lista): List<Obra> = l.obras.mapNotNull { id -> e.viva
 @Composable
 fun Listas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
-    Seccion(stringResource(R.string.pestana_listas), Modifier.padding(top = 12.dp)) {
+    Cabecera(stringResource(R.string.pestana_listas), vm::cerrar) {
         Pildora(stringResource(R.string.nueva), Iconos.Mas, acento = true) { vm.abrir(Pantalla.EditarLista(null)) }
     }
     val listas = e.listasVivas.sortedByDescending { it.cambio }
@@ -50,7 +50,7 @@ fun Listas(vm: CajonViewModel, e: Estado) {
         FilaVidrio({ vm.abrir(Pantalla.VerLista(l.id)) }, Modifier.aparecer(i)) {
             // Las tres primeras portadas, montadas.
             Row(horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
-                obras.take(3).forEach { Portada(it.portada, it.tipo, it.titulo, Modifier.width(40.dp), esquina = 6.dp) }
+                obras.take(3).forEach { Portada(it.portada, it.tipo, it.titulo, Modifier.width(40.dp), esquina = 6.dp, conTitulo = false) }
                 if (obras.isEmpty()) Ficha(f.tinta1, Iconos.Lista)
             }
             Column(Modifier.weight(1f).padding(start = 8.dp)) {
@@ -64,7 +64,7 @@ fun Listas(vm: CajonViewModel, e: Estado) {
     // Las de siempre: lo que le gustó y sus pendientes.
     Seccion(stringResource(R.string.listas_automaticas))
     val gustadas = e.vivas.filter { it.meGusta }
-    FilaVidrio({ vm.irA(io.github.fogonapps.cajon.Pestana.CAJON) }) {
+    FilaVidrio {
         Ficha(f.tinta1, Iconos.Corazon)
         Text(stringResource(R.string.lo_que_me_gusto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
         Text("${gustadas.size}", fontFamily = f.cifras, color = f.textoSuave)
@@ -107,7 +107,7 @@ fun VerLista(vm: CajonViewModel, e: Estado, id: String) {
         obras.forEachIndexed { i, o ->
             FilaVidrio {
                 Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(24.dp))
-                Portada(o.portada, o.tipo, o.titulo, Modifier.width(36.dp), esquina = 6.dp)
+                Portada(o.portada, o.tipo, o.titulo, Modifier.width(36.dp), esquina = 6.dp, conTitulo = false)
                 Text(o.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 BotonIcono(Iconos.Arriba, stringResource(R.string.subir), activo = i > 0) { vm.moverEnLista(l.id, l.obras.indexOf(o.id), l.obras.indexOf(o.id) - 1) }
                 BotonIcono(Iconos.Abajo, stringResource(R.string.bajar), activo = i < obras.lastIndex) { vm.moverEnLista(l.id, l.obras.indexOf(o.id), l.obras.indexOf(o.id) + 1) }
@@ -179,7 +179,7 @@ fun Diario(vm: CajonViewModel, e: Estado) {
         lista.forEach { d ->
             FilaVidrio({ vm.abrir(Pantalla.Ficha(d.obra.id)) }) {
                 Text(d.registro.fecha.takeLast(2), fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(26.dp))
-                Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(38.dp), esquina = 6.dp)
+                Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(38.dp), esquina = 6.dp, conTitulo = false)
                 Column(Modifier.weight(1f)) {
                     Text(d.obra.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {

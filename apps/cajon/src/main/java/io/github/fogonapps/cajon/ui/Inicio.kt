@@ -60,7 +60,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     if (e.vivas.isEmpty()) {
         EstadoVacio(RId.drawable.personaje_el_cajon, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
         Column(Modifier.padding(horizontal = 24.dp)) {
-            BotonRiso(stringResource(R.string.agregar_lo_primero), { vm.abrir(Pantalla.Buscar(Tipos.PELICULA)) }, Modifier.fillMaxWidth())
+            BotonRiso(stringResource(R.string.agregar_lo_primero), { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO)) }, Modifier.fillMaxWidth())
         }
         return
     }
@@ -68,7 +68,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     // La tarjeta grande: lo terminado este año, en puntos sobre su halo, con el personaje.
     val total = c.porTipo.values.sum()
     Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio(forma(28.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f), centro = androidx.compose.ui.geometry.Offset(0.25f, 0.45f))
-        .clickable { vm.irA(Pestana.TU) }) {
+        .clickable { vm.abrir(Pantalla.Cifras) }) {
         Column(Modifier.padding(20.dp).fillMaxWidth(0.62f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.este_anio, anio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             NumeroRiso("$total", 56.sp)
@@ -86,6 +86,33 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         Personaje(RId.drawable.personaje_el_cajon, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 120.dp)
     }
 
+    // Todo lo del cajón, desde siempre: cada cifra lleva a su apartado.
+    Seccion(stringResource(R.string.todo_tu_cajon))
+    val terminadas = e.vivas.filter { it.estado == Estados.TERMINADO }
+    val cifras = listOf(
+        Triple(Tipos.PELICULA, terminadas.count { it.tipo == Tipos.PELICULA }, R.plurals.peliculas_vistas),
+        Triple(Tipos.SERIE, terminadas.count { it.tipo == Tipos.SERIE }, R.plurals.series_vistas),
+        Triple(Tipos.ANIME, terminadas.count { it.tipo == Tipos.ANIME }, R.plurals.animes_vistos),
+        Triple(Tipos.ALBUM, terminadas.count { it.tipo == Tipos.ALBUM }, R.plurals.albumes_escuchados),
+        Triple(CajonViewModel.TIPO_ARTISTA, e.artistasVivos.size, R.plurals.artistas_guardados),
+        Triple(Tipos.LIBRO, terminadas.count { it.tipo == Tipos.LIBRO }, R.plurals.libros_leidos),
+    )
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        cifras.chunked(3).forEachIndexed { fila, grupo ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                grupo.forEachIndexed { k, (t, n, etiqueta) ->
+                    Column(Modifier.weight(1f).aparecer(fila * 3 + k + 1).vidrio().clickable {
+                        vm.irA(when (t) { Tipos.LIBRO -> Pestana.LIBROS; Tipos.ALBUM, CajonViewModel.TIPO_ARTISTA -> Pestana.MUSICA; else -> Pestana.CINE })
+                    }.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconoRiso(Iconos.de(t), null, tamano = 20.dp, tinta = f.acentoTexto)
+                        Text("$n", fontFamily = f.cifras, fontSize = 24.sp, color = f.texto)
+                        Text(pluralStringResource(etiqueta, n), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 2)
+                    }
+                }
+            }
+        }
+    }
+
     // Lo que está viendo, leyendo o escuchando.
     val enCurso = e.vivas.filter { it.estado == Estados.EN_CURSO }.sortedByDescending { it.cambio }
     if (enCurso.isNotEmpty()) {
@@ -99,7 +126,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         Seccion(stringResource(R.string.tu_diario)) { Pildora(stringResource(R.string.ver_todo)) { vm.abrir(Pantalla.Diario) } }
         diario.forEachIndexed { i, d ->
             FilaVidrio({ vm.abrir(Pantalla.Ficha(d.obra.id)) }, Modifier.aparecer(i + 1)) {
-                Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(40.dp), esquina = 6.dp)
+                Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(40.dp), esquina = 6.dp, conTitulo = false)
                 Column(Modifier.weight(1f)) {
                     Text(d.obra.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -116,8 +143,39 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     // Los pendientes más recientes.
     val pendientes = e.vivas.filter { it.estado == Estados.QUIERO }.sortedByDescending { it.agregada }
     if (pendientes.isNotEmpty()) {
-        Seccion(stringResource(R.string.pendientes)) { Pildora(stringResource(R.string.ver_todo)) { vm.irA(Pestana.CAJON) } }
+        Seccion(stringResource(R.string.pendientes))
         Carrusel(pendientes.take(12), vm, conProgreso = false)
+    }
+
+    // Sus listas.
+    val listas = e.listasVivas.sortedByDescending { it.cambio }
+    Seccion(stringResource(R.string.pestana_listas)) { Pildora(stringResource(if (listas.isEmpty()) R.string.nueva else R.string.ver_todo)) { vm.abrir(if (listas.isEmpty()) Pantalla.EditarLista(null) else Pantalla.Listas) } }
+    if (listas.isEmpty()) Pista(stringResource(R.string.listas_vacio))
+    else LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(listas, key = { it.id }) { l ->
+            val obras = obrasDe(e, l)
+            Column(Modifier.width(150.dp).vidrio().clickable { vm.abrir(Pantalla.VerLista(l.id)) }.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy((-16).dp)) {
+                    obras.take(3).forEach { Portada(it.portada, it.tipo, it.titulo, Modifier.width(48.dp), esquina = 6.dp, conTitulo = false) }
+                    if (obras.isEmpty()) Ficha(f.tinta1, Iconos.Lista)
+                }
+                Text(l.nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(pluralStringResource(R.plurals.obras_n, obras.size, obras.size), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+            }
+        }
+    }
+
+    // Las cifras completas y el diario.
+    Seccion(stringResource(R.string.mas))
+    FilaVidrio({ vm.abrir(Pantalla.Cifras) }) {
+        Ficha(f.tinta1, Iconos.Cifras)
+        Text(stringResource(R.string.tus_cifras), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
+        IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+    }
+    FilaVidrio({ vm.abrir(Pantalla.Diario) }) {
+        Ficha(f.tinta2, Iconos.Diario)
+        Text(stringResource(R.string.tu_diario), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
+        IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
 
     // Los retos del año, si tiene.

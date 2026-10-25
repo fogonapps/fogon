@@ -23,6 +23,7 @@ import io.github.fogonapps.cajon.datos.Registro
 import io.github.fogonapps.cajon.datos.SinRed
 import io.github.fogonapps.cajon.datos.Tipos
 import io.github.fogonapps.cajon.datos.Tmdb
+import io.github.fogonapps.cajon.datos.Wikimedia
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -38,8 +39,8 @@ import kotlin.random.Random
 
 /** Las pantallas que se abren encima de las pestañas. */
 sealed interface Pantalla {
-    /** Buscar algo para agregar, empezando en [tipo]. */
-    data class Buscar(val tipo: String) : Pantalla
+    /** Buscar algo para agregar, empezando en la [seccion] (ver [Secciones]). */
+    data class Buscar(val seccion: String) : Pantalla
     /** Una obra encontrada afuera, antes de agregarla. */
     data class Previa(val obra: Obra) : Pantalla
     data class Ficha(val id: String) : Pantalla
@@ -55,6 +56,9 @@ sealed interface Pantalla {
     /** Elegir a qué lista va una obra. */
     data class AgregarALista(val obra: String) : Pantalla
     data object Diario : Pantalla
+    data object Listas : Pantalla
+    /** Las cifras y el perfil (las cuatro favoritas). */
+    data object Cifras : Pantalla
     data object Artistas : Pantalla
     data object Retos : Pantalla
     data object Ajustes : Pantalla
@@ -66,17 +70,31 @@ sealed interface Pantalla {
     data object Licencias : Pantalla
 }
 
-enum class Pestana { INICIO, CAJON, LISTAS, TU }
+enum class Pestana { INICIO, CINE, MUSICA, LIBROS }
 
-/** Lo que muestra la búsqueda. */
+/** Los apartados de la app (y de la búsqueda): cine, música y libros. */
+object Secciones {
+    const val TODO = "todo"
+    const val CINE = "cine"
+    const val MUSICA = "musica"
+    const val LIBROS = "libros"
+    val TODAS = listOf(TODO, CINE, MUSICA, LIBROS)
+    fun de(tipo: String) = when (tipo) { Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; else -> CINE }
+    fun tipos(s: String) = when (s) { CINE -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME); MUSICA -> listOf(Tipos.ALBUM); LIBROS -> listOf(Tipos.LIBRO); else -> Tipos.TODOS }
+    fun dePestana(p: Pestana) = when (p) { Pestana.CINE -> CINE; Pestana.MUSICA -> MUSICA; Pestana.LIBROS -> LIBROS; else -> TODO }
+}
+
+/**
+ * Lo que muestra la búsqueda: cada fuente busca por su lado y sus resultados llegan por grupos
+ * ([obras] por tipo de obra, [artistas] aparte). [cargando] y [errores] van por fuente: "tmdb", "libros", "musica".
+ */
 data class Busqueda(
     val texto: String = "",
-    val tipo: String = Tipos.PELICULA,
-    val cargando: Boolean = false,
-    val obras: List<Encontrado> = emptyList(),
+    val seccion: String = Secciones.TODO,
+    val obras: Map<String, List<Encontrado>> = emptyMap(),
     val artistas: List<ArtistaEncontrado> = emptyList(),
-    /** Algo salió mal: sin internet, falta la clave de TMDB o la clave no sirve. */
-    val error: Int? = null,
+    val cargando: Set<String> = emptySet(),
+    val errores: Map<String, Int> = emptyMap(),
 )
 
 enum class EstadoSync { APAGADA, EN_NUBE, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
@@ -160,7 +178,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun abrir(p: Pantalla) {
         // Cada búsqueda nueva empieza en blanco, en el tipo pedido.
-        if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(tipo = p.tipo) }
+        if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(seccion = p.seccion) }
         _pila.value = _pila.value + p
     }
     fun cerrar() { _pila.value = _pila.value.dropLast(1) }
@@ -193,35 +211,48 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Buscar afuera ----- */
 
-    fun cambiarTipoBusqueda(tipo: String) {
-        _busqueda.value = Busqueda(texto = _busqueda.value.texto, tipo = tipo)
+    fun cambiarSeccion(seccion: String) {
+        _busqueda.value = Busqueda(texto = _busqueda.value.texto, seccion = seccion)
         if (_busqueda.value.texto.isNotBlank()) buscar(_busqueda.value.texto)
     }
 
+    /** Busca en las fuentes de la sección elegida, a la vez; cada una pone sus resultados cuando llegan. */
     fun buscar(texto: String) {
         val t = texto.trim()
+        val seccion = _busqueda.value.seccion
         _busqueda.value = _busqueda.value.copy(texto = texto)
         buscando?.cancel()
-        if (t.length < 2) { _busqueda.value = _busqueda.value.copy(cargando = false, obras = emptyList(), artistas = emptyList(), error = null); return }
-        val tipo = _busqueda.value.tipo
+        if (t.length < 2) { _busqueda.value = Busqueda(texto = texto, seccion = seccion); return }
         buscando = viewModelScope.launch {
             delay(450) // espera a que la persona deje de escribir
-            _busqueda.value = _busqueda.value.copy(cargando = true, error = null)
-            try {
-                when (tipo) {
-                    Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME -> {
-                        val clave = caja.claveTmdb
-                        if (clave == null) { _busqueda.value = _busqueda.value.copy(cargando = false, obras = emptyList(), error = R.string.buscar_falta_tmdb); return@launch }
-                        _busqueda.value = _busqueda.value.copy(cargando = false, obras = Tmdb(clave).buscar(t, tipo, idioma()))
-                    }
-                    Tipos.LIBRO -> _busqueda.value = _busqueda.value.copy(cargando = false, obras = OpenLibrary.buscar(t))
-                    Tipos.ALBUM -> _busqueda.value = _busqueda.value.copy(cargando = false, obras = MusicBrainz.buscarAlbumes(t))
-                    TIPO_ARTISTA -> _busqueda.value = _busqueda.value.copy(cargando = false, artistas = MusicBrainz.buscarArtistas(t))
+            _busqueda.value = Busqueda(texto = texto, seccion = seccion)
+            fun fuente(nombre: String, trabajo: suspend () -> Unit) = launch {
+                _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + nombre)
+                try { trabajo() }
+                catch (e: ClaveMala) { _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to R.string.buscar_tmdb_mala)) }
+                catch (e: SinRed) { _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to R.string.buscar_sin_red)) }
+                finally { _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando - nombre) }
+            }
+            fun poner(r: List<Encontrado>) {
+                val grupos = r.groupBy { it.tipo }
+                _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)
+            }
+            if (seccion == Secciones.TODO || seccion == Secciones.CINE) {
+                val clave = caja.claveTmdb
+                if (clave == null) _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + ("tmdb" to R.string.buscar_falta_tmdb))
+                else fuente("tmdb") {
+                    val r = Tmdb(clave).buscar(t, Tipos.PELICULA, idioma()) + Tmdb(clave).buscar(t, Tipos.SERIE, idioma())
+                    poner(r)
                 }
-            } catch (e: ClaveMala) {
-                _busqueda.value = _busqueda.value.copy(cargando = false, error = R.string.buscar_tmdb_mala)
-            } catch (e: SinRed) {
-                _busqueda.value = _busqueda.value.copy(cargando = false, error = R.string.buscar_sin_red)
+            }
+            if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") { poner(OpenLibrary.buscar(t)) }
+            if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) fuente("musica") {
+                // Primero los artistas (con su foto, si la hay) y después los álbumes.
+                val artistas = MusicBrainz.buscarArtistas(t)
+                _busqueda.value = _busqueda.value.copy(artistas = artistas)
+                val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.getOrDefault(emptyMap())
+                if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
+                poner(MusicBrainz.buscarAlbumes(t))
             }
         }
     }
@@ -377,7 +408,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val fuente = "mb:artist:${a.mbid}"
         e.artistasVivos.firstOrNull { it.fuente == fuente }?.let { reemplazar(Pantalla.VerArtista(it.id)); return it.id }
         val id = nuevoId("a")
-        cambiar { s -> s.copy(artistas = s.artistas + Artista(id, a.nombre, fuente, a.pais, a.desde, a.tipo, cambio = ahora())) }
+        cambiar { s -> s.copy(artistas = s.artistas + Artista(id, a.nombre, fuente, a.pais, a.desde, a.tipo, foto = a.foto, cambio = ahora())) }
         reemplazar(Pantalla.VerArtista(id))
         return id
     }
@@ -396,6 +427,31 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         cambiarArtista(id) { it.copy(borrada = true) }
         cambiar { e -> e.copy(obras = e.obras.map { if (it.artista == id) it.copy(artista = null, cambio = ahora()) else it }) }
         cerrar()
+    }
+
+    private var fotosPedidas = false
+
+    /** Busca las fotos de los artistas de MusicBrainz que todavía no tienen (una vez por sesión). */
+    fun completarFotos() {
+        if (fotosPedidas) return
+        val faltan = _estado.value?.artistasVivos?.filter { it.foto.isBlank() && it.fuente.startsWith("mb:artist:") } ?: return
+        if (faltan.isEmpty()) return
+        fotosPedidas = true
+        viewModelScope.launch {
+            val fotos = runCatching { Wikimedia.fotos(faltan.map { it.fuente.removePrefix("mb:artist:") }) }.getOrNull() ?: run { fotosPedidas = false; return@launch }
+            if (fotos.isNotEmpty()) cambiar { e -> e.copy(artistas = e.artistas.map { a ->
+                fotos[a.fuente.removePrefix("mb:artist:")]?.takeIf { a.foto.isBlank() }?.let { a.copy(foto = it, cambio = ahora()) } ?: a
+            }) }
+        }
+    }
+
+    /** El crédito (autor y licencia) de la foto de un artista, si todavía no lo tiene. */
+    fun completarCredito(id: String) {
+        val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
+        if (a.foto.isBlank() || a.fotoCredito.isNotBlank()) return
+        viewModelScope.launch {
+            runCatching { Wikimedia.credito(a.foto) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { c -> cambiarArtista(id) { it.copy(fotoCredito = c) } }
+        }
     }
 
     /** Trae la discografía de un artista de MusicBrainz (una vez por artista). */

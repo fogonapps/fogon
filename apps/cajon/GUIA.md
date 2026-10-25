@@ -22,7 +22,7 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`) y func
 ## Datos de prueba y capturas
 
 - **Datos de prueba:** inventados. `python3 herramientas/datos-prueba.py <es|en> <fecha de hoy> <salida.json>` (desde `apps/cajon`) arma un cajón con obras de dominio público y otras inventadas, diario, episodios, páginas, canciones calificadas, dos listas, favoritas y retos. **Sin portadas**: las de verdad tienen dueño y no van en las capturas. En la versión de prueba se copia con `adb push` y `run-as io.github.fogonapps.cajon cp … files/datastore/estado.json`; el idioma va en `shared_prefs/ui.xml` (`idioma`) y el tema en `shared_prefs/apariencia.xml` (`version` 4 y `estilo`: `GRAFITO`, `MARCA` para Vinilo, `CLARO` o `CONTRASTE`).
-- **Capturas de F-Droid:** con el modo demo de Android, siete por idioma en `fastlane/metadata/android/<es|en-US>/images/phoneScreenshots/`: Inicio en Grafito y en Vinilo, el cajón, un álbum con sus canciones, una serie con sus episodios, tus cifras y una lista en Claro.
+- **Capturas de F-Droid:** con el modo demo de Android, siete por idioma en `fastlane/metadata/android/<es|en-US>/images/phoneScreenshots/`: Inicio en Grafito y en Vinilo, Cine, un álbum con sus canciones, una serie con sus episodios, Música en Vinilo y Libros en Claro. Sin búsquedas (mostrarían portadas y fotos de otros).
 
 ## Agregar una fuente de datos
 

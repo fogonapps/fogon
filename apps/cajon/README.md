@@ -18,7 +18,9 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **Nota en estrellas** de media en media, me gusta, reseña (solo de la persona: la app nunca la escribe), datos curiosos y etiquetas.
 - **Diario:** cada vez que se ve, lee o escucha algo, con fecha, nota de ese día, si fue otra vez y unas palabras.
 - **Progreso:** episodios por temporada (series y animes), páginas (libros) y cada canción de un álbum con su nota y su corazón.
-- **Artistas** con su discografía de MusicBrainz para sumar discos con un toque; los artistas de los álbumes se suman solos.
+- **Inicio y apartados:** el Inicio dice todo lo del cajón (películas, series y animes vistos, álbumes escuchados, artistas, libros leídos) y cada cosa tiene su apartado: Cine, Música y Libros, con sus cifras del año, lo que está en curso y su cajón con filtros.
+- **Buscador** como el de una app de música: arriba Todo, Cine, Música o Libros; abajo el mejor resultado (un artista con su foto) y los grupos, cada uno con "Ver más".
+- **Artistas** con su foto (Wikimedia Commons, por Wikidata, con autor y licencia) y su discografía de MusicBrainz para sumar discos con un toque; los artistas de los álbumes se suman solos.
 - **Listas propias** de cualquier tipo, con ranking si se quiere y para reordenar. Las cuatro favoritas en el perfil.
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine, episodios, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).
@@ -31,7 +33,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Buscar y traer los datos y portadas (TMDB, Open Library, MusicBrainz, Cover Art Archive) y, si se activa, sincronizar con GitHub. |
+| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, Wikidata y Wikimedia Commons) y, si se activa, sincronizar con GitHub. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de El Cajón en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Lo que sale del teléfono:** el texto que se busca (a la fuente elegida) y, con la sincronización, el cajón entero a un Gist secreto de la propia cuenta. Nada más.
@@ -53,10 +55,12 @@ Para la versión firmada, ver [`docs/PUBLICAR.md`](../../docs/PUBLICAR.md).
 | Versión | Fecha | Qué cambió |
 |---------|-------|------------|
 | 1.0 | 2026-10-25 | Primera versión: películas, series, animes, libros, álbumes y artistas; búsqueda en TMDB (con la clave de cada persona), Open Library y MusicBrainz; estados, estrellas, me gusta, reseña, diario, episodios, páginas y canciones calificadas; artistas con discografía; listas; cuatro favoritas; cifras del año y retos; compartir como imagen; importar de Letterboxd y Goodreads; sincronización con un Gist; widget; respaldo; español e inglés. Probada en el emulador (Android 16), también la versión firmada: tutorial, buscar y agregar un libro y un álbum, calificar, episodios de una serie a mano, listas, compartir, ajustes. 13 pruebas de la lógica (unir al sincronizar, borrados, episodios, cifras, CSV, Letterboxd, Goodreads) y la de traducción. La búsqueda en TMDB no se pudo probar en vivo: hace falta una clave. Publicada el 25-10-2026; reproducible desde la etiqueta pública `cajon-v1.0`. |
+| 1.1 | 2026-10-25 | Lo que pidió Angel al probarla: **Inicio con todo el cajón** (películas, series y animes vistos, álbumes escuchados, artistas y libros leídos, cada cifra lleva a su apartado), **apartados de Cine, Música y Libros** en la barra (con sus cifras del año, en curso y su cajón; Música con álbumes y artistas), **buscador nuevo** con Todo, Cine, Música y Libros arriba y resultados por grupos que llegan a la vez (antes la píldora de Libros quedaba escondida), **fotos de los artistas** de Wikimedia Commons por Wikidata, con su crédito en la ficha. Listas y cifras pasan a abrirse desde el Inicio. Arreglado: MusicBrainz a veces responde "ocupado" y ahora se reintenta; los resultados que llegaban tarde quedaban escondidos arriba de la lista; las portadas de Wikimedia necesitaban que la app se identificara. Probada en el emulador. |
 
 ## Créditos
 
 - Películas, series y animes: [TMDB](https://www.themoviedb.org/), con la clave de cada persona. El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.
 - Libros: [Open Library](https://openlibrary.org/) (Internet Archive).
 - Música: [MusicBrainz](https://musicbrainz.org/) (núcleo de datos CC0) y carátulas del [Cover Art Archive](https://coverartarchive.org/).
+- Fotos de artistas: [Wikimedia Commons](https://commons.wikimedia.org/), encontradas por [Wikidata](https://www.wikidata.org/); cada una con su autor y licencia en la ficha del artista.
 - Portadas: Coil, Apache 2.0.

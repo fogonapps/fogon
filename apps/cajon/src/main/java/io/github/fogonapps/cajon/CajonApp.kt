@@ -20,6 +20,14 @@ class CajonApp : Application(), SingletonImageLoader.Factory {
     /** Las portadas se guardan en la caché del teléfono (hasta 150 MB) para no bajarlas cada vez. */
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
         .diskCache { DiskCache.Builder().directory(cacheDir.resolve("portadas")).maxSizeBytes(150L * 1024 * 1024).build() }
+        // Wikimedia (fotos de artistas) y MusicBrainz piden que cada app se identifique; sin esto, rechazan la descarga.
+        .components {
+            add(coil3.network.okhttp.OkHttpNetworkFetcherFactory(callFactory = {
+                okhttp3.OkHttpClient.Builder().addInterceptor { c ->
+                    c.proceed(c.request().newBuilder().header("User-Agent", "ElCajon-Fogon/${BuildConfig.VERSION_NAME} (fogonapps@gmail.com)").build())
+                }.build()
+            }))
+        }
         .crossfade(true)
         .build()
 }

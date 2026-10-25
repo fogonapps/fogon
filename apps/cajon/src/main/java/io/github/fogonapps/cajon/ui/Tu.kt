@@ -50,7 +50,7 @@ fun Tu(vm: CajonViewModel, e: Estado) {
     var anio by rememberSaveable { mutableStateOf<Int?>(anioActual) }
     val c = vm.L.cifras(e, anio)
 
-    Seccion(e.ajustes.nombre.ifBlank { stringResource(R.string.pestana_tu) }, Modifier.padding(top = 12.dp)) {
+    Cabecera(stringResource(R.string.tus_cifras), vm::cerrar) {
         BotonIcono(Iconos.Persona, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
     }
 
