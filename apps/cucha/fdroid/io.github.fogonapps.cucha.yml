@@ -21,7 +21,7 @@ Binaries: https://github.com/fogonapps/la-cucha/releases/download/v%v/LaCucha-%v
 Builds:
   - versionName: "1.0"
     versionCode: 1
-    commit: PENDIENTE  # el hash de la etiqueta cucha-v1.0
+    commit: 11858db0dacf0605ec7eb2e9e0911cb3ad8c56bd
     subdir: apps/cucha
     gradle:
       - yes

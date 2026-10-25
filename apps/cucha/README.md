@@ -6,7 +6,7 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 
 - Cómo está hecha por dentro: [`ARQUITECTURA.md`](ARQUITECTURA.md).
 - Cómo cambiar cosas y sacar versiones nuevas: [`GUIA.md`](GUIA.md).
-- Descargar: todavía no está publicada.
+- Descargar: [fogonapps/la-cucha](https://github.com/fogonapps/la-cucha/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-cucha`). F-Droid, más adelante.
 
 ## Qué hace
 
@@ -50,7 +50,7 @@ El APK queda en `apps/cucha/build/outputs/apk/debug/`. Para la versión firmada,
 
 | Versión | Fecha | Qué cambió |
 |---------|-------|------------|
-| 1.0 | 2026-10-24 | Primera versión (sin publicar): Hoy con anillo de calorías, macros, agua y cinco comidas; anotar con 185 alimentos de USDA y porciones caseras; código de barras opcional con Open Food Facts; 16 recetas colombianas; menú de la semana A/B; lista de mercado; metas calculadas o a mano; progreso; conexión con El Forzudo; widget; respaldo; español e inglés. Probada en el emulador (Android 16): tutorial, anotar un alimento y un producto propio, agua, recetas, menú, mercado, progreso con el peso de El Forzudo, escáner (cámara), widget, importar recetas y cambio de idioma. 10 pruebas de la lógica y la traducción. El 25-10-2026: ficha de F-Droid (textos, ícono y 7 capturas por idioma), datos de prueba (`herramientas/datos-prueba.py`), receta de F-Droid y los títulos largos (como "Ajiaco (chicken and potato soup)") en dos líneas en vez de cortarse. |
+| 1.0 | 2026-10-24 | Primera versión: Hoy con anillo de calorías, macros, agua y cinco comidas; anotar con 185 alimentos de USDA y porciones caseras; código de barras opcional con Open Food Facts; 16 recetas colombianas; menú de la semana A/B; lista de mercado; metas calculadas o a mano; progreso; conexión con El Forzudo; widget; respaldo; español e inglés. Probada en el emulador (Android 16): tutorial, anotar un alimento y un producto propio, agua, recetas, menú, mercado, progreso con el peso de El Forzudo, escáner (cámara), widget, importar recetas y cambio de idioma. 10 pruebas de la lógica y la traducción. El 25-10-2026: ficha de F-Droid (textos, ícono y 7 capturas por idioma), datos de prueba (`herramientas/datos-prueba.py`), receta de F-Droid y los títulos largos (como "Ajiaco (chicken and potato soup)") en dos líneas en vez de cortarse. Publicada el 25-10-2026; reproducible desde la etiqueta pública `cucha-v1.0`. |
 
 ## Créditos
 

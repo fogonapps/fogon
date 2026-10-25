@@ -18,7 +18,7 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`) y func
    ```
    El lint no debe tener errores (deja avisos menores conocidos, como en las otras apps).
 4. **Probar en el emulador** y **comprobar que es reproducible** (`docs/PUBLICAR.md`).
-5. **Publicar solo con el visto bueno de Angel** (`docs/PUBLICAR.md`). La primera vez hace falta el repo de descargas `fogonapps/la-cucha` (lo crea Angel; su README es `docs/descargas/la-cucha.md`). La ficha de F-Droid ya está en `fastlane/metadata/android/` y el borrador de la receta en `fdroid/io.github.fogonapps.cucha.yml`.
+5. **Publicar solo con el visto bueno de Angel** (`docs/PUBLICAR.md`). Las versiones van al repo de descargas `fogonapps/la-cucha` (su README es `docs/descargas/la-cucha.md`), con la etiqueta `cucha-v<versión>`. Agregar el changelog de la versión en `fastlane/metadata/android/<es|en-US>/changelogs/` y actualizar la receta de F-Droid (`fdroid/io.github.fogonapps.cucha.yml`).
 
 ## Datos de prueba y capturas
 
