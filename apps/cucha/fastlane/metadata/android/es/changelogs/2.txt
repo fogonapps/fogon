@@ -1,0 +1,1 @@
+Base de 397 alimentos con porciones medidas por USDA y 55 recetas. Busca en plural y por otros nombres. Arma tu plato sumando ingredientes seguidos y guárdalo como receta. Las flechas del día ya no se mueven.

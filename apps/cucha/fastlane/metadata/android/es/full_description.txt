@@ -2,10 +2,11 @@
 
 <ul>
 <li><b>Hoy:</b> las calorías que quedan, la proteína, los carbohidratos y la grasa, el agua y las cinco comidas del día.</li>
-<li><b>185 alimentos de aquí</b> (arepa, fríjoles, patacón, bocadillo, panela…) con porciones caseras: una arepa mediana, una taza, un cucharón. Se busca sin importar tildes.</li>
+<li><b>397 alimentos</b> (arepa, fríjoles, patacón, bocadillo, panela, champiñones, pandebono…) con porciones caseras: un huevo grande, una arepa mediana, una taza. Se busca sin importar tildes ni plurales.</li>
+<li><b>Arma tu plato:</b> suma ingredientes seguidos y guárdalo como receta para repetirlo con un toque.</li>
 <li><b>Valores de USDA FoodData Central,</b> y cada alimento dice de dónde salen.</li>
 <li><b>Código de barras, opcional:</b> escanea el empaque y busca el producto en Open Food Facts, o escribe tú los datos de la tabla.</li>
-<li><b>16 recetas colombianas</b> (ajiaco, sancocho, changua, calentado…) con sus calorías por porción. Crea las tuyas o impórtalas.</li>
+<li><b>55 recetas</b> (ajiaco, sancocho, bandeja paisa, changua, huevos con champiñones…) con sus calorías por porción. Crea las tuyas o impórtalas.</li>
 <li><b>Menú de la semana</b>, con semana A y B si quieres, y la <b>lista de mercado</b> que sale sola de él.</li>
 <li><b>Metas</b> calculadas con tus datos o puestas a mano si tienes un plan de nutricionista.</li>
 <li><b>Progreso:</b> días seguidos, promedio de la semana, los últimos 14 días y la curva del peso.</li>

@@ -22,14 +22,15 @@ class LogicaTest {
     private val L = Logica(Base.leer(File("src/main/assets/datos/alimentos.json").readText(), File("src/main/assets/datos/recetas.json").readText()))
 
     @Test fun laBaseYLasRecetasSonCoherentes() {
-        assertTrue(L.base.alimentos.size >= 180)
+        assertTrue(L.base.alimentos.size >= 390)
         assertEquals(L.base.alimentos.size, L.base.alimentos.map { it.id }.toSet().size)
         L.base.alimentos.forEach { a ->
             assertTrue(a.id, a.porciones.isNotEmpty() && a.k >= 0)
             // Las calorías cuadran con los macros (4/4/9), salvo las bebidas (el alcohol), lo que casi no tiene nada
-            // y el cacao, al que USDA le calcula las calorías con factores propios.
+            // y lo que tiene mucha fibra o especias, a lo que USDA le calcula las calorías con factores propios.
             val calc = a.p * 4 + a.c * 4 + a.g * 9
-            if (a.grupo != "bebidas" && a.k > 30 && a.id != "cacao") assertTrue("${a.id}: ${a.k} vs $calc", calc in a.k * 0.8..a.k * 1.2)
+            val factoresPropios = setOf("cacao", "salvado_avena", "kale", "pimienta")
+            if (a.grupo != "bebidas" && a.k > 30 && a.id !in factoresPropios) assertTrue("${a.id}: ${a.k} vs $calc", calc in a.k * 0.8..a.k * 1.2)
         }
         L.base.recetas.forEach { r -> r.ingredientes.forEach { assertNotNull("${r.id}: ${it.alimento}", L.base.alimento(it.alimento)) } }
     }
@@ -49,6 +50,13 @@ class LogicaTest {
         assertTrue(r.any { it is Comible.DeBase && it.a.id == "frijol_rojo" })
         assertTrue(L.buscar(Estado(), "ajiaco", "es").first() is Comible.DeReceta)
         assertTrue(L.buscar(Estado(), "rice", "es").any { it.ref == "a:arroz_blanco" })
+    }
+
+    @Test fun buscaEnPluralYPorOtrosNombres() {
+        assertTrue(L.buscar(Estado(), "huevos", "es").any { it.ref == "a:huevo_frito" })
+        assertTrue(L.buscar(Estado(), "champiñones", "es").any { it.ref == "a:champinones_salteados" })
+        assertTrue(L.buscar(Estado(), "limones", "es").any { it.ref == "a:limon" })
+        assertTrue(L.buscar(Estado(), "palomitas", "es").any { it.ref == "a:crispetas_aceite" })
     }
 
     @Test fun porcionDeRecetaYTotales() {

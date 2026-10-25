@@ -3,6 +3,7 @@ package io.github.fogonapps.identidad
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -24,9 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -36,10 +40,14 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /*
  * El movimiento de Fogón (ver docs/IDENTIDAD.md → Vidrio y puntos → Movimiento): resortes suaves, como en
@@ -57,10 +65,18 @@ fun <T> resorteAlegre() = spring<T>(dampingRatio = 0.55f, stiffness = 260f)
 /**
  * La pantalla de encima de la pila, animada. Al abrir una más profunda entra desde la derecha y la de atrás
  * se hunde y se apaga; al volver, al revés. [profundidad] es cuántas pantallas hay en la pila.
+ *
+ * Las pantallas de atrás guardan lo suyo (lo escrito en una búsqueda, el scroll): al volver a ellas sigue ahí.
+ * Lo de las que se cierran se olvida, para que al abrirlas de nuevo empiecen en blanco.
  */
 @Composable
 fun <T> PilaAnimada(pantalla: T?, profundidad: Int, contenido: @Composable (T) -> Unit) {
     val quieto = FogonTema.actual.menosMovimiento
+    val guardado = rememberSaveableStateHolder()
+    val claves = remember { mutableMapOf<Int, String>() }
+    LaunchedEffect(profundidad) {
+        claves.keys.filter { it > profundidad }.forEach { n -> claves.remove(n)?.let(guardado::removeState) }
+    }
     AnimatedContent(
         targetState = pantalla to profundidad,
         transitionSpec = {
@@ -78,7 +94,15 @@ fun <T> PilaAnimada(pantalla: T?, profundidad: Int, contenido: @Composable (T) -
         },
         contentKey = { it.first?.let { p -> p::class } to it.second },
         label = "pila",
-    ) { (p, _) -> if (p != null) contenido(p) }
+    ) { (p, n) ->
+        if (p != null) {
+            val clave = "$n:$p"
+            // Otra pantalla en la misma profundidad reemplaza a la anterior: lo de esa se olvida.
+            claves[n]?.takeIf { it != clave }?.let(guardado::removeState)
+            claves[n] = clave
+            guardado.SaveableStateProvider(clave) { contenido(p) }
+        }
+    }
 }
 
 /** El cambio de pestaña: la nueva sube un poco mientras se aclara. */
@@ -177,4 +201,27 @@ fun progresoAnimado(objetivo: Float): Float {
     val p = remember { Animatable(if (quieto) objetivo else 0f) }
     LaunchedEffect(objetivo) { if (quieto) p.snapTo(objetivo) else p.animateTo(objetivo, spring(dampingRatio = 0.85f, stiffness = 120f)) }
     return p.value
+}
+
+/**
+ * Un estallido de puntos que sale del centro y se apaga, una vez, al aparecer (los récords). Va detrás de lo
+ * que celebra, en una caja del mismo tamaño; los puntos salen hasta [alcance] más allá de ese borde.
+ */
+fun Modifier.estallido(color: Color, alcance: Dp = 18.dp, retraso: Long = 80): Modifier = composed {
+    val quieto = FogonTema.actual.menosMovimiento
+    val t = remember { Animatable(if (quieto) 1f else 0f) }
+    LaunchedEffect(Unit) { if (t.value < 1f) { delay(retraso); t.animateTo(1f, tween(700, easing = FastOutSlowInEasing)) } }
+    drawBehind {
+        if (t.value <= 0f || t.value >= 1f) return@drawBehind
+        val centro = center
+        val inicio = size.minDimension / 2
+        val lejos = inicio + alcance.toPx()
+        // Doce puntos en círculo, alternando dos tamaños; se alejan y se apagan.
+        for (i in 0 until 12) {
+            val angulo = (i / 12.0) * 2 * PI
+            val r = inicio * 0.6f + (lejos - inicio * 0.6f) * t.value
+            val p = Offset(centro.x + (cos(angulo) * r).toFloat(), centro.y + (sin(angulo) * r).toFloat())
+            drawCircle(color.copy(alpha = (1f - t.value) * color.alpha), radius = (if (i % 2 == 0) 3.dp else 2.dp).toPx(), center = p)
+        }
+    }
 }

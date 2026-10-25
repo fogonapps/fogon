@@ -41,6 +41,8 @@ data class Alimento(
     val g: Double,
     val fi: Double = 0.0,
     val porciones: List<Porcion> = emptyList(),
+    /** Más nombres para buscarlo, separados por comas ("guineo", "palomitas"…). */
+    val otros: String = "",
 ) {
     val por100 get() = Nutrientes(k, p, c, g)
     fun nombre(idioma: String) = if (idioma == "en") en else es

@@ -190,6 +190,11 @@
   <string name="tut_metas_propias">I already have goals from a plan</string>
   <string name="tut_metas_nota">It’s a general estimate (Mifflin-St Jeor formula). You can change it anytime in Profile.</string>
   <string name="tut_empezar">Start</string>
+  <string name="llevas_en">In %1$s so far</string>
+  <string name="listo">Done</string>
+  <string name="guardar_como_receta">Save as recipe</string>
+  <string name="agrega_otro">Search for another ingredient to add it, or tap Done.</string>
+  <string name="receta_de_comida">My %1$s</string>
   <string name="aviso_anotado">Logged: %1$s</string>
   <string name="aviso_ayer_vacio">You didn’t log anything for that meal yesterday.</string>
   <string name="aviso_buscando">Searching Open Food Facts…</string>

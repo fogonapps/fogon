@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.cucha.CuchaViewModel
 import io.github.fogonapps.cucha.Pantalla
 import io.github.fogonapps.cucha.R
+import io.github.fogonapps.cucha.datos.Comible
 import io.github.fogonapps.cucha.datos.Estado
 import io.github.fogonapps.cucha.datos.Ingrediente
 import io.github.fogonapps.cucha.datos.Nutrientes
@@ -161,17 +162,20 @@ fun VerReceta(vm: CuchaViewModel, e: Estado, id: String) {
 /** Crear o corregir una receta. Al corregir una de ejemplo se guarda una copia propia con el mismo id. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun EditarReceta(vm: CuchaViewModel, e: Estado, id: String?) {
+fun EditarReceta(vm: CuchaViewModel, e: Estado, p: Pantalla.EditarReceta) {
     val f = FogonTema.actual
     val idioma = vm.idioma()
-    val r = id?.let { vm.L.receta(e, it) }
-    var nombre by rememberSaveable { mutableStateOf(r?.nombre(idioma) ?: "") }
+    val r = p.id?.let { vm.L.receta(e, it) }
+    // Una receta nueva armada con lo anotado en una comida trae sus ingredientes y un nombre para cambiar.
+    val nombreComida = p.comida?.let { nombreComida(it).lowercase() }
+    val nombreInicial = r?.nombre(idioma) ?: nombreComida?.let { stringResource(R.string.receta_de_comida, it) } ?: ""
+    var nombre by rememberSaveable { mutableStateOf(nombreInicial) }
     var porciones by rememberSaveable { mutableStateOf((r?.porciones ?: 1).toString()) }
     var minutos by rememberSaveable { mutableStateOf(r?.minutos?.takeIf { it > 0 }?.toString() ?: "") }
     var pasos by rememberSaveable { mutableStateOf(r?.pasos(idioma)?.joinToString("\n") ?: "") }
     var nota by rememberSaveable { mutableStateOf(r?.nota ?: "") }
-    val comidas = remember { mutableStateListOf(*(r?.comidas ?: emptyList()).toTypedArray()) }
-    val ingredientes = remember { mutableStateListOf(*(r?.ingredientes ?: emptyList()).toTypedArray()) }
+    val comidas = remember { mutableStateListOf(*(r?.comidas ?: listOfNotNull(p.comida)).toTypedArray()) }
+    val ingredientes = remember { mutableStateListOf(*(r?.ingredientes ?: p.ingredientes).toTypedArray()) }
     var buscar by rememberSaveable { mutableStateOf("") }
     // Sin ingredientes, los valores de cada porción se escriben a mano.
     var kcal by rememberSaveable { mutableStateOf(r?.porPorcion?.kcal?.let { cifra(it, idioma) } ?: "") }
@@ -205,8 +209,7 @@ fun EditarReceta(vm: CuchaViewModel, e: Estado, id: String?) {
         }
         CampoTexto(buscar, { buscar = it }, stringResource(R.string.agregar_ingrediente))
         if (buscar.isNotBlank()) {
-            val palabras = io.github.fogonapps.cucha.datos.normal(buscar).split(" ").filter { it.isNotBlank() }
-            vm.L.base.alimentos.filter { a -> palabras.all { it in io.github.fogonapps.cucha.datos.normal(a.nombre(idioma)) } }.take(6).forEach { a ->
+            vm.L.buscar(e, buscar, idioma).filterIsInstance<Comible.DeBase>().map { it.a }.take(6).forEach { a ->
                 FilaVidrio({ ingredientes.add(Ingrediente(a.id, a.porciones.firstOrNull()?.gramos ?: 100.0)); buscar = "" }, adentro = true) {
                     IconoRiso(Iconos.Mas, null, tamano = 18.dp, tinta = f.acentoTexto)
                     Text(a.nombre(idioma), style = MaterialTheme.typography.bodyLarge, color = f.texto)

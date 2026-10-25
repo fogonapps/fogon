@@ -1,0 +1,1 @@
+More motion: each set checkbox pops and vibrates when you tick it, records appear with a burst of dots, and lists and the summary slide in card by card. Going back to a screen keeps what you typed.

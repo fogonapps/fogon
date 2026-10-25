@@ -164,9 +164,10 @@ En el código todo sale de `FogonTema.actual` (`core/identidad`): nunca un color
 Desde el 24-10-2026 (`core/identidad/.../Movimiento.kt`). La idea: que se sienta como una app de iPhone, con resortes suaves y sin adornos.
 
 - **Resortes:** `resorte()` (rápido, sin rebote) para casi todo y `resorteAlegre()` (con un poco de rebote) para lo que celebra.
-- **Pantallas:** `PilaAnimada` hace que la pantalla nueva entre desde la derecha mientras la de atrás se hunde un poco (94 %) y se apaga; al volver, al revés. `PestanaAnimada` cambia de pestaña subiendo 14 dp con un fundido.
+- **Pantallas:** `PilaAnimada` hace que la pantalla nueva entre desde la derecha mientras la de atrás se hunde un poco (94 %) y se apaga; al volver, al revés. Las de atrás guardan lo suyo (lo escrito en una búsqueda): al volver sigue ahí. `PestanaAnimada` cambia de pestaña subiendo 14 dp con un fundido.
 - **Tocar:** `Modifier.rebote()` achica un poco lo que se toca y lo suelta con un resorte (botones, pestañas, píldoras, acciones). Ya lo traen `BotonRiso` y `BotonSecundario`.
 - **Aparecer:** `Modifier.aparecer(n)` sube y aclara las tarjetas una tras otra (45 ms entre cada una); `aparecerConRebote()` para ilustraciones y logros (ya lo trae `Ilustracion`).
+- **Celebrar:** `Modifier.estallido(color)` saca un anillo de doce puntos que se alejan y se apagan, una vez (los récords de El Forzudo). Con un toque de vibración (`HapticFeedbackType.Confirm`); al marcar algo como hecho, `ToggleOn`. Nada gira.
 - **Números:** `NumeroRiso` usa `CifrasRodantes`: cada cifra que cambia sale hacia arriba y la nueva entra desde abajo. Las barras y los anillos se llenan con `progresoAnimado`, y las gráficas se dibujan de izquierda a derecha.
 - **Menos movimiento** (Apariencia → Comodidad) apaga todo: fundidos cortos o nada.
 

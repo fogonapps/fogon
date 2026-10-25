@@ -189,6 +189,11 @@
   <string name="tut_metas_propias">Ya tengo metas de un plan</string>
   <string name="tut_metas_nota">Es un cálculo general (fórmula de Mifflin-St Jeor). Puedes cambiarlo cuando quieras en Perfil.</string>
   <string name="tut_empezar">Empezar</string>
+  <string name="llevas_en">En %1$s llevas</string>
+  <string name="listo">Listo</string>
+  <string name="guardar_como_receta">Guardar como receta</string>
+  <string name="agrega_otro">Busca otro ingrediente para sumarlo, o toca Listo.</string>
+  <string name="receta_de_comida">Mi %1$s</string>
   <string name="aviso_anotado">Anotado: %1$s</string>
   <string name="aviso_ayer_vacio">Ayer no anotaste nada en esa comida.</string>
   <string name="aviso_buscando">Buscando en Open Food Facts…</string>

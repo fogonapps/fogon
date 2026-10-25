@@ -93,11 +93,17 @@ class Logica(val base: Base) {
             base.alimentos.map { Comible.DeBase(it) }
         return todo.mapNotNull { c ->
             val n = normal(c.nombre(idioma))
-            // En la base se busca también por el otro idioma (quien escribe "rice" con la app en español).
-            val otro = (c as? Comible.DeBase)?.a?.let { normal(it.nombre(if (idioma == "en") "es" else "en")) } ?: ""
-            if (palabras.all { it in n || it in otro }) c to (if (n.startsWith(palabras[0])) 0 else 1) * 1000 + n.length else null
+            // En la base se busca también por el otro idioma (quien escribe "rice" con la app en español) y por
+            // sus otros nombres ("guineo", "palomitas").
+            val otro = (c as? Comible.DeBase)?.a?.let { normal(it.nombre(if (idioma == "en") "es" else "en") + " " + it.otros) } ?: ""
+            if (palabras.all { coincide(it, n) || coincide(it, otro) }) c to (if (n.startsWith(palabras[0])) 0 else 1) * 1000 + n.length else null
         }.sortedBy { it.second }.take(max).map { it.first }
     }
+
+    /** La palabra está en el texto, también en singular: "huevos" encuentra "huevo", "limones" encuentra "limón". */
+    private fun coincide(palabra: String, texto: String) = palabra in texto ||
+        (palabra.length > 3 && palabra.endsWith("s") && palabra.dropLast(1) in texto) ||
+        (palabra.length > 4 && palabra.endsWith("es") && palabra.dropLast(2) in texto)
 
     /** Favoritos primero y luego lo último anotado, sin repetir. */
     fun recientes(e: Estado, max: Int = 20): List<Comible> {
@@ -129,7 +135,7 @@ class Logica(val base: Base) {
             val factor = 1.0 / r.porciones.coerceAtLeast(1)
             for (i in r.ingredientes) gramos.merge(i.alimento, i.gramos * factor, Double::plus)
         }
-        val orden = listOf("verduras", "frutas", "tuberculos", "carnes", "pescados", "lacteos", "granos", "legumbres", "grasas", "dulces", "bebidas", "hechas")
+        val orden = listOf("verduras", "frutas", "tuberculos", "carnes", "pescados", "lacteos", "granos", "legumbres", "grasas", "salsas", "dulces", "bebidas", "hechas")
         return gramos.mapNotNull { (id, g) -> base.alimento(id)?.let { it to g } }
             .sortedWith(compareBy({ orden.indexOf(it.first.grupo) }, { it.first.es }))
     }

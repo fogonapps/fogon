@@ -40,6 +40,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.animation.animateContentSize
 import io.github.fogonapps.identidad.rebote
+import io.github.fogonapps.identidad.aparecerConRebote
+import io.github.fogonapps.identidad.estallido
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.border
 import androidx.compose.runtime.CompositionLocalProvider
@@ -218,7 +220,14 @@ private fun AvisoTinta(mensaje: String) {
         Modifier.fillMaxWidth().padding(12.dp).clip(io.github.fogonapps.identidad.FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (record) io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
+        // En los récords, la chispa salta con un estallido de puntos y el teléfono vibra.
+        if (record) {
+            val haptico = androidx.compose.ui.platform.LocalHapticFeedback.current
+            LaunchedEffect(mensaje) { haptico.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm) }
+            Box(Modifier.aparecerConRebote(60).estallido(FogonTema.actual.tinta1, alcance = 12.dp, retraso = 120)) {
+                io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
+            }
+        }
         Text(mensaje.removePrefix(io.github.fogonapps.forzudo.MARCA_RECORD), color = FogonTema.actual.sobrePildora, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
     }
 }

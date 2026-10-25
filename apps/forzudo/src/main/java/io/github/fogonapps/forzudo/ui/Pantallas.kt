@@ -72,6 +72,9 @@ import io.github.fogonapps.identidad.URL_CODIGO
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.NumeroRiso
+import io.github.fogonapps.identidad.aparecer
+import io.github.fogonapps.identidad.aparecerConRebote
+import io.github.fogonapps.identidad.estallido
 import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
@@ -152,7 +155,7 @@ fun Vivo(vm: GymViewModel, e: Estado) {
                 else vm.cambiarRutinaActiva(did)
             }
         }
-        a.items.forEach { BloqueEjercicio(vm, e, vm.bib.cfg(it)) }
+        a.items.forEachIndexed { i, it -> Box(Modifier.aparecer(i.coerceAtMost(6))) { BloqueEjercicio(vm, e, vm.bib.cfg(it)) } }
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             BotonSecundario(stringResource(R.string.mas_agregar_ejercicio), { vm.abrir(Pantalla.Cambiar(null, ModoCambio.VIVO_AGREGAR)) }, Modifier.fillMaxWidth())
         }
@@ -237,8 +240,9 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
             val p = previas.getOrNull(i)
             val descCopiar = stringResource(R.string.copiar_anterior)
             val descMarcar = stringResource(R.string.marcar_serie, i + 1)
+            val fondoFila by androidx.compose.animation.animateColorAsState(if (s.done) f.paleta.tinta.copy(alpha = 0.16f) else Color.Transparent, label = "fila")
             Row(
-                Modifier.fillMaxWidth().background(if (s.done) f.paleta.tinta.copy(alpha = 0.16f) else Color.Transparent)
+                Modifier.fillMaxWidth().background(fondoFila)
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -251,17 +255,39 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
                     { vm.escribir(c.id, i, "kg", it) }, Modifier.weight(1f))
                 CampoNumero(s.reps?.let { fk(it) } ?: "", p?.reps?.let { fk(it) } ?: "${c.lo}", stringResource(if (c.e.kind == "s") R.string.segundos_serie else R.string.reps_serie, i + 1), false,
                     { vm.escribir(c.id, i, "reps", it) }, Modifier.weight(1f))
-                Box(
-                    Modifier.size(44.dp).clip(forma(10.dp))
-                        .background(if (s.done) f.paleta.tinta else f.superficie)
-                        .clickable { vm.marcar(c.id, i) }
-                        .semantics { contentDescription = descMarcar; stateDescription = if (s.done) descCompleta else descPendiente },
-                    contentAlignment = Alignment.Center,
-                ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 22.dp, tinta = if (s.done) f.sobreTinta1 else f.textoSuave, corrida = null) }
+                CasillaSerie(s.done, descMarcar, if (s.done) descCompleta else descPendiente) { vm.marcar(c.id, i) }
             }
         }
         TextButton({ vm.agregarSerie(c.id) }, Modifier.padding(horizontal = 8.dp)) { Text(stringResource(R.string.mas_agregar_serie)) }
     }
+}
+
+/**
+ * La casilla de una serie. Al marcarla se llena de tinta, el chulo salta con un resorte y el teléfono vibra
+ * un toque; al desmarcarla se apaga sin rebote.
+ */
+@Composable
+private fun CasillaSerie(hecha: Boolean, descripcion: String, estado: String, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    val haptico = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val fondo by androidx.compose.animation.animateColorAsState(if (hecha) f.paleta.tinta else f.superficie, label = "casilla")
+    val escala = remember { androidx.compose.animation.core.Animatable(1f) }
+    // Solo salta al marcarla aquí, no al abrir un entreno con series ya hechas.
+    var antes by remember { mutableStateOf(hecha) }
+    LaunchedEffect(hecha) {
+        if (hecha && !antes && !f.menosMovimiento) { escala.snapTo(0.6f); escala.animateTo(1f, io.github.fogonapps.identidad.resorteAlegre()) }
+        antes = hecha
+    }
+    Box(
+        Modifier.size(44.dp).graphicsLayer { scaleX = escala.value; scaleY = escala.value }.clip(forma(10.dp))
+            .background(fondo)
+            .clickable {
+                haptico.performHapticFeedback(if (hecha) androidx.compose.ui.hapticfeedback.HapticFeedbackType.ToggleOff else androidx.compose.ui.hapticfeedback.HapticFeedbackType.ToggleOn)
+                onClick()
+            }
+            .semantics { contentDescription = descripcion; stateDescription = estado },
+        contentAlignment = Alignment.Center,
+    ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 22.dp, tinta = if (hecha) f.sobreTinta1 else f.textoSuave, corrida = null) }
 }
 
 @Composable
@@ -288,7 +314,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
         // La tarjeta del final: el saludo, el volumen en puntos sobre su halo y el personaje.
-        Box(Modifier.fillMaxWidth().padding(16.dp).height(220.dp).tarjetaFogon(forma(30.dp))) {
+        Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).height(220.dp).tarjetaFogon(forma(30.dp))) {
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2, centro = androidx.compose.ui.geometry.Offset(0.85f, 0.25f)))
             Column(Modifier.padding(22.dp).fillMaxWidth(0.6f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
@@ -297,7 +323,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
             NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
             Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
         }
-        Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}")
+        Box(Modifier.aparecer(1)) { Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}") }
         if (r.volumen >= 150) {
             val motos = r.volumen / 150
             Text(pluralStringResource(R.plurals.motos, motos.toInt(), motos.toInt()),
@@ -314,14 +340,16 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
         MedallasNuevas(vm, vm.L.medallasNuevas(e, vm.hoy()))
         // Los récords nuevos, en una tarjeta con el trofeo.
         if (r.records.isNotEmpty()) Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(26.dp)).padding(start = 18.dp, top = 16.dp, bottom = 16.dp, end = 6.dp),
+            Modifier.aparecerConRebote(350).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(26.dp)).padding(start = 18.dp, top = 16.dp, bottom = 16.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.records_nuevos), style = MaterialTheme.typography.titleLarge, color = f.texto)
                 r.records.forEach { Logro(it) }
             }
-            io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_trofeo, tamano = 110.dp)
+            Box(Modifier.estallido(f.tinta1, alcance = 14.dp, retraso = 600)) {
+                io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_trofeo, tamano = 110.dp)
+            }
         }
         Box(Modifier.padding(16.dp)) { BotonRiso(stringResource(R.string.volver_inicio), vm::cerrar, Modifier.fillMaxWidth()) }
     }
@@ -461,8 +489,8 @@ fun Programas(vm: GymViewModel, e: Estado) {
     Column {
         Cabecera(stringResource(R.string.programas), vm::cerrar)
         Pista(stringResource(R.string.pista_programas))
-        vm.bib.programas.forEach { p ->
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp),
+        vm.bib.programas.forEachIndexed { i, p ->
+            Column(Modifier.aparecer(i.coerceAtMost(8)).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(p.level, p.goal, pluralStringResource(R.plurals.dias, p.routines.size, p.routines.size)).forEach { Etiqueta(it, f.linea, f.texto) }

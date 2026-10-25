@@ -240,8 +240,11 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             val lista = e.sessions.sortedByDescending { it.date }
             if (lista.isEmpty()) {
                 EstadoVacio(RId.drawable.personaje_el_forzudo, stringResource(R.string.sin_entrenos), stringResource(R.string.sin_entrenos_texto))
-            } else lista.forEach { s ->
-                TarjetaEntreno(vm, s, dias) { confirmar(vm.tx(R.string.borrar_entreno_pregunta), null) { vm.borrarSesion(s.id) } }
+            } else lista.forEachIndexed { i, s ->
+                // Las tarjetas entran una tras otra (las primeras; las de más abajo, juntas).
+                Box(Modifier.aparecer(i.coerceAtMost(8))) {
+                    TarjetaEntreno(vm, s, dias) { confirmar(vm.tx(R.string.borrar_entreno_pregunta), null) { vm.borrarSesion(s.id) } }
+                }
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -308,8 +311,8 @@ fun Entrenar(vm: GymViewModel, e: Estado) {
             }
         }
         Seccion(stringResource(R.string.mis_rutinas, dias.size)) {
-            dias.forEach { d ->
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            dias.forEachIndexed { i, d ->
+                Column(Modifier.aparecer(i.coerceAtMost(8)).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(14.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(d.title, style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f))
                         if (hoyId == d.id) Etiqueta(stringResource(R.string.hoy), f.paleta.tinta, f.paleta.sobreTinta)
@@ -532,9 +535,9 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
 
         val usados = (L.dias(e).flatMap { d -> d.rutina.items.map { it.id } } + e.sessions.flatMap { it.entries.keys }).toSet()
         Seccion(stringResource(R.string.ejercicios)) {
-            vm.bib.ejercicios.filter { it.id in usados }.forEach { ej ->
+            vm.bib.ejercicios.filter { it.id in usados }.forEachIndexed { i, ej ->
                 val mk = L.maxKg(e, ej.id); val mxr = L.maxReps(e, ej.id); val r = L.rangoEjercicio(e, ej.id)
-                Fila({ vm.abrir(Pantalla.Detalle(ej.id)) }) {
+                Fila({ vm.abrir(Pantalla.Detalle(ej.id)) }, Modifier.aparecer(i.coerceAtMost(8))) {
                     Miniatura(ej, vm.bib)
                     Column(Modifier.weight(1f)) {
                         Text(ej.n, fontWeight = FontWeight.Bold, color = f.texto)

@@ -39,6 +39,7 @@ def main(sr, fndds):
             "fdc": x["fdc"], "usda": nombres[x["fdc"]], "aprox": x["aprox"],
             "k": round(v["k"], 1), "p": round(v["p"], 2), "c": round(v["c"], 2), "g": round(v["g"], 2), "fi": round(v.get("fi", 0.0), 2),
             "porciones": [{"es": es, "en": en, "gramos": g} for es, en, g in x["porciones"]],
+            **({"otros": x["otros"]} if x["otros"] else {}),
         })
     destino = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../src/main/assets/datos/alimentos.json")
     with open(destino, "w", encoding="utf-8") as f:

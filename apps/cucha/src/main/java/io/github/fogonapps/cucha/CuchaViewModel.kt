@@ -9,6 +9,7 @@ import io.github.fogonapps.cucha.datos.Comible
 import io.github.fogonapps.cucha.datos.DeForzudo
 import io.github.fogonapps.cucha.datos.Dia
 import io.github.fogonapps.cucha.datos.Estado
+import io.github.fogonapps.cucha.datos.Ingrediente
 import io.github.fogonapps.cucha.datos.JsonCucha
 import io.github.fogonapps.cucha.datos.Metas
 import io.github.fogonapps.cucha.datos.Nutrientes
@@ -41,7 +42,8 @@ sealed interface Pantalla {
     /** Cuánto se comió de [ref]; con [editar], se corrige algo ya anotado. */
     data class Cantidad(val ref: String, val comida: String, val fecha: String, val editar: String? = null) : Pantalla
     data class VerReceta(val id: String) : Pantalla
-    data class EditarReceta(val id: String?) : Pantalla
+    /** [ingredientes] y [comida]: para una receta nueva armada con lo anotado en una comida. */
+    data class EditarReceta(val id: String?, val ingredientes: List<Ingrediente> = emptyList(), val comida: String? = null) : Pantalla
     /** Un producto nuevo o para corregir; [producto] viene de Open Food Facts (o con solo el código). */
     data class EditarProducto(val producto: Producto?, val comida: String, val fecha: String) : Pantalla
     data object Mercado : Pantalla
@@ -184,8 +186,11 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
             val lista = if (editar != null) d.anotados.map { if (it.id == editar) nuevo else it } else d.anotados + nuevo
             e.copy(dias = e.dias + (fecha to d.copy(anotados = lista)))
         }
-        // Volver hasta Hoy: se cierran la búsqueda y la cantidad.
-        _pila.value = _pila.value.filterNot { it is Pantalla.Anotar || it is Pantalla.Cantidad || it is Pantalla.EditarProducto }
+        // Si vino de la búsqueda, se vuelve a ella para sumar otro ingrediente (huevos, y después champiñones…);
+        // si no (el menú de Hoy, corregir algo), se vuelve hasta Hoy.
+        val busqueda = _pila.value.indexOfLast { it is Pantalla.Anotar }
+        _pila.value = if (editar == null && busqueda >= 0) _pila.value.take(busqueda + 1)
+            else _pila.value.filterNot { it is Pantalla.Anotar || it is Pantalla.Cantidad || it is Pantalla.EditarProducto }
         if (editar == null) avisar(tx(R.string.aviso_anotado, nuevo.nombre))
     }
 

@@ -131,7 +131,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                             is Pantalla.Cantidad -> Cantidad(vm, estado, p)
                             is Pantalla.EditarProducto -> EditarProducto(vm, p)
                             is Pantalla.VerReceta -> VerReceta(vm, estado, p.id)
-                            is Pantalla.EditarReceta -> EditarReceta(vm, estado, p.id)
+                            is Pantalla.EditarReceta -> EditarReceta(vm, estado, p)
                             Pantalla.Mercado -> Mercado(vm, estado)
                             Pantalla.Metas -> EditarMetas(vm, estado)
                             Pantalla.Perfil -> Perfil(vm, estado, acciones)

@@ -23,12 +23,12 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`) y func
 ## Datos de prueba y capturas
 
 - **Datos de prueba:** inventados, nunca los de alguien. `python3 herramientas/datos-prueba.py <es|en> <fecha de hoy> <salida.json>` (desde `apps/cucha`) arma un estado con perfil y metas, tres semanas de comidas (hoy, hasta el almuerzo), agua, el peso de un mes, favoritos y el menú de la semana. En la versión de prueba se copia con `adb push` y `run-as io.github.fogonapps.cucha cp … files/datastore/estado.json`; el idioma va en `shared_prefs/ui.xml` (clave `idioma`) y el tema en `shared_prefs/apariencia.xml` (`version` 4 y `estilo`: `GRAFITO`, `MARCA` para Cocina, `CLARO` o `CONTRASTE`).
-- **Capturas de F-Droid:** como en El Forzudo (`apps/forzudo/GUIA.md` → Emulador), con el modo demo de Android. Van en `fastlane/metadata/android/<es|en-US>/images/phoneScreenshots/`, siete por idioma: Hoy en Grafito y en Cocina, Anotar una arepa en Cocina, la receta del ajiaco, el menú, la lista de mercado en Claro y el progreso. Si se instala una El Forzudo vieja (sin el proveedor de datos), La Cucha usa el peso de sus propios datos.
+- **Capturas de F-Droid:** como en El Forzudo (`apps/forzudo/GUIA.md` → Emulador), con el modo demo de Android. Van en `fastlane/metadata/android/<es|en-US>/images/phoneScreenshots/`, siete por idioma: Hoy en Grafito y en Cocina, Anotar en Cocina (con lo que llevas en la comida), una receta, el menú, la lista de mercado en Claro y el progreso. Sin El Forzudo instalado en el emulador, para que el peso y las metas salgan de los datos de prueba. Si se instala una El Forzudo vieja (sin el proveedor de datos), La Cucha usa el peso de sus propios datos.
 
 ## Agregar o corregir un alimento
 
-1. Buscar el alimento en USDA FoodData Central: en [fdc.nal.usda.gov](https://fdc.nal.usda.gov/) o en los CSV descargados (ver abajo). Sirven **SR Legacy** y **FNDDS (Survey)**: los dos son de dominio público. Anotar su número FDC.
-2. Agregarlo a `herramientas/alimentos/lista.py` con `a(id, español, inglés, grupo, fdc, porciones…)`. Si no está tal cual y se usa el más parecido, `aprox=True` (la app lo avisa). **Un id publicado no se cambia:** lo anotado lo usa.
+1. Buscar el alimento en USDA FoodData Central: en [fdc.nal.usda.gov](https://fdc.nal.usda.gov/) o en los CSV descargados (ver abajo), con `python3 -I apps/cucha/herramientas/alimentos/buscar.py <sr> <fndds> palabras…`, que muestra el número FDC, las calorías y **las porciones medidas por USDA** ("1 large = 50 g"). Sirven **SR Legacy** y **FNDDS (Survey)**: los dos son de dominio público. Evitar los que tienen marca en la descripción (la app la muestra).
+2. Agregarlo a `herramientas/alimentos/lista.py` con `a(id, español, inglés, grupo, fdc, porciones…, otros="…")`. Las porciones con el peso que da USDA cuando lo trae; `otros` son más nombres para buscarlo (guineo, palomitas). Si no está tal cual y se usa el más parecido, `aprox=True` (la app lo avisa). **Un id publicado no se cambia:** lo anotado lo usa.
 3. Descargar los CSV a una carpeta fuera del repo y generar:
    ```
    curl -LO https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip
@@ -40,7 +40,7 @@ Todos los comandos se corren desde la raíz del repo (`~/Projects/fogon`) y func
    El script nunca inventa valores: si un número FDC no existe o le falta un macro, se detiene.
 4. Correr `LogicaTest` (revisa ids únicos y que las calorías cuadren con los macros).
 
-Grupos: `granos`, `tuberculos`, `legumbres`, `carnes`, `pescados`, `lacteos`, `frutas`, `verduras`, `grasas`, `dulces`, `hechas`, `bebidas`. El orden de la lista de mercado sale de `Logica.mercado`.
+Grupos: `granos`, `tuberculos`, `legumbres`, `carnes`, `pescados`, `lacteos`, `frutas`, `verduras`, `grasas`, `salsas`, `dulces`, `hechas`, `bebidas`. El orden de la lista de mercado sale de `Logica.mercado`.
 
 ## Agregar una receta de ejemplo
 

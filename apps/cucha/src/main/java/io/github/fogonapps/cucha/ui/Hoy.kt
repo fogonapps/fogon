@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -26,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,6 +70,16 @@ fun nombreDia(f: LocalDate, hoy: LocalDate, idioma: String): String = when (f) {
         .replaceFirstChar { it.uppercase() }
 }
 
+/** Para la cabecera de Hoy: "Hoy", "Ayer" o "Viernes 23" (el mes solo si es otro). */
+@Composable
+private fun nombreDiaCorto(f: LocalDate, hoy: LocalDate, idioma: String): String = when {
+    f == hoy || f == hoy.minusDays(1) -> nombreDia(f, hoy, idioma)
+    else -> f.format(DateTimeFormatter.ofPattern(
+        if (f.month == hoy.month) "EEEE d" else if (idioma == "en") "MMM d" else "d MMM",
+        Locale.forLanguageTag(idioma),
+    )).replaceFirstChar { it.uppercase() }
+}
+
 @Composable
 fun Hoy(vm: CuchaViewModel, e: Estado) {
     val f = FogonTema.actual
@@ -85,10 +97,19 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
         Column(Modifier.weight(1f)) {
             Text(if (e.nombre.isBlank()) stringResource(R.string.hola) else stringResource(R.string.hola_nombre, e.nombre),
                 style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                BotonIcono(Iconos.Atras, stringResource(R.string.dia_anterior)) { vm.verDia(dia.minusDays(1)) }
-                Text(nombreDia(dia, hoy, idioma), fontFamily = f.titulos, fontSize = 22.sp, color = f.texto, maxLines = 1)
-                if (dia < hoy) BotonIcono(Iconos.Siguiente, stringResource(R.string.dia_siguiente)) { vm.verDia(dia.plusDays(1)) }
+            // El nombre del día va corto ("Viernes 23") y las flechas quedan quietas a la derecha (la de adelante
+            // guarda su lugar en Hoy), para poder tocarlas varias veces seguidas sin que se muevan.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    nombreDiaCorto(dia, hoy, idioma), fontFamily = f.titulos, fontSize = 22.sp, color = f.texto, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+                )
+                Row(Modifier.padding(start = 8.dp, end = 10.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)) {
+                    BotonIcono(Iconos.Atras, stringResource(R.string.dia_anterior)) { vm.verDia(dia.minusDays(1)) }
+                    Box(Modifier.alpha(if (dia < hoy) 1f else 0.3f)) {
+                        BotonIcono(Iconos.Siguiente, stringResource(R.string.dia_siguiente), activo = dia < hoy) { vm.verDia(dia.plusDays(1)) }
+                    }
+                }
             }
         }
         BotonIcono(Iconos.Persona, stringResource(R.string.perfil), grande = true) { vm.abrir(Pantalla.Perfil) }
@@ -158,12 +179,12 @@ private fun pluralStringResource(id: Int, n: Int) = androidx.compose.ui.res.plur
 
 /** Un botón redondo con solo un ícono. */
 @Composable
-fun BotonIcono(icono: io.github.fogonapps.identidad.Dibujo, descripcion: String, grande: Boolean = false, onClick: () -> Unit) {
+fun BotonIcono(icono: io.github.fogonapps.identidad.Dibujo, descripcion: String, grande: Boolean = false, activo: Boolean = true, onClick: () -> Unit) {
     val f = FogonTema.actual
     Box(
-        Modifier.rebote(0.9f).size(if (grande) 46.dp else 36.dp).clip(CircleShape)
+        Modifier.rebote(0.9f).size(if (grande) 46.dp else 40.dp).clip(CircleShape)
             .then(if (grande) Modifier.background(f.superficie).border(f.borde, f.linea, CircleShape) else Modifier)
-            .clickable(onClick = onClick).semantics { contentDescription = descripcion; role = Role.Button },
+            .clickable(enabled = activo, onClick = onClick).semantics { contentDescription = descripcion; role = Role.Button },
         contentAlignment = Alignment.Center,
     ) { IconoRiso(icono, null, tamano = if (grande) 22.dp else 18.dp, tinta = f.texto) }
 }

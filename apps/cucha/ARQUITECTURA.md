@@ -36,8 +36,8 @@ Otros lugares:
 
 | Lugar | Qué hay |
 |-------|---------|
-| `src/main/assets/datos/alimentos.json` | La base: 185 alimentos con nombre en español e inglés, grupo, número FDC, descripción de USDA, valores por 100 g y porciones. **Se genera** (ver GUIA). |
-| `src/main/assets/datos/recetas.json` | Las 16 recetas de ejemplo, escritas a mano. |
+| `src/main/assets/datos/alimentos.json` | La base: 397 alimentos con nombre en español e inglés, grupo, número FDC, descripción de USDA, valores por 100 g y porciones. **Se genera** (ver GUIA). |
+| `src/main/assets/datos/recetas.json` | Las 55 recetas de ejemplo, escritas a mano. |
 | `herramientas/alimentos/` | `lista.py` (qué alimentos, de qué número FDC y con qué porciones) y `generar.py` (saca los valores de los CSV de USDA). |
 | `herramientas/icono.py` | El ícono de la app a partir de `identidad/png/la-cucha.png`. |
 | `src/test/` | `LogicaTest` (base, metas, buscar, recetas, mercado, racha, El Forzudo, Open Food Facts) y `TraduccionTest`. |
@@ -63,8 +63,8 @@ Todo lo de la persona es un `Estado` en `files/datastore/estado.json`. Fechas `"
 Anotar una arepa:
 
 1. El botón del centro abre `Anotar` en la comida que toca por la hora (`comidaAhora`).
-2. `Logica.buscar` busca "arepa" en recetas, productos y la base, sin tildes y también por el nombre en el otro idioma.
-3. `Cantidad` muestra lo que aporta según la porción y la comida elegidas; `vm.anotar` guarda un `Anotado` con sus valores y vuelve a Hoy.
+2. `Logica.buscar` busca "arepa" en recetas, productos y la base, sin tildes, también en plural ("huevos" encuentra "huevo"), por el nombre en el otro idioma y por sus otros nombres (`Alimento.otros`).
+3. `Cantidad` muestra lo que aporta según la porción y la comida elegidas; `vm.anotar` guarda un `Anotado` con sus valores. Si vino de la búsqueda, vuelve a ella en blanco para sumar otro ingrediente (huevos, después champiñones): arriba, `LlevasEn` muestra lo que va en esa comida con su total, "Listo" (vuelve a Hoy) y "Guardar como receta" (abre `EditarReceta` con esos alimentos y sus gramos). Si vino de otro lado (el menú de Hoy, corregir), vuelve a Hoy.
 4. 300 ms después se guarda en disco y se actualiza el widget.
 
 ## 5. La lógica (`datos/Logica.kt`)

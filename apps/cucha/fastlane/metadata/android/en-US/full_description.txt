@@ -2,10 +2,11 @@
 
 <ul>
 <li><b>Today:</b> the calories you have left, protein, carbs and fat, water and the day’s five meals.</li>
-<li><b>185 everyday foods, Colombian ones included</b> (arepa, beans, patacón, guava paste, panela…) with home portions: a medium arepa, a cup, a ladle. Search works with or without accents.</li>
+<li><b>397 foods, Colombian ones included</b> (arepa, beans, patacón, guava paste, panela, mushrooms, cheese bread…) with home portions: a large egg, a medium arepa, a cup. Search works with or without accents or plurals.</li>
+<li><b>Build your plate:</b> add ingredients one after another and save it as a recipe to repeat it with one tap.</li>
 <li><b>Values from USDA FoodData Central,</b> and every food says where they come from.</li>
 <li><b>Optional barcode lookup:</b> scan the package and find the product on Open Food Facts, or type in the label yourself.</li>
-<li><b>16 Colombian recipes</b> (ajiaco, sancocho, changua, calentado…) with calories per serving. Create your own or import them.</li>
+<li><b>55 recipes</b> (ajiaco, sancocho, bandeja paisa, changua, eggs with mushrooms…) with calories per serving. Create your own or import them.</li>
 <li><b>Weekly menu</b>, with alternating weeks A and B if you like, and a <b>shopping list</b> built from it.</li>
 <li><b>Goals</b> calculated from your details, or set by hand if you follow a dietitian’s plan.</li>
 <li><b>Progress:</b> streak, weekly average, the last 14 days and your weight curve.</li>

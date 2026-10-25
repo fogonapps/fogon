@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,10 +35,13 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.cucha.CuchaViewModel
 import io.github.fogonapps.cucha.Pantalla
 import io.github.fogonapps.cucha.R
+import io.github.fogonapps.cucha.datos.Anotado
 import io.github.fogonapps.cucha.datos.Comible
 import io.github.fogonapps.cucha.datos.Estado
+import io.github.fogonapps.cucha.datos.Ingrediente
 import io.github.fogonapps.cucha.datos.Nutrientes
 import io.github.fogonapps.cucha.datos.Producto
+import io.github.fogonapps.cucha.datos.suma
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
@@ -52,7 +56,11 @@ import kotlin.math.roundToInt
 fun Anotar(vm: CuchaViewModel, e: Estado, p: Pantalla.Anotar, acciones: Acciones) {
     val f = FogonTema.actual
     val idioma = vm.idioma()
+    // Lo ya anotado en esta comida: al sumar algo, la búsqueda vuelve aquí y empieza en blanco.
+    val enLaComida = e.dias[p.fecha]?.anotados?.filter { it.comida == p.comida } ?: emptyList()
     var texto by rememberSaveable { mutableStateOf("") }
+    var cuantosVi by rememberSaveable { mutableIntStateOf(enLaComida.size) }
+    LaunchedEffect(enLaComida.size) { if (enLaComida.size != cuantosVi) { texto = ""; cuantosVi = enLaComida.size } }
     val resultados = remember(texto, e) { vm.L.buscar(e, texto, idioma) }
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) { foco.requestFocus() }
@@ -69,6 +77,7 @@ fun Anotar(vm: CuchaViewModel, e: Estado, p: Pantalla.Anotar, acciones: Acciones
             if (e.codigoBarras) Pildora(stringResource(R.string.escanear), Iconos.Codigo) { acciones.escanear(p.comida, p.fecha) }
             Pildora(stringResource(R.string.producto_nuevo), Iconos.Mas) { vm.abrir(Pantalla.EditarProducto(null, p.comida, p.fecha)) }
         }
+        if (enLaComida.isNotEmpty()) LlevasEn(vm, p, enLaComida)
         if (texto.isBlank()) Pista(stringResource(if (resultados.isEmpty()) R.string.buscar_vacio else R.string.recientes))
         else if (resultados.isEmpty()) Pista(stringResource(R.string.buscar_nada, texto))
         LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
@@ -235,5 +244,34 @@ fun EditarProducto(vm: CuchaViewModel, p: Pantalla.EditarProducto) {
             stringResource(R.string.fuente_off), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto,
             modifier = Modifier.clickable { uri.openUri("https://world.openfoodfacts.org/product/${inicial.codigo}") }.padding(vertical = 4.dp),
         )
+    }
+}
+
+/**
+ * Lo que va en la comida mientras se anota (huevos, champiñones…), con el total, "Listo" para volver a Hoy y
+ * "Guardar como receta" para repetirlo con un toque (si hay dos o más alimentos de la base).
+ */
+@Composable
+private fun LlevasEn(vm: CuchaViewModel, p: Pantalla.Anotar, anotados: List<Anotado>) {
+    val f = FogonTema.actual
+    val idioma = vm.idioma()
+    val total = anotados.map { it.n }.suma()
+    val ingredientes = anotados.filter { it.ref.startsWith("a:") }.map { Ingrediente(it.ref.removePrefix("a:"), it.cantidad) }
+    Column(
+        Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp).vidrio().padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.llevas_en, nombreComida(p.comida).lowercase()), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.weight(1f))
+            Text("${total.kcal.roundToInt()} kcal", fontFamily = f.cifras, color = f.texto)
+        }
+        Text(anotados.joinToString(" · ") { it.nombre }, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 3)
+        Text(stringResource(R.string.agrega_otro), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pildora(stringResource(R.string.listo), Iconos.Chulo, acento = true) { vm.cerrar() }
+            if (ingredientes.size >= 2) Pildora(stringResource(R.string.guardar_como_receta), Iconos.Recetas) {
+                vm.abrir(Pantalla.EditarReceta(null, ingredientes, p.comida))
+            }
+        }
     }
 }
