@@ -74,19 +74,12 @@ class LogicaTest {
         assertEquals(listOf("2"), Logica.filtrar(e, null, null, "amelie", Orden.TITULO).map { it.id })
     }
 
-    @Test fun episodiosTerminanLaSerie() {
-        var s = Obra("s", Tipos.SERIE, "Serie", temporadas = listOf(Temporada(1, 2), Temporada(2, 1)))
-        s = Logica.marcarEpisodio(s, 1, 1, hoy)
-        assertEquals(Estados.EN_CURSO, s.estado)
-        assertEquals(1 to 2, Logica.siguienteEpisodio(s))
-        s = Logica.marcarTemporada(s, 1, hoy)
-        s = Logica.marcarEpisodio(s, 2, 1, hoy)
-        assertEquals(Estados.TERMINADO, s.estado)
-        assertNull(Logica.siguienteEpisodio(s))
-        assertEquals(1f, Logica.progreso(s))
-        // Desmarcar uno la devuelve a "viendo".
-        s = Logica.marcarEpisodio(s, 2, 1, hoy)
-        assertEquals(Estados.EN_CURSO, s.estado)
+    @Test fun progresoSoloDeLibros() {
+        assertEquals(0.5f, Logica.progreso(Obra("l", Tipos.LIBRO, "Libro", paginas = 200, pagina = 100)))
+        // Las series ya no llevan episodios marcados: no tienen barra.
+        assertNull(Logica.progreso(Obra("s", Tipos.SERIE, "Serie", temporadas = listOf(Temporada(1, 2)))))
+        val terminada = Obra("s", Tipos.SERIE, "Serie", minutos = 30, estado = Estados.TERMINADO, terminada = "2026-02-01", temporadas = listOf(Temporada(1, 10), Temporada(2, 8)))
+        assertEquals(540, Logica.cifras(Estado(obras = listOf(terminada)), 2026).minutosSeries)
     }
 
     @Test fun cifrasDelAnio() {

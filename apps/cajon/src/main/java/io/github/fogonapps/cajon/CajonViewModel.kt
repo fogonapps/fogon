@@ -319,8 +319,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun ponerResena(id: String, texto: String) = cambiarObra(id) { it.copy(resena = texto.take(10000)) }
     fun ponerNotas(id: String, texto: String) = cambiarObra(id) { it.copy(notas = texto.take(5000)) }
     fun ponerEtiquetas(id: String, texto: String) = cambiarObra(id) { it.copy(etiquetas = texto.split(",").map { t -> t.trim().take(30) }.filter { t -> t.isNotEmpty() }.distinct().take(12)) }
-    fun marcarEpisodio(id: String, t: Int, ep: Int) = cambiarObra(id) { L.marcarEpisodio(it, t, ep, hoy()) }
-    fun marcarTemporada(id: String, t: Int) = cambiarObra(id) { L.marcarTemporada(it, t, hoy()) }
 
     fun ponerPagina(id: String, pagina: Int) = cambiarObra(id) { o ->
         val p = pagina.coerceIn(0, o.paginas ?: 99999)
@@ -358,7 +356,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Vuelve a traer los datos de afuera (TMDB pide renovarlos cada 6 meses) sin tocar lo de la persona. */
-    fun actualizarDatos(id: String) {
+    fun actualizarDatos(id: String, callado: Boolean = false) {
         val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
         if (o.fuente.isEmpty()) return
         viewModelScope.launch {
@@ -371,16 +369,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         fondo = d.fondo.ifBlank { v.fondo }, minutos = d.minutos ?: v.minutos, paginas = d.paginas ?: v.paginas,
                         temporadas = d.temporadas.ifEmpty { v.temporadas },
                         canciones = if (d.canciones.isEmpty()) v.canciones else d.canciones.mapIndexed { i, c -> v.canciones.getOrNull(i)?.takeIf { it.titulo == c.titulo }?.let { c.copy(nota = it.nota, favorita = it.favorita) } ?: c },
-                        traida = d.traida)
+                        traida = d.traida, publica = d.publica ?: v.publica, votos = if (d.publica != null) d.votos else v.votos)
                 }
-                avisar(tx(R.string.aviso_datos_al_dia))
-            } catch (x: ClaveMala) { avisar(tx(R.string.buscar_tmdb_mala)) } catch (x: Exception) { avisar(tx(R.string.buscar_sin_red)) }
+                if (!callado) avisar(tx(R.string.aviso_datos_al_dia))
+            } catch (x: ClaveMala) { if (!callado) avisar(tx(R.string.buscar_tmdb_mala)) } catch (x: Exception) { if (!callado) avisar(tx(R.string.buscar_sin_red)) }
         }
     }
 
     /** Las obras con datos de TMDB de hace más de 6 meses se renuevan al abrirlas (si hay clave e internet). */
     fun renovarSiHaceFalta(o: Obra) {
-        if (o.fuente.startsWith("tmdb:") && caja.claveTmdb != null && o.traida > 0 && ahora() - o.traida > SEIS_MESES) actualizarDatos(o.id)
+        val tmdb = o.fuente.startsWith("tmdb:")
+        if (tmdb && caja.claveTmdb == null || o.fuente.isEmpty() || o.traida <= 0) return
+        // Lo de TMDB, cada 6 meses; lo agregado antes de la 1.2 (sin nota del público), una vez.
+        if (tmdb && ahora() - o.traida > SEIS_MESES || o.publica == null && o.traida < ANTES_DE_NOTAS) actualizarDatos(o.id, callado = true)
     }
 
     /* ----- Diario ----- */
@@ -604,5 +605,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         /** En la búsqueda, además de los tipos de obra, se pueden buscar artistas. */
         const val TIPO_ARTISTA = "artista"
         private const val SEIS_MESES = 182L * 24 * 3600 * 1000
+        /** Cuándo empezó a guardarse la nota del público (1.2): lo traído antes se renueva una vez al abrirlo. */
+        private const val ANTES_DE_NOTAS = 1792990800000L
     }
 }

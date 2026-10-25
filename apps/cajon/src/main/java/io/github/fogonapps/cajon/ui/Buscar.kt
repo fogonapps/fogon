@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -244,7 +245,8 @@ private fun FilaEncontrado(vm: CajonViewModel, e: Estado, r: Encontrado, modifie
         Portada(r.portada, r.tipo, r.titulo, Modifier.width(46.dp), esquina = 6.dp, conTitulo = false)
         Column(Modifier.weight(1f)) {
             Text(r.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", r.creador, r.detalle).filter { it.isNotBlank() }.joinToString(" · "),
+            val nota = r.publica?.let { "★ " + String.format(LocalConfiguration.current.locales[0], "%.1f", it) } ?: ""
+            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", r.creador, r.detalle, nota).filter { it.isNotBlank() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         when {

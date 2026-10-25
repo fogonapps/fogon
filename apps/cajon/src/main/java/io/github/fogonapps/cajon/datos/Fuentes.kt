@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -41,6 +42,9 @@ data class Encontrado(
     val fuente: String,
     /** Una línea extra (el título original, "EP", el país…). */
     val detalle: String = "",
+    /** La nota del público, si la fuente la da en la búsqueda (ver [Obra.publica]). */
+    val publica: Double? = null,
+    val votos: Int = 0,
 )
 
 /** Un artista encontrado en MusicBrainz ([foto] la pone después [Wikimedia]). */
@@ -69,6 +73,7 @@ private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emp
 
 private fun JsonElement?.texto(): String = (this as? JsonPrimitive)?.contentOrNull ?: ""
 private fun JsonElement?.entero(): Int? = (this as? JsonPrimitive)?.intOrNull
+private fun JsonElement?.decimal(): Double? = (this as? JsonPrimitive)?.doubleOrNull
 private fun JsonObject.arr(k: String): JsonArray = (this[k] as? JsonArray) ?: JsonArray(emptyList())
 private fun anioDe(fecha: String) = fecha.take(4).toIntOrNull()
 
@@ -103,11 +108,13 @@ class Tmdb(private val clave: String) {
         val r = mutableListOf<Encontrado>()
         series.map { it.jsonObject }.filter { tipo != Tipos.ANIME || esAnime(it) }.forEach { o ->
             r += Encontrado(if (esAnime(o)) Tipos.ANIME else Tipos.SERIE, o["name"].texto(), anioDe(o["first_air_date"].texto()), "",
-                imagen(o["poster_path"].texto(), "w342"), "tmdb:tv:${o["id"].entero()}", o["original_name"].texto().takeIf { it != o["name"].texto() } ?: "")
+                imagen(o["poster_path"].texto(), "w342"), "tmdb:tv:${o["id"].entero()}", o["original_name"].texto().takeIf { it != o["name"].texto() } ?: "",
+                publica(o), votos(o))
         }
         pelis.map { it.jsonObject }.filter { tipo != Tipos.ANIME || esAnime(it) }.forEach { o ->
             r += Encontrado(if (esAnime(o)) Tipos.ANIME else Tipos.PELICULA, o["title"].texto(), anioDe(o["release_date"].texto()), "",
-                imagen(o["poster_path"].texto(), "w342"), "tmdb:movie:${o["id"].entero()}", o["original_title"].texto().takeIf { it != o["title"].texto() } ?: "")
+                imagen(o["poster_path"].texto(), "w342"), "tmdb:movie:${o["id"].entero()}", o["original_title"].texto().takeIf { it != o["title"].texto() } ?: "",
+                publica(o), votos(o))
         }
         return r
     }
@@ -127,7 +134,7 @@ class Tmdb(private val clave: String) {
                 id = "", tipo = tipoPedido, titulo = o["title"].texto(), original = o["original_title"].texto().takeIf { it != o["title"].texto() } ?: "",
                 anio = anioDe(o["release_date"].texto()), creador = director, generos = generos, sinopsis = sinopsis,
                 portada = imagen(o["poster_path"].texto(), "w500"), fondo = imagen(o["backdrop_path"].texto(), "w780"),
-                fuente = fuente, minutos = o["runtime"].entero()?.takeIf { it > 0 }, traida = ahora,
+                fuente = fuente, minutos = o["runtime"].entero()?.takeIf { it > 0 }, traida = ahora, publica = publica(o), votos = votos(o),
             )
         } else {
             val creadores = o.arr("created_by").joinToString(", ") { it.jsonObject["name"].texto() }
@@ -138,9 +145,14 @@ class Tmdb(private val clave: String) {
                 anio = anioDe(o["first_air_date"].texto()), creador = creadores, generos = generos, sinopsis = sinopsis,
                 portada = imagen(o["poster_path"].texto(), "w500"), fondo = imagen(o["backdrop_path"].texto(), "w780"),
                 fuente = fuente, minutos = o.arr("episode_run_time").firstOrNull()?.entero(), temporadas = temporadas, traida = ahora,
+                publica = publica(o), votos = votos(o),
             )
         }
     }
+
+    // La nota del público (de 0 a 10); sin votos no dice nada.
+    private fun votos(o: JsonObject) = o["vote_count"].entero() ?: 0
+    private fun publica(o: JsonObject) = o["vote_average"].decimal()?.takeIf { votos(o) > 0 && it > 0 }
 
     companion object {
         const val URL_CLAVE = "https://www.themoviedb.org/settings/api"
@@ -155,13 +167,14 @@ object OpenLibrary {
 
     suspend fun buscar(texto: String): List<Encontrado> {
         val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("q", texto)
-            .addQueryParameter("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median")
+            .addQueryParameter("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,ratings_average,ratings_count")
             .addQueryParameter("limit", "25").build()
         return pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }.map { d ->
             Encontrado(
                 Tipos.LIBRO, d["title"].texto(), d["first_publish_year"].entero(), d.arr("author_name").take(2).joinToString(", ") { it.texto() },
                 portada(d["cover_i"].entero(), "M"), "ol:" + d["key"].texto().removePrefix("/works/"),
                 d["number_of_pages_median"].entero()?.let { "$it p." } ?: "",
+                d["ratings_average"].decimal()?.takeIf { (d["ratings_count"].entero() ?: 0) > 0 }, d["ratings_count"].entero() ?: 0,
             )
         }
     }
@@ -174,10 +187,14 @@ object OpenLibrary {
             .substringBefore("\n----").substringBefore("([source]").trim())
         val temas = w.arr("subjects").map { it.texto() }.filter { t -> t.length in 3..30 && !t.contains(":") && RUIDO.none { it in t.lowercase() } }.take(4)
         val cubierta = w.arr("covers").firstOrNull()?.entero()?.takeIf { it > 0 }
+        // La nota de los lectores de Open Library (de 1 a 5); si no se puede traer, la de la búsqueda.
+        val notas = runCatching { pedirJson(base.newBuilder().addPathSegments("works/$id/ratings.json").build()).jsonObject["summary"] as? JsonObject }.getOrNull()
+        val votos = notas?.get("count").entero() ?: e.votos
         return Obra(
             id = "", tipo = Tipos.LIBRO, titulo = w["title"].texto().ifBlank { e.titulo }, anio = e.anio, creador = e.creador,
             generos = temas, sinopsis = desc, portada = cubierta?.let { portada(it, "L") } ?: e.portada.replace("-M.jpg", "-L.jpg"),
             fuente = e.fuente, paginas = e.detalle.removeSuffix(" p.").toIntOrNull(), traida = System.currentTimeMillis(),
+            publica = (notas?.get("average").decimal() ?: e.publica)?.takeIf { votos > 0 }, votos = votos,
         )
     }
 
@@ -244,9 +261,12 @@ object MusicBrainz {
     /** El álbum completo: géneros y la lista de canciones de su primera edición oficial. */
     suspend fun detalles(e: Encontrado): Obra {
         val mbid = e.fuente.removePrefix("mb:rg:")
-        val g = pedir("release-group/$mbid", "inc" to "genres+artist-credits")
+        val g = pedir("release-group/$mbid", "inc" to "genres+artist-credits+ratings")
         val generos = g.arr("genres").map { it.jsonObject }.sortedByDescending { it["count"].entero() ?: 0 }.map { it["name"].texto() }.take(5)
         val artista = g.arr("artist-credit").firstOrNull()?.jsonObject?.get("artist")?.jsonObject
+        // La nota de quienes usan MusicBrainz (de 0 a 5).
+        val nota = g["rating"] as? JsonObject
+        val votos = nota?.get("votes-count").entero() ?: 0
         val ediciones = pedir("release", "release-group" to mbid, "inc" to "recordings", "status" to "official", "limit" to "10").arr("releases").map { it.jsonObject }
         // La edición más vieja (la original), no una reedición con extras.
         val edicion = ediciones.minByOrNull { it["date"].texto().ifBlank { "9999" } }
@@ -257,7 +277,7 @@ object MusicBrainz {
             id = "", tipo = Tipos.ALBUM, titulo = g["title"].texto().ifBlank { e.titulo }, anio = e.anio,
             creador = e.creador, generos = generos, portada = caratula(mbid, 500), fuente = e.fuente,
             canciones = canciones, formato = e.detalle, minutos = canciones.sumOf { it.segundos }.takeIf { it > 0 }?.let { (it + 59) / 60 },
-            traida = System.currentTimeMillis(),
+            traida = System.currentTimeMillis(), publica = nota?.get("value").decimal()?.takeIf { votos > 0 }, votos = votos,
         )
         // De paso, el artista (la app lo suma a Artistas con su fuente: "mb:artist:<id>").
         .copy(artista = artista?.let { "mb:artist:" + it["id"].texto() })

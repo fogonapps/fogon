@@ -91,7 +91,7 @@ fun Tu(vm: CajonViewModel, e: Estado) {
     // Lo que suma.
     Row(Modifier.aparecer(1).fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Caja(stringResource(R.string.horas_de_cine), "${c.minutosCine / 60}", Modifier.weight(1f))
-        Caja(stringResource(R.string.episodios_vistos_corto), "${c.episodios}", Modifier.weight(1f))
+        Caja(stringResource(R.string.horas_de_series), "${c.minutosSeries / 60}", Modifier.weight(1f))
     }
     Row(Modifier.aparecer(2).fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Caja(stringResource(R.string.paginas_leidas), "${c.paginas}", Modifier.weight(1f))

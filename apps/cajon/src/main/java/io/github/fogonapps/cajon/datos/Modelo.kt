@@ -94,6 +94,9 @@ data class Obra(
     val formato: String = "",
     /** El id del artista en El Cajón (álbumes), si está. */
     val artista: String? = null,
+    /** La nota del público en su fuente (TMDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
+    val publica: Double? = null,
+    val votos: Int = 0,
 
     // Lo de la persona
     val estado: String = Estados.QUIERO,

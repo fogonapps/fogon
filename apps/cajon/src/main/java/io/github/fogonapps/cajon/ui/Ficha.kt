@@ -1,7 +1,8 @@
 package io.github.fogonapps.cajon.ui
 
+import java.text.NumberFormat
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -29,12 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,11 +47,9 @@ import io.github.fogonapps.cajon.datos.Tipos
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
-import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
-import io.github.fogonapps.identidad.rebote
 
 /** Lo de arriba de la ficha: el fondo (cine), la portada y los datos de afuera. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -74,11 +69,30 @@ private fun Encabezado(o: Obra, vm: CajonViewModel) {
                 if (o.original.isNotBlank()) Text(o.original, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2)
                 Text(listOfNotNull(o.anio?.toString(), o.creador.takeIf { it.isNotBlank() }).joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.texto)
                 Text(medida(o), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                NotaPublica(o.fuente, o.publica, o.votos)
             }
         }
     }
     if (o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         o.generos.forEach { Etiqueta(it, f.superficie, f.texto) }
+    }
+}
+
+/** La nota del público en su fuente: "★ 7,8 de 10 en TMDB · 11.536 votos". */
+@Composable
+fun NotaPublica(fuente: String, publica: Double?, votos: Int, modifier: Modifier = Modifier) {
+    if (publica == null) return
+    val f = FogonTema.actual
+    val idioma = LocalConfiguration.current.locales[0]
+    val (escala, nombre) = when {
+        fuente.startsWith("tmdb:") -> 10 to R.string.nombre_tmdb
+        fuente.startsWith("ol:") -> 5 to R.string.nombre_open_library
+        else -> 5 to R.string.nombre_musicbrainz
+    }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        IconoRiso(Iconos.Estrella, null, tamano = 14.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
+        Text(pluralStringResource(R.plurals.nota_publica, votos, String.format(idioma, "%.1f", publica), escala, stringResource(nombre),
+            NumberFormat.getIntegerInstance(idioma).format(votos)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
     }
 }
 
@@ -163,9 +177,8 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         BotonSecundario(stringResource(R.string.agregar_a_lista), { vm.abrir(Pantalla.AgregarALista(o.id)) }, Modifier.fillMaxWidth())
     }
 
-    // El progreso: episodios, páginas o canciones.
+    // El progreso: páginas o canciones.
     when {
-        Tipos.porEpisodios(o.tipo) && o.temporadas.isNotEmpty() -> Episodios(vm, o)
         o.tipo == Tipos.LIBRO -> Paginas(vm, o)
         o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> Canciones(vm, o)
     }
@@ -223,52 +236,6 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_obra_pregunta, o.titulo), vm.tx(R.string.borrar_obra_texto)) { vm.borrarObra(o.id) }
         }, Modifier.fillMaxWidth(), peligro = true)
-    }
-}
-
-/** Las temporadas con sus episodios: cada círculo es un episodio; tocar el título marca toda la temporada. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun Episodios(vm: CajonViewModel, o: Obra) {
-    val f = FogonTema.actual
-    val total = vm.L.totalEpisodios(o)
-    Seccion(stringResource(R.string.episodios_vistos, o.vistos.size, total))
-    vm.L.progreso(o)?.let { Barra(it, f.tinta1, Modifier.padding(horizontal = 20.dp)) }
-    vm.L.siguienteEpisodio(o)?.let { (t, ep) ->
-        Box(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-            BotonRiso(stringResource(R.string.marcar_visto, t, ep), { vm.marcarEpisodio(o.id, t, ep) }, Modifier.fillMaxWidth())
-        }
-    }
-    o.temporadas.sortedBy { it.numero }.forEach { t -> Temporada(vm, o, t) }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun Temporada(vm: CajonViewModel, o: Obra, t: Temporada) {
-    val f = FogonTema.actual
-    var abierta by rememberSaveable(o.id + t.numero) { mutableStateOf(vm.L.siguienteEpisodio(o)?.first == t.numero) }
-    val vistos = (1..t.episodios).count { "${t.numero}x$it" in o.vistos }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().clickable { abierta = !abierta }, verticalAlignment = Alignment.CenterVertically) {
-            Text(t.nombre.ifBlank { stringResource(R.string.temporada_n, t.numero) }, style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-            Text("$vistos/${t.episodios}", fontFamily = f.cifras, color = if (vistos == t.episodios) f.acentoTexto else f.textoSuave)
-            IconoRiso(if (abierta) Iconos.Abajo else Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave, modifier = Modifier.padding(start = 8.dp))
-        }
-        if (abierta) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (ep in 1..t.episodios) {
-                    val visto = "${t.numero}x$ep" in o.vistos
-                    val desc = stringResource(R.string.episodio_n, ep)
-                    val estado = stringResource(if (visto) R.string.visto else R.string.sin_ver)
-                    Box(Modifier.rebote(0.85f).size(38.dp).clip(CircleShape).background(if (visto) f.tinta1 else f.superficie)
-                        .border(f.borde, if (visto) f.tinta1 else f.linea, CircleShape).clickable { vm.marcarEpisodio(o.id, t.numero, ep) }
-                        .semantics { contentDescription = desc; stateDescription = estado }, contentAlignment = Alignment.Center) {
-                        Text("$ep", fontFamily = f.cifras, fontSize = 13.sp, color = if (visto) f.sobreTinta1 else f.texto)
-                    }
-                }
-            }
-            Pildora(stringResource(if (vistos == t.episodios) R.string.desmarcar_temporada else R.string.marcar_temporada)) { vm.marcarTemporada(o.id, t.numero) }
-        }
     }
 }
 

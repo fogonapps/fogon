@@ -12,7 +12,7 @@ Cómo está hecha la app por dentro. Lo común a todas las apps de Fogón (tema,
 | `Datos.kt` | `DatosCajon`, el proveedor para el respaldo de todo Fogón. |
 | `Widget.kt` | `WidgetCurso` (Glance): lo terminado en el año y lo que está en curso. |
 | `datos/Modelo.kt` | `Obra`, `Registro`, `Temporada`, `Cancion`, `Artista`, `Lista`, `Ajustes`, `Estado`; `Tipos` y `Estados`. Sin nada de Android: la versión de PC usa el mismo modelo. |
-| `datos/Logica.kt` | Unir al sincronizar, filtrar y ordenar, diario, progreso (episodios, páginas), estados con sus fechas, cifras del año y racha. Sin Android. |
+| `datos/Logica.kt` | Unir al sincronizar, filtrar y ordenar, diario, progreso (páginas), estados con sus fechas, cifras del año y racha. Sin Android. |
 | `datos/Fuentes.kt` | Los clientes de TMDB, Open Library, MusicBrainz (con su pausa de un segundo y reintentos si dice "ocupado") y Wikimedia (fotos de artistas). |
 | `datos/Importar.kt` | El lector de CSV y los importadores de Letterboxd (ZIP o CSV) y Goodreads (CSV); `sumar` sin repetir. |
 | `datos/Gist.kt` | El cliente del Gist (archivo `el-cajon-datos.json`). |
@@ -32,11 +32,13 @@ Cómo está hecha la app por dentro. Lo común a todas las apps de Fogón (tema,
 
 ## 2. Los datos
 
-- **Una obra** guarda lo de afuera (título, año, creador, géneros, sinopsis, portada, fuente, minutos o páginas, temporadas, canciones) y lo de la persona (estado, nota en medias estrellas de 0 a 10, me gusta, reseña, notas, etiquetas, episodios vistos como `"1x3"`, página, registros del diario, fechas).
+- **Una obra** guarda lo de afuera (título, año, creador, géneros, sinopsis, portada, fuente, minutos o páginas, temporadas, canciones, la nota del público `publica` con sus `votos`) y lo de la persona (estado, nota en medias estrellas de 0 a 10, me gusta, reseña, notas, etiquetas, página, registros del diario, fechas).
 - **La fuente** dice de dónde salió: `tmdb:movie:603`, `tmdb:tv:1396`, `ol:OL274505W`, `mb:rg:<mbid>`, o vacío si es a mano. Sirve para no agregar dos veces lo mismo y para actualizar los datos.
 - **Buscar:** `buscar` lanza una tarea por fuente (TMDB, Open Library, MusicBrainz) y cada una pone sus resultados en `Busqueda.obras` (por tipo) o `artistas` al llegar; `cargando` y `errores` van por fuente. La lista vuelve arriba cuando llega algo nuevo, si la persona no ha bajado.
 - **Sincronizar:** cada obra, artista y lista lleva `cambio` (ms). `Logica.unir` se queda, por id, con la versión más reciente. Borrar no quita la fila: la marca `borrada`, así el otro aparato también la borra; si después se vuelve a tocar en el otro, gana el cambio más nuevo. Las migraciones son solo aditivas.
 - **TMDB pide no guardar sus datos más de 6 meses sin renovarlos:** cada obra guarda `traida` y, al abrir una de TMDB de hace más de 6 meses (con clave e internet), se renuevan sus datos sin tocar los de la persona.
+- **La nota del público** se guarda en la escala de su fuente: TMDB `vote_average` (0 a 10), Open Library `works/<id>/ratings.json` y MusicBrainz `rating` (0 a 5). Sin votos queda vacía. Lo traído antes de la 1.2 (`ANTES_DE_NOTAS`) se renueva una vez al abrir su ficha, en silencio.
+- **Episodios:** desde la 1.2 no se marcan (Angel, 25-10-2026: innecesario). `vistos` sigue en el modelo para no perder lo de respaldos viejos, pero la app ya no lo usa.
 
 ## 3. Cómo fluye
 

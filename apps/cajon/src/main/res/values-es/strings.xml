@@ -21,7 +21,6 @@
   <string name="pendientes">Pendientes</string>
   <string name="retos_del_anio">Retos de %1$d</string>
   <string name="cambiar">Cambiar</string>
-  <string name="sigue_episodio">Sigue: %1$dx%2$d</string>
   <string name="va_en_pagina">Va en la página %1$d</string>
   <string name="buscar_en_cajon">Buscar en tu cajón</string>
   <string name="todo">Todo</string>
@@ -94,14 +93,6 @@
   <string name="borrar">Borrar</string>
   <string name="borrar_obra_pregunta">¿Borrar «%1$s»?</string>
   <string name="borrar_obra_texto">Se borra con tu nota, tu reseña y su diario. Si sincronizas, también se borra en el PC.</string>
-  <string name="episodios_vistos">Episodios: %1$d de %2$d</string>
-  <string name="marcar_visto">Ya vi el %1$dx%2$d</string>
-  <string name="temporada_n">Temporada %1$d</string>
-  <string name="episodio_n">Episodio %1$d</string>
-  <string name="visto">visto</string>
-  <string name="sin_ver">sin ver</string>
-  <string name="marcar_temporada">Marcar toda la temporada</string>
-  <string name="desmarcar_temporada">Desmarcar la temporada</string>
   <string name="tu_lectura">Tu lectura</string>
   <string name="pagina_de">Página %1$d de %2$d</string>
   <string name="voy_en_pagina">Voy en la página…</string>
@@ -155,7 +146,6 @@
   <string name="en_el_anio">En %1$d</string>
   <string name="desde_siempre">Desde siempre</string>
   <string name="horas_de_cine">horas de cine</string>
-  <string name="episodios_vistos_corto">episodios vistos</string>
   <string name="paginas_leidas">páginas leídas</string>
   <string name="canciones_escuchadas">canciones escuchadas</string>
   <string name="en_tu_diario">entradas en tu diario</string>
@@ -359,4 +349,13 @@
   <string name="artista_grupo">Grupo</string>
   <string name="artista_orquesta">Orquesta</string>
   <string name="artista_coro">Coro</string>
+  <string name="horas_de_series">horas de series</string>
+  <string name="nombre_tmdb">TMDB</string>
+  <string name="nombre_open_library">Open Library</string>
+  <string name="nombre_musicbrainz">MusicBrainz</string>
+  <plurals name="nota_publica">
+    <item quantity="one">%1$s de %2$d en %3$s · %4$s voto</item>
+    <item quantity="many">%1$s de %2$d en %3$s · %4$s votos</item>
+    <item quantity="other">%1$s de %2$d en %3$s · %4$s votos</item>
+  </plurals>
 </resources>

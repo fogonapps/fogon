@@ -209,11 +209,7 @@ fun Carrusel(obras: List<Obra>, vm: CajonViewModel, conProgreso: Boolean) {
                 Text(o.titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (conProgreso) {
                     vm.L.progreso(o)?.let { Barra(it, f.tinta1) }
-                    val sigue = when {
-                        Tipos.porEpisodios(o.tipo) -> vm.L.siguienteEpisodio(o)?.let { (t, ep) -> stringResource(R.string.sigue_episodio, t, ep) }
-                        o.tipo == Tipos.LIBRO && o.pagina > 0 -> stringResource(R.string.va_en_pagina, o.pagina)
-                        else -> null
-                    }
+                    val sigue = if (o.tipo == Tipos.LIBRO && o.pagina > 0) stringResource(R.string.va_en_pagina, o.pagina) else null
                     if (sigue != null) Text(sigue, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
                 } else Text(nombreTipo(o.tipo, plural = false), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
             }

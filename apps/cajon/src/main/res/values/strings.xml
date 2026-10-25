@@ -22,7 +22,6 @@
   <string name="pendientes">Up next</string>
   <string name="retos_del_anio">%1$d challenges</string>
   <string name="cambiar">Change</string>
-  <string name="sigue_episodio">Next: %1$dx%2$d</string>
   <string name="va_en_pagina">On page %1$d</string>
   <string name="buscar_en_cajon">Search your cajón</string>
   <string name="todo">All</string>
@@ -95,14 +94,6 @@
   <string name="borrar">Delete</string>
   <string name="borrar_obra_pregunta">Delete “%1$s”?</string>
   <string name="borrar_obra_texto">Its rating, review and diary go too. If you sync, it’s deleted on your PC as well.</string>
-  <string name="episodios_vistos">Episodes: %1$d of %2$d</string>
-  <string name="marcar_visto">Watched %1$dx%2$d</string>
-  <string name="temporada_n">Season %1$d</string>
-  <string name="episodio_n">Episode %1$d</string>
-  <string name="visto">watched</string>
-  <string name="sin_ver">not watched</string>
-  <string name="marcar_temporada">Mark whole season</string>
-  <string name="desmarcar_temporada">Unmark season</string>
   <string name="tu_lectura">Your reading</string>
   <string name="pagina_de">Page %1$d of %2$d</string>
   <string name="voy_en_pagina">I’m on page…</string>
@@ -156,7 +147,6 @@
   <string name="en_el_anio">In %1$d</string>
   <string name="desde_siempre">All time</string>
   <string name="horas_de_cine">hours of film</string>
-  <string name="episodios_vistos_corto">episodes watched</string>
   <string name="paginas_leidas">pages read</string>
   <string name="canciones_escuchadas">tracks listened</string>
   <string name="en_tu_diario">diary entries</string>
@@ -360,4 +350,12 @@
   <string name="artista_grupo">Group</string>
   <string name="artista_orquesta">Orchestra</string>
   <string name="artista_coro">Choir</string>
+  <string name="horas_de_series">hours of series</string>
+  <string name="nombre_tmdb">TMDB</string>
+  <string name="nombre_open_library">Open Library</string>
+  <string name="nombre_musicbrainz">MusicBrainz</string>
+  <plurals name="nota_publica">
+    <item quantity="one">%1$s of %2$d on %3$s · %4$s vote</item>
+    <item quantity="other">%1$s of %2$d on %3$s · %4$s votes</item>
+  </plurals>
 </resources>

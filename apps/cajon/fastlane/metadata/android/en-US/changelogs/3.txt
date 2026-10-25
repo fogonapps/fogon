@@ -1,0 +1,1 @@
+Public ratings: TMDB for film, Open Library for books and MusicBrainz for records, on each page and in search. Series no longer ask you to tick episodes: just watching, watched or to watch. Your stats now show hours of series.

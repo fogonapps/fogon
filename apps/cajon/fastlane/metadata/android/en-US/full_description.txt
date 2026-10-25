@@ -6,11 +6,12 @@
 <li><b>Star ratings</b> (in halves), likes, reviews, trivia and tags.</li>
 <li><b>Diary:</b> every time you watch, read or listen to something, with date, rating and whether it was a rewatch.</li>
 <li><b>To watch, to read, to listen:</b> what’s up next, what you’re in the middle of and what you finished.</li>
-<li><b>Progress:</b> episodes by season for series and anime, pages for books, and every album track with its own rating and heart.</li>
+<li><b>Public ratings</b> next to yours: TMDB, Open Library or MusicBrainz.</li>
+<li><b>Progress:</b> pages for books and every album track with its own rating and heart.</li>
 <li><b>Film, Music and Books</b>, each with its own section, and a Home with everything you’ve watched, listened to and read.</li>
 <li><b>Artists</b> with their photo and discography, to add records with one tap.</li>
 <li><b>Your own lists</b>, ranked if you like, and your top four on your profile.</li>
-<li><b>Your stats:</b> what you finished this year, hours of film, episodes, pages, tracks, your ratings, months, genres and creators. Plus yearly challenges.</li>
+<li><b>Your stats:</b> what you finished this year, hours of film and series, pages, tracks, your ratings, months, genres and creators. Plus yearly challenges.</li>
 <li><b>Share</b> a review or a list as an image.</li>
 <li><b>Bring what you had:</b> import your Letterboxd history (ZIP or CSV) and your Goodreads library (CSV).</li>
 <li><b>Phone and PC:</b> if you like, it syncs through a secret file in your GitHub account.</li>

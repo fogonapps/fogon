@@ -2,8 +2,8 @@
 """Datos de prueba de El Cajón, inventados (nunca los de alguien), para el emulador y las capturas.
 
 Uso (desde apps/cajon): python3 herramientas/datos-prueba.py <es|en> <AAAA-MM-DD de hoy> <salida.json>
-Escribe un Estado con películas, series, animes, libros y álbumes (con notas, diario, episodios vistos,
-páginas y canciones calificadas), dos listas, las cuatro favoritas y los retos del año. Sin portadas: las
+Escribe un Estado con películas, series, animes, libros y álbumes (con notas, diario, la nota del público
+(inventada), páginas y canciones calificadas), dos listas, las cuatro favoritas y los retos del año. Sin portadas: las
 de verdad tienen dueño y no van en las capturas. Para usarlo en el emulador (versión de prueba):
 adb push … y `run-as io.github.fogonapps.cajon cp … files/datastore/estado.json`.
 """
@@ -36,6 +36,10 @@ def obra(tipo, titulo, anio, creador, generos, estado='terminado', nota=0, megus
         f = fecha(atras if atras is not None else random.randint(2, 280))
         o['terminada'] = f
         o['registros'] = [{'id': nid('g'), 'fecha': f, 'nota': nota}]
+    # La nota del público, inventada, con la escala de su fuente (TMDB de 0 a 10; Open Library y MusicBrainz de 0 a 5).
+    fuente = {'pelicula': 'tmdb:movie:', 'serie': 'tmdb:tv:', 'anime': 'tmdb:tv:', 'libro': 'ol:', 'album': 'mb:rg:'}[tipo]
+    escala = 10 if fuente.startswith('tmdb') else 5
+    o.update(fuente=fuente + '0', publica=round(random.uniform(0.66, 0.86) * escala, 1), votos=random.randint(40, 9000))
     o.update(extra)
     return o
 
@@ -50,13 +54,13 @@ obras = [
     obra('pelicula', 'Sherlock Jr.', 1924, 'Buster Keaton', [G('Comedia', 'Comedy')], nota=8, atras=41, minutos=45),
     obra('pelicula', 'El gabinete del doctor Caligari' if es else 'The Cabinet of Dr. Caligari', 1920, 'Robert Wiene', [G('Terror', 'Horror')], estado='quiero'),
     obra('serie', G('La casa del río', 'The River House'), 2024, 'Ana Rivas', ['Drama'], estado='en_curso',
-         temporadas=[{'numero': 1, 'episodios': 8}, {'numero': 2, 'episodios': 8}], vistos=[f'1x{i}' for i in range(1, 9)] + ['2x1', '2x2', '2x3'], empezada=fecha(30)),
+         temporadas=[{'numero': 1, 'episodios': 8}, {'numero': 2, 'episodios': 8}], empezada=fecha(30)),
     obra('serie', G('Barrio arriba', 'Uptown'), 2022, 'Tomás Ortega', [G('Comedia', 'Comedy')], nota=7, atras=60,
-         temporadas=[{'numero': 1, 'episodios': 10}], vistos=[f'1x{i}' for i in range(1, 11)]),
+         temporadas=[{'numero': 1, 'episodios': 10}]),
     obra('anime', G('Cielo de papel', 'Paper Sky'), 2023, 'Studio Faro', [G('Fantasía', 'Fantasy')], estado='en_curso',
-         temporadas=[{'numero': 1, 'episodios': 12}], vistos=[f'1x{i}' for i in range(1, 6)], empezada=fecha(10)),
+         temporadas=[{'numero': 1, 'episodios': 12}], empezada=fecha(10)),
     obra('anime', G('El último tren', 'The Last Train'), 2021, 'Studio Faro', ['Drama'], nota=9, megusta=True, atras=90,
-         temporadas=[{'numero': 1, 'episodios': 13}], vistos=[f'1x{i}' for i in range(1, 14)]),
+         temporadas=[{'numero': 1, 'episodios': 13}]),
     obra('libro', 'Don Quijote de la Mancha' if es else 'Don Quixote', 1605, 'Miguel de Cervantes', ['Novela' if es else 'Novel'], estado='en_curso', paginas=1056, pagina=412, empezada=fecha(45)),
     obra('libro', 'María', 1867, 'Jorge Isaacs', ['Novela' if es else 'Novel', 'Romance'], nota=8, atras=8, paginas=360),
     obra('libro', 'Frankenstein', 1818, 'Mary Shelley', [G('Terror', 'Horror')], nota=9, megusta=True, atras=50, paginas=280),

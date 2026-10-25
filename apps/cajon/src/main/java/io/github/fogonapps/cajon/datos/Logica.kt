@@ -27,7 +27,8 @@ data class Cifras(
     /** Veces que se registró algo en el diario (cuenta volver a ver). */
     val registros: Int,
     val minutosCine: Int,
-    val episodios: Int,
+    /** Minutos de series y animes terminados (duración del episodio por la cantidad de episodios). */
+    val minutosSeries: Int,
     val paginas: Int,
     val canciones: Int,
     /** Cuántas notas hay de cada media estrella (índice 1 a 10). */
@@ -106,40 +107,8 @@ object Logica {
 
     /** De 0 a 1, o null si no hay cómo medirlo. */
     fun progreso(o: Obra): Float? = when {
-        Tipos.porEpisodios(o.tipo) && totalEpisodios(o) > 0 -> o.vistos.size.toFloat() / totalEpisodios(o)
         o.tipo == Tipos.LIBRO && (o.paginas ?: 0) > 0 -> o.pagina.toFloat() / o.paginas!!
         else -> null
-    }
-
-    /** El siguiente episodio por ver ("1x4"), o null si los vio todos. */
-    fun siguienteEpisodio(o: Obra): Pair<Int, Int>? {
-        for (t in o.temporadas.sortedBy { it.numero }) for (ep in 1..t.episodios) if ("${t.numero}x$ep" !in o.vistos) return t.numero to ep
-        return null
-    }
-
-    /** Marca o desmarca un episodio; si con eso los vio todos, la serie queda terminada (y al revés). */
-    fun marcarEpisodio(o: Obra, temporada: Int, episodio: Int, hoy: LocalDate): Obra {
-        val k = "${temporada}x$episodio"
-        val vistos = if (k in o.vistos) o.vistos - k else o.vistos + k
-        var r = o.copy(vistos = vistos)
-        if (vistos.isNotEmpty() && o.estado == Estados.QUIERO) r = r.copy(estado = Estados.EN_CURSO, empezada = o.empezada ?: hoy.toString())
-        val total = totalEpisodios(o)
-        if (total > 0 && vistos.size >= total && o.estado != Estados.TERMINADO) r = r.copy(estado = Estados.TERMINADO, terminada = hoy.toString())
-        else if (total > 0 && vistos.size < total && o.estado == Estados.TERMINADO) r = r.copy(estado = Estados.EN_CURSO, terminada = null)
-        return r
-    }
-
-    /** Marca toda una temporada (o la desmarca si ya estaba completa). */
-    fun marcarTemporada(o: Obra, temporada: Int, hoy: LocalDate): Obra {
-        val t = o.temporadas.firstOrNull { it.numero == temporada } ?: return o
-        val todos = (1..t.episodios).map { "${temporada}x$it" }
-        val completa = todos.all { it in o.vistos }
-        var r = o.copy(vistos = if (completa) o.vistos - todos.toSet() else (o.vistos + todos).distinct())
-        val total = totalEpisodios(o)
-        if (!completa && r.vistos.size >= total) r = r.copy(estado = Estados.TERMINADO, terminada = hoy.toString(), empezada = o.empezada ?: hoy.toString())
-        else if (!completa && o.estado == Estados.QUIERO) r = r.copy(estado = Estados.EN_CURSO, empezada = o.empezada ?: hoy.toString())
-        else if (completa && o.estado == Estados.TERMINADO) r = r.copy(estado = Estados.EN_CURSO, terminada = null)
-        return r
     }
 
     /** Cambia el estado y anota las fechas de empezar y terminar. */
@@ -178,7 +147,7 @@ object Logica {
             porTipo = Tipos.TODOS.associateWith { t -> terminadas.count { it.tipo == t } },
             registros = registros.size,
             minutosCine = minutos,
-            episodios = obras.filter { Tipos.porEpisodios(it.tipo) }.sumOf { o -> if (anio == null || anioDe(o.terminada ?: o.empezada) == anio) o.vistos.size else 0 },
+            minutosSeries = terminadas.filter { Tipos.porEpisodios(it.tipo) }.sumOf { (it.minutos ?: 0) * totalEpisodios(it) },
             paginas = terminadas.filter { it.tipo == Tipos.LIBRO }.sumOf { it.paginas ?: 0 },
             canciones = terminadas.filter { it.tipo == Tipos.ALBUM }.sumOf { it.canciones.size },
             notas = notas,
