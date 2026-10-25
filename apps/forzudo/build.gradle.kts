@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.fogonapps.forzudo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 18
-        versionName = "1.10.1"
+        versionCode = 19
+        versionName = "1.11"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -72,6 +72,7 @@ android {
 dependencies {
     implementation(project(":core:identidad"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.glance.appwidget)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

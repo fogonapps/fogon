@@ -76,7 +76,7 @@ Cada app es **alguien**: una figura líquida, con la cabeza suelta, impresa en *
 | El Forzudo (antes Mi Gym) | **El Forzudo**: levanta la barra sobre la cabeza | Azul `#2D5BFF` | Rosa `#FF4FA3` | Diseñado |
 | Gastos | **El Ahorrador**: empuja una moneda gigante, como Sísifo | Verde `#1FB45A` | Amarillo `#FFC93C` | Diseñado |
 | Hábitos y día a día | **La Corredora**: corre detrás de la chispa | Naranja `#FF7A1A` | Azul `#2D5BFF` | Diseñado |
-| Alimentación | *(personaje nuevo, por diseñar)* | — | — | Pendiente |
+| Alimentación | **La Cucha**: moño, delantal y la cuchara de palo en alto | Naranja `#FF7A3D` | Verde `#3FBF6A` | Diseñado (`identidad/cucha/`) |
 | En reserva | **El Monje** (meditando) y **La Escritora** (lápiz como antorcha) | Violeta / Rosa | Naranja / Amarillo | Sin app |
 
 Reglas:
@@ -85,9 +85,9 @@ Reglas:
 - Los objetos (la moneda, el lápiz) van en la segunda tinta y con transparencia (`multiply`).
 - **Dentro de las apps, los personajes y muñequitos toman las tintas del tema** (24-10-2026): el cuerpo en la primera tinta, la sombra en la segunda y la chispa con su rojo. Van en capas (`*_t1`, `*_t2`, `*_fijo`), hechas con `identidad/vidrio/capas/generar_capas.py`; los `personaje_*.webp` sin capas (los de las apps que aún no existen) siguen como calcomanía. Antes (21-10-2026) llevaban un borde de papel para que se leyeran sobre cualquier fondo; con las tintas del tema ya no hace falta.
 
-## Dibujos de ejercicios: la lámina riso
+## Dibujos de ejercicios: las láminas
 
-Las apps que muestran ejercicios usan **láminas riso**: una ilustración en línea de tinta sobre papel con grano, con la silueta corrida en el color de la zona del cuerpo (rosa tren superior, amarillo brazos, azul piernas), el músculo que trabaja con su color propio y el número del paso (1 inicio, 2 final) en Anton con la chispa. Por dentro, la figura es del mismo papel del fondo.
+Las apps que muestran ejercicios usan **láminas** en el estilo Vidrio y puntos (desde el 25-10-2026; antes eran láminas riso sobre papel crema): papel grafito, un halo de puntos detrás de la figura en el color de la zona del cuerpo (rosa tren superior, amarillo brazos, azul piernas), la figura rellena de vidrio con la línea clara, el músculo que trabaja con su color y el número del paso (1 inicio, 2 final) en la letra de puntos con la chispa. Son oscuras en todos los temas, como una foto.
 
 Los colores de cada grupo muscular, las fuentes de los dibujos y cómo se generan están en `apps/forzudo/herramientas/laminas/README.md`. **Solo figuras de hombre**, por decisión de Angel (18-10-2026): no hay ilustraciones libres de mujer y las generadas con IA no quedaron al nivel. Está explicado en las preguntas frecuentes de la app.
 
@@ -128,6 +128,7 @@ Cada app tiene **Perfil → Apariencia** (`PantallaApariencia`, igual en todas) 
 |-----|-----------------------------------|-------|-------------------------|-----|
 | El Forzudo | **Gimnasio** | `#0C0D09` | Lima `#CDEB3A` / Oliva `#5C7A12` | `#8CAA1E` |
 | El Ahorrador | **Vino** | `#0D0809` | Rojo `#F2384D` / Ámbar `#F5B547` | `#AA1830` |
+| La Cucha | **Cocina** | `#100B08` | Naranja `#FF8A4C` / Verde `#3FBF6A` | `#B8501E` |
 | La Minga | **Brasa** | `#120A08` | Coral `#FF5A4F` / Amarillo `#FFC93C` | `#B0301F` |
 
 - **Solo se eligen tres colores por tema:** el papel y las dos tintas (muestras u "otro color"), más qué tan transparente es el vidrio y si lleva la luz. "Volver a como viene" deja el tema como estaba.
@@ -153,9 +154,21 @@ En el código todo sale de `FogonTema.actual` (`core/identidad`): nunca un color
 7. **El personaje:** `Personaje(R.drawable.personaje_…)` lo tiñe solo si tiene capas; cualquier figura en capas se dibuja con `PersonajeTenido(t1, t2, fijo, …)`. Las capas se generan con `identidad/vidrio/capas/generar_capas.py`.
 8. **Una sola luz:** fuera de `fondoFogon` y del halo no hay degradados ni brillos. Las líneas finas van en `f.linea`.
 9. **Ilustraciones 3D propias** (trofeo, mancuerna, moneda, pila de monedas, sobre): modeladas desde cero en Blender con `identidad/vidrio/ilustraciones/generar.py`, en gris; `Ilustracion(recurso, tinta = …)` las tiñe con la tinta del tema (a las tintas oscuras les suma gris para que no pierdan el volumen). Van en las tarjetas, al lado del texto, nunca solas ni como fondo: "Lo que toca" y los récords en El Forzudo; la meta del Inicio y la tarjeta de Sobres en El Ahorrador.
-10. **Las láminas de ejercicios** van sobre su tarjeta de papel `#EFE7DA`, como siempre.
+10. **Las láminas de ejercicios** son oscuras (papel grafito) en todos los temas; van tal cual, con esquinas redondeadas.
 11. **"Acerca de" igual en todas:** el logotipo, el personaje, "Hecha en el Fogón · Sin anuncios · Sin rastreo · Código abierto", el enlace al código y los créditos.
-12. **Accesibilidad:** texto con 4,5:1 o más en todos los temas (`AparienciaTest`), botones de 48 dp o más, y nunca un color como única señal (los días cumplidos llevan además un chulo).
+12. **Movimiento** (ver abajo).
+13. **Accesibilidad:** texto con 4,5:1 o más en todos los temas (`AparienciaTest`), botones de 48 dp o más, y nunca un color como única señal (los días cumplidos llevan además un chulo).
+
+### Movimiento
+
+Desde el 24-10-2026 (`core/identidad/.../Movimiento.kt`). La idea: que se sienta como una app de iPhone, con resortes suaves y sin adornos.
+
+- **Resortes:** `resorte()` (rápido, sin rebote) para casi todo y `resorteAlegre()` (con un poco de rebote) para lo que celebra.
+- **Pantallas:** `PilaAnimada` hace que la pantalla nueva entre desde la derecha mientras la de atrás se hunde un poco (94 %) y se apaga; al volver, al revés. `PestanaAnimada` cambia de pestaña subiendo 14 dp con un fundido.
+- **Tocar:** `Modifier.rebote()` achica un poco lo que se toca y lo suelta con un resorte (botones, pestañas, píldoras, acciones). Ya lo traen `BotonRiso` y `BotonSecundario`.
+- **Aparecer:** `Modifier.aparecer(n)` sube y aclara las tarjetas una tras otra (45 ms entre cada una); `aparecerConRebote()` para ilustraciones y logros (ya lo trae `Ilustracion`).
+- **Números:** `NumeroRiso` usa `CifrasRodantes`: cada cifra que cambia sale hacia arriba y la nueva entra desde abajo. Las barras y los anillos se llenan con `progresoAnimado`, y las gráficas se dibujan de izquierda a derecha.
+- **Menos movimiento** (Apariencia → Comodidad) apaga todo: fundidos cortos o nada.
 
 ## Voz
 

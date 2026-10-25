@@ -1,0 +1,19 @@
+<p>La Cucha helps you keep track of what you eat: calories, protein, your recipes and the weekly menu. No ads, no tracking, and no internet except to look up a barcode if you turn that on. It’s part of <b>Fogón</b>, home-made apps: your attention is worth more than an ad.</p>
+
+<ul>
+<li><b>Today:</b> the calories you have left, protein, carbs and fat, water and the day’s five meals.</li>
+<li><b>185 everyday foods, Colombian ones included</b> (arepa, beans, patacón, guava paste, panela…) with home portions: a medium arepa, a cup, a ladle. Search works with or without accents.</li>
+<li><b>Values from USDA FoodData Central,</b> and every food says where they come from.</li>
+<li><b>Optional barcode lookup:</b> scan the package and find the product on Open Food Facts, or type in the label yourself.</li>
+<li><b>16 Colombian recipes</b> (ajiaco, sancocho, changua, calentado…) with calories per serving. Create your own or import them.</li>
+<li><b>Weekly menu</b>, with alternating weeks A and B if you like, and a <b>shopping list</b> built from it.</li>
+<li><b>Goals</b> calculated from your details, or set by hand if you follow a dietitian’s plan.</li>
+<li><b>Progress:</b> streak, weekly average, the last 14 days and your weight curve.</li>
+<li><b>Linked with El Forzudo:</b> it reads your weight and workouts from there, inside your phone.</li>
+<li><b>Widget</b> with what’s left for today and a button to log food.</li>
+<li><b>In Spanish and English.</b></li>
+</ul>
+
+<p><b>Your data is yours.</b> Everything stays on your phone. The only thing that leaves it is a barcode number, and only if you turn that option on. Save a backup any time.</p>
+
+<p>La Cucha isn’t medical or nutrition advice. Food values are estimates; if you have a health condition, follow your doctor’s or dietitian’s advice.</p>

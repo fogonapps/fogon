@@ -16,6 +16,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
   - descanso con aviso y vibración;
   - récords marcados con la chispa;
   - aviso cuando llevas 3 sesiones sin progresar, con alternativas;
+  - calentamiento sugerido (barra sola, 40, 60 y 80 %) y qué discos poner a cada lado;
   - cancelar o terminar en cualquier momento, también desde la barra del entreno en curso.
 - **6 programas listos** (de 3 a 6 días) y **editor de rutinas** (series, repeticiones, descanso, orden, cambiar o quitar ejercicios).
 - **65 ejercicios** con técnica y enlace a videos; 57 con lámina de inicio y final.
@@ -24,11 +25,14 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
   - racha de semanas;
   - semanas del mes;
   - mapa anual de días entrenados.
-- **Peso corporal** con gráfica.
+- **Medallas:** 16, por entrenos, semanas seguidas, toneladas levantadas y rangos; las nuevas aparecen al terminar un entreno.
+- **Peso corporal** con gráfica. La Cucha (la app de comida de Fogón) lo lee para ajustar tus calorías.
+- **Widget** con la racha de semanas y los entrenos de esta semana.
 - **Tus datos son tuyos:**
   - se guardan en el teléfono;
   - exportar e importar en JSON;
-  - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub.
+  - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub;
+  - el respaldo de todas las apps de Fogón en un solo archivo.
 - **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. El personaje toma las tintas del tema. Además, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
@@ -41,6 +45,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. L
 | Notificaciones | El aviso de "descanso terminado". Se pide al empezar el primer entreno. |
 | Alarmas exactas | Que ese aviso llegue a tiempo. Si lo niegas, se usa una alarma aproximada. |
 | Vibración | Al marcar una serie y al terminar el descanso. |
+| Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Sin copias automáticas a la nube de Google:** solo se copian los entrenos al pasar los datos a un teléfono nuevo.
 - **El token de GitHub va cifrado** con una llave del Keystore de Android y nunca sale del teléfono.
@@ -87,6 +92,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.9 | 2026-10-24 | **Viene en Neutro** (pedido de Angel, con Tailscale de referencia): papel casi blanco, tarjetas blancas con borde gris fino, botones casi negros, la letra del teléfono y sin adornos. **"¡Dale vida!"**, último paso del tutorial: los seis estilos se prueban al momento y "Más opciones" abre el resto de la Apariencia. Quien ya había elegido un estilo lo conserva. Probada en el emulador desde una instalación limpia. Reproducible desde la etiqueta pública `forzudo-v1.9`. |
 | 1.10 | 2026-10-24 | **Vidrio y puntos** (ver `docs/IDENTIDAD.md` → Vidrio y puntos): una sola letra (Bricolage Grotesque), el número grande de puntos (Doto) sobre un halo, tarjetas de vidrio con una luz suave y barra de pestañas flotante. Cuatro temas: Grafito (el que viene), Gimnasio (lima sobre oliva), Claro y Contraste; solo se eligen papel y tintas y todo lo demás se ajusta para que se lea. **El personaje y los muñequitos del tutorial toman las tintas del tema.** Inicio nuevo: la semana en píldoras, la racha con el personaje, esta semana, el volumen y lo que toca; "Entreno terminado" con el volumen en puntos. Íconos de línea redonda, todos iguales. **Ilustraciones 3D propias** (hechas en Blender) teñidas con el tema: la mancuerna en "Lo que toca" y el trofeo en los récords. Probada en el emulador en los cuatro temas. Reproducible desde la etiqueta pública `forzudo-v1.10`. |
 | 1.10.1 | 2026-10-24 | El personaje va una sola vez en el Inicio: sale el circulito de la cabecera. Probada en el emulador; reproducible desde la etiqueta pública `forzudo-v1.10.1`. |
+| 1.11 | 2026-10-24 | **Láminas en el estilo Vidrio y puntos**: papel grafito, halo de puntos del color de la zona, figura de vidrio con línea clara y el número del paso en puntos (las 114 regeneradas; pesan 3,6 MB en vez de 5,1). Capturas de F-Droid nuevas. **Movimiento** como en iPhone (pantallas que entran con resorte, botones que se achican al tocar, tarjetas que suben una tras otra, cifras que ruedan, gráficas que se dibujan). **Medallas** (16: entrenos, semanas seguidas, toneladas levantadas y rangos), en Perfil y al terminar un entreno. **Calentamiento sugerido y calculadora de discos** en cada ejercicio con barra. **Widget** de la racha. **Respaldo de todo Fogón** en un solo archivo. Créditos de las letras corregidos (Bricolage Grotesque y Doto). Probada en el emulador. |
 
 **1.1.1** se probó completa en el emulador con la versión firmada:
 - tutorial y registro de peso;
@@ -140,5 +146,5 @@ Fallos o ideas: desde la app (Perfil → Reportar un fallo o sugerir algo), en [
 - Estándares de fuerza: modelo de Fogón con datos de [OpenPowerlifting](https://www.openpowerlifting.org) (dominio público).
 - Dibujos de los ejercicios: [Everkinetic](https://github.com/everkinetic/data) (CC BY-SA 4.0; aperturas y press de hombro en máquina desde [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:Weight_training_diagrams), CC BY-SA 3.0), pasados a lámina riso por Fogón; las láminas también son CC BY-SA 4.0. Hasta la 1.3 la app usaba fotos de free-exercise-db, que no eran libres (ver `docs/LEGAL.md` §6).
 - Modelo muscular: [react-body-highlighter](https://github.com/giavinh79/react-body-highlighter) (MIT, © 2020 GV79), que tomó el dibujo de [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT, © 2022 ELABBASSI Hicham).
-- Letras: Bagel Fat One y Anton (SIL Open Font License).
+- Letras: Bricolage Grotesque y Doto (SIL Open Font License).
 - Licencia del código: GPL-3.0 o posterior.

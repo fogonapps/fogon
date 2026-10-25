@@ -1,0 +1,19 @@
+<p>La Cucha te ayuda a llevar lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios, sin rastreo, y sin internet salvo para buscar un código de barras si tú lo activas. Es parte de <b>Fogón</b>, apps hechas en casa: tu atención vale más que un anuncio.</p>
+
+<ul>
+<li><b>Hoy:</b> las calorías que quedan, la proteína, los carbohidratos y la grasa, el agua y las cinco comidas del día.</li>
+<li><b>185 alimentos de aquí</b> (arepa, fríjoles, patacón, bocadillo, panela…) con porciones caseras: una arepa mediana, una taza, un cucharón. Se busca sin importar tildes.</li>
+<li><b>Valores de USDA FoodData Central,</b> y cada alimento dice de dónde salen.</li>
+<li><b>Código de barras, opcional:</b> escanea el empaque y busca el producto en Open Food Facts, o escribe tú los datos de la tabla.</li>
+<li><b>16 recetas colombianas</b> (ajiaco, sancocho, changua, calentado…) con sus calorías por porción. Crea las tuyas o impórtalas.</li>
+<li><b>Menú de la semana</b>, con semana A y B si quieres, y la <b>lista de mercado</b> que sale sola de él.</li>
+<li><b>Metas</b> calculadas con tus datos o puestas a mano si tienes un plan de nutricionista.</li>
+<li><b>Progreso:</b> días seguidos, promedio de la semana, los últimos 14 días y la curva del peso.</li>
+<li><b>Conectada con El Forzudo:</b> toma de allá tu peso y tus entrenos, dentro del teléfono.</li>
+<li><b>Widget</b> con lo que queda del día y un botón para anotar.</li>
+<li><b>En español e inglés.</b></li>
+</ul>
+
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Lo único que sale es el número de un código de barras, y solo si activas esa opción. Puedes guardar un respaldo cuando quieras.</p>
+
+<p>La Cucha no es consejo médico ni nutricional. Los valores de los alimentos son aproximados; si tienes una condición de salud, sigue lo que te diga tu médico o nutricionista.</p>

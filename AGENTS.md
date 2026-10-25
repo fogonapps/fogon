@@ -23,7 +23,7 @@ Fogón son apps de Android libres (GPL-3.0-or-later), hechas con IA, sin anuncio
 
 ## Comandos
 
-Para El Forzudo (`forzudo`); para las otras apps se cambia por su carpeta (`ahorrador`).
+Para El Forzudo (`forzudo`); para las otras apps se cambia por su carpeta (`ahorrador`, `cucha`).
 
 ```
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew :apps:forzudo:assembleDebug

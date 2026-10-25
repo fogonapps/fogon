@@ -32,6 +32,7 @@
   <string name="aviso_importado">Respaldo recuperado</string>
   <string name="aviso_meta_cumplida">¡Cumpliste la meta %1$s!</string>
   <string name="aviso_monto">Escribe cuánto</string>
+  <string name="aviso_no_es_extracto">No encontré movimientos en ese archivo. Tiene que ser un CSV con fecha y valor.</string>
   <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de El Ahorrador</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
   <string name="aviso_otra_cuenta">Elige a qué cuenta va</string>
@@ -62,6 +63,8 @@
   <string name="cambiar_reparto">Cambiar el reparto</string>
   <string name="canal_pagos">Pagos por vencer</string>
   <string name="canal_pagos_detalle">Te aviso a las 9 de la mañana cuando un pago fijo vence en 3 días o menos.</string>
+  <string name="canal_recordatorio">Recordatorio diario</string>
+  <string name="canal_recordatorio_detalle">Un aviso por la noche para anotar los gastos del día.</string>
   <string name="cancelar">Cancelar</string>
   <string name="candado">Candado</string>
   <string name="candado_pista">Pide tu huella o el bloqueo del teléfono al abrir la app.</string>
@@ -131,6 +134,7 @@
   <string name="dia_del_mes">Día del mes</string>
   <string name="dia_pago">Día de pago</string>
   <string name="editar">Editar</string>
+  <string name="editar_categoria">Editar categoría</string>
   <string name="editar_cuenta">Editar cuenta</string>
   <string name="editar_deuda">Editar deuda</string>
   <string name="editar_fijo">Editar pago fijo</string>
@@ -148,6 +152,19 @@
   <string name="enviar_github">Enviar por GitHub</string>
   <string name="enviar_github_pista">Se abre GitHub con el mensaje listo. Necesitas una cuenta de GitHub, y lo que envíes queda público: no pongas datos personales ni de tu plata.</string>
   <string name="exportar_csv">Exportar movimientos (CSV)</string>
+  <plurals name="extracto_anotar">
+    <item quantity="one">Anotar %1$d movimiento</item>
+    <item quantity="other">Anotar %1$d movimientos</item>
+  </plurals>
+  <string name="extracto_categoria">Categoría</string>
+  <string name="extracto_cuenta">¿De qué cuenta es?</string>
+  <plurals name="extracto_importados">
+    <item quantity="one">Se anotó %1$d movimiento</item>
+    <item quantity="other">Se anotaron %1$d movimientos</item>
+  </plurals>
+  <string name="extracto_importar">Importar extracto del banco (CSV)</string>
+  <string name="extracto_pista">Encontré %1$d movimientos. Revisa la categoría de cada uno (tócala para cambiarla) y quita los que no quieras anotar. Los que ya estén anotados se saltan.</string>
+  <string name="extracto_titulo">Extracto del banco</string>
   <string name="falta_x">Falta %1$s</string>
   <string name="faltan">Faltan</string>
   <string name="faltan_este_mes">Falta pagar este mes</string>
@@ -214,6 +231,7 @@
   <string name="no_debes">No le debes a nadie.</string>
   <string name="nombre_cuenta">Nombre de la cuenta</string>
   <string name="nota">Nota (opcional)</string>
+  <string name="nueva_categoria">Nueva categoría</string>
   <string name="nueva_cuenta">Nueva cuenta</string>
   <string name="nueva_meta">Nueva meta</string>
   <string name="nuevo_debo">Anotar algo que debo</string>
@@ -247,6 +265,10 @@
   <string name="queda">Queda</string>
   <string name="quien_te_debe">¿Quién te debe?</string>
   <string name="quiero_ahorrar">Quiero ahorrar este mes</string>
+  <string name="recordatorio">Recordatorio para anotar</string>
+  <string name="recordatorio_pista">Un aviso cada noche, solo si ese día no anotaste nada.</string>
+  <string name="recordatorio_texto">Toma un minuto y luego cuadra solo.</string>
+  <string name="recordatorio_titulo">¿Anotaste los gastos de hoy?</string>
   <string name="recuperar_pregunta">¿Recuperar un respaldo?</string>
   <string name="recuperar_respaldo">Recuperar respaldo</string>
   <string name="recuperar_texto">Vas a elegir un archivo. Antes de reemplazar nada te muestro qué trae.</string>
@@ -257,6 +279,17 @@
   <string name="reportar_titulo">Reportar o sugerir</string>
   <string name="respaldo">Respaldo</string>
   <string name="respaldo_pista">Tus datos están solo en este teléfono. Guarda un respaldo de vez en cuando en tu computador y, si lo prefieres, también en tu propia nube.</string>
+  <string name="reto_dejar">Dejar el reto</string>
+  <string name="reto_elige">¿Con cuánto empiezas la primera semana?</string>
+  <string name="reto_empezado">¡Reto empezado! Mira la meta en Metas.</string>
+  <string name="reto_empezar">Empezar el reto</string>
+  <string name="reto_esta_semana">Esta semana: %1$s</string>
+  <string name="reto_llevas">Llevas %1$s · deberías llevar %2$s</string>
+  <string name="reto_nombre">Reto de ahorro</string>
+  <string name="reto_opcion">%1$s la primera · %2$s en un año</string>
+  <string name="reto_semana">Semana %1$d de %2$d</string>
+  <string name="reto_texto">Cada semana guardas un poquito más que la anterior. En un año se junta una buena plata casi sin sentirlo.</string>
+  <string name="reto_titulo">Reto de ahorro por semanas</string>
   <string name="saldo">Saldo</string>
   <string name="saldo_hoy">¿Cuánto tiene hoy?</string>
   <string name="sale_de">Sale de</string>
@@ -296,6 +329,7 @@
   <string name="tipo_efectivo">Efectivo</string>
   <string name="tu_idea">Tu idea</string>
   <string name="tu_plata">Tu plata</string>
+  <string name="tus_categorias">Tus categorías</string>
   <string name="tut_billetera">Billetera digital</string>
   <string name="tut_deuda_tarjeta">¿Cuánto debes hoy en la tarjeta?</string>
   <string name="tut_empezar">Empezar</string>
@@ -310,6 +344,7 @@
   <string name="tut_tengo_tarjeta">Tengo tarjeta de crédito</string>
   <string name="tut_tu_nombre">¿Cómo te llamo? (opcional)</string>
   <string name="ultimos">Últimos movimientos</string>
+  <string name="ultimos_meses">Gastos de los últimos meses</string>
   <string name="vacio_texto">Toca el + para anotar tu primer gasto o ingreso.</string>
   <string name="vacio_titulo">Todavía no hay nada</string>
   <string name="vence_el">Vence el %1$s</string>
@@ -356,7 +391,7 @@
     <item>diciembre</item>
   </string-array>
   <string-array name="creditos">
-    <item>Letras: Bagel Fat One y Anton (SIL Open Font License).</item>
+    <item>Letras: Bricolage Grotesque y Doto (SIL Open Font License).</item>
     <item>Ideas de presupuesto de uso libre: el método de sobres, la regla 50/30/20 y el kakeibo.</item>
   </string-array>
   <string-array name="preguntas">
@@ -377,4 +412,8 @@
     <item>El gravamen a los movimientos financieros: 4 pesos por cada 1.000 que salen de una cuenta de banco. Si lo activas en Perfil, la app lo anota sola. Muchas cuentas de ahorro tienen una exenta.</item>
     <item>Ahorrar es guardar para una meta: la plata sale de lo disponible del mes y se suma a la meta. Pasar es mover plata entre tus cuentas, sin que cambie nada.</item>
   </string-array>
+  <string name="widget_descripcion">Lo que tienes, lo que salió este mes y un botón para anotar.</string>
+  <string name="widget_nombre">Tu plata</string>
+  <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
+  <string name="widget_salio">Este mes salió %1$s</string>
 </resources>

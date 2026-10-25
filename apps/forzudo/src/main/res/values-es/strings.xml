@@ -1,10 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="calentamiento">Calentamiento</string>
+  <string name="calentamiento_texto">Antes de tu primera serie de %1$s kg:</string>
+  <string name="discos">Discos</string>
+  <string name="discos_no_exacto">Con los discos de siempre (25 a 1,25 kg) no da exacto. Redondea a 2,5 kg.</string>
+  <string name="discos_solo_barra">Solo la barra.</string>
+  <string name="discos_texto">Para %1$s kg con barra de 20 kg, a cada lado:</string>
   <string name="inicio_de">%1$d de %2$d</string>
   <string name="inicio_esta_semana">Esta semana</string>
   <string name="inicio_fecha">Semana %1$d, %2$s</string>
   <string name="inicio_hoy_toca">Lo que toca</string>
   <string name="inicio_volumen">Volumen</string>
+  <string name="medalla_entrenos">%1$d entrenos</string>
+  <string name="medalla_falta">falta</string>
+  <string name="medalla_lograda">ganada</string>
+  <plurals name="medalla_nueva">
+    <item quantity="one">¡Medalla nueva!</item>
+    <item quantity="other">¡Medallas nuevas!</item>
+  </plurals>
+  <string name="medalla_primer_entreno">Primer entreno</string>
+  <plurals name="medalla_racha">
+    <item quantity="one">%1$d semana seguida</item>
+    <item quantity="other">%1$d semanas seguidas</item>
+  </plurals>
+  <string name="medalla_rango">Llegaste a %1$s</string>
+  <string name="medalla_volumen">%1$s toneladas</string>
+  <string name="medallas_titulo">Medallas · %1$d de %2$d</string>
   <string name="voc_decimal">,</string>
   <string name="voc_seg">seg</string>
   <string name="voc_reps">reps</string>
@@ -426,7 +447,7 @@
     <item>Dibujos de ejercicios: Everkinetic (CC BY-SA), pasados a lámina riso por Fogón.</item>
     <item>Modelo muscular: react-body-highlighter y react-native-body-highlighter (licencia MIT).</item>
     <item>Estándares de fuerza: modelo propio de Fogón, calibrado con OpenPowerlifting (dominio público).</item>
-    <item>Letras: Bagel Fat One y Anton (SIL Open Font License).</item>
+    <item>Letras: Bricolage Grotesque y Doto (SIL Open Font License).</item>
   </string-array>
   <string-array name="preguntas">
     <item>¿Por qué los dibujos solo tienen figuras de hombre?</item>
@@ -451,4 +472,8 @@
   <string name="hola">¡Hola!</string>
   <string name="hola_nombre">Hola, %1$s</string>
   <string name="descanso_queda">Descanso: quedan %1$s</string>
+  <string name="widget_descripcion">Las semanas seguidas y cuántos entrenos van esta semana.</string>
+  <string name="widget_nombre">Tu racha</string>
+  <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
+  <string name="widget_semana">Esta semana: %1$d de %2$d</string>
 </resources>

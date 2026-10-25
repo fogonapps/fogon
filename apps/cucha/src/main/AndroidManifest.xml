@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Internet solo para buscar productos por código de barras en Open Food Facts, si la persona lo activa en Perfil. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- La cámara (la pide el lector de códigos de barras, solo al escanear) es opcional: la app sirve sin ella. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:name=".CuchaApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/reglas_respaldo"
+        android:fullBackupContent="@xml/respaldo_antiguo"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Tema.Cucha"
+        android:localeConfig="@xml/locales_config"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Tema.Cucha.Arranque"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- El lector de códigos viene apaisado; aquí se deja girar con el teléfono. -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="android:screenOrientation" />
+        <receiver android:name=".WidgetCaloriasReceptor" android:exported="true" android:label="@string/widget_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_calorias" />
+        </receiver>
+        <!-- Sus datos para las otras apps de Fogón (respaldo de todo Fogón); solo con la misma firma. -->
+        <provider
+            android:name=".DatosCucha"
+            android:authorities="${applicationId}.datos"
+            android:exported="true"
+            android:permission="io.github.fogonapps.permiso.DATOS" />
+    </application>
+
+</manifest>

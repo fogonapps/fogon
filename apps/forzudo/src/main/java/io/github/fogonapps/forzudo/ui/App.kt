@@ -38,6 +38,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.animateContentSize
+import io.github.fogonapps.identidad.rebote
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.border
 import androidx.compose.runtime.CompositionLocalProvider
@@ -118,7 +120,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 },
             ) { pad ->
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba)
-                androidx.compose.runtime.key(pestana) { Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
+                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana -> Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
                     // Inicio y Rangos llevan su propia cabecera gigante.
                     if (pestana == Pestana.ENTRENAR || pestana == Pestana.PERFIL) Text(
                         stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos; Pestana.PERFIL -> R.string.pestana_perfil }),
@@ -135,7 +137,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
             }
 
             // Pantallas encima de las pestañas
-            pila.lastOrNull()?.let { p ->
+            io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
@@ -194,7 +196,8 @@ private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonap
         pestanas.forEach { (p, nombre, icono) ->
             val activa = p == actual
             Row(
-                Modifier.height(48.dp).clip(forma).then(if (activa) Modifier.background(f.tinta1) else Modifier)
+                Modifier.animateContentSize(io.github.fogonapps.identidad.resorte()).rebote(0.92f).height(48.dp).clip(forma)
+                    .background(androidx.compose.animation.animateColorAsState(if (activa) f.tinta1 else f.tinta1.copy(alpha = 0f), label = "pestana").value)
                     .selectable(activa, role = androidx.compose.ui.semantics.Role.Tab) { onElegir(p) }
                     .semantics { contentDescription = nombre }
                     .padding(horizontal = if (activa) 16.dp else 13.dp),

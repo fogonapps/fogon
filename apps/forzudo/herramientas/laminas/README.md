@@ -1,17 +1,17 @@
 # Láminas de los ejercicios
 
-Reemplazan las fotos de los ejercicios, que no son libres (ver `docs/LEGAL.md` §6). Estilo aprobado por Angel el 18-10-2026.
+Reemplazan las fotos de los ejercicios, que no son libres (ver `docs/LEGAL.md` §6). Primero fueron láminas riso (papel crema, aprobadas el 18-10-2026); desde el 25-10-2026 van en el estilo Vidrio y puntos de las apps.
 
-## El estilo: lámina riso
+## El estilo: Vidrio y puntos
 
 | Capa | Qué es |
 |------|--------|
-| Fondo | Papel `#EFE7DA` con grano. |
-| Sombra | La silueta corrida, en el color de la zona del cuerpo: **rosa** tren superior (pecho, espalda, hombros, abdomen), **amarillo** brazos, **azul** piernas. |
-| Figura | Por dentro, el mismo papel del fondo (sin trama ni relleno de color). |
+| Fondo | Papel grafito `#141417`, liso. |
+| Halo | Puntos que se apagan hacia el borde, centrados en la figura, en el color de la zona del cuerpo: **rosa** tren superior (pecho, espalda, hombros, abdomen), **amarillo** brazos, **azul** `#6E8BFF` piernas. |
+| Figura | Rellena de vidrio `#26262B`. |
 | Músculo | Mancha con el color de su grupo (tabla abajo). |
-| Línea | En tinta `#141210`. |
-| Paso | "1" (inicio) y "2" (final) en Anton, con la sombra de la zona y la chispa roja. |
+| Línea | Clara, `#ECECEF`. |
+| Paso | "1" (inicio) y "2" (final) en la letra de puntos (Doto, de `core/identidad`), en el color de la zona, con la chispa roja. |
 
 | Grupo | Color |
 |-------|-------|
@@ -58,4 +58,4 @@ Por cada ejercicio, `ejercicios.py` dice qué SVG usa en cada paso, dónde va la
 
 ## Peso
 
-Cada lámina sale a 540 px de ancho en WebP calidad 72: unos 45 KB. Las 110 láminas suman unos 5 MB.
+Cada lámina sale a 540 px de ancho en WebP calidad 72: unos 32 KB. Las 114 láminas suman unos 3,6 MB.

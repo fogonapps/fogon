@@ -34,6 +34,18 @@
         </activity>
 
         <receiver android:name=".AvisoDescanso" android:exported="false" />
+        <receiver android:name=".WidgetRachaReceptor" android:exported="true" android:label="@string/widget_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_racha" />
+        </receiver>
+        <!-- Sus datos para las otras apps de Fogón (respaldo de todo Fogón); solo con la misma firma. -->
+        <provider
+            android:name=".DatosForzudo"
+            android:authorities="${applicationId}.datos"
+            android:exported="true"
+            android:permission="io.github.fogonapps.permiso.DATOS" />
     </application>
 
 </manifest>

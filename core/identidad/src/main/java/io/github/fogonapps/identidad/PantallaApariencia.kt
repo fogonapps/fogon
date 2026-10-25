@@ -262,7 +262,7 @@ private fun VistaPrevia(paleta: Paleta) {
 }
 
 /** El personaje de cada app, para la vista previa. */
-private val PERSONAJE_DE = mapOf(Paleta.Forzudo to R.drawable.personaje_el_forzudo, Paleta.Ahorrador to R.drawable.personaje_el_ahorrador)
+private val PERSONAJE_DE = mapOf(Paleta.Forzudo to R.drawable.personaje_el_forzudo, Paleta.Ahorrador to R.drawable.personaje_el_ahorrador, Paleta.Cucha to R.drawable.personaje_la_cucha)
 
 /** Miniatura de un tema: su papel con su luz, una tarjeta de vidrio y sus dos tintas. */
 @Composable

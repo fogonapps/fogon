@@ -33,6 +33,7 @@
   <string name="aviso_importado">Backup restored</string>
   <string name="aviso_meta_cumplida">Goal reached: %1$s!</string>
   <string name="aviso_monto">Enter an amount</string>
+  <string name="aviso_no_es_extracto">I couldn’t find entries in that file. It has to be a CSV with a date and an amount.</string>
   <string name="aviso_no_es_respaldo">That file isn’t an El Ahorrador backup</string>
   <string name="aviso_no_exportado">Couldn’t save the file</string>
   <string name="aviso_otra_cuenta">Pick the account it goes to</string>
@@ -63,6 +64,8 @@
   <string name="cambiar_reparto">Change the split</string>
   <string name="canal_pagos">Upcoming payments</string>
   <string name="canal_pagos_detalle">A reminder at 9 a.m. when a fixed payment is due in 3 days or less.</string>
+  <string name="canal_recordatorio">Daily reminder</string>
+  <string name="canal_recordatorio_detalle">An evening nudge to log the day’s spending.</string>
   <string name="cancelar">Cancel</string>
   <string name="candado">Lock</string>
   <string name="candado_pista">Asks for your fingerprint or phone lock when you open the app.</string>
@@ -132,6 +135,7 @@
   <string name="dia_del_mes">Day of the month</string>
   <string name="dia_pago">Due day</string>
   <string name="editar">Edit</string>
+  <string name="editar_categoria">Edit category</string>
   <string name="editar_cuenta">Edit account</string>
   <string name="editar_deuda">Edit debt</string>
   <string name="editar_fijo">Edit fixed payment</string>
@@ -149,6 +153,19 @@
   <string name="enviar_github">Send via GitHub</string>
   <string name="enviar_github_pista">GitHub opens with the message ready. You need a GitHub account, and what you send is public: don’t include personal or money details.</string>
   <string name="exportar_csv">Export entries (CSV)</string>
+  <plurals name="extracto_anotar">
+    <item quantity="one">Add %1$d entry</item>
+    <item quantity="other">Add %1$d entries</item>
+  </plurals>
+  <string name="extracto_categoria">Category</string>
+  <string name="extracto_cuenta">Which account is it?</string>
+  <plurals name="extracto_importados">
+    <item quantity="one">%1$d entry added</item>
+    <item quantity="other">%1$d entries added</item>
+  </plurals>
+  <string name="extracto_importar">Import bank statement (CSV)</string>
+  <string name="extracto_pista">I found %1$d entries. Check each one’s category (tap it to change) and untick the ones you don’t want. Entries you already have are skipped.</string>
+  <string name="extracto_titulo">Bank statement</string>
   <string name="falta_x">%1$s left</string>
   <string name="faltan">Remaining</string>
   <string name="faltan_este_mes">Still due this month</string>
@@ -215,6 +232,7 @@
   <string name="no_debes">You don’t owe anyone.</string>
   <string name="nombre_cuenta">Account name</string>
   <string name="nota">Note (optional)</string>
+  <string name="nueva_categoria">New category</string>
   <string name="nueva_cuenta">New account</string>
   <string name="nueva_meta">New goal</string>
   <string name="nuevo_debo">Add something I owe</string>
@@ -248,6 +266,10 @@
   <string name="queda">Left</string>
   <string name="quien_te_debe">Who owes you?</string>
   <string name="quiero_ahorrar">I want to save this month</string>
+  <string name="recordatorio">Reminder to log</string>
+  <string name="recordatorio_pista">A nudge each evening, only if you didn’t log anything that day.</string>
+  <string name="recordatorio_texto">It takes a minute and then it all adds up.</string>
+  <string name="recordatorio_titulo">Did you log today’s spending?</string>
   <string name="recuperar_pregunta">Restore a backup?</string>
   <string name="recuperar_respaldo">Restore backup</string>
   <string name="recuperar_texto">You’ll pick a file. You’ll see what’s in it before anything is replaced.</string>
@@ -258,6 +280,17 @@
   <string name="reportar_titulo">Report or suggest</string>
   <string name="respaldo">Backup</string>
   <string name="respaldo_pista">Your data is only on this phone. Save a backup now and then on your computer and, if you like, also in your own cloud.</string>
+  <string name="reto_dejar">Leave the challenge</string>
+  <string name="reto_elige">How much do you start with in week one?</string>
+  <string name="reto_empezado">Challenge started! See it in Goals.</string>
+  <string name="reto_empezar">Start the challenge</string>
+  <string name="reto_esta_semana">This week: %1$s</string>
+  <string name="reto_llevas">You have %1$s · you should have %2$s</string>
+  <string name="reto_nombre">Savings challenge</string>
+  <string name="reto_opcion">%1$s the first week · %2$s in a year</string>
+  <string name="reto_semana">Week %1$d of %2$d</string>
+  <string name="reto_texto">Each week you save a little more than the last. In a year it adds up to a good amount almost without noticing.</string>
+  <string name="reto_titulo">Weekly savings challenge</string>
   <string name="saldo">Balance</string>
   <string name="saldo_hoy">How much is in it today?</string>
   <string name="sale_de">From</string>
@@ -297,6 +330,7 @@
   <string name="tipo_efectivo">Cash</string>
   <string name="tu_idea">Your idea</string>
   <string name="tu_plata">Your money</string>
+  <string name="tus_categorias">Your categories</string>
   <string name="tut_billetera">Digital wallet</string>
   <string name="tut_deuda_tarjeta">How much do you owe on it today?</string>
   <string name="tut_empezar">Start</string>
@@ -311,6 +345,7 @@
   <string name="tut_tengo_tarjeta">I have a credit card</string>
   <string name="tut_tu_nombre">What should I call you? (optional)</string>
   <string name="ultimos">Latest entries</string>
+  <string name="ultimos_meses">Spending over the last months</string>
   <string name="vacio_texto">Tap + to log your first expense or income.</string>
   <string name="vacio_titulo">Nothing here yet</string>
   <string name="vence_el">Due %1$s</string>
@@ -355,7 +390,7 @@
     <item>December</item>
   </string-array>
   <string-array name="creditos">
-    <item>Fonts: Bagel Fat One and Anton (SIL Open Font License).</item>
+    <item>Fonts: Bricolage Grotesque and Doto (SIL Open Font License).</item>
     <item>Free-to-use budgeting ideas: the envelope method, the 50/30/20 rule and kakeibo.</item>
   </string-array>
   <string-array name="preguntas">
@@ -376,4 +411,8 @@
     <item>Colombia’s financial transactions tax: 4 pesos per 1,000 leaving a bank account. Turn it on in Profile and the app logs it for you. Many savings accounts have an exemption.</item>
     <item>Saving sets money aside for a goal: it leaves this month’s available money and adds to the goal. A transfer just moves money between your accounts, and nothing else changes.</item>
   </string-array>
+  <string name="widget_descripcion">What you have, what went out this month and a button to log.</string>
+  <string name="widget_nombre">Your money</string>
+  <string name="widget_poner">Add the widget to your home screen</string>
+  <string name="widget_salio">%1$s out this month</string>
 </resources>

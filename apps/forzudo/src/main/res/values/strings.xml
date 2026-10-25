@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name" translatable="false">El Forzudo</string>
+  <string name="calentamiento">Warm-up</string>
+  <string name="calentamiento_texto">Before your first set of %1$s kg:</string>
+  <string name="discos">Plates</string>
+  <string name="discos_no_exacto">Standard plates (25 to 1.25 kg) can’t make it exactly. Round to 2.5 kg.</string>
+  <string name="discos_solo_barra">Just the bar.</string>
+  <string name="discos_texto">For %1$s kg with a 20 kg bar, on each side:</string>
   <string name="inicio_de">%1$d of %2$d</string>
   <string name="inicio_esta_semana">This week</string>
   <string name="inicio_fecha">Week %1$d, %2$s</string>
   <string name="inicio_hoy_toca">Up next</string>
   <string name="inicio_volumen">Volume</string>
+  <string name="medalla_entrenos">%1$d workouts</string>
+  <string name="medalla_falta">not yet</string>
+  <string name="medalla_lograda">earned</string>
+  <plurals name="medalla_nueva">
+    <item quantity="one">New medal!</item>
+    <item quantity="other">New medals!</item>
+  </plurals>
+  <string name="medalla_primer_entreno">First workout</string>
+  <plurals name="medalla_racha">
+    <item quantity="one">%1$d week in a row</item>
+    <item quantity="other">%1$d weeks in a row</item>
+  </plurals>
+  <string name="medalla_rango">Reached %1$s</string>
+  <string name="medalla_volumen">%1$s tonnes</string>
+  <string name="medallas_titulo">Medals · %1$d of %2$d</string>
   <string name="voc_decimal">.</string>
   <string name="voc_seg">sec</string>
   <string name="voc_reps">reps</string>
@@ -414,7 +435,7 @@
     <item>Exercise drawings: Everkinetic (CC BY-SA), turned into riso plates by Fogón.</item>
     <item>Muscle model: react-body-highlighter and react-native-body-highlighter (MIT license).</item>
     <item>Strength standards: Fogón’s own model, calibrated with OpenPowerlifting (public domain).</item>
-    <item>Fonts: Bagel Fat One and Anton (SIL Open Font License).</item>
+    <item>Fonts: Bricolage Grotesque and Doto (SIL Open Font License).</item>
   </string-array>
   <string-array name="preguntas">
     <item>Why do the drawings only show male figures?</item>
@@ -439,4 +460,8 @@
   <string name="hola">Hi!</string>
   <string name="hola_nombre">Hi, %1$s</string>
   <string name="descanso_queda">Rest: %1$s left</string>
+  <string name="widget_descripcion">Weeks in a row and how many workouts you have done this week.</string>
+  <string name="widget_nombre">Your streak</string>
+  <string name="widget_poner">Add the widget to your home screen</string>
+  <string name="widget_semana">This week: %1$d of %2$d</string>
 </resources>

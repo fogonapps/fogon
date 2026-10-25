@@ -107,6 +107,13 @@ data class Meta(
     val icono: String = "moneda",
 )
 
+/**
+ * Reto de ahorro: la semana 1 se guarda [base], la 2 el doble, y así hasta la [semanas]. Lo ahorrado va a la
+ * meta [meta], que se crea al empezar el reto.
+ */
+@Serializable
+data class Reto(val inicio: String, val base: Long, val meta: String, val semanas: Int = 52)
+
 @Serializable
 data class Abono(val fecha: String, val monto: Long)
 
@@ -148,4 +155,6 @@ data class Estado(
     val gmf: Boolean = false,
     /** Ya pasó por el tutorial. */
     val listo: Boolean = false,
+    /** El reto de ahorro por semanas, si la persona lo empezó. */
+    val reto: Reto? = null,
 )

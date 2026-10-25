@@ -1,0 +1,716 @@
+[
+ {
+  "id": "arepa_huevo_queso",
+  "es": "Arepa con huevo y queso",
+  "en": "Arepa with egg and cheese",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arepa",
+    "gramos": 80
+   },
+   {
+    "alimento": "huevo_revuelto",
+    "gramos": 122
+   },
+   {
+    "alimento": "queso_campesino",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Asa la arepa hasta que dore por los dos lados.",
+   "Revuelve los dos huevos en una sartén.",
+   "Ábrela y rellénala con el huevo y el queso."
+  ],
+  "pasosEn": [
+   "Toast the arepa until golden on both sides.",
+   "Scramble the two eggs in a pan.",
+   "Split it and fill it with the egg and cheese."
+  ]
+ },
+ {
+  "id": "changua",
+  "es": "Changua",
+  "en": "Changua (milk and egg soup)",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "leche_deslactosada",
+    "gramos": 250
+   },
+   {
+    "alimento": "huevo_crudo",
+    "gramos": 100
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 15
+   },
+   {
+    "alimento": "cilantro",
+    "gramos": 2
+   },
+   {
+    "alimento": "pan_blanco",
+    "gramos": 25
+   }
+  ],
+  "pasosEs": [
+   "Calienta la leche con un poco de agua y la cebolla larga picada.",
+   "Cuando hierva, echa los huevos enteros y déjalos cuajar 3 minutos.",
+   "Sirve con cilantro y el pan en trocitos."
+  ],
+  "pasosEn": [
+   "Heat the milk with a little water and the chopped scallion.",
+   "When it boils, crack in the eggs and let them set for 3 minutes.",
+   "Serve with cilantro and the bread in pieces."
+  ]
+ },
+ {
+  "id": "calentado",
+  "es": "Calentado",
+  "en": "Calentado (rice and beans hash)",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 100
+   },
+   {
+    "alimento": "frijol_rojo",
+    "gramos": 100
+   },
+   {
+    "alimento": "huevo_revuelto",
+    "gramos": 61
+   },
+   {
+    "alimento": "arepa",
+    "gramos": 45
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Sofríe el arroz y los fríjoles del día anterior en una sartén con el aceite.",
+   "Sírvelo con el huevo y la arepa."
+  ],
+  "pasosEn": [
+   "Fry yesterday's rice and beans in a pan with the oil.",
+   "Serve with the egg and the arepa."
+  ]
+ },
+ {
+  "id": "avena_banano",
+  "es": "Avena con banano y maní",
+  "en": "Oats with banana and peanut butter",
+  "comidas": [
+   "desayuno",
+   "media_manana"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "avena",
+    "gramos": 60
+   },
+   {
+    "alimento": "leche_deslactosada",
+    "gramos": 250
+   },
+   {
+    "alimento": "banano",
+    "gramos": 118
+   },
+   {
+    "alimento": "mantequilla_mani",
+    "gramos": 16
+   }
+  ],
+  "pasosEs": [
+   "Cocina la avena en la leche a fuego bajo, revolviendo, 5 minutos.",
+   "Sirve con el banano en rodajas y la mantequilla de maní encima."
+  ],
+  "pasosEn": [
+   "Cook the oats in the milk over low heat, stirring, for 5 minutes.",
+   "Top with the sliced banana and the peanut butter."
+  ]
+ },
+ {
+  "id": "ajiaco",
+  "es": "Ajiaco",
+  "en": "Ajiaco (chicken and potato soup)",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 75,
+  "ingredientes": [
+   {
+    "alimento": "pechuga",
+    "gramos": 600
+   },
+   {
+    "alimento": "papa",
+    "gramos": 900
+   },
+   {
+    "alimento": "mazorca",
+    "gramos": 400
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 30
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 6
+   },
+   {
+    "alimento": "crema_leche",
+    "gramos": 60
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 200
+   }
+  ],
+  "pasosEs": [
+   "Cocina la pechuga con la cebolla larga y el ajo en 2 litros de agua, 25 minutos. Sácala y desméchala.",
+   "Echa al caldo las papas en trozos (si consigues, mezcla papa criolla y sabanera) y la mazorca en ruedas. Cocina 35 minutos, hasta que la criolla se deshaga y espese.",
+   "Si tienes guascas, agrégalas al final.",
+   "Vuelve a poner el pollo y sirve con la crema y el aguacate."
+  ],
+  "pasosEn": [
+   "Cook the chicken breast with the scallion and garlic in 2 liters of water for 25 minutes. Take it out and shred it.",
+   "Add the potatoes in chunks (a mix of varieties if you can) and the corn in rounds. Cook 35 minutes, until some potatoes break down and thicken it.",
+   "If you have guascas, add them at the end.",
+   "Return the chicken and serve with the cream and avocado."
+  ]
+ },
+ {
+  "id": "sancocho",
+  "es": "Sancocho de pollo",
+  "en": "Chicken sancocho",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 80,
+  "ingredientes": [
+   {
+    "alimento": "muslo_pollo",
+    "gramos": 560
+   },
+   {
+    "alimento": "papa",
+    "gramos": 450
+   },
+   {
+    "alimento": "yuca",
+    "gramos": 400
+   },
+   {
+    "alimento": "platano_verde",
+    "gramos": 180
+   },
+   {
+    "alimento": "mazorca",
+    "gramos": 300
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 30
+   },
+   {
+    "alimento": "cilantro",
+    "gramos": 5
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 316
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 200
+   }
+  ],
+  "pasosEs": [
+   "Pon el pollo a hervir con la cebolla larga en 2,5 litros de agua, 20 minutos.",
+   "Agrega el plátano verde en trozos (partido con la mano) y la mazorca. 15 minutos más.",
+   "Echa la yuca y la papa y cocina hasta que estén blandas.",
+   "Termina con cilantro y sirve con arroz y aguacate."
+  ],
+  "pasosEn": [
+   "Boil the chicken with the scallion in 2.5 liters of water for 20 minutes.",
+   "Add the green plantain broken into chunks by hand and the corn. 15 more minutes.",
+   "Add the cassava and potato and cook until tender.",
+   "Finish with cilantro and serve with rice and avocado."
+  ]
+ },
+ {
+  "id": "pollo_sudado",
+  "es": "Pollo sudado con papa",
+  "en": "Braised chicken with potatoes",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 4,
+  "minutos": 50,
+  "ingredientes": [
+   {
+    "alimento": "pierna_pollo",
+    "gramos": 560
+   },
+   {
+    "alimento": "papa",
+    "gramos": 600
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 250
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 110
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 6
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 14
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 474
+   }
+  ],
+  "pasosEs": [
+   "Haz un hogao: sofríe la cebolla, el tomate y el ajo picados en el aceite, 10 minutos.",
+   "Agrega el pollo, las papas en mitades y un pocillo de agua.",
+   "Tapa y cocina a fuego bajo 30 minutos.",
+   "Sirve con arroz."
+  ],
+  "pasosEn": [
+   "Make a hogao: fry the chopped onion, tomato and garlic in the oil for 10 minutes.",
+   "Add the chicken, the halved potatoes and a mug of water.",
+   "Cover and cook over low heat for 30 minutes.",
+   "Serve with rice."
+  ]
+ },
+ {
+  "id": "frijoles_antioquenos",
+  "es": "Fríjoles antioqueños livianos",
+  "en": "Light Antioquia-style beans",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 120,
+  "ingredientes": [
+   {
+    "alimento": "frijol_cargamanto",
+    "gramos": 700
+   },
+   {
+    "alimento": "platano_maduro",
+    "gramos": 180
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 120
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 123
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 30
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 10
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 474
+   },
+   {
+    "alimento": "carne_molida_magra",
+    "gramos": 300
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 200
+   }
+  ],
+  "pasosEs": [
+   "Deja los fríjoles en remojo la noche anterior y cocínalos en olla a presión 40 minutos.",
+   "Agrega el plátano maduro y la zanahoria rallada; cocina destapado 20 minutos más.",
+   "Sofríe un hogao con tomate y cebolla larga y échalo a la olla.",
+   "Sirve con arroz, la carne molida sofrita y aguacate."
+  ],
+  "pasosEn": [
+   "Soak the beans overnight and cook them in a pressure cooker for 40 minutes.",
+   "Add the ripe plantain and grated carrot; cook uncovered 20 more minutes.",
+   "Fry a hogao with tomato and scallion and add it to the pot.",
+   "Serve with rice, the browned ground beef and avocado."
+  ]
+ },
+ {
+  "id": "lentejas",
+  "es": "Lentejas con arroz",
+  "en": "Lentils with rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 4,
+  "minutos": 40,
+  "ingredientes": [
+   {
+    "alimento": "lentejas",
+    "gramos": 600
+   },
+   {
+    "alimento": "papa",
+    "gramos": 300
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 120
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 123
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 110
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 10
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 474
+   }
+  ],
+  "pasosEs": [
+   "Cocina las lentejas con la papa y la zanahoria picadas, 25 minutos.",
+   "Sofríe la cebolla y el tomate en el aceite y agrégalos.",
+   "Cocina 10 minutos más y sirve con arroz."
+  ],
+  "pasosEn": [
+   "Cook the lentils with the diced potato and carrot for 25 minutes.",
+   "Fry the onion and tomato in the oil and add them.",
+   "Cook 10 more minutes and serve with rice."
+  ]
+ },
+ {
+  "id": "mojarra_patacon",
+  "es": "Mojarra con patacón y ensalada",
+  "en": "Tilapia with patacón and salad",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 2,
+  "minutos": 35,
+  "ingredientes": [
+   {
+    "alimento": "tilapia",
+    "gramos": 400
+   },
+   {
+    "alimento": "patacon",
+    "gramos": 160
+   },
+   {
+    "alimento": "lechuga",
+    "gramos": 72
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 123
+   },
+   {
+    "alimento": "limon",
+    "gramos": 67
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 7
+   }
+  ],
+  "pasosEs": [
+   "Sazona el pescado con sal y limón y ásalo al horno o en sartén con poco aceite, 20 minutos.",
+   "Fríe el plátano en trozos, aplástalo y vuelve a freírlo.",
+   "Sirve con lechuga, tomate y limón."
+  ],
+  "pasosEn": [
+   "Season the fish with salt and lime and bake or pan-fry it with little oil for 20 minutes.",
+   "Fry the plantain chunks, smash them and fry again.",
+   "Serve with lettuce, tomato and lime."
+  ]
+ },
+ {
+  "id": "arroz_con_pollo",
+  "es": "Arroz con pollo",
+  "en": "Chicken and rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 4,
+  "minutos": 45,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 632
+   },
+   {
+    "alimento": "pechuga",
+    "gramos": 480
+   },
+   {
+    "alimento": "arveja",
+    "gramos": 160
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 120
+   },
+   {
+    "alimento": "pimenton",
+    "gramos": 119
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 110
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 14
+   }
+  ],
+  "pasosEs": [
+   "Cocina la pechuga en agua y desméchala; guarda el caldo.",
+   "Sofríe la cebolla, el pimentón y la zanahoria en el aceite.",
+   "Agrega el arroz crudo, la arveja, el pollo y el caldo (el doble del arroz). Tapa y cocina 20 minutos."
+  ],
+  "pasosEn": [
+   "Cook the chicken breast in water and shred it; keep the broth.",
+   "Fry the onion, pepper and carrot in the oil.",
+   "Add the raw rice, peas, chicken and the broth (twice the rice). Cover and cook 20 minutes."
+  ]
+ },
+ {
+  "id": "carne_desmechada",
+  "es": "Carne desmechada con arepa",
+  "en": "Shredded beef with arepa",
+  "comidas": [
+   "cena",
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 90,
+  "ingredientes": [
+   {
+    "alimento": "carne_desmechada",
+    "gramos": 500
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 250
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 110
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 6
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 14
+   },
+   {
+    "alimento": "arepa",
+    "gramos": 320
+   }
+  ],
+  "pasosEs": [
+   "Cocina la carne en agua con sal hasta que esté blanda (40 minutos en olla a presión).",
+   "Desméchala y revuélvela con un hogao de cebolla, tomate y ajo, 10 minutos.",
+   "Sirve con arepa."
+  ],
+  "pasosEn": [
+   "Cook the beef in salted water until tender (40 minutes in a pressure cooker).",
+   "Shred it and stir it into a hogao of onion, tomato and garlic for 10 minutes.",
+   "Serve with arepa."
+  ]
+ },
+ {
+  "id": "huevos_pericos_arepa",
+  "es": "Pericos con arepa",
+  "en": "Pericos with arepa",
+  "comidas": [
+   "cena",
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "pericos",
+    "gramos": 130
+   },
+   {
+    "alimento": "arepa",
+    "gramos": 80
+   },
+   {
+    "alimento": "chocolate_caliente",
+    "gramos": 240
+   }
+  ],
+  "pasosEs": [
+   "Revuelve los huevos con tomate y cebolla larga picados.",
+   "Sirve con la arepa y un chocolate."
+  ],
+  "pasosEn": [
+   "Scramble the eggs with chopped tomato and scallion.",
+   "Serve with the arepa and a hot chocolate."
+  ]
+ },
+ {
+  "id": "batido_proteina",
+  "es": "Batido de banano y avena",
+  "en": "Banana oat shake",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "leche_deslactosada",
+    "gramos": 300
+   },
+   {
+    "alimento": "banano",
+    "gramos": 118
+   },
+   {
+    "alimento": "avena",
+    "gramos": 30
+   },
+   {
+    "alimento": "mantequilla_mani",
+    "gramos": 16
+   }
+  ],
+  "pasosEs": [
+   "Licúa todo con hielo."
+  ],
+  "pasosEn": [
+   "Blend everything with ice."
+  ]
+ },
+ {
+  "id": "yogur_frutas",
+  "es": "Yogur con fruta y granola",
+  "en": "Yogurt with fruit and granola",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "yogur_griego",
+    "gramos": 170
+   },
+   {
+    "alimento": "fresas",
+    "gramos": 100
+   },
+   {
+    "alimento": "granola",
+    "gramos": 30
+   },
+   {
+    "alimento": "miel",
+    "gramos": 7
+   }
+  ],
+  "pasosEs": [
+   "Sirve el yogur con la fruta picada, la granola y la miel."
+  ],
+  "pasosEn": [
+   "Top the yogurt with chopped fruit, granola and honey."
+  ]
+ },
+ {
+  "id": "salpicon",
+  "es": "Salpicón de frutas",
+  "en": "Fruit salpicón",
+  "comidas": [
+   "algo"
+  ],
+  "porciones": 2,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "papaya",
+    "gramos": 150
+   },
+   {
+    "alimento": "pina",
+    "gramos": 165
+   },
+   {
+    "alimento": "banano",
+    "gramos": 118
+   },
+   {
+    "alimento": "sandia",
+    "gramos": 152
+   },
+   {
+    "alimento": "jugo_naranja",
+    "gramos": 150
+   }
+  ],
+  "pasosEs": [
+   "Pica la fruta en cubos pequeños y báñala con el jugo de naranja. Sirve frío."
+  ],
+  "pasosEn": [
+   "Dice the fruit and pour the orange juice over it. Serve cold."
+  ]
+ }
+]

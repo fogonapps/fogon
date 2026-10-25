@@ -27,6 +27,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import io.github.fogonapps.identidad.rebote
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,7 +74,7 @@ val LocalConfirmar = staticCompositionLocalOf<Confirmar> { { _, _, si -> si() } 
 private data class Pregunta(val titulo: String, val texto: String?, val si: () -> Unit)
 
 @Composable
-fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Unit, onImportar: () -> Unit, candadoDisponible: Boolean) {
+fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Unit, onImportar: () -> Unit, candadoDisponible: Boolean, onImportarExtracto: () -> Unit = {}) {
     val e by vm.estado.collectAsStateWithLifecycle()
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
@@ -97,7 +98,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                 Tutorial(vm, onImportar)
             } else {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
-                key(pestana) {
+                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana ->
                     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
                         when (pestana) {
                             Pestana.INICIO -> Inicio(vm, estado)
@@ -113,7 +114,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
             }
 
             // Pantallas encima de las pestañas
-            pila.lastOrNull()?.let { p ->
+            io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     Column(Modifier.fillMaxSize().then(if (p is Pantalla.Anotar) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
@@ -128,7 +129,8 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.EditarMeta -> EditarMeta(vm, estado, p.id)
                             is Pantalla.EditarSobre -> EditarSobre(vm, estado, p.id)
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
-                            is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible)
+                            is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
+                            is Pantalla.ImportarExtracto -> ImportarExtracto(vm, estado, p.filas)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
                             is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Ahorrador, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
@@ -172,7 +174,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
         pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.size(52.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.rebote(0.9f).size(52.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
@@ -185,7 +187,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
 private fun BotonPestana(icono: io.github.fogonapps.identidad.Dibujo, texto: String, elegida: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
     Box(
-        Modifier.size(48.dp).clip(CircleShape).background(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent)
+        Modifier.rebote(0.9f).size(48.dp).clip(CircleShape).background(androidx.compose.animation.animateColorAsState(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent, label = "pestana").value)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
     ) { io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (elegida) f.acentoTexto else f.textoSuave) }

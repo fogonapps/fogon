@@ -51,7 +51,7 @@ Fogón no está *contra* nadie. No copiamos marcas, no atacamos empresas, no rom
 | App | Qué hace | Estado |
 |-----|----------|--------|
 | [El Forzudo](apps/forzudo/) | Registro de entrenos, rutinas, récords y rangos de fuerza (antes "Mi Gym") | Publicada: [descargar](https://github.com/fogonapps/el-forzudo/releases/latest) (en Obtainium, pegar `https://github.com/fogonapps/el-forzudo`). F-Droid, desde enero de 2027. |
-| Alimentación | Calorías, macros y planes de comida | Siguiente |
+| [La Cucha](apps/cucha/) | Calorías, macros, recetas colombianas, menú de la semana y lista de mercado; conectada con El Forzudo | En pruebas (sin publicar) |
 | [El Ahorrador](apps/ahorrador/) | Gastos, presupuesto (sobres, 50/30/20, kakeibo), tarjeta de crédito, metas y pagos fijos, sin internet | Publicada: [descargar](https://github.com/fogonapps/el-ahorrador/releases/latest) (en Obtainium, pegar `https://github.com/fogonapps/el-ahorrador`). |
 | Hábitos · La Corredora | Hábitos, rachas y organizar el día | Planeada |
 | Sueño · El Monje | Rutina y registro de sueño | Planeada |

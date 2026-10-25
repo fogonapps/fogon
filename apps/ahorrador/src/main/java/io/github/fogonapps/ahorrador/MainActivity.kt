@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.widget.Toast
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         bloqueada.value = vm.candado.value && candadoDisponible()
+        if (savedInstanceState == null) abrirDesdeWidget(intent)
         setContent {
             val apariencia by io.github.fogonapps.identidad.AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
@@ -97,6 +99,18 @@ class MainActivity : ComponentActivity() {
                         if (d == null) aviso(getString(R.string.aviso_no_es_respaldo)) else porImportar = d
                     }
                 }
+                // El extracto del banco en CSV: se lee y se abre la pantalla para revisar antes de anotar.
+                val importarExtracto = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                    if (uri != null) {
+                        val filas = runCatching {
+                            contentResolver.openInputStream(uri)?.use { ent ->
+                                val bytes = ent.buffered().readBytesHasta(MAX_RESPALDO + 1)
+                                if (bytes.size > MAX_RESPALDO) null else io.github.fogonapps.ahorrador.datos.leerExtracto(textoDeBytes(bytes))
+                            }
+                        }.getOrNull()
+                        if (filas.isNullOrEmpty()) aviso(getString(R.string.aviso_no_es_extracto)) else vm.abrir(Pantalla.ImportarExtracto(filas))
+                    }
+                }
                 porImportar?.let { d ->
                     AlertDialog(
                         onDismissRequest = { porImportar = null },
@@ -107,10 +121,12 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // El permiso de notificaciones se pide cuando la persona crea su primer pago fijo.
+                // El permiso de notificaciones se pide con el primer pago fijo o al encender el recordatorio.
                 val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-                LaunchedEffect(estado?.fijos?.isNotEmpty() == true) {
-                    if (estado?.fijos?.isNotEmpty() == true && Build.VERSION.SDK_INT >= 33 &&
+                val recordatorio by vm.recordatorio.collectAsStateWithLifecycle()
+                val quiereAvisos = estado?.fijos?.isNotEmpty() == true || recordatorio >= 0
+                LaunchedEffect(quiereAvisos) {
+                    if (quiereAvisos && Build.VERSION.SDK_INT >= 33 &&
                         ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
                     ) permiso.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
@@ -121,6 +137,7 @@ class MainActivity : ComponentActivity() {
                     onExportarCsv = { exportarCsv.launch("el-ahorrador-movimientos-${vm.hoy()}.csv") },
                     onImportar = { importar.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
                     candadoDisponible = candadoDisponible(),
+                    onImportarExtracto = { importarExtracto.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/vnd.ms-excel", "application/octet-stream")) },
                 )
             }
         }
@@ -153,8 +170,23 @@ class MainActivity : ComponentActivity() {
 
     private fun aviso(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
 
-    private companion object {
-        const val MAX_RESPALDO = 10 * 1024 * 1024
+    companion object {
+        private const val MAX_RESPALDO = 10 * 1024 * 1024
+        /** El widget abre la app directo en Anotar. */
+        const val EXTRA_ANOTAR = "anotar"
+    }
+
+    /** Si la app se abrió desde el botón Anotar del widget, va directo a anotar un gasto. */
+    private fun abrirDesdeWidget(i: Intent?) {
+        if (i?.getBooleanExtra(EXTRA_ANOTAR, false) == true) {
+            i.removeExtra(EXTRA_ANOTAR)
+            vm.abrir(Pantalla.Anotar())
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        abrirDesdeWidget(intent)
     }
 
     override fun onStop() {
@@ -180,4 +212,10 @@ private fun java.io.InputStream.readBytesHasta(max: Int): ByteArray {
         out.write(buf, 0, n)
     }
     return out.toByteArray()
+}
+
+/** Los extractos vienen en UTF-8 o en Latin-1 (los de algunos bancos): si no es UTF-8 válido, se lee como Latin-1. */
+private fun textoDeBytes(b: ByteArray): String {
+    val utf = b.decodeToString()
+    return if ('\uFFFD' in utf) String(b, Charsets.ISO_8859_1) else utf
 }

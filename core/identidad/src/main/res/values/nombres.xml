@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Los nombres de las apps de Fogón: son nombres propios y no se traducen. -->
+<resources>
+  <string name="fogon_app_forzudo" translatable="false">El Forzudo</string>
+  <string name="fogon_app_ahorrador" translatable="false">El Ahorrador</string>
+  <string name="fogon_app_cucha" translatable="false">La Cucha</string>
+</resources>

@@ -27,6 +27,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.luminance
 import io.github.fogonapps.identidad.haloPuntos
+import io.github.fogonapps.identidad.aparecer
+import io.github.fogonapps.identidad.rebote
 import io.github.fogonapps.identidad.NumeroRiso
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.border
@@ -150,7 +152,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
 
     // Lo que tienes: el número de puntos sobre su halo, y el mes en una línea.
     Column(
-        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).height(150.dp)
+        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).aparecer(1).height(150.dp)
             .haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 0.9f else 0.6f), centro = androidx.compose.ui.geometry.Offset(0.5f, 0.45f)),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
@@ -168,7 +170,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     }
 
     // Las acciones, en una tarjeta de vidrio.
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio().padding(vertical = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).aparecer(2).vidrio().padding(vertical = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
         AccionRedonda(Iconos.Gasto, stringResource(R.string.gasto), { vm.abrir(Pantalla.Anotar(TipoMovimiento.GASTO)) }, acento = true)
         AccionRedonda(Iconos.Ingreso, stringResource(R.string.ingreso), { vm.abrir(Pantalla.Anotar(TipoMovimiento.INGRESO)) })
         AccionRedonda(Iconos.Pasar, stringResource(R.string.pasar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.TRASPASO)) })
@@ -178,7 +180,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     // La meta que va más cerca, con el personaje empujando su moneda.
     e.metas.maxByOrNull { L.progreso(e, it) }?.let { m ->
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio().clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.METAS) }
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).aparecer(3).vidrio().clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.METAS) }
                 .padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -312,10 +314,7 @@ fun Resumen(vm: AhorradorViewModel, e: Estado) {
     if (porCat.isNotEmpty()) {
         Seccion(stringResource(R.string.en_que_se_fue))
         val total = porCat.sumOf { it.second }.coerceAtLeast(1)
-        // Una barra con los colores de cada categoría, del tamaño de lo que se gastó.
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(14.dp).clip(forma(7.dp))) {
-            porCat.forEach { (c, n) -> Box(Modifier.weight(n.toFloat() / total).fillMaxHeight().background(colorDe(c.color))) }
-        }
+        DonaDelMes(porCat)
         porCat.forEach { (c, n) ->
             FilaVidrio {
                 Ficha(colorDe(c.color), Iconos.de(c.icono), 38.dp)
@@ -326,6 +325,7 @@ fun Resumen(vm: AhorradorViewModel, e: Estado) {
         }
     }
 
+    UltimosMeses(vm, e, mes)
     BotonSecundario(stringResource(R.string.cierre_del_mes), { vm.abrir(Pantalla.Cierre(mes)) }, Modifier.fillMaxWidth().padding(16.dp))
 
     Seccion(stringResource(R.string.movimientos))

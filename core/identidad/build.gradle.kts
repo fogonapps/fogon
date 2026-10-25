@@ -29,5 +29,9 @@ dependencies {
     api(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.glance.appwidget)
+    implementation(libs.work.runtime)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
 }

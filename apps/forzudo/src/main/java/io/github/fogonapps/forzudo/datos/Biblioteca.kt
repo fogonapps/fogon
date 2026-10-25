@@ -24,6 +24,8 @@ class Biblioteca(
     musculos: List<Musculo>,
     val cuerpo: ModeloCuerpo,
     val laminas: Set<String>,
+    /** Los ejercicios con barra (el equipo en español, antes de traducir): para el calentamiento y los discos. */
+    val conBarra: Set<String> = emptySet(),
 ) {
     val ex: Map<String, Ejercicio> = ejercicios.associateBy { it.id }
     val musculos: List<MusculoCfg> = musculos.map { m -> MusculoCfg(m.id, m.n, ejercicios.filter { it.m == m.id }.map { it.id }) }
@@ -50,6 +52,7 @@ class Biblioteca(
          */
         fun cargar(idioma: String = "es", leer: (String) -> String): Biblioteca {
             var ejercicios = JsonGym.decodeFromString<List<Ejercicio>>(leer("ejercicios.json"))
+            val conBarra = ejercicios.filter { it.eq == "Barra" }.map { it.id }.toSet()
             var programas = JsonGym.decodeFromString<List<Programa>>(leer("programas.json"))
             var niveles = JsonGym.decodeFromString<List<Nivel>>(leer("rangos.json"))
             var musculos = JsonGym.decodeFromString<List<Musculo>>(leer("musculos.json"))
@@ -75,6 +78,7 @@ class Biblioteca(
                 musculos = musculos,
                 cuerpo = JsonGym.decodeFromString(leer("modelo-cuerpo.json")),
                 laminas = JsonGym.decodeFromString<List<String>>(leer("laminas.json")).toSet(),
+                conBarra = conBarra,
             )
         }
     }

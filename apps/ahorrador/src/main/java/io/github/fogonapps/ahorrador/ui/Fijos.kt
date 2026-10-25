@@ -59,6 +59,7 @@ fun Fijos(vm: AhorradorViewModel, e: Estado) {
             Dato(stringResource(R.string.faltan_este_mes), Formato.pesos(e.fijos.filter { it.activo && !vm.L.pagadoEnMes(e, it, mes) }.sumOf { it.monto }))
         }
     }
+    if (e.fijos.any { it.activo }) CalendarioPagos(vm, e)
     e.fijos.sortedBy { it.dia }.forEach { fijo ->
         val cat = e.categorias.firstOrNull { it.id == fijo.categoria }
         val pagado = vm.L.pagadoEnMes(e, fijo, mes)

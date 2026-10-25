@@ -60,7 +60,7 @@ Están en `Categorias.kt`. Cada una tiene `id` (**no se cambia una vez publicado
 - **Cuál hay:** el enum `Sistema` en `datos/Modelo.kt`. Su nombre y explicación están en `ui/Tutorial.kt` (`Sistema.nombre`, `Sistema.explicacion`) y en `strings.xml` (`sistema_*`).
 - **Cómo calcula cada uno:** `Logica.sobres()` y `Logica.porAsignar()` (ver `ARQUITECTURA.md` → La lógica). Si se cambia, se ajusta `LogicaTest` → `sobresSegunElSistema`.
 - **Cómo se ve:** `ui/Presupuesto.kt` (`Sobres`, `Regla`, `Kakeibo`).
-- **Editar o crear sobres:** en el sistema Sobres, tocar un sobre → "Editar sobre", o "Nuevo sobre" al final de la lista (`EditarSobre`, `vm.guardarCategoria`). Se cambian nombre, grupo, color e ícono. Un sobre con gastos o pagos fijos no se borra (`categoriaEnUso`); al borrar uno, se quita también lo asignado en cada mes.
+- **Editar o crear sobres:** en el sistema Sobres, tocar un sobre → "Editar sobre", o "Nuevo sobre" al final de la lista (`EditarSobre`, `vm.guardarCategoria`). En 50/30/20 y kakeibo, la lista "Tus categorías" debajo de los grupos abre el mismo editor, que ahí se llama "Editar categoría" (`ListaCategorias`). Se cambian nombre, grupo, color e ícono. Un sobre con gastos o pagos fijos no se borra (`categoriaEnUso`); al borrar uno, se quita también lo asignado en cada mes.
 
 ## Tarjeta de crédito y 4×1000
 
@@ -104,7 +104,8 @@ En `Avisos.kt`: la hora (9:00) está en `programar()` y los días de anticipaci�
 
 - **Instalar siempre encima** de la versión anterior y, al final, `logcat -b crash -d` no debe mostrar nada.
 - **El candado** se prueba poniéndole un PIN al emulador: `adb shell locksettings set-pin 1234`; se quita con `adb shell locksettings clear --old 1234`. La pantalla del PIN sale negra en las capturas (Android no deja capturarla).
-- **Datos de prueba:** inventados, nunca los de alguien. Se anotan a mano o se importa un respaldo JSON hecho para eso.
+- **Datos de prueba:** inventados, nunca los de alguien. `python3 herramientas/datos-prueba.py <es|en> <fecha de hoy> <salida.json>` (desde `apps/ahorrador`) arma un estado con cuentas, dos meses de movimientos, sobres, metas, pagos fijos y deudas, con las categorías en ese idioma. En la versión de prueba se copia con `adb push` y `run-as io.github.fogonapps.ahorrador cp … files/datastore/estado.json`.
+- **Capturas de F-Droid:** como en El Forzudo (`apps/forzudo/GUIA.md` → Emulador): con esos datos, el modo demo de Android y la app en cada idioma (preferencias `ui`, clave `idioma`). Van en `fastlane/metadata/android/<es|en-US>/images/phoneScreenshots/`, seis por idioma: Inicio en Grafito y en Vino, Sobres, Metas, Resumen y Anotar en Claro.
 
 ## Reglas que no se rompen
 

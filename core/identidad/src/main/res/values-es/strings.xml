@@ -3,7 +3,7 @@
   <string name="fogon_lic_app">Esta app</string>
   <string name="fogon_lic_app_texto">Código de Fogón, GPL-3.0 o posterior. Sin ninguna garantía (secciones 15 y 16).</string>
   <string name="fogon_lic_bibliotecas">Bibliotecas de Android, Kotlin, OkHttp y Okio</string>
-  <string name="fogon_lic_bibliotecas_texto">AndroidX y Jetpack Compose (Google), Kotlin y kotlinx (JetBrains), OkHttp y Okio (Square), Guava ListenableFuture y JSpecify. Apache License 2.0.</string>
+  <string name="fogon_lic_bibliotecas_texto">AndroidX, Jetpack Compose y Glance (Google), Kotlin y kotlinx (JetBrains), OkHttp y Okio (Square), Guava ListenableFuture y JSpecify. Apache License 2.0.</string>
   <string name="fogon_lic_psl">Lista de dominios de Mozilla que trae OkHttp, sin cambios. Mozilla Public License 2.0. Código fuente: https://publicsuffix.org/list/</string>
   <string name="fogon_lic_titulo">Mi código y el de otros</string>
   <string name="fogon_lic_pista">Esta app está hecha con piezas libres de otras personas. Estas son sus licencias; toca una para leer el texto completo.</string>
@@ -55,6 +55,7 @@
   <string name="fogon_tema_gimnasio">Gimnasio</string>
   <string name="fogon_tema_vino">Vino</string>
   <string name="fogon_tema_brasa">Brasa</string>
+  <string name="fogon_tema_cocina">Cocina</string>
   <string name="fogon_ap_luz">Luz del tema</string>
   <string name="fogon_ap_luz_texto">Una luz suave del color del tema arriba de cada pantalla.</string>
   <string name="fogon_estilo_contraste">Contraste</string>
@@ -90,4 +91,16 @@
   <string name="fogon_ap_tintas">Papel y tintas</string>
   <string name="fogon_ap_otro_color">Otro color</string>
   <string name="fogon_ap_elegido">elegido</string>
+  <string name="fogon_permiso_datos">Datos de las apps de Fogón</string>
+  <string name="fogon_todo_titulo">Todo Fogón en un archivo</string>
+  <string name="fogon_todo_pista">Guarda juntos los datos de todas las apps de Fogón que tengas (por ejemplo, para pasarte a otro teléfono).</string>
+  <string name="fogon_todo_guardar">Guardar todo Fogón</string>
+  <string name="fogon_todo_recuperar">Recuperar todo Fogón</string>
+  <string name="fogon_todo_guardado">Listo. Quedó guardado: %1$s.</string>
+  <string name="fogon_todo_error">No se pudo guardar el archivo.</string>
+  <string name="fogon_todo_no_es">Ese archivo no es un respaldo de todo Fogón.</string>
+  <string name="fogon_todo_pregunta">¿Recuperar todo Fogón?</string>
+  <string name="fogon_todo_reemplaza">Se reemplazan los datos de: %1$s.</string>
+  <string name="fogon_todo_recuperado">Recuperado: %1$s.</string>
+  <string name="fogon_todo_faltan">Sin recuperar (instala la app y vuelve a intentarlo): %1$s.</string>
 </resources>

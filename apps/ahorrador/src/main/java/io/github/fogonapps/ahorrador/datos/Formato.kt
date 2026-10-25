@@ -26,6 +26,12 @@ object Formato {
         return if (idioma == "es") "$signo$ $s" else "$signo$$s"
     }
 
+    /** "oct" (o "Oct" en inglés) de un mes "AAAA-MM". */
+    fun mesCorto(mes: String): String = mesesCortos[mes.takeLast(2).toInt() - 1].let { if (idioma == "es") it else it.replaceFirstChar { c -> c.uppercase() } }
+
+    /** Las iniciales de los días de la semana, de lunes a domingo. */
+    fun diasCortos(): List<String> = if (idioma == "es") listOf("L", "M", "X", "J", "V", "S", "D") else listOf("M", "T", "W", "T", "F", "S", "S")
+
     /** Solo el número con separadores, sin el signo pesos. */
     fun numero(n: Long): String = numeros().format(n)
 

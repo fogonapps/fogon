@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -116,8 +117,15 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _estado.value = L.normalizar(gymApp.almacen.data.first())
             sincronizar()
+            // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
+            gymApp.almacen.data.drop(1).collect { d ->
+                if (d != ultimoGuardado && d != _estado.value) _estado.value = L.normalizar(d).copy(active = _estado.value?.active)
+            }
         }
     }
+
+    /** Lo último que esta pantalla escribió en el disco, para distinguirlo de un cambio de afuera. */
+    @Volatile private var ultimoGuardado: Estado? = null
 
     fun hoy(): LocalDate = LocalDate.now()
     fun dias(): List<Dia> = _estado.value?.let { L.dias(it) } ?: emptyList()
@@ -140,7 +148,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     /** Escribe en disco ahora (también se llama al salir de la app). */
     suspend fun guardarYa() {
         val e = _estado.value ?: return
+        ultimoGuardado = e
         escribiendo.withLock { gymApp.almacen.updateData { e } }
+        WidgetRacha.actualizar(getApplication())
     }
 
     /** Al salir de la app: el ViewModel sigue vivo, así que basta con lanzar la escritura. */
@@ -451,9 +461,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun textoRespaldo(): String = _estado.value?.let { JsonGym.encodeToString(Estado.serializer(), L.paraNube(it)) } ?: ""
 
     /** Lee un respaldo. Devuelve el estado si es válido, para confirmar antes de reemplazar. */
-    fun leerRespaldo(texto: String): Estado? = runCatching {
-        JsonGym.decodeFromString(Estado.serializer(), texto)
-    }.getOrNull()?.takeIf { it.sessions.isNotEmpty() || it.routines != null || it.body.isNotEmpty() }
+    fun leerRespaldo(texto: String): Estado? = leerRespaldoGym(texto)
 
     fun importar(d: Estado) {
         val activo = _estado.value?.active

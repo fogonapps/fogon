@@ -144,7 +144,7 @@ fun Modifier.haloPuntos(color: Color, paso: Dp = 10.dp, centro: Offset = Offset(
     onDrawBehind { puntos.forEach { (o, t) -> drawCircle(color.copy(alpha = color.alpha * 0.55f * t), r, o) } }
 }
 
-/** Un número o palabra grande, hecho de puntos (Doto). [fantasma] queda por compatibilidad. */
+/** Un número o palabra grande, hecho de puntos (Doto), con las cifras que ruedan al cambiar. [fantasma] queda por compatibilidad. */
 @Suppress("UNUSED_PARAMETER")
 @Composable
 fun NumeroRiso(
@@ -157,7 +157,8 @@ fun NumeroRiso(
     fantasma: Boolean = true,
     maxLineas: Int = 1,
 ) {
-    Text(texto, modifier, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = color, maxLines = maxLineas, softWrap = maxLineas > 1)
+    if (maxLineas > 1) Text(texto, modifier, fontFamily = familia, fontSize = tamano, lineHeight = alto, color = color, maxLines = maxLineas)
+    else CifrasRodantes(texto, familia, tamano, color, modifier, alto)
 }
 
 /** Botón principal: una píldora llena de la primera tinta. */
@@ -175,7 +176,7 @@ fun BotonRiso(
         shape = FormaPildora,
         colors = ButtonDefaults.buttonColors(containerColor = f.tinta1, contentColor = f.sobreTinta1),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
-        modifier = modifier.heightIn(min = 50.dp),
+        modifier = modifier.rebote().heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
@@ -197,7 +198,7 @@ fun BotonSecundario(
         border = BorderStroke(f.borde, if (peligro) color.copy(alpha = 0.6f) else f.linea),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = f.superficie, contentColor = color),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-        modifier = modifier.heightIn(min = 50.dp),
+        modifier = modifier.rebote().heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
 }
 
@@ -278,7 +279,7 @@ fun PersonajeTenido(
  * sirve en todos los temas. Las luces del gris quedan como brillos de la tinta.
  */
 @Composable
-fun Ilustracion(@DrawableRes recurso: Int, modifier: Modifier = Modifier, tamano: Dp = 120.dp, tinta: Color = FogonTema.actual.tinta1) {
+fun Ilustracion(@DrawableRes recurso: Int, modifier: Modifier = Modifier, tamano: Dp = 120.dp, tinta: Color = FogonTema.actual.tintaIlustracion) {
     // Cada canal = el gris por la tinta; a las tintas oscuras se les suma algo de gris para que no pierdan
     // las luces y se siga viendo el volumen.
     val extra = (1f - tinta.luminance()) * 0.35f
@@ -289,7 +290,7 @@ fun Ilustracion(@DrawableRes recurso: Int, modifier: Modifier = Modifier, tamano
         0f, 0f, c(tinta.blue), 0f, 0f,
         0f, 0f, 0f, 1f, 0f,
     ))
-    Image(painterResource(recurso), null, modifier.size(tamano), colorFilter = ColorFilter.colorMatrix(matriz))
+    Image(painterResource(recurso), null, modifier.aparecerConRebote().size(tamano), colorFilter = ColorFilter.colorMatrix(matriz))
 }
 
 @Composable

@@ -36,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import io.github.fogonapps.identidad.contraste
+import io.github.fogonapps.identidad.rebote
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -81,6 +83,13 @@ fun Modifier.vidrio(forma: androidx.compose.ui.graphics.Shape = FormaRiso): Modi
 /** La tarjeta destacada de cada pantalla: un bloque de la primera tinta con la segunda corrida detrás. */
 @Composable
 fun Modifier.destacada(): Modifier = tarjetaDestacada(forma(28.dp))
+
+/** El tamaño del número grande de puntos según cuántas cifras tenga, para que nunca se corte. */
+fun tamanoGrande(texto: String) = when {
+    texto.length <= 9 -> 40.sp
+    texto.length <= 11 -> 34.sp
+    else -> 28.sp
+}
 
 /** Plata en la letra de las cifras. */
 @Composable
@@ -152,7 +161,7 @@ fun PildoraPesos(n: Long, relleno: Boolean = false) {
 fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     Box(modifier.fillMaxWidth().height(10.dp).clip(forma(5.dp)).background(f.superficie).border(1.5.dp, f.linea, forma(5.dp))) {
-        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).fillMaxHeight().clip(forma(4.dp)).background(color))
+        Box(Modifier.fillMaxWidth(io.github.fogonapps.identidad.progresoAnimado(progreso.coerceIn(0f, 1f))).fillMaxHeight().clip(forma(4.dp)).background(color))
     }
 }
 
@@ -161,7 +170,7 @@ fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
 fun AccionRedonda(icono: Dibujo, texto: String, onClick: () -> Unit, acento: Boolean = false) {
     val f = FogonTema.actual
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clip(forma(16.dp)).clickable(onClick = onClick).padding(4.dp)) {
+        modifier = Modifier.rebote(0.92f).clip(forma(16.dp)).clickable(onClick = onClick).padding(4.dp)) {
         Box(Modifier.size(56.dp).clip(CircleShape).background(if (acento) f.tinta1 else f.superficie)
             .border(f.borde, if (acento) f.tinta1 else f.linea, CircleShape), contentAlignment = Alignment.Center) {
             IconoRiso(icono, null, tamano = 24.dp, tinta = if (acento) f.sobreTinta1 else f.texto)
@@ -247,7 +256,7 @@ fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atra
             .clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
             IconoRiso(icono, stringResource(R.string.volver), tamano = 22.dp, corrida = null)
         }
-        Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 1, modifier = Modifier.weight(1f))
+        Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         derecha()
     }
 }

@@ -61,6 +61,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.fogonapps.forzudo.datos.medallasNuevas
+import io.github.fogonapps.forzudo.datos.calentamiento
+import io.github.fogonapps.forzudo.datos.discos
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -219,6 +222,7 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
             io.github.fogonapps.identidad.IconoRiso(Iconos.Reloj, null, tamano = 16.dp, tinta = f.textoSuave, corrida = null)
             Text(stringResource(R.string.descanso_de, "${c.rest / 60}min" + if (c.rest % 60 > 0) " ${c.rest % 60}s" else ""), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
+        if (c.e.kind == "w") HerramientasSerie(c, series.firstOrNull()?.kg ?: previas.firstOrNull()?.kg, std?.mancuerna == true, c.id in vm.bib.conBarra)
         // Encabezado de la tabla
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             val est = MaterialTheme.typography.labelSmall
@@ -307,6 +311,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
                 }
             }
         }
+        MedallasNuevas(vm, vm.L.medallasNuevas(e, vm.hoy()))
         // Los récords nuevos, en una tarjeta con el trofeo.
         if (r.records.isNotEmpty()) Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon(forma(26.dp)).padding(start = 18.dp, top = 16.dp, bottom = 16.dp, end = 6.dp),
@@ -728,3 +733,42 @@ fun Reporte(vm: GymViewModel) {
 
 /** Minúsculas y sin tildes, para que "bulgara" encuentre "búlgara". */
 private fun paraBuscar(s: String) = Normalizer.normalize(s.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+/**
+ * Debajo del descanso: el calentamiento sugerido para el peso de la primera serie y, con barra, los discos
+ * que van a cada lado.
+ */
+@Composable
+private fun HerramientasSerie(c: EjercicioCfg, kg: Double?, mancuerna: Boolean, barra: Boolean) {
+    val f = FogonTema.actual
+    var verCalentamiento by rememberSaveable(c.id) { mutableStateOf(false) }
+    var verDiscos by rememberSaveable(c.id) { mutableStateOf(false) }
+    val series = kg?.let { calentamiento(it, if (barra) 20.0 else null, if (mancuerna) 2.0 else 2.5) }.orEmpty()
+    if (series.isEmpty() && !(barra && kg != null)) return
+    Row(Modifier.padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (series.isNotEmpty()) TextButton({ verCalentamiento = !verCalentamiento }) { Text(stringResource(R.string.calentamiento)) }
+        if (barra && kg != null) TextButton({ verDiscos = !verDiscos }) { Text(stringResource(R.string.discos)) }
+    }
+    androidx.compose.animation.AnimatedVisibility(verCalentamiento) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).tarjetaFogon(forma(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.calentamiento_texto, fk(kg ?: 0.0)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            series.forEach { s -> Text("${fk(s.kg)} kg × ${s.reps}", style = MaterialTheme.typography.titleSmall, color = f.texto) }
+        }
+    }
+    androidx.compose.animation.AnimatedVisibility(verDiscos && kg != null) {
+        val d = kg?.let { discos(it) }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).tarjetaFogon(forma(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.discos_texto, fk(kg ?: 0.0)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            if (d == null) Text(stringResource(R.string.discos_no_exacto), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+            else if (d.isEmpty()) Text(stringResource(R.string.discos_solo_barra), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+            else Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                d.forEach { p ->
+                    val alto = (28 + p * 2).coerceAtMost(76.0).dp
+                    Box(Modifier.size(width = 26.dp, height = alto).clip(forma(6.dp)).background(f.tinta1), contentAlignment = Alignment.Center) {
+                        Text(fk(p), style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1, maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}

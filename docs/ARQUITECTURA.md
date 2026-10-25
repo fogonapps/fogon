@@ -32,7 +32,7 @@ Versiones exactas y dónde están instaladas: [`TECNOLOGIA.md`](TECNOLOGIA.md).
 
 ```
 fogon/
-├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, apps:ahorrador)
+├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, apps:ahorrador, apps:cucha)
 ├── gradle/libs.versions.toml← versiones de TODAS las bibliotecas, en un solo lugar
 ├── core/identidad/          ← lo que comparten todas las apps (biblioteca de Android)
 ├── apps/<app>/              ← una carpeta por app (aplicación de Android)
@@ -46,12 +46,15 @@ Es un **monorepo**: todas las apps viven juntas y comparten el módulo `core/ide
 
 | Archivo | Qué tiene |
 |---------|-----------|
-| `Tintas.kt` | Las tintas de Fogón (`Tintas`) y las de cada app (`Paleta.Forzudo`, `Paleta.Ahorrador`, `Paleta.Minga`): el papel, las dos tintas, la luz y el nombre de su tema propio (Gimnasio, Vino, Brasa). |
+| `Tintas.kt` | Las tintas de Fogón (`Tintas`) y las de cada app (`Paleta.Forzudo`, `Paleta.Ahorrador`, `Paleta.Cucha`, `Paleta.Minga`): el papel, las dos tintas, la luz y el nombre de su tema propio (Gimnasio, Vino, Cocina, Brasa). |
 | `Tema.kt` | `FogonTema(paleta, apariencia) { … }`: arma los colores (`fogonDe`) con la paleta de la app y la Apariencia elegida, aplica el tamaño de letra y da las letras (`Bricolage` para todo, `Puntos` = Doto para el número grande). Las pantallas leen todo de `FogonTema.actual`: el papel (`fondo`), el vidrio (`superficie`, `linea`), la luz (`brillo`), la barra flotante (`barra`), las letras y las dos tintas (`tinta1`, `tinta2`). |
 | `Apariencia.kt` | Los cuatro temas (`Estilo`: Grafito por defecto, el de la app, Claro y Contraste), su papel y tintas (`colorBase`), los colores calculados para que todo se lea (`Apariencia.colores`), lo que cambió la persona (`AjustesEstilo`: papel, tintas, vidrio y luz), la comodidad y `AlmacenApariencia` (preferencias "apariencia", versión 4). |
 | `PantallaApariencia.kt` | Perfil → Apariencia, igual en todas las apps: vista previa, temas (`SelectorEstilos`, dos filas de dos), papel y tintas en muestras con su editor (`DialogoColor`), vidrio, luz y comodidad. También `PasoDaleVida`, el último paso del tutorial de cada app. |
 | `IconoRiso.kt` | Los íconos: `Dibujo` (partes de 24 × 24), `IconoRiso` (dibuja su contorno de línea redonda; con `relleno`, un cuerpo suave) y los comunes en `IconosFogon`. |
 | `Componentes.kt` | Piezas con la identidad: `fondoFogon` (el papel con su luz), `tarjetaFogon` (vidrio), `tarjetaDestacada`, `haloPuntos`, `NumeroRiso` (el número grande en puntos), `BotonRiso`, `BotonSecundario`, `Personaje` y `PersonajeTenido` (el personaje en las tintas del tema, por capas), `Ilustracion` (una ilustración 3D teñida con una tinta), `FormaPildora`, `forma(radio)`, `Chispa`, `EstadoVacio`, `AcercaDeFogon`. |
+| `Movimiento.kt` | El movimiento (resortes como en iPhone): `PilaAnimada` (pantallas que entran desde la derecha y la de atrás se hunde), `PestanaAnimada`, `Modifier.rebote()` (se achica al tocar), `Modifier.aparecer(n)` (tarjetas escalonadas), `aparecerConRebote`, `CifrasRodantes` (el número grande rueda cifra por cifra) y `progresoAnimado`. Todo respeta "Menos movimiento". |
+| `Widget.kt` | Los widgets de la pantalla de inicio (Glance): `TarjetaWidget` (papel del tema elegido, etiqueta, número grande que se achica si es largo, pie, botón opcional y el personaje teñido por capas), `coloresWidget`, las capas de cada personaje y `pedirWidget` (pide al teléfono que lo ponga). Usan la letra del teléfono. **Ojo:** Glance trae WorkManager 2.7.1 (con Room 2.2.5), que hace caer la app al arrancar cuando se minifica con R8; por eso core pide `work-runtime` 2.11.2 (`libs.work.runtime`). Antes de publicar, probar siempre el APK de publicación, no solo el de prueba. |
+| `RespaldoFogon.kt` | El respaldo de todo Fogón: `ProveedorDatosFogon` (lo que cada app pone en su manifiesto: lee y restaura sus datos por un tubo, solo con el permiso de firma), `RespaldoFogon` (`juntar` arma un archivo `{"fogon":1, "apps":{…}}` con los datos de todas las apps instaladas y `repartir` devuelve cada parte a su app) y `RespaldoTodoFogon` (los botones de Perfil). El mismo canal sirve para que una app lea datos de otra. El permiso y las `<queries>` están en el manifiesto de core. |
 | `Manifiesto.kt` | El manifiesto, igual en todas las apps y sin internet. |
 | `Idioma.kt` | El idioma de las apps: el del teléfono o el elegido en la app, y `Idioma.envolver(contexto)` para aplicarlo. |
 | `Licencias.kt` | La pantalla de licencias. `licenciasFogon()` lista lo que llevan todas las apps; cada app suma lo suyo. Una app sin internet pasa `conRed = false`, porque la Public Suffix List solo viene con OkHttp. Los textos completos están en `assets/licencias/`. |
@@ -82,6 +85,7 @@ Pantallas (Compose)  ──lee──▶  ViewModel  ──usa──▶  Lógica 
 - **Sin Google Play Services, Firebase ni analíticas.** Ninguna biblioteca que rastree.
 - **Internet solo si hace falta,** y explicado en el `AndroidManifest.xml` con un comentario.
 - **Secretos cifrados** con una llave del Keystore de Android (AES-GCM). La llave nunca sale del hardware seguro.
+- **Los datos solo se comparten entre apps de Fogón:** cada app los expone con un `ProveedorDatosFogon` (autoridad `<paquete>.datos`) protegido con el permiso de firma `io.github.fogonapps.permiso.DATOS`, así que solo otra app firmada con la misma llave puede leerlos o reemplazarlos (`RespaldoFogon.kt`). Por lo mismo, Android no deja instalar juntas apps de Fogón con firmas distintas (por ejemplo, una de prueba y una firmada): la segunda falla con `INSTALL_FAILED_DUPLICATE_PERMISSION`.
 - **Sin copia automática a la nube de Google** (`res/xml/reglas_respaldo.xml`). Al pasar a un teléfono nuevo sí se copian los datos.
 - **Exportar e importar** con el selector de archivos del sistema: no hace falta pedir permiso de almacenamiento.
 

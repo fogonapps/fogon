@@ -2,6 +2,7 @@ package io.github.fogonapps.forzudo.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.ui.geometry.Offset
+import io.github.fogonapps.identidad.RespaldoTodoFogon
 import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.forma
@@ -60,6 +61,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import io.github.fogonapps.forzudo.datos.medallas
 import androidx.compose.ui.unit.sp
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -67,6 +70,7 @@ import io.github.fogonapps.identidad.Chispa
 import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.haloPuntos
+import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.identidad.NumeroRiso
@@ -125,7 +129,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         val lunes = java.time.LocalDate.parse(ws)
         val fechasHechas = e.sessions.map { it.date }.toSet()
         val estHecho = stringResource(R.string.dia_hecho); val estPendiente = stringResource(R.string.dia_pendiente)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp).aparecer(1), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             (0 until 7).forEach { i ->
                 val d = lunes.plusDays(i.toLong())
                 val hecho = iso(d) in fechasHechas
@@ -150,7 +154,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         }
 
         // La racha: el número de puntos sobre su halo, la mejor racha en una píldora y el personaje.
-        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(230.dp).tarjetaFogon(forma(30.dp))) {
+        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).aparecer(2).height(230.dp).tarjetaFogon(forma(30.dp))) {
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 1f else 0.7f), centro = androidx.compose.ui.geometry.Offset(0.28f, 0.5f)))
             Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
@@ -167,7 +171,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
 
         // Esta semana y el volumen, lado a lado.
         val deLaSemana = e.sessions.filter { inicioSemana(it.date) == ws }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).aparecer(3), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f).tarjetaFogon(forma(24.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.inicio_esta_semana), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 Text(stringResource(R.string.inicio_de, hechos.size, dias.size), style = MaterialTheme.typography.headlineSmall, color = f.texto)
@@ -186,7 +190,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         // Lo que toca: la rutina de hoy (o la siguiente sin hacer esta semana) y el botón para empezarla.
         val toca = dias.firstOrNull { it.id == L.diaDeHoy(dias, hoy) && it.id !in hechos } ?: dias.firstOrNull { it.id !in hechos }
         if (toca != null) Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon(forma(24.dp)).padding(16.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).aparecer(4).tarjetaFogon(forma(24.dp)).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_mancuerna, tamano = 64.dp)
@@ -498,6 +502,13 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
             }
         }
 
+        SeccionMedallas(vm, vm.L.medallas(e, vm.hoy()))
+        val contexto = androidx.compose.ui.platform.LocalContext.current
+        val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
+        BotonSecundario(stringResource(R.string.widget_poner), {
+            alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.forzudo.WidgetRachaReceptor::class.java) }
+        }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
+
         Seccion(stringResource(R.string.constancia)) {
             val anioHoy = vm.hoy().year
             val desde = minOf(anioHoy, e.sessions.minOfOrNull { it.date.take(4).toInt() } ?: anioHoy)
@@ -516,6 +527,7 @@ fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onIm
                 BotonSecundario(stringResource(R.string.importar), onImportar, Modifier.weight(1f))
             }
             Pista(stringResource(R.string.pista_respaldo))
+            RespaldoTodoFogon(confirmar, Modifier.padding(top = 8.dp))
         }
 
         val usados = (L.dias(e).flatMap { d -> d.rutina.items.map { it.id } } + e.sessions.flatMap { it.entries.keys }).toSet()

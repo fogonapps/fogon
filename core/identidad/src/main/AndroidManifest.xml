@@ -1,2 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Los datos de cada app de Fogón solo los puede leer otra app firmada con la misma llave (RespaldoFogon.kt). -->
+    <permission
+        android:name="io.github.fogonapps.permiso.DATOS"
+        android:label="@string/fogon_permiso_datos"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="io.github.fogonapps.permiso.DATOS" />
+
+    <!-- Para ver qué otras apps de Fogón hay en el teléfono (Android 11 o más). -->
+    <queries>
+        <package android:name="io.github.fogonapps.forzudo" />
+        <package android:name="io.github.fogonapps.ahorrador" />
+        <package android:name="io.github.fogonapps.cucha" />
+    </queries>
+</manifest>

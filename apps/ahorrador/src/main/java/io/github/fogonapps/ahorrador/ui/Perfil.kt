@@ -28,12 +28,14 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.BuildConfig
 import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.R
 import io.github.fogonapps.ahorrador.datos.Estado
 import io.github.fogonapps.ahorrador.datos.Sistema
+import io.github.fogonapps.identidad.RespaldoTodoFogon
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -55,6 +57,7 @@ fun Perfil(
     onExportarCsv: () -> Unit,
     onImportar: () -> Unit,
     candadoDisponible: Boolean,
+    onImportarExtracto: () -> Unit = {},
 ) {
     val confirmar = LocalConfirmar.current
     val candado by vm.candado.collectAsState()
@@ -84,6 +87,12 @@ fun Perfil(
         BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
         Interruptor(stringResource(R.string.gmf), stringResource(R.string.gmf_pista), e.gmf, vm::cambiarGmf)
         if (candadoDisponible) Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, vm::cambiarCandado)
+        AjusteRecordatorio(vm)
+        val contexto = androidx.compose.ui.platform.LocalContext.current
+        val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
+        BotonSecundario(stringResource(R.string.widget_poner), {
+            alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.ahorrador.WidgetPlataReceptor::class.java) }
+        }, Modifier.fillMaxWidth())
         Text(stringResource(R.string.idioma), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.textoSuave)
         SelectorIdioma(vm)
     }
@@ -96,7 +105,9 @@ fun Perfil(
             confirmar(vm.tx(R.string.recuperar_pregunta), vm.tx(R.string.recuperar_texto), onImportar)
         }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.exportar_csv), onExportarCsv, Modifier.fillMaxWidth())
+        BotonSecundario(stringResource(R.string.extracto_importar), onImportarExtracto, Modifier.fillMaxWidth())
     }
+    RespaldoTodoFogon(confirmar, Modifier.padding(bottom = 8.dp))
 
     Seccion(stringResource(R.string.fogon))
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

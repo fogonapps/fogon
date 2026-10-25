@@ -24,11 +24,13 @@ Código en `src/main/java/io/github/fogonapps/forzudo/`:
 | `datos/Biblioteca.kt` | Carga los datos fijos de `assets/datos/` y los tiene a mano (ejercicios por id, programas, músculos y qué ejercicios tienen lámina). |
 | `datos/Vocabulario.kt` | Las palabras de la lógica (meses, unidades, consejos). Por defecto en español, como la web; la app lo llena con el idioma en uso. |
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Clase `Logica(biblioteca)`, sin Android: se prueba en la JVM. |
+| `datos/Herramientas.kt` | Calentamiento (`calentamiento`), discos por lado (`discos`) y medallas (`Medalla`, `medallas`): cálculos puros, probados en `HerramientasTest`. |
 | `datos/Gist.kt` | `ClienteGist`: habla con la API de GitHub para buscar, crear, leer y escribir el Gist. |
 | `ui/App.kt` | El armazón: barra de pestañas, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), la barra del entreno en curso, la del descanso con su medidor (`MedidorDescanso`), avisos y tutorial. |
 | `ui/Pestanas.kt` | Las 4 pestañas: Inicio (cabecera con la racha gigante, semana, historial), Entrenar (rutinas), Rangos (el rango general gigante, mapa del cuerpo, rangos por músculo) y Perfil (peso, datos, sincronización, Apariencia, ajustes). Inicio y Rangos ponen su propia cabecera; las otras dos llevan el título que pone `App.kt`. |
 | `ui/Pantallas.kt` | Las pantallas que se abren encima: entreno en vivo, resumen, detalle de ejercicio, músculo, programas, editor de rutinas, cambiar ejercicio, lámina en grande, Acerca de, Licencias y Preguntas frecuentes. |
 | `ui/Comunes.kt` | Piezas de interfaz propias de esta app: secciones, filas, gráficas, insignias de rango, mapa del cuerpo, mapa anual, campos de número y fecha. |
+| `ui/Medallas.kt` | Las 16 medallas en Perfil (`SeccionMedallas`) y las nuevas al terminar un entreno (`MedallasNuevas`). |
 | `ui/Tutorial.kt` | Los 6 pasos del primer arranque y, al final, "¡Dale vida!" (`PasoDaleVida` de `core/identidad`) para elegir el estilo. |
 | `ui/Iconos.kt` | Íconos de contorno de tinta y cuerpo de la segunda tinta (`Dibujo`, se pintan con `IconoRiso`), también los de los grupos musculares. Los comunes salen de `IconosFogon`. |
 
@@ -113,6 +115,8 @@ Los errores se muestran en palabras simples: token vencido, sin permiso o sin co
 | Aviso de fin de descanso | `AlarmManager.setExactAndAllowWhileIdle`. Si no hay permiso de alarma exacta, usa una aproximada. | `POST_NOTIFICATIONS` (se pide al empezar el primer entreno), `SCHEDULE_EXACT_ALARM`, `VIBRATE` |
 | Sincronizar con el Gist | OkHttp contra `api.github.com`, con el token de la persona (permiso `gist`). | `INTERNET` (solo se usa si la persona conecta GitHub) |
 | Exportar / importar | Selector de archivos del sistema (`CreateDocument` / `OpenDocument`). | Ninguno |
+| Widget de la racha | Glance (`Widget.kt`: `WidgetRacha`): semanas seguidas y entrenos de esta semana, con el tema elegido. Se actualiza al guardar (`GymViewModel.guardarYa`) y cada hora. Perfil tiene un botón para ponerlo. | Ninguno |
+| Respaldo de todo Fogón | `Datos.kt`: `DatosForzudo` (un `ProveedorDatosFogon`) da el respaldo (sin el entreno en curso) y lo restaura conservando el entreno en curso. Si la app está abierta, `GymViewModel` ve el cambio en el disco y lo toma (`ultimoGuardado` distingue lo que escribió ella misma). | Permiso de firma `io.github.fogonapps.permiso.DATOS` |
 | Videos de técnica | Abre una búsqueda de YouTube ("<ejercicio> tecnica correcta") en el navegador. La app no reproduce nada. | Ninguno |
 
 ## 7. Pruebas y herramientas

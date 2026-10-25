@@ -92,6 +92,15 @@ data class Fogon(
 ) {
     /** Sin tinta corrida en los íconos. */
     val desfaseIcono: Dp get() = 0.dp
+
+    /**
+     * La tinta de las ilustraciones: de las dos, la que tenga más color (en Claro, el acento de la app y no el
+     * casi negro de los botones), siempre que se distinga del papel.
+     */
+    val tintaIlustracion: Color get() {
+        fun color(c: Color): Float { val mx = maxOf(c.red, c.green, c.blue); return if (mx == 0f) 0f else (mx - minOf(c.red, c.green, c.blue)) / mx }
+        return listOf(tinta1, tinta2).filter { contraste(it, fondo) >= 1.4 }.maxByOrNull { color(it) } ?: tinta1
+    }
 }
 
 val LocalFogon = staticCompositionLocalOf<Fogon> { error("Falta FogonTema") }

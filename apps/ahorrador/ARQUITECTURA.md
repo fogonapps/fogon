@@ -20,6 +20,7 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `datos/Modelo.kt` | Las clases de datos (`Estado`, `Cuenta`, `Movimiento`, `Fijo`, `Meta`, `Deuda`, …) y la configuración del JSON (`JsonAhorrador`). |
 | `datos/Almacen.kt` | Guardar el estado en disco (`SerializadorEstado`, `crearAlmacen`). |
 | `datos/Logica.kt` | Todos los cálculos (ver sección 5). Sin Android: se prueba en la JVM. |
+| `datos/Extracto.kt` | Leer el extracto del banco en CSV (`leerExtracto`: separador, columnas y formatos de fecha y monto que adivina) y el reto de ahorro (`montoReto`, `totalReto`). Probado en `ExtractoTest`. |
 | `datos/Formato.kt` | Cómo se escriben la plata y las fechas ("$ 842.300", "21 oct") en cada idioma. |
 | `ui/App.kt` | El armazón: la barra flotante con el botón de anotar, la pantalla de arriba de la pila (también Apariencia, que es `PantallaApariencia` de `core/identidad`), avisos, confirmaciones y la pantalla con candado. |
 | `ui/Tutorial.kt` | Los 4 pasos del primer arranque: nombre, sistema, saldos y "¡Dale vida!" (`PasoDaleVida` de `core/identidad`) para elegir el estilo. |
@@ -28,6 +29,7 @@ Código en `src/main/java/io/github/fogonapps/ahorrador/`:
 | `ui/Anotar.kt` | Anotar o corregir un movimiento, con su teclado. |
 | `ui/Cuentas.kt` | Todas las cuentas, una cuenta (con su tarjeta de crédito) y crear o editar una cuenta. |
 | `ui/Fijos.kt` | Pagos fijos, me deben y debo, y el cierre del mes. |
+| `ui/Mejoras.kt` | La dona del mes y los últimos meses (Resumen), el calendario de pagos (Fijos), importar el extracto, la tarjeta del reto de ahorro (Metas) y el ajuste del recordatorio diario. |
 | `ui/Perfil.kt` | Perfil y ajustes, Acerca de, Licencias, Preguntas frecuentes y Reportar. |
 | `ui/Comunes.kt` | Piezas de interfaz: tarjetas de las filas (`vidrio()`, sin sombra), tarjeta destacada (`tarjetaDestacada`), fichas de categoría en una mancha de su tinta, campos de plata, selectores, fecha. |
 | `ui/Iconos.kt` | Íconos de contorno de tinta y cuerpo de la segunda tinta (`Dibujo`, se pintan con `IconoRiso`), también los de las categorías (`Iconos.de(nombre)`). Los comunes salen de `IconosFogon`. |
@@ -88,6 +90,8 @@ Todo está en `datos/Logica.kt`, recibe el estado y la fecha de hoy, y no toca l
 
 - **Avisos:** `AlarmManager.setInexactRepeating` a las 9:00 cada día (no necesita el permiso de alarmas exactas). El receptor lee el estado del disco y muestra los fijos que vencen en 3 días o menos (o ya vencieron). Se vuelve a programar al reiniciar el teléfono (`ArranqueTelefono`).
 - **Candado:** `BiometricPrompt` del sistema con huella, cara o el bloqueo del teléfono (Android 10 o más). Solo se ofrece si el teléfono tiene un bloqueo puesto; si se quita después, la app se abre sin pedir nada, para que nadie quede por fuera de sus datos. Se vuelve a pedir al volver de otra app.
+- **Widget:** Glance (`Widget.kt`: `WidgetPlata`): lo que tienes (patrimonio), lo que salió este mes y un botón "Anotar" que abre la app en el formulario (`MainActivity.EXTRA_ANOTAR`). Se actualiza al guardar y cada hora. Perfil tiene un botón para ponerlo.
+- **Respaldo de todo Fogón:** `Datos.kt`: `DatosAhorrador` (un `ProveedorDatosFogon`) da y restaura el `Estado` completo. Si la app está abierta, el ViewModel ve el cambio en el disco y lo toma. Ojo: el candado no protege de otra app de Fogón, porque comparten la firma.
 - **Sin internet:** el manifiesto no pide el permiso `INTERNET`. Reportar abre GitHub o el correo en otra app.
 - **Respaldo:** JSON completo (el mismo `Estado`) con tope de 10 MB al leerlo, y CSV de movimientos (fecha, tipo, monto, cuenta, a cuenta, categoría, nota).
 

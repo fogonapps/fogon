@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.fogonapps.ahorrador"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.4.1"
+        versionCode = 7
+        versionName = "1.5"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -66,6 +66,7 @@ android {
 dependencies {
     implementation(project(":core:identidad"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.glance.appwidget)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

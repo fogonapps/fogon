@@ -3,7 +3,7 @@
   <string name="fogon_lic_app">This app</string>
   <string name="fogon_lic_app_texto">Fogón code, GPL-3.0 or later. No warranty of any kind (sections 15 and 16).</string>
   <string name="fogon_lic_bibliotecas">Android, Kotlin, OkHttp and Okio libraries</string>
-  <string name="fogon_lic_bibliotecas_texto">AndroidX and Jetpack Compose (Google), Kotlin and kotlinx (JetBrains), OkHttp and Okio (Square), Guava ListenableFuture and JSpecify. Apache License 2.0.</string>
+  <string name="fogon_lic_bibliotecas_texto">AndroidX, Jetpack Compose and Glance (Google), Kotlin and kotlinx (JetBrains), OkHttp and Okio (Square), Guava ListenableFuture and JSpecify. Apache License 2.0.</string>
   <string name="fogon_lic_psl">Mozilla’s domain list bundled with OkHttp, unchanged. Mozilla Public License 2.0. Source: https://publicsuffix.org/list/</string>
   <string name="fogon_lic_titulo">My code and other people’s</string>
   <string name="fogon_lic_pista">This app is built with free pieces made by other people. These are their licenses; tap one to read the full text.</string>
@@ -55,6 +55,7 @@
   <string name="fogon_tema_gimnasio">Gym</string>
   <string name="fogon_tema_vino">Wine</string>
   <string name="fogon_tema_brasa">Ember</string>
+  <string name="fogon_tema_cocina">Kitchen</string>
   <string name="fogon_ap_luz">Theme glow</string>
   <string name="fogon_ap_luz_texto">A soft glow in the theme’s color at the top of each screen.</string>
   <string name="fogon_estilo_contraste">Contrast</string>
@@ -90,4 +91,16 @@
   <string name="fogon_ap_tintas">Paper and inks</string>
   <string name="fogon_ap_otro_color">Other colour</string>
   <string name="fogon_ap_elegido">selected</string>
+  <string name="fogon_permiso_datos">Fogón apps data</string>
+  <string name="fogon_todo_titulo">All of Fogón in one file</string>
+  <string name="fogon_todo_pista">Saves the data of every Fogón app you have together (for example, to move to a new phone).</string>
+  <string name="fogon_todo_guardar">Save all of Fogón</string>
+  <string name="fogon_todo_recuperar">Restore all of Fogón</string>
+  <string name="fogon_todo_guardado">Done. Saved: %1$s.</string>
+  <string name="fogon_todo_error">Couldn’t save the file.</string>
+  <string name="fogon_todo_no_es">That file isn’t a backup of all of Fogón.</string>
+  <string name="fogon_todo_pregunta">Restore all of Fogón?</string>
+  <string name="fogon_todo_reemplaza">This replaces the data of: %1$s.</string>
+  <string name="fogon_todo_recuperado">Restored: %1$s.</string>
+  <string name="fogon_todo_faltan">Not restored (install the app and try again): %1$s.</string>
 </resources>

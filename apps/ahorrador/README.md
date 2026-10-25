@@ -22,13 +22,16 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
   - **Regla 50/30/20:** necesidades, gustos y ahorro, con el reparto que quieras;
   - **Kakeibo:** cuatro grupos, una meta de ahorro del mes y el cierre con sus cuatro preguntas;
   - **Solo anotar.**
-- **Resumen del mes:** cuánto entró, salió y guardaste, en qué se fue (por categoría) y cuánto cambió frente al mes anterior.
+- **Resumen del mes:** cuánto entró, salió y guardaste, en qué se fue (una dona por categoría) y cómo van los últimos meses.
+- **Extracto del banco:** importa el CSV que descargas del banco; adivina las columnas y la categoría de cada movimiento, salta lo que ya estaba y te deja revisar antes de anotar.
+- **Reto de ahorro de 52 semanas** y **recordatorio diario** opcional (solo si ese día no anotaste nada).
+- **Widget** con lo que tienes, lo que salió este mes y un botón para anotar.
 - **Metas de ahorro:** con fecha te dice cuánto guardar cada quincena; sin fecha, a este paso en qué mes llegas.
-- **Pagos fijos** (arriendo, servicios, celular): aviso a las 9 de la mañana cuando vencen en 3 días o menos, y si quieres se anotan solos el día del pago.
+- **Pagos fijos** (arriendo, servicios, celular), con su calendario del mes: aviso a las 9 de la mañana cuando vencen en 3 días o menos, y si quieres se anotan solos el día del pago.
 - **Me deben y debo:** préstamos entre personas y créditos, con abonos.
 - **4×1000:** si lo activas, la app anota sola el impuesto al sacar plata de una cuenta de banco.
 - **Candado:** pide la huella o el bloqueo del teléfono al abrir (Android 10 o más, y solo si el teléfono tiene bloqueo).
-- **Tus datos son tuyos:** respaldo y recuperación en JSON, y exportar los movimientos en CSV para una hoja de cálculo.
+- **Tus datos son tuyos:** respaldo y recuperación en JSON, exportar los movimientos en CSV para una hoja de cálculo y el respaldo de todas las apps de Fogón en un solo archivo.
 - **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. El personaje toma las tintas del tema. Además, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
@@ -37,16 +40,17 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
 
 | Permiso | Para qué |
 |---------|----------|
-| Notificaciones | Avisar de los pagos fijos que están por vencer. Se pide al crear el primer pago fijo. |
+| Notificaciones | Avisar de los pagos fijos que están por vencer y el recordatorio diario, si lo activas. Se pide al crear el primer pago fijo o al encender el recordatorio. |
 | Huella o bloqueo del teléfono | El candado, si lo activas. |
 | Arrancar con el teléfono | Volver a programar el aviso diario después de reiniciar. |
+| Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Sin internet:** la app no tiene el permiso, así que no puede mandar nada a ningún lado.
 - **Sin copias automáticas a la nube de Google:** solo se copian los datos al pasar a un teléfono nuevo.
 
 ## Por qué no se conecta al banco
 
-En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. Una app libre, sin servidor y sin internet no puede conectarse, y así tampoco nadie tiene tus claves. Más adelante la app podría leer en el teléfono los avisos que manda el banco o importar el extracto, sin salir de él.
+En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. Una app libre, sin servidor y sin internet no puede conectarse, y así tampoco nadie tiene tus claves. En cambio, la app importa el extracto que descargas del banco (CSV), sin salir del teléfono.
 
 ## Compilar
 
@@ -70,6 +74,7 @@ Para la versión firmada y cómo llega al teléfono, ver [`docs/PUBLICAR.md`](..
 | 1.3 | 2026-10-24 | **Viene en Neutro**, igual que El Forzudo 1.9, y el tutorial termina en **"¡Dale vida!"** para elegir estilo (paso 4 de 4). Quien ya había elegido un estilo lo conserva. Probada en el emulador desde una instalación limpia. Reproducible desde la etiqueta pública `ahorrador-v1.3`. |
 | 1.4 | 2026-10-24 | **Vidrio y puntos**, como El Forzudo 1.10: temas Grafito (el que viene), Vino (rojo y ámbar), Claro y Contraste; el saldo en puntos sobre su halo, acciones en vidrio, la meta más cercana con el personaje teñido y barra flotante. Fichas de sobres y cuentas iguales: un círculo teñido de su color con el ícono de línea. **Editar y crear sobres** (nombre, grupo, color e ícono) y 9 íconos nuevos: mascota, ejercicio, café, ropa, internet, música, juegos, regalo y un avión para viajes. **Ilustraciones 3D propias** (hechas en Blender) teñidas con el tema: las monedas en la meta de Inicio y el sobre en Sobres. Probada en el emulador en los cuatro temas. Reproducible desde la etiqueta pública `ahorrador-v1.4`. |
 | 1.4.1 | 2026-10-24 | Sale el circulito con el personaje de la cabecera del Inicio. Probada en el emulador; reproducible desde la etiqueta pública `ahorrador-v1.4.1`. |
+| 1.5 | 2026-10-24 | **Categorías editables en 50/30/20 y kakeibo** ("Tus categorías", con el mismo editor de los sobres). Los montos grandes de las tarjetas se achican para no cortarse. Datos de prueba (`herramientas/datos-prueba.py`), capturas de F-Droid nuevas y receta de F-Droid. **Movimiento** como en iPhone. **Dona del mes** (en qué se fue la plata) y **los últimos meses** comparados. **Calendario de pagos** fijos. **Importar el extracto del banco** (CSV): adivina las columnas y la categoría, salta lo repetido y deja revisar antes de anotar. **Reto de ahorro de 52 semanas.** **Recordatorio diario** opcional (solo si ese día no anotaste nada). **Widget** con lo que tienes y un botón para anotar. **Respaldo de todo Fogón** en un solo archivo. Créditos de las letras corregidos. Los títulos largos de las pantallas terminan en "…" en vez de cortarse, y la receta de F-Droid usa la categoría `Finance Manager` (`Money` ya no existe). Probada en el emulador. |
 
 ## Preguntas frecuentes
 
@@ -108,5 +113,5 @@ Fallos o ideas: desde la app (Perfil → Reportar un fallo o sugerir algo), en [
 ## Créditos
 
 - Ideas de presupuesto de uso libre: el método de sobres, la regla 50/30/20 y el kakeibo.
-- Letras: Bagel Fat One y Anton (SIL Open Font License).
+- Letras: Bricolage Grotesque y Doto (SIL Open Font License).
 - Licencia del código: GPL-3.0 o posterior.

@@ -1,0 +1,34 @@
+# Borrador de la receta para fdroiddata (metadata/io.github.fogonapps.cucha.yml).
+# No la lee nadie desde aquí: se copia a un fork de gitlab.com/fdroid/fdroiddata al pedir la inclusión.
+# Antes de mandarla: poner el hash completo del commit de la etiqueta en `commit` y pasarla por
+# `fdroid rewritemeta`, `fdroid lint` y `fdroid build` (ver docs/PUBLICAR.md → F-Droid).
+Categories:
+  - Diet
+  - Health Manager
+License: GPL-3.0-or-later
+AuthorName: Fogón
+SourceCode: https://github.com/fogonapps/fogon
+IssueTracker: https://github.com/fogonapps/fogon/issues
+Changelog: https://github.com/fogonapps/la-cucha/releases
+
+AutoName: La Cucha
+
+RepoType: git
+Repo: https://github.com/fogonapps/fogon.git
+# F-Droid compila desde el código y publica nuestro APK firmado solo si sale idéntico.
+Binaries: https://github.com/fogonapps/la-cucha/releases/download/v%v/LaCucha-%v.apk
+
+Builds:
+  - versionName: "1.0"
+    versionCode: 1
+    commit: PENDIENTE  # el hash de la etiqueta cucha-v1.0
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
+
+AutoUpdateMode: Version cucha-v%v
+UpdateCheckMode: Tags ^cucha-v
+CurrentVersion: "1.0"
+CurrentVersionCode: 1

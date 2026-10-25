@@ -34,12 +34,25 @@
         </activity>
 
         <receiver android:name=".AvisoPagos" android:exported="false" />
+        <receiver android:name=".RecordatorioGastos" android:exported="false" />
         <!-- BOOT_COMPLETED solo lo envía el sistema. -->
         <receiver android:name=".ArranqueTelefono" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".WidgetPlataReceptor" android:exported="true" android:label="@string/widget_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_plata" />
+        </receiver>
+        <!-- Sus datos para las otras apps de Fogón (respaldo de todo Fogón); solo con la misma firma. -->
+        <provider
+            android:name=".DatosAhorrador"
+            android:authorities="${applicationId}.datos"
+            android:exported="true"
+            android:permission="io.github.fogonapps.permiso.DATOS" />
     </application>
 
 </manifest>

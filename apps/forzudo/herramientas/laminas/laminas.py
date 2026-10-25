@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Láminas riso de los ejercicios de El Forzudo, a partir de las ilustraciones de Everkinetic.
+"""Láminas de los ejercicios de El Forzudo, a partir de las ilustraciones de Everkinetic, en el estilo
+Vidrio y puntos (docs/IDENTIDAD.md).
 
-Capas, de abajo hacia arriba: papel con grano, sombra corrida en el color de la zona del
-cuerpo, la figura por dentro del mismo papel, el músculo que trabaja con su color, la
-línea en tinta y el número del paso (1 inicio, 2 final) en Anton con la chispa.
+Capas, de abajo hacia arriba: papel grafito, un halo de puntos en el color de la zona del cuerpo detrás
+de la figura, la figura rellena de vidrio, el músculo que trabaja con su color, la línea clara y el
+número del paso (1 inicio, 2 final) en la letra de puntos con la chispa.
 
 Uso: python3 laminas.py <carpeta con los SVG de Everkinetic> ../../src/main/assets/laminas [id1,id2,...]
 
@@ -27,10 +28,11 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ejercicios import EJERCICIOS  # noqa: E402
 
-PAPEL, TINTA, ROJO = (239, 231, 218), (20, 18, 16), (229, 51, 42)
+# Papel grafito, vidrio de la figura, línea clara y la chispa.
+PAPEL, VIDRIO, LINEA, ROJO = (20, 20, 23), (38, 38, 43), (236, 236, 239), (229, 51, 42)
 # Tamaño en la app: suficiente para la pantalla de un teléfono y liviano (ver README, "Peso").
 ANCHO_FINAL, CALIDAD = 540, 72
-ANTON = os.path.join(os.path.dirname(__file__), '../../../../identidad/fuentes/anton/Anton-Regular.ttf')
+PUNTOS = os.path.join(os.path.dirname(__file__), '../../../../core/identidad/src/main/res/font/doto_bold.ttf')
 
 # Un color por grupo muscular (tintas riso). Son los mismos ids de musculos.json.
 MUSCULOS = {
@@ -49,7 +51,7 @@ MUSCULOS = {
 ZONAS = {
     'superior': ('Tren superior', '#FF4FA3', ('pecho', 'espalda', 'hombros', 'abdomen')),
     'brazos': ('Brazos', '#FFC93C', ('biceps', 'triceps')),
-    'piernas': ('Piernas', '#2D5BFF', ('cuads', 'femorales', 'pantorrillas')),
+    'piernas': ('Piernas', '#6E8BFF', ('cuads', 'femorales', 'pantorrillas')),
 }
 
 
@@ -83,11 +85,17 @@ def silueta(lineas, cerrar=7, huecos=()):
     return ImageChops.lighter(sil, a)
 
 
-def grano(tam, fuerza=14, semilla=7):
-    rng = np.random.default_rng(semilla)
-    n = rng.normal(0, fuerza, (tam[1], tam[0])).clip(-40, 40)
-    base = np.array(PAPEL, dtype=float)[None, None, :] + n[:, :, None]
-    return Image.fromarray(base.clip(0, 255).astype('uint8'), 'RGB')
+def halo(img, centro, alcance, color, paso):
+    """Puntos que se apagan hacia el borde, como el halo de los números grandes de la app."""
+    dr = ImageDraw.Draw(img)
+    r = paso * 0.16
+    for y in np.arange(paso / 2, img.height, paso):
+        for x in np.arange(paso / 2, img.width, paso):
+            t = 1 - math.hypot(x - centro[0], y - centro[1]) / alcance
+            if t > 0:
+                a = 0.55 * t
+                c = tuple(int(PAPEL[i] + (color[i] - PAPEL[i]) * a) for i in range(3))
+                dr.ellipse((x - r, y - r, x + r, y + r), fill=c)
 
 
 def pintar(base, mascara, color):
@@ -132,20 +140,19 @@ def lamina(svg_txt, manchas, musculo, paso, ancho=900, huecos=()):
              f'<g fill="#000" filter="url(#w)">{elipses}</g></svg>')
     M = ImageChops.multiply(pad(rasterizar(m_svg, ancho).split()[3]), S)
 
-    img = grano(tam)
-    papel = img.copy()
-    sombra = hexrgb(ZONAS[zona_de(musculo)][1])
-    corr = int(W * 0.018)
-    pintar(img, ImageChops.offset(S, corr, int(corr * 0.85)), sombra)  # sombra corrida
-    img.paste(papel, (0, 0), S)                                       # por dentro, el mismo papel
+    img = Image.new('RGB', tam, PAPEL)
+    zona = hexrgb(ZONAS[zona_de(musculo)][1])
+    caja_fig = S.getbbox() or (0, 0, *tam)
+    centro = ((caja_fig[0] + caja_fig[2]) / 2, (caja_fig[1] + caja_fig[3]) / 2)
+    halo(img, centro, max(tam) * 0.62, zona, W * 0.028)               # halo de puntos de la zona
+    pintar(img, S, VIDRIO)                                             # la figura, de vidrio
     pintar(img, M, hexrgb(MUSCULOS[musculo][1]))                       # músculo
-    pintar(img, L, TINTA)                                              # línea
+    pintar(img, L, LINEA)                                              # línea
 
     dr = ImageDraw.Draw(img)
-    letra = ImageFont.truetype(ANTON, int(W * 0.13))
+    letra = ImageFont.truetype(PUNTOS, int(W * 0.19))
     x0, y0 = int(margen * 0.6), int(margen * 0.5)
-    dr.text((x0 + corr, y0 + corr), str(paso), font=letra, fill=sombra)
-    dr.text((x0, y0), str(paso), font=letra, fill=TINTA)
+    dr.text((x0, y0), str(paso), font=letra, fill=zona)
     bb = dr.textbbox((x0, y0), str(paso), font=letra)
     chispa(dr, bb[2] + W * 0.035, bb[1] + W * 0.02, W * 0.035, ROJO)
     return img

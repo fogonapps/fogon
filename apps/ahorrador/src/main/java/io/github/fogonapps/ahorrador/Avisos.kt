@@ -30,11 +30,44 @@ object Avisos {
     private const val CANAL = "pagos"
     private const val ID = 1
 
+    private const val CANAL_RECORDATORIO = "recordatorio"
+    private const val ID_RECORDATORIO = 2
+
     fun crearCanal(c: Context) {
         val canal = NotificationChannel(CANAL, c.getString(R.string.canal_pagos), NotificationManager.IMPORTANCE_DEFAULT).apply {
             description = c.getString(R.string.canal_pagos_detalle)
         }
-        c.getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
+        val recordatorio = NotificationChannel(CANAL_RECORDATORIO, c.getString(R.string.canal_recordatorio), NotificationManager.IMPORTANCE_LOW).apply {
+            description = c.getString(R.string.canal_recordatorio_detalle)
+        }
+        c.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(canal, recordatorio))
+    }
+
+    /** El recordatorio diario para anotar los gastos, a la [hora] (0–23); con -1 se apaga. */
+    fun programarRecordatorio(c: Context, hora: Int) {
+        val am = c.getSystemService(AlarmManager::class.java)
+        val pi = PendingIntent.getBroadcast(c, 1, Intent(c, RecordatorioGastos::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        am.cancel(pi)
+        if (hora !in 0..23) return
+        var cuando = LocalDate.now().atTime(LocalTime.of(hora, 0))
+        if (cuando.isBefore(java.time.LocalDateTime.now())) cuando = cuando.plusDays(1)
+        am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cuando.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), AlarmManager.INTERVAL_DAY, pi)
+    }
+
+    fun mostrarRecordatorio(c0: Context) {
+        val c = Idioma.envolver(c0)
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(c, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) return
+        val abrir = PendingIntent.getActivity(c, 1, Intent(c, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
+        val n = NotificationCompat.Builder(c, CANAL_RECORDATORIO)
+            .setSmallIcon(R.drawable.ic_notificacion)
+            .setContentTitle(c.getString(R.string.recordatorio_titulo))
+            .setContentText(c.getString(R.string.recordatorio_texto))
+            .setContentIntent(abrir)
+            .setAutoCancel(true)
+            .build()
+        c.getSystemService(NotificationManager::class.java).notify(ID_RECORDATORIO, n)
     }
 
     fun programar(c: Context) {
@@ -87,9 +120,28 @@ class AvisoPagos : BroadcastReceiver() {
     }
 }
 
-/** Al reiniciar el teléfono, las alarmas se borran: se vuelve a programar el aviso. */
+/** El recordatorio diario: solo avisa si hoy no se anotó nada. */
+class RecordatorioGastos : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val app = context.applicationContext as AhorradorApp
+        val pendiente = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val e = app.almacen.data.first()
+                if (e.listo && e.movimientos.none { it.fecha == LocalDate.now().toString() }) Avisos.mostrarRecordatorio(context)
+            } finally {
+                pendiente.finish()
+            }
+        }
+    }
+}
+
+/** Al reiniciar el teléfono, las alarmas se borran: se vuelven a programar los avisos. */
 class ArranqueTelefono : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) Avisos.programar(context)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            Avisos.programar(context)
+            Avisos.programarRecordatorio(context, context.getSharedPreferences("ui", Context.MODE_PRIVATE).getInt("recordatorio", -1))
+        }
     }
 }

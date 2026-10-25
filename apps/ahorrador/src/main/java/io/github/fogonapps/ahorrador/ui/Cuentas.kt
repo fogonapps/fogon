@@ -43,7 +43,7 @@ fun Cuentas(vm: AhorradorViewModel, e: Estado) {
     Cabecera(stringResource(R.string.cuentas), vm::cerrar)
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(L.patrimonio(e)), 40.sp, color = FogonTema.actual.sobreDestacada)
+        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(L.patrimonio(e)), tamanoGrande(Formato.pesos(L.patrimonio(e))), color = FogonTema.actual.sobreDestacada)
         val enMetas = e.metas.sumOf { L.ahorradoEn(e, it.id) }
         if (enMetas > 0) Text(stringResource(R.string.mas_en_metas, Formato.pesos(enMetas)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
         Text(stringResource(R.string.tienes_pista), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))

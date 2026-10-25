@@ -89,5 +89,18 @@ data class Paleta(
             brillo = Color(0xFFAA1830),
             nombreTema = R.string.fogon_tema_vino,
         )
+
+        /** Cocina: naranja de fogón con verde de cilantro sobre casi negro tostado (La Cucha). */
+        val Cucha = Paleta(
+            tinta = Color(0xFFFF8A4C),
+            sobreTinta = Color(0xFF140A05),
+            textoEnPapel = Color(0xFFB84A12),
+            textoEnTinta = Color(0xFFFF8A4C),
+            segunda = Color(0xFF3FBF6A),
+            luz2 = Color(0xFF3FBF6A),
+            fondo = Color(0xFF100B08),
+            brillo = Color(0xFFB8501E),
+            nombreTema = R.string.fogon_tema_cocina,
+        )
     }
 }

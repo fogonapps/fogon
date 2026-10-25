@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -44,6 +45,7 @@ sealed interface Pantalla {
     data class EditarMeta(val id: String?) : Pantalla
     data class EditarSobre(val id: String?) : Pantalla
     data class Cierre(val mes: String) : Pantalla
+    data class ImportarExtracto(val filas: List<io.github.fogonapps.ahorrador.datos.FilaExtracto>) : Pantalla
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
     data object Manifiesto : Pantalla
@@ -82,8 +84,13 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             val e = almacen.data.first()
             _estado.value = e
             anotarFijos()
+            // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
+            almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
         }
     }
+
+    /** Lo último que esta pantalla escribió en el disco, para distinguirlo de un cambio de afuera. */
+    @Volatile private var ultimoGuardado: Estado? = null
 
     fun hoy(): LocalDate = LocalDate.now()
     fun mesActual(): String = mesDe(hoy())
@@ -105,7 +112,9 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun guardarYa() {
         val e = _estado.value ?: return
+        ultimoGuardado = e
         almacen.updateData { e }
+        WidgetPlata.actualizar(getApplication())
     }
 
     /* ----- Navegación ----- */
@@ -265,6 +274,58 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         cerrar()
     }
 
+    /* ----- Extracto del banco (CSV) ----- */
+
+    /** La categoría que se le sugiere a una fila del extracto: la de un movimiento anterior con la misma nota, o por palabras. */
+    fun categoriaSugerida(e: Estado, fila: io.github.fogonapps.ahorrador.datos.FilaExtracto): String {
+        val nota = normalizar(fila.descripcion)
+        e.movimientos.lastOrNull { it.categoria != null && normalizar(it.nota) == nota }?.let { return it.categoria!! }
+        if (fila.monto > 0) return if (PALABRAS_SUELDO.any { nota.contains(it) }) "sueldo" else "extra"
+        return PALABRAS.entries.firstOrNull { (_, ps) -> ps.any { nota.contains(it) } }?.key?.takeIf { k -> e.categorias.any { it.id == k } } ?: "otros"
+    }
+
+    /** Anota las filas elegidas en la [cuenta]. Salta las que ya están (misma fecha, monto y nota). */
+    fun importarExtracto(filas: List<Pair<io.github.fogonapps.ahorrador.datos.FilaExtracto, String>>, cuenta: String) {
+        var n = 0
+        cambiar { st ->
+            val ya = st.movimientos.map { Triple(it.fecha, it.monto, normalizar(it.nota)) }.toSet()
+            val nuevos = filas.filter { (f, _) -> Triple(f.fecha, kotlin.math.abs(f.monto), normalizar(f.descripcion)) !in ya }.map { (f, cat) ->
+                Movimiento(nuevoId("m"), f.fecha, if (f.monto < 0) TipoMovimiento.GASTO else TipoMovimiento.INGRESO, kotlin.math.abs(f.monto), cuenta,
+                    categoria = cat, nota = f.descripcion.take(60))
+            }
+            n = nuevos.size
+            st.copy(movimientos = st.movimientos + nuevos)
+        }
+        cerrar()
+        avisar(txPlural(R.plurals.extracto_importados, n))
+    }
+
+    /* ----- Reto de ahorro ----- */
+
+    /** La semana del reto en la que va la persona (1 a 52). */
+    fun semanaReto(r: io.github.fogonapps.ahorrador.datos.Reto): Int =
+        (java.time.temporal.ChronoUnit.WEEKS.between(LocalDate.parse(r.inicio), hoy()).toInt() + 1).coerceIn(1, r.semanas)
+
+    fun empezarReto(base: Long) {
+        val meta = Meta(nuevoId("t"), tx(R.string.reto_nombre), io.github.fogonapps.ahorrador.datos.totalReto(base, 52), color = 0xFFF5B547, icono = "moneda")
+        cambiar { it.copy(metas = it.metas + meta, reto = io.github.fogonapps.ahorrador.datos.Reto(hoy().toString(), base, meta.id)) }
+        avisar(tx(R.string.reto_empezado))
+    }
+
+    fun dejarReto() { cambiar { it.copy(reto = null) } }
+
+    /* ----- Recordatorio diario ----- */
+
+    private val _recordatorio = MutableStateFlow(prefsUi.getInt("recordatorio", -1))
+    /** La hora del recordatorio diario para anotar los gastos, o -1 si está apagado. */
+    val recordatorio: StateFlow<Int> = _recordatorio
+
+    fun ponerRecordatorio(hora: Int) {
+        prefsUi.edit().putInt("recordatorio", hora).apply()
+        _recordatorio.value = hora
+        Avisos.programarRecordatorio(getApplication(), hora)
+    }
+
     /* ----- Metas ----- */
 
     fun guardarMeta(m: Meta) {
@@ -322,8 +383,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     fun exportarJson(): String = JsonAhorrador.encodeToString(Estado.serializer(), _estado.value ?: Estado())
 
-    fun leerRespaldo(texto: String): Estado? = runCatching { JsonAhorrador.decodeFromString(Estado.serializer(), texto) }.getOrNull()
-        ?.takeIf { it.cuentas.isNotEmpty() }
+    fun leerRespaldo(texto: String): Estado? = leerRespaldoAhorrador(texto)
 
     fun importar(e: Estado) {
         cambiar { L.normalizar(e) }
@@ -347,3 +407,18 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
 /** Va al principio de los avisos de logro (meta cumplida, deuda saldada), que salen con la chispa. Es invisible. */
 const val MARCA_LOGRO = "​"
+
+/** Palabras para sugerir la categoría de un movimiento del extracto (sin marcas: solo palabras comunes). */
+private val PALABRAS = mapOf(
+    "mercado" to listOf("supermercado", "mercado", "tienda", "fruver", "carnes", "panaderia"),
+    "transporte" to listOf("gasolina", "combustible", "peaje", "parqueadero", "taxi", "bus", "transporte"),
+    "servicios" to listOf("energia", "acueducto", "gas natural", "internet", "telefonia", "servicio"),
+    "salud" to listOf("farmacia", "drogueria", "clinica", "hospital", "eps", "medic"),
+    "comida" to listOf("restaurante", "cafe", "comida", "pizza", "hamburgues", "domicilio"),
+    "casa" to listOf("arriendo", "administracion", "hogar"),
+    "impuestos" to listOf("4x1000", "gmf", "impuesto", "predial", "dian"),
+    "deudas" to listOf("cuota", "credito", "prestamo"),
+)
+private val PALABRAS_SUELDO = listOf("nomina", "salario", "sueldo", "pago empresa")
+
+private fun normalizar(s: String) = java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").trim()

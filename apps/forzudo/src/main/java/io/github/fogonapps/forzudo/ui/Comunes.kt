@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
@@ -167,7 +168,7 @@ fun Pista(texto: String, modifier: Modifier = Modifier, centro: Boolean = false)
 fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     Box(modifier.fillMaxWidth().height(10.dp).clip(forma(5.dp)).background(f.superficie).border(1.5.dp, f.linea, forma(5.dp))) {
-        Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).height(10.dp).clip(forma(5.dp)).background(color))
+        Box(Modifier.fillMaxWidth(io.github.fogonapps.identidad.progresoAnimado(progreso.coerceIn(0f, 1f))).height(10.dp).clip(forma(5.dp)).background(color))
     }
 }
 
@@ -218,6 +219,8 @@ fun Grafica(puntos: List<Pair<String, Double?>>, modifier: Modifier = Modifier) 
     val medidor = rememberTextMeasurer()
     val acento = f.paleta.tinta
     val grafica = stringResource(R.string.grafica)
+    // La línea se dibuja de izquierda a derecha al aparecer.
+    val avance = io.github.fogonapps.identidad.progresoAnimado(1f)
     Canvas(modifier.fillMaxWidth().aspectRatio(2f).padding(horizontal = 16.dp, vertical = 8.dp).semantics { contentDescription = grafica }) {
         val L = 40.dp.toPx(); val R = 8.dp.toPx(); val T = 12.dp.toPx(); val B = 22.dp.toPx()
         var mn = pts.minOf { it.second }; var mx = pts.maxOf { it.second }
@@ -232,8 +235,15 @@ fun Grafica(puntos: List<Pair<String, Double?>>, modifier: Modifier = Modifier) 
         }
         val p = Path()
         pts.forEachIndexed { i, (_, v) -> if (i == 0) p.moveTo(x(i), y(v)) else p.lineTo(x(i), y(v)) }
-        drawPath(p, acento, style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        val medida = androidx.compose.ui.graphics.PathMeasure().apply { setPath(p, false) }
+        val trazo = Path().also { medida.getSegment(0f, medida.length * avance, it, true) }
+        // Relleno suave bajo la línea, hasta donde va dibujada.
+        val limite = L + (size.width - L - R) * avance
+        val relleno = Path().apply { addPath(p); lineTo(x(pts.lastIndex), size.height - B); lineTo(x(0), size.height - B); close() }
+        clipRect(right = limite) { drawPath(relleno, acento.copy(alpha = 0.12f)) }
+        drawPath(trazo, acento, style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         pts.forEachIndexed { i, (_, v) ->
+            if (x(i) > limite + 1f) return@forEachIndexed
             drawCircle(f.fondo, 4.dp.toPx(), Offset(x(i), y(v)))
             drawCircle(acento, 4.dp.toPx(), Offset(x(i), y(v)), style = Stroke(2.5.dp.toPx()))
         }
