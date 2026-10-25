@@ -43,6 +43,7 @@ data class CapasPersonaje(val t1: Int, val t2: Int, val fijo: Int)
 val CAPAS_FORZUDO = CapasPersonaje(R.drawable.personaje_el_forzudo_t1, R.drawable.personaje_el_forzudo_t2, R.drawable.personaje_el_forzudo_fijo)
 val CAPAS_AHORRADOR = CapasPersonaje(R.drawable.personaje_el_ahorrador_t1, R.drawable.personaje_el_ahorrador_t2, R.drawable.personaje_el_ahorrador_fijo)
 val CAPAS_CUCHA = CapasPersonaje(R.drawable.personaje_la_cucha_t1, R.drawable.personaje_la_cucha_t2, R.drawable.personaje_la_cucha_fijo)
+val CAPAS_CAJON = CapasPersonaje(R.drawable.personaje_el_cajon_t1, R.drawable.personaje_el_cajon_t2, R.drawable.personaje_el_cajon_fijo)
 
 @Composable
 fun TarjetaWidget(

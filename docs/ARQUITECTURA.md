@@ -32,7 +32,7 @@ Versiones exactas y dónde están instaladas: [`TECNOLOGIA.md`](TECNOLOGIA.md).
 
 ```
 fogon/
-├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, apps:ahorrador, apps:cucha)
+├── settings.gradle.kts      ← lista de módulos (core:identidad, apps:forzudo, apps:ahorrador, apps:cucha, apps:cajon)
 ├── gradle/libs.versions.toml← versiones de TODAS las bibliotecas, en un solo lugar
 ├── core/identidad/          ← lo que comparten todas las apps (biblioteca de Android)
 ├── apps/<app>/              ← una carpeta por app (aplicación de Android)
@@ -46,7 +46,7 @@ Es un **monorepo**: todas las apps viven juntas y comparten el módulo `core/ide
 
 | Archivo | Qué tiene |
 |---------|-----------|
-| `Tintas.kt` | Las tintas de Fogón (`Tintas`) y las de cada app (`Paleta.Forzudo`, `Paleta.Ahorrador`, `Paleta.Cucha`, `Paleta.Minga`): el papel, las dos tintas, la luz y el nombre de su tema propio (Gimnasio, Vino, Cocina, Brasa). |
+| `Tintas.kt` | Las tintas de Fogón (`Tintas`) y las de cada app (`Paleta.Forzudo`, `Paleta.Ahorrador`, `Paleta.Cucha`, `Paleta.Cajon`, `Paleta.Minga`): el papel, las dos tintas, la luz y el nombre de su tema propio (Gimnasio, Vino, Cocina, Brasa). |
 | `Tema.kt` | `FogonTema(paleta, apariencia) { … }`: arma los colores (`fogonDe`) con la paleta de la app y la Apariencia elegida, aplica el tamaño de letra y da las letras (`Bricolage` para todo, `Puntos` = Doto para el número grande). Las pantallas leen todo de `FogonTema.actual`: el papel (`fondo`), el vidrio (`superficie`, `linea`), la luz (`brillo`), la barra flotante (`barra`), las letras y las dos tintas (`tinta1`, `tinta2`). |
 | `Apariencia.kt` | Los cuatro temas (`Estilo`: Grafito por defecto, el de la app, Claro y Contraste), su papel y tintas (`colorBase`), los colores calculados para que todo se lea (`Apariencia.colores`), lo que cambió la persona (`AjustesEstilo`: papel, tintas, vidrio y luz), la comodidad y `AlmacenApariencia` (preferencias "apariencia", versión 4). |
 | `PantallaApariencia.kt` | Perfil → Apariencia, igual en todas las apps: vista previa, temas (`SelectorEstilos`, dos filas de dos), papel y tintas en muestras con su editor (`DialogoColor`), vidrio, luz y comodidad. También `PasoDaleVida`, el último paso del tutorial de cada app. |

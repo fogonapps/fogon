@@ -1,0 +1,1 @@
+Primera versión: películas, series, animes, libros, álbumes y artistas en un mismo cajón, con estrellas, reseñas, diario, pendientes, episodios, páginas, canciones calificadas, listas, cifras del año, retos, compartir como imagen, importar de Letterboxd y Goodreads, y sincronización con tu GitHub. En español e inglés.

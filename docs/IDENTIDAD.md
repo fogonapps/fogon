@@ -77,6 +77,7 @@ Cada app es **alguien**: una figura líquida, con la cabeza suelta, impresa en *
 | Gastos | **El Ahorrador**: empuja una moneda gigante, como Sísifo | Verde `#1FB45A` | Amarillo `#FFC93C` | Diseñado |
 | Hábitos y día a día | **La Corredora**: corre detrás de la chispa | Naranja `#FF7A1A` | Azul `#2D5BFF` | Diseñado |
 | Alimentación | **La Cucha**: moño, delantal y la cuchara de palo en alto | Naranja `#FF7A3D` | Verde `#3FBF6A` | Diseñado (`identidad/cucha/`) |
+| Cine, libros y música | **El Cajón**: levanta un disco y carga su cajón de discos (25-10-2026) | Violeta `#7B4DFF` | Amarillo `#FFC93C` | Diseñado (`identidad/personajes/el-cajon.svg`) |
 | En reserva | **El Monje** (meditando) y **La Escritora** (lápiz como antorcha) | Violeta / Rosa | Naranja / Amarillo | Sin app |
 
 Reglas:
@@ -129,6 +130,7 @@ Cada app tiene **Perfil → Apariencia** (`PantallaApariencia`, igual en todas) 
 | El Forzudo | **Gimnasio** | `#0C0D09` | Lima `#CDEB3A` / Oliva `#5C7A12` | `#8CAA1E` |
 | El Ahorrador | **Vino** | `#0D0809` | Rojo `#F2384D` / Ámbar `#F5B547` | `#AA1830` |
 | La Cucha | **Cocina** | `#100B08` | Naranja `#FF8A4C` / Verde `#3FBF6A` | `#B8501E` |
+| El Cajón | **Vinilo** | `#0E0B16` | Violeta `#9B7BFF` / Amarillo `#FFC93C` | `#5B3BCC` |
 | La Minga | **Brasa** | `#120A08` | Coral `#FF5A4F` / Amarillo `#FFC93C` | `#B0301F` |
 
 - **Solo se eligen tres colores por tema:** el papel y las dos tintas (muestras u "otro color"), más qué tan transparente es el vidrio y si lleva la luz. "Volver a como viene" deja el tema como estaba.

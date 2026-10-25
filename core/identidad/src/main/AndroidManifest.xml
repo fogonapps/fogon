@@ -12,5 +12,6 @@
         <package android:name="io.github.fogonapps.forzudo" />
         <package android:name="io.github.fogonapps.ahorrador" />
         <package android:name="io.github.fogonapps.cucha" />
+        <package android:name="io.github.fogonapps.cajon" />
     </queries>
 </manifest>

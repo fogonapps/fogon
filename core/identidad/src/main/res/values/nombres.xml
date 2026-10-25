@@ -4,4 +4,5 @@
   <string name="fogon_app_forzudo" translatable="false">El Forzudo</string>
   <string name="fogon_app_ahorrador" translatable="false">El Ahorrador</string>
   <string name="fogon_app_cucha" translatable="false">La Cucha</string>
+  <string name="fogon_app_cajon" translatable="false">El Cajón</string>
 </resources>

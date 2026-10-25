@@ -102,5 +102,18 @@ data class Paleta(
             brillo = Color(0xFFB8501E),
             nombreTema = R.string.fogon_tema_cocina,
         )
+
+        /** Vinilo: violeta de disco con amarillo de cajón sobre casi negro violeta (El Cajón). */
+        val Cajon = Paleta(
+            tinta = Color(0xFF9B7BFF),
+            sobreTinta = Color(0xFF0D0A16),
+            textoEnPapel = Color(0xFF6C39FF),
+            textoEnTinta = Color(0xFFA68BFF),
+            segunda = Color(0xFFFFC93C),
+            luz2 = Color(0xFFFFC93C),
+            fondo = Color(0xFF0E0B16),
+            brillo = Color(0xFF5B3BCC),
+            nombreTema = R.string.fogon_tema_vinilo,
+        )
     }
 }

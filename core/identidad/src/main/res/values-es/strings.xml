@@ -56,6 +56,7 @@
   <string name="fogon_tema_vino">Vino</string>
   <string name="fogon_tema_brasa">Brasa</string>
   <string name="fogon_tema_cocina">Cocina</string>
+  <string name="fogon_tema_vinilo">Vinilo</string>
   <string name="fogon_ap_luz">Luz del tema</string>
   <string name="fogon_ap_luz_texto">Una luz suave del color del tema arriba de cada pantalla.</string>
   <string name="fogon_estilo_contraste">Contraste</string>

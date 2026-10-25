@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Tema.Cajon" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/noche</item>
+    </style>
+    <style name="Tema.Cajon.Arranque" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/noche</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Tema.Cajon</item>
+    </style>
+</resources>

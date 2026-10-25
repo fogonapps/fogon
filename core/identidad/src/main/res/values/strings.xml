@@ -56,6 +56,7 @@
   <string name="fogon_tema_vino">Wine</string>
   <string name="fogon_tema_brasa">Ember</string>
   <string name="fogon_tema_cocina">Kitchen</string>
+  <string name="fogon_tema_vinilo">Vinyl</string>
   <string name="fogon_ap_luz">Theme glow</string>
   <string name="fogon_ap_luz_texto">A soft glow in the theme’s color at the top of each screen.</string>
   <string name="fogon_estilo_contraste">Contrast</string>

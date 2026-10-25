@@ -1,0 +1,21 @@
+<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios y sin rastreo. Es parte de <b>Fogón</b>, apps hechas en casa: tu atención vale más que un anuncio.</p>
+
+<ul>
+<li><b>Todo en un cajón:</b> películas, series, animes, libros y discos, con su portada, año, director o autor, géneros y sinopsis.</li>
+<li><b>Busca y agrega:</b> libros en Open Library y discos y artistas en MusicBrainz, sin clave; películas, series y animes en TMDB con tu propia clave gratuita. O agrégalos a mano.</li>
+<li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos y etiquetas.</li>
+<li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
+<li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
+<li><b>Progreso:</b> episodios por temporada en series y animes, páginas en libros, y cada canción de un álbum con su nota y su corazón.</li>
+<li><b>Artistas</b> con su discografía para sumar discos con un toque.</li>
+<li><b>Listas propias</b>, con ranking si quieres, y tus cuatro favoritas en el perfil.</li>
+<li><b>Tus cifras:</b> lo terminado en el año, horas de cine, episodios, páginas, canciones, tus notas, meses, géneros y creadores. Y retos del año.</li>
+<li><b>Comparte</b> una reseña o una lista como imagen.</li>
+<li><b>Trae lo que tenías:</b> importa tu historial de Letterboxd (ZIP o CSV) y tu biblioteca de Goodreads (CSV).</li>
+<li><b>Teléfono y PC:</b> si quieres, se sincroniza con un archivo secreto de tu cuenta de GitHub.</li>
+<li><b>En español e inglés.</b></li>
+</ul>
+
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Internet solo se usa para buscar, traer portadas y, si lo activas, sincronizar. Puedes guardar un respaldo cuando quieras.</p>
+
+<p>El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</p>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Internet para buscar películas, series, libros y discos (TMDB, Open Library, MusicBrainz), traer sus
+         portadas y, si la persona lo activa, sincronizar con su Gist de GitHub. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".CajonApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/reglas_respaldo"
+        android:fullBackupContent="@xml/respaldo_antiguo"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Tema.Cajon"
+        android:localeConfig="@xml/locales_config"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Tema.Cajon.Arranque"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".WidgetCursoReceptor" android:exported="true" android:label="@string/widget_nombre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_curso" />
+        </receiver>
+        <!-- Las imágenes para compartir una reseña o una lista. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.compartir"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/compartir" />
+        </provider>
+        <!-- Sus datos para las otras apps de Fogón (respaldo de todo Fogón); solo con la misma firma. -->
+        <provider
+            android:name=".DatosCajon"
+            android:authorities="${applicationId}.datos"
+            android:exported="true"
+            android:permission="io.github.fogonapps.permiso.DATOS" />
+    </application>
+
+</manifest>

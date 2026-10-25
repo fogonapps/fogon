@@ -237,6 +237,8 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
 private val CAPAS = mapOf(
     R.drawable.personaje_el_forzudo to Triple(R.drawable.personaje_el_forzudo_t1, R.drawable.personaje_el_forzudo_t2, R.drawable.personaje_el_forzudo_fijo),
     R.drawable.personaje_el_ahorrador to Triple(R.drawable.personaje_el_ahorrador_t1, R.drawable.personaje_el_ahorrador_t2, R.drawable.personaje_el_ahorrador_fijo),
+    R.drawable.personaje_la_cucha to Triple(R.drawable.personaje_la_cucha_t1, R.drawable.personaje_la_cucha_t2, R.drawable.personaje_la_cucha_fijo),
+    R.drawable.personaje_el_cajon to Triple(R.drawable.personaje_el_cajon_t1, R.drawable.personaje_el_cajon_t2, R.drawable.personaje_el_cajon_fijo),
 )
 
 /**

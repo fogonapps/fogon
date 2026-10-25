@@ -62,6 +62,7 @@ val APPS_FOGON = listOf(
     AppFogon("forzudo", "io.github.fogonapps.forzudo", R.string.fogon_app_forzudo),
     AppFogon("ahorrador", "io.github.fogonapps.ahorrador", R.string.fogon_app_ahorrador),
     AppFogon("cucha", "io.github.fogonapps.cucha", R.string.fogon_app_cucha),
+    AppFogon("cajon", "io.github.fogonapps.cajon", R.string.fogon_app_cajon),
 )
 
 private fun uriDatos(paquete: String): Uri = "content://$paquete.datos/estado".toUri()

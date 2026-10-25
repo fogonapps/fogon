@@ -15,6 +15,7 @@ PERSONAJES = {
     'identidad/personajes/el-forzudo.svg': ('core/identidad/src/main/res/drawable-nodpi', 'personaje_el_forzudo', FORZUDO),
     'identidad/personajes/la-cucha.svg': ('core/identidad/src/main/res/drawable-nodpi', 'personaje_la_cucha', {'t1': ['#FF7A3D'], 't2': ['#3FBF6A']}),
     'identidad/personajes/el-ahorrador.svg': ('core/identidad/src/main/res/drawable-nodpi', 'personaje_el_ahorrador', {'t1': ['#1FB45A'], 't2': ['#FFC93C']}),
+    'identidad/personajes/el-cajon.svg': ('core/identidad/src/main/res/drawable-nodpi', 'personaje_el_cajon', {'t1': ['#7B4DFF'], 't2': ['#FFC93C']}),
     **{f'identidad/munecos/tut_{n}.svg': ('apps/forzudo/src/main/res/drawable-nodpi', f'munieco_tut_{n}', FORZUDO)
        for n in ['hola', 'anota', 'racha', 'rangos', 'datos']},
 }
