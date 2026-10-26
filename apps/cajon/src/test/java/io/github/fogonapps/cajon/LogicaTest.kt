@@ -165,20 +165,12 @@ class LogicaTest {
             libro("E", "El amor en los tiempos del cólera", "Gabriel García Márquez", 130, 5),
         ), "es")
         assertEquals(listOf("ol:A", "ol:E"), r.map { it.fuente })
-        assertEquals("https://covers.openlibrary.org/b/id/1-M.jpg", r[0].portada)
+        assertEquals("", r[0].portada)   // los libros van sin portada
     }
 
     @Test fun edicionMalMarcadaNoCambiaElTitulo() {
         val r = io.github.fogonapps.cajon.datos.OpenLibrary.ordenar(listOf(
             libro("A", "Cien años de soledad", "Gabriel García Márquez", 208, 1, "spa", "One hundred years of solitude")), "es")
         assertEquals("Cien años de soledad", r[0].titulo)
-    }
-
-    @Test fun laPortadaMasLindaNoEsUnEscaneo() {
-        fun tapa(id: Int, alto: Int, escaneo: Boolean) = io.github.fogonapps.cajon.datos.OpenLibrary.Tapa(id, alto, escaneo)
-        val tapas = listOf(tapa(1, 2600, true), tapa(2, 1024, false), tapa(3, 486, false), tapa(4, 900, false))
-        assertEquals(4, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(tapas, setOf(1, 4)))   // del idioma, sin escaneo
-        assertEquals(2, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(tapas, emptySet()))   // la más grande sin escaneo
-        assertEquals(3, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(listOf(tapa(1, 2600, true), tapa(3, 486, false)), emptySet()))
     }
 }

@@ -1,0 +1,1 @@
+Books no longer show a cover (the available ones were old or low-quality scans); their rating is still shown.

@@ -294,7 +294,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun detalles(r: Encontrado): Obra = when {
         r.fuente.startsWith("tmdb:") -> Tmdb(caja.claveTmdb ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
-        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
+        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r)
         else -> MusicBrainz.detalles(r)
     }
 

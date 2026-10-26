@@ -259,8 +259,10 @@ fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, onCli
  * vidrio con el ícono del tipo y el título, para que nunca quede un hueco.
  */
 @Composable
-fun Portada(url: String, tipo: String, titulo: String, modifier: Modifier = Modifier, esquina: Dp = 12.dp, conTitulo: Boolean = true) {
+fun Portada(url0: String, tipo: String, titulo: String, modifier: Modifier = Modifier, esquina: Dp = 12.dp, conTitulo: Boolean = true) {
     val f = FogonTema.actual
+    // Los libros van sin portada (las de Open Library suelen ser escaneos viejos): también los que ya la tenían guardada.
+    val url = if (tipo == "libro") "" else url0
     val forma = RoundedCornerShape(esquina)
     val cuadrada = tipo == "album"
     Box(modifier.aspectRatio(if (cuadrada) 1f else 2f / 3f).clip(forma).background(f.superficie)
