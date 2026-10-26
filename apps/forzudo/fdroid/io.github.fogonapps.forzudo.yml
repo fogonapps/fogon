@@ -33,9 +33,16 @@ Builds:
     gradle:
       - yes
 
+  - versionName: "1.13"
+    versionCode: 22
+    commit: 31393e79e5a09b236c6cc16cb5de34c4586fffe4
+    subdir: apps/forzudo
+    gradle:
+      - yes
+
 AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
 
 AutoUpdateMode: Version forzudo-v%v
 UpdateCheckMode: Tags ^forzudo-v
-CurrentVersion: "1.12"
-CurrentVersionCode: 21
+CurrentVersion: "1.13"
+CurrentVersionCode: 22

@@ -33,9 +33,16 @@ Builds:
     gradle:
       - yes
 
+  - versionName: "1.3"
+    versionCode: 4
+    commit: 31393e79e5a09b236c6cc16cb5de34c4586fffe4
+    subdir: apps/cucha
+    gradle:
+      - yes
+
 AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
 
 AutoUpdateMode: Version cucha-v%v
 UpdateCheckMode: Tags ^cucha-v
-CurrentVersion: "1.2"
-CurrentVersionCode: 3
+CurrentVersion: "1.3"
+CurrentVersionCode: 4
