@@ -93,6 +93,8 @@ data class Busqueda(
     val seccion: String = Secciones.TODO,
     val obras: Map<String, List<Encontrado>> = emptyMap(),
     val artistas: List<ArtistaEncontrado> = emptyList(),
+    val autores: List<ArtistaEncontrado> = emptyList(),
+    val directores: List<ArtistaEncontrado> = emptyList(),
     val cargando: Set<String> = emptySet(),
     val errores: Map<String, Int> = emptyMap(),
 )
@@ -118,8 +120,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val busqueda: StateFlow<Busqueda> = _busqueda
 
     /** La discografía del artista que se está viendo (de MusicBrainz). */
-    private val _discografia = MutableStateFlow<Pair<String, List<Encontrado>>?>(null)
-    val discografia: StateFlow<Pair<String, List<Encontrado>>?> = _discografia
+    /** Las obras de la persona que se está viendo (discografía, libros o filmografía): null mientras llegan. */
+    private val _discografia = MutableStateFlow<Pair<String, List<Encontrado>?>?>(null)
+    val discografia: StateFlow<Pair<String, List<Encontrado>?>?> = _discografia
 
     /** Mientras se traen los datos de una obra encontrada (para mostrar que está cargando). */
     private val _trayendo = MutableStateFlow<String?>(null)
@@ -129,6 +132,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val sync: StateFlow<Sync> = _sync
 
     private val _tieneTmdb = MutableStateFlow(caja.claveTmdb != null)
+    fun hayClaveTmdb() = caja.claveTmdb != null
     val tieneTmdb: StateFlow<Boolean> = _tieneTmdb
 
     private val _mensajes = Channel<String>(Channel.BUFFERED)
@@ -243,9 +247,18 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 else fuente("tmdb") {
                     val r = Tmdb(clave).buscar(t, Tipos.PELICULA, idioma()) + Tmdb(clave).buscar(t, Tipos.SERIE, idioma())
                     poner(r)
+                    // Los directores, aparte: si fallan, quedan las películas.
+                    runCatching { Tmdb(clave).buscarDirectores(t, idioma()) }.getOrNull()?.let { _busqueda.value = _busqueda.value.copy(directores = it) }
                 }
             }
-            if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") { poner(OpenLibrary.buscar(t)) }
+            if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") {
+                poner(OpenLibrary.buscar(t, idioma()))
+                // Los escritores, con su foto de Wikimedia Commons (por su id de Open Library en Wikidata).
+                val autores = runCatching { OpenLibrary.buscarAutores(t) }.getOrDefault(emptyList())
+                _busqueda.value = _busqueda.value.copy(autores = autores)
+                val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.getOrDefault(emptyMap())
+                if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
+            }
             if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) fuente("musica") {
                 // Primero los artistas (con su foto, si la hay) y después los álbumes.
                 val artistas = MusicBrainz.buscarArtistas(t)
@@ -261,24 +274,27 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun abrirEncontrado(r: Encontrado) {
         val e = _estado.value ?: return
         L.porFuente(e, r.fuente)?.let { abrir(Pantalla.Ficha(it.id)); return }
-        if (_trayendo.value != null) return
+        // Se abre ya, con lo que trajo la búsqueda; lo demás (sinopsis, canciones, géneros) llega después y
+        // reemplaza la previa si la persona sigue en ella. Así no hay que esperar a MusicBrainz (1 consulta por segundo).
+        abrir(Pantalla.Previa(Obra("", r.tipo, r.titulo, anio = r.anio, creador = r.creador, portada = r.portada, fuente = r.fuente,
+            publica = r.publica, votos = r.votos, paginas = if (r.tipo == Tipos.LIBRO) r.detalle.removeSuffix(" p.").toIntOrNull() else null,
+            formato = if (r.tipo == Tipos.ALBUM) r.detalle else "")))
         _trayendo.value = r.fuente
         viewModelScope.launch {
             try {
                 val o = detalles(r)
-                abrir(Pantalla.Previa(o))
+                if ((_pila.value.lastOrNull() as? Pantalla.Previa)?.obra?.fuente == r.fuente) reemplazar(Pantalla.Previa(o))
             } catch (x: ClaveMala) { avisar(tx(R.string.buscar_tmdb_mala))
             } catch (x: Exception) {
-                // Sin internet o algo raro: se puede agregar con lo que trajo la búsqueda.
-                abrir(Pantalla.Previa(Obra("", r.tipo, r.titulo, anio = r.anio, creador = r.creador, portada = r.portada, fuente = r.fuente)))
+                // Sin internet o algo raro: se puede agregar igual con lo que trajo la búsqueda.
                 avisar(tx(R.string.aviso_sin_detalles))
-            } finally { _trayendo.value = null }
+            } finally { if (_trayendo.value == r.fuente) _trayendo.value = null }
         }
     }
 
     private suspend fun detalles(r: Encontrado): Obra = when {
         r.fuente.startsWith("tmdb:") -> Tmdb(caja.claveTmdb ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
-        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r)
+        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
         else -> MusicBrainz.detalles(r)
     }
 
@@ -305,6 +321,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         avisar(tx(R.string.aviso_agregada, o.titulo))
         if (abrirFicha) reemplazar(Pantalla.Ficha(id))
+        // Si se agregó antes de que llegaran los datos completos (la previa se abre al instante), se traen ahora.
+        if (o.traida == 0L && o.fuente.isNotEmpty()) actualizarDatos(id, callado = true)
         return id
     }
 
@@ -406,7 +424,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun guardarArtista(a: ArtistaEncontrado): String {
         val e = _estado.value ?: return ""
-        val fuente = "mb:artist:${a.mbid}"
+        val fuente = a.fuente
         e.artistasVivos.firstOrNull { it.fuente == fuente }?.let { reemplazar(Pantalla.VerArtista(it.id)); return it.id }
         val id = nuevoId("a")
         cambiar { s -> s.copy(artistas = s.artistas + Artista(id, a.nombre, fuente, a.pais, a.desde, a.tipo, foto = a.foto, cambio = ahora())) }
@@ -432,16 +450,20 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     private var fotosPedidas = false
 
-    /** Busca las fotos de los artistas de MusicBrainz que todavía no tienen (una vez por sesión). */
+    /** Busca las fotos de los artistas (MusicBrainz) y escritores (Open Library) que todavía no tienen (una vez por sesión). */
     fun completarFotos() {
         if (fotosPedidas) return
-        val faltan = _estado.value?.artistasVivos?.filter { it.foto.isBlank() && it.fuente.startsWith("mb:artist:") } ?: return
+        val faltan = _estado.value?.artistasVivos?.filter { it.foto.isBlank() && (it.fuente.startsWith("mb:artist:") || it.fuente.startsWith("ol:author:")) } ?: return
         if (faltan.isEmpty()) return
         fotosPedidas = true
         viewModelScope.launch {
-            val fotos = runCatching { Wikimedia.fotos(faltan.map { it.fuente.removePrefix("mb:artist:") }) }.getOrNull() ?: run { fotosPedidas = false; return@launch }
+            val fotos = runCatching {
+                Wikimedia.fotos(faltan.map { it.fuente.removePrefix("mb:artist:") }) +
+                    Wikimedia.fotos(faltan.map { it.fuente.removePrefix("ol:author:") }, "P648")
+            }.getOrNull() ?: run { fotosPedidas = false; return@launch }
+            fun id(a: Artista) = a.fuente.removePrefix("mb:artist:").removePrefix("ol:author:")
             if (fotos.isNotEmpty()) cambiar { e -> e.copy(artistas = e.artistas.map { a ->
-                fotos[a.fuente.removePrefix("mb:artist:")]?.takeIf { a.foto.isBlank() }?.let { a.copy(foto = it, cambio = ahora()) } ?: a
+                fotos[id(a)]?.takeIf { a.foto.isBlank() }?.let { a.copy(foto = it, cambio = ahora()) } ?: a
             }) }
         }
     }
@@ -449,18 +471,26 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** El crédito (autor y licencia) de la foto de un artista, si todavía no lo tiene. */
     fun completarCredito(id: String) {
         val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
-        if (a.foto.isBlank() || a.fotoCredito.isNotBlank()) return
+        // Solo las de Wikimedia Commons llevan crédito propio (las de TMDB van con su aviso en Licencias).
+        if (a.foto.isBlank() || a.fotoCredito.isNotBlank() || "wikimedia.org" !in a.foto) return
         viewModelScope.launch {
             runCatching { Wikimedia.credito(a.foto) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { c -> cambiarArtista(id) { it.copy(fotoCredito = c) } }
         }
     }
 
-    /** Trae la discografía de un artista de MusicBrainz (una vez por artista). */
+    /** Trae las obras de una persona (una vez por persona): discos de MusicBrainz, libros de Open Library o lo que dirigió en TMDB. */
     fun cargarDiscografia(fuente: String) {
-        if (!fuente.startsWith("mb:artist:") || _discografia.value?.first == fuente) return
-        _discografia.value = fuente to emptyList()
+        if (_discografia.value?.first == fuente) return
+        val clave = caja.claveTmdb
+        val traer: (suspend () -> List<Encontrado>) = when {
+            fuente.startsWith("mb:artist:") -> ({ MusicBrainz.discografia(fuente.removePrefix("mb:artist:")) })
+            fuente.startsWith("ol:author:") -> ({ OpenLibrary.obrasDe(fuente.removePrefix("ol:author:"), idioma()) })
+            fuente.startsWith("tmdb:person:") && clave != null -> ({ Tmdb(clave).filmografia(fuente.removePrefix("tmdb:person:"), idioma()) })
+            else -> return
+        }
+        _discografia.value = fuente to null
         viewModelScope.launch {
-            try { _discografia.value = fuente to MusicBrainz.discografia(fuente.removePrefix("mb:artist:")) }
+            try { _discografia.value = fuente to traer() }
             catch (x: Exception) { _discografia.value = ("error:$fuente") to emptyList() }
         }
     }

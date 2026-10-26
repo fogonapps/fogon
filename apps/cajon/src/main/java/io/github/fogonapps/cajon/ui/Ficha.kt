@@ -1,5 +1,7 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.LinearProgressIndicator
 import java.text.NumberFormat
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
@@ -112,7 +114,10 @@ private fun medida(o: Obra): String = when {
 @Composable
 fun Previa(vm: CajonViewModel, o: Obra) {
     val f = FogonTema.actual
+    val trayendo by vm.trayendo.collectAsStateWithLifecycle()
     Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar)
+    // Mientras llegan la sinopsis, las canciones y los géneros, una línea fina arriba (la ficha ya se puede usar).
+    if (trayendo == o.fuente) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(2.dp), color = f.tinta1, trackColor = f.linea)
     Encabezado(o, vm)
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         BotonRiso(nombreEstado(Estados.QUIERO, o.tipo), { vm.agregar(o, Estados.QUIERO) }, Modifier.fillMaxWidth())

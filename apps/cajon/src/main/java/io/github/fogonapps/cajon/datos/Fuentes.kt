@@ -1,6 +1,8 @@
 package io.github.fogonapps.cajon.datos
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,8 +49,15 @@ data class Encontrado(
     val votos: Int = 0,
 )
 
-/** Un artista encontrado en MusicBrainz ([foto] la pone después [Wikimedia]). */
-data class ArtistaEncontrado(val mbid: String, val nombre: String, val pais: String, val desde: Int?, val tipo: String, val detalle: String, val foto: String = "")
+/**
+ * Una persona encontrada afuera: un artista de MusicBrainz, un escritor de Open Library o un director de TMDB.
+ * [tipo] es el de MusicBrainz (Person, Group…) o [Personas.AUTOR] / [Personas.DIRECTOR]; [foto] la pone después
+ * [Wikimedia] (o viene de TMDB). [fuente]: "mb:artist:<mbid>", "ol:author:OL…A", "tmdb:person:<id>".
+ */
+data class ArtistaEncontrado(
+    val mbid: String, val nombre: String, val pais: String, val desde: Int?, val tipo: String, val detalle: String, val foto: String = "",
+    val fuente: String = "mb:artist:$mbid",
+)
 
 class SinRed : IOException()
 class ClaveMala : IOException()
@@ -150,6 +159,28 @@ class Tmdb(private val clave: String) {
         }
     }
 
+    /** Directores (los que TMDB conoce por dirigir), con su foto. */
+    suspend fun buscarDirectores(texto: String, idioma: String): List<ArtistaEncontrado> =
+        pedir("search/person", "query" to texto, "language" to if (idioma == "en") "en-US" else "es-ES").arr("results").map { it.jsonObject }
+            .filter { it["known_for_department"].texto() == "Directing" }.take(8).map { p ->
+                ArtistaEncontrado("", p["name"].texto(), "", null, Personas.DIRECTOR,
+                    p.arr("known_for").take(2).joinToString(", ") { k -> k.jsonObject["title"].texto().ifBlank { k.jsonObject["name"].texto() } },
+                    imagen(p["profile_path"].texto(), "w185"), "tmdb:person:${p["id"].entero()}")
+            }
+
+    /** Lo que dirigió una persona (películas, series y animes), de lo más nuevo a lo más viejo. */
+    suspend fun filmografia(id: String, idioma: String): List<Encontrado> {
+        val c = pedir("person/$id/combined_credits", "language" to if (idioma == "en") "en-US" else "es-ES")
+        fun esAnime(o: JsonObject) = o.arr("genre_ids").any { it.entero() == 16 } && o["original_language"].texto() == "ja"
+        return c.arr("crew").map { it.jsonObject }.filter { it["job"].texto() == "Director" }.mapNotNull { o ->
+            val serie = o["media_type"].texto() == "tv"
+            val titulo = (if (serie) o["name"] else o["title"]).texto().ifBlank { return@mapNotNull null }
+            Encontrado(if (esAnime(o)) Tipos.ANIME else if (serie) Tipos.SERIE else Tipos.PELICULA, titulo,
+                anioDe((if (serie) o["first_air_date"] else o["release_date"]).texto()), "", imagen(o["poster_path"].texto(), "w342"),
+                "tmdb:${if (serie) "tv" else "movie"}:${o["id"].entero()}", "", publica(o), votos(o))
+        }.distinctBy { it.fuente }.sortedByDescending { it.anio ?: 0 }
+    }
+
     // La nota del público (de 0 a 10); sin votos no dice nada.
     private fun votos(o: JsonObject) = o["vote_count"].entero() ?: 0
     private fun publica(o: JsonObject) = o["vote_average"].decimal()?.takeIf { votos(o) > 0 && it > 0 }
@@ -165,22 +196,92 @@ class Tmdb(private val clave: String) {
 object OpenLibrary {
     private val base = "https://openlibrary.org".toHttpUrl()
 
-    suspend fun buscar(texto: String): List<Encontrado> {
-        val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("q", texto)
-            .addQueryParameter("fields", "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,ratings_average,ratings_count")
-            .addQueryParameter("limit", "25").build()
-        return pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }.map { d ->
-            Encontrado(
-                Tipos.LIBRO, d["title"].texto(), d["first_publish_year"].entero(), d.arr("author_name").take(2).joinToString(", ") { it.texto() },
-                portada(d["cover_i"].entero(), "M"), "ol:" + d["key"].texto().removePrefix("/works/"),
-                d["number_of_pages_median"].entero()?.let { "$it p." } ?: "",
-                d["ratings_average"].decimal()?.takeIf { (d["ratings_count"].entero() ?: 0) > 0 }, d["ratings_count"].entero() ?: 0,
-            )
-        }
+    /** El código de idioma de las ediciones de Open Library (MARC): "spa", "eng". */
+    private fun marc(idioma: String) = if (idioma == "en") "eng" else "spa"
+
+    /** Escritores: los que tienen obras de verdad (no los registros sueltos de bibliotecas), los más conocidos primero. */
+    suspend fun buscarAutores(texto: String): List<ArtistaEncontrado> {
+        val u = base.newBuilder().addPathSegments("search/authors.json").addQueryParameter("q", texto).addQueryParameter("limit", "20").build()
+        return pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }
+            .filter { (it["work_count"].entero() ?: 0) >= 3 }
+            .sortedByDescending { it["work_count"].entero() ?: 0 }
+            // Open Library tiene al mismo autor repetido (registros de bibliotecas): queda el de más obras.
+            .distinctBy { normal(it["name"].texto()).trim() }.take(6).map { a ->
+                ArtistaEncontrado("", a["name"].texto(), "", anioDe(a["birth_date"].texto().takeLast(4)), Personas.AUTOR,
+                    a["top_work"].texto(), fuente = "ol:author:" + a["key"].texto())
+            }
     }
 
-    /** La obra completa: sinopsis, temas y la portada grande. Lo de la búsqueda llega en [e]. */
-    suspend fun detalles(e: Encontrado): Obra {
+    /** Las obras de un escritor, las más editadas primero, en el idioma de la app (como en [buscar]). */
+    suspend fun obrasDe(autor: String, idioma: String): List<Encontrado> {
+        val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("author_key", autor).addQueryParameter("sort", "editions")
+            .addQueryParameter("lang", if (idioma == "en") "en" else "es").addQueryParameter("fields", CAMPOS).addQueryParameter("limit", "60").build()
+        return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma, tope = 60)
+    }
+
+    private const val CAMPOS = "key,title,author_name,first_publish_year,cover_i,number_of_pages_median,ratings_average," +
+        "ratings_count,edition_count,editions,editions.title,editions.cover_i,editions.language"
+
+    /** Dos títulos se parecen si comparten una palabra (así no se cuela una edición mal marcada de otro idioma). */
+    fun parecidos(a: String, b: String): Boolean {
+        fun palabras(s: String) = normal(s).split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }.toSet()
+        return palabras(a).intersect(palabras(b)).isNotEmpty() || normal(a) == normal(b)
+    }
+
+    /**
+     * Busca libros. Open Library devuelve obras; con `lang` trae de cada una su mejor edición en el idioma de la
+     * app, y de ahí salen el título y la portada (así sale "Cien años de soledad" con una portada en español).
+     */
+    suspend fun buscar(texto: String, idioma: String): List<Encontrado> {
+        val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("q", texto)
+            .addQueryParameter("lang", if (idioma == "en") "en" else "es")
+            .addQueryParameter("fields", CAMPOS).addQueryParameter("limit", "40").build()
+        return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma)
+    }
+
+    /**
+     * De los resultados crudos a la lista: sin la misma obra repetida (mismo título y autor; queda la de más
+     * ediciones), sin las que solo existen en otro idioma, y lo conocido (muchas ediciones) un poco más arriba sin
+     * perder el orden de relevancia; lo de una sola edición y sin portada (guías, estudios, copias) va al final.
+     */
+    fun ordenar(docs: List<JsonObject>, idioma: String, tope: Int = 25): List<Encontrado> {
+        data class Libro(val e: Encontrado, val ediciones: Int, val puesto: Int, val clave: String)
+        val mio = marc(idioma)
+        val libros = docs.mapIndexedNotNull { i, d ->
+            val ed = (d["editions"] as? JsonObject)?.arr("docs")?.firstOrNull() as? JsonObject
+            val lenguas = ed?.arr("language")?.map { it.texto() } ?: emptyList()
+            // Solo en otro idioma (ni el de la app ni inglés): es una traducción que no se buscó.
+            if (lenguas.isNotEmpty() && mio !in lenguas && "eng" !in lenguas) return@mapIndexedNotNull null
+            val enMiIdioma = mio in lenguas && parecidos(ed?.get("title").texto(), d["title"].texto())
+            val titulo = (if (enMiIdioma) ed?.get("title").texto() else "").ifBlank { d["title"].texto() }
+            // La portada de la obra suele ser la carátula de verdad; la de la edición es a veces un escaneo de la
+            // página del título. La de la edición, solo si la obra no tiene.
+            val portada = d["cover_i"].entero()?.takeIf { it > 0 } ?: (if (enMiIdioma) ed?.get("cover_i").entero() else null)
+            val autores = d.arr("author_name").take(2).joinToString(", ") { it.texto() }
+            val e = Encontrado(
+                Tipos.LIBRO, titulo, d["first_publish_year"].entero(), autores, portada(portada, "M"),
+                "ol:" + d["key"].texto().removePrefix("/works/"), d["number_of_pages_median"].entero()?.let { "$it p." } ?: "",
+                d["ratings_average"].decimal()?.takeIf { (d["ratings_count"].entero() ?: 0) > 0 }, d["ratings_count"].entero() ?: 0,
+            )
+            Libro(e, d["edition_count"].entero() ?: 1, i, normal(titulo).trim() + "|" + normal(autores.substringBefore(",")).trim())
+        }
+        val unicos0 = libros.groupBy { it.clave }.values.map { g -> g.maxBy { it.ediciones }.copy(puesto = g.minOf { it.puesto }) }
+        // Si hay una obra muy editada, los libros de otros autores con ese título y casi sin ediciones son estudios
+        // y guías sobre ella ("Cien años de soledad" de un crítico): se quitan.
+        val fuertes = unicos0.filter { it.ediciones >= 20 }
+        val unicos = unicos0.filter { l ->
+            fuertes.none { g -> g !== l && l.ediciones <= 3 && normal(g.e.titulo).trim() in normal(l.e.titulo) && normal(g.e.creador) != normal(l.e.creador) }
+        }
+        return unicos.sortedWith(compareBy<Libro> { it.ediciones <= 1 && it.e.portada.isEmpty() }
+            .thenBy { it.puesto - 4 * kotlin.math.ln(it.ediciones.toDouble()) / kotlin.math.ln(2.0) })
+            .take(tope).map { it.e }
+    }
+
+    /**
+     * La obra completa: sinopsis, temas, la nota de los lectores y la portada más linda que haya ([mejorPortada]):
+     * entre las de las ediciones en el idioma de la app y las de la obra. Lo de la búsqueda llega en [e].
+     */
+    suspend fun detalles(e: Encontrado, idioma: String = "es"): Obra {
         val id = e.fuente.removePrefix("ol:")
         val w = pedirJson(base.newBuilder().addPathSegments("works/$id.json").build()).jsonObject
         val desc = sinFormato(w["description"].let { d -> if (d is JsonObject) d["value"].texto() else d.texto() }
@@ -190,12 +291,60 @@ object OpenLibrary {
         // La nota de los lectores de Open Library (de 1 a 5); si no se puede traer, la de la búsqueda.
         val notas = runCatching { pedirJson(base.newBuilder().addPathSegments("works/$id/ratings.json").build()).jsonObject["summary"] as? JsonObject }.getOrNull()
         val votos = notas?.get("count").entero() ?: e.votos
+        val ediciones = runCatching {
+            enIdioma(pedirJson(base.newBuilder().addPathSegments("works/$id/editions.json").addQueryParameter("limit", "200").build())
+                .jsonObject.arr("entries").map { it.jsonObject }, idioma, w["title"].texto())
+        }.getOrDefault(emptyList())
+        val deLaObra = w.arr("covers").mapNotNull { it.entero()?.takeIf { n -> n > 0 } }
+        val tapa = mejorPortada(ediciones.mapNotNull { it.arr("covers").firstOrNull()?.entero() }, deLaObra)
         return Obra(
-            id = "", tipo = Tipos.LIBRO, titulo = w["title"].texto().ifBlank { e.titulo }, anio = e.anio, creador = e.creador,
-            generos = temas, sinopsis = desc, portada = cubierta?.let { portada(it, "L") } ?: e.portada.replace("-M.jpg", "-L.jpg"),
-            fuente = e.fuente, paginas = e.detalle.removeSuffix(" p.").toIntOrNull(), traida = System.currentTimeMillis(),
+            id = "", tipo = Tipos.LIBRO, titulo = e.titulo.ifBlank { w["title"].texto() }, anio = e.anio, creador = e.creador,
+            generos = temas, sinopsis = desc,
+            portada = tapa?.let { portada(it, "L") } ?: e.portada.replace("-M.jpg", "-L.jpg").ifBlank { cubierta?.let { portada(it, "L") } ?: "" },
+            fuente = e.fuente, paginas = e.detalle.removeSuffix(" p.").toIntOrNull() ?: ediciones.firstNotNullOfOrNull { it["number_of_pages"].entero() },
+            traida = System.currentTimeMillis(),
             publica = (notas?.get("average").decimal() ?: e.publica)?.takeIf { votos > 0 }, votos = votos,
         )
+    }
+
+    /**
+     * Las ediciones en [idioma] con portada, la subida más reciente primero, sin guías, estudios ni ediciones
+     * bilingües, y con un título parecido al de la obra (hay ediciones mal marcadas de otro idioma).
+     */
+    fun enIdioma(ediciones: List<JsonObject>, idioma: String, tituloObra: String = ""): List<JsonObject> {
+        val mio = "/languages/" + marc(idioma)
+        val ruido = listOf("estudio", "guia", "study", "guide", "summary", "resumen", "analisis", "analysis", " / ")
+        return ediciones.filter { ed ->
+            ed.arr("languages").map { (it as? JsonObject)?.get("key").texto() } == listOf(mio) &&
+                (ed.arr("covers").firstOrNull()?.entero() ?: 0) > 0 && ruido.none { it in normal(ed["title"].texto()) } &&
+                (tituloObra.isBlank() || parecidos(ed["title"].texto(), tituloObra))
+        }.sortedByDescending { it.arr("covers").firstOrNull()?.entero() ?: 0 }
+    }
+
+    /** Lo que se sabe de una portada: si es un escaneo de la página del título (de archive.org) y su alto. */
+    data class Tapa(val id: Int, val alto: Int, val escaneo: Boolean)
+
+    /**
+     * La portada más linda: Open Library guarda de cada una de dónde salió y su tamaño. Las que son escaneos de
+     * la página del título (salen de archive.org) son las feas; de las demás, la más grande, primero las de
+     * [delIdioma] (ediciones en el idioma de la app) y después las de la obra. Se miran a la vez, hasta 10.
+     */
+    suspend fun mejorPortada(delIdioma: List<Int>, deLaObra: List<Int>): Int? = kotlinx.coroutines.coroutineScope {
+        val todas = (delIdioma.take(6) + deLaObra.take(4)).distinct()
+        val tapas = todas.map { id ->
+            async { runCatching {
+                val j = pedirJson("https://covers.openlibrary.org/b/id/$id.json".toHttpUrl()).jsonObject
+                Tapa(id, j["height"].entero() ?: 0, "archive.org/download" in j["source_url"].texto())
+            }.getOrNull() }
+        }.awaitAll().filterNotNull()
+        elegirPortada(tapas, delIdioma.toSet()) ?: todas.firstOrNull()
+    }
+
+    /** La regla de [mejorPortada], aparte para probarla: sin escaneos y grande (600 px o más), primero del idioma. */
+    fun elegirPortada(tapas: List<Tapa>, delIdioma: Set<Int>): Int? {
+        val buenas = tapas.filter { !it.escaneo && it.alto >= 600 }
+        return (buenas.filter { it.id in delIdioma }.maxByOrNull { it.alto } ?: buenas.maxByOrNull { it.alto }
+            ?: tapas.filter { !it.escaneo }.maxByOrNull { it.alto })?.id
     }
 
     /** Temas de Open Library que no son géneros (de bibliotecas, idiomas, formatos). */
@@ -295,11 +444,15 @@ object Wikimedia {
     private val sparql = "https://query.wikidata.org/sparql".toHttpUrl()
     private val commons = "https://commons.wikimedia.org/w/api.php".toHttpUrl()
 
-    /** mbid → dirección de la foto (400 px de ancho). Una sola consulta para varios artistas. */
-    suspend fun fotos(mbids: List<String>): Map<String, String> {
-        val ids = mbids.filter { it.matches(Regex("[0-9a-f-]{36}")) }.distinct().take(50)
+    /**
+     * id → dirección de la foto (400 px de ancho). Una sola consulta para varias personas. [propiedad] es cómo
+     * Wikidata guarda el id: P434 (MusicBrainz, artistas) o P648 (Open Library, escritores).
+     */
+    suspend fun fotos(ids0: List<String>, propiedad: String = "P434"): Map<String, String> {
+        val forma = if (propiedad == "P648") Regex("OL[0-9]+A") else Regex("[0-9a-f-]{36}")
+        val ids = ids0.filter { it.matches(forma) }.distinct().take(50)
         if (ids.isEmpty()) return emptyMap()
-        val q = "SELECT ?mbid ?img WHERE { VALUES ?mbid { ${ids.joinToString(" ") { "\"$it\"" }} } ?a wdt:P434 ?mbid ; wdt:P18 ?img . }"
+        val q = "SELECT ?mbid ?img WHERE { VALUES ?mbid { ${ids.joinToString(" ") { "\"$it\"" }} } ?a wdt:$propiedad ?mbid ; wdt:P18 ?img . }"
         val u = sparql.newBuilder().addQueryParameter("query", q).addQueryParameter("format", "json").build()
         val r = pedirJson(u, mapOf("Accept" to "application/sparql-results+json")).jsonObject
         val filas = (r["results"] as? JsonObject)?.arr("bindings") ?: return emptyMap()

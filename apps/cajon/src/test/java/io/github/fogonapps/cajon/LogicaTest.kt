@@ -150,4 +150,35 @@ class LogicaTest {
         val e = Estado(obras = listOf(peli("1", "A", fecha = "2026-10-25"), peli("2", "B", fecha = "2026-10-24"), peli("3", "C", fecha = "2026-10-22")))
         assertEquals(2, Logica.racha(e, hoy))
     }
+
+    private fun libro(clave: String, titulo: String, autor: String, ediciones: Int, portada: Int?, idioma: String? = "spa", tituloEd: String = titulo) =
+        kotlinx.serialization.json.Json.parseToJsonElement("""{"key":"/works/$clave","title":"$titulo","author_name":["$autor"],"edition_count":$ediciones,""" +
+            (if (portada != null) "\"cover_i\":$portada," else "") +
+            """"editions":{"docs":[{"title":"$tituloEd"${if (idioma != null) ",\"language\":[\"$idioma\"]" else ""}}]}}""").let { it as kotlinx.serialization.json.JsonObject }
+
+    @Test fun librosSinRepetidosNiEstudios() {
+        val r = io.github.fogonapps.cajon.datos.OpenLibrary.ordenar(listOf(
+            libro("A", "Cien años de soledad", "Gabriel García Márquez", 208, 1),
+            libro("B", "Cien años de soledad", "Josefina Ludmer", 1, 2),               // un estudio: fuera
+            libro("C", "Cien Años De Soledad", "Gabriel García Márquez", 1, null),     // la misma obra repetida: fuera
+            libro("D", "Sto godina samoće", "Gabriel García Márquez", 3, 4, "hrv"),    // solo en otro idioma: fuera
+            libro("E", "El amor en los tiempos del cólera", "Gabriel García Márquez", 130, 5),
+        ), "es")
+        assertEquals(listOf("ol:A", "ol:E"), r.map { it.fuente })
+        assertEquals("https://covers.openlibrary.org/b/id/1-M.jpg", r[0].portada)
+    }
+
+    @Test fun edicionMalMarcadaNoCambiaElTitulo() {
+        val r = io.github.fogonapps.cajon.datos.OpenLibrary.ordenar(listOf(
+            libro("A", "Cien años de soledad", "Gabriel García Márquez", 208, 1, "spa", "One hundred years of solitude")), "es")
+        assertEquals("Cien años de soledad", r[0].titulo)
+    }
+
+    @Test fun laPortadaMasLindaNoEsUnEscaneo() {
+        fun tapa(id: Int, alto: Int, escaneo: Boolean) = io.github.fogonapps.cajon.datos.OpenLibrary.Tapa(id, alto, escaneo)
+        val tapas = listOf(tapa(1, 2600, true), tapa(2, 1024, false), tapa(3, 486, false), tapa(4, 900, false))
+        assertEquals(4, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(tapas, setOf(1, 4)))   // del idioma, sin escaneo
+        assertEquals(2, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(tapas, emptySet()))   // la más grande sin escaneo
+        assertEquals(3, io.github.fogonapps.cajon.datos.OpenLibrary.elegirPortada(listOf(tapa(1, 2600, true), tapa(3, 486, false)), emptySet()))
+    }
 }

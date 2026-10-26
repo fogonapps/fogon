@@ -28,6 +28,7 @@ import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Estado
+import io.github.fogonapps.cajon.datos.Personas
 import io.github.fogonapps.cajon.datos.normal
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -46,15 +47,15 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     OutlinedTextField(texto, { texto = it.take(60) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), singleLine = true, shape = FormaPildora,
         placeholder = { Text(stringResource(R.string.buscar_o_nuevo_artista)) },
         leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) })
-    val lista = e.artistasVivos.filter { texto.isBlank() || normal(texto) in normal(it.nombre) }.sortedBy { normal(it.nombre) }
+    val lista = e.musicosVivos.filter { texto.isBlank() || normal(texto) in normal(it.nombre) }.sortedBy { normal(it.nombre) }
     if (texto.isNotBlank() && lista.none { normal(it.nombre) == normal(texto) }) Box(Modifier.padding(16.dp)) {
         BotonSecundario(stringResource(R.string.agregar_artista, texto.trim()), { vm.nuevoArtista(texto); texto = "" }, Modifier.fillMaxWidth())
     }
-    if (e.artistasVivos.isEmpty()) Pista(stringResource(R.string.artistas_vacio))
+    if (e.musicosVivos.isEmpty()) Pista(stringResource(R.string.artistas_vacio))
     lista.forEachIndexed { i, a ->
         val albumes = e.vivas.count { it.artista == a.id }
         FilaVidrio({ vm.abrir(Pantalla.VerArtista(a.id)) }, Modifier.aparecer(i.coerceAtMost(10))) {
-            FotoArtista(a.foto, a.nombre, 46.dp)
+            FotoArtista(a.foto, a.nombre, 46.dp, a.tipo)
             Column(Modifier.weight(1f)) {
                 Text(a.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(pluralStringResource(R.plurals.albumes_n, albumes, albumes), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -64,18 +65,19 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     }
 }
 
-/** Un artista encontrado en MusicBrainz, antes de guardarlo. */
+/** Una persona encontrada (artista, escritor o director), antes de guardarla. */
 @Composable
 fun PreviaArtista(vm: CajonViewModel, p: Pantalla.PreviaArtista) {
     val f = FogonTema.actual
     val a = p.artista
-    Cabecera(stringResource(R.string.tipo_artista), vm::cerrar)
+    val musico = a.tipo != Personas.AUTOR && a.tipo != Personas.DIRECTOR
+    Cabecera(nombreTipo(if (musico) CajonViewModel.TIPO_ARTISTA else a.tipo, plural = false), vm::cerrar)
     Column(Modifier.padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        FotoArtista(a.foto, a.nombre, 150.dp)
+        FotoArtista(a.foto, a.nombre, 150.dp, a.tipo)
         Text(a.nombre, fontFamily = f.titulos, fontSize = 26.sp, color = f.texto)
         Text(listOf(tipoArtista(a.tipo), a.pais, a.desde?.toString() ?: "", a.detalle).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-        BotonRiso(stringResource(R.string.guardar_artista), { vm.guardarArtista(a) }, Modifier.fillMaxWidth())
-        Pista(stringResource(R.string.fuente_musicbrainz), adentro = true)
+        BotonRiso(stringResource(if (musico) R.string.guardar_artista else R.string.guardar), { vm.guardarArtista(a) }, Modifier.fillMaxWidth())
+        Pista(stringResource(fuentePersona(a.fuente)), adentro = true)
     }
 }
 
@@ -96,7 +98,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
     LaunchedEffect(a.id, a.foto) { vm.completarCredito(a.id) }
     // La foto grande, con su crédito (autor y licencia de Wikimedia Commons) debajo.
     Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FotoArtista(a.foto, a.nombre, 150.dp)
+        FotoArtista(a.foto, a.nombre, 150.dp, a.tipo)
         if (a.foto.isNotBlank() && a.fotoCredito.isNotBlank()) Text(stringResource(R.string.foto_de, a.fotoCredito), style = MaterialTheme.typography.labelSmall,
             color = f.textoSuave, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
         val datos = listOf(tipoArtista(a.tipo), a.pais, a.desde?.let { stringResource(R.string.desde_anio, it) } ?: "").filter { it.isNotBlank() }
@@ -114,20 +116,23 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
             label = { Text(stringResource(R.string.datos_curiosos)) })
     }
 
-    // Sus álbumes en el cajón.
-    val suyos = e.vivas.filter { it.artista == a.id }.sortedByDescending { it.anio ?: 0 }
+    // Lo suyo en el cajón: los álbumes unidos al artista; de escritores y directores, lo que lleva su nombre.
+    val musico = Personas.esMusico(a)
+    val suyos = e.vivas.filter { it.artista == a.id || !musico && a.nombre.isNotBlank() && normal(a.nombre) in normal(it.creador) }.sortedByDescending { it.anio ?: 0 }
     if (suyos.isNotEmpty()) {
         Seccion(stringResource(R.string.en_tu_cajon))
         Cuadricula(suyos, vm)
     }
 
-    // Su discografía en MusicBrainz, para sumar discos con un toque.
-    if (a.fuente.startsWith("mb:artist:")) {
-        Seccion(stringResource(R.string.discografia))
+    // Sus obras afuera (discografía, libros o filmografía), para sumarlas con un toque.
+    if (a.fuente.startsWith("mb:artist:") || a.fuente.startsWith("ol:author:") || a.fuente.startsWith("tmdb:person:")) {
+        Seccion(stringResource(when (a.tipo) { Personas.AUTOR -> R.string.sus_libros; Personas.DIRECTOR -> R.string.filmografia; else -> R.string.discografia }))
         val lista = disco?.takeIf { it.first == a.fuente }?.second
         when {
             disco?.first == "error:" + a.fuente -> Pista(stringResource(R.string.buscar_sin_red))
-            lista.isNullOrEmpty() -> Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
+            a.fuente.startsWith("tmdb:") && !vm.hayClaveTmdb() -> Pista(stringResource(R.string.buscar_falta_tmdb))
+            lista == null -> Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
+            lista.isEmpty() -> Pista(stringResource(R.string.cajon_nada))
             else -> lista.forEach { r ->
                 val ya = vm.L.porFuente(e, r.fuente) != null
                 FilaVidrio({ vm.abrirEncontrado(r) }) {
@@ -143,7 +148,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
                 }
             }
         }
-        Pista(stringResource(R.string.fuente_musicbrainz))
+        Pista(stringResource(fuentePersona(a.fuente)))
     }
 
     Box(Modifier.padding(16.dp)) {

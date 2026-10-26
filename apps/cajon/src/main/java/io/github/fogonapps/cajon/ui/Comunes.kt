@@ -327,6 +327,8 @@ fun nombreTipo(tipo: String, plural: Boolean = true): String = stringResource(wh
     "anime" -> if (plural) R.string.tipo_animes else R.string.tipo_anime
     "libro" -> if (plural) R.string.tipo_libros else R.string.tipo_libro
     "album" -> if (plural) R.string.tipo_albumes else R.string.tipo_album
+    "autor" -> if (plural) R.string.tipo_autores else R.string.tipo_autor
+    "director" -> if (plural) R.string.tipo_directores else R.string.tipo_director
     else -> if (plural) R.string.tipo_artistas else R.string.tipo_artista
 })
 

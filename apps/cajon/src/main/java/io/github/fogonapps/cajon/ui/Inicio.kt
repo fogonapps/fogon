@@ -94,7 +94,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         Triple(Tipos.SERIE, terminadas.count { it.tipo == Tipos.SERIE }, R.plurals.series_vistas),
         Triple(Tipos.ANIME, terminadas.count { it.tipo == Tipos.ANIME }, R.plurals.animes_vistos),
         Triple(Tipos.ALBUM, terminadas.count { it.tipo == Tipos.ALBUM }, R.plurals.albumes_escuchados),
-        Triple(CajonViewModel.TIPO_ARTISTA, e.artistasVivos.size, R.plurals.artistas_guardados),
+        Triple(CajonViewModel.TIPO_ARTISTA, e.musicosVivos.size, R.plurals.artistas_guardados),
         Triple(Tipos.LIBRO, terminadas.count { it.tipo == Tipos.LIBRO }, R.plurals.libros_leidos),
     )
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -358,4 +358,11 @@
     <item quantity="one">%1$s of %2$d on %3$s · %4$s vote</item>
     <item quantity="other">%1$s of %2$d on %3$s · %4$s votes</item>
   </plurals>
+  <string name="tipo_autores">Writers</string>
+  <string name="tipo_autor">Writer</string>
+  <string name="tipo_directores">Directors</string>
+  <string name="tipo_director">Director</string>
+  <string name="sus_libros">Books</string>
+  <string name="filmografia">Filmography</string>
+  <string name="personas_vacio">No one saved yet. Search for them and save them to see their work.</string>
 </resources>

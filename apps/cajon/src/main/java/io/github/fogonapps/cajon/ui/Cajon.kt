@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.cajon.datos.Personas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -58,13 +59,16 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     val f = FogonTema.actual
     val tipos = Secciones.tipos(seccion)
     val musica = seccion == Secciones.MUSICA
-    // En Cine se elige entre películas, series y animes; en Música, entre álbumes y artistas.
+    // Las personas de este apartado: artistas en Música, directores en Cine y escritores en Libros.
+    val tipoPersona = when (seccion) { Secciones.LIBROS -> Personas.AUTOR; Secciones.CINE -> Personas.DIRECTOR; else -> CajonViewModel.TIPO_ARTISTA }
+    val esDeAqui: (Artista) -> Boolean = { a -> if (musica) Personas.esMusico(a) else a.tipo == tipoPersona }
+    // En Cine se elige entre películas, series, animes y directores; en Música, entre álbumes y artistas; en Libros, entre libros y escritores.
     var tipo by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
     var artistas by rememberSaveable(seccion) { mutableStateOf(false) }
     var estado by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
     var texto by rememberSaveable(seccion) { mutableStateOf("") }
     var orden by rememberSaveable(seccion) { mutableStateOf(Orden.RECIENTES) }
-    if (musica) LaunchedEffect(Unit) { vm.completarFotos() }
+    LaunchedEffect(seccion) { vm.completarFotos() }
 
     Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp)) {
         Pildora(stringResource(R.string.buscar), Iconos.Buscar, acento = true) { vm.abrir(Pantalla.Buscar(seccion)) }
@@ -86,7 +90,7 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             MiniDato(stringResource(R.string.en_curso), obras.count { it.estado == Estados.EN_CURSO })
             MiniDato(stringResource(R.string.pendientes), obras.count { it.estado == Estados.QUIERO })
-            if (musica) MiniDato(nombreTipo(CajonViewModel.TIPO_ARTISTA), e.artistasVivos.size)
+            if (musica) MiniDato(nombreTipo(CajonViewModel.TIPO_ARTISTA), e.musicosVivos.size)
             else MiniDato(stringResource(R.string.siempre), obras.count { it.estado == Estados.TERMINADO })
         }
     }
@@ -98,8 +102,11 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     }
 
     Seccion(stringResource(R.string.tu_cajon))
-    if (musica) Chips(listOf(false to nombreTipo(Tipos.ALBUM), true to nombreTipo(CajonViewModel.TIPO_ARTISTA)), artistas) { artistas = it }
-    else if (seccion == Secciones.CINE) Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + tipos.map { it to nombreTipo(it) }, tipo) { tipo = it }
+    if (seccion == Secciones.CINE) {
+        // Las obras por tipo y, al final, los directores.
+        val opciones = listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + tipos.map { it to nombreTipo(it) } + (Personas.DIRECTOR to nombreTipo(Personas.DIRECTOR))
+        Chips(opciones, if (artistas) Personas.DIRECTOR else tipo) { if (it == Personas.DIRECTOR) artistas = true else { artistas = false; tipo = it } }
+    } else Chips(listOf(false to nombreTipo(tipos.first()), true to nombreTipo(tipoPersona)), artistas) { artistas = it }
 
     OutlinedTextField(
         texto, { texto = it.take(40) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
@@ -107,7 +114,7 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) },
     )
 
-    if (musica && artistas) { CajonArtistas(vm, e, texto); return }
+    if (artistas) { CajonArtistas(vm, e, texto, esDeAqui, musica); return }
 
     val tipoEstados = tipo ?: tipos.first()
     Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipoEstados) }, estado) { estado = it }
@@ -135,27 +142,27 @@ private fun MiniDato(etiqueta: String, n: Int) {
     }
 }
 
-/** Los artistas en cuadrícula, con su foto redonda y su nota. */
+/** Las personas del apartado (artistas, directores o escritores) en cuadrícula, con su foto redonda y su nota. */
 @Composable
-private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String) {
+private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String, esDeAqui: (Artista) -> Boolean, musica: Boolean) {
     val f = FogonTema.actual
-    val lista = e.artistasVivos.filter { texto.isBlank() || normal(texto) in normal(it.nombre) }
+    val lista = e.artistasVivos.filter { esDeAqui(it) && (texto.isBlank() || normal(texto) in normal(it.nombre)) }
         .sortedWith(compareByDescending<Artista> { it.favorito }.thenByDescending { it.nota }.thenBy { normal(it.nombre) })
     if (lista.isEmpty()) {
-        Pista(stringResource(R.string.artistas_vacio), centro = true, modifier = Modifier.padding(top = 16.dp))
+        Pista(stringResource(if (musica) R.string.artistas_vacio else R.string.personas_vacio), centro = true, modifier = Modifier.padding(top = 16.dp))
         return
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         lista.chunked(3).forEachIndexed { fila, grupo ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 grupo.forEachIndexed { k, a ->
-                    val albumes = e.vivas.count { it.artista == a.id }
+                    val albumes = e.vivas.count { it.artista == a.id || !musica && normal(a.nombre) in normal(it.creador) }
                     Column(Modifier.weight(1f).aparecer((fila * 3 + k).coerceAtMost(12)).clip(forma(12.dp)).clickable { vm.abrir(Pantalla.VerArtista(a.id)) },
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) { FotoArtista(a.foto, a.nombre, 96.dp) }
+                        Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) { FotoArtista(a.foto, a.nombre, 96.dp, a.tipo) }
                         Text(a.nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                         if (a.nota > 0) Estrellas(a.nota, 12.sp)
-                        else Text(pluralStringResource(R.plurals.albumes_n, albumes, albumes), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+                        else Text(pluralStringResource(if (musica) R.plurals.albumes_n else R.plurals.obras_n, albumes, albumes), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
                     }
                 }
                 repeat(3 - grupo.size) { Spacer(Modifier.weight(1f)) }

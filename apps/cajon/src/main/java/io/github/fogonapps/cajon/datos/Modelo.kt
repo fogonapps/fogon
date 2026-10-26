@@ -123,6 +123,13 @@ data class Obra(
     val borrada: Boolean = false,
 )
 
+/** Escritores y directores se guardan con los artistas, con su tipo; los de MusicBrainz llevan el suyo (Person, Group…). */
+object Personas {
+    const val AUTOR = "autor"
+    const val DIRECTOR = "director"
+    fun esMusico(a: Artista) = a.tipo != AUTOR && a.tipo != DIRECTOR
+}
+
 /** Un artista o banda (de MusicBrainz o a mano), con lo que la persona sabe y opina. */
 @Serializable
 data class Artista(
@@ -181,6 +188,8 @@ data class Estado(
     /** Lo que se ve (sin lo borrado). */
     val vivas get() = obras.filter { !it.borrada }
     val artistasVivos get() = artistas.filter { !it.borrada }
+    /** Solo los de la música (sin escritores ni directores). */
+    val musicosVivos get() = artistasVivos.filter { Personas.esMusico(it) }
     val listasVivas get() = listas.filter { !it.borrada }
 }
 

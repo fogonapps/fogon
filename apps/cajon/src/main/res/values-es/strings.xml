@@ -358,4 +358,11 @@
     <item quantity="many">%1$s de %2$d en %3$s · %4$s votos</item>
     <item quantity="other">%1$s de %2$d en %3$s · %4$s votos</item>
   </plurals>
+  <string name="tipo_autores">Escritores</string>
+  <string name="tipo_autor">Escritor</string>
+  <string name="tipo_directores">Directores</string>
+  <string name="tipo_director">Director</string>
+  <string name="sus_libros">Sus libros</string>
+  <string name="filmografia">Filmografía</string>
+  <string name="personas_vacio">Todavía no guardas a nadie. Búscalo y guárdalo para ver su obra.</string>
 </resources>

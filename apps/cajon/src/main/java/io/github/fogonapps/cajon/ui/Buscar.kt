@@ -50,6 +50,7 @@ import io.github.fogonapps.cajon.Secciones
 import io.github.fogonapps.cajon.datos.ArtistaEncontrado
 import io.github.fogonapps.cajon.datos.Encontrado
 import io.github.fogonapps.cajon.datos.Estado
+import io.github.fogonapps.cajon.datos.Personas
 import io.github.fogonapps.cajon.datos.Tipos
 import io.github.fogonapps.cajon.datos.normal
 import io.github.fogonapps.identidad.BotonRiso
@@ -99,25 +100,35 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         // Cada fuente llega a su tiempo y sus grupos van arriba de otros: mientras la persona no haya bajado por
         // su cuenta, la lista vuelve arriba para que lo nuevo no quede escondido.
         val lista = androidx.compose.foundation.lazy.rememberLazyListState()
-        val llegadas = b.artistas.size * 1000 + b.obras.values.sumOf { it.size }
+        val llegadas = (b.artistas.size + b.autores.size + b.directores.size) * 1000 + b.obras.values.sumOf { it.size }
+        val titulos = mapOf("artistas" to nombreTipo(CajonViewModel.TIPO_ARTISTA), "directores" to nombreTipo(Personas.DIRECTOR), "autores" to nombreTipo(Personas.AUTOR))
         LaunchedEffect(llegadas) { if (lista.firstVisibleItemIndex <= 2 && !lista.isScrollInProgress) lista.scrollToItem(0) }
         LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE
 
-            // El mejor resultado: un artista con el nombre exacto, como en las apps de música.
-            val exacto = b.artistas.firstOrNull { normal(it.nombre) == normal(b.texto.trim()) }
-            if (exacto != null && (todo || b.seccion == Secciones.MUSICA)) item(key = "mejor") { MejorArtista(vm, e, exacto) }
+            // Las personas de cada sección: artistas (Música), directores (Cine) y escritores (Libros).
+            val personas = listOf(Triple("artistas", Secciones.MUSICA, b.artistas), Triple("directores", Secciones.CINE, b.directores),
+                Triple("autores", Secciones.LIBROS, b.autores)).filter { todo || b.seccion == it.second }
 
-            // Artistas: en Todo, una fila de fotos redondas; en Música, la lista completa.
-            val artistas = b.artistas.filter { it != exacto || !todo }
-            if (artistas.isNotEmpty() && (todo || b.seccion == Secciones.MUSICA)) {
-                item(key = "t-artistas") { Titulo(nombreTipo(CajonViewModel.TIPO_ARTISTA), if (todo) ({ vm.cambiarSeccion(Secciones.MUSICA) }) else null) }
-                if (todo) item(key = "fila-artistas") {
-                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        items(artistas.take(8), key = { it.mbid }) { a -> ArtistaRedondo(vm, a) }
-                    }
-                } else items(artistas, key = { "a" + it.mbid }) { a -> FilaArtista(vm, e, a, Modifier.animateItem()) }
+            // El mejor resultado: la persona más conocida (cada lista viene de la más a la menos) cuyo nombre tiene
+            // todas las palabras buscadas, como en las apps de música.
+            val palabras = normal(b.texto).split(" ").filter { it.isNotBlank() }
+            val exacto = personas.flatMap { it.third }.firstOrNull { a -> normal(a.nombre) == normal(b.texto.trim()) }
+                ?: personas.flatMap { it.third }.firstOrNull { a -> palabras.size >= 2 && palabras.all { it in normal(a.nombre) } }
+            if (exacto != null) item(key = "mejor") { MejorArtista(vm, e, exacto) }
+
+            // En Todo, una fila de fotos redondas por grupo; en su sección, la lista completa.
+            personas.forEach { (clave, seccion, lista0) ->
+                val lista = lista0.filter { it != exacto || !todo }
+                if (lista.isNotEmpty()) {
+                    item(key = "t-$clave") { Titulo(titulos.getValue(clave), if (todo) ({ vm.cambiarSeccion(seccion) }) else null) }
+                    if (todo) item(key = "fila-$clave") {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            items(lista.take(8), key = { it.fuente }) { a -> ArtistaRedondo(vm, a) }
+                        }
+                    } else items(lista, key = { "a" + it.fuente }) { a -> FilaArtista(vm, e, a, Modifier.animateItem()) }
+                }
             }
 
             // Los grupos de obras, en el orden de la sección.
@@ -146,7 +157,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             }
 
             item(key = "pie") {
-                val vacio = b.cargando.isEmpty() && b.artistas.isEmpty() && b.obras.values.all { it.isEmpty() }
+                val vacio = b.cargando.isEmpty() && b.artistas.isEmpty() && b.autores.isEmpty() && b.directores.isEmpty() && b.obras.values.all { it.isEmpty() }
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (vacio) Pista(stringResource(R.string.buscar_nada, b.texto.trim()), adentro = true)
                     BotonSecundario(stringResource(R.string.no_esta_a_mano), { vm.reemplazar(Pantalla.EditarObra(null, tipoAMano(b.seccion))) }, Modifier.fillMaxWidth())
@@ -185,12 +196,12 @@ private fun Titulo(texto: String, onVerMas: (() -> Unit)?) {
     Seccion(texto) { if (onVerMas != null) Pildora(stringResource(R.string.ver_mas), onClick = onVerMas) }
 }
 
-/** La foto redonda de un artista (o su ícono si no tiene). */
+/** La foto redonda de una persona (o su ícono si no tiene: micrófono, libro o claqueta, según [tipo]). */
 @Composable
-fun FotoArtista(foto: String, nombre: String, tamano: Dp) {
+fun FotoArtista(foto: String, nombre: String, tamano: Dp, tipo: String = "") {
     val f = FogonTema.actual
     Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-        IconoRiso(Iconos.Artista, null, tamano = tamano * 0.4f, tinta = f.acentoTexto)
+        IconoRiso(when (tipo) { Personas.AUTOR -> Iconos.Libro; Personas.DIRECTOR -> Iconos.Pelicula; else -> Iconos.Artista }, null, tamano = tamano * 0.4f, tinta = f.acentoTexto)
         if (foto.isNotBlank()) coil3.compose.AsyncImage(foto, nombre, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
     }
 }
@@ -198,13 +209,13 @@ fun FotoArtista(foto: String, nombre: String, tamano: Dp) {
 @Composable
 private fun MejorArtista(vm: CajonViewModel, e: Estado, a: ArtistaEncontrado) {
     val f = FogonTema.actual
-    val ya = e.artistasVivos.any { it.fuente == "mb:artist:${a.mbid}" }
+    val ya = e.artistasVivos.any { it.fuente == a.fuente }
     Row(Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio().clickable { vm.abrir(Pantalla.PreviaArtista(a)) }.padding(16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        FotoArtista(a.foto, a.nombre, 76.dp)
+        FotoArtista(a.foto, a.nombre, 76.dp, a.tipo)
         Column(Modifier.weight(1f)) {
             Text(a.nombre, fontFamily = f.titulos, fontSize = 22.sp, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(listOf(nombreTipo(CajonViewModel.TIPO_ARTISTA, plural = false), a.pais, a.desde?.toString() ?: "").filter { it.isNotBlank() }.joinToString(" · "),
+            Text(listOf(nombreTipo(if (a.tipo == Personas.AUTOR || a.tipo == Personas.DIRECTOR) a.tipo else CajonViewModel.TIPO_ARTISTA, plural = false), a.pais, a.desde?.toString() ?: "").filter { it.isNotBlank() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
         if (ya) IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 20.dp, tinta = f.acentoTexto)
@@ -216,7 +227,7 @@ private fun ArtistaRedondo(vm: CajonViewModel, a: ArtistaEncontrado) {
     val f = FogonTema.actual
     Column(Modifier.width(92.dp).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrir(Pantalla.PreviaArtista(a)) },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FotoArtista(a.foto, a.nombre, 84.dp)
+        FotoArtista(a.foto, a.nombre, 84.dp, a.tipo)
         Text(a.nombre, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
     }
 }
@@ -224,9 +235,9 @@ private fun ArtistaRedondo(vm: CajonViewModel, a: ArtistaEncontrado) {
 @Composable
 private fun FilaArtista(vm: CajonViewModel, e: Estado, a: ArtistaEncontrado, modifier: Modifier) {
     val f = FogonTema.actual
-    val ya = e.artistasVivos.any { it.fuente == "mb:artist:${a.mbid}" }
+    val ya = e.artistasVivos.any { it.fuente == a.fuente }
     FilaVidrio({ vm.abrir(Pantalla.PreviaArtista(a)) }, modifier) {
-        FotoArtista(a.foto, a.nombre, 46.dp)
+        FotoArtista(a.foto, a.nombre, 46.dp, a.tipo)
         Column(Modifier.weight(1f)) {
             Text(a.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(listOf(tipoArtista(a.tipo), a.pais, a.desde?.toString() ?: "", a.detalle).filter { it.isNotBlank() }.joinToString(" · "),
@@ -271,6 +282,13 @@ fun iconoSeccion(s: String) = when (s) {
     else -> Iconos.Cajon
 }
 
+/** De dónde salen los datos de una persona, por su fuente. */
+fun fuentePersona(fuente: String) = when {
+    fuente.startsWith("ol:") -> R.string.fuente_open_library
+    fuente.startsWith("tmdb:") -> R.string.fuente_tmdb
+    else -> R.string.fuente_musicbrainz
+}
+
 /** De dónde salen los datos de cada tipo (se muestra como crédito). */
 fun fuenteDe(tipo: String) = when (tipo) {
     Tipos.LIBRO -> R.string.fuente_open_library
@@ -285,5 +303,7 @@ fun tipoArtista(t: String): String = when (t) {
     "Group" -> stringResource(R.string.artista_grupo)
     "Orchestra" -> stringResource(R.string.artista_orquesta)
     "Choir" -> stringResource(R.string.artista_coro)
+    Personas.AUTOR -> stringResource(R.string.tipo_autor)
+    Personas.DIRECTOR -> stringResource(R.string.tipo_director)
     else -> t
 }

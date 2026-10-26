@@ -9,7 +9,7 @@
 <li><b>Public ratings</b> next to yours: TMDB, Open Library or MusicBrainz.</li>
 <li><b>Progress:</b> pages for books and every album track with its own rating and heart.</li>
 <li><b>Film, Music and Books</b>, each with its own section, and a Home with everything you’ve watched, listened to and read.</li>
-<li><b>Artists</b> with their photo and discography, to add records with one tap.</li>
+<li><b>Artists, writers and directors</b> with their photo and their records, books or films, to add them with one tap.</li>
 <li><b>Your own lists</b>, ranked if you like, and your top four on your profile.</li>
 <li><b>Your stats:</b> what you finished this year, hours of film and series, pages, tracks, your ratings, months, genres and creators. Plus yearly challenges.</li>
 <li><b>Share</b> a review or a list as an image.</li>

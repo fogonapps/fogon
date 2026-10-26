@@ -141,7 +141,7 @@ fun Tu(vm: CajonViewModel, e: Estado) {
     FilaVidrio({ vm.abrir(Pantalla.Artistas) }) {
         Ficha(f.tinta2, Iconos.Artista)
         Text(stringResource(R.string.tipo_artistas), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-        Text("${e.artistasVivos.size}", fontFamily = f.cifras, color = f.textoSuave)
+        Text("${e.musicosVivos.size}", fontFamily = f.cifras, color = f.textoSuave)
     }
     FilaVidrio({ vm.abrir(Pantalla.Diario) }) {
         Ficha(f.tinta1, Iconos.Diario)
