@@ -1,0 +1,1 @@
+Personaje nuevo: el muñeco de Fogón salta con un disco, con la cabeza de estrella en el color de la app y el cuerpo en puntos.

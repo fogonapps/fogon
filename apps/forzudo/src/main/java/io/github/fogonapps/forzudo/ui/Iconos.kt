@@ -47,18 +47,17 @@ object Iconos {
     )
 }
 
-/** Los muñequitos del tutorial en capas, para teñirlos con las tintas del tema (identidad/vidrio/capas). */
-val MUNIECOS: Map<Int, Triple<Int, Int, Int>> = mapOf(
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_t1 to Triple(io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_t1, io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_t2, io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_fijo),
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_t1 to Triple(io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_t1, io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_t2, io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_fijo),
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_t1 to Triple(io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_t1, io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_t2, io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_fijo),
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_t1 to Triple(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_t1, io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_t2, io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_fijo),
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_t1 to Triple(io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_t1, io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_t2, io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_fijo),
+/** Los muñequitos del tutorial: el mismo muñeco de Fogón (identidad/muneco), en dos capas (cuerpo y cabeza). */
+val MUNIECOS: Map<Int, Int> = mapOf(
+    io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cabeza,
+    io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cabeza,
+    io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_cabeza,
+    io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cabeza,
+    io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_cabeza,
 )
 
 /** Un muñequito del tutorial, teñido con las tintas del tema. */
 @androidx.compose.runtime.Composable
 fun Munieco(recurso: Int, modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier, tamano: androidx.compose.ui.unit.Dp) {
-    val c = MUNIECOS.getValue(recurso)
-    io.github.fogonapps.identidad.PersonajeTenido(c.first, c.second, c.third, null, modifier, tamano)
+    io.github.fogonapps.identidad.PersonajeFogon(recurso, MUNIECOS.getValue(recurso), null, modifier, tamano)
 }

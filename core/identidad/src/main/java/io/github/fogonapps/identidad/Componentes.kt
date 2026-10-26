@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
@@ -233,17 +232,17 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Los personajes que tienen capas para teñir: cuerpo (primera tinta), sombra y moneda (segunda) y lo fijo. */
+/** Los personajes hechos con el muñeco (identidad/muneco): el cuerpo en semitono y la cabeza (la chispa). */
 private val CAPAS = mapOf(
-    R.drawable.personaje_el_forzudo to Triple(R.drawable.personaje_el_forzudo_t1, R.drawable.personaje_el_forzudo_t2, R.drawable.personaje_el_forzudo_fijo),
-    R.drawable.personaje_el_ahorrador to Triple(R.drawable.personaje_el_ahorrador_t1, R.drawable.personaje_el_ahorrador_t2, R.drawable.personaje_el_ahorrador_fijo),
-    R.drawable.personaje_la_cucha to Triple(R.drawable.personaje_la_cucha_t1, R.drawable.personaje_la_cucha_t2, R.drawable.personaje_la_cucha_fijo),
-    R.drawable.personaje_el_cajon to Triple(R.drawable.personaje_el_cajon_t1, R.drawable.personaje_el_cajon_t2, R.drawable.personaje_el_cajon_fijo),
+    R.drawable.personaje_el_forzudo to (R.drawable.personaje_el_forzudo_cuerpo to R.drawable.personaje_el_forzudo_cabeza),
+    R.drawable.personaje_el_ahorrador to (R.drawable.personaje_el_ahorrador_cuerpo to R.drawable.personaje_el_ahorrador_cabeza),
+    R.drawable.personaje_la_cucha to (R.drawable.personaje_la_cucha_cuerpo to R.drawable.personaje_la_cucha_cabeza),
+    R.drawable.personaje_el_cajon to (R.drawable.personaje_el_cajon_cuerpo to R.drawable.personaje_el_cajon_cabeza),
 )
 
 /**
- * El personaje de la app. Si tiene capas (identidad/vidrio/capas), toma las tintas del tema: el cuerpo en la
- * primera tinta (o en las letras, si la tinta no se distingue del papel) y la sombra en la segunda.
+ * El personaje de la app. Si es del muñeco (identidad/muneco), toma los colores del tema: el cuerpo en las
+ * letras y la cabeza en la tinta (ver [PersonajeFogon]).
  */
 @Composable
 fun Personaje(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp) {
@@ -252,27 +251,34 @@ fun Personaje(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifie
         Image(painterResource(recurso), contentDescription = descripcion, modifier = modifier.size(tamano))
         return
     }
-    PersonajeTenido(capas.first, capas.second, capas.third, descripcion, modifier, tamano)
+    PersonajeFogon(capas.first, capas.second, descripcion, modifier, tamano)
 }
 
 /**
- * Una figura en capas (identidad/vidrio/capas), teñida con las tintas del tema: el cuerpo ([t1]) en la
- * primera tinta (o en las letras, si la tinta no se distingue del papel), la sombra ([t2]) en la segunda y
- * lo [fijo] (la chispa, los detalles) con su color.
+ * La tinta de la cabeza del muñeco: el color propio de la app (también en los temas neutros, como Grafito), o
+ * la del tema si ese color no se distingue del fondo.
+ */
+fun tintaCabeza(f: Fogon): Color = when {
+    contraste(f.marca, f.fondo) >= 2.0 -> f.marca
+    contraste(f.tinta1, f.fondo) >= 2.0 -> f.tinta1
+    else -> f.acentoTexto
+}
+
+/**
+ * El muñeco de Fogón (identidad/muneco): el mismo cuerpo hace la acción de cada app. El cuerpo, en semitono,
+ * va en el color de las letras del tema (oscuro en los claros, claro en los oscuros) y la cabeza, la chispa, en
+ * la tinta de la app.
  */
 @Composable
-fun PersonajeTenido(
-    @DrawableRes t1: Int, @DrawableRes t2: Int, @DrawableRes fijo: Int,
+fun PersonajeFogon(
+    @DrawableRes cuerpo: Int, @DrawableRes cabeza: Int,
     descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp,
 ) {
     val f = FogonTema.actual
-    val cuerpo = if (contraste(f.tinta1, f.fondo) >= 2.0) f.tinta1 else f.texto
-    val sombra = if (contraste(f.tinta2, cuerpo) >= 1.25) f.tinta2 else lerp(cuerpo, f.fondo, 0.55f)
     val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion } else Modifier
     Box(modifier.size(tamano).then(sem)) {
-        Image(painterResource(t2), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(sombra))
-        Image(painterResource(t1), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(cuerpo))
-        Image(painterResource(fijo), null, Modifier.matchParentSize())
+        Image(painterResource(cuerpo), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(f.texto))
+        Image(painterResource(cabeza), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tintaCabeza(f)))
     }
 }
 

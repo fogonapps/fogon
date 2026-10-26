@@ -39,7 +39,7 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.NumeroRiso
-import io.github.fogonapps.identidad.PersonajeTenido
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.rebote
@@ -168,7 +168,7 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
 
     if (d?.anotados.isNullOrEmpty() && dia == hoy) {
         Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) {
-            PersonajeTenido(RId.drawable.personaje_la_cucha_t1, RId.drawable.personaje_la_cucha_t2, RId.drawable.personaje_la_cucha_fijo, null, tamano = 110.dp)
+            Personaje(RId.drawable.personaje_la_cucha, null, tamano = 110.dp)
         }
         Pista(stringResource(R.string.hoy_vacio), centro = true)
     }

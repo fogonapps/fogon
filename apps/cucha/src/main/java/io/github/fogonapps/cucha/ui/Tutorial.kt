@@ -40,7 +40,7 @@ import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PasoDaleVida
-import io.github.fogonapps.identidad.PersonajeTenido
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
 
 /**
@@ -70,8 +70,7 @@ fun Tutorial(vm: CuchaViewModel, onImportar: () -> Unit) {
     ) {
         when (paso) {
             0 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                PersonajeTenido(RId.drawable.personaje_la_cucha_t1, RId.drawable.personaje_la_cucha_t2, RId.drawable.personaje_la_cucha_fijo,
-                    null, Modifier.align(Alignment.CenterHorizontally), tamano = 170.dp)
+                Personaje(RId.drawable.personaje_la_cucha, null, Modifier.align(Alignment.CenterHorizontally), tamano = 170.dp)
                 Text(stringResource(R.string.tut_hola), style = MaterialTheme.typography.headlineLarge, color = f.texto,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,

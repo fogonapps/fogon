@@ -378,7 +378,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 // Lo más grande que quepa a lo ancho: cada mayúscula mide unos [Fogon.anchoCifra] em.
                 val tam = if (ov == null) 44f else minOf(120f, 340f / (f.anchoCifra * palabra.length.coerceAtLeast(1)))
                 NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
-                Munieco(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_t1, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), tamano = 120.dp)
+                Munieco(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cuerpo, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), tamano = 120.dp)
                 Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Insignia(ov?.rango, 40.dp)

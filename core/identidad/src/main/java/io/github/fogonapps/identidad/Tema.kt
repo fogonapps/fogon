@@ -61,6 +61,8 @@ data class Fogon(
     val sobreTinta1: Color = paleta.sobreTinta,
     /** La segunda tinta: la sombra del personaje, barras de metas, el halo de puntos. */
     val tinta2: Color = paleta.segunda,
+    /** El color propio de la app (la tinta de su paleta, sin el tema): la cabeza del muñeco. */
+    val marca: Color = paleta.tinta,
     /** Ya no hay tinta corrida: queda en 0 por compatibilidad. */
     val desfase: Dp = 0.dp,
     /** Color del número grande. */
@@ -125,7 +127,7 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
         paleta = ef, oscuro = oscuro, fondo = c.fondo, superficie = c.tarjetas,
         texto = c.texto, textoSuave = textoSuave, linea = if (a.masContraste) c.texto else c.bordes,
         acentoTexto = acentoTexto, estilo = e,
-        tinta1 = c.tinta1, sobreTinta1 = c.sobreTinta1, tinta2 = c.tinta2,
+        tinta1 = c.tinta1, sobreTinta1 = c.sobreTinta1, tinta2 = c.tinta2, marca = paleta.tinta,
         numero = c.numero,
         pildora = c.texto, sobrePildora = legibleSobre(c.texto, listOf(c.fondo, Color.White, Tintas.Tinta)),
         destacada = listOf(c.tinta1, c.tinta1), sobreDestacada = c.sobreTinta1,

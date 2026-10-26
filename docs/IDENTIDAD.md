@@ -27,7 +27,7 @@ Salen de las referencias que eligió Angel (pósters y apps, de otros autores; p
 1. **Un número grande de puntos** por pantalla (la racha, el saldo, el volumen), en la letra Doto, sobre un **halo de puntos** que se apaga hacia el borde: la trama riso de Fogón convertida en luz. Solo uno por pantalla.
 2. **Una sola letra para todo:** Bricolage Grotesque. Nada de mezclar letras.
 3. **Vidrio sobre una sola luz:** tarjetas transparentes con borde fino sobre el papel del tema, y arriba una luz suave de su color. Nada más brilla.
-4. **El personaje en las tintas del tema:** el cuerpo en la primera tinta, la sombra en la segunda y la chispa roja siempre. Va en la tarjeta grande, en los vacíos y en el tutorial, una sola vez por pantalla. Nunca girado, repetido ni en un circulito de la cabecera (Angel, 24-10-2026: "innecesario, no cumple ninguna función").
+4. **El personaje, el muñeco de Fogón:** el mismo muñeco en todas las apps; el cuerpo en semitono en el color de las letras del tema y la cabeza, la chispa, en el color de la app. Va en la tarjeta grande, en los vacíos y en el tutorial, una sola vez por pantalla. Nunca girado, repetido ni en un circulito de la cabecera (Angel, 24-10-2026: "innecesario, no cumple ninguna función").
 5. **Íconos de línea redonda**, todos iguales, casi siempre dentro de una ficha de vidrio redonda. Ninguno relleno de negro ni con recortes blancos.
 6. **Píldoras:** botones, días de la semana, la barra de pestañas flotante y los logros. La pestaña activa es una píldora llena con su nombre.
 7. **Frases, no carteles:** títulos y etiquetas en minúsculas como una frase; nada en mayúsculas ni girado.
@@ -46,8 +46,9 @@ Salen de las referencias que eligió Angel (pósters y apps, de otros autores; p
 | `identidad/personajes/una-tinta/*.svg` | Los personajes en negro (íconos temáticos de Android, notificaciones, sellos) |
 | `identidad/png/*.png` | Todo lo anterior en PNG con fondo transparente (1024 px, logotipo de 1600 px) |
 | `identidad/fuentes/` | Bricolage Grotesque y Doto (las de las apps), Bagel Fat One y Anton (logotipo y piezas impresas), cada una con su licencia OFL |
-| `identidad/munecos/*.svg` | Los muñequitos del tutorial de El Forzudo |
-| `identidad/vidrio/` | El estudio Vidrio y puntos, los personajes en cada tema y el generador de capas para teñirlos |
+| `identidad/munecos/*.svg` | Los muñequitos viejos del tutorial de El Forzudo (historia; desde el 25-10-2026 el tutorial usa el muñeco) |
+| `identidad/muneco/` | El muñeco de Fogón: `muneco.py` (Blender), `generar.py` (capas de las apps) y `png/` (los cuatro armados) |
+| `identidad/vidrio/` | El estudio Vidrio y puntos, los personajes viejos en cada tema y las ilustraciones 3D |
 | `identidad/lienzo/` | Código del lienzo de diseño |
 
 El borde de tinta y lo líquido de las figuras se hacen con filtros SVG (`feTurbulence`, `feDisplacementMap` y un desenfoque con umbral tipo *metaball*). Los navegadores, WebView y `rsvg` los muestran bien. Para Android nativo se usan los PNG.
@@ -84,7 +85,17 @@ Reglas:
 - Un personaje por app, que no cambia nunca. Es su ícono, su pantalla de arranque y su mascota.
 - Los cuerpos se arman con trazos gruesos de punta redonda y se funden con el filtro "goo". La cabeza siempre va separada del cuerpo.
 - Los objetos (la moneda, el lápiz) van en la segunda tinta y con transparencia (`multiply`).
-- **Dentro de las apps, los personajes y muñequitos toman las tintas del tema** (24-10-2026): el cuerpo en la primera tinta, la sombra en la segunda y la chispa con su rojo. Van en capas (`*_t1`, `*_t2`, `*_fijo`), hechas con `identidad/vidrio/capas/generar_capas.py`; los `personaje_*.webp` sin capas (los de las apps que aún no existen) siguen como calcomanía. Antes (21-10-2026) llevaban un borde de papel para que se leyeran sobre cualquier fondo; con las tintas del tema ya no hace falta.
+- **Dentro de las apps va el muñeco de Fogón** (desde el 25-10-2026; ver "El muñeco" abajo). Los `personaje_*.webp` sin capas (los de las apps que aún no existen) siguen como calcomanía.
+- **Los íconos de las apps** siguen saliendo de los dibujos de `identidad/personajes/` y `identidad/png/` (Angel, 25-10-2026: los íconos se quedan como están).
+
+## El muñeco
+
+Angel lo pidió el 25-10-2026, después de varias rondas de propuestas: **un solo muñeco que hace la acción de cada app**, con la cabeza de estrella (la chispa), una pierna más grande que la otra, el cuerpo en semitono (puntos) y todos del mismo tamaño, para que las apps juntas se vean como familia. Lo que se descartó en el camino: figuras dibujadas a mano una por una (salían deformes y de tamaños distintos), el efecto hecho a mano, las líneas cortadas y el semitono con estela.
+
+- **Cómo se hace:** `identidad/muneco/muneco.py` arma el muñeco en Blender: cada hueso tiene su largo y su grosor fijos (conos que se adelgazan, con esferas en las uniones) y la pose solo dice hacia dónde apunta cada uno; los objetos (barra, moneda con la chispa calada, cuchara de palo y falda, disco) se agregan aparte. Se renderiza la silueta sin luz (Workbench) desde la misma cámara, en dos pasadas: el cuerpo con sus objetos y la cabeza sola. `identidad/muneco/generar.py` corre Blender, recorta los cuatro con el mismo cuadrado (misma escala), le abre un borde al cuerpo alrededor de la cabeza, pasa el cuerpo a semitono y escribe las capas. Uso: `python3 identidad/muneco/generar.py` desde la raíz.
+- **Las acciones:** El Forzudo levanta la barra; El Ahorrador empuja la moneda; La Cucha corre con la cuchara de palo en alto; El Cajón salta con un disco. El tutorial de El Forzudo usa el mismo muñeco: saluda, anota en su cuaderno, corre, sube al podio y lleva su caja al hombro.
+- **En la app:** dos capas en blanco, `personaje_<app>_cuerpo` y `_cabeza` (y `munieco_tut_<paso>_…` en El Forzudo). `PersonajeFogon` tiñe el cuerpo con `f.texto` (oscuro en los temas claros, claro en los oscuros) y la cabeza con `tintaCabeza(f)`: el color de la app (`f.marca`), también en los temas neutros; si no se distingue del fondo, la tinta del tema. El widget hace lo mismo.
+- **Para una app nueva:** agregar su acción en `muneco.py` (una función con la pose y sus objetos) y su color en `generar.py`.
 
 ## Dibujos de ejercicios: las láminas
 
@@ -112,7 +123,7 @@ Sobre papel, **ninguna tinta pura llega a 4,5:1** para texto pequeño. Por eso c
 
 ## Vidrio y puntos: la interfaz de las apps
 
-Desde el 24-10-2026 (El Forzudo 1.10, El Ahorrador 1.4). El estudio, las letras y las capas de los personajes están en `identidad/vidrio/` (ver su README).
+Desde el 24-10-2026 (El Forzudo 1.10, El Ahorrador 1.4). El estudio y las letras están en `identidad/vidrio/` (ver su README); el muñeco, en `identidad/muneco/`.
 
 ### Los temas
 
@@ -153,7 +164,7 @@ En el código todo sale de `FogonTema.actual` (`core/identidad`): nunca un color
 4. **Botones en píldora:** el principal lleno de la primera tinta (`BotonRiso`), el secundario de vidrio (`BotonSecundario`).
 5. **Íconos:** `IconoRiso(dibujo, …)` dibuja el contorno de cada parte del `Dibujo` (línea de 1,9, puntas redondas); con `relleno` se le pone un cuerpo suave. En listas y acciones van dentro de una ficha de vidrio redonda; en El Ahorrador las fichas de categoría (`Ficha`) son un círculo teñido de su color con el ícono en ese color.
 6. **Barra de pestañas:** una píldora opaca que flota (`f.barra`), con la activa llena de la primera tinta y su nombre; las demás, solo el ícono (el nombre va para los lectores de pantalla).
-7. **El personaje:** `Personaje(R.drawable.personaje_…)` lo tiñe solo si tiene capas; cualquier figura en capas se dibuja con `PersonajeTenido(t1, t2, fijo, …)`. Las capas se generan con `identidad/vidrio/capas/generar_capas.py`.
+7. **El personaje:** `Personaje(R.drawable.personaje_…)` dibuja el muñeco con sus dos capas (`PersonajeFogon`); ver "El muñeco". Las capas salen de `identidad/muneco/generar.py`.
 8. **Una sola luz:** fuera de `fondoFogon` y del halo no hay degradados ni brillos. Las líneas finas van en `f.linea`.
 9. **Ilustraciones 3D propias** (trofeo, mancuerna, moneda, pila de monedas, sobre): modeladas desde cero en Blender con `identidad/vidrio/ilustraciones/generar.py`, en gris; `Ilustracion(recurso, tinta = …)` las tiñe con la tinta del tema (a las tintas oscuras les suma gris para que no pierdan el volumen). Van en las tarjetas, al lado del texto, nunca solas ni como fondo: "Lo que toca" y los récords en El Forzudo; la meta del Inicio y la tarjeta de Sobres en El Ahorrador.
 10. **Las láminas de ejercicios** son oscuras (papel grafito) en todos los temas; van tal cual, con esquinas redondeadas.

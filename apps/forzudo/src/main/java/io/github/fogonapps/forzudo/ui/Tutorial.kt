@@ -54,12 +54,12 @@ import kotlinx.coroutines.launch
 private data class Paso(@DrawableRes val dibujo: Int, @StringRes val titulo: Int, @StringRes val texto: Int)
 
 private val pasos = listOf(
-    Paso(R.drawable.munieco_tut_hola_t1, R.string.tut_hola, R.string.tut_hola_texto),
-    Paso(R.drawable.munieco_tut_anota_t1, R.string.tut_anota, R.string.tut_anota_texto),
-    Paso(R.drawable.munieco_tut_racha_t1, R.string.tut_racha, R.string.tut_racha_texto),
-    Paso(R.drawable.munieco_tut_rangos_t1, R.string.tut_rangos, R.string.tut_rangos_texto),
-    Paso(R.drawable.munieco_tut_hola_t1, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
-    Paso(R.drawable.munieco_tut_datos_t1, R.string.tut_datos, R.string.tut_datos_texto),
+    Paso(R.drawable.munieco_tut_hola_cuerpo, R.string.tut_hola, R.string.tut_hola_texto),
+    Paso(R.drawable.munieco_tut_anota_cuerpo, R.string.tut_anota, R.string.tut_anota_texto),
+    Paso(R.drawable.munieco_tut_racha_cuerpo, R.string.tut_racha, R.string.tut_racha_texto),
+    Paso(R.drawable.munieco_tut_rangos_cuerpo, R.string.tut_rangos, R.string.tut_rangos_texto),
+    Paso(R.drawable.munieco_tut_hola_cuerpo, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
+    Paso(R.drawable.munieco_tut_datos_cuerpo, R.string.tut_datos, R.string.tut_datos_texto),
 )
 
 /** Los pasos con dibujo y, al final, "¡Dale vida!": la app viene en Neutro y aquí se elige el estilo. */
