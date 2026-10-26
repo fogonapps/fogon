@@ -168,6 +168,12 @@ class LogicaTest {
         assertEquals("", r[0].portada)   // los libros van sin portada
     }
 
+    @Test fun laTraduccionBuscadaSaleConSuTitulo() {
+        val r = io.github.fogonapps.cajon.datos.OpenLibrary.ordenar(listOf(
+            libro("A", "L’étranger", "Albert Camus", 468, 1, "spa", "El extranjero")), "es", consulta = "el extranjero")
+        assertEquals("El extranjero", r[0].titulo)
+    }
+
     @Test fun edicionMalMarcadaNoCambiaElTitulo() {
         val r = io.github.fogonapps.cajon.datos.OpenLibrary.ordenar(listOf(
             libro("A", "Cien años de soledad", "Gabriel García Márquez", 208, 1, "spa", "One hundred years of solitude")), "es")

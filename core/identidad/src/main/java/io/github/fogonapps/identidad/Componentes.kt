@@ -255,19 +255,32 @@ fun Personaje(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifie
 }
 
 /**
+ * Tiñe una capa en grises: el blanco queda en [luz] y lo oscuro se acerca a [fondo] (hasta casi la mitad), así se
+ * ven las caras de los bloques en cualquier tema. Cada canal = luz + k·(fondo − luz)·(1 − gris).
+ */
+fun caras(luz: Color, fondo: Color): androidx.compose.ui.graphics.ColorMatrix {
+    val k = 0.45f
+    fun fila(l: Float, fo: Float) = floatArrayOf(-k * (fo - l), 0f, 0f, 0f, (l + k * (fo - l)) * 255f)
+    val r = fila(luz.red, fondo.red); val g = fila(luz.green, fondo.green); val b = fila(luz.blue, fondo.blue)
+    return androidx.compose.ui.graphics.ColorMatrix(r + g + b + floatArrayOf(0f, 0f, 0f, 1f, 0f))
+}
+
+/**
  * La tinta de la cabeza del muñeco: el color propio de la app (también en los temas neutros, como Grafito), o
- * la del tema si ese color no se distingue del fondo.
+ * su versión para papel (o la del tema) si ese color no se distingue del fondo.
  */
 fun tintaCabeza(f: Fogon): Color = when {
     contraste(f.marca, f.fondo) >= 2.0 -> f.marca
+    // En papel claro, la versión de la misma tinta hecha para leerse en papel (el lima se vuelve oliva).
+    contraste(f.paleta.textoEnPapel, f.fondo) >= 2.0 -> f.paleta.textoEnPapel
     contraste(f.tinta1, f.fondo) >= 2.0 -> f.tinta1
     else -> f.acentoTexto
 }
 
 /**
- * El muñeco de Fogón (identidad/muneco): el mismo cuerpo hace la acción de cada app. El cuerpo, en semitono,
- * va en el color de las letras del tema (oscuro en los claros, claro en los oscuros) y la cabeza, la chispa, en
- * la tinta de la app.
+ * El muñeco de Fogón (identidad/muneco): el mismo cuerpo en bloques hace la acción de cada app. El cuerpo va en
+ * el color de las letras del tema (oscuro en los claros, claro en los oscuros) con sus caras: la capa viene en
+ * grises y lo que no da a la luz se acerca al fondo. La cabeza, la chispa, va en la tinta de la app.
  */
 @Composable
 fun PersonajeFogon(
@@ -277,7 +290,7 @@ fun PersonajeFogon(
     val f = FogonTema.actual
     val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion } else Modifier
     Box(modifier.size(tamano).then(sem)) {
-        Image(painterResource(cuerpo), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(f.texto))
+        Image(painterResource(cuerpo), null, Modifier.matchParentSize(), colorFilter = ColorFilter.colorMatrix(caras(f.texto, f.fondo)))
         Image(painterResource(cabeza), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tintaCabeza(f)))
     }
 }

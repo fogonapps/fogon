@@ -234,7 +234,7 @@ object OpenLibrary {
         val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("q", texto)
             .addQueryParameter("lang", if (idioma == "en") "en" else "es")
             .addQueryParameter("fields", CAMPOS).addQueryParameter("limit", "40").build()
-        return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma)
+        return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma, consulta = texto)
     }
 
     /**
@@ -242,7 +242,7 @@ object OpenLibrary {
      * ediciones), sin las que solo existen en otro idioma, y lo conocido (muchas ediciones) un poco más arriba sin
      * perder el orden de relevancia; lo de una sola edición (guías, estudios, copias) va al final.
      */
-    fun ordenar(docs: List<JsonObject>, idioma: String, tope: Int = 25): List<Encontrado> {
+    fun ordenar(docs: List<JsonObject>, idioma: String, tope: Int = 25, consulta: String = ""): List<Encontrado> {
         data class Libro(val e: Encontrado, val ediciones: Int, val puesto: Int, val clave: String)
         val mio = marc(idioma)
         val libros = docs.mapIndexedNotNull { i, d ->
@@ -250,7 +250,10 @@ object OpenLibrary {
             val lenguas = ed?.arr("language")?.map { it.texto() } ?: emptyList()
             // Solo en otro idioma (ni el de la app ni inglés): es una traducción que no se buscó.
             if (lenguas.isNotEmpty() && mio !in lenguas && "eng" !in lenguas) return@mapIndexedNotNull null
-            val enMiIdioma = mio in lenguas && parecidos(ed?.get("title").texto(), d["title"].texto())
+            // El título de la edición en el idioma de la app, si se parece al de la obra o a lo que se buscó
+            // ("El extranjero" para "L'étranger"); si no, puede ser una edición mal marcada de otro idioma.
+            val tituloEd = ed?.get("title").texto()
+            val enMiIdioma = mio in lenguas && (parecidos(tituloEd, d["title"].texto()) || consulta.isNotBlank() && parecidos(tituloEd, consulta))
             val titulo = (if (enMiIdioma) ed?.get("title").texto() else "").ifBlank { d["title"].texto() }
             val autores = d.arr("author_name").take(2).joinToString(", ") { it.texto() }
             val e = Encontrado(

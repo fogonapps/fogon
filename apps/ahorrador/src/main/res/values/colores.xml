@@ -2,4 +2,6 @@
 <resources>
     <color name="papel">#EFE7DA</color>
     <color name="noche">#0D0C0A</color>
+    <!-- El fondo del ícono: blanco (identidad/muneco/generar.py hace el muñeco oscuro de encima). -->
+    <color name="icono_fondo">#FFFFFF</color>
 </resources>

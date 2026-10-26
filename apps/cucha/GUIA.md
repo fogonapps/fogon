@@ -76,4 +76,4 @@ La fórmula está en `Logica.metasDe` (ver `ARQUITECTURA.md` → La lógica). Si
 |-----|-------|
 | Tema Cocina (naranja y verde) | `core/identidad/.../Tintas.kt` (`Paleta.Cucha`). Las pantallas nunca usan colores fijos. |
 | Personaje | `identidad/personajes/la-cucha.svg`, sus capas `personaje_la_cucha_*` en `core/identidad`. |
-| Ícono de la app | `src/main/res/mipmap-*/ic_launcher_*.webp`, hechos con `python3 apps/cucha/herramientas/icono.py`. |
+| Ícono de la app | `src/main/res/mipmap-*/ic_launcher_*.webp` y el de la tienda: los hace `python3 identidad/muneco/generar.py` (con los de las otras apps); el fondo es `@color/icono_fondo`. |

@@ -1,0 +1,1 @@
+Personaje e ícono nuevos: el muñeco de Fogón en bloques salta con un disco, con la cabeza de estrella en el color de la app. El ícono va en blanco con el muñeco oscuro. Arreglado: al buscar «el extranjero» no salía el libro de Camus (salía con su título en francés).

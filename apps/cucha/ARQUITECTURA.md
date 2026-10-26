@@ -39,7 +39,6 @@ Otros lugares:
 | `src/main/assets/datos/alimentos.json` | La base: 397 alimentos con nombre en español e inglés, grupo, número FDC, descripción de USDA, valores por 100 g y porciones. **Se genera** (ver GUIA). |
 | `src/main/assets/datos/recetas.json` | Las 55 recetas de ejemplo, escritas a mano. |
 | `herramientas/alimentos/` | `lista.py` (qué alimentos, de qué número FDC y con qué porciones) y `generar.py` (saca los valores de los CSV de USDA). |
-| `herramientas/icono.py` | El ícono de la app a partir de `identidad/png/la-cucha.png`. |
 | `src/test/` | `LogicaTest` (base, metas, buscar, recetas, mercado, racha, El Forzudo, Open Food Facts) y `TraduccionTest`. |
 
 ## 3. Los datos
