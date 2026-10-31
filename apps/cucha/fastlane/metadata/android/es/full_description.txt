@@ -6,7 +6,7 @@
 <li><b>Arma tu plato:</b> suma ingredientes seguidos y guárdalo como receta para repetirlo con un toque.</li>
 <li><b>Valores de USDA FoodData Central,</b> y cada alimento dice de dónde salen.</li>
 <li><b>Código de barras, opcional:</b> escanea el empaque y busca el producto en Open Food Facts, o escribe tú los datos de la tabla.</li>
-<li><b>55 recetas</b> (ajiaco, sancocho, bandeja paisa, changua, huevos con champiñones…) con sus calorías por porción. Crea las tuyas o impórtalas.</li>
+<li><b>129 recetas</b> (ajiaco, sancocho, bandeja paisa, mondongo, cazuela de fríjoles, changua, huevos con champiñones…) con sus calorías por porción. Crea las tuyas o impórtalas.</li>
 <li><b>Menú de la semana</b>, con semana A y B si quieres, y la <b>lista de mercado</b> que sale sola de él.</li>
 <li><b>Metas</b> calculadas con tus datos o puestas a mano si tienes un plan de nutricionista.</li>
 <li><b>Progreso:</b> días seguidos, promedio de la semana, los últimos 14 días y la curva del peso.</li>

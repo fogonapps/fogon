@@ -37,7 +37,8 @@ Otros lugares:
 | Lugar | Qué hay |
 |-------|---------|
 | `src/main/assets/datos/alimentos.json` | La base: 397 alimentos con nombre en español e inglés, grupo, número FDC, descripción de USDA, valores por 100 g y porciones. **Se genera** (ver GUIA). |
-| `src/main/assets/datos/recetas.json` | Las 55 recetas de ejemplo, escritas a mano. |
+| `src/main/assets/datos/recetas.json` | Las 129 recetas de ejemplo, escritas para la app. |
+| `herramientas/recetas_nuevas.py` | Suma recetas nuevas a `recetas.json` (las de la 1.4); revisa que cada ingrediente exista en la base. |
 | `herramientas/alimentos/` | `lista.py` (qué alimentos, de qué número FDC y con qué porciones) y `generar.py` (saca los valores de los CSV de USDA). |
 | `src/test/` | `LogicaTest` (base, metas, buscar, recetas, mercado, racha, El Forzudo, Open Food Facts) y `TraduccionTest`. |
 

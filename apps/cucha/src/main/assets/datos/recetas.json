@@ -2283,5 +2283,2772 @@
    "Mix the drained tuna with the mayo.",
    "Build the sandwich with the lettuce and tomato."
   ]
+ },
+ {
+  "id": "basa_limon",
+  "es": "Filete de pescado al limón con arroz",
+  "en": "Lemon fish fillet with rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "tilapia_cruda",
+    "gramos": 180
+   },
+   {
+    "alimento": "limon",
+    "gramos": 30
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 5
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   },
+   {
+    "alimento": "ensalada_verde",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Sazona el filete con sal, pimienta y el jugo del limón.",
+   "Ásalo en la sartén con el aceite, 3 o 4 minutos por lado.",
+   "Sírvelo con el arroz y la ensalada."
+  ],
+  "pasosEn": [
+   "Season the fillet with salt, pepper and the lemon juice.",
+   "Pan-sear it in the oil, 3 to 4 minutes per side.",
+   "Serve with the rice and the salad."
+  ]
+ },
+ {
+  "id": "bowl_arroz_frijol_carne",
+  "es": "Bowl de arroz, fríjol y carne",
+  "en": "Rice, bean and beef bowl",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   },
+   {
+    "alimento": "frijol_rojo",
+    "gramos": 120
+   },
+   {
+    "alimento": "carne_molida_magra",
+    "gramos": 120
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 60
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 50
+   }
+  ],
+  "pasosEs": [
+   "Dora la carne molida y sazónala.",
+   "Arma el bowl con el arroz, los fríjoles calientes y la carne.",
+   "Termina con el tomate picado y el aguacate."
+  ],
+  "pasosEn": [
+   "Brown the ground beef and season it.",
+   "Build the bowl with the rice, the warm beans and the beef.",
+   "Top with diced tomato and avocado."
+  ]
+ },
+ {
+  "id": "ensalada_atun_completa",
+  "es": "Ensalada completa de atún",
+  "en": "Hearty tuna salad",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "atun",
+    "gramos": 120
+   },
+   {
+    "alimento": "lechuga_romana",
+    "gramos": 80
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 80
+   },
+   {
+    "alimento": "pepino",
+    "gramos": 60
+   },
+   {
+    "alimento": "huevo",
+    "gramos": 50
+   }
+  ],
+  "pasosEs": [
+   "Cocina el huevo 10 minutos y pártelo.",
+   "Pica la lechuga, el tomate y el pepino.",
+   "Mézclalo con el atún escurrido y aliña con limón."
+  ],
+  "pasosEn": [
+   "Boil the egg for 10 minutes and slice it.",
+   "Chop the lettuce, tomato and cucumber.",
+   "Toss with the drained tuna and dress with lime."
+  ]
+ },
+ {
+  "id": "pollo_sarten_papa_brocoli",
+  "es": "Pollo en sartén con papa y brócoli",
+  "en": "Pan chicken with potato and broccoli",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 25,
+  "ingredientes": [
+   {
+    "alimento": "pechuga_cruda",
+    "gramos": 160
+   },
+   {
+    "alimento": "papa",
+    "gramos": 150
+   },
+   {
+    "alimento": "brocoli",
+    "gramos": 100
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Cocina la papa en trozos hasta que esté blanda.",
+   "Dora la pechuga en cubos con el ajo y el aceite.",
+   "Agrega el brócoli y la papa, y saltea 5 minutos."
+  ],
+  "pasosEn": [
+   "Boil the potato in chunks until tender.",
+   "Brown the diced chicken with garlic and oil.",
+   "Add the broccoli and potato and stir-fry 5 minutes."
+  ]
+ },
+ {
+  "id": "arepa_pollo_hogao",
+  "es": "Arepas con pollo desmechado y hogao",
+  "en": "Arepas with shredded chicken and hogao",
+  "comidas": [
+   "desayuno",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "arepa",
+    "gramos": 120
+   },
+   {
+    "alimento": "pechuga",
+    "gramos": 100
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 60
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 20
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Sofríe el tomate y la cebolla larga picados hasta hacer el hogao.",
+   "Mezcla el pollo desmechado con el hogao.",
+   "Asa las arepas y sírvelas con el pollo encima."
+  ],
+  "pasosEn": [
+   "Cook diced tomato and scallion into a hogao sauce.",
+   "Mix the shredded chicken into the hogao.",
+   "Toast the arepas and top with the chicken."
+  ]
+ },
+ {
+  "id": "sardinas_guisadas",
+  "es": "Sardinas guisadas con arroz",
+  "en": "Stewed sardines with rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "sardinas_tomate",
+    "gramos": 120
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 40
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 60
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   }
+  ],
+  "pasosEs": [
+   "Sofríe la cebolla y el tomate picados.",
+   "Agrega las sardinas con su salsa y calienta 5 minutos.",
+   "Sirve con el arroz."
+  ],
+  "pasosEn": [
+   "Sauté the diced onion and tomato.",
+   "Add the sardines with their sauce and heat for 5 minutes.",
+   "Serve with the rice."
+  ]
+ },
+ {
+  "id": "higado_encebollado",
+  "es": "Hígado encebollado con papa",
+  "en": "Liver and onions with potato",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "higado_res",
+    "gramos": 150
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 80
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   },
+   {
+    "alimento": "papa",
+    "gramos": 150
+   }
+  ],
+  "pasosEs": [
+   "Corta el hígado en tiras y sazónalo.",
+   "Dóralo rápido en el aceite y agrega la cebolla en aros hasta que ablande.",
+   "Sirve con la papa cocida."
+  ],
+  "pasosEn": [
+   "Slice the liver into strips and season.",
+   "Sear it quickly in the oil, then add the onion rings until soft.",
+   "Serve with boiled potato."
+  ]
+ },
+ {
+  "id": "olla_lentejas",
+  "es": "Olla de lentejas con verduras",
+  "en": "Lentil and vegetable pot",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 40,
+  "ingredientes": [
+   {
+    "alimento": "lentejas",
+    "gramos": 600
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 100
+   },
+   {
+    "alimento": "papa",
+    "gramos": 300
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 120
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 80
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Haz un hogao con la cebolla, el tomate y el aceite.",
+   "Agrega las lentejas, la papa y la zanahoria en cubos, con agua que las cubra.",
+   "Cocina 25 minutos a fuego medio, hasta que la papa espese el caldo."
+  ],
+  "pasosEn": [
+   "Make a hogao with the onion, tomato and oil.",
+   "Add the lentils, diced potato and carrot, with water to cover.",
+   "Simmer 25 minutes until the potato thickens the broth."
+  ]
+ },
+ {
+  "id": "arroz_pollo_verduras",
+  "es": "Arroz con pollo y verduras",
+  "en": "Chicken rice with vegetables",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 40,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 600
+   },
+   {
+    "alimento": "pechuga",
+    "gramos": 400
+   },
+   {
+    "alimento": "arveja_zanahoria",
+    "gramos": 200
+   },
+   {
+    "alimento": "pimenton",
+    "gramos": 60
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 60
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 15
+   }
+  ],
+  "pasosEs": [
+   "Sofríe la cebolla y el pimentón.",
+   "Agrega el pollo desmechado, las verduras y el arroz cocido.",
+   "Mezcla bien y deja 5 minutos tapado para que se unan los sabores."
+  ],
+  "pasosEn": [
+   "Sauté the onion and bell pepper.",
+   "Add the shredded chicken, vegetables and cooked rice.",
+   "Mix well and leave covered for 5 minutes."
+  ]
+ },
+ {
+  "id": "papa_sudada_carne_espinaca",
+  "es": "Papa sudada con carne molida y espinaca",
+  "en": "Braised potatoes with beef and spinach",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 2,
+  "minutos": 30,
+  "ingredientes": [
+   {
+    "alimento": "papa",
+    "gramos": 400
+   },
+   {
+    "alimento": "carne_molida_magra",
+    "gramos": 250
+   },
+   {
+    "alimento": "espinaca",
+    "gramos": 100
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 120
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Haz un hogao con el tomate y la cebolla.",
+   "Agrega la carne y dórala; suma las papas en trozos y un poco de agua.",
+   "Tapa 20 minutos y al final agrega la espinaca."
+  ],
+  "pasosEn": [
+   "Make a hogao with tomato and onion.",
+   "Add the beef and brown it; add the potato chunks and a little water.",
+   "Cover for 20 minutes and stir in the spinach at the end."
+  ]
+ },
+ {
+  "id": "carne_guisada",
+  "es": "Carne de res guisada",
+  "en": "Colombian beef stew",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 60,
+  "ingredientes": [
+   {
+    "alimento": "estofado_res",
+    "gramos": 600
+   },
+   {
+    "alimento": "papa",
+    "gramos": 400
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 100
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 600
+   }
+  ],
+  "pasosEs": [
+   "Cocina la carne en trozos con el hogao hasta que ablande.",
+   "Agrega la papa y la zanahoria y deja espesar.",
+   "Sirve con arroz blanco."
+  ],
+  "pasosEn": [
+   "Simmer the beef chunks in hogao until tender.",
+   "Add the potato and carrot and let it thicken.",
+   "Serve with white rice."
+  ]
+ },
+ {
+  "id": "pasta_atun_brocoli",
+  "es": "Pasta con atún y brócoli",
+  "en": "Pasta with tuna and broccoli",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "pasta",
+    "gramos": 180
+   },
+   {
+    "alimento": "atun",
+    "gramos": 100
+   },
+   {
+    "alimento": "brocoli",
+    "gramos": 100
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 5
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Cocina la pasta y en los últimos 3 minutos agrega el brócoli.",
+   "Escurre y mezcla con el atún, el ajo y el aceite."
+  ],
+  "pasosEn": [
+   "Boil the pasta, adding the broccoli in the last 3 minutes.",
+   "Drain and toss with the tuna, garlic and oil."
+  ]
+ },
+ {
+  "id": "lomo_cerdo_plancha",
+  "es": "Lomo de cerdo a la plancha con ensalada",
+  "en": "Grilled pork loin with salad",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "lomo_cerdo_magro",
+    "gramos": 160
+   },
+   {
+    "alimento": "ensalada_verde",
+    "gramos": 100
+   },
+   {
+    "alimento": "papa_criolla",
+    "gramos": 120
+   }
+  ],
+  "pasosEs": [
+   "Sazona el lomo y ásalo a la plancha 4 minutos por lado.",
+   "Cocina las papas criollas y sírvelas con la ensalada."
+  ],
+  "pasosEn": [
+   "Season the pork loin and grill 4 minutes per side.",
+   "Boil the small potatoes and serve with the salad."
+  ]
+ },
+ {
+  "id": "pollo_plancha_marinado",
+  "es": "Pollo a la plancha marinado",
+  "en": "Marinated grilled chicken",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 25,
+  "ingredientes": [
+   {
+    "alimento": "pechuga_cruda",
+    "gramos": 180
+   },
+   {
+    "alimento": "limon",
+    "gramos": 20
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 5
+   },
+   {
+    "alimento": "salsa_soya",
+    "gramos": 10
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   },
+   {
+    "alimento": "ensalada_verde",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Marina la pechuga con limón, ajo y salsa de soya por 15 minutos.",
+   "Ásala a la plancha hasta que quede dorada.",
+   "Sirve con arroz y ensalada."
+  ],
+  "pasosEn": [
+   "Marinate the chicken in lime, garlic and soy sauce for 15 minutes.",
+   "Grill until golden.",
+   "Serve with rice and salad."
+  ]
+ },
+ {
+  "id": "tortilla_papa_espinaca",
+  "es": "Tortilla de papa y espinaca",
+  "en": "Potato and spinach omelette",
+  "comidas": [
+   "desayuno",
+   "cena"
+  ],
+  "porciones": 2,
+  "minutos": 25,
+  "ingredientes": [
+   {
+    "alimento": "huevo",
+    "gramos": 200
+   },
+   {
+    "alimento": "papa",
+    "gramos": 200
+   },
+   {
+    "alimento": "espinaca",
+    "gramos": 60
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 40
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Cocina la papa en láminas con la cebolla hasta que ablande.",
+   "Agrega la espinaca y luego los huevos batidos.",
+   "Cuaja a fuego bajo y voltéala con un plato."
+  ],
+  "pasosEn": [
+   "Cook sliced potato with onion until soft.",
+   "Add the spinach, then the beaten eggs.",
+   "Set over low heat and flip with a plate."
+  ]
+ },
+ {
+  "id": "pollo_guisado_arroz",
+  "es": "Pollo guisado con arroz",
+  "en": "Stewed chicken with rice",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 45,
+  "ingredientes": [
+   {
+    "alimento": "muslo_pollo",
+    "gramos": 600
+   },
+   {
+    "alimento": "papa",
+    "gramos": 400
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 150
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 80
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 600
+   }
+  ],
+  "pasosEs": [
+   "Dora las presas y agrega el hogao.",
+   "Suma la papa y agua hasta la mitad; tapa 30 minutos.",
+   "Sirve con arroz."
+  ],
+  "pasosEn": [
+   "Brown the chicken pieces and add the hogao.",
+   "Add the potatoes and water halfway up; cover 30 minutes.",
+   "Serve with rice."
+  ]
+ },
+ {
+  "id": "sobrebarriga_criolla",
+  "es": "Sobrebarriga en salsa criolla",
+  "en": "Flank steak in creole sauce",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 90,
+  "ingredientes": [
+   {
+    "alimento": "sobrebarriga",
+    "gramos": 600
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 200
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 100
+   },
+   {
+    "alimento": "papa",
+    "gramos": 400
+   },
+   {
+    "alimento": "yuca",
+    "gramos": 300
+   }
+  ],
+  "pasosEs": [
+   "Cocina la sobrebarriga en agua con sal hasta que ablande (1 hora).",
+   "Báñala en el hogao y deja que se impregne.",
+   "Sírvela con papa y yuca cocidas."
+  ],
+  "pasosEn": [
+   "Simmer the flank steak in salted water until tender (1 hour).",
+   "Coat it with hogao and let it soak in.",
+   "Serve with boiled potato and cassava."
+  ]
+ },
+ {
+  "id": "ajiaco_pollo_light",
+  "es": "Ajiaco sin crema",
+  "en": "Light ajiaco",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 60,
+  "ingredientes": [
+   {
+    "alimento": "pechuga",
+    "gramos": 400
+   },
+   {
+    "alimento": "papa_criolla",
+    "gramos": 300
+   },
+   {
+    "alimento": "papa",
+    "gramos": 400
+   },
+   {
+    "alimento": "mazorca",
+    "gramos": 300
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 40
+   }
+  ],
+  "pasosEs": [
+   "Cocina el pollo con la cebolla larga y saca el pollo.",
+   "Agrega las papas y deja que la criolla se deshaga.",
+   "Desmecha el pollo, devuélvelo a la olla y sirve con la mazorca."
+  ],
+  "pasosEn": [
+   "Simmer the chicken with scallion, then remove it.",
+   "Add the potatoes and let the yellow potato break down.",
+   "Shred the chicken, return it to the pot and serve with corn."
+  ]
+ },
+ {
+  "id": "cazuela_frijoles",
+  "es": "Cazuela de fríjoles",
+  "en": "Bean casserole",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 30,
+  "ingredientes": [
+   {
+    "alimento": "frijol_cargamanto",
+    "gramos": 600
+   },
+   {
+    "alimento": "chicharron",
+    "gramos": 100
+   },
+   {
+    "alimento": "chorizo",
+    "gramos": 100
+   },
+   {
+    "alimento": "platano_maduro",
+    "gramos": 200
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 400
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Calienta los fríjoles espesos con el chorizo picado.",
+   "Sírvelos en cazuela con arroz, chicharrón y maduro encima.",
+   "Termina con el aguacate."
+  ],
+  "pasosEn": [
+   "Heat the thick beans with chopped chorizo.",
+   "Serve in bowls with rice, crackling and ripe plantain on top.",
+   "Finish with avocado."
+  ]
+ },
+ {
+  "id": "arroz_coco_pescado",
+  "es": "Pescado con arroz de coco",
+  "en": "Fish with coconut rice",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 2,
+  "minutos": 35,
+  "ingredientes": [
+   {
+    "alimento": "pargo",
+    "gramos": 400
+   },
+   {
+    "alimento": "arroz_coco",
+    "gramos": 300
+   },
+   {
+    "alimento": "patacon",
+    "gramos": 150
+   },
+   {
+    "alimento": "ensalada_verde",
+    "gramos": 100
+   },
+   {
+    "alimento": "limon",
+    "gramos": 20
+   }
+  ],
+  "pasosEs": [
+   "Sazona el pescado con sal y limón y fríelo u hornéalo.",
+   "Sírvelo con el arroz de coco, patacón y ensalada."
+  ],
+  "pasosEn": [
+   "Season the fish with salt and lime and fry or bake it.",
+   "Serve with coconut rice, plantain and salad."
+  ]
+ },
+ {
+  "id": "cerdo_salsa_bbq",
+  "es": "Costillas de cerdo en salsa BBQ",
+  "en": "BBQ pork ribs",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 90,
+  "ingredientes": [
+   {
+    "alimento": "costilla_cerdo",
+    "gramos": 800
+   },
+   {
+    "alimento": "salsa_bbq",
+    "gramos": 120
+   },
+   {
+    "alimento": "papa_horno",
+    "gramos": 400
+   },
+   {
+    "alimento": "ensalada_repollo",
+    "gramos": 200
+   }
+  ],
+  "pasosEs": [
+   "Hornea las costillas tapadas a 160 °C por una hora.",
+   "Úntalas de salsa y hornéalas destapadas 20 minutos más.",
+   "Sirve con papa al horno y ensalada de repollo."
+  ],
+  "pasosEn": [
+   "Bake the ribs covered at 160 °C for one hour.",
+   "Brush with sauce and bake uncovered 20 more minutes.",
+   "Serve with baked potato and coleslaw."
+  ]
+ },
+ {
+  "id": "trucha_almendras",
+  "es": "Trucha a la plancha con almendras",
+  "en": "Grilled trout with almonds",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "trucha",
+    "gramos": 200
+   },
+   {
+    "alimento": "almendras",
+    "gramos": 15
+   },
+   {
+    "alimento": "mantequilla",
+    "gramos": 5
+   },
+   {
+    "alimento": "papa",
+    "gramos": 150
+   },
+   {
+    "alimento": "esparragos",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Ásala a la plancha con la mantequilla, 4 minutos por lado.",
+   "Tuesta las almendras en la misma sartén.",
+   "Sirve con papa y espárragos."
+  ],
+  "pasosEn": [
+   "Grill it with the butter, 4 minutes per side.",
+   "Toast the almonds in the same pan.",
+   "Serve with potato and asparagus."
+  ]
+ },
+ {
+  "id": "pollo_curry_arroz",
+  "es": "Pollo al curry con arroz",
+  "en": "Chicken curry with rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 2,
+  "minutos": 30,
+  "ingredientes": [
+   {
+    "alimento": "pechuga_cruda",
+    "gramos": 300
+   },
+   {
+    "alimento": "leche_entera",
+    "gramos": 150
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 60
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 300
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Dora la cebolla y el pollo en cubos.",
+   "Agrega curry en polvo al gusto y la leche; cocina 10 minutos.",
+   "Sirve con arroz."
+  ],
+  "pasosEn": [
+   "Brown the onion and diced chicken.",
+   "Add curry powder to taste and the milk; simmer 10 minutes.",
+   "Serve with rice."
+  ]
+ },
+ {
+  "id": "lasana_carne",
+  "es": "Lasaña de carne",
+  "en": "Beef lasagna",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 6,
+  "minutos": 70,
+  "ingredientes": [
+   {
+    "alimento": "pasta",
+    "gramos": 300
+   },
+   {
+    "alimento": "carne_molida",
+    "gramos": 500
+   },
+   {
+    "alimento": "salsa_napolitana",
+    "gramos": 300
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 200
+   },
+   {
+    "alimento": "queso_parmesano",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Cocina la carne con la salsa napolitana.",
+   "Arma capas de pasta, carne y queso.",
+   "Hornea a 180 °C por 35 minutos."
+  ],
+  "pasosEn": [
+   "Cook the beef with the tomato sauce.",
+   "Layer pasta, beef and cheese.",
+   "Bake at 180 °C for 35 minutes."
+  ]
+ },
+ {
+  "id": "pechuga_gratinada",
+  "es": "Pechuga gratinada con champiñones",
+  "en": "Chicken breast au gratin with mushrooms",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 25,
+  "ingredientes": [
+   {
+    "alimento": "pechuga_cruda",
+    "gramos": 180
+   },
+   {
+    "alimento": "champinones",
+    "gramos": 80
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 40
+   },
+   {
+    "alimento": "crema_leche",
+    "gramos": 20
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 120
+   }
+  ],
+  "pasosEs": [
+   "Dora la pechuga y sácala.",
+   "Saltea los champiñones con la crema y vuelve a poner la pechuga.",
+   "Cubre con el queso y tapa hasta que se derrita."
+  ],
+  "pasosEn": [
+   "Brown the chicken and set aside.",
+   "Sauté the mushrooms with the cream and return the chicken.",
+   "Top with cheese and cover until melted."
+  ]
+ },
+ {
+  "id": "tilapia_horno_verduras",
+  "es": "Tilapia al horno con verduras",
+  "en": "Baked tilapia with vegetables",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 25,
+  "ingredientes": [
+   {
+    "alimento": "tilapia_cruda",
+    "gramos": 180
+   },
+   {
+    "alimento": "calabacin",
+    "gramos": 100
+   },
+   {
+    "alimento": "pimenton",
+    "gramos": 60
+   },
+   {
+    "alimento": "tomate_cherry",
+    "gramos": 80
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Pon el pescado y las verduras en una bandeja con el aceite.",
+   "Hornea a 200 °C por 18 minutos."
+  ],
+  "pasosEn": [
+   "Place the fish and vegetables on a tray with the oil.",
+   "Bake at 200 °C for 18 minutes."
+  ]
+ },
+ {
+  "id": "frijoles_negros_arroz",
+  "es": "Fríjoles negros con arroz y huevo",
+  "en": "Black beans with rice and egg",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "frijol_negro",
+    "gramos": 150
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   },
+   {
+    "alimento": "huevo_frito",
+    "gramos": 50
+   },
+   {
+    "alimento": "platano_maduro",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Calienta los fríjoles con un poco de hogao.",
+   "Sirve con el arroz, el huevo frito y el maduro."
+  ],
+  "pasosEn": [
+   "Heat the beans with a little hogao.",
+   "Serve with the rice, fried egg and ripe plantain."
+  ]
+ },
+ {
+  "id": "arroz_camarones",
+  "es": "Arroz con camarones",
+  "en": "Shrimp rice",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 35,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 600
+   },
+   {
+    "alimento": "camarones_crudos",
+    "gramos": 400
+   },
+   {
+    "alimento": "pimenton",
+    "gramos": 80
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 80
+   },
+   {
+    "alimento": "arveja",
+    "gramos": 100
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 15
+   }
+  ],
+  "pasosEs": [
+   "Sofríe la cebolla y el pimentón.",
+   "Agrega los camarones y cocina 3 minutos.",
+   "Mezcla con el arroz y las arvejas."
+  ],
+  "pasosEn": [
+   "Sauté the onion and bell pepper.",
+   "Add the shrimp and cook 3 minutes.",
+   "Fold in the rice and peas."
+  ]
+ },
+ {
+  "id": "ceviche_camaron",
+  "es": "Ceviche de camarón",
+  "en": "Shrimp ceviche",
+  "comidas": [
+   "algo",
+   "almuerzo"
+  ],
+  "porciones": 2,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "ceviche",
+    "gramos": 300
+   },
+   {
+    "alimento": "galletas_soda",
+    "gramos": 30
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Sirve el ceviche bien frío.",
+   "Acompaña con galletas de soda y aguacate."
+  ],
+  "pasosEn": [
+   "Serve the ceviche well chilled.",
+   "Add soda crackers and avocado."
+  ]
+ },
+ {
+  "id": "sudado_pollo_yuca",
+  "es": "Sudado de pollo con yuca",
+  "en": "Braised chicken with cassava",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 45,
+  "ingredientes": [
+   {
+    "alimento": "pierna_pollo",
+    "gramos": 600
+   },
+   {
+    "alimento": "yuca",
+    "gramos": 400
+   },
+   {
+    "alimento": "papa",
+    "gramos": 300
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 150
+   },
+   {
+    "alimento": "cebolla",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Haz el hogao y agrega el pollo.",
+   "Suma la yuca y la papa con agua hasta la mitad.",
+   "Tapa y cocina 35 minutos."
+  ],
+  "pasosEn": [
+   "Make the hogao and add the chicken.",
+   "Add the cassava and potato with water halfway up.",
+   "Cover and cook 35 minutes."
+  ]
+ },
+ {
+  "id": "mondongo",
+  "es": "Mondongo",
+  "en": "Tripe soup",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 6,
+  "minutos": 120,
+  "ingredientes": [
+   {
+    "alimento": "mondongo_carne",
+    "gramos": 900
+   },
+   {
+    "alimento": "cerdo",
+    "gramos": 300
+   },
+   {
+    "alimento": "papa",
+    "gramos": 500
+   },
+   {
+    "alimento": "yuca",
+    "gramos": 300
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 600
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 150
+   }
+  ],
+  "pasosEs": [
+   "Cocina el mondongo limpio hasta que ablande.",
+   "Agrega el cerdo, la papa, la yuca y el hogao.",
+   "Sirve con arroz y aguacate."
+  ],
+  "pasosEn": [
+   "Simmer the cleaned tripe until tender.",
+   "Add the pork, potato, cassava and hogao.",
+   "Serve with rice and avocado."
+  ]
+ },
+ {
+  "id": "cuchuco_trigo",
+  "es": "Sopa de verduras con costilla",
+  "en": "Rib and vegetable soup",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 60,
+  "ingredientes": [
+   {
+    "alimento": "costilla_res",
+    "gramos": 500
+   },
+   {
+    "alimento": "papa",
+    "gramos": 300
+   },
+   {
+    "alimento": "arveja",
+    "gramos": 150
+   },
+   {
+    "alimento": "habas",
+    "gramos": 100
+   },
+   {
+    "alimento": "repollo",
+    "gramos": 100
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Cocina la costilla en agua con sal 40 minutos.",
+   "Agrega las verduras y cocina hasta que ablanden."
+  ],
+  "pasosEn": [
+   "Simmer the rib in salted water for 40 minutes.",
+   "Add the vegetables and cook until tender."
+  ]
+ },
+ {
+  "id": "tamal_tolimense",
+  "es": "Tamal con chocolate",
+  "en": "Tamal with hot chocolate",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "tamal",
+    "gramos": 250
+   },
+   {
+    "alimento": "chocolate_caliente",
+    "gramos": 250
+   },
+   {
+    "alimento": "pan_blanco",
+    "gramos": 40
+   }
+  ],
+  "pasosEs": [
+   "Calienta el tamal en agua hirviendo 15 minutos.",
+   "Sírvelo con chocolate y pan."
+  ],
+  "pasosEn": [
+   "Heat the tamal in boiling water for 15 minutes.",
+   "Serve with hot chocolate and bread."
+  ]
+ },
+ {
+  "id": "empanadas_pollo_aji",
+  "es": "Empanadas de pollo",
+  "en": "Chicken empanadas",
+  "comidas": [
+   "algo"
+  ],
+  "porciones": 2,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "empanada_pollo",
+    "gramos": 200
+   },
+   {
+    "alimento": "limon",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Calienta las empanadas en el horno o la freidora de aire.",
+   "Sírvelas con limón y ají."
+  ],
+  "pasosEn": [
+   "Warm the empanadas in the oven or air fryer.",
+   "Serve with lime and hot sauce."
+  ]
+ },
+ {
+  "id": "quinua_verduras",
+  "es": "Quinua salteada con verduras",
+  "en": "Quinoa stir-fry with vegetables",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "quinua",
+    "gramos": 150
+   },
+   {
+    "alimento": "verduras_mixtas",
+    "gramos": 120
+   },
+   {
+    "alimento": "huevo",
+    "gramos": 50
+   },
+   {
+    "alimento": "salsa_soya",
+    "gramos": 10
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Saltea las verduras con el aceite.",
+   "Agrega la quinua cocida, la soya y el huevo revuelto."
+  ],
+  "pasosEn": [
+   "Stir-fry the vegetables in the oil.",
+   "Add the cooked quinoa, soy sauce and scrambled egg."
+  ]
+ },
+ {
+  "id": "tofu_salteado",
+  "es": "Tofu salteado con arroz",
+  "en": "Tofu stir-fry with rice",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "tofu",
+    "gramos": 150
+   },
+   {
+    "alimento": "brocoli",
+    "gramos": 80
+   },
+   {
+    "alimento": "pimenton",
+    "gramos": 60
+   },
+   {
+    "alimento": "salsa_soya",
+    "gramos": 15
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 150
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Dora el tofu en cubos.",
+   "Agrega las verduras y la soya, y saltea 5 minutos.",
+   "Sirve sobre el arroz."
+  ],
+  "pasosEn": [
+   "Brown the diced tofu.",
+   "Add the vegetables and soy sauce and stir-fry 5 minutes.",
+   "Serve over rice."
+  ]
+ },
+ {
+  "id": "garbanzos_espinaca",
+  "es": "Garbanzos con espinaca",
+  "en": "Chickpeas with spinach",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 2,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "garbanzos",
+    "gramos": 300
+   },
+   {
+    "alimento": "espinaca",
+    "gramos": 150
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 100
+   },
+   {
+    "alimento": "ajo",
+    "gramos": 5
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Sofríe el ajo y el tomate.",
+   "Agrega los garbanzos y la espinaca hasta que se marchite."
+  ],
+  "pasosEn": [
+   "Sauté the garlic and tomato.",
+   "Add the chickpeas and spinach until wilted."
+  ]
+ },
+ {
+  "id": "pollo_horno_batata",
+  "es": "Pollo al horno con batata",
+  "en": "Roast chicken with sweet potato",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 2,
+  "minutos": 45,
+  "ingredientes": [
+   {
+    "alimento": "pierna_pollo",
+    "gramos": 400
+   },
+   {
+    "alimento": "batata",
+    "gramos": 300
+   },
+   {
+    "alimento": "aceite_oliva",
+    "gramos": 10
+   },
+   {
+    "alimento": "ensalada_verde",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Sazona el pollo y la batata en trozos con el aceite.",
+   "Hornea a 200 °C por 40 minutos.",
+   "Sirve con ensalada."
+  ],
+  "pasosEn": [
+   "Season the chicken and sweet potato chunks with the oil.",
+   "Bake at 200 °C for 40 minutes.",
+   "Serve with salad."
+  ]
+ },
+ {
+  "id": "hamburguesa_pollo",
+  "es": "Hamburguesa de pollo casera",
+  "en": "Homemade chicken burger",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "pollo_molido",
+    "gramos": 150
+   },
+   {
+    "alimento": "pan_blanco",
+    "gramos": 70
+   },
+   {
+    "alimento": "lechuga",
+    "gramos": 20
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 40
+   },
+   {
+    "alimento": "queso_amarillo",
+    "gramos": 20
+   }
+  ],
+  "pasosEs": [
+   "Forma la carne y ásala 5 minutos por lado.",
+   "Arma el pan con lechuga, tomate y queso."
+  ],
+  "pasosEn": [
+   "Shape the patty and grill 5 minutes per side.",
+   "Build the bun with lettuce, tomato and cheese."
+  ]
+ },
+ {
+  "id": "burrito_frijol",
+  "es": "Burrito de fríjol y pollo",
+  "en": "Bean and chicken burrito",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "tortilla_trigo",
+    "gramos": 70
+   },
+   {
+    "alimento": "frijoles_refritos",
+    "gramos": 100
+   },
+   {
+    "alimento": "pechuga",
+    "gramos": 80
+   },
+   {
+    "alimento": "queso_amarillo",
+    "gramos": 25
+   },
+   {
+    "alimento": "salsa_mexicana",
+    "gramos": 40
+   }
+  ],
+  "pasosEs": [
+   "Calienta la tortilla.",
+   "Rellénala con fríjoles, pollo, queso y salsa, y enróllala."
+  ],
+  "pasosEn": [
+   "Warm the tortilla.",
+   "Fill with beans, chicken, cheese and salsa, and roll it up."
+  ]
+ },
+ {
+  "id": "pasta_pesto_pollo",
+  "es": "Pasta al pesto con pollo",
+  "en": "Pesto pasta with chicken",
+  "comidas": [
+   "almuerzo",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "pasta",
+    "gramos": 180
+   },
+   {
+    "alimento": "pesto",
+    "gramos": 30
+   },
+   {
+    "alimento": "pechuga",
+    "gramos": 100
+   },
+   {
+    "alimento": "tomate_cherry",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Cocina la pasta y escúrrela.",
+   "Mézclala con el pesto, el pollo y los tomates."
+  ],
+  "pasosEn": [
+   "Boil and drain the pasta.",
+   "Toss with the pesto, chicken and tomatoes."
+  ]
+ },
+ {
+  "id": "sopa_frijol_casera",
+  "es": "Sopa de fríjol",
+  "en": "Bean soup",
+  "comidas": [
+   "almuerzo"
+  ],
+  "porciones": 4,
+  "minutos": 30,
+  "ingredientes": [
+   {
+    "alimento": "sopa_frijol",
+    "gramos": 1000
+   },
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 300
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Calienta la sopa y ajusta la sal.",
+   "Sirve con arroz y aguacate."
+  ],
+  "pasosEn": [
+   "Heat the soup and adjust the salt.",
+   "Serve with rice and avocado."
+  ]
+ },
+ {
+  "id": "crema_tomate_queso",
+  "es": "Crema de tomate con queso",
+  "en": "Tomato soup with cheese",
+  "comidas": [
+   "cena"
+  ],
+  "porciones": 2,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "crema_tomate",
+    "gramos": 500
+   },
+   {
+    "alimento": "queso_campesino",
+    "gramos": 60
+   },
+   {
+    "alimento": "pan_tostado",
+    "gramos": 40
+   }
+  ],
+  "pasosEs": [
+   "Calienta la crema.",
+   "Sírvela con el queso en cubos y pan tostado."
+  ],
+  "pasosEn": [
+   "Heat the soup.",
+   "Serve with cubed cheese and toast."
+  ]
+ },
+ {
+  "id": "calentado_huevo",
+  "es": "Calentado con huevo",
+  "en": "Calentado with egg",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 120
+   },
+   {
+    "alimento": "frijol_rojo",
+    "gramos": 100
+   },
+   {
+    "alimento": "huevo_frito",
+    "gramos": 50
+   },
+   {
+    "alimento": "arepa",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Calienta el arroz con los fríjoles en la sartén.",
+   "Sirve con el huevo y la arepa."
+  ],
+  "pasosEn": [
+   "Fry the rice and beans together.",
+   "Serve with the egg and an arepa."
+  ]
+ },
+ {
+  "id": "avena_frutos_rojos",
+  "es": "Avena con frutos rojos",
+  "en": "Oats with berries",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "avena",
+    "gramos": 50
+   },
+   {
+    "alimento": "leche_semi",
+    "gramos": 250
+   },
+   {
+    "alimento": "fresas",
+    "gramos": 80
+   },
+   {
+    "alimento": "moras",
+    "gramos": 40
+   },
+   {
+    "alimento": "miel",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Cocina la avena en la leche 5 minutos.",
+   "Sirve con las frutas y la miel."
+  ],
+  "pasosEn": [
+   "Cook the oats in the milk for 5 minutes.",
+   "Top with the fruit and honey."
+  ]
+ },
+ {
+  "id": "batido_proteina_banano",
+  "es": "Batido de proteína y banano",
+  "en": "Protein banana shake",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "leche_semi",
+    "gramos": 250
+   },
+   {
+    "alimento": "banano",
+    "gramos": 100
+   },
+   {
+    "alimento": "proteina_whey",
+    "gramos": 30
+   },
+   {
+    "alimento": "avena",
+    "gramos": 30
+   },
+   {
+    "alimento": "mantequilla_mani",
+    "gramos": 15
+   }
+  ],
+  "pasosEs": [
+   "Licúa todo con hielo."
+  ],
+  "pasosEn": [
+   "Blend everything with ice."
+  ]
+ },
+ {
+  "id": "jugo_naranja_apio",
+  "es": "Jugo verde de naranja y apio",
+  "en": "Orange and celery green juice",
+  "comidas": [
+   "desayuno",
+   "media_manana"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "jugo_naranja",
+    "gramos": 250
+   },
+   {
+    "alimento": "apio",
+    "gramos": 40
+   },
+   {
+    "alimento": "espinaca",
+    "gramos": 30
+   },
+   {
+    "alimento": "jengibre",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Licúa todo y sírvelo sin colar."
+  ],
+  "pasosEn": [
+   "Blend everything and serve unstrained."
+  ]
+ },
+ {
+  "id": "sandwich_atun_huevo",
+  "es": "Sándwich de atún y huevo",
+  "en": "Tuna and egg sandwich",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "pan_integral",
+    "gramos": 70
+   },
+   {
+    "alimento": "atun",
+    "gramos": 80
+   },
+   {
+    "alimento": "huevo",
+    "gramos": 50
+   },
+   {
+    "alimento": "lechuga",
+    "gramos": 15
+   },
+   {
+    "alimento": "mayonesa_light",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Mezcla el atún con la mayonesa.",
+   "Arma el sándwich con el huevo cocido en rodajas y la lechuga."
+  ],
+  "pasosEn": [
+   "Mix the tuna with the mayo.",
+   "Build the sandwich with sliced boiled egg and lettuce."
+  ]
+ },
+ {
+  "id": "changua_deslactosada",
+  "es": "Changua con leche deslactosada",
+  "en": "Lactose-free changua",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "leche_deslactosada",
+    "gramos": 300
+   },
+   {
+    "alimento": "huevo",
+    "gramos": 100
+   },
+   {
+    "alimento": "cebolla_larga",
+    "gramos": 10
+   },
+   {
+    "alimento": "pan_blanco",
+    "gramos": 40
+   },
+   {
+    "alimento": "cilantro",
+    "gramos": 3
+   }
+  ],
+  "pasosEs": [
+   "Hierve la leche con agua y la cebolla larga.",
+   "Rompe los huevos dentro y deja que cuajen.",
+   "Sirve con cilantro y pan."
+  ],
+  "pasosEn": [
+   "Simmer the milk with water and scallion.",
+   "Crack in the eggs and let them set.",
+   "Serve with cilantro and bread."
+  ]
+ },
+ {
+  "id": "arepa_huevo_jamon_queso",
+  "es": "Arepa con huevo, jamón y queso",
+  "en": "Arepa with egg, ham and cheese",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arepa",
+    "gramos": 80
+   },
+   {
+    "alimento": "huevo_revuelto",
+    "gramos": 100
+   },
+   {
+    "alimento": "jamon",
+    "gramos": 30
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 25
+   }
+  ],
+  "pasosEs": [
+   "Asa la arepa.",
+   "Rellénala con el huevo, el jamón y el queso."
+  ],
+  "pasosEn": [
+   "Toast the arepa.",
+   "Fill with the egg, ham and cheese."
+  ]
+ },
+ {
+  "id": "tostadas_francesas_avena",
+  "es": "Tostadas francesas de avena",
+  "en": "Oat French toast",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "pan_integral",
+    "gramos": 70
+   },
+   {
+    "alimento": "huevo",
+    "gramos": 50
+   },
+   {
+    "alimento": "leche_semi",
+    "gramos": 60
+   },
+   {
+    "alimento": "avena",
+    "gramos": 20
+   },
+   {
+    "alimento": "banano",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Bate el huevo con la leche y la avena.",
+   "Pasa el pan por la mezcla y dóralo en la sartén.",
+   "Sirve con banano."
+  ],
+  "pasosEn": [
+   "Whisk the egg with milk and oats.",
+   "Dip the bread and brown it in the pan.",
+   "Serve with banana."
+  ]
+ },
+ {
+  "id": "sandwich_jamon_queso_espinaca",
+  "es": "Sándwich de jamón, queso y espinaca",
+  "en": "Ham, cheese and spinach sandwich",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "pan_integral",
+    "gramos": 70
+   },
+   {
+    "alimento": "jamon",
+    "gramos": 40
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 30
+   },
+   {
+    "alimento": "espinaca",
+    "gramos": 20
+   }
+  ],
+  "pasosEs": [
+   "Arma el sándwich y caliéntalo en la sartén hasta que se derrita el queso."
+  ],
+  "pasosEn": [
+   "Build the sandwich and toast it in the pan until the cheese melts."
+  ]
+ },
+ {
+  "id": "kefir_fruta",
+  "es": "Kéfir con fruta y avena",
+  "en": "Kefir with fruit and oats",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "kefir",
+    "gramos": 250
+   },
+   {
+    "alimento": "fresas",
+    "gramos": 80
+   },
+   {
+    "alimento": "avena",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Sirve el kéfir con la fruta picada y la avena."
+  ],
+  "pasosEn": [
+   "Serve the kefir with chopped fruit and oats."
+  ]
+ },
+ {
+  "id": "huevos_rancheros",
+  "es": "Huevos rancheros",
+  "en": "Huevos rancheros",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "huevo_frito",
+    "gramos": 100
+   },
+   {
+    "alimento": "tortilla_maiz",
+    "gramos": 60
+   },
+   {
+    "alimento": "salsa_mexicana",
+    "gramos": 60
+   },
+   {
+    "alimento": "frijoles_refritos",
+    "gramos": 80
+   }
+  ],
+  "pasosEs": [
+   "Calienta las tortillas y los fríjoles.",
+   "Pon los huevos encima y báñalos con la salsa."
+  ],
+  "pasosEn": [
+   "Warm the tortillas and beans.",
+   "Top with the eggs and the salsa."
+  ]
+ },
+ {
+  "id": "calentado_paisa",
+  "es": "Calentado paisa",
+  "en": "Paisa calentado",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "arroz_blanco",
+    "gramos": 120
+   },
+   {
+    "alimento": "frijol_cargamanto",
+    "gramos": 100
+   },
+   {
+    "alimento": "chorizo",
+    "gramos": 50
+   },
+   {
+    "alimento": "huevo_frito",
+    "gramos": 50
+   },
+   {
+    "alimento": "arepa",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Calienta el arroz con los fríjoles y el chorizo picado.",
+   "Sirve con huevo y arepa."
+  ],
+  "pasosEn": [
+   "Fry the rice with the beans and chopped chorizo.",
+   "Serve with egg and arepa."
+  ]
+ },
+ {
+  "id": "buñuelo_chocolate",
+  "es": "Buñuelos con chocolate",
+  "en": "Buñuelos with hot chocolate",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "bunuelo",
+    "gramos": 80
+   },
+   {
+    "alimento": "chocolate_caliente",
+    "gramos": 250
+   }
+  ],
+  "pasosEs": [
+   "Sirve los buñuelos con el chocolate caliente."
+  ],
+  "pasosEn": [
+   "Serve the buñuelos with hot chocolate."
+  ]
+ },
+ {
+  "id": "pan_queso_cafe",
+  "es": "Pandebono con café con leche",
+  "en": "Cheese bread with coffee",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "pan_queso",
+    "gramos": 80
+   },
+   {
+    "alimento": "cafe_leche",
+    "gramos": 250
+   }
+  ],
+  "pasosEs": [
+   "Calienta el pan y sírvelo con el café."
+  ],
+  "pasosEn": [
+   "Warm the bread and serve with the coffee."
+  ]
+ },
+ {
+  "id": "omelet_champinon_queso",
+  "es": "Omelet de champiñones y queso",
+  "en": "Mushroom and cheese omelette",
+  "comidas": [
+   "desayuno",
+   "cena"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "huevo",
+    "gramos": 100
+   },
+   {
+    "alimento": "champinones",
+    "gramos": 60
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 25
+   },
+   {
+    "alimento": "aceite",
+    "gramos": 5
+   }
+  ],
+  "pasosEs": [
+   "Saltea los champiñones.",
+   "Agrega los huevos batidos y el queso, y dobla el omelet."
+  ],
+  "pasosEn": [
+   "Sauté the mushrooms.",
+   "Add the beaten eggs and cheese and fold the omelette."
+  ]
+ },
+ {
+  "id": "yogur_chia_mango",
+  "es": "Yogur con chía y mango",
+  "en": "Yogurt with chia and mango",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "yogur_griego",
+    "gramos": 170
+   },
+   {
+    "alimento": "chia",
+    "gramos": 10
+   },
+   {
+    "alimento": "mango",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Mezcla el yogur con la chía y pon el mango encima."
+  ],
+  "pasosEn": [
+   "Mix the yogurt with chia and top with mango."
+  ]
+ },
+ {
+  "id": "hummus_zanahoria_apio",
+  "es": "Hummus con zanahoria y apio",
+  "en": "Hummus with carrot and celery",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "hummus",
+    "gramos": 60
+   },
+   {
+    "alimento": "zanahoria",
+    "gramos": 80
+   },
+   {
+    "alimento": "apio",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Corta las verduras en bastones y sírvelas con el hummus."
+  ],
+  "pasosEn": [
+   "Cut the vegetables into sticks and serve with hummus."
+  ]
+ },
+ {
+  "id": "manzana_mani",
+  "es": "Manzana con mantequilla de maní",
+  "en": "Apple with peanut butter",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 3,
+  "ingredientes": [
+   {
+    "alimento": "manzana",
+    "gramos": 150
+   },
+   {
+    "alimento": "mantequilla_mani",
+    "gramos": 20
+   }
+  ],
+  "pasosEs": [
+   "Corta la manzana y úntala con la mantequilla de maní."
+  ],
+  "pasosEn": [
+   "Slice the apple and spread with peanut butter."
+  ]
+ },
+ {
+  "id": "queso_bocadillo",
+  "es": "Queso con bocadillo",
+  "en": "Cheese with guava paste",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 2,
+  "ingredientes": [
+   {
+    "alimento": "queso_campesino",
+    "gramos": 50
+   },
+   {
+    "alimento": "bocadillo",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Sirve el queso con el bocadillo."
+  ],
+  "pasosEn": [
+   "Serve the cheese with the guava paste."
+  ]
+ },
+ {
+  "id": "mezcla_nueces_fruta",
+  "es": "Mezcla de nueces y uvas pasas",
+  "en": "Nut and raisin mix",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 1,
+  "ingredientes": [
+   {
+    "alimento": "mezcla_nueces",
+    "gramos": 30
+   },
+   {
+    "alimento": "uvas_pasas",
+    "gramos": 20
+   }
+  ],
+  "pasosEs": [
+   "Sirve una porción."
+  ],
+  "pasosEn": [
+   "Serve one portion."
+  ]
+ },
+ {
+  "id": "tostadas_arroz_aguacate",
+  "es": "Tortas de arroz con aguacate",
+  "en": "Rice cakes with avocado",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "tortas_arroz",
+    "gramos": 20
+   },
+   {
+    "alimento": "aguacate",
+    "gramos": 60
+   },
+   {
+    "alimento": "tomate",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Unta las tortas con aguacate y pon el tomate encima."
+  ],
+  "pasosEn": [
+   "Spread the rice cakes with avocado and top with tomato."
+  ]
+ },
+ {
+  "id": "cottage_pina",
+  "es": "Queso cottage con piña",
+  "en": "Cottage cheese with pineapple",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 3,
+  "ingredientes": [
+   {
+    "alimento": "queso_cottage",
+    "gramos": 120
+   },
+   {
+    "alimento": "pina",
+    "gramos": 100
+   }
+  ],
+  "pasosEs": [
+   "Sirve el queso con la piña en cubos."
+  ],
+  "pasosEn": [
+   "Serve the cheese with diced pineapple."
+  ]
+ },
+ {
+  "id": "edamame_sal",
+  "es": "Edamame con sal y limón",
+  "en": "Edamame with salt and lime",
+  "comidas": [
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 8,
+  "ingredientes": [
+   {
+    "alimento": "edamame",
+    "gramos": 120
+   },
+   {
+    "alimento": "limon",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Cocina el edamame 5 minutos y sírvelo con sal y limón."
+  ],
+  "pasosEn": [
+   "Boil the edamame 5 minutes; serve with salt and lime."
+  ]
+ },
+ {
+  "id": "papaya_limon",
+  "es": "Papaya con limón",
+  "en": "Papaya with lime",
+  "comidas": [
+   "desayuno",
+   "media_manana"
+  ],
+  "porciones": 1,
+  "minutos": 3,
+  "ingredientes": [
+   {
+    "alimento": "papaya",
+    "gramos": 200
+   },
+   {
+    "alimento": "limon",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Sirve la papaya en cubos con limón."
+  ],
+  "pasosEn": [
+   "Serve diced papaya with lime."
+  ]
+ },
+ {
+  "id": "avena_fria",
+  "es": "Avena fría colombiana",
+  "en": "Colombian cold oat drink",
+  "comidas": [
+   "media_manana",
+   "algo"
+  ],
+  "porciones": 2,
+  "minutos": 15,
+  "ingredientes": [
+   {
+    "alimento": "avena",
+    "gramos": 60
+   },
+   {
+    "alimento": "leche_entera",
+    "gramos": 500
+   },
+   {
+    "alimento": "panela",
+    "gramos": 30
+   }
+  ],
+  "pasosEs": [
+   "Cocina la avena en la leche con la panela 10 minutos.",
+   "Enfríala y licúala; sírvela con hielo."
+  ],
+  "pasosEn": [
+   "Cook the oats in milk with panela for 10 minutes.",
+   "Chill, blend and serve over ice."
+  ]
+ },
+ {
+  "id": "salpicon_queso",
+  "es": "Ensalada de frutas con queso",
+  "en": "Fruit salad with cheese",
+  "comidas": [
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "ensalada_frutas",
+    "gramos": 200
+   },
+   {
+    "alimento": "queso_mozzarella",
+    "gramos": 25
+   },
+   {
+    "alimento": "yogur",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Sirve la fruta con el yogur y el queso rallado."
+  ],
+  "pasosEn": [
+   "Serve the fruit with yogurt and grated cheese."
+  ]
+ },
+ {
+  "id": "arepa_queso_cafe",
+  "es": "Arepa con queso y café",
+  "en": "Arepa with cheese and coffee",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "arepa",
+    "gramos": 80
+   },
+   {
+    "alimento": "queso_campesino",
+    "gramos": 40
+   },
+   {
+    "alimento": "cafe_leche",
+    "gramos": 200
+   }
+  ],
+  "pasosEs": [
+   "Asa la arepa con el queso encima.",
+   "Sírvela con el café."
+  ],
+  "pasosEn": [
+   "Toast the arepa with cheese on top.",
+   "Serve with the coffee."
+  ]
+ },
+ {
+  "id": "maduro_queso",
+  "es": "Maduro con queso",
+  "en": "Ripe plantain with cheese",
+  "comidas": [
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 20,
+  "ingredientes": [
+   {
+    "alimento": "platano_maduro",
+    "gramos": 150
+   },
+   {
+    "alimento": "queso_campesino",
+    "gramos": 40
+   }
+  ],
+  "pasosEs": [
+   "Asa el maduro hasta que dore.",
+   "Ábrelo y rellénalo con el queso."
+  ],
+  "pasosEn": [
+   "Roast the plantain until golden.",
+   "Split it and fill with the cheese."
+  ]
+ },
+ {
+  "id": "pudin_chia",
+  "es": "Pudín de chía",
+  "en": "Chia pudding",
+  "comidas": [
+   "desayuno",
+   "algo"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "chia",
+    "gramos": 25
+   },
+   {
+    "alimento": "bebida_almendras",
+    "gramos": 200
+   },
+   {
+    "alimento": "fresas",
+    "gramos": 60
+   }
+  ],
+  "pasosEs": [
+   "Mezcla la chía con la bebida de almendras y déjala en la nevera toda la noche.",
+   "Sirve con fresas."
+  ],
+  "pasosEn": [
+   "Mix the chia with almond milk and chill overnight.",
+   "Serve with strawberries."
+  ]
+ },
+ {
+  "id": "waffles_fruta",
+  "es": "Waffles con fruta y yogur",
+  "en": "Waffles with fruit and yogurt",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 10,
+  "ingredientes": [
+   {
+    "alimento": "waffle",
+    "gramos": 75
+   },
+   {
+    "alimento": "yogur_griego",
+    "gramos": 100
+   },
+   {
+    "alimento": "arandanos",
+    "gramos": 50
+   },
+   {
+    "alimento": "miel",
+    "gramos": 10
+   }
+  ],
+  "pasosEs": [
+   "Calienta los waffles y sírvelos con yogur, arándanos y miel."
+  ],
+  "pasosEn": [
+   "Warm the waffles and top with yogurt, blueberries and honey."
+  ]
+ },
+ {
+  "id": "bagel_queso_crema",
+  "es": "Bagel con queso crema y salmón",
+  "en": "Bagel with cream cheese and salmon",
+  "comidas": [
+   "desayuno"
+  ],
+  "porciones": 1,
+  "minutos": 5,
+  "ingredientes": [
+   {
+    "alimento": "bagel",
+    "gramos": 100
+   },
+   {
+    "alimento": "queso_crema",
+    "gramos": 30
+   },
+   {
+    "alimento": "salmon",
+    "gramos": 50
+   }
+  ],
+  "pasosEs": [
+   "Tuesta el bagel y úntalo con el queso; pon el salmón encima."
+  ],
+  "pasosEn": [
+   "Toast the bagel, spread with cream cheese and top with salmon."
+  ]
  }
 ]

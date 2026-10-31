@@ -44,7 +44,7 @@ Grupos: `granos`, `tuberculos`, `legumbres`, `carnes`, `pescados`, `lacteos`, `f
 
 ## Agregar una receta de ejemplo
 
-En `src/main/assets/datos/recetas.json`: `id` (no se cambia después), `es`, `en`, `comidas` (de `desayuno`, `media_manana`, `almuerzo`, `algo`, `cena`), `porciones`, `minutos`, `ingredientes` (id de la base y gramos **de toda la olla**) y `pasosEs` / `pasosEn`. Las calorías se calculan solas. Que sean recetas escritas para la app (no copiadas de un libro o una página).
+En `src/main/assets/datos/recetas.json`: `id` (no se cambia después), `es`, `en`, `comidas` (de `desayuno`, `media_manana`, `almuerzo`, `algo`, `cena`), `porciones`, `minutos`, `ingredientes` (id de la base y gramos **de toda la olla**) y `pasosEs` / `pasosEn`. Las calorías se calculan solas. Que sean recetas escritas para la app (no copiadas de un libro o una página). Para sumar varias de una vez: agregarlas en `herramientas/recetas_nuevas.py` y correrlo (revisa que los ingredientes existan y no repite ids ni nombres).
 
 ## Importar recetas propias (privadas)
 

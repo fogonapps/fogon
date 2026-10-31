@@ -6,7 +6,7 @@
 <li><b>Build your plate:</b> add ingredients one after another and save it as a recipe to repeat it with one tap.</li>
 <li><b>Values from USDA FoodData Central,</b> and every food says where they come from.</li>
 <li><b>Optional barcode lookup:</b> scan the package and find the product on Open Food Facts, or type in the label yourself.</li>
-<li><b>55 recipes</b> (ajiaco, sancocho, bandeja paisa, changua, eggs with mushrooms…) with calories per serving. Create your own or import them.</li>
+<li><b>129 recipes</b> (ajiaco, sancocho, bandeja paisa, mondongo, bean casserole, changua, eggs with mushrooms…) with calories per serving. Create your own or import them.</li>
 <li><b>Weekly menu</b>, with alternating weeks A and B if you like, and a <b>shopping list</b> built from it.</li>
 <li><b>Goals</b> calculated from your details, or set by hand if you follow a dietitian’s plan.</li>
 <li><b>Progress:</b> streak, weekly average, the last 14 days and your weight curve.</li>
