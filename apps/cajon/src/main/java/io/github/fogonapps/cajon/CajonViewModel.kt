@@ -120,6 +120,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val busqueda: StateFlow<Busqueda> = _busqueda
 
     /** La discografía del artista que se está viendo (de MusicBrainz). */
+    /** Cómo va "Buscar portadas" (null si no está corriendo). */
+    data class Completando(val hechas: Int, val total: Int, val encontradas: Int)
+    private val _completando = MutableStateFlow<Completando?>(null)
+    val completando: StateFlow<Completando?> = _completando
+    private var trabajoPortadas: Job? = null
+
     /** Las obras de la persona que se está viendo (discografía, libros o filmografía): null mientras llegan. */
     private val _discografia = MutableStateFlow<Pair<String, List<Encontrado>?>?>(null)
     val discografia: StateFlow<Pair<String, List<Encontrado>?>?> = _discografia
@@ -400,6 +406,48 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (tmdb && caja.claveTmdb == null || o.fuente.isEmpty() || o.traida <= 0) return
         // Lo de TMDB, cada 6 meses; lo agregado antes de la 1.2 (sin nota del público), una vez.
         if (tmdb && ahora() - o.traida > SEIS_MESES || o.publica == null && o.traida < ANTES_DE_NOTAS) actualizarDatos(o.id, callado = true)
+    }
+
+    /* ----- Portadas que faltan ----- */
+
+    /**
+     * Busca afuera lo que llegó sin fuente (a mano o de otra app): películas, series y animes en TMDB (si hay
+     * clave) y álbumes en MusicBrainz. Solo enlaza si es la misma obra ([Logica.esLaMisma]); entonces pone la
+     * fuente, la portada y la nota del público, sin tocar lo de la persona. Los libros van sin portada.
+     */
+    fun buscarPortadas() {
+        if (trabajoPortadas?.isActive == true) { trabajoPortadas?.cancel(); _completando.value = null; return }
+        val clave = caja.claveTmdb
+        val pendientes = _estado.value?.vivas.orEmpty()
+            .filter { it.fuente.isEmpty() && it.tipo != Tipos.LIBRO && (it.tipo == Tipos.ALBUM || clave != null) }
+        if (pendientes.isEmpty()) { avisar(tx(R.string.aviso_portadas_nada)); return }
+        trabajoPortadas = viewModelScope.launch {
+            var encontradas = 0
+            _completando.value = Completando(0, pendientes.size, 0)
+            try {
+                pendientes.forEachIndexed { i, o ->
+                    val candidatos = runCatching {
+                        if (o.tipo == Tipos.ALBUM) MusicBrainz.buscarAlbum(o.titulo, o.creador)
+                        else {
+                            val t = Tmdb(clave!!)
+                            // Un "anime" puede no ser japonés (TMDB solo los marca así): también se busca como serie y película.
+                            val tipos = if (o.tipo == Tipos.ANIME) listOf(Tipos.ANIME, Tipos.SERIE, Tipos.PELICULA) else listOf(o.tipo)
+                            tipos.flatMap { t.buscar(o.titulo, it, idioma()) }
+                        }
+                    }.getOrElse { if (it is ClaveMala || it is SinRed) throw it else emptyList() }
+                    val r = candidatos.firstOrNull { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
+                    if (r != null) {
+                        encontradas++
+                        val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
+                        cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
+                    }
+                    _completando.value = Completando(i + 1, pendientes.size, encontradas)
+                }
+                avisar(txPlural(R.plurals.aviso_portadas, encontradas, encontradas))
+            } catch (x: ClaveMala) { avisar(tx(R.string.buscar_tmdb_mala))
+            } catch (x: SinRed) { avisar(tx(R.string.buscar_sin_red))
+            } finally { _completando.value = null }
+        }
     }
 
     /* ----- Diario ----- */

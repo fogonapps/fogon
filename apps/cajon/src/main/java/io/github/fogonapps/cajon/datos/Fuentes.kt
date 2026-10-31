@@ -333,6 +333,14 @@ object MusicBrainz {
             caratula(g["id"].texto(), 250), "mb:rg:" + g["id"].texto(), tipos.filter { it.isNotBlank() }.joinToString(" · "))
     }
 
+    /** Un álbum por su título y su artista (para completar lo que llegó sin fuente): los candidatos más parecidos. */
+    suspend fun buscarAlbum(titulo: String, artista: String): List<Encontrado> {
+        fun limpio(s: String) = s.replace(Regex("[\"\\\\]"), " ").trim()
+        val q = "releasegroup:\"${limpio(titulo)}\"" + if (artista.isNotBlank()) " AND artist:\"${limpio(artista)}\"" else ""
+        return pedir("release-group", "query" to q, "limit" to "5").arr("release-groups").map { it.jsonObject }
+            .filter { (it["score"].entero() ?: 0) >= 80 }.map { deGrupo(it) }
+    }
+
     /** Ordena por relevancia; entre los igual de relevantes, los álbumes antes que los sencillos y lo conocido (más ediciones) primero. */
     suspend fun buscarAlbumes(texto: String): List<Encontrado> =
         pedir("release-group", "query" to texto, "limit" to "40").arr("release-groups").map { it.jsonObject }

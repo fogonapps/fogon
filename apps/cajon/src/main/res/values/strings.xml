@@ -365,4 +365,15 @@
   <string name="sus_libros">Books</string>
   <string name="filmografia">Filmography</string>
   <string name="personas_vacio">No one saved yet. Search for them and save them to see their work.</string>
+  <string name="portadas">Missing covers</string>
+  <string name="portadas_pista">What you added by hand or brought from another app has no cover. The app looks it up on TMDB (films, series and anime, with your key) and MusicBrainz (albums), and only links it when the title, year and artist match. Books have no covers. It can take a while: MusicBrainz answers one request per second.</string>
+  <string name="buscar_portadas">Find covers</string>
+  <string name="detener">Stop</string>
+  <string name="portadas_avance">%1$d of %2$d checked · %3$d found</string>
+  <string name="portadas_sin_tmdb">Films, series and anime need your TMDB key; without it only albums are searched.</string>
+  <plurals name="aviso_portadas">
+    <item quantity="one">Done: %1$d new cover.</item>
+    <item quantity="other">Done: %1$d new covers.</item>
+  </plurals>
+  <string name="aviso_portadas_nada">No missing covers to look for.</string>
 </resources>

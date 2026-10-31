@@ -92,6 +92,24 @@ object Logica {
     /** La fecha del último registro del diario (o cuándo se terminó). */
     fun ultimaVez(o: Obra): String? = (o.registros.map { it.fecha } + listOfNotNull(o.terminada)).maxOrNull()
 
+    /** Un título para comparar: sin tildes, mayúsculas, signos ni espacios de más. */
+    fun tituloLimpio(s: String) = normal(s).replace(Regex("[^a-z0-9]+"), " ").trim()
+
+    /**
+     * Si algo encontrado afuera es de verdad esta obra (para completar portadas sin equivocarse): el mismo título
+     * (o el original), el año a lo sumo uno de diferencia si los dos lo tienen y, en los álbumes, el mismo artista.
+     */
+    fun esLaMisma(o: Obra, r: Encontrado): Boolean {
+        val t = tituloLimpio(o.titulo)
+        if (t.isEmpty() || (t != tituloLimpio(r.titulo) && t != tituloLimpio(r.detalle))) return false
+        if (o.anio != null && r.anio != null && kotlin.math.abs(o.anio - r.anio) > 1) return false
+        if (o.tipo == Tipos.ALBUM && o.creador.isNotBlank()) {
+            val a = tituloLimpio(o.creador); val b = tituloLimpio(r.creador)
+            if (b.isEmpty() || !(a in b || b in a)) return false
+        }
+        return true
+    }
+
     /** Ya está en el cajón algo de esa fuente (para no agregarlo dos veces). */
     fun porFuente(e: Estado, fuente: String): Obra? = if (fuente.isEmpty()) null else e.vivas.firstOrNull { it.fuente == fuente }
 

@@ -179,4 +179,17 @@ class LogicaTest {
             libro("A", "Cien años de soledad", "Gabriel García Márquez", 208, 1, "spa", "One hundred years of solitude")), "es")
         assertEquals("Cien años de soledad", r[0].titulo)
     }
+
+    @Test fun portadasSoloSiEsLaMisma() {
+        fun enc(tipo: String, t: String, anio: Int?, creador: String = "", detalle: String = "") =
+            io.github.fogonapps.cajon.datos.Encontrado(tipo, t, anio, creador, "", "x", detalle)
+        val disco = Obra("1", Tipos.ALBUM, "Sé Morir", anio = 1999, creador = "Andrés Cepeda")
+        assertEquals(true, Logica.esLaMisma(disco, enc(Tipos.ALBUM, "Se morir", 1999, "Andres Cepeda")))
+        assertEquals(false, Logica.esLaMisma(disco, enc(Tipos.ALBUM, "Sé Morir", 1999, "Otro Artista")))
+        assertEquals(false, Logica.esLaMisma(disco, enc(Tipos.ALBUM, "Sé Morir", 2010, "Andrés Cepeda")))
+        val peli = Obra("2", Tipos.PELICULA, "The Basketball Diaries", anio = 1995)
+        // Por el título original, aunque TMDB lo traiga traducido.
+        assertEquals(true, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Diario de un rebelde", 1995, detalle = "The Basketball Diaries")))
+        assertEquals(false, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Basketball", 1995)))
+    }
 }

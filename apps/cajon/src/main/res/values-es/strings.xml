@@ -365,4 +365,16 @@
   <string name="sus_libros">Sus libros</string>
   <string name="filmografia">Filmografía</string>
   <string name="personas_vacio">Todavía no guardas a nadie. Búscalo y guárdalo para ver su obra.</string>
+  <string name="portadas">Portadas que faltan</string>
+  <string name="portadas_pista">Lo que agregaste a mano o trajiste de otra app no tiene portada. La app lo busca en TMDB (películas, series y animes, con tu clave) y en MusicBrainz (álbumes), y solo lo enlaza si el título, el año y el artista coinciden. Los libros van sin portada. Puede tardar: MusicBrainz responde una consulta por segundo.</string>
+  <string name="buscar_portadas">Buscar portadas</string>
+  <string name="detener">Detener</string>
+  <string name="portadas_avance">%1$d de %2$d revisadas · %3$d encontradas</string>
+  <string name="portadas_sin_tmdb">Para películas, series y animes hace falta tu clave de TMDB; sin ella solo se buscan los álbumes.</string>
+  <plurals name="aviso_portadas">
+    <item quantity="one">Listo: %1$d portada nueva.</item>
+    <item quantity="many">Listo: %1$d portadas nuevas.</item>
+    <item quantity="other">Listo: %1$d portadas nuevas.</item>
+  </plurals>
+  <string name="aviso_portadas_nada">No falta ninguna portada que se pueda buscar.</string>
 </resources>
