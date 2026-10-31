@@ -104,6 +104,10 @@ data class Obra(
     val meGusta: Boolean = false,
     /** La reseña o el análisis: solo de la persona, nunca lo escribe la app. */
     val resena: String = "",
+    /** Episodios favoritos de una serie o un anime: "1x5" o "1x5|Nombre del episodio". */
+    val episodiosFavoritos: List<String> = emptyList(),
+    /** La portada la eligió la persona (otra edición, otro póster o una imagen suya): al renovar los datos no se cambia. */
+    val portadaPropia: Boolean = false,
     /** Datos curiosos, notas sueltas. */
     val notas: String = "",
     val etiquetas: List<String> = emptyList(),

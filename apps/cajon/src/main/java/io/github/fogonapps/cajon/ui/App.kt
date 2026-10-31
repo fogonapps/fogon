@@ -78,6 +78,8 @@ data class Acciones(
     val importar: () -> Unit,
     val deOtraApp: () -> Unit,
     val compartir: (Bitmap, String) -> Unit,
+    /** Elegir una imagen del teléfono (para la portada). */
+    val elegirImagen: ((android.net.Uri) -> Unit) -> Unit = {},
 )
 
 val LocalAcciones = staticCompositionLocalOf<Acciones?> { null }
@@ -134,6 +136,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.Buscar -> Buscar(vm, estado, p)
                             is Pantalla.Previa -> Previa(vm, p.obra)
                             is Pantalla.Ficha -> Ficha(vm, estado, p.id)
+                            is Pantalla.CambiarPortada -> CambiarPortada(vm, estado, p.id)
                             is Pantalla.EditarObra -> EditarObra(vm, estado, p)
                             is Pantalla.Registrar -> Registrar(vm, estado, p)
                             is Pantalla.VerArtista -> VerArtista(vm, estado, p.id)

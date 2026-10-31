@@ -1,9 +1,9 @@
 <p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios y sin rastreo. Es parte de <b>Fogón</b>, apps hechas en casa: tu atención vale más que un anuncio.</p>
 
 <ul>
-<li><b>Todo en un cajón:</b> películas, series, animes, libros y discos, con su portada, año, director o autor, géneros y sinopsis.</li>
+<li><b>Todo en un cajón:</b> películas, series, animes, libros y discos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>
 <li><b>Busca y agrega:</b> libros en Open Library y discos y artistas en MusicBrainz, sin clave; películas, series y animes en TMDB con tu propia clave gratuita. O agrégalos a mano.</li>
-<li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos y etiquetas.</li>
+<li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos, etiquetas para todo y episodios favoritos.</li>
 <li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
 <li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
 <li><b>La nota del público</b> junto a la tuya: TMDB, Open Library o MusicBrainz.</li>

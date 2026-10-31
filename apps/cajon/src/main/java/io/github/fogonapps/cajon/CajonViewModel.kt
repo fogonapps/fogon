@@ -26,6 +26,7 @@ import io.github.fogonapps.cajon.datos.Tmdb
 import io.github.fogonapps.cajon.datos.Wikimedia
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,8 @@ sealed interface Pantalla {
     /** Una obra encontrada afuera, antes de agregarla. */
     data class Previa(val obra: Obra) : Pantalla
     data class Ficha(val id: String) : Pantalla
+    /** Elegir otra portada o subir una imagen propia. */
+    data class CambiarPortada(val id: String) : Pantalla
     /** Agregar a mano ([id] null, del [tipo]) o corregir los datos de una obra. */
     data class EditarObra(val id: String?, val tipo: String) : Pantalla
     /** Anotar en el diario: una vez que se vio, leyó o escuchó. */
@@ -269,8 +272,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
             // ¿Es un género? Entonces se buscan artistas y álbumes de ese género (como en las apps de música).
-            val genero = if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) L.genero(t, generosDelCajon()) else null
-            if (genero != null) _busqueda.value = _busqueda.value.copy(genero = genero)
+            // ¿O una etiqueta del cajón (un género de cine o de libros, o una propia)? Primero sale lo del cajón que la lleva.
+            val musical = seccion == Secciones.TODO || seccion == Secciones.MUSICA
+            val genero = if (musical) L.genero(t, generosDelCajon()) else null
+            val local = genero ?: _estado.value?.let { e -> L.etiquetasDelCajon(e, Secciones.tipos(seccion).takeIf { seccion != Secciones.TODO }).firstOrNull { L.tituloLimpio(it) == L.tituloLimpio(t) } }
+            if (local != null) _busqueda.value = _busqueda.value.copy(genero = local)
             if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) fuente("musica") {
                 // Primero los artistas (con su foto, si la hay) y después los álbumes.
                 val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
@@ -307,7 +313,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun detalles(r: Encontrado): Obra = when {
         r.fuente.startsWith("tmdb:") -> Tmdb(caja.claveTmdb ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
-        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r)
+        r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
         else -> MusicBrainz.detalles(r)
     }
 
@@ -349,7 +355,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun meGusta(id: String) = cambiarObra(id) { it.copy(meGusta = !it.meGusta) }
     fun ponerResena(id: String, texto: String) = cambiarObra(id) { it.copy(resena = texto.take(10000)) }
     fun ponerNotas(id: String, texto: String) = cambiarObra(id) { it.copy(notas = texto.take(5000)) }
-    fun ponerEtiquetas(id: String, texto: String) = cambiarObra(id) { it.copy(etiquetas = texto.split(",").map { t -> t.trim().take(30) }.filter { t -> t.isNotEmpty() }.distinct().take(12)) }
 
     fun ponerPagina(id: String, pagina: Int) = cambiarObra(id) { o ->
         val p = pagina.coerceIn(0, o.paginas ?: 99999)
@@ -395,8 +400,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val r = io.github.fogonapps.cajon.datos.Encontrado(o.tipo, o.titulo, o.anio, o.creador, o.portada, o.fuente, o.paginas?.let { "$it p." } ?: o.formato)
                 val d = detalles(r)
                 cambiarObra(id) { v ->
+                    // Las etiquetas (géneros) y la sinopsis que ya tenía se respetan: la persona pudo haberlas ajustado; la
+                    // portada también, si la eligió ella.
                     v.copy(titulo = d.titulo, original = d.original, anio = d.anio ?: v.anio, creador = d.creador.ifBlank { v.creador },
-                        generos = d.generos.ifEmpty { v.generos }, sinopsis = d.sinopsis.ifBlank { v.sinopsis }, portada = d.portada.ifBlank { v.portada },
+                        generos = v.generos.ifEmpty { d.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
+                        portada = if (v.portadaPropia) v.portada else d.portada.ifBlank { v.portada },
                         fondo = d.fondo.ifBlank { v.fondo }, minutos = d.minutos ?: v.minutos, paginas = d.paginas ?: v.paginas,
                         temporadas = d.temporadas.ifEmpty { v.temporadas },
                         canciones = if (d.canciones.isEmpty()) v.canciones else d.canciones.mapIndexed { i, c -> v.canciones.getOrNull(i)?.takeIf { it.titulo == c.titulo }?.let { c.copy(nota = it.nota, favorita = it.favorita) } ?: c },
@@ -424,42 +432,62 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      * Es automático: corre al abrir la app, al traer algo de otra app o de un respaldo y al poner la clave de TMDB,
      * en silencio; lo ya revisado no se vuelve a buscar ([CajaFuerte.portadasRevisadas]).
      */
+    private fun libroIdeal(o: Obra, r: Encontrado) = L.esLaMisma(o, r) && L.tituloLimpio(o.titulo) == L.tituloLimpio(r.titulo) && r.portada.isNotBlank()
+
     fun buscarPortadas() {
         if (trabajoPortadas?.isActive == true) return
         val clave = caja.claveTmdb
         val revisadas = caja.portadasRevisadas.toMutableSet()
         val pendientes = _estado.value?.vivas.orEmpty()
-            .filter { it.fuente.isEmpty() && it.tipo != Tipos.LIBRO && (it.tipo == Tipos.ALBUM || clave != null) && it.id !in revisadas }
+            .filter { it.fuente.isEmpty() && (it.tipo == Tipos.ALBUM || it.tipo == Tipos.LIBRO || clave != null) && it.id !in revisadas }
         // Los artistas guardados sin fuente (a mano o de otra app) se enlazan con MusicBrainz: así traen foto y biografía.
         val artistas = _estado.value?.musicosVivos.orEmpty().filter { it.fuente.isEmpty() && it.id !in revisadas }
         if (pendientes.isEmpty() && artistas.isEmpty()) return
         trabajoPortadas = viewModelScope.launch {
             val total = pendientes.size + artistas.size
             var encontradas = 0
+            // Un fallo suelto (MusicBrainz "ocupado", Open Library con un error 500 o lenta) no detiene todo ni se da por
+            // revisado: se salta y se reintenta la próxima vez; si fallan 5 seguidas, no hay internet y se para.
+            var fallos = 0
+            fun fallo(x: Throwable): Boolean { if (x is ClaveMala || x is kotlinx.coroutines.CancellationException) throw x; if (++fallos >= 5) throw SinRed(); return true }
             _completando.value = Completando(0, total, 0)
             try {
                 pendientes.forEachIndexed { i, o ->
                     val candidatos = runCatching {
                         if (o.tipo == Tipos.ALBUM) MusicBrainz.buscarAlbum(o.titulo, o.creador)
+                        else if (o.tipo == Tipos.LIBRO) OpenLibrary.buscar(o.titulo, idioma(), autor = o.creador.substringBefore(",").trim()).let { c ->
+                            // El título puede estar en el otro idioma (un cajón en español con la app en inglés): si no
+                            // aparece con el mismo título y con portada, se busca también en el otro.
+                            if (c.any { libroIdeal(o, it) }) c else c + OpenLibrary.buscar(o.titulo, if (idioma() == "en") "es" else "en", autor = o.creador.substringBefore(",").trim())
+                        }
                         else {
                             val t = Tmdb(clave!!)
                             // Un "anime" puede no ser japonés (TMDB solo los marca así): también se busca como serie y película.
                             val tipos = if (o.tipo == Tipos.ANIME) listOf(Tipos.ANIME, Tipos.SERIE, Tipos.PELICULA) else listOf(o.tipo)
                             tipos.flatMap { t.buscar(o.titulo, it, idioma()) }
                         }
-                    }.getOrElse { if (it is ClaveMala || it is SinRed) throw it else emptyList() }
-                    val r = candidatos.firstOrNull { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
+                    }.getOrElse { if (fallo(it)) { _completando.value = Completando(i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
+                    fallos = 0
+                    // En libros, Open Library tiene obras repetidas de una sola edición y sin portada: primero la del mismo
+                    // título y con portada (el orden de la búsqueda ya pone arriba la de más ediciones).
+                    val r = candidatos.filter { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
+                        .let { l -> if (o.tipo == Tipos.LIBRO) l.sortedByDescending { (if (libroIdeal(o, it)) 2 else 0) + (if (it.portada.isNotBlank()) 1 else 0) } else l }
+                        .firstOrNull()
                     revisadas += o.id
                     if ((i + 1) % 10 == 0) caja.portadasRevisadas = revisadas
                     if (r != null) {
                         encontradas++
                         val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
                         cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
+                        // Y el resto de los datos de afuera (sinopsis, páginas, temporadas, canciones…), sin tocar lo de la persona.
+                        actualizarDatos(o.id, callado = true)
                     }
                     _completando.value = Completando(i + 1, total, encontradas)
                 }
                 artistas.forEachIndexed { i, a ->
-                    val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }.getOrElse { if (it is SinRed) throw it else emptyList() }
+                    val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }
+                        .getOrElse { if (fallo(it)) { _completando.value = Completando(pendientes.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
+                        .also { fallos = 0 }
                         .firstOrNull { L.tituloLimpio(it.nombre) == L.tituloLimpio(a.nombre) && _estado.value!!.artistasVivos.none { x -> x.fuente == it.fuente } }
                     revisadas += a.id
                     if (r != null) {
@@ -557,9 +585,124 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Abre el buscador de música con un género (al tocar una etiqueta). */
-    fun buscarGenero(g: String) {
-        abrir(Pantalla.Buscar(Secciones.MUSICA))
-        buscar(g)
+    fun buscarGenero(g: String) = buscarEtiqueta(g, Secciones.MUSICA)
+
+    /** Abre el buscador en la [seccion] con una etiqueta (un género o una etiqueta propia): primero sale lo del cajón que la lleva. */
+    fun buscarEtiqueta(t: String, seccion: String) {
+        abrir(Pantalla.Buscar(seccion))
+        buscar(t)
+    }
+
+    fun ponerGenerosObra(id: String, lista: List<String>) = cambiarObra(id) { it.copy(generos = limpiarEtiquetas(lista)) }
+    fun ponerEtiquetasObra(id: String, lista: List<String>) = cambiarObra(id) { it.copy(etiquetas = limpiarEtiquetas(lista)) }
+    private fun limpiarEtiquetas(l: List<String>) = l.map { it.trim().take(30) }.filter { it.isNotEmpty() }.distinctBy { L.tituloLimpio(it) }.take(20)
+
+    /** Sugerencias para el editor de etiquetas: las del cajón (del mismo apartado primero) y los géneros comunes. */
+    fun sugerenciasEtiquetas(tipos: Collection<String>?): List<String> {
+        val e = _estado.value ?: return emptyList()
+        val musica = tipos == null || Tipos.ALBUM in tipos
+        return (L.etiquetasDelCajon(e, tipos) + L.etiquetasDelCajon(e) + (if (musica) L.GENEROS_COMUNES.keys.toList() else GENEROS_CINE_LIBROS))
+            .distinctBy { L.tituloLimpio(it) }
+    }
+
+    /* ----- Portada propia ----- */
+
+    private val _candidatas = MutableStateFlow<Pair<String, List<String>?>?>(null)
+    /** Portadas para elegir de una obra ("Cambiar portada"): null mientras llegan. */
+    val candidatas: StateFlow<Pair<String, List<String>?>?> = _candidatas
+
+    fun cargarCandidatas(id: String) {
+        val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
+        if (_candidatas.value?.first == id) return
+        _candidatas.value = id to null
+        viewModelScope.launch {
+            val lista = runCatching {
+                when {
+                    o.fuente.startsWith("ol:") -> OpenLibrary.portadasParaElegir(o.fuente)
+                    o.fuente.startsWith("tmdb:") && caja.claveTmdb != null -> Tmdb(caja.claveTmdb!!).posteres(o.fuente, idioma())
+                    else -> emptyList()
+                }
+            }.getOrDefault(emptyList())
+            _candidatas.value = id to (listOfNotNull(o.portada.takeIf { it.isNotBlank() }) + lista).distinct()
+        }
+    }
+
+    fun elegirPortada(id: String, url: String) { cambiarObra(id) { it.copy(portada = url, portadaPropia = true) }; cerrar() }
+
+    /** Una imagen del teléfono como portada: se copia (reducida a 800 px) a la carpeta de la app. */
+    fun subirPortada(id: String, uri: android.net.Uri) {
+        viewModelScope.launch {
+            val ruta = runCatching { withContext(kotlinx.coroutines.Dispatchers.IO) { copiarImagen(uri, id) } }.getOrNull()
+            if (ruta == null) { avisar(tx(R.string.aviso_imagen_no)); return@launch }
+            elegirPortada(id, ruta)
+        }
+    }
+
+    private fun copiarImagen(uri: android.net.Uri, id: String): String {
+        val app = getApplication<android.app.Application>()
+        val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("sin imagen")
+        // Primero el tamaño, para no cargar entera una foto de 50 megapíxeles.
+        val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, medidas)
+        var muestra = 1
+        while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= 800) muestra *= 2
+        val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: error("no es imagen")
+        val escala = minOf(1f, 800f / maxOf(original.width, original.height))
+        val chica = android.graphics.Bitmap.createScaledBitmap(original, (original.width * escala).toInt().coerceAtLeast(1), (original.height * escala).toInt().coerceAtLeast(1), true)
+        val dir = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+        dir.listFiles { f -> f.name.startsWith("$id-") }?.forEach { it.delete() }
+        val f = java.io.File(dir, "$id-${System.currentTimeMillis()}.jpg")
+        f.outputStream().use { chica.compress(android.graphics.Bitmap.CompressFormat.JPEG, 88, it) }
+        return "file://" + f.absolutePath
+    }
+
+    /* ----- Episodios favoritos ----- */
+
+    private val _episodios = MutableStateFlow<Pair<String, List<Pair<Int, String>>?>?>(null)
+    /** Los episodios de una temporada ("id:temporada" → número y nombre), para elegir favoritos. */
+    val episodios: StateFlow<Pair<String, List<Pair<Int, String>>?>?> = _episodios
+
+    fun cargarEpisodios(id: String, temporada: Int) {
+        val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
+        val k = "$id:$temporada"
+        if (_episodios.value?.first == k) return
+        val clave = caja.claveTmdb
+        val cuantos = o.temporadas.firstOrNull { it.numero == temporada }?.episodios ?: 0
+        // Sin TMDB, los números de episodio de la temporada (sin nombre).
+        if (!o.fuente.startsWith("tmdb:tv:") || clave == null) { _episodios.value = k to (1..cuantos).map { it to "" }; return }
+        _episodios.value = k to null
+        viewModelScope.launch {
+            _episodios.value = k to (runCatching { Tmdb(clave).episodios(o.fuente, temporada, idioma()) }.getOrNull() ?: (1..cuantos).map { it to "" })
+        }
+    }
+
+    fun episodioFavorito(id: String, temporada: Int, episodio: Int, nombre: String) = cambiarObra(id) { o ->
+        val clave = "${temporada}x$episodio"
+        val ya = o.episodiosFavoritos.any { it.substringBefore("|") == clave }
+        o.copy(episodiosFavoritos = if (ya) o.episodiosFavoritos.filterNot { it.substringBefore("|") == clave }
+            else (o.episodiosFavoritos + (if (nombre.isBlank()) clave else "$clave|$nombre")).sortedWith(compareBy({ it.substringBefore("x").toIntOrNull() ?: 0 }, { it.substringAfter("x").substringBefore("|").toIntOrNull() ?: 0 })))
+    }
+
+    /* ----- Enlazar un artista a mano ----- */
+
+    private val _candidatosArtista = MutableStateFlow<Pair<String, List<ArtistaEncontrado>?>?>(null)
+    val candidatosArtista: StateFlow<Pair<String, List<ArtistaEncontrado>?>?> = _candidatosArtista
+
+    fun buscarCandidatosArtista(id: String) {
+        val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
+        _candidatosArtista.value = id to null
+        viewModelScope.launch {
+            val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }.getOrDefault(emptyList())
+            val fotos = runCatching { Wikimedia.fotos(r.take(8).map { it.mbid }) }.getOrDefault(emptyMap())
+            _candidatosArtista.value = id to r.map { x -> fotos[x.mbid]?.let { x.copy(foto = it) } ?: x }
+        }
+    }
+
+    fun enlazarArtista(id: String, r: ArtistaEncontrado) {
+        cambiarArtista(id) { it.copy(fuente = r.fuente, tipo = it.tipo.ifBlank { r.tipo }, pais = it.pais.ifBlank { r.pais }, desde = it.desde ?: r.desde, foto = it.foto.ifBlank { r.foto }) }
+        _candidatosArtista.value = null
+        _discografia.value = null
+        completarBio(id)
     }
 
     /** Los géneros de la música del cajón (artistas y álbumes), los más usados primero. */
@@ -739,6 +882,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         /** En la búsqueda, además de los tipos de obra, se pueden buscar artistas. */
         const val TIPO_ARTISTA = "artista"
+        /** Sugerencias de géneros para cine y libros (las de la música están en [Logica.GENEROS_COMUNES]). */
+        val GENEROS_CINE_LIBROS = listOf("Drama", "Comedia", "Terror", "Thriller", "Suspenso", "Acción", "Aventura", "Ciencia ficción",
+            "Fantasía", "Romance", "Animación", "Documental", "Crimen", "Misterio", "Bélica", "Historia", "Biografía", "Musical", "Familiar",
+            "Novela", "Cuento", "Poesía", "Ensayo", "Filosofía", "Psicología", "Realismo mágico", "Distopía", "Clásico", "Juvenil", "Shonen", "Seinen")
         private const val SEIS_MESES = 182L * 24 * 3600 * 1000
         /** Cuándo empezó a guardarse la nota del público (1.2): lo traído antes se renueva una vez al abrirlo. */
         private const val ANTES_DE_NOTAS = 1792990800000L

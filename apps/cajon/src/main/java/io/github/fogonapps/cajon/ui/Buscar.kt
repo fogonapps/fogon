@@ -108,13 +108,14 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE
 
-            // Si se buscó un género: primero lo del cajón con ese género (artistas y álbumes), después lo de afuera.
+            // Si se buscó un género o una etiqueta: primero lo del cajón que la lleva (artistas y obras), después lo de afuera.
             val genero = b.genero
             if (genero != null) {
                 val g = io.github.fogonapps.cajon.datos.Logica.tituloLimpio(genero)
                 fun tiene(lista: List<String>) = lista.any { io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it) == g }
-                val susArtistas = e.musicosVivos.filter { tiene(it.generos) }
-                val susAlbumes = e.vivas.filter { it.tipo == Tipos.ALBUM && tiene(it.generos) }
+                val susArtistas = if (todo || b.seccion == Secciones.MUSICA) e.musicosVivos.filter { tiene(it.generos) } else emptyList()
+                val tipos = Secciones.tipos(b.seccion)
+                val susAlbumes = e.vivas.filter { (todo || it.tipo in tipos) && tiene(it.generos + it.etiquetas) }
                 if (susArtistas.isNotEmpty() || susAlbumes.isNotEmpty()) {
                     item(key = "t-genero") { Titulo(stringResource(R.string.genero_en_tu_cajon, genero), null) }
                     if (susArtistas.isNotEmpty()) item(key = "genero-artistas") {

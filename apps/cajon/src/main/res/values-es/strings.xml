@@ -85,7 +85,6 @@
   <string name="resena_pista">Qué te pareció (solo tú la ves, a menos que la compartas)</string>
   <string name="datos_curiosos">Datos curiosos y notas</string>
   <string name="etiquetas">Etiquetas</string>
-  <string name="etiquetas_pista">Separadas por comas: con Juan, cine, relectura…</string>
   <string name="empezada">Empezaste</string>
   <string name="terminada">Terminaste</string>
   <string name="actualizar_datos">Actualizar los datos de afuera</string>
@@ -112,12 +111,10 @@
   <string name="autor">Autor</string>
   <string name="director">Director</string>
   <string name="creador">Creador</string>
-  <string name="generos_campo">Géneros, separados por comas</string>
   <string name="temporadas_campo">Episodios por temporada</string>
   <string name="temporadas_pista">Por ejemplo «10, 8, 12» son tres temporadas de 10, 8 y 12 episodios.</string>
   <string name="canciones_campo">Canciones, una por línea</string>
-  <string name="portada_campo">Dirección de la portada (opcional)</string>
-  <string name="portada_pista">La portada debe ser una dirección que empiece por https://.</string>
+  <string name="a_mano_pista">Los géneros, las etiquetas y la portada se ponen después, en su ficha.</string>
   <string name="y_mas">y %1$d más</string>
   <string name="marca_compartir">El Cajón · Fogón</string>
   <string name="nueva">Nueva</string>
@@ -378,4 +375,20 @@
   <string name="agregar_genero">Agregar género</string>
   <string name="editar">Editar</string>
   <string name="genero_en_tu_cajon">%1$s en tu cajón</string>
+    <string name="cambiar_portada">Cambiar la portada</string>
+    <string name="falta_tmdb_ficha">Para traer la portada, la sinopsis y los episodios de películas, series y animes hace falta una clave de TMDB (gratis, se saca en un minuto).</string>
+    <string name="agregar_etiqueta">Agregar etiqueta</string>
+    <string name="agregar_episodio_favorito">Agregar episodio favorito</string>
+    <string name="episodios_favoritos">Episodios favoritos</string>
+    <string name="temporada_episodio">T%1$s · E%2$s</string>
+    <string name="temporada_n_corta">T%1$d</string>
+    <string name="episodio_numero">Episodio %1$d</string>
+    <string name="subir_imagen">Subir una imagen</string>
+    <string name="subir_imagen_pista">Una foto de tu edición, de tu disco o la que te guste. Se queda en este teléfono.</string>
+    <string name="sin_otras_portadas">No hay otras portadas para elegir. Puedes subir una imagen.</string>
+    <string name="elegir_otra">Elegir otra</string>
+    <string name="aviso_imagen_no">No se pudo usar esa imagen</string>
+    <string name="enlazar_pista">Este artista no está enlazado: búscalo en MusicBrainz y elige cuál es, para traer su foto, su biografía y sus álbumes.</string>
+    <string name="enlazar_musicbrainz">Buscar en MusicBrainz</string>
+    <string name="sin_resultados">No se encontró. Revisa cómo está escrito el nombre.</string>
 </resources>

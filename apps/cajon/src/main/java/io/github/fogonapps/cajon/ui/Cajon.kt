@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -93,6 +94,13 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
             if (musica) MiniDato(nombreTipo(CajonViewModel.TIPO_ARTISTA), e.musicosVivos.size)
             else MiniDato(stringResource(R.string.siempre), obras.count { it.estado == Estados.TERMINADO })
         }
+    }
+
+    // Sin clave de TMDB, el cine no trae pósteres ni datos: se dice arriba, con el botón para ponerla.
+    val conTmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
+    if (seccion == Secciones.CINE && !conTmdb) Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.falta_tmdb_ficha), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        io.github.fogonapps.identidad.BotonSecundario(stringResource(R.string.poner_clave_tmdb), { vm.abrir(Pantalla.ClaveTmdb) }, Modifier.fillMaxWidth())
     }
 
     val enCurso = obras.filter { it.estado == Estados.EN_CURSO }.sortedByDescending { it.cambio }

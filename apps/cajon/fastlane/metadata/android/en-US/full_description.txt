@@ -1,9 +1,9 @@
 <p>El Cajón keeps everything you watch, read and listen to: films, series, anime, books, albums and artists, in one place, with your rating and your diary. No ads, no tracking. It’s part of <b>Fogón</b>, home-made apps: your attention is worth more than an ad.</p>
 
 <ul>
-<li><b>Everything in one cajón:</b> films, series, anime, books and records, with cover, year, director or author, genres and synopsis.</li>
+<li><b>Everything in one cajón:</b> films, series, anime, books and records, with cover (change it or upload your own), year, director or author, genres and synopsis.</li>
 <li><b>Search and add:</b> books from Open Library and records and artists from MusicBrainz, no key needed; films, series and anime from TMDB with your own free key. Or add them by hand.</li>
-<li><b>Star ratings</b> (in halves), likes, reviews, trivia and tags.</li>
+<li><b>Star ratings</b> (in halves), likes, reviews, trivia, tags for everything and favorite episodes.</li>
 <li><b>Diary:</b> every time you watch, read or listen to something, with date, rating and whether it was a rewatch.</li>
 <li><b>To watch, to read, to listen:</b> what’s up next, what you’re in the middle of and what you finished.</li>
 <li><b>Public ratings</b> next to yours: TMDB, Open Library or MusicBrainz.</li>

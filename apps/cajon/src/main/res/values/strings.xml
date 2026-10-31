@@ -86,7 +86,6 @@
   <string name="resena_pista">What you thought (only you see it unless you share it)</string>
   <string name="datos_curiosos">Trivia and notes</string>
   <string name="etiquetas">Tags</string>
-  <string name="etiquetas_pista">Comma-separated: with Juan, theater, reread…</string>
   <string name="empezada">Started</string>
   <string name="terminada">Finished</string>
   <string name="actualizar_datos">Refresh details</string>
@@ -113,12 +112,10 @@
   <string name="autor">Author</string>
   <string name="director">Director</string>
   <string name="creador">Creator</string>
-  <string name="generos_campo">Genres, comma-separated</string>
   <string name="temporadas_campo">Episodes per season</string>
   <string name="temporadas_pista">For example “10, 8, 12” means three seasons of 10, 8 and 12 episodes.</string>
   <string name="canciones_campo">Tracks, one per line</string>
-  <string name="portada_campo">Cover address (optional)</string>
-  <string name="portada_pista">The cover must be an address starting with https://.</string>
+  <string name="a_mano_pista">Genres, tags and the cover are added afterwards, on its page.</string>
   <string name="y_mas">and %1$d more</string>
   <string name="marca_compartir">El Cajón · Fogón</string>
   <string name="nueva">New</string>
@@ -378,4 +375,20 @@
   <string name="agregar_genero">Add genre</string>
   <string name="editar">Edit</string>
   <string name="genero_en_tu_cajon">%1$s in your cajón</string>
+    <string name="cambiar_portada">Change cover</string>
+    <string name="falta_tmdb_ficha">To bring the poster, synopsis and episodes of movies, series and anime you need a TMDB key (free, takes a minute).</string>
+    <string name="agregar_etiqueta">Add tag</string>
+    <string name="agregar_episodio_favorito">Add a favorite episode</string>
+    <string name="episodios_favoritos">Favorite episodes</string>
+    <string name="temporada_episodio">S%1$s · E%2$s</string>
+    <string name="temporada_n_corta">S%1$d</string>
+    <string name="episodio_numero">Episode %1$d</string>
+    <string name="subir_imagen">Upload an image</string>
+    <string name="subir_imagen_pista">A photo of your edition, your record or any you like. It stays on this phone.</string>
+    <string name="sin_otras_portadas">There are no other covers to choose from. You can upload an image.</string>
+    <string name="elegir_otra">Choose another</string>
+    <string name="aviso_imagen_no">That image couldn\'t be used</string>
+    <string name="enlazar_pista">This artist isn\'t linked: look them up on MusicBrainz and pick the right one to bring their photo, bio and albums.</string>
+    <string name="enlazar_musicbrainz">Search MusicBrainz</string>
+    <string name="sin_resultados">Not found. Check how the name is spelled.</string>
 </resources>

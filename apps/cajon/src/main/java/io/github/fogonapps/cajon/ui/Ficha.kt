@@ -1,5 +1,9 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.border
+import androidx.compose.material3.CircularProgressIndicator
+import io.github.fogonapps.cajon.Secciones
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.LinearProgressIndicator
 import java.text.NumberFormat
@@ -24,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -56,7 +61,7 @@ import io.github.fogonapps.identidad.forma
 /** Lo de arriba de la ficha: el fondo (cine), la portada y los datos de afuera. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Encabezado(o: Obra, vm: CajonViewModel) {
+private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true) {
     val f = FogonTema.actual
     Box(Modifier.fillMaxWidth()) {
         if (o.fondo.isNotBlank()) coil3.compose.AsyncImage(
@@ -75,7 +80,7 @@ private fun Encabezado(o: Obra, vm: CajonViewModel) {
             }
         }
     }
-    if (o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         o.generos.forEach { g ->
             // En los álbumes, tocar un género lo busca (artistas y álbumes de ese género).
             if (o.tipo == Tipos.ALBUM) Pildora(g) { vm.buscarGenero(g) } else Etiqueta(g, f.superficie, f.texto)
@@ -172,10 +177,22 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     var compartiendo by rememberSaveable { mutableStateOf(false) }
     Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar) {
         if (acciones != null) BotonIcono(Iconos.Compartir, stringResource(R.string.compartir), grande = true) { compartiendo = true }
-        BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
+        // Lo que viene de una fuente oficial (TMDB, Open Library, MusicBrainz) no se edita: solo se puede cambiar la portada.
+        BotonIcono(Iconos.Imagen, stringResource(R.string.cambiar_portada), grande = true) { vm.abrir(Pantalla.CambiarPortada(o.id)) }
+        if (o.fuente.isEmpty()) BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
     }
     if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, o.titulo) }) { TarjetaObra(o) }
-    Encabezado(o, vm)
+    Encabezado(o, vm, conGeneros = false)
+
+    // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
+    if (o.fuente.isEmpty() && o.tipo != Tipos.LIBRO && o.tipo != Tipos.ALBUM && !vm.hayClaveTmdb()) Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.falta_tmdb_ficha), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        BotonSecundario(stringResource(R.string.poner_clave_tmdb), { vm.abrir(Pantalla.ClaveTmdb) }, Modifier.fillMaxWidth())
+    }
+
+    // Los géneros, como etiquetas (tocar uno busca lo del cajón con ese género).
+    EditorEtiquetas("g" + o.id, stringResource(R.string.generos), o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo))) },
+        { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_genero))
 
     // El estado, como píldoras.
     Selector(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado, { vm.ponerEstado(o.id, it) }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
@@ -213,10 +230,13 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         if (conNotas) OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
             label = { Text(stringResource(R.string.datos_curiosos)) })
         else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
-        var etiquetas by rememberSaveable(o.id) { mutableStateOf(o.etiquetas.joinToString(", ")) }
-        OutlinedTextField(etiquetas, { etiquetas = it.take(300); vm.ponerEtiquetas(o.id, it) }, Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text(stringResource(R.string.etiquetas)) }, placeholder = { Text(stringResource(R.string.etiquetas_pista)) })
     }
+    // Las etiquetas propias ("para ver con amigos", "favorita de 2024"…): como los géneros, sin comas.
+    EditorEtiquetas("e" + o.id, stringResource(R.string.etiquetas), o.etiquetas, { vm.sugerenciasEtiquetas(null) },
+        { vm.ponerEtiquetasObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_etiqueta))
+
+    // Los episodios favoritos de una serie o un anime.
+    if (Tipos.porEpisodios(o.tipo)) EpisodiosFavoritos(vm, o)
 
     // Las veces que la vio, leyó o escuchó, con su fecha (el diario).
     if (o.registros.isNotEmpty()) {
@@ -256,6 +276,87 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
             confirmar(vm.tx(R.string.borrar_obra_pregunta, o.titulo), vm.tx(R.string.borrar_obra_texto)) { vm.borrarObra(o.id) }
         }, Modifier.fillMaxWidth(), peligro = true)
     }
+}
+
+/**
+ * Los episodios favoritos: se ven como píldoras ("T1 · E5 · Nombre"); "Agregar" deja elegir la temporada y tocar los
+ * episodios (con su nombre si la serie es de TMDB y hay clave; si no, por número).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EpisodiosFavoritos(vm: CajonViewModel, o: Obra) {
+    val f = FogonTema.actual
+    var eligiendo by rememberSaveable(o.id) { mutableStateOf(false) }
+    if (o.episodiosFavoritos.isEmpty() && !eligiendo) {
+        if (o.temporadas.isNotEmpty()) Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { Pildora(stringResource(R.string.agregar_episodio_favorito), Iconos.Estrella) { eligiendo = true } }
+        return
+    }
+    Seccion(stringResource(R.string.episodios_favoritos)) {
+        if (o.temporadas.isNotEmpty()) Pildora(stringResource(if (eligiendo) R.string.listo else R.string.agregar)) { eligiendo = !eligiendo }
+    }
+    FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        o.episodiosFavoritos.forEach { e ->
+            val (t, ep) = e.substringBefore("|").split("x").let { (it.getOrNull(0) ?: "") to (it.getOrNull(1) ?: "") }
+            val nombre = e.substringAfter("|", "")
+            Pildora(listOf(stringResource(R.string.temporada_episodio, t, ep), nombre).filter { it.isNotBlank() }.joinToString(" · "), if (eligiendo) Iconos.Cerrar else Iconos.Estrella) {
+                if (eligiendo) vm.episodioFavorito(o.id, t.toIntOrNull() ?: 0, ep.toIntOrNull() ?: 0, nombre)
+            }
+        }
+    }
+    if (eligiendo && o.temporadas.isNotEmpty()) {
+        var temporada by rememberSaveable(o.id + "t") { mutableIntStateOf(o.temporadas.first().numero) }
+        val eps by vm.episodios.collectAsStateWithLifecycle()
+        LaunchedEffect(o.id, temporada) { vm.cargarEpisodios(o.id, temporada) }
+        Chips(o.temporadas.map { it.numero to stringResource(R.string.temporada_n_corta, it.numero) }, temporada) { temporada = it }
+        val lista = eps?.takeIf { it.first == "${o.id}:$temporada" }?.second
+        if (lista == null) Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
+        else lista.forEach { (n, nombre) ->
+            val es = o.episodiosFavoritos.any { it.substringBefore("|") == "${temporada}x$n" }
+            FilaVidrio({ vm.episodioFavorito(o.id, temporada, n, nombre) }) {
+                Text("$n", fontFamily = f.cifras, color = f.textoSuave)
+                Text(nombre.ifBlank { stringResource(R.string.episodio_numero, n) }, style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
+                IconoRiso(Iconos.Estrella, stringResource(R.string.episodios_favoritos), tamano = 20.dp, tinta = if (es) f.acentoTexto else f.textoSuave, relleno = if (es) f.acentoTexto else null)
+            }
+        }
+    }
+}
+
+/** Cambiar la portada: elegir otra (ediciones de Open Library, pósteres de TMDB) o subir una imagen del teléfono. */
+@Composable
+fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String) {
+    val f = FogonTema.actual
+    val acciones = LocalAcciones.current
+    val o = e.vivas.firstOrNull { it.id == id }
+    if (o == null) { Cabecera("", vm::cerrar); Pista(stringResource(R.string.ya_no_esta)); return }
+    val c by vm.candidatas.collectAsStateWithLifecycle()
+    LaunchedEffect(id) { vm.cargarCandidatas(id) }
+    Cabecera(stringResource(R.string.cambiar_portada), vm::cerrar)
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (acciones != null) BotonRiso(stringResource(R.string.subir_imagen), { acciones.elegirImagen { uri -> vm.subirPortada(id, uri) } }, Modifier.fillMaxWidth())
+        Pista(stringResource(R.string.subir_imagen_pista), adentro = true)
+    }
+    val lista = c?.takeIf { it.first == id }?.second
+    when {
+        lista == null -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
+        lista.size <= 1 -> Pista(stringResource(if (o.fuente.startsWith("tmdb:") && !vm.hayClaveTmdb()) R.string.falta_tmdb_ficha else R.string.sin_otras_portadas))
+        else -> {
+            Seccion(stringResource(R.string.elegir_otra))
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                lista.chunked(3).forEach { fila ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        fila.forEach { url ->
+                            Box(Modifier.weight(1f).clip(forma(12.dp)).clickable { vm.elegirPortada(id, url) }
+                                .then(if (url == o.portada) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
+                                Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                            }
+                        }
+                        repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
+    }
+    Espacio(24.dp)
 }
 
 /** Por qué página va (libros). */
@@ -339,7 +440,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     }
 }
 
-/** Agregar algo a mano (si no está en ninguna fuente) o corregir los datos de afuera de una obra. */
+/** Agregar algo a mano (si no está en ninguna fuente) o corregir sus datos. Lo que viene de una fuente no se edita. */
 @Composable
 fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
     val viejo = p.id?.let { id -> e.vivas.firstOrNull { it.id == id } }
@@ -348,13 +449,11 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
     var original by rememberSaveable { mutableStateOf(viejo?.original ?: "") }
     var anio by rememberSaveable { mutableStateOf(viejo?.anio?.toString() ?: "") }
     var creador by rememberSaveable { mutableStateOf(viejo?.creador ?: "") }
-    var generos by rememberSaveable { mutableStateOf(viejo?.generos?.joinToString(", ") ?: "") }
     var sinopsis by rememberSaveable { mutableStateOf(viejo?.sinopsis ?: "") }
     var medida by rememberSaveable { mutableStateOf((if (tipo == Tipos.LIBRO) viejo?.paginas else viejo?.minutos)?.toString() ?: "") }
     // Series: "10, 8, 12" = episodios de cada temporada. Álbum: una canción por línea.
     var temporadas by rememberSaveable { mutableStateOf(viejo?.temporadas?.joinToString(", ") { it.episodios.toString() } ?: "") }
     var canciones by rememberSaveable { mutableStateOf(viejo?.canciones?.joinToString("\n") { it.titulo } ?: "") }
-    var portada by rememberSaveable { mutableStateOf(viejo?.portada ?: "") }
 
     Cabecera(stringResource(if (viejo == null) R.string.agregar_a_mano else R.string.corregir_datos), vm::cerrar)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -368,7 +467,6 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
         CampoTexto(creador, { creador = it }, stringResource(when (tipo) {
             Tipos.LIBRO -> R.string.autor; Tipos.ALBUM -> R.string.tipo_artista; Tipos.PELICULA -> R.string.director; else -> R.string.creador
         }), max = 150)
-        CampoTexto(generos, { generos = it }, stringResource(R.string.generos_campo), max = 200)
         if (Tipos.porEpisodios(tipo)) {
             CampoTexto(temporadas, { temporadas = it.filter { c -> c.isDigit() || c == ',' || c == ' ' } }, stringResource(R.string.temporadas_campo), max = 200)
             Pista(stringResource(R.string.temporadas_pista), adentro = true)
@@ -376,21 +474,20 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
         if (tipo == Tipos.ALBUM) OutlinedTextField(canciones, { canciones = it.take(5000) }, Modifier.fillMaxWidth(), minLines = 3,
             label = { Text(stringResource(R.string.canciones_campo)) })
         OutlinedTextField(sinopsis, { sinopsis = it.take(5000) }, Modifier.fillMaxWidth(), minLines = 3, label = { Text(stringResource(R.string.sinopsis)) })
-        CampoTexto(portada, { portada = it.trim() }, stringResource(R.string.portada_campo), max = 500)
         BotonRiso(stringResource(R.string.guardar), {
             val base = viejo ?: Obra("", tipo, "")
             val eps = temporadas.split(",").mapNotNull { it.trim().toIntOrNull()?.takeIf { n -> n in 1..2000 } }
             val lineas = canciones.lines().map { it.trim() }.filter { it.isNotEmpty() }
             vm.guardarObra(base.copy(
                 tipo = tipo, titulo = titulo.trim(), original = original.trim(), anio = anio.toIntOrNull(), creador = creador.trim(),
-                generos = generos.split(",").map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(12), sinopsis = sinopsis.trim(),
-                portada = portada.takeIf { it.startsWith("https://") } ?: "",
+                sinopsis = sinopsis.trim(),
                 paginas = if (tipo == Tipos.LIBRO) medida.toIntOrNull() else base.paginas,
                 minutos = if (tipo != Tipos.LIBRO) medida.toIntOrNull() else base.minutos,
                 temporadas = if (Tipos.porEpisodios(tipo)) eps.mapIndexed { i, n -> base.temporadas.getOrNull(i)?.copy(episodios = n) ?: Temporada(i + 1, n) } else base.temporadas,
                 canciones = if (tipo == Tipos.ALBUM) lineas.mapIndexed { i, t -> base.canciones.getOrNull(i)?.takeIf { it.titulo == t } ?: io.github.fogonapps.cajon.datos.Cancion(t) } else base.canciones,
             ))
         }, Modifier.fillMaxWidth(), habilitado = titulo.isNotBlank())
-        Pista(stringResource(R.string.portada_pista), adentro = true)
+        // Los géneros y la portada se ponen después, en la ficha (como etiquetas y con "Cambiar la portada").
+        Pista(stringResource(R.string.a_mano_pista), adentro = true)
     }
 }

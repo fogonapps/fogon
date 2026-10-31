@@ -92,6 +92,16 @@ object Logica {
     /** La fecha del último registro del diario (o cuándo se terminó). */
     fun ultimaVez(o: Obra): String? = (o.registros.map { it.fecha } + listOfNotNull(o.terminada)).maxOrNull()
 
+    /** Todas las etiquetas del cajón (géneros y etiquetas propias de obras y artistas), las más usadas primero. */
+    fun etiquetasDelCajon(e: Estado, tipos: Collection<String>? = null): List<String> =
+        (e.vivas.filter { tipos == null || it.tipo in tipos }.flatMap { it.generos + it.etiquetas } +
+            (if (tipos == null || Tipos.ALBUM in tipos) e.musicosVivos.flatMap { it.generos } else emptyList()))
+            .map { it.trim() }.filter { it.isNotEmpty() }
+            .groupBy { tituloLimpio(it) }.values.sortedByDescending { it.size }.map { it.first() }
+
+    /** Si una obra o un artista lleva esa etiqueta (como género o como etiqueta propia). */
+    fun tieneEtiqueta(o: Obra, etiqueta: String) = tituloLimpio(etiqueta).let { t -> (o.generos + o.etiquetas).any { tituloLimpio(it) == t } }
+
     /**
      * Si lo buscado es un género: uno de los del cajón ([delCajon]) o de los comunes ([GENEROS_COMUNES]).
      * Devuelve el género tal como se muestra, o null.
@@ -129,17 +139,31 @@ object Logica {
 
     /**
      * Si algo encontrado afuera es de verdad esta obra (para completar portadas sin equivocarse): el mismo título
-     * (o el original), el año a lo sumo uno de diferencia si los dos lo tienen y, en los álbumes, el mismo artista.
+     * (o el original), el año a lo sumo uno de diferencia si los dos lo tienen, en los álbumes el mismo artista y en los
+     * libros un autor en común (entonces el año no importa y basta con que un título empiece por el otro).
      */
     fun esLaMisma(o: Obra, r: Encontrado): Boolean {
         val t = tituloLimpio(o.titulo)
-        if (t.isEmpty() || (t != tituloLimpio(r.titulo) && t != tituloLimpio(r.detalle))) return false
-        if (o.anio != null && r.anio != null && kotlin.math.abs(o.anio - r.anio) > 1) return false
+        if (t.isEmpty()) return false
+        // Libros del mismo autor: basta con que un título empiece por el otro ("Frankenstein" y "Frankenstein o el moderno Prometeo").
+        val mismoAutor = o.tipo == Tipos.LIBRO && autorEnComun(o.creador, r.creador)
+        val rt = tituloLimpio(r.titulo)
+        val parecido = mismoAutor && minOf(t.length, rt.length) >= 4 && (t.startsWith(rt) || rt.startsWith(t))
+        if (t != rt && t != tituloLimpio(r.detalle) && !parecido) return false
+        // El año, menos en libros del mismo autor (Open Library a veces da el de una edición, no el de la obra).
+        if (!mismoAutor && o.anio != null && r.anio != null && kotlin.math.abs(o.anio - r.anio) > 1) return false
         if (o.tipo == Tipos.ALBUM && o.creador.isNotBlank()) {
             val a = tituloLimpio(o.creador); val b = tituloLimpio(r.creador)
             if (b.isEmpty() || !(a in b || b in a)) return false
         }
+        // Libros: si los dos traen autor, que compartan al menos un apellido (hay muchos libros con el mismo título).
+        if (o.tipo == Tipos.LIBRO && o.creador.isNotBlank() && r.creador.isNotBlank() && !mismoAutor) return false
         return true
+    }
+
+    private fun autorEnComun(a: String, b: String): Boolean {
+        val x = tituloLimpio(a).split(" ").filter { it.length > 2 }.toSet()
+        return x.isNotEmpty() && x.intersect(tituloLimpio(b).split(" ").toSet()).isNotEmpty()
     }
 
     /** Ya está en el cajón algo de esa fuente (para no agregarlo dos veces). */

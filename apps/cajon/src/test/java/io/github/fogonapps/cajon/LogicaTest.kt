@@ -165,7 +165,7 @@ class LogicaTest {
             libro("E", "El amor en los tiempos del cólera", "Gabriel García Márquez", 130, 5),
         ), "es")
         assertEquals(listOf("ol:A", "ol:E"), r.map { it.fuente })
-        assertEquals("", r[0].portada)   // los libros van sin portada
+        assertEquals("https://covers.openlibrary.org/b/id/1-M.jpg", r[0].portada)   // en la lista, la portada de la obra
     }
 
     @Test fun laTraduccionBuscadaSaleConSuTitulo() {
@@ -191,6 +191,37 @@ class LogicaTest {
         // Por el título original, aunque TMDB lo traiga traducido.
         assertEquals(true, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Diario de un rebelde", 1995, detalle = "The Basketball Diaries")))
         assertEquals(false, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Basketball", 1995)))
+    }
+
+    @Test fun librosConElMismoTituloPeroOtroAutor() {
+        fun enc(t: String, creador: String) = io.github.fogonapps.cajon.datos.Encontrado(Tipos.LIBRO, t, null, creador, "", "x")
+        val libro = Obra("1", Tipos.LIBRO, "El extranjero", creador = "Albert Camus")
+        assertTrue(Logica.esLaMisma(libro, enc("El Extranjero", "Albert Camus")))
+        assertFalse(Logica.esLaMisma(libro, enc("El extranjero", "Otra Persona")))
+        // Sin autor en el cajón, basta el título.
+        assertTrue(Logica.esLaMisma(libro.copy(creador = ""), enc("El extranjero", "Albert Camus")))
+        // Del mismo autor: un título que empieza por el otro, aunque el año sea el de una edición.
+        assertTrue(Logica.esLaMisma(Obra("2", Tipos.LIBRO, "Frankenstein o el moderno Prometeo", anio = 1818, creador = "Mary Shelley"),
+            io.github.fogonapps.cajon.datos.Encontrado(Tipos.LIBRO, "Frankenstein", 1994, "Mary Wollstonecraft Shelley", "", "x")))
+        assertFalse(Logica.esLaMisma(libro, enc("El", "Albert Camus")))
+    }
+
+    @Test fun etiquetasIgualesParaTodo() {
+        val a = Obra("1", Tipos.PELICULA, "A", generos = listOf("Drama"), etiquetas = listOf("Con amigos"))
+        val b = Obra("2", Tipos.LIBRO, "B", generos = listOf("drama"))
+        val e = Estado(obras = listOf(a, b))
+        // Se juntan sin importar mayúsculas ni tildes, la más usada primero.
+        assertEquals(listOf("Drama", "Con amigos"), Logica.etiquetasDelCajon(e))
+        assertEquals(listOf("drama"), Logica.etiquetasDelCajon(e, listOf(Tipos.LIBRO)))
+        assertTrue(Logica.tieneEtiqueta(a, "con AMIGOS"))
+        assertTrue(Logica.tieneEtiqueta(b, "Drama"))
+        assertFalse(Logica.tieneEtiqueta(b, "Con amigos"))
+    }
+
+    @Test fun losNuevosCamposViajanEnElRespaldo() {
+        val o = Obra("1", Tipos.SERIE, "S", episodiosFavoritos = listOf("1x5|Piloto"), portadaPropia = true)
+        val e = Estado(obras = listOf(o))
+        assertEquals(e, JsonCajon.decodeFromString(Estado.serializer(), JsonCajon.encodeToString(Estado.serializer(), e)))
     }
 
     @Test fun recientesPorFechaDeAgregada() {

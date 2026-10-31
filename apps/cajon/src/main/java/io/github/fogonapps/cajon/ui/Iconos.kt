@@ -29,6 +29,8 @@ object Iconos {
     val Lista = dibujo("lista", trazo("M9.4 6.4h10.2M9.4 12h10.2M9.4 17.6h10.2", 2.6f), relleno("M5.2 5a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 10.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 16.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"))
     /** Un cuaderno: el diario. */
     val Diario = dibujo("diario", relleno("M6 3.6h12.4v16.8H6z"), huecoTrazo("M9.4 8h5.6M9.4 11.6h5.6", 1.8f), trazo("M4.4 7.4h2.8M4.4 12h2.8M4.4 16.6h2.8", 1.8f))
+    /** Un cuadro con un monte y un sol: una imagen (cambiar la portada). */
+    val Imagen = dibujo("imagen", relleno("M3.6 5h16.8v14H3.6z"), hueco("M5.6 17l4.4-5.4 3 3.4 2.2-2.4 3.2 4.4z"), hueco("M15.6 7.6a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z"))
     val Corazon = dibujo("corazon", relleno("M12 20s-7.6-4.6-7.6-10a4.2 4.2 0 0 1 7.6-2.6A4.2 4.2 0 0 1 19.6 10c0 5.4-7.6 10-7.6 10z"))
     val Estrella = dibujo("estrella", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"))
     val Buscar = dibujo("buscar", trazo("M10.6 4.4a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4zM15.2 15.2l4.6 4.6", 2.8f))

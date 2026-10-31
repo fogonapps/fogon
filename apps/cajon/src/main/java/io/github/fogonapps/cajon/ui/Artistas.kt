@@ -69,31 +69,37 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     }
 }
 
-/** Los géneros de un artista como etiquetas. Tocar una busca el género; en "Editar" se quitan con un toque y se agregan. */
-@OptIn(ExperimentalLayoutApi::class)
+/** Los géneros de un artista, con el mismo editor de etiquetas que las obras. Tocar uno busca ese género. */
 @Composable
-private fun Generos(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artista) {
+private fun Generos(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artista) =
+    EditorEtiquetas("a" + a.id, stringResource(R.string.generos), a.generos, { (vm.generosDelCajon() + vm.sugerenciasEtiquetas(listOf(io.github.fogonapps.cajon.datos.Tipos.ALBUM))).distinct() },
+        { vm.ponerGeneros(a.id, it) }, { vm.buscarGenero(it) }, stringResource(R.string.agregar_genero))
+
+/**
+ * Un músico que no está enlazado (lo trajo un respaldo, o se agregó a mano): se busca en MusicBrainz y se elige
+ * cuál es, para que lleguen la foto, la biografía y la discografía.
+ */
+@Composable
+private fun Enlazar(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artista) {
     val f = FogonTema.actual
-    var editando by rememberSaveable(a.id) { mutableStateOf(false) }
-    if (a.generos.isEmpty() && !editando) {
-        Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { Pildora(stringResource(R.string.agregar_genero), Iconos.Mas) { editando = true } }
-        return
-    }
-    Seccion(stringResource(R.string.generos)) {
-        Pildora(stringResource(if (editando) R.string.listo else R.string.editar)) { editando = !editando }
-    }
-    FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        a.generos.forEach { g ->
-            if (editando) Pildora(g, Iconos.Cerrar) { vm.ponerGeneros(a.id, a.generos - g) }
-            else Pildora(g) { vm.buscarGenero(g) }
-        }
-    }
-    if (editando) {
-        var nuevo by rememberSaveable(a.id) { mutableStateOf("") }
-        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(nuevo, { nuevo = it.take(40) }, Modifier.weight(1f), singleLine = true, shape = FormaPildora,
-                placeholder = { Text(stringResource(R.string.agregar_genero)) })
-            BotonSecundario(stringResource(R.string.agregar), { if (nuevo.isNotBlank()) { vm.ponerGeneros(a.id, a.generos + nuevo); nuevo = "" } })
+    val c by vm.candidatosArtista.collectAsStateWithLifecycle()
+    val lista = c?.takeIf { it.first == a.id }
+    Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.enlazar_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        when {
+            lista == null -> BotonSecundario(stringResource(R.string.enlazar_musicbrainz), { vm.buscarCandidatosArtista(a.id) }, Modifier.fillMaxWidth())
+            lista.second == null -> Box(Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) { androidx.compose.material3.CircularProgressIndicator(color = f.tinta1) }
+            lista.second!!.isEmpty() -> Pista(stringResource(R.string.sin_resultados), adentro = true)
+            else -> lista.second!!.take(6).forEach { r ->
+                FilaVidrio({ vm.enlazarArtista(a.id, r) }, adentro = true) {
+                    FotoArtista(r.foto, r.nombre, 44.dp, r.tipo)
+                    Column(Modifier.weight(1f)) {
+                        Text(r.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                        val d = listOf(r.pais, r.desde?.toString() ?: "", r.detalle).filter { it.isNotBlank() }.joinToString(" · ")
+                        if (d.isNotBlank()) Text(d, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2)
+                    }
+                }
+            }
         }
     }
 }
@@ -141,6 +147,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
 
     // Los géneros, como etiquetas: tocar una busca ese género; "Editar" deja quitar y agregar.
     Generos(vm, a)
+    if (a.fuente.isEmpty() && Personas.esMusico(a)) Enlazar(vm, a)
 
     // La biografía breve (de Wikipedia, con su crédito y su licencia).
     if (a.bio.isNotBlank()) {

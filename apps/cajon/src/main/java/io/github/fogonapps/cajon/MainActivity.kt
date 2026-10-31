@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.material3.AlertDialog
@@ -78,6 +79,12 @@ class MainActivity : ComponentActivity() {
                         else vm.importarDeOtraApp(bytes, uri.lastPathSegment ?: "")
                     }
                 }
+                // La foto para una portada: el selector de fotos del sistema (sin permisos; si no hay, el de archivos).
+                var alElegir by remember { mutableStateOf<((android.net.Uri) -> Unit)?>(null) }
+                val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                    if (uri != null) alElegir?.invoke(uri)
+                    alElegir = null
+                }
                 porImportar?.let { d ->
                     AlertDialog(
                         onDismissRequest = { porImportar = null },
@@ -93,6 +100,7 @@ class MainActivity : ComponentActivity() {
                     importar = { importar.launch(TIPOS_JSON) },
                     deOtraApp = { deOtraApp.launch(TIPOS_OTRAS) },
                     compartir = ::compartir,
+                    elegirImagen = { cb -> alElegir = cb; imagen.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 ))
             }
         }
