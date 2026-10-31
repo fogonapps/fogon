@@ -150,21 +150,16 @@ def el_ahorrador(M):
 
 
 def la_cucha(M):
-    """Corre con la cuchara de palo en alto como una antorcha; su gorro de chef flota encima de la estrella."""
+    """Corre con la cuchara de palo en alto como una antorcha (sin gorro ni falda: Angel, 31-10-2026)."""
     M.armar({"espalda": (0.35, 0, 1),
              "brazo_d": (1, 0, 0.75), "antebrazo_d": (0.7, 0, 1), "brazo_i": (-0.8, 0.2, -0.5), "antebrazo_i": (-0.6, 0, 0.5),
              "muslo_d": (0.6, -0.75, -0.5), "canilla_d": (0.1, -0.5, -1), "pie_d": (1, -0.5, 0), "adelante": {"d": 0.12},
              "muslo_i": (-0.5, 0.3, -1), "canilla_i": (-1, 0.2, -0.25), "pie_i": (-0.3, 0, -1)})
-    # La cuchara de palo, en diagonal hacia afuera (así no se cruza con el gorro).
+    # La cuchara de palo, en diagonal hacia afuera.
     mano = M.manos["d"]; d = Vector((0.45, 0, 1)).normalized()
     prisma(mano + d * 0.02, mano + d * 0.55, 0.035, 0.035)
     bpy.ops.mesh.primitive_ico_sphere_add(radius=0.11, subdivisions=1, location=mano + d * 0.66)
     o = plano(bpy.context.active_object); o.scale = (0.8, 0.5, 1.3)
-    # El gorro de chef: la banda y la copa inflada, facetados, un poco arriba de la cabeza.
-    g = M.cabeza + Vector((0, 0, CABEZA + 0.1))
-    disco(g, 0.17, 0.12, 8, (0, 0, 0))
-    for dx, dz, rr in ((-0.1, 0.16, 0.13), (0.1, 0.16, 0.13), (0, 0.22, 0.15)):
-        bpy.ops.mesh.primitive_ico_sphere_add(radius=rr, subdivisions=1, location=g + Vector((dx, 0, dz))); plano(bpy.context.active_object)
 
 
 def el_cajon(M):

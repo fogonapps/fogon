@@ -266,16 +266,10 @@ fun caras(luz: Color, fondo: Color): androidx.compose.ui.graphics.ColorMatrix {
 }
 
 /**
- * La tinta de la cabeza del muñeco: el color propio de la app (también en los temas neutros, como Grafito), o
- * su versión para papel (o la del tema) si ese color no se distingue del fondo.
+ * La tinta de la cabeza del muñeco: siempre el color propio de la app, en todos los temas (Angel, 31-10-2026:
+ * también el lima de El Forzudo sobre papel claro).
  */
-fun tintaCabeza(f: Fogon): Color = when {
-    contraste(f.marca, f.fondo) >= 2.0 -> f.marca
-    // En papel claro, la versión de la misma tinta hecha para leerse en papel (el lima se vuelve oliva).
-    contraste(f.paleta.textoEnPapel, f.fondo) >= 2.0 -> f.paleta.textoEnPapel
-    contraste(f.tinta1, f.fondo) >= 2.0 -> f.tinta1
-    else -> f.acentoTexto
-}
+fun tintaCabeza(f: Fogon): Color = f.marca
 
 /**
  * El muñeco de Fogón (identidad/muneco): el mismo cuerpo en bloques hace la acción de cada app. El cuerpo va en

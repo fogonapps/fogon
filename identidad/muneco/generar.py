@@ -26,10 +26,10 @@ TUTORIAL = {f"tut-{p}": f"munieco_tut_{p}" for p in ("hola", "anota", "racha", "
 APP = {"el-forzudo": "forzudo", "el-ahorrador": "ahorrador", "la-cucha": "cucha", "el-cajon": "cajon"}
 # La tinta de cada app (la de su tema) y el fondo oscuro de su ícono (el de su tema).
 COLOR = {"el-forzudo": "#C4E02E", "el-ahorrador": "#F2384D", "la-cucha": "#FF8A4C", "el-cajon": "#9B7BFF"}
-# El ícono va en blanco con el muñeco oscuro (Angel, 25-10-2026); la cabeza en el color de la app, o en su versión
-# para papel si ese color no se ve sobre blanco (el lima de El Forzudo se vuelve oliva, como en el tema Claro).
+# El ícono va en blanco con el muñeco oscuro en semitono (Angel, 25 y 31-10-2026); la cabeza en el color de la app,
+# también el lima de El Forzudo (Angel lo prefiere así aunque sobre blanco se vea menos).
 FONDO_ICONO = "#FFFFFF"
-CABEZA_ICONO = {"el-forzudo": "#4E6312", "el-ahorrador": "#F2384D", "la-cucha": "#FF8A4C", "el-cajon": "#9B7BFF"}
+CABEZA_ICONO = {"el-forzudo": "#C4E02E", "el-ahorrador": "#F2384D", "la-cucha": "#FF8A4C", "el-cajon": "#9B7BFF"}
 PAPEL, TINTA = (236, 233, 226), (22, 21, 24)
 LADO_APP, LADO_PNG = 600, 1200
 DENSIDADES = {"mdpi": 108, "hdpi": 162, "xhdpi": 216, "xxhdpi": 324, "xxxhdpi": 432}
@@ -103,13 +103,15 @@ def armado(cue, tono, cab, color, cuerpo=TINTA):
 
 
 def iconos(r, n, rc):
-    """El ícono de la app: el muñeco plano (cuerpo oscuro, cabeza en su color) en la zona segura del adaptativo."""
+    """El ícono de la app: el muñeco (cuerpo oscuro en semitono de puntos grandes, para que se lean pequeños; la
+    cabeza en su color) en la zona segura del adaptativo. El monocromo va plano (Android lo tiñe entero)."""
     app = APP[n]
-    cue, _, cab = capas(r, n, rc, 1024, puntos=False)
+    plano, _, cab = capas(r, n, rc, 1024, puntos=False)
+    cue = semitono(plano, 22)
     figura = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     figura.paste(Image.new("RGBA", (1024, 1024), TINTA + (255,)), (0, 0), imagen(cue))
     figura.paste(Image.new("RGBA", (1024, 1024), CABEZA_ICONO[n]), (0, 0), imagen(cab))
-    silueta = blanco(np.maximum(cue, cab))
+    silueta = blanco(np.maximum(plano, cab))
     for d, lado in DENSIDADES.items():
         carpeta = os.path.join(RAIZ, f"apps/{app}/src/main/res/mipmap-{d}")
         os.makedirs(carpeta, exist_ok=True)
