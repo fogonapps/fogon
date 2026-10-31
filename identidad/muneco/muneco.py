@@ -122,10 +122,11 @@ class Muneco:
 # ---------- Las cuatro acciones (el pie de adelante viene hacia la cámara) ----------
 
 def el_forzudo(M):
+    """Levanta la barra sobre la cabeza, de frente y con las dos piernas iguales (abiertas, firmes)."""
     M.armar({"espalda": (0, 0, 1),
              "brazo_i": (-0.75, 0, 1), "antebrazo_i": (-0.15, 0, 1), "brazo_d": (0.75, 0, 1), "antebrazo_d": (0.15, 0, 1),
-             "muslo_i": (-0.55, 0.2, -1), "canilla_i": (-0.15, 0.15, -1), "pie_i": (-1, 0, 0),
-             "muslo_d": (0.5, -0.75, -0.8), "canilla_d": (0.1, -0.5, -1), "pie_d": (0.5, -1, 0), "adelante": {"d": 0.15}})
+             "muslo_i": (-0.45, 0, -1), "canilla_i": (-0.08, 0, -1), "pie_i": (-1, -0.3, 0),
+             "muslo_d": (0.45, 0, -1), "canilla_d": (0.08, 0, -1), "pie_d": (1, -0.3, 0)})
     y, z = M.manos["i"].y, (M.manos["i"].z + M.manos["d"].z) / 2
     disco((0, y, z), 0.035, 2.3, 8, (0, math.radians(90), 0))
     for x in (-0.95, -0.83, 0.83, 0.95):
@@ -133,23 +134,19 @@ def el_forzudo(M):
 
 
 def el_ahorrador(M):
-    """Como Sísifo: empuja cuesta arriba una moneda más grande que él, con los brazos y el hombro."""
-    M.armar({"espalda": (1, 0, 0.6),
-             "brazo_i": (1, 0.1, 0.45), "antebrazo_i": (1, 0, 0.3), "brazo_d": (1, -0.1, 0.2), "antebrazo_d": (1, 0, 0.15),
-             "muslo_i": (-0.75, 0.15, -0.65), "canilla_i": (-0.95, 0.1, -0.45), "pie_i": (-0.3, 0, -1),
-             "muslo_d": (0.35, -0.75, -0.85), "canilla_d": (-0.1, -0.45, -1), "pie_d": (1, -0.5, 0), "adelante": {"d": 0.12}},
-            cadera=(-0.8, 0, 0.05))
+    """Sísifo, como en las portadas: el cuerpo en diagonal, metido bajo una moneda más grande que él, los dos
+    brazos arriba empujándola, la pierna de atrás estirada y la de adelante doblada. Sin cuesta: la inclinación
+    del cuerpo dice que es cuesta arriba."""
+    M.armar({"espalda": (0.8, 0, 0.75),
+             "brazo_i": (0.9, 0.1, 0.55), "antebrazo_i": (1, 0.05, 0.25), "brazo_d": (0.95, -0.1, 0.4), "antebrazo_d": (1, -0.05, 0.15),
+             "muslo_i": (-0.6, 0.15, -0.8), "canilla_i": (-0.85, 0.1, -0.55), "pie_i": (-0.4, 0, -1),
+             "muslo_d": (0.55, -0.1, -0.85), "canilla_d": (-0.15, -0.05, -1), "pie_d": (1, -0.2, 0)},
+            cadera=(-0.7, 0, -0.1))
     manos = (M.manos["i"] + M.manos["d"]) / 2
-    r = 0.78
-    c = manos + Vector((r * 0.92, 0, 0.05))
-    moneda = disco(c, r, 0.14, 14)
-    restar(moneda, chispa(c, r * 0.6, 0.16, 0.25, "calado"))
-    # La cuesta: una losa facetada que sube desde detrás del pie hasta debajo de la moneda.
-    pie = M.pies["d"]; base = Vector((c.x, 0, c.z - r))
-    ang = math.atan2(base.z - pie.z, base.x - pie.x)
-    largo = (base - Vector((pie.x, 0, pie.z))).length + 1.0
-    medio = Vector((pie.x, 0.1, pie.z)) + Vector((math.cos(ang), 0, math.sin(ang))) * (largo / 2 - 0.55) + Vector((0, 0, -0.09))
-    bloque(medio, (largo, 0.9, 0.1), (0, -ang, 0))
+    r = 0.85
+    c = manos + Vector((r * 0.95, 0, r * 0.25))
+    moneda = disco(c, r, 0.16, 14)
+    restar(moneda, chispa(c, r * 0.6, 0.16, 0.3, "calado"))
 
 
 def la_cucha(M):

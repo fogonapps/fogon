@@ -29,6 +29,8 @@ Tarda unos 15 segundos y reescribe, para las cuatro apps:
 - `apps/<app>/fastlane/metadata/android/en-US/images/icon.png` (el ícono de la tienda);
 - `identidad/muneco/png/<personaje>.png`.
 
+**Las poses que pidió Angel** (no cambiarlas sin que lo pida): El Forzudo de frente con las dos piernas iguales; El Ahorrador como el Sísifo de las portadas, sin rampa; La Cucha sin falda y con gorro de chef flotando sobre la estrella; El Cajón saltando con un disco.
+
 Después: compilar, probar en el emulador (tutorial en Grafito y en Claro, el ícono en el cajón de apps), rehacer
 las capturas de la tienda que muestren al personaje (ver la `GUIA.md` de cada app) y publicar las apps.
 
@@ -61,7 +63,7 @@ Todo está en `muneco.py`:
   `generar.py`, en `NOMBRES`, `APP`, `COLOR` y `CABEZA_ICONO`; en la app, `@color/icono_fondo` y el personaje en
   `core/identidad` (`CAPAS` en `Componentes.kt`, `CAPAS_…` en `Widget.kt`).
 
-En `generar.py`: los colores de la cabeza (`COLOR` en la app, `CABEZA_ICONO` en el ícono: la del Forzudo es oliva
+En `generar.py`: el acabado (`capas(…, puntos=True)`: semitono en las apps; con `puntos=False`, como en los íconos, el cuerpo plano), los colores de la cabeza (`COLOR` en la app, `CABEZA_ICONO` en el ícono: la del Forzudo es oliva
 porque el lima no se ve sobre blanco), el fondo del ícono (`FONDO_ICONO`, blanco) y el tamaño en la zona segura
 (64 de 108 dp).
 

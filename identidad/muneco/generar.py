@@ -5,9 +5,8 @@ Uso (desde la raíz del repo): python3 identidad/muneco/generar.py
 Necesita Blender (lo corre en segundo plano), Pillow y numpy.
 
 Escribe, para El Forzudo, El Ahorrador, La Cucha y El Cajón:
-- core/identidad/src/main/res/drawable-nodpi/personaje_<nombre>_cuerpo.webp: el cuerpo en grises (las caras de los
-  bloques: blanco lo que da a la luz, más oscuro lo que no), que la app tiñe con las letras del tema
-  (`PersonajeFogon`); y _cabeza.webp: la cabeza (la chispa) en blanco, que se tiñe con el color de la app;
+- core/identidad/src/main/res/drawable-nodpi/personaje_<nombre>_cuerpo.webp: el cuerpo en semitono (puntos blancos),
+  que la app tiñe con las letras del tema (`PersonajeFogon`); y _cabeza.webp: la cabeza (la chispa) en blanco, que se tiñe con el color de la app;
 - core/identidad/src/main/res/drawable-nodpi/personaje_<nombre>.webp e identidad/muneco/png/<nombre>.png: el
   personaje armado (cuerpo oscuro, cabeza en el color de la app), por si algo lo muestra sin teñir;
 - apps/forzudo/src/main/res/drawable-nodpi/munieco_tut_<paso>_cuerpo.webp y _cabeza.webp: el tutorial;
@@ -55,7 +54,21 @@ def cortar(im, rc, lado_salida):
     return im.crop((x, y, x + lado, y + lado)).resize((lado_salida, lado_salida), Image.LANCZOS)
 
 
-def capas(r, n, rc, lado):
+def semitono(a, paso):
+    """El cuerpo en puntos (filas alternadas; cada punto tan grande como lleno está el cuerpo ahí)."""
+    suave = np.asarray(imagen(a).filter(ImageFilter.GaussianBlur(paso * 0.4)), dtype=np.float32) / 255
+    lado = a.shape[0]
+    im = Image.new("L", (lado, lado), 0); d = ImageDraw.Draw(im)
+    for y in range(paso // 2, lado, paso):
+        for x in range(paso // 2 + (paso // 2 if (y // paso) % 2 else 0), lado, paso):
+            v = suave[y, x]
+            if v > 0.08:
+                rr = paso * 0.5 * v ** 0.7
+                d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=255)
+    return np.asarray(im, dtype=np.float32) / 255
+
+
+def capas(r, n, rc, lado, puntos=True):
     """El cuerpo (alfa y tono de 0 a 1: 1 lo más iluminado) y la cabeza, separados por un borde alrededor de la cabeza."""
     cab = np.asarray(cortar(Image.open(f"{r}/{n}-cabeza.png").getchannel("A"), rc, lado), dtype=np.float32) / 255
     cue = np.asarray(cortar(Image.open(f"{r}/{n}-cuerpo.png").getchannel("A"), rc, lado), dtype=np.float32) / 255
@@ -63,6 +76,8 @@ def capas(r, n, rc, lado):
     cue = np.clip(cue - halo, 0, 1)
     lum = np.asarray(cortar(Image.open(f"{r}/{n}-luz.png").convert("RGBA"), rc, lado).convert("L"), dtype=np.float32) / 255
     tono = np.clip((lum - 0.3) / 0.62, 0, 1)
+    if puntos:   # en las apps, el cuerpo va en semitono (Angel); en los íconos, plano
+        cue = semitono(cue, max(5, lado // 80)); tono = np.ones_like(cue)
     return cue, tono, cab
 
 
@@ -90,7 +105,7 @@ def armado(cue, tono, cab, color, cuerpo=TINTA):
 def iconos(r, n, rc):
     """El ícono de la app: el muñeco plano (cuerpo oscuro, cabeza en su color) en la zona segura del adaptativo."""
     app = APP[n]
-    cue, _, cab = capas(r, n, rc, 1024)
+    cue, _, cab = capas(r, n, rc, 1024, puntos=False)
     figura = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     figura.paste(Image.new("RGBA", (1024, 1024), TINTA + (255,)), (0, 0), imagen(cue))
     figura.paste(Image.new("RGBA", (1024, 1024), CABEZA_ICONO[n]), (0, 0), imagen(cab))
