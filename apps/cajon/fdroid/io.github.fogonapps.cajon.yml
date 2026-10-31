@@ -70,9 +70,16 @@ Builds:
     gradle:
       - yes
 
+  - versionName: "1.5.1"
+    versionCode: 8
+    commit: e14f174afff51606449632bddcc15ef25cfd30b5
+    subdir: apps/cajon
+    gradle:
+      - yes
+
 AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
 
 AutoUpdateMode: Version cajon-v%v
 UpdateCheckMode: Tags ^cajon-v
-CurrentVersion: "1.5"
-CurrentVersionCode: 7
+CurrentVersion: "1.5.1"
+CurrentVersionCode: 8

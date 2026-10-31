@@ -39,9 +39,16 @@ Builds:
     gradle:
       - yes
 
+  - versionName: "1.7.1"
+    versionCode: 10
+    commit: e14f174afff51606449632bddcc15ef25cfd30b5
+    subdir: apps/ahorrador
+    gradle:
+      - yes
+
 AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
 
 AutoUpdateMode: Version ahorrador-v%v
 UpdateCheckMode: Tags ^ahorrador-v
-CurrentVersion: "1.7"
-CurrentVersionCode: 9
+CurrentVersion: "1.7.1"
+CurrentVersionCode: 10
