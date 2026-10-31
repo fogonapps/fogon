@@ -1,0 +1,1 @@
+Missing covers are found automatically, no button. “Trivia” only shows when it has something. The diary is clearer: “Log when I watched it” saves the day you watched, read or listened to something.

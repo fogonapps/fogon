@@ -102,18 +102,13 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         SelectorIdioma(vm)
     }
 
-    // Las portadas de lo que llegó sin fuente (a mano o de otra app).
+    // Las portadas de lo que llegó sin fuente se buscan solas; aquí solo se ve cómo va.
     val completando by vm.completando.collectAsStateWithLifecycle()
-    Seccion(stringResource(R.string.portadas))
-    Pista(stringResource(R.string.portadas_pista))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        val c = completando
-        if (c != null) {
+    completando?.let { c ->
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             LinearProgressIndicator({ c.hechas / c.total.toFloat() }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
             Text(stringResource(R.string.portadas_avance, c.hechas, c.total, c.encontradas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        if (!tmdb) Text(stringResource(R.string.portadas_sin_tmdb), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        BotonSecundario(stringResource(if (c != null) R.string.detener else R.string.buscar_portadas), vm::buscarPortadas, Modifier.fillMaxWidth())
     }
 
     Seccion(stringResource(R.string.traer_de_otras))

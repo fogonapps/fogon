@@ -155,6 +155,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             sincronizar()
+            buscarPortadas()
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
         }
@@ -414,13 +415,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      * Busca afuera lo que llegó sin fuente (a mano o de otra app): películas, series y animes en TMDB (si hay
      * clave) y álbumes en MusicBrainz. Solo enlaza si es la misma obra ([Logica.esLaMisma]); entonces pone la
      * fuente, la portada y la nota del público, sin tocar lo de la persona. Los libros van sin portada.
+     * Es automático: corre al abrir la app, al traer algo de otra app o de un respaldo y al poner la clave de TMDB,
+     * en silencio; lo ya revisado no se vuelve a buscar ([CajaFuerte.portadasRevisadas]).
      */
     fun buscarPortadas() {
-        if (trabajoPortadas?.isActive == true) { trabajoPortadas?.cancel(); _completando.value = null; return }
+        if (trabajoPortadas?.isActive == true) return
         val clave = caja.claveTmdb
+        val revisadas = caja.portadasRevisadas.toMutableSet()
         val pendientes = _estado.value?.vivas.orEmpty()
-            .filter { it.fuente.isEmpty() && it.tipo != Tipos.LIBRO && (it.tipo == Tipos.ALBUM || clave != null) }
-        if (pendientes.isEmpty()) { avisar(tx(R.string.aviso_portadas_nada)); return }
+            .filter { it.fuente.isEmpty() && it.tipo != Tipos.LIBRO && (it.tipo == Tipos.ALBUM || clave != null) && it.id !in revisadas }
+        if (pendientes.isEmpty()) return
         trabajoPortadas = viewModelScope.launch {
             var encontradas = 0
             _completando.value = Completando(0, pendientes.size, 0)
@@ -436,6 +440,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         }
                     }.getOrElse { if (it is ClaveMala || it is SinRed) throw it else emptyList() }
                     val r = candidatos.firstOrNull { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
+                    revisadas += o.id
+                    if ((i + 1) % 10 == 0) caja.portadasRevisadas = revisadas
                     if (r != null) {
                         encontradas++
                         val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
@@ -443,10 +449,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     }
                     _completando.value = Completando(i + 1, pendientes.size, encontradas)
                 }
-                avisar(txPlural(R.plurals.aviso_portadas, encontradas, encontradas))
-            } catch (x: ClaveMala) { avisar(tx(R.string.buscar_tmdb_mala))
-            } catch (x: SinRed) { avisar(tx(R.string.buscar_sin_red))
-            } finally { _completando.value = null }
+            } catch (_: ClaveMala) { // la clave dejó de servir: se avisa al buscar a mano
+            } catch (_: SinRed) { // sin internet: sigue la próxima vez
+            } finally { caja.portadasRevisadas = revisadas; _completando.value = null }
         }
     }
 
@@ -583,6 +588,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 Tmdb(c).probar()
                 caja.claveTmdb = c; _tieneTmdb.value = true
+                buscarPortadas()   // ahora también las películas, series y animes
                 avisar(tx(R.string.aviso_clave_lista))
                 cerrar()
                 if (_busqueda.value.texto.isNotBlank()) buscar(_busqueda.value.texto)
@@ -667,6 +673,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         var nuevas = 0
         cambiar { e -> val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n; x }
         avisar(txPlural(R.plurals.aviso_importadas, r.obras.size, r.obras.size, r.deDonde, nuevas))
+        buscarPortadas()
     }
 
     fun exportarJson(): String = JsonCajon.encodeToString(Estado.serializer(), _estado.value ?: Estado())
@@ -677,6 +684,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         cambiar { L.normalizar(L.unir(it, e)) }
         _pila.value = emptyList(); _pestana.value = Pestana.INICIO
         avisar(tx(R.string.aviso_importado))
+        buscarPortadas()
     }
 
     companion object {

@@ -80,7 +80,6 @@
   <string name="tu_nota">Tu nota</string>
   <string name="quitar_favorita">Quitar de tus cuatro favoritas</string>
   <string name="poner_favorita">Poner en tus cuatro favoritas</string>
-  <string name="registrar">Anotar en el diario</string>
   <string name="agregar_a_lista">Agregar a una lista</string>
   <string name="tu_resena">Tu reseña</string>
   <string name="resena_pista">Qué te pareció (solo tú la ves, a menos que la compartas)</string>
@@ -365,16 +364,12 @@
   <string name="sus_libros">Sus libros</string>
   <string name="filmografia">Filmografía</string>
   <string name="personas_vacio">Todavía no guardas a nadie. Búscalo y guárdalo para ver su obra.</string>
-  <string name="portadas">Portadas que faltan</string>
-  <string name="portadas_pista">Lo que agregaste a mano o trajiste de otra app no tiene portada. La app lo busca en TMDB (películas, series y animes, con tu clave) y en MusicBrainz (álbumes), y solo lo enlaza si el título, el año y el artista coinciden. Los libros van sin portada. Puede tardar: MusicBrainz responde una consulta por segundo.</string>
-  <string name="buscar_portadas">Buscar portadas</string>
-  <string name="detener">Detener</string>
-  <string name="portadas_avance">%1$d de %2$d revisadas · %3$d encontradas</string>
-  <string name="portadas_sin_tmdb">Para películas, series y animes hace falta tu clave de TMDB; sin ella solo se buscan los álbumes.</string>
-  <plurals name="aviso_portadas">
-    <item quantity="one">Listo: %1$d portada nueva.</item>
-    <item quantity="many">Listo: %1$d portadas nuevas.</item>
-    <item quantity="other">Listo: %1$d portadas nuevas.</item>
-  </plurals>
-  <string name="aviso_portadas_nada">No falta ninguna portada que se pueda buscar.</string>
+  <string name="portadas_avance">Buscando portadas: %1$d de %2$d revisadas · %3$d encontradas</string>
+  <string name="anotar_visto">Anotar cuándo lo vi</string>
+  <string name="anotar_leido">Anotar cuándo lo leí</string>
+  <string name="anotar_escuchado">Anotar cuándo lo escuché</string>
+  <string name="cuando_visto">Cuándo lo viste</string>
+  <string name="cuando_leido">Cuándo lo leíste</string>
+  <string name="cuando_escuchado">Cuándo lo escuchaste</string>
+  <string name="agregar_datos_curiosos">Agregar datos curiosos</string>
 </resources>

@@ -146,6 +146,14 @@ private fun Sinopsis(texto: String) {
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp).clickable { abierta = true })
 }
 
+/** "Anotar cuándo lo vi", "…lo leí", "…lo escuché": guarda en el diario el día que se vio, leyó o escuchó. */
+@Composable
+fun textoAnotar(tipo: String) = stringResource(when (tipo) { Tipos.LIBRO -> R.string.anotar_leido; Tipos.ALBUM -> R.string.anotar_escuchado; else -> R.string.anotar_visto })
+
+/** "Cuándo lo viste", "…lo leíste", "…lo escuchaste": la lista de esas fechas en la ficha. */
+@Composable
+fun textoCuando(tipo: String) = stringResource(when (tipo) { Tipos.LIBRO -> R.string.cuando_leido; Tipos.ALBUM -> R.string.cuando_escuchado; else -> R.string.cuando_visto })
+
 /** La ficha de una obra del cajón: todo lo de afuera y todo lo de la persona. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -178,7 +186,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
             BotonIcono(Iconos.Corazon, stringResource(R.string.me_gusta), tinta = if (o.meGusta) f.acentoTexto else f.textoSuave, lleno = o.meGusta) { vm.meGusta(o.id) }
         }
         ElegirEstrellas(o.nota, { vm.ponerNota(o.id, it) }, descripcion = stringResource(R.string.tu_nota))
-        BotonRiso(stringResource(R.string.registrar), { vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.fillMaxWidth())
+        BotonRiso(textoAnotar(o.tipo), { vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.agregar_a_lista), { vm.abrir(Pantalla.AgregarALista(o.id)) }, Modifier.fillMaxWidth())
     }
 
@@ -196,17 +204,20 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         var resena by rememberSaveable(o.id) { mutableStateOf(o.resena) }
         OutlinedTextField(resena, { resena = it; vm.ponerResena(o.id, it) }, Modifier.fillMaxWidth(), minLines = 3,
             placeholder = { Text(stringResource(R.string.resena_pista)) })
+        // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).
         var notas by rememberSaveable(o.id) { mutableStateOf(o.notas) }
-        OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
+        var conNotas by rememberSaveable(o.id) { mutableStateOf(o.notas.isNotBlank()) }
+        if (conNotas) OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
             label = { Text(stringResource(R.string.datos_curiosos)) })
+        else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
         var etiquetas by rememberSaveable(o.id) { mutableStateOf(o.etiquetas.joinToString(", ")) }
         OutlinedTextField(etiquetas, { etiquetas = it.take(300); vm.ponerEtiquetas(o.id, it) }, Modifier.fillMaxWidth(), singleLine = true,
             label = { Text(stringResource(R.string.etiquetas)) }, placeholder = { Text(stringResource(R.string.etiquetas_pista)) })
     }
 
-    // El diario de esta obra.
+    // Las veces que la vio, leyó o escuchó, con su fecha (el diario).
     if (o.registros.isNotEmpty()) {
-        Seccion(stringResource(R.string.tu_diario))
+        Seccion(textoCuando(o.tipo))
         o.registros.sortedByDescending { it.fecha }.forEach { r ->
             FilaVidrio({ vm.abrir(Pantalla.Registrar(o.id, r.id)) }) {
                 IconoRiso(if (r.otraVez) Iconos.Repetir else Iconos.Diario, null, tamano = 20.dp, tinta = f.textoSuave)
@@ -303,7 +314,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     var otraVez by rememberSaveable { mutableStateOf(viejo?.otraVez ?: o.registros.isNotEmpty()) }
     var texto by rememberSaveable { mutableStateOf(viejo?.texto ?: "") }
 
-    Cabecera(stringResource(R.string.registrar), vm::cerrar)
+    Cabecera(textoAnotar(o.tipo), vm::cerrar)
     Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Portada(o.portada, o.tipo, o.titulo, Modifier.width(64.dp), esquina = 8.dp)
         Text(o.titulo, fontFamily = f.titulos, fontSize = 20.sp, color = f.texto, maxLines = 3)

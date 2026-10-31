@@ -108,5 +108,19 @@ class CajaFuerte(context: Context) {
         get() = prefs.getLong("ultima", 0)
         set(v) = prefs.edit { putLong("ultima", v) }
 
+    /**
+     * Las obras que "Buscar portadas" ya revisó sin encontrar (para no repetir cientos de consultas cada vez que se
+     * abre la app). Se olvidan a los 30 días, por si MusicBrainz o TMDB las agregan después. Solo en este teléfono.
+     */
+    var portadasRevisadas: Set<String>
+        get() {
+            if (System.currentTimeMillis() - prefs.getLong("portadas_desde", 0) > 30L * 24 * 3600 * 1000) return emptySet()
+            return prefs.getStringSet("portadas_revisadas", emptySet()) ?: emptySet()
+        }
+        set(v) = prefs.edit {
+            if (prefs.getStringSet("portadas_revisadas", emptySet()).isNullOrEmpty() || v.isEmpty()) putLong("portadas_desde", System.currentTimeMillis())
+            putStringSet("portadas_revisadas", v)
+        }
+
     fun desconectarGithub() { tokenGithub = null; usuario = null; gist = null; ultima = 0 }
 }
