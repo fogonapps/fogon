@@ -1,0 +1,1 @@
+“Recent” now sorts by the date you added each item, not by when you last touched it.

@@ -192,4 +192,10 @@ class LogicaTest {
         assertEquals(true, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Diario de un rebelde", 1995, detalle = "The Basketball Diaries")))
         assertEquals(false, Logica.esLaMisma(peli, enc(Tipos.PELICULA, "Basketball", 1995)))
     }
+
+    @Test fun recientesPorFechaDeAgregada() {
+        val vieja = Obra("1", Tipos.PELICULA, "Vieja", agregada = 1000, cambio = 9000)   // se tocó hace poco, pero entró antes
+        val nueva = Obra("2", Tipos.PELICULA, "Nueva", agregada = 5000, cambio = 5000)
+        assertEquals(listOf("2", "1"), Logica.filtrar(Estado(obras = listOf(vieja, nueva)), null, null, "", Orden.RECIENTES).map { it.id })
+    }
 }

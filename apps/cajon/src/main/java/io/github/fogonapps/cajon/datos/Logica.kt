@@ -81,8 +81,8 @@ object Logica {
                 (palabras.isEmpty() || normal("${o.titulo} ${o.original} ${o.creador} ${o.generos.joinToString(" ")} ${o.etiquetas.joinToString(" ")}").let { t -> palabras.all { it in t } })
         }
         return when (orden) {
-            // Lo último que se tocó (agregar, registrar, calificar) primero.
-            Orden.RECIENTES -> lista.sortedByDescending { maxOf(it.cambio, it.agregada) }
+            // Lo agregado más recientemente primero (por la fecha en que entró al cajón, no por la última vez que se tocó).
+            Orden.RECIENTES -> lista.sortedWith(compareByDescending<Obra> { if (it.agregada > 0) it.agregada else it.cambio }.thenBy { normal(it.titulo) })
             Orden.NOTA -> lista.sortedWith(compareByDescending<Obra> { it.nota }.thenBy { normal(it.titulo) })
             Orden.ANIO -> lista.sortedWith(compareByDescending<Obra> { it.anio ?: 0 }.thenBy { normal(it.titulo) })
             Orden.TITULO -> lista.sortedBy { normal(it.titulo) }
