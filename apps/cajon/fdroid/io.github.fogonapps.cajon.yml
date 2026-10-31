@@ -98,9 +98,16 @@ Builds:
     gradle:
       - yes
 
+  - versionName: "1.6.2"
+    versionCode: 12
+    commit: 75be3efe611336b413cea3c76d2691fdbe589b32
+    subdir: apps/cajon
+    gradle:
+      - yes
+
 AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
 
 AutoUpdateMode: Version cajon-v%v
 UpdateCheckMode: Tags ^cajon-v
-CurrentVersion: "1.6.1"
-CurrentVersionCode: 11
+CurrentVersion: "1.6.2"
+CurrentVersionCode: 12
