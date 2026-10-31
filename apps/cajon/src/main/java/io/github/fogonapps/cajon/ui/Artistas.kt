@@ -1,5 +1,9 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +69,35 @@ fun Artistas(vm: CajonViewModel, e: Estado) {
     }
 }
 
+/** Los géneros de un artista como etiquetas. Tocar una busca el género; en "Editar" se quitan con un toque y se agregan. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Generos(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artista) {
+    val f = FogonTema.actual
+    var editando by rememberSaveable(a.id) { mutableStateOf(false) }
+    if (a.generos.isEmpty() && !editando) {
+        Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { Pildora(stringResource(R.string.agregar_genero), Iconos.Mas) { editando = true } }
+        return
+    }
+    Seccion(stringResource(R.string.generos)) {
+        Pildora(stringResource(if (editando) R.string.listo else R.string.editar)) { editando = !editando }
+    }
+    FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        a.generos.forEach { g ->
+            if (editando) Pildora(g, Iconos.Cerrar) { vm.ponerGeneros(a.id, a.generos - g) }
+            else Pildora(g) { vm.buscarGenero(g) }
+        }
+    }
+    if (editando) {
+        var nuevo by rememberSaveable(a.id) { mutableStateOf("") }
+        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(nuevo, { nuevo = it.take(40) }, Modifier.weight(1f), singleLine = true, shape = FormaPildora,
+                placeholder = { Text(stringResource(R.string.agregar_genero)) })
+            BotonSecundario(stringResource(R.string.agregar), { if (nuevo.isNotBlank()) { vm.ponerGeneros(a.id, a.generos + nuevo); nuevo = "" } })
+        }
+    }
+}
+
 /** Una persona encontrada (artista, escritor o director), antes de guardarla. */
 @Composable
 fun PreviaArtista(vm: CajonViewModel, p: Pantalla.PreviaArtista) {
@@ -96,6 +129,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
             tinta = if (a.favorito) f.acentoTexto else f.textoSuave) { vm.cambiarArtista(a.id) { it.copy(favorito = !it.favorito) } }
     }
     LaunchedEffect(a.id, a.foto) { vm.completarCredito(a.id) }
+    LaunchedEffect(a.id, a.fuente) { vm.completarBio(a.id) }
     // La foto grande, con su crédito (autor y licencia de Wikimedia Commons) debajo.
     Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         FotoArtista(a.foto, a.nombre, 150.dp, a.tipo)
@@ -105,15 +139,27 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
         if (datos.isNotEmpty()) Text(datos.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.texto)
     }
 
+    // Los géneros, como etiquetas: tocar una busca ese género; "Editar" deja quitar y agregar.
+    Generos(vm, a)
+
+    // La biografía breve (de Wikipedia, con su crédito y su licencia).
+    if (a.bio.isNotBlank()) {
+        Seccion(stringResource(R.string.biografia))
+        var abierta by rememberSaveable(a.id) { mutableStateOf(false) }
+        Text(a.bio, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = if (abierta) Int.MAX_VALUE else 6,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable { abierta = !abierta })
+        Pista(stringResource(R.string.bio_credito))
+    }
+
     Column(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(a.nota, { n -> vm.cambiarArtista(a.id) { it.copy(nota = n) } }, descripcion = stringResource(R.string.tu_nota))
-        var generos by rememberSaveable(a.id) { mutableStateOf(a.generos.joinToString(", ")) }
-        OutlinedTextField(generos, { generos = it.take(200); vm.cambiarArtista(a.id) { x -> x.copy(generos = it.split(",").map { g -> g.trim() }.filter { g -> g.isNotEmpty() }.distinct()) } },
-            Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.generos_campo)) })
+        // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).
         var notas by rememberSaveable(a.id) { mutableStateOf(a.notas) }
-        OutlinedTextField(notas, { notas = it.take(5000); vm.cambiarArtista(a.id) { x -> x.copy(notas = it.take(5000)) } }, Modifier.fillMaxWidth(), minLines = 3,
+        var conNotas by rememberSaveable(a.id) { mutableStateOf(a.notas.isNotBlank()) }
+        if (conNotas) OutlinedTextField(notas, { notas = it.take(5000); vm.cambiarArtista(a.id) { x -> x.copy(notas = it.take(5000)) } }, Modifier.fillMaxWidth(), minLines = 3,
             label = { Text(stringResource(R.string.datos_curiosos)) })
+        else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
     }
 
     // Lo suyo en el cajón: los álbumes unidos al artista; de escritores y directores, lo que lleva su nombre.

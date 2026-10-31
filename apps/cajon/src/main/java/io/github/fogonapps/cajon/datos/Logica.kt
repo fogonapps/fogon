@@ -92,6 +92,38 @@ object Logica {
     /** La fecha del último registro del diario (o cuándo se terminó). */
     fun ultimaVez(o: Obra): String? = (o.registros.map { it.fecha } + listOfNotNull(o.terminada)).maxOrNull()
 
+    /**
+     * Si lo buscado es un género: uno de los del cajón ([delCajon]) o de los comunes ([GENEROS_COMUNES]).
+     * Devuelve el género tal como se muestra, o null.
+     */
+    fun genero(texto: String, delCajon: List<String>): String? {
+        val t = tituloLimpio(texto)
+        if (t.length < 2) return null
+        return (delCajon + GENEROS_COMUNES.keys).firstOrNull { tituloLimpio(it) == t }
+    }
+
+    /** Cómo se llama el género en las etiquetas de MusicBrainz (en inglés y en minúsculas). */
+    fun etiquetaMusicBrainz(genero: String): String = GENEROS_COMUNES.entries.firstOrNull { tituloLimpio(it.key) == tituloLimpio(genero) }?.value
+        ?: tituloLimpio(genero)
+
+    /** Géneros comunes en español y su etiqueta de MusicBrainz. */
+    val GENEROS_COMUNES = mapOf(
+        "Pop" to "pop", "Rock" to "rock", "Hip Hop" to "hip hop", "Rap" to "hip hop", "R&B" to "rnb", "Jazz" to "jazz",
+        "Reggaetón" to "reggaeton", "Trap" to "trap", "Salsa" to "salsa", "Cumbia" to "cumbia", "Bachata" to "bachata",
+        "Merengue" to "merengue", "Vallenato" to "vallenato", "Boleros" to "bolero", "Bolero" to "bolero", "Baladas" to "ballad",
+        "Pop Latino" to "latin pop", "Rock Latino" to "latin rock", "Rock Alternativo" to "alternative rock", "Pop Rock" to "pop rock",
+        "Indie Pop" to "indie pop", "Indie Rock" to "indie rock", "Indie" to "indie", "Electrónica" to "electronic", "House" to "house",
+        "Techno" to "techno", "Soul" to "soul", "Neo-Soul" to "neo soul", "Funk" to "funk", "Disco" to "disco", "Reggae" to "reggae",
+        "Ska" to "ska", "Punk Rock" to "punk rock", "Punk" to "punk", "Heavy Metal" to "heavy metal", "Metal" to "metal", "Hard Rock" to "hard rock",
+        "Blues" to "blues", "Folk" to "folk", "Country" to "country", "K-pop" to "k-pop", "Lo-fi" to "lo-fi", "Trip Hop" to "trip hop",
+        "Boom Bap" to "boom bap", "Rap Alternativo" to "alternative hip hop", "Rap Underground" to "underground hip hop",
+        "Jazz Rap" to "jazz rap", "Urbano Latino" to "latin urban", "Bossa Nova" to "bossa nova", "Dream Pop" to "dream pop",
+        "Shoegaze" to "shoegaze", "Ranchera" to "ranchera", "Regional Mexicano" to "regional mexicano", "Corridos Tumbados" to "corridos tumbados",
+        "Música Clásica" to "classical", "Clásica" to "classical", "Soundtrack" to "soundtrack", "Gospel" to "gospel", "Dancehall" to "dancehall",
+        "Afrobeats" to "afrobeats", "Drill" to "drill", "Emo" to "emo", "Grunge" to "grunge", "Synthpop" to "synth-pop", "Art Pop" to "art pop",
+        "Electropop" to "electropop", "Bedroom Pop" to "bedroom pop", "City Pop" to "city pop", "J-pop" to "j-pop",
+    )
+
     /** Un título para comparar: sin tildes, mayúsculas, signos ni espacios de más. */
     fun tituloLimpio(s: String) = normal(s).replace(Regex("[^a-z0-9]+"), " ").trim()
 

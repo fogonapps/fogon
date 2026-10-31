@@ -320,7 +320,7 @@
   <string name="todo_tu_cajon">Your whole cajón</string>
   <string name="tus_cifras">Your stats</string>
   <string name="foto_de">Photo: %1$s</string>
-  <string name="lic_wikimedia">Artist photos from Wikimedia Commons, found through Wikidata (CC0 data). Each photo has its own free license and author, shown on the artist’s page.</string>
+  <string name="lic_wikimedia">Artist photos from Wikimedia Commons, found through Wikidata (CC0 data). Each photo has its own free license and author, shown on the artist’s page. Short biographies are the introduction of each artist’s Wikipedia article (CC BY-SA 4.0), credited.</string>
   <plurals name="peliculas_vistas">
     <item quantity="one">film watched</item>
     <item quantity="other">films watched</item>
@@ -372,4 +372,10 @@
   <string name="cuando_leido">When you read it</string>
   <string name="cuando_escuchado">When you listened</string>
   <string name="agregar_datos_curiosos">Add trivia</string>
+  <string name="biografia">Biography</string>
+  <string name="bio_credito">Text from Wikipedia, licensed CC BY-SA 4.0.</string>
+  <string name="generos">Genres</string>
+  <string name="agregar_genero">Add genre</string>
+  <string name="editar">Edit</string>
+  <string name="genero_en_tu_cajon">%1$s in your cajón</string>
 </resources>

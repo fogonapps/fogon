@@ -95,6 +95,8 @@ data class Busqueda(
     val artistas: List<ArtistaEncontrado> = emptyList(),
     val autores: List<ArtistaEncontrado> = emptyList(),
     val directores: List<ArtistaEncontrado> = emptyList(),
+    /** Si lo buscado es un género (de los del cajón o de los comunes): se buscan artistas y álbumes de ese género. */
+    val genero: String? = null,
     val cargando: Set<String> = emptySet(),
     val errores: Map<String, Int> = emptyMap(),
 )
@@ -266,13 +268,17 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
+            // ¿Es un género? Entonces se buscan artistas y álbumes de ese género (como en las apps de música).
+            val genero = if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) L.genero(t, generosDelCajon()) else null
+            if (genero != null) _busqueda.value = _busqueda.value.copy(genero = genero)
             if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) fuente("musica") {
                 // Primero los artistas (con su foto, si la hay) y después los álbumes.
-                val artistas = MusicBrainz.buscarArtistas(t)
+                val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
+                val artistas = if (etiqueta != null) MusicBrainz.artistasPorGenero(etiqueta) else MusicBrainz.buscarArtistas(t)
                 _busqueda.value = _busqueda.value.copy(artistas = artistas)
                 val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
-                poner(MusicBrainz.buscarAlbumes(t))
+                poner(if (etiqueta != null) MusicBrainz.albumesPorGenero(etiqueta) else MusicBrainz.buscarAlbumes(t))
             }
         }
     }
@@ -424,10 +430,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val revisadas = caja.portadasRevisadas.toMutableSet()
         val pendientes = _estado.value?.vivas.orEmpty()
             .filter { it.fuente.isEmpty() && it.tipo != Tipos.LIBRO && (it.tipo == Tipos.ALBUM || clave != null) && it.id !in revisadas }
-        if (pendientes.isEmpty()) return
+        // Los artistas guardados sin fuente (a mano o de otra app) se enlazan con MusicBrainz: así traen foto y biografía.
+        val artistas = _estado.value?.musicosVivos.orEmpty().filter { it.fuente.isEmpty() && it.id !in revisadas }
+        if (pendientes.isEmpty() && artistas.isEmpty()) return
         trabajoPortadas = viewModelScope.launch {
+            val total = pendientes.size + artistas.size
             var encontradas = 0
-            _completando.value = Completando(0, pendientes.size, 0)
+            _completando.value = Completando(0, total, 0)
             try {
                 pendientes.forEachIndexed { i, o ->
                     val candidatos = runCatching {
@@ -447,8 +456,20 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
                         cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
                     }
-                    _completando.value = Completando(i + 1, pendientes.size, encontradas)
+                    _completando.value = Completando(i + 1, total, encontradas)
                 }
+                artistas.forEachIndexed { i, a ->
+                    val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }.getOrElse { if (it is SinRed) throw it else emptyList() }
+                        .firstOrNull { L.tituloLimpio(it.nombre) == L.tituloLimpio(a.nombre) && _estado.value!!.artistasVivos.none { x -> x.fuente == it.fuente } }
+                    revisadas += a.id
+                    if (r != null) {
+                        encontradas++
+                        cambiarArtista(a.id) { it.copy(fuente = r.fuente, tipo = it.tipo.ifBlank { r.tipo }, pais = it.pais.ifBlank { r.pais }, desde = it.desde ?: r.desde) }
+                    }
+                    _completando.value = Completando(pendientes.size + i + 1, total, encontradas)
+                }
+                // Las fotos de los que se enlazaron.
+                if (artistas.isNotEmpty()) { fotosPedidas = false; completarFotos() }
             } catch (_: ClaveMala) { // la clave dejó de servir: se avisa al buscar a mano
             } catch (_: SinRed) { // sin internet: sigue la próxima vez
             } finally { caja.portadasRevisadas = revisadas; _completando.value = null }
@@ -522,6 +543,34 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** El crédito (autor y licencia) de la foto de un artista, si todavía no lo tiene. */
+    private val biosPedidas = mutableSetOf<String>()
+
+    /** La biografía breve de un artista de MusicBrainz (de Wikipedia), si todavía no la tiene (una vez por sesión). */
+    fun completarBio(id: String) {
+        val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
+        if (a.bio.isNotBlank() || !a.fuente.startsWith("mb:artist:") || !biosPedidas.add(id)) return
+        viewModelScope.launch {
+            runCatching { Wikimedia.bio(a.fuente.removePrefix("mb:artist:"), idioma()) }.getOrNull()?.let { (texto, url) ->
+                cambiarArtista(id) { it.copy(bio = texto, bioFuente = url) }
+            }
+        }
+    }
+
+    /** Abre el buscador de música con un género (al tocar una etiqueta). */
+    fun buscarGenero(g: String) {
+        abrir(Pantalla.Buscar(Secciones.MUSICA))
+        buscar(g)
+    }
+
+    /** Los géneros de la música del cajón (artistas y álbumes), los más usados primero. */
+    fun generosDelCajon(): List<String> {
+        val e = _estado.value ?: return emptyList()
+        return (e.musicosVivos.flatMap { it.generos } + e.vivas.filter { it.tipo == Tipos.ALBUM }.flatMap { it.generos })
+            .filter { it.isNotBlank() }.groupingBy { it.trim() }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
+    }
+
+    fun ponerGeneros(id: String, generos: List<String>) = cambiarArtista(id) { it.copy(generos = generos.map { g -> g.trim() }.filter { g -> g.isNotEmpty() }.distinctBy { g -> L.tituloLimpio(g) }) }
+
     fun completarCredito(id: String) {
         val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
         // Solo las de Wikimedia Commons llevan crédito propio (las de TMDB van con su aviso en Licencias).

@@ -198,4 +198,12 @@ class LogicaTest {
         val nueva = Obra("2", Tipos.PELICULA, "Nueva", agregada = 5000, cambio = 5000)
         assertEquals(listOf("2", "1"), Logica.filtrar(Estado(obras = listOf(vieja, nueva)), null, null, "", Orden.RECIENTES).map { it.id })
     }
+
+    @Test fun generosParaBuscar() {
+        assertEquals("Boom Bap", Logica.genero("boom bap", listOf("Boom Bap", "Pop")))
+        assertEquals("Rock Alternativo", Logica.genero("rock alternativo", emptyList()))   // de los comunes
+        assertEquals(null, Logica.genero("mac miller", listOf("Boom Bap")))
+        assertEquals("alternative rock", Logica.etiquetaMusicBrainz("Rock Alternativo"))
+        assertEquals("musica rara", Logica.etiquetaMusicBrainz("Música Rara"))   // los que no conoce van tal cual, limpios
+    }
 }

@@ -319,7 +319,7 @@
   <string name="todo_tu_cajon">Todo tu cajón</string>
   <string name="tus_cifras">Tus cifras</string>
   <string name="foto_de">Foto: %1$s</string>
-  <string name="lic_wikimedia">Fotos de artistas de Wikimedia Commons, encontradas por Wikidata (datos CC0). Cada foto tiene su propia licencia libre y su autor, que se muestran en la ficha del artista.</string>
+  <string name="lic_wikimedia">Fotos de artistas de Wikimedia Commons, encontradas por Wikidata (datos CC0). Cada foto tiene su propia licencia libre y su autor, que se muestran en la ficha del artista. Las biografías breves son la introducción del artículo de Wikipedia de cada artista (CC BY-SA 4.0), con su crédito.</string>
   <plurals name="peliculas_vistas">
     <item quantity="one">película vista</item>
     <item quantity="other">películas vistas</item>
@@ -372,4 +372,10 @@
   <string name="cuando_leido">Cuándo lo leíste</string>
   <string name="cuando_escuchado">Cuándo lo escuchaste</string>
   <string name="agregar_datos_curiosos">Agregar datos curiosos</string>
+  <string name="biografia">Biografía</string>
+  <string name="bio_credito">Texto de Wikipedia, con licencia CC BY-SA 4.0.</string>
+  <string name="generos">Géneros</string>
+  <string name="agregar_genero">Agregar género</string>
+  <string name="editar">Editar</string>
+  <string name="genero_en_tu_cajon">%1$s en tu cajón</string>
 </resources>

@@ -324,6 +324,9 @@ object MusicBrainz {
         throw SinRed()
     }
 
+    /** "Various Artists": así firma MusicBrainz las recopilaciones; no es un artista. */
+    private const val VARIOS = "89ad4ac3-39f7-470e-963a-56509c546377"
+
     fun caratula(mbid: String, t: Int = 500) = "https://coverartarchive.org/release-group/$mbid/front-$t"
 
     private fun deGrupo(g: JsonObject): Encontrado {
@@ -332,6 +335,19 @@ object MusicBrainz {
         return Encontrado(Tipos.ALBUM, g["title"].texto(), anioDe(g["first-release-date"].texto()), artistas,
             caratula(g["id"].texto(), 250), "mb:rg:" + g["id"].texto(), tipos.filter { it.isNotBlank() }.joinToString(" · "))
     }
+
+    /** Artistas de un género (MusicBrainz los etiqueta: `tag:`), los más etiquetados primero. */
+    suspend fun artistasPorGenero(genero: String): List<ArtistaEncontrado> =
+        pedir("artist", "query" to "tag:\"${genero.replace("\"", " ")}\"", "limit" to "20").arr("artists").map { it.jsonObject }
+            .filter { it["id"].texto() != VARIOS }.map { a ->
+            ArtistaEncontrado(a["id"].texto(), a["name"].texto(), a["country"].texto(),
+                anioDe((a["life-span"] as? JsonObject)?.get("begin").texto()), a["type"].texto(), a["disambiguation"].texto())
+        }
+
+    /** Álbumes de un género. */
+    suspend fun albumesPorGenero(genero: String): List<Encontrado> =
+        pedir("release-group", "query" to "tag:\"${genero.replace("\"", " ")}\" AND primarytype:album", "limit" to "25")
+            .arr("release-groups").map { deGrupo(it.jsonObject) }
 
     /** Un álbum por su título y su artista (para completar lo que llegó sin fuente): los candidatos más parecidos. */
     suspend fun buscarAlbum(titulo: String, artista: String): List<Encontrado> {
@@ -417,6 +433,26 @@ object Wikimedia {
             if (id.isNotBlank() && img.isNotBlank() && id !in m) m[id] = img.replace("http://", "https://") + "?width=400"
         }
         return m
+    }
+
+    /**
+     * La biografía breve de un artista: la introducción de su artículo de Wikipedia en el idioma de la app (o en
+     * inglés si no hay), encontrado por Wikidata (P434, el id de MusicBrainz). Devuelve el texto y la dirección del
+     * artículo; el texto es CC BY-SA 4.0 y se muestra con su crédito.
+     */
+    suspend fun bio(mbid: String, idioma: String): Pair<String, String>? {
+        if (!mbid.matches(Regex("[0-9a-f-]{36}"))) return null
+        for (lengua in listOf(if (idioma == "en") "en" else "es", "en").distinct()) {
+            val q = "SELECT ?art WHERE { ?a wdt:P434 \"$mbid\" . ?art schema:about ?a ; schema:isPartOf <https://$lengua.wikipedia.org/> . }"
+            val u = sparql.newBuilder().addQueryParameter("query", q).addQueryParameter("format", "json").build()
+            val art = ((pedirJson(u, mapOf("Accept" to "application/sparql-results+json")).jsonObject["results"] as? JsonObject)
+                ?.arr("bindings")?.firstOrNull() as? JsonObject)?.let { (it["art"] as? JsonObject)?.get("value").texto() } ?: continue
+            val titulo = art.substringAfter("/wiki/")
+            val resumen = pedirJson("https://$lengua.wikipedia.org/api/rest_v1/page/summary/$titulo".toHttpUrl()).jsonObject
+            val texto = resumen["extract"].texto().trim()
+            if (texto.isNotEmpty()) return texto to art
+        }
+        return null
     }
 
     /** El crédito de una foto de Commons: "Autor · Licencia · Wikimedia Commons" (sin HTML). */

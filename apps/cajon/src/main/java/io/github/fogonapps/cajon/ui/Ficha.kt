@@ -76,7 +76,10 @@ private fun Encabezado(o: Obra, vm: CajonViewModel) {
         }
     }
     if (o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        o.generos.forEach { Etiqueta(it, f.superficie, f.texto) }
+        o.generos.forEach { g ->
+            // En los álbumes, tocar un género lo busca (artistas y álbumes de ese género).
+            if (o.tipo == Tipos.ALBUM) Pildora(g) { vm.buscarGenero(g) } else Etiqueta(g, f.superficie, f.texto)
+        }
     }
 }
 

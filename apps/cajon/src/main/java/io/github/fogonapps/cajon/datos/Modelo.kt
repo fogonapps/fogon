@@ -147,6 +147,9 @@ data class Artista(
     /** La foto (de Wikimedia Commons, por Wikidata) y su crédito: autor y licencia, que se muestran con ella. */
     val foto: String = "",
     val fotoCredito: String = "",
+    /** Una biografía breve (la introducción de su artículo de Wikipedia, por Wikidata) y la dirección del artículo. */
+    val bio: String = "",
+    val bioFuente: String = "",
     val cambio: Long = 0,
     val borrada: Boolean = false,
 )

@@ -146,7 +146,7 @@ private fun MiniDato(etiqueta: String, n: Int) {
 @Composable
 private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String, esDeAqui: (Artista) -> Boolean, musica: Boolean) {
     val f = FogonTema.actual
-    val lista = e.artistasVivos.filter { esDeAqui(it) && (texto.isBlank() || normal(texto) in normal(it.nombre)) }
+    val lista = e.artistasVivos.filter { esDeAqui(it) && (texto.isBlank() || normal(texto) in normal(it.nombre) || it.generos.any { g -> normal(texto) in normal(g) }) }
         .sortedWith(compareByDescending<Artista> { it.favorito }.thenByDescending { it.nota }.thenBy { normal(it.nombre) })
     if (lista.isEmpty()) {
         Pista(stringResource(if (musica) R.string.artistas_vacio else R.string.personas_vacio), centro = true, modifier = Modifier.padding(top = 16.dp))

@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -107,6 +108,39 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE
 
+            // Si se buscó un género: primero lo del cajón con ese género (artistas y álbumes), después lo de afuera.
+            val genero = b.genero
+            if (genero != null) {
+                val g = io.github.fogonapps.cajon.datos.Logica.tituloLimpio(genero)
+                fun tiene(lista: List<String>) = lista.any { io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it) == g }
+                val susArtistas = e.musicosVivos.filter { tiene(it.generos) }
+                val susAlbumes = e.vivas.filter { it.tipo == Tipos.ALBUM && tiene(it.generos) }
+                if (susArtistas.isNotEmpty() || susAlbumes.isNotEmpty()) {
+                    item(key = "t-genero") { Titulo(stringResource(R.string.genero_en_tu_cajon, genero), null) }
+                    if (susArtistas.isNotEmpty()) item(key = "genero-artistas") {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            items(susArtistas, key = { "g" + it.id }) { a ->
+                                Column(Modifier.width(92.dp).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrir(Pantalla.VerArtista(a.id)) },
+                                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    FotoArtista(a.foto, a.nombre, 84.dp, a.tipo)
+                                    Text(a.nombre, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                                }
+                            }
+                        }
+                    }
+                    items(susAlbumes.take(maximo(6)), key = { "ga" + it.id }) { o ->
+                        FilaVidrio({ vm.abrir(Pantalla.Ficha(o.id)) }) {
+                            Portada(o.portada, o.tipo, o.titulo, Modifier.width(46.dp), esquina = 6.dp, conTitulo = false)
+                            Column(Modifier.weight(1f)) {
+                                Text(o.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(listOfNotNull(o.anio?.toString(), o.creador.takeIf { it.isNotBlank() }).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
+                            }
+                            Estrellas(o.nota)
+                        }
+                    }
+                }
+            }
+
             // Las personas de cada sección: artistas (Música), directores (Cine) y escritores (Libros).
             val personas = listOf(Triple("artistas", Secciones.MUSICA, b.artistas), Triple("directores", Secciones.CINE, b.directores),
                 Triple("autores", Secciones.LIBROS, b.autores)).filter { todo || b.seccion == it.second }
@@ -170,6 +204,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
 }
 
 /** Antes de escribir: para qué sirve cada sección y el botón de agregar a mano. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun SinBuscar(vm: CajonViewModel, b: Busqueda) {
     val f = FogonTema.actual
@@ -186,6 +221,15 @@ private fun SinBuscar(vm: CajonViewModel, b: Busqueda) {
             }
         }
         BotonSecundario(stringResource(R.string.agregar_a_mano), { vm.reemplazar(Pantalla.EditarObra(null, tipoAMano(b.seccion))) }, Modifier.fillMaxWidth())
+        // Los géneros, para buscar por uno (como en las apps de música): los del cajón primero, después los comunes.
+        if (b.seccion == Secciones.TODO || b.seccion == Secciones.MUSICA) {
+            Text(stringResource(R.string.generos), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(top = 8.dp))
+            val lista = (vm.generosDelCajon() + io.github.fogonapps.cajon.datos.Logica.GENEROS_COMUNES.keys.take(24))
+                .distinctBy { io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it) }.take(36)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                lista.forEach { g -> Pildora(g) { vm.cambiarSeccion(Secciones.MUSICA); vm.buscar(g) } }
+            }
+        }
     }
 }
 
