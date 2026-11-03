@@ -91,6 +91,26 @@ class Base(ruta: String) {
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")
+                // Contraseña (opcional, con correo): PBKDF2-SHA256, sal propia, "iteraciones:sal:huella" en base64.
+                columna(s, "cuentas", "clave TEXT")
+                // Cambio de usuario: una vez cada 7 días; el usuario viejo queda reservado 14 días.
+                columna(s, "cuentas", "usuario_cambio INTEGER NOT NULL DEFAULT 0")
+                s.execute("CREATE TABLE IF NOT EXISTS usuarios_viejos(usuario TEXT PRIMARY KEY, cuenta INTEGER NOT NULL, hasta INTEGER NOT NULL)")
+                // Moderación: quién administra, lo oculto mientras se revisa, las faltas (vencen a los 90 días),
+                // las restricciones y las decisiones (la prueba de cada una).
+                columna(s, "cuentas", "admin INTEGER NOT NULL DEFAULT 0")
+                columna(s, "cuentas", "restringida_hasta INTEGER NOT NULL DEFAULT 0")
+                columna(s, "cuentas", "suspendida_hasta INTEGER NOT NULL DEFAULT 0")
+                columna(s, "cuentas", "cerrada INTEGER NOT NULL DEFAULT 0")
+                columna(s, "publicaciones", "oculta INTEGER NOT NULL DEFAULT 0")
+                columna(s, "comentarios", "oculto INTEGER NOT NULL DEFAULT 0")
+                columna(s, "reportes", "estado TEXT NOT NULL DEFAULT 'abierto'")
+                s.execute("""CREATE TABLE IF NOT EXISTS faltas(
+                    id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    puntos INTEGER NOT NULL, regla TEXT NOT NULL, cuando INTEGER NOT NULL, vence INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS decisiones(
+                    id INTEGER PRIMARY KEY, admin INTEGER NOT NULL, que TEXT NOT NULL, objeto TEXT NOT NULL, decision TEXT NOT NULL,
+                    regla TEXT NOT NULL DEFAULT '', cuando INTEGER NOT NULL)""")
                 columna(s, "cuentas", "acepto TEXT NOT NULL DEFAULT ''")
                 columna(s, "cuentas", "acepto_cuando INTEGER NOT NULL DEFAULT 0")
                 s.execute("CREATE UNIQUE INDEX IF NOT EXISTS cuentas_correo ON cuentas(correo) WHERE correo IS NOT NULL")

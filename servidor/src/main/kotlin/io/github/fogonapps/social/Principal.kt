@@ -54,7 +54,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.6"
+const val VERSION = "0.8"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -76,7 +76,14 @@ fun Application.fogonSocial(social: Social) {
     })
 
     fun ApplicationCall.token() = request.header("Authorization")?.removePrefix("Bearer ")?.trim()
-    fun ApplicationCall.yo(): Long = social.cuentaDe(token()) ?: throw Problema(401, "sin_cuenta")
+    // Toda escritura pasa por aquí: una cuenta suspendida o cerrada no puede usar la red, y una restringida no puede
+    // publicar, comentar ni mandar mensajes (sí leer, ver su estado y borrar su cuenta).
+    fun ApplicationCall.yo(): Long {
+        val id = social.cuentaDe(token()) ?: throw Problema(401, "sin_cuenta")
+        val soloMirar = request.local.method == io.ktor.http.HttpMethod.Get || request.local.uri.startsWith("/v1/cuenta") || request.local.uri.startsWith("/v1/salir")
+        if (!request.local.uri.startsWith("/v1/cuenta")) social.revisarSancion(id, escribir = !soloMirar)
+        return id
+    }
     fun ApplicationCall.lector(): Long? = social.cuentaDe(token())
     fun ApplicationCall.id(): Long = parameters["id"]?.toLongOrNull() ?: throw Problema(400, "id")
     fun ApplicationCall.usuario(): String = parameters["usuario"] ?: throw Problema(400, "usuario")
@@ -99,6 +106,13 @@ fun Application.fogonSocial(social: Social) {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.entrar(call.receive()))
             }
+            post("/acceso/clave") {
+                if (!registros.pasa("clave:${call.ip()}")) throw Problema(429, "despacio")
+                call.respond(social.entrarConClave(call.receive()))
+            }
+            put("/cuenta/clave") { social.ponerClave(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            put("/cuenta/usuario") { call.respond(mapOf("usuario" to social.cambiarUsuario(call.yo(), call.receive()))) }
+            get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta") { call.respond(social.miCuenta(call.yo())) }
@@ -163,6 +177,9 @@ fun Application.fogonSocial(social: Social) {
             get("/notas") { call.respond(social.notas(call.yo())) }
             delete("/avisos") { social.borrarAvisos(call.yo(), null); call.respond(HttpStatusCode.NoContent) }
             delete("/avisos/{id}") { social.borrarAvisos(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            get("/cuenta/estado") { call.respond(social.estadoCuenta(call.yo())) }
+            get("/admin/casos") { call.respond(social.casos(call.yo())) }
+            post("/admin/decidir") { social.decidir(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/bloqueos") { call.respond(social.bloqueados(call.yo())) }
             post("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }

@@ -94,7 +94,16 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val mayorDeEdad: Boolean = false,
 )
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean)
-@Serializable data class MiCuenta(val usuario: String, val nombre: String, val correo: String, val privada: Boolean)
+@Serializable data class MiCuenta(
+    val usuario: String, val nombre: String, val correo: String, val privada: Boolean,
+    val conClave: Boolean = false,
+    /** Desde cuándo puede volver a cambiar el usuario (0 = ya). */
+    val usuarioDesde: Long = 0,
+    val admin: Boolean = false,
+)
+@Serializable data class EntradaClave(val correo: String, val clave: String)
+@Serializable data class CambioClave(val nueva: String, val actual: String = "")
+@Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
 @Serializable data class Ajustes(val privada: Boolean? = null)
 @Serializable data class NuevoComentario(val texto: String)
@@ -214,6 +223,7 @@ class Social(
     }
 
     private fun sesionNueva(cuenta: Long): String {
+        if (b.usar { leer("SELECT cerrada FROM cuentas WHERE id = ?", cuenta) { it.getInt(1) == 1 }.first() }) throw Problema(403, "cerrada")
         val token = Base.tokenNuevo()
         b.usar { cambiar("INSERT INTO sesiones(huella, cuenta, creada) VALUES(?,?,?)", Base.huella(token), cuenta, ahora()) }
         return token
@@ -226,7 +236,50 @@ class Social(
     }
 
     fun miCuenta(yo: Long): MiCuenta = b.usar {
-        leer("SELECT usuario, nombre, coalesce(correo, ''), privada FROM cuentas WHERE id = ?", yo) { MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1) }.first()
+        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin FROM cuentas WHERE id = ?", yo) {
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (it.getLong(6) + SEMANA).takeIf { d -> d > ahora() } ?: 0, it.getInt(7) == 1)
+        }.first()
+    }
+
+    /* ----- Contraseña ----- */
+
+    /** Entrar con correo y contraseña (si la cuenta tiene). Los intentos los limita la ruta por dirección. */
+    fun entrarConClave(e: EntradaClave): Acceso {
+        val correo = e.correo.trim().lowercase()
+        val (id, usuario, guardada) = b.usar {
+            leer("SELECT id, usuario, clave FROM cuentas WHERE correo = ?", correo) { Triple(it.getLong(1), it.getString(2), it.getString(3)) }.firstOrNull()
+        } ?: throw Problema(400, "clave_mala")
+        if (guardada == null || !Claves.comprobar(e.clave, guardada)) throw Problema(400, "clave_mala")
+        return Acceso(usuario, sesionNueva(id), false)
+    }
+
+    /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
+    fun ponerClave(yo: Long, c: CambioClave, conCodigo: Boolean = false) {
+        if (c.nueva.length < 8 || c.nueva.length > 200) throw Problema(400, "clave_corta")
+        val (correo, guardada) = b.usar { leer("SELECT correo, clave FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
+        if (correo == null) throw Problema(400, "sin_correo")
+        if (guardada != null && !conCodigo && !Claves.comprobar(c.actual, guardada)) throw Problema(400, "clave_mala")
+        b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(c.nueva), yo) }
+    }
+
+    /* ----- Cambiar el usuario ----- */
+
+    /** Cambia el @usuario: una vez cada 7 días; el viejo queda reservado 14 días para la misma persona. */
+    fun cambiarUsuario(yo: Long, c: CambioUsuario): String {
+        val nuevo = c.usuario.trim().lowercase()
+        if (!USUARIO.matches(nuevo) || nuevo in RESERVADOS) throw Problema(400, "usuario")
+        val (actual, ultimo) = b.usar { leer("SELECT usuario, usuario_cambio FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getLong(2) }.first() }
+        if (nuevo == actual) return actual
+        if (ahora() - ultimo < SEMANA) throw Problema(429, "usuario_espera")
+        b.usar { cambiar("DELETE FROM usuarios_viejos WHERE hasta < ?", ahora()) }
+        val reservado = b.usar { leer("SELECT cuenta FROM usuarios_viejos WHERE usuario = ?", nuevo) { it.getLong(1) }.firstOrNull() }
+        if (reservado != null && reservado != yo || b.usar { leer("SELECT 1 FROM cuentas WHERE usuario = ?", nuevo) { 1 }.isNotEmpty() }) throw Problema(409, "usuario_tomado")
+        b.usar {
+            cambiar("INSERT OR REPLACE INTO usuarios_viejos(usuario, cuenta, hasta) VALUES(?,?,?)", actual, yo, ahora() + 2 * SEMANA)
+            cambiar("DELETE FROM usuarios_viejos WHERE usuario = ?", nuevo)
+            cambiar("UPDATE cuentas SET usuario = ?, usuario_cambio = ?, cambio = ? WHERE id = ?", nuevo, ahora(), ahora(), yo)
+        }
+        return nuevo
     }
 
     /** Crea una cuenta sin correo (solo para las pruebas: la app entra siempre con [entrar]). */
@@ -247,7 +300,8 @@ class Social(
     fun usuarioLibre(usuario: String): Boolean {
         val u = usuario.trim().lowercase()
         if (!USUARIO.matches(u) || u in RESERVADOS) return false
-        return b.usar { leer("SELECT 1 FROM cuentas WHERE usuario = ?", u) { 1 }.isEmpty() }
+        return b.usar { leer("SELECT 1 FROM cuentas WHERE usuario = ?", u) { 1 }.isEmpty() &&
+            leer("SELECT 1 FROM usuarios_viejos WHERE usuario = ? AND hasta > ?", u, ahora()) { 1 }.isEmpty() }
     }
 
     /** La cuenta de un token, o null. */
@@ -280,7 +334,7 @@ class Social(
     }
 
     private fun idDe(usuario: String): Long =
-        b.usar { leer("SELECT id FROM cuentas WHERE usuario = ?", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
+        b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
 
     private fun persona(id: Long): Persona = b.usar {
         leer("SELECT usuario, nombre, foto, privada FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1) }.first()
@@ -329,7 +383,7 @@ class Social(
         val relacion = relacion(lector, id)
         val cerrada = esPrivada(id) && relacion != "yo" && relacion != "sigo"
         val ve = { v: String -> !cerrada && (v == Vis.PUBLICA || relacion == "yo" || relacion == "sigo") }
-        val pubs = if (cerrada) emptyList() else filas(lector, "p.cuenta = ? ORDER BY p.cuando DESC LIMIT 60", id).map { it.second }.filter { ve(it.visibilidad) }
+        val pubs = if (cerrada) emptyList() else filas(lector, "p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.cuando DESC LIMIT 60", id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
         val (seguidores, siguiendo, cuantas) = b.usar {
             Triple(
                 leer("SELECT COUNT(*) FROM seguir WHERE a = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
@@ -375,10 +429,13 @@ class Social(
     fun subirPublicaciones(yo: Long, lista: List<PublicacionSubida>) {
         if (lista.size > 2000) throw Problema(413, "muy_grande")
         val buenas = lista.filter { it.visibilidad in Vis.SUBIBLES && it.clave.isNotBlank() }.distinctBy { it.clave }
+        var nuevaParaAvisar: String? = null
         b.usar {
             autoCommit = false
             try {
                 val claves = buenas.map { it.clave.take(80) }.toSet()
+                val yaEstaban = leer("SELECT clave FROM publicaciones WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
+                nuevaParaAvisar = buenas.filter { it.clave.take(80) !in yaEstaban && ahora() - it.cuando < 24 * 3600_000L }.maxByOrNull { it.cuando }?.clave?.take(80)
                 leer("SELECT id, clave FROM publicaciones WHERE cuenta = ?", yo) { it.getLong(1) to it.getString(2) }
                     .filter { it.second !in claves }.forEach { cambiar("DELETE FROM publicaciones WHERE id = ?", it.first) }
                 buenas.forEach { p ->
@@ -391,7 +448,18 @@ class Social(
                 commit()
             } catch (x: Exception) { rollback(); throw x } finally { autoCommit = true }
         }
+        nuevaParaAvisar?.let { clave -> avisarSeguidores(yo, clave) }
     }
+
+    /** Avisa a sus seguidores que publicó algo (una vez cada 6 horas por autor, para no llenar de avisos). */
+    private fun avisarSeguidores(yo: Long, clave: String) {
+        val id = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND clave = ?", yo, clave) { it.getLong(1) }.firstOrNull() } ?: return
+        val reciente = b.usar { leer("SELECT 1 FROM avisos WHERE de = ? AND tipo = 'publico' AND cuando > ? LIMIT 1", yo, ahora() - 6 * 3600_000L) { 1 }.isNotEmpty() }
+        if (reciente) return
+        b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 1", yo) { it.getLong(1) } }.forEach { avisar(it, yo, "publico", id.toString()) }
+    }
+
+    fun mensajesSinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE para = ?", yo) { it.getInt(1) }.first() }
 
     /** Las publicaciones que cumplen [donde] (SQL sobre `p`), con su autor y sus cifras, en una sola consulta; con el id del autor. */
     private fun filas(lector: Long?, donde: String, vararg args: Any?): List<Pair<Long, Publicacion>> = b.usar {
@@ -412,11 +480,11 @@ class Social(
 
     /** Una publicación como la ve [lector], o null si no la puede ver. */
     fun publicacion(lector: Long?, id: Long): Publicacion? =
-        filas(lector, "p.id = ?", id).firstOrNull()?.takeIf { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }?.second
+        filas(lector, "p.id = ? AND (p.oculta = 0 OR p.cuenta = ?)", id, lector ?: -1).firstOrNull()?.takeIf { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }?.second
 
     /** El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. */
     fun actividad(yo: Long, antes: Long?, n: Int = 40): List<Publicacion> =
-        filas(yo, """(p.cuenta = ? OR p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1))
+        filas(yo, """(p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)))
                 AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100)).map { it.second }
 
     /**
@@ -428,7 +496,7 @@ class Social(
     fun explorar(lector: Long?, antes: Long?, n: Int = 200): List<Publicacion> {
         val ahora = ahora()
         // Las 1000 más recientes: la semana y lo nuevo salen de ahí, y en una red chiquita también lo más viejo completa.
-        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ?
+        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.oculta = 0 AND c.cerrada = 0 AND p.cuando < ?
                 AND (? IS NULL OR (p.cuenta <> ? AND p.cuenta NOT IN (SELECT a FROM seguir WHERE de = ?)
                     AND p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
                 ORDER BY p.cuando DESC LIMIT 1000""", antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector)
@@ -494,7 +562,7 @@ class Social(
     fun comentarios(lector: Long?, pub: Long): List<Comentario> {
         val p = publicacion(lector, pub) ?: throw Problema(404, "no_existe")
         val autorPub = idDe(p.autor.usuario)
-        return b.usar { leer("SELECT id, cuenta, texto, cuando FROM comentarios WHERE pub = ? ORDER BY cuando", pub) { arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4)) } }
+        return b.usar { leer("SELECT id, cuenta, texto, cuando FROM comentarios WHERE pub = ? AND (oculto = 0 OR cuenta = ?) ORDER BY cuando", pub, lector ?: -1) { arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4)) } }
             .filter { lector == null || !bloqueado(lector, it[1] as Long) }
             .map { Comentario(it[0] as Long, persona(it[1] as Long), it[2] as String, it[3] as Long, lector == it[1] || lector == autorPub) }
     }
@@ -502,6 +570,9 @@ class Social(
     fun comentar(yo: Long, pub: Long, texto: String): Long {
         val t = texto.trim().take(1000)
         if (t.isEmpty()) throw Problema(400, "vacio")
+        val (creada, hora) = b.usar { leer("SELECT creada FROM cuentas WHERE id = ?", yo) { it.getLong(1) }.first() } to
+            b.usar { leer("SELECT COUNT(*) FROM comentarios WHERE cuenta = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
+        if (hora >= (if (ahora() - creada < 7L * 24 * 3600_000) 10 else 60)) throw Problema(429, "despacio")
         val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
         val autor = idDe(p.autor.usuario)
         if (bloqueado(autor, yo)) throw Problema(404, "no_existe")
@@ -682,11 +753,117 @@ class Social(
         b.usar { if (id == null) cambiar("DELETE FROM avisos WHERE para = ?", yo) else cambiar("DELETE FROM avisos WHERE para = ? AND id = ?", yo, id) }
     }
 
-    /* ----- Reportes ----- */
+    /* ----- Reportes y moderación ----- */
 
+    /**
+     * Un reporte. [NuevoReporte.motivo] empieza por uno de [Moderacion.MOTIVOS] ("acoso: …"). Si lo reportan
+     * [Moderacion.UMBRAL] cuentas distintas que cuentan (más de 7 días y sin sanción), o una sola por un menor en riesgo,
+     * se oculta mientras se revisa (su autor lo sigue viendo).
+     */
     fun reportar(yo: Long?, r: NuevoReporte) {
         if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje")) throw Problema(400, "que")
-        b.usar { insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?,?,?,?,?)", yo, r.que, r.objeto.take(80), r.motivo.trim().take(1000), ahora()) }
+        if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= 10)
+            throw Problema(429, "despacio")
+        val motivo = r.motivo.trim().take(2000)
+        b.usar { insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?,?,?,?,?)", yo, r.que, r.objeto.take(80), motivo, ahora()) }
+        val grave = motivo.startsWith(Moderacion.MENOR_EN_RIESGO)
+        val cuentan = b.usar {
+            leer("""SELECT COUNT(DISTINCT r.de) FROM reportes r JOIN cuentas c ON c.id = r.de
+                    WHERE r.que = ? AND r.objeto = ? AND r.estado = 'abierto' AND c.creada < ? AND c.restringida_hasta < ? AND c.suspendida_hasta < ?""",
+                r.que, r.objeto.take(80), ahora() - 7L * 24 * 3600_000, ahora(), ahora()) { it.getInt(1) }.first()
+        }
+        if (grave || cuentan >= Moderacion.UMBRAL) ocultarReportado(r.que, r.objeto, true)
+    }
+
+    private fun ocultarReportado(que: String, objeto: String, si: Boolean) {
+        val id = objeto.toLongOrNull() ?: return
+        b.usar {
+            when (que) {
+                "publicacion" -> cambiar("UPDATE publicaciones SET oculta = ? WHERE id = ?", if (si) 1 else 0, id)
+                "comentario" -> cambiar("UPDATE comentarios SET oculto = ? WHERE id = ?", if (si) 1 else 0, id)
+            }
+        }
+    }
+
+    private fun esAdmin(yo: Long) = b.usar { leer("SELECT admin FROM cuentas WHERE id = ?", yo) { it.getInt(1) == 1 }.firstOrNull() } ?: false
+
+    /** La cola de revisión (solo administradores): lo de menores primero, después lo que más gente reportó. */
+    fun casos(yo: Long): List<Caso> {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        val filas = b.usar { leer("SELECT que, objeto, motivo, de FROM reportes WHERE estado = 'abierto' ORDER BY cuando", ) { arrayOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4)) } }
+        return filas.groupBy { it[0] as String to it[1] as String }.map { (k, rs) ->
+            val (que, objeto) = k
+            val motivos = rs.groupingBy { (it[2] as String).substringBefore(':').trim() }.eachCount()
+            val (contenido, autor, oculto) = verReportado(que, objeto, rs.map { it[2] as String })
+            Caso(que, objeto, motivos, rs.map { it[3] }.distinct().size, oculto, contenido, autor?.let(::persona), autor?.let(::puntosVigentes) ?: 0)
+        }.sortedWith(compareByDescending<Caso> { Moderacion.MENOR_EN_RIESGO in it.motivos }.thenByDescending { it.personas })
+    }
+
+    private fun verReportado(que: String, objeto: String, motivos: List<String>): Triple<String, Long?, Boolean> = b.usar {
+        val id = objeto.toLongOrNull()
+        when (que) {
+            "publicacion" -> leer("SELECT datos, cuenta, oculta FROM publicaciones WHERE id = ?", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
+            "comentario" -> leer("SELECT texto, cuenta, oculto FROM comentarios WHERE id = ?", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
+            "cuenta" -> leer("SELECT perfil, id FROM cuentas WHERE usuario = ?", objeto) { Triple(it.getString(1), it.getLong(2), false) }.firstOrNull()
+            // Un mensaje va cifrado: lo único que se ve es lo que mandó quien lo reportó (con su permiso).
+            else -> Triple(motivos.joinToString("\n---\n"), leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.substringBefore(':')) { it.getLong(1) }.firstOrNull(), false)
+        } ?: Triple("(ya no está)", null, false)
+    }
+
+    /**
+     * Lo que decide quien modera: "sin_falta" (vuelve a verse), "falta" (se quita y suma 1), "falta_grave" (suma 2)
+     * o "cerrar" (se quita y se cierra la cuenta). A la persona le llega un aviso con la regla.
+     */
+    fun decidir(yo: Long, d: Decision) {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        if (d.decision !in setOf("sin_falta", "falta", "falta_grave", "cerrar")) throw Problema(400, "decision")
+        val (_, autor, _) = verReportado(d.que, d.objeto, emptyList())
+        b.usar {
+            cambiar("INSERT INTO decisiones(admin, que, objeto, decision, regla, cuando) VALUES(?,?,?,?,?,?)", yo, d.que, d.objeto, d.decision, d.regla.take(100), ahora())
+            cambiar("UPDATE reportes SET estado = ? WHERE que = ? AND objeto = ? AND estado = 'abierto'", if (d.decision == "sin_falta") "sin_falta" else "confirmado", d.que, d.objeto)
+        }
+        if (d.decision == "sin_falta") { ocultarReportado(d.que, d.objeto, false); return }
+        // Se quita lo reportado.
+        val id = d.objeto.toLongOrNull()
+        b.usar {
+            when (d.que) {
+                "publicacion" -> cambiar("DELETE FROM publicaciones WHERE id = ?", id)
+                "comentario" -> cambiar("DELETE FROM comentarios WHERE id = ?", id)
+            }
+        }
+        autor ?: return
+        val puntos = when { d.decision == "cerrar" || d.regla in Moderacion.CIERRE_DIRECTO -> 99; d.decision == "falta_grave" -> 2; else -> 1 }
+        b.usar { cambiar("INSERT INTO faltas(cuenta, puntos, regla, cuando, vence) VALUES(?,?,?,?,?)", autor, puntos, d.regla.ifBlank { d.que }, ahora(), ahora() + Moderacion.VENCE) }
+        aplicarSancion(autor, yo, d.regla)
+    }
+
+    private fun puntosVigentes(cuenta: Long) = b.usar { leer("SELECT coalesce(sum(puntos), 0) FROM faltas WHERE cuenta = ? AND vence > ?", cuenta, ahora()) { it.getInt(1) }.first() }
+
+    private fun aplicarSancion(cuenta: Long, admin: Long, regla: String) {
+        val p = puntosVigentes(cuenta)
+        b.usar {
+            when {
+                p >= 4 -> cambiar("UPDATE cuentas SET cerrada = 1 WHERE id = ?", cuenta)
+                p == 3 -> cambiar("UPDATE cuentas SET suspendida_hasta = ? WHERE id = ?", ahora() + 7L * 24 * 3600_000, cuenta)
+                p == 2 -> cambiar("UPDATE cuentas SET restringida_hasta = ? WHERE id = ?", ahora() + 24 * 3600_000L, cuenta)
+            }
+        }
+        avisar(cuenta, admin, "sancion", regla)
+    }
+
+    /** Las faltas vigentes y las restricciones de la cuenta ("Estado de tu cuenta"). */
+    fun estadoCuenta(yo: Long): EstadoCuenta {
+        val faltas = b.usar { leer("SELECT regla, puntos, cuando, vence FROM faltas WHERE cuenta = ? AND vence > ? ORDER BY cuando DESC", yo, ahora()) { Falta(it.getString(1), it.getInt(2), it.getLong(3), it.getLong(4)) } }
+        return b.usar { leer("SELECT restringida_hasta, suspendida_hasta, cerrada, admin FROM cuentas WHERE id = ?", yo) {
+            EstadoCuenta(faltas, it.getLong(1), it.getLong(2), it.getInt(3) == 1, it.getInt(4) == 1) }.first() }
+    }
+
+    /** Si la cuenta puede usar la red: cerrada o suspendida, no ([escribir]: tampoco si está restringida). */
+    fun revisarSancion(yo: Long, escribir: Boolean) {
+        val (restr, susp, cerrada) = b.usar { leer("SELECT restringida_hasta, suspendida_hasta, cerrada FROM cuentas WHERE id = ?", yo) { Triple(it.getLong(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull() } ?: return
+        if (cerrada) throw Problema(403, "cerrada")
+        if (susp > ahora()) throw Problema(403, "suspendida")
+        if (escribir && restr > ahora()) throw Problema(403, "restringida")
     }
 
     /* ----- Reglas ----- */
@@ -725,6 +902,7 @@ class Social(
         private const val PREVIA_GUARDADO = 0.02
         private const val PREVIA_COMENTARIO = 0.02
         private const val M = 20.0
+        private const val SEMANA = 7L * 24 * 3600_000
         private val azar = java.security.SecureRandom()
         val CORREO = Regex("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}")
         /** Igual que en El Cajón (`Logica.usuarioLimpio`): 3 a 30 de letras, números, punto y guion bajo. */

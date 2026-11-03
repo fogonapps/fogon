@@ -368,6 +368,8 @@ data class Ajustes(
     val categorias: List<String> = emptyList(),
     /** Ya pasó por "Cuéntame tus gustos" (o lo saltó): no se le vuelve a ofrecer en Inicio. */
     val gustosListos: Boolean = false,
+    /** Palabras que la persona no quiere ver en la red (publicaciones y comentarios que las lleven se esconden). */
+    val palabrasOcultas: List<String> = emptyList(),
     val cambio: Long = 0,
 )
 

@@ -89,6 +89,9 @@ class RedSocial(
     val gente: StateFlow<Map<String, List<PersonaSocial>>> = _gente
     private val _privada = MutableStateFlow(false)
     val privada: StateFlow<Boolean> = _privada
+    private val _cuenta = MutableStateFlow<io.github.fogonapps.cajon.datos.MiCuenta?>(null)
+    /** Lo de la cuenta en el servidor: correo, si tiene contraseña, desde cuándo puede cambiar el usuario. */
+    val cuenta: StateFlow<io.github.fogonapps.cajon.datos.MiCuenta?> = _cuenta
     private val _correoCuenta = MutableStateFlow("")
     val correoCuenta: StateFlow<String> = _correoCuenta
     private val _notas = MutableStateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>>(emptyList())
@@ -108,6 +111,11 @@ class RedSocial(
             "codigo_vencido", "sin_codigo" -> R.string.red_codigo_vencido
             "correo_tomado" -> R.string.red_correo_tomado
             "despacio" -> R.string.red_despacio
+            "clave_mala" -> R.string.red_clave_mala
+            "clave_corta" -> R.string.red_clave_corta
+            "usuario_espera" -> R.string.red_usuario_espera
+            "suspendida", "cerrada" -> R.string.red_suspendida
+            "restringida" -> R.string.red_restringida
             "privada" -> R.string.red_es_privada
             "no_existe" -> R.string.red_no_existe
             else -> R.string.red_error
@@ -132,7 +140,7 @@ class RedSocial(
         }
         if (_usuario.value != null) intentar {
             val c = cliente().miCuenta()
-            _privada.value = c.privada; _correoCuenta.value = c.correo
+            _privada.value = c.privada; _correoCuenta.value = c.correo; _cuenta.value = c
         }
     }
 
@@ -174,6 +182,22 @@ class RedSocial(
 
     fun volverAlCorreo() { _acceso.value = Acceso() }
 
+    fun entrarConClave(correo: String, clave: String) = lanzar {
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try { entro(ClienteSocial().entrarConClave(correo.trim(), clave)) } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    fun ponerClave(nueva: String, actual: String, listo: () -> Unit) = lanzar {
+        cliente().ponerClave(nueva, actual); decir(R.string.red_clave_lista); revisarServidor(); listo()
+    }
+
+    fun cambiarUsuario(nuevo: String, listo: () -> Unit) = lanzar {
+        val u = cliente().cambiarUsuario(nuevo.trim().lowercase())
+        caja.usuarioSocial = u; _usuario.value = u
+        cambiar { e -> e.copy(perfil = e.perfil.copy(usuario = u, cambio = System.currentTimeMillis())) }
+        decir(R.string.red_usuario_cambiado); revisarServidor(); listo()
+    }
+
     private fun entro(a: io.github.fogonapps.cajon.datos.Acceso) {
         caja.tokenSocial = a.token
         caja.usuarioSocial = a.usuario
@@ -181,6 +205,7 @@ class RedSocial(
         caja.partesRedPuestas = true
         _usuario.value = a.usuario
         _acceso.value = Acceso()
+        AvisosRed.programar(app)
         // El usuario de la red es el del perfil; y lo que hace que el perfil tenga sentido queda a la vista (si no eligió otra cosa).
         cambiar { e -> e.copy(perfil = e.perfil.copy(usuario = a.usuario, visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
         decir(if (a.nueva) R.string.red_bienvenida else R.string.red_entraste)
@@ -204,6 +229,7 @@ class RedSocial(
     private fun olvidarCuenta() {
         caja.tokenSocial = null; caja.usuarioSocial = null
         _usuario.value = null
+        AvisosRed.programar(app)
         _feed.value = null; _avisos.value = null; _guardados.value = null; _sinLeer.value = 0
         _perfiles.value = emptyMap(); _gente.value = emptyMap(); _correoCuenta.value = ""
     }
@@ -361,6 +387,36 @@ class RedSocial(
 
     fun reportar(que: String, objeto: String, motivo: String) = lanzar { cliente().reportar(que, objeto, motivo); decir(R.string.red_reportado) }
 
+    /* ----- Lo que la persona dice de lo que ve (todo en el teléfono, como sus gustos) ----- */
+
+    private val _ocultas = MutableStateFlow<Set<Long>>(emptySet())
+    /** Publicaciones que escondió (o reportó) en esta sesión: dejan de verse al momento. */
+    val ocultas: StateFlow<Set<Long>> = _ocultas
+    fun ocultar(id: Long) { _ocultas.value = _ocultas.value + id }
+
+    /** "Me interesa" / "No me interesa": se guarda como un gusto de la obra o del creador de la publicación. */
+    fun interesa(p: PublicacionSocial, si: Boolean) {
+        val fuente = (p.datos["fuente"] as? JsonPrimitive)?.content.orEmpty()
+        val creador = (p.datos["creador"] as? JsonPrimitive)?.content.orEmpty()
+        val titulo = (p.datos["titulo"] as? JsonPrimitive)?.content.orEmpty()
+        val (clave, nombre) = when {
+            fuente.isNotBlank() -> "obra:$fuente" to titulo
+            creador.isNotBlank() -> "artista:${creador.lowercase()}" to creador
+            else -> "red:${p.autor.usuario}" to "@${p.autor.usuario}"
+        }
+        val senal = if (si) io.github.fogonapps.cajon.datos.Senales.GUSTA else io.github.fogonapps.cajon.datos.Senales.NO_INTERESA
+        cambiar { e -> e.copy(gustos = e.gustos.filter { it.clave != clave } + io.github.fogonapps.cajon.datos.Gusto(clave, nombre, senal, cambio = System.currentTimeMillis())) }
+        if (!si) ocultar(p.id)
+        decir(if (si) R.string.menu_anotado_interesa else R.string.menu_anotado_no)
+    }
+
+    /** Silenciar a alguien: sus publicaciones no salen en Explorar ni en el feed (sin que se entere). */
+    fun silenciar(usuario: String) {
+        cambiar { e -> e.copy(gustos = e.gustos.filter { it.clave != "red:$usuario" } +
+            io.github.fogonapps.cajon.datos.Gusto("red:$usuario", "@$usuario", io.github.fogonapps.cajon.datos.Senales.EXCLUIR, cambio = System.currentTimeMillis())) }
+        decir(R.string.menu_silenciado)
+    }
+
     /* ----- Vistas y notas ----- */
 
     private val porContar = java.util.Collections.synchronizedSet(LinkedHashSet<Long>())
@@ -393,6 +449,21 @@ class RedSocial(
         sincronizarYa(); cargarFeed(); decir(R.string.red_quitada)
     }
 
+    /* ----- Moderación ----- */
+
+    private val _estadoCuenta = MutableStateFlow<io.github.fogonapps.cajon.datos.EstadoCuentaSocial?>(null)
+    val estadoCuenta: StateFlow<io.github.fogonapps.cajon.datos.EstadoCuentaSocial?> = _estadoCuenta
+    fun cargarEstadoCuenta() = lanzar { _estadoCuenta.value = cliente().estadoCuenta() }
+
+    private val _casos = MutableStateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?>(null)
+    val casos: StateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?> = _casos
+    fun cargarCasos() = lanzar { _casos.value = cliente().casos() }
+    fun decidir(c: io.github.fogonapps.cajon.datos.CasoModeracion, decision: String) = lanzar {
+        val regla = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
+        cliente().decidir(c.que, c.objeto, decision, regla)
+        _casos.value = _casos.value?.filterNot { it.que == c.que && it.objeto == c.objeto }
+    }
+
     /* ----- Avisos ----- */
 
     fun cargarAvisos() = lanzar {
@@ -409,7 +480,7 @@ class RedSocial(
 
     fun revisarSinLeer() {
         if (_usuario.value == null) return
-        scope.launch { runCatching { _sinLeer.value = cliente().sinLeer() } }
+        scope.launch { runCatching { _sinLeer.value = cliente().sinLeer(); AvisosRed.vistoAvisos(app, _sinLeer.value) } }
     }
 
     /* ----- Publicar a mano ----- */
@@ -511,7 +582,15 @@ class RedSocial(
         }
 
         private fun excluida(p: PublicacionSocial, g: Gusto) =
-            "obra:${texto(p, "fuente")}".lowercase() in g.fuera || "artista:${texto(p, "creador")}".lowercase() in g.fuera
+            "obra:${texto(p, "fuente")}".lowercase() in g.fuera || "artista:${texto(p, "creador")}".lowercase() in g.fuera ||
+                "red:${p.autor.usuario}".lowercase() in g.fuera
+
+        /** Lo que no se muestra en ninguna lista: silenciado, escondido, o con una palabra oculta. */
+        fun seMuestra(p: PublicacionSocial, e: Estado, ocultas: Set<Long>): Boolean {
+            if (p.id in ocultas) return false
+            if (e.gustos.any { !it.borrada && it.clave == "red:${p.autor.usuario}" && it.senal == io.github.fogonapps.cajon.datos.Senales.EXCLUIR }) return false
+            return !io.github.fogonapps.cajon.ui.lleva(e.ajustes.palabrasOcultas, texto(p, "texto") + " " + texto(p, "titulo"))
+        }
 
         /**
          * Explorar, ordenado en el teléfono: puntaje = afinidad con lo
@@ -521,7 +600,7 @@ class RedSocial(
          */
         fun ordenarPorGustos(lista: List<PublicacionSocial>, e: Estado, ahora: Long = System.currentTimeMillis()): List<Pair<PublicacionSocial, Motivo?>> {
             val g = Gusto(e)
-            val puntuadas = lista.filter { !excluida(it, g) }.map { p ->
+            val puntuadas = lista.filter { !excluida(it, g) && !io.github.fogonapps.cajon.ui.lleva(e.ajustes.palabrasOcultas, texto(it, "texto") + " " + texto(it, "titulo")) }.map { p ->
                 val (a, motivo) = afinidad(p, g)
                 val horas = ((ahora - p.cuando) / 3_600_000.0).coerceAtLeast(0.0)
                 val s = a + 0.6 * (p.calidad.coerceIn(0.0, 2.0) / 2) + 0.4 * Math.pow(2.0, -horas / 72)

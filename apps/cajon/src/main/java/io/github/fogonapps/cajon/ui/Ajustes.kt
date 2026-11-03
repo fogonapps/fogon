@@ -1,5 +1,9 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.clickable
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.IconoRiso
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,89 +60,115 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
     val acciones = LocalAcciones.current
-    val sync by vm.sync.collectAsStateWithLifecycle()
     val tmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
+    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val c = LocalContext.current
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
     val alcance = rememberCoroutineScope()
 
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
 
-    Seccion(stringResource(R.string.tu_nombre))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre), Modifier.weight(1f))
-        }
-        if (nombre.trim() != e.ajustes.nombre) BotonSecundario(stringResource(R.string.guardar), { vm.cambiarNombre(nombre) }, Modifier.fillMaxWidth())
-    }
+    // Tu cuenta: lo primero.
+    Seccion(stringResource(R.string.aj_tu_cuenta))
+    val u = usuario
+    if (u == null) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.red_invita_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        Text(stringResource(R.string.red_invita_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
+    } else FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
+    FilaAjuste(Iconos.Lapiz, stringResource(R.string.editar_perfil), stringResource(R.string.aj_editar_perfil_pista)) { vm.abrir(Pantalla.EditarPerfil) }
 
-    Seccion(stringResource(R.string.buscar_afuera))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Seccion(stringResource(R.string.aj_como_usas))
+    FilaAjuste(Iconos.Campana, stringResource(R.string.aj_notificaciones), stringResource(R.string.aj_notificaciones_pista)) { vm.abrir(Pantalla.AjustesAvisos) }
+    if (u != null) {
+        FilaAjuste(Iconos.Guardar, stringResource(R.string.red_guardadas), null) { vm.abrir(Pantalla.GuardadosRed) }
+        FilaAjuste(Iconos.Candado, stringResource(R.string.aj_privacidad), stringResource(R.string.aj_privacidad_pista)) { vm.abrir(Pantalla.CuentaRed) }
+        FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloqueadas), null) { vm.abrir(Pantalla.BloqueadosRed) }
+    }
+    FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
+    FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
+
+    Seccion(stringResource(R.string.aj_tu_cajon))
+    Desplegable(Iconos.Pelicula, stringResource(R.string.buscar_afuera), stringResource(if (tmdb) R.string.clave_tmdb_lista else R.string.clave_tmdb_falta)) {
         FilaVidrio({ vm.abrir(Pantalla.ClaveTmdb) }, adentro = true) {
             Ficha(if (tmdb) f.tinta1 else f.linea, Iconos.Pelicula)
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.clave_tmdb), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(stringResource(if (tmdb) R.string.clave_tmdb_lista else R.string.clave_tmdb_falta), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
+            Text(stringResource(R.string.clave_tmdb), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
         }
         Pista(stringResource(R.string.libros_y_musica_sin_clave), adentro = true)
     }
-
-    Seccion(stringResource(R.string.sync_titulo))
-    Column(Modifier.padding(horizontal = 16.dp)) {
-        FilaVidrio({ vm.abrir(Pantalla.Sincronizar) }, adentro = true) {
-            Ficha(if (sync.estado == EstadoSync.APAGADA) f.linea else f.tinta1, Iconos.Nube)
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(if (sync.estado == EstadoSync.APAGADA) R.string.sync_apagada else R.string.sync_conectada, sync.usuario ?: ""),
-                    style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(stringResource(R.string.sync_para_pc), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-        }
-    }
-
-    Seccion(stringResource(R.string.opciones))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.widget_poner), { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }, Modifier.fillMaxWidth())
-        Text(stringResource(R.string.idioma), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-        SelectorIdioma(vm)
-    }
-
-    // Las portadas de lo que llegó sin fuente se buscan solas; aquí solo se ve cómo va.
-    val completando by vm.completando.collectAsStateWithLifecycle()
-    completando?.let { c ->
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            LinearProgressIndicator({ c.hechas / c.total.toFloat() }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
-            Text(stringResource(R.string.portadas_avance, c.hechas, c.total, c.encontradas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        }
-    }
-
-    MusicaQueEscuchas(vm)
-
-    Seccion(stringResource(R.string.traer_de_otras))
-    Pista(stringResource(R.string.traer_de_otras_pista))
-    Column(Modifier.padding(16.dp)) {
-        if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
-    }
-
-    Seccion(stringResource(R.string.respaldo))
-    Pista(stringResource(R.string.respaldo_pista))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
+    Desplegable(Iconos.Nube, stringResource(R.string.respaldo), stringResource(R.string.aj_respaldo_pista)) {
+        Pista(stringResource(R.string.respaldo_pista), adentro = true)
         if (acciones != null) {
             BotonSecundario(stringResource(R.string.guardar_respaldo), acciones.exportar, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.recuperar_respaldo), {
                 confirmar(vm.tx(R.string.recuperar_pregunta), vm.tx(R.string.recuperar_texto), acciones.importar)
             }, Modifier.fillMaxWidth())
         }
+        RespaldoTodoFogon(confirmar)
     }
-    RespaldoTodoFogon(confirmar, Modifier.padding(bottom = 8.dp))
+    Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
+        Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
+        if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
+    }
+    // Las portadas de lo que llegó sin fuente se buscan solas; aquí solo se ve cómo va.
+    val completando by vm.completando.collectAsStateWithLifecycle()
+    completando?.let { k ->
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            LinearProgressIndicator({ k.hechas / k.total.toFloat() }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            Text(stringResource(R.string.portadas_avance, k.hechas, k.total, k.encontradas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+    }
+
+    Seccion(stringResource(R.string.aj_apariencia_idioma))
+    FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
+    Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
+    Desplegable(Iconos.Persona, stringResource(R.string.tu_nombre), e.ajustes.nombre.ifBlank { null }) {
+        var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
+        CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre), Modifier.fillMaxWidth())
+        if (nombre.trim() != e.ajustes.nombre) BotonSecundario(stringResource(R.string.guardar), { vm.cambiarNombre(nombre) }, Modifier.fillMaxWidth())
+    }
+    FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }
 
     Seccion(stringResource(R.string.fogon))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario(stringResource(R.string.red_tu_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.manifiesto), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
+    FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/privacidad") }
+    FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/terminos") }
+    FilaAjuste(Iconos.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
+    FilaAjuste(Iconos.Cajon, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }
+}
+
+/** Una fila de los ajustes: ícono, título, una pista y la flecha. */
+@Composable
+fun FilaAjuste(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
+        Column(Modifier.weight(1f)) {
+            Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
+        }
+        IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+    }
+}
+
+/** Un grupo de ajustes que se abre y se cierra en el mismo lugar. */
+@Composable
+fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, contenido: @Composable () -> Unit) {
+    val f = FogonTema.actual
+    var abierto by rememberSaveable(titulo) { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable { abierto = !abierto }.padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
+        Column(Modifier.weight(1f)) {
+            Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
+        }
+        IconoRiso(if (abierto) Iconos.Arriba else Iconos.Abajo, null, tamano = 18.dp, tinta = f.textoSuave)
+    }
+    androidx.compose.animation.AnimatedVisibility(abierto) {
+        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { contenido() }
     }
 }
 
@@ -374,8 +404,7 @@ private fun MusicaQueEscuchas(vm: CajonViewModel) {
     var solos by remember { mutableStateOf(io.github.fogonapps.cajon.EscuchaMusica.agregarSolos(c)) }
     val permiso = remember(revisar) { io.github.fogonapps.cajon.EscuchaMusica.conPermiso(c) }
 
-    Seccion(stringResource(R.string.musica_que_escuchas))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.anotar_escuchas), style = MaterialTheme.typography.bodyLarge, color = f.texto)

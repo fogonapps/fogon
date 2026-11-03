@@ -216,6 +216,85 @@ class SocialTest {
         assertTrue(otra.all { it.calidad in 0.0..3.0 })
     }
 
+    @Test fun claveYUsuario() {
+        val dir = Files.createTempDirectory("social").toFile()
+        val buzon = mutableListOf<String>()
+        var reloj = 1_000_000_000L
+        val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"), ahora = { reloj }, cartero = { _, asunto, _ -> buzon += asunto })
+        s.pedirCodigo("ana@correo.co")
+        val a = s.entrar(Entrada("ana@correo.co", Regex("[0-9]{6}").find(buzon.last())!!.value, usuario = "ana", acepta = Social.POLITICA, mayorDeEdad = true))
+        val ana = s.cuentaDe(a.token)!!
+        assertFailsWith<Problema> { s.ponerClave(ana, CambioClave("corta")) }
+        s.ponerClave(ana, CambioClave("una clave larga"))
+        assertTrue(s.miCuenta(ana).conClave)
+        assertFailsWith<Problema> { s.entrarConClave(EntradaClave("ana@correo.co", "otra cosa")) }
+        assertEquals("ana", s.entrarConClave(EntradaClave("ANA@correo.co", "una clave larga")).usuario)
+        assertFailsWith<Problema> { s.ponerClave(ana, CambioClave("nueva clave larga", actual = "mala")) }   // pide la actual
+        s.ponerClave(ana, CambioClave("nueva clave larga", actual = "una clave larga"))
+        // Usuario: una vez cada 7 días; el viejo, reservado.
+        reloj += 8L * 24 * 3600_000
+        assertEquals("anita", s.cambiarUsuario(ana, CambioUsuario("anita")))
+        assertFailsWith<Problema> { s.cambiarUsuario(ana, CambioUsuario("ana2")) }
+        assertTrue(!s.usuarioLibre("ana"))
+        assertFailsWith<Problema> { s.crearSinCorreo(Entrada(usuario = "ana", acepta = Social.POLITICA, mayorDeEdad = true)) }
+    }
+
+    @Test fun avisoAlPublicar() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.seguir(beto, "ana")
+        s.subirPublicaciones(ana, listOf(pub("1", Vis.PUBLICA, System.currentTimeMillis())))
+        s.subirPublicaciones(ana, listOf(pub("1", Vis.PUBLICA, System.currentTimeMillis()), pub("2", Vis.PUBLICA, System.currentTimeMillis())))
+        assertEquals(1, s.avisos(beto, null).count { it.tipo == "publico" })     // una vez cada 6 horas
+    }
+
+    @Test fun moderacion() {
+        val dir = Files.createTempDirectory("social").toFile()
+        var reloj = 1_000_000_000_000L
+        val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"), ahora = { reloj })
+        val admin = s.cuentaDe(s.crearCuenta(NuevaCuenta("moderadora")).token)!!
+        val malo = s.cuentaDe(s.crearCuenta(NuevaCuenta("malo")).token)!!
+        val gente = (1..3).map { s.cuentaDe(s.crearCuenta(NuevaCuenta("persona$it")).token)!! }
+        val nueva = s.cuentaDe(s.crearCuenta(NuevaCuenta("recien")).token)
+        reloj += 8L * 24 * 3600_000                                              // las de antes ya tienen más de 7 días
+        val tardia = s.cuentaDe(s.crearCuenta(NuevaCuenta("tardia")).token)!!
+        s.subirPublicaciones(malo, listOf(pub("1", Vis.PUBLICA, reloj)))
+        val id = s.explorar(gente[0], null).single().id
+        // Una cuenta recién hecha no tumba nada; tres que cuentan, sí (hasta revisar).
+        s.reportar(tardia, NuevoReporte("publicacion", "$id", "spam"))
+        s.reportar(gente[0], NuevoReporte("publicacion", "$id", "spam")); s.reportar(gente[1], NuevoReporte("publicacion", "$id", "acoso"))
+        assertEquals(1, s.explorar(gente[2], null).size)
+        s.reportar(gente[2], NuevoReporte("publicacion", "$id", "spam"))
+        assertEquals(0, s.explorar(nueva, null).size)
+        assertTrue(s.publicacion(malo, id) != null)                             // su autor la sigue viendo
+        // Solo quien administra ve la cola y decide.
+        assertFailsWith<Problema> { s.casos(gente[0]) }
+        Base(java.io.File(dir, "s.db").path).usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", admin) }
+        val caso = s.casos(admin).single()
+        assertEquals(4, caso.personas); assertEquals(3, caso.motivos["spam"])
+        s.decidir(admin, Decision("publicacion", "$id", "falta", "spam"))
+        assertNull(s.publicacion(malo, id))
+        assertEquals("sancion", s.avisos(malo, null).first().tipo)
+        // Escala: 2 puntos = 24 h sin escribir; 3 = 7 días suspendida; 4 = cerrada.
+        repeat(1) { s.subirPublicaciones(malo, listOf(pub("2", Vis.PUBLICA, reloj))); val i = s.explorar(gente[0], null).single().id
+            s.decidir(admin, Decision("publicacion", "$i", "falta", "spam")) }
+        assertFailsWith<Problema> { s.revisarSancion(malo, escribir = true) }
+        s.revisarSancion(malo, escribir = false)                                // leer, sí
+        assertEquals(2, s.estadoCuenta(malo).faltas.size)
+        // Las faltas vencen a los 90 días.
+        reloj += 91L * 24 * 3600_000
+        assertEquals(0, s.estadoCuenta(malo).faltas.size)
+        // Cierre a la primera por un menor en riesgo.
+        s.subirPublicaciones(malo, listOf(pub("3", Vis.PUBLICA, reloj)))
+        val i3 = s.explorar(gente[0], null).single().id
+        s.reportar(gente[0], NuevoReporte("publicacion", "$i3", Moderacion.MENOR_EN_RIESGO))
+        assertEquals(0, s.explorar(gente[1], null).size)                       // oculta al primer reporte
+        s.decidir(admin, Decision("publicacion", "$i3", "falta", Moderacion.MENOR_EN_RIESGO))
+        assertTrue(s.estadoCuenta(malo).cerrada)
+        assertFailsWith<Problema> { s.verPerfil(null, "malo") }
+    }
+
     @Test fun imagenes() {
         val s = nuevo()
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!
@@ -277,7 +356,8 @@ class SocialTest {
             s.subirPublicaciones(a, (1..50).map { k -> pub("$k", if (k % 2 == 0) Vis.SEGUIDORES else Vis.PUBLICA, (i * 50L + k)) })
         }
         val primeras = s.actividad(yo, null)
-        primeras.take(20).forEach { s.meGusta(yo, it.id, true); s.comentar(yo, it.id, "bien") }
+        primeras.take(20).forEach { s.meGusta(yo, it.id, true) }
+        primeras.take(10).forEach { s.comentar(yo, it.id, "bien") }   // una cuenta nueva: hasta 10 comentarios por hora
         val inicio = System.nanoTime()
         repeat(20) { s.actividad(yo, null) }
         val ms = (System.nanoTime() - inicio) / 1_000_000 / 20

@@ -63,6 +63,8 @@ object Iconos {
         relleno("M16.4 6.2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.6 13.6c3 0 5 2.2 5 5.8h-4.2c0-2.4-.6-4.2-2-5.4z"))
     /** Un avión de papel: enviar. */
     val Enviar = dibujo("enviar", relleno("M3.6 11.4 20.4 4l-5.2 16.4-3.4-6.6z"))
+    /** Tres puntos: más opciones. */
+    val Opciones = dibujo("opciones", relleno("M5.6 10.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zM12 10.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zM18.4 10.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z"))
     /** Un triángulo: tocar (reproducir). */
     val Tocar = dibujo("tocar", relleno("M7.4 4.6v14.8L19.6 12z"))
     /** Una banderita: reportar. */

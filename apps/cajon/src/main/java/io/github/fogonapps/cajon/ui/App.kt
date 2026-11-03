@@ -181,6 +181,10 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.Chats -> Chats(vm, estado, p.obra)
                             is Pantalla.Conversacion -> Conversacion(vm, estado, p.usuario)
                             Pantalla.ElegirCancion -> ElegirCancion(vm, estado)
+                            Pantalla.AjustesAvisos -> AjustesAvisos(vm)
+                            Pantalla.PalabrasOcultas -> PalabrasOcultas(vm, estado)
+                            Pantalla.EstadoCuenta -> EstadoCuenta(vm)
+                            Pantalla.Moderacion -> Moderacion(vm)
                             is Pantalla.EtiquetaRed -> EtiquetaRed(vm, p.etiqueta)
                         }
                         if (conScroll) Espacio(40.dp)

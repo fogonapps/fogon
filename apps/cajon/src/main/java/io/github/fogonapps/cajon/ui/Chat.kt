@@ -105,6 +105,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
     var elegir by remember { mutableStateOf(false) }
     var verNumero by remember { mutableStateOf(false) }
     var borrar by remember { mutableStateOf(false) }
+    var reportar by remember { mutableStateOf(false) }
     val numero by produceState<String?>(null, usuario, verNumero) { if (verNumero) value = vm.chat.numeroSeguridad(usuario) }
     // Mientras está abierta, revisa cada 8 segundos si llegó algo.
     LaunchedEffect(usuario) { while (true) { vm.chat.recibir(); vm.chat.marcarLeida(usuario); delay(8000) } }
@@ -112,7 +113,16 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
         Row {
             BotonIcono(Iconos.Candado, stringResource(R.string.chat_numero)) { verNumero = !verNumero }
             BotonIcono(Iconos.Persona, stringResource(R.string.red_ver_perfil)) { vm.abrir(Pantalla.PerfilRed(usuario)) }
+            BotonIcono(Iconos.Bandera, stringResource(R.string.red_reportar)) { reportar = !reportar }
             BotonIcono(Iconos.Borrar, stringResource(R.string.chat_borrar)) { borrar = !borrar }
+        }
+    }
+    if (reportar) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pista(stringResource(R.string.chat_reportar_explica, usuario))
+        val suyos = chats[usuario].orEmpty().filter { !it.mio && it.texto.isNotBlank() }.takeLast(5).joinToString("\n") { it.texto }
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            MOTIVOS_REPORTE.forEach { (codigo, m) -> val t = stringResource(m)
+                Pildora(t) { vm.red.reportar("mensaje", "$usuario:mensajes", "$codigo: $t\n$suyos"); reportar = false } }
         }
     }
     if (borrar) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

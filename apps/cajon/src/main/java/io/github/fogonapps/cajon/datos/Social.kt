@@ -66,7 +66,17 @@ data class PerfilSubido(
 @Serializable private data class Correo(val correo: String)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false)
-@Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false)
+@Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
+    val conClave: Boolean = false, val usuarioDesde: Long = 0, val admin: Boolean = false)
+@Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
+    val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0)
+@Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
+@Serializable data class FaltaSocial(val regla: String, val puntos: Int, val cuando: Long, val vence: Long)
+@Serializable data class EstadoCuentaSocial(val faltas: List<FaltaSocial> = emptyList(), val restringidaHasta: Long = 0, val suspendidaHasta: Long = 0,
+    val cerrada: Boolean = false, val admin: Boolean = false)
+@Serializable private data class EntradaClave(val correo: String, val clave: String)
+@Serializable private data class CambioClave(val nueva: String, val actual: String = "")
+@Serializable private data class CambioUsuario(val usuario: String)
 /** Lo que dice el servidor de sí mismo: si puede mandar códigos por correo y la versión de la política. */
 @Serializable data class InfoServidor(val version: String = "", val correo: String = "false", val politica: String = "")
 @Serializable private data class Texto(val texto: String)
@@ -117,6 +127,13 @@ class ClienteSocial(private val token: String? = null) {
             Entrada(correo, codigo, usuario, nombre, politica, mayorDeEdad = politica.isNotEmpty()))))
     suspend fun vincularCorreo(correo: String, codigo: String) { pedir("/cuenta/correo", "POST", json(Entrada.serializer(), Entrada(correo, codigo))) }
     suspend fun salir() { pedir("/salir", "POST") }
+    suspend fun estadoCuenta() = leer(EstadoCuentaSocial.serializer(), pedir("/cuenta/estado"))
+    suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
+    suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }
+    suspend fun entrarConClave(correo: String, clave: String): Acceso = leer(Acceso.serializer(), pedir("/acceso/clave", "POST", json(EntradaClave.serializer(), EntradaClave(correo, clave))))
+    suspend fun ponerClave(nueva: String, actual: String = "") { pedir("/cuenta/clave", "PUT", json(CambioClave.serializer(), CambioClave(nueva, actual))) }
+    suspend fun cambiarUsuario(u: String): String =
+        JsonCajon.parseToJsonElement(pedir("/cuenta/usuario", "PUT", json(CambioUsuario.serializer(), CambioUsuario(u)))!!).jsonObject["usuario"]!!.jsonPrimitive.content
     suspend fun miCuenta(): MiCuenta = leer(MiCuenta.serializer(), pedir("/cuenta"))
     suspend fun borrarCuenta() { pedir("/cuenta", "DELETE") }
     suspend fun privada(si: Boolean) { pedir("/cuenta", "PUT", json(Privada.serializer(), Privada(si))) }
@@ -162,6 +179,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
+    suspend fun mensajesSinLeer(): Int = JsonCajon.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
 
     suspend fun vio(ids: List<Long>) { pedir("/vistas", "POST", json(ListSerializer(Long.serializer()), ids)) }

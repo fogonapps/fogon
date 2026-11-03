@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -156,9 +157,11 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
     val ctx = LocalContext.current
     val d = p.datos
     var destapado by remember(p.id) { mutableStateOf(false) }
+    var menu by remember(p.id) { mutableStateOf(false) }
     LaunchedEffect(p.id) { vm.red.vista(p.id) }
+    if (menu) MenuPublicacion(vm, p, motivo) { menu = false }
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon()
-        .then(if (abrir) Modifier.clickable { vm.abrir(Pantalla.PublicacionRed(p.id)) } else Modifier).padding(14.dp),
+        .then(if (abrir) Modifier.combinedClickable(onLongClick = { menu = true }) { vm.abrir(Pantalla.PublicacionRed(p.id)) } else Modifier).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().clip(FormaPildora).clickable { vm.abrir(Pantalla.PerfilRed(p.autor.usuario)) },
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -170,6 +173,7 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
                 }) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
             }
             if (p.visibilidad == Visibilidad.AMIGOS) IconoRiso(Iconos.Candado, stringResource(R.string.red_para_seguidores), tamano = 16.dp, tinta = f.textoSuave)
+            BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), tinta = f.textoSuave) { menu = true }
         }
         // Por qué ves esto (en Explorar).
         motivo?.let { m ->
@@ -311,7 +315,9 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
         if (usuario != null) Pildora(stringResource(R.string.red_publicar), Iconos.Mas, acento = true) { vm.abrir(Pantalla.Publicar()) }
     }
     if (pestana == 0 && usuario == null) { Pista(stringResource(R.string.red_feed_sin_cuenta), Modifier.padding(16.dp)); return }
-    val lista = if (pestana == 0) feed?.map { it to null } else explorar?.let { remember(it, e) { io.github.fogonapps.cajon.RedSocial.ordenarPorGustos(it, e) } }
+    val ocultas by vm.red.ocultas.collectAsStateWithLifecycle()
+    val lista = (if (pestana == 0) feed?.map { it to null } else explorar?.let { remember(it, e) { io.github.fogonapps.cajon.RedSocial.ordenarPorGustos(it, e) } })
+        ?.filter { (p, _) -> io.github.fogonapps.cajon.RedSocial.seMuestra(p, e, ocultas) }
     when {
         lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
         lista.isEmpty() -> Pista(stringResource(if (pestana == 0) R.string.red_feed_vacio else R.string.red_explorar_vacio), Modifier.padding(16.dp))
@@ -407,7 +413,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 BotonIcono(Iconos.Lapiz, stringResource(R.string.editar_perfil)) { vm.abrir(Pantalla.EditarPerfil) }
                 BotonIcono(Iconos.Ajustes, stringResource(R.string.red_ajustes_cuenta)) { vm.abrir(Pantalla.CuentaRed) }
             } else BotonIcono(Iconos.Compartir, stringResource(R.string.red_compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            if (yo != null && !propio) BotonIcono(Iconos.Mas, stringResource(R.string.red_mas_opciones)) { menu = !menu }
+            if (yo != null && !propio) BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones)) { menu = !menu }
         }
     }
     if (p == null) {
@@ -627,7 +633,8 @@ fun PublicacionRed(vm: CajonViewModel, id: Long) {
             { vm.red.quitarDeLaRed(clave); vm.cerrar() }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), peligro = true)
     }
     Seccion(stringResource(R.string.red_comentarios))
-    todos[id].orEmpty().forEach { c ->
+    val palabras = (vm.estado.collectAsStateWithLifecycle().value?.ajustes?.palabrasOcultas).orEmpty()
+    todos[id].orEmpty().filter { !lleva(palabras, it.texto) }.forEach { c ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(Modifier.clickable { vm.abrir(Pantalla.PerfilRed(c.autor.usuario)) }) { AvatarRed(c.autor, 32.dp) }
             Column(Modifier.weight(1f)) {
@@ -685,11 +692,11 @@ fun AvisosRed(vm: CajonViewModel) {
           avisosDelGrupo.forEach { a ->
             val que = stringResource(when (a.tipo) {
                 "megusta" -> R.string.red_aviso_megusta; "comentario" -> R.string.red_aviso_comentario; "seguir" -> R.string.red_aviso_seguir
-                "solicitud" -> R.string.red_aviso_solicitud; "aceptada" -> R.string.red_aviso_aceptada; else -> R.string.red_aviso_otro
+                "solicitud" -> R.string.red_aviso_solicitud; "aceptada" -> R.string.red_aviso_aceptada; "publico" -> R.string.red_aviso_publico; "sancion" -> R.string.red_aviso_sancion; else -> R.string.red_aviso_otro
             })
             FilaPersona(a.de, {
                 val pub = a.objeto.toLongOrNull()
-                if (pub != null && a.tipo in setOf("megusta", "comentario")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
+                if (pub != null && a.tipo in setOf("megusta", "comentario", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
             }) {
                 Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.acentoTexto, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
@@ -814,9 +821,20 @@ private fun EntrarRed(vm: CajonViewModel, e: Estado) {
         if (correo == null) { LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea); return }
         val conCorreo = correo == true
         if (conCorreo && acceso.paso == PasoAcceso.CORREO) {
+            var conClave by rememberSaveable { mutableStateOf(false) }
+            var clave by rememberSaveable { mutableStateOf("") }
             OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
                 singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-            BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
+            if (conClave) {
+                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp),
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrarConClave(correoTexto, clave) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && clave.length >= 8)
+                BotonSecundario(stringResource(R.string.red_mejor_codigo), { conClave = false }, Modifier.fillMaxWidth())
+            } else {
+                BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
+                BotonSecundario(stringResource(R.string.red_con_clave), { conClave = true }, Modifier.fillMaxWidth())
+            }
+            Pista(stringResource(R.string.red_olvide_clave))
             return
         }
         if (conCorreo && acceso.paso == PasoAcceso.CODIGO) {
@@ -883,7 +901,32 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
                 BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = "@" in correoTexto)
             }
         }
+        // Tu usuario (una vez cada 7 días) y tu contraseña.
+        val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+        Desplegable(Iconos.Persona, stringResource(R.string.red_cambiar_usuario), "@$usuario") {
+            var nuevo by rememberSaveable { mutableStateOf(usuario) }
+            val desde = cuenta?.usuarioDesde ?: 0
+            if (desde > System.currentTimeMillis()) Pista(stringResource(R.string.red_usuario_desde, java.text.DateFormat.getDateInstance().format(java.util.Date(desde))))
+            else {
+                OutlinedTextField(nuevo, { nuevo = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
+                    prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
+                Pista(stringResource(R.string.red_usuario_regla))
+                BotonRiso(stringResource(R.string.guardar), { vm.red.cambiarUsuario(nuevo) {} }, Modifier.fillMaxWidth(), habilitado = nuevo.length >= 3 && nuevo != usuario)
+            }
+        }
+        if (correoCuenta.isNotBlank()) Desplegable(Iconos.Candado, stringResource(if (cuenta?.conClave == true) R.string.red_cambiar_clave else R.string.red_crear_clave), null) {
+            var actual by rememberSaveable { mutableStateOf("") }
+            var nueva by rememberSaveable { mutableStateOf("") }
+            val oculto = androidx.compose.ui.text.input.PasswordVisualTransformation()
+            if (cuenta?.conClave == true) OutlinedTextField(actual, { actual = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_actual)) },
+                singleLine = true, shape = forma(18.dp), visualTransformation = oculto)
+            OutlinedTextField(nueva, { nueva = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_nueva)) },
+                singleLine = true, shape = forma(18.dp), visualTransformation = oculto, supportingText = { Text(stringResource(R.string.red_clave_regla)) })
+            BotonRiso(stringResource(R.string.guardar), { vm.red.ponerClave(nueva, actual) { nueva = ""; actual = "" } }, Modifier.fillMaxWidth(), habilitado = nueva.length >= 8)
+        } else Pista(stringResource(R.string.red_clave_pide_correo))
         FilaVidrio({ vm.abrir(Pantalla.GenteRed(usuario, true)) }) { Text(stringResource(R.string.red_tus_seguidores), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
+        FilaVidrio({ vm.abrir(Pantalla.EstadoCuenta) }) { Text(stringResource(R.string.mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
+        if (cuenta?.admin == true) FilaVidrio({ vm.abrir(Pantalla.Moderacion) }) { Text(stringResource(R.string.mod_titulo), color = f.acentoTexto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.abrir(Pantalla.BloqueadosRed) }) { Text(stringResource(R.string.red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }) { Text(stringResource(R.string.red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
@@ -975,4 +1018,184 @@ fun ElegirCancion(vm: CajonViewModel, e: Estado) {
             }
         }
     }
+}
+
+/* ----- Notificaciones y palabras ocultas ----- */
+
+@Composable
+fun AjustesAvisos(vm: CajonViewModel) {
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences(io.github.fogonapps.cajon.AvisosRed.PREFS, android.content.Context.MODE_PRIVATE) }
+    var avisos by remember { mutableStateOf(prefs.getBoolean(io.github.fogonapps.cajon.AvisosRed.AVISOS, true)) }
+    var mensajes by remember { mutableStateOf(prefs.getBoolean(io.github.fogonapps.cajon.AvisosRed.MENSAJES, true)) }
+    val permiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+    fun guardar() {
+        prefs.edit().putBoolean(io.github.fogonapps.cajon.AvisosRed.AVISOS, avisos).putBoolean(io.github.fogonapps.cajon.AvisosRed.MENSAJES, mensajes).apply()
+        if ((avisos || mensajes) && android.os.Build.VERSION.SDK_INT >= 33) permiso.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        io.github.fogonapps.cajon.AvisosRed.programar(ctx)
+    }
+    Cabecera(stringResource(R.string.aj_notificaciones), vm::cerrar)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pista(stringResource(R.string.notif_explica))
+        Opcion(stringResource(R.string.notif_de_avisos), avisos) { avisos = it; guardar() }
+        Opcion(stringResource(R.string.notif_de_mensajes), mensajes) { mensajes = it; guardar() }
+        Pista(stringResource(R.string.notif_privacidad))
+    }
+}
+
+@Composable
+fun PalabrasOcultas(vm: CajonViewModel, e: Estado) {
+    val f = FogonTema.actual
+    var nueva by rememberSaveable { mutableStateOf("") }
+    Cabecera(stringResource(R.string.aj_palabras_ocultas), vm::cerrar)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Pista(stringResource(R.string.palabras_explica))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(nueva, { nueva = it.take(40) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.palabras_agregar)) }, singleLine = true, shape = forma(22.dp))
+            BotonIcono(Iconos.Mas, stringResource(R.string.palabras_agregar), lleno = true, activo = nueva.isNotBlank()) { vm.palabraOculta(nueva, true); nueva = "" }
+        }
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            e.ajustes.palabrasOcultas.forEach { p -> Pildora("$p  ✕") { vm.palabraOculta(p, false) } }
+        }
+        if (e.ajustes.palabrasOcultas.isEmpty()) Text(stringResource(R.string.palabras_vacio), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    }
+}
+
+/** Si una publicación o un comentario lleva alguna de las palabras que la persona escondió. */
+fun lleva(palabras: List<String>, texto: String): Boolean {
+    if (palabras.isEmpty()) return false
+    val t = io.github.fogonapps.cajon.datos.Logica.tituloLimpio(texto)
+    return palabras.any { p -> io.github.fogonapps.cajon.datos.Logica.tituloLimpio(p).let { it.isNotBlank() && it in t } }
+}
+
+/* ----- El menú de una publicación (abajo, como una hoja) ----- */
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun MenuPublicacion(vm: CajonViewModel, p: PublicacionSocial, motivo: io.github.fogonapps.cajon.RedSocial.Companion.Motivo?, onCerrar: () -> Unit) {
+    val f = FogonTema.actual
+    val ctx = LocalContext.current
+    val yo by vm.red.usuario.collectAsStateWithLifecycle()
+    var reportando by remember { mutableStateOf(false) }
+    var porque by remember { mutableStateOf(false) }
+    androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            @Composable fun Fila(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
+                Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    IconoRiso(icono, null, tamano = 22.dp, tinta = if (peligro) MaterialTheme.colorScheme.error else f.texto)
+                    Text(texto, style = MaterialTheme.typography.bodyLarge, color = if (peligro) MaterialTheme.colorScheme.error else f.texto)
+                }
+            }
+            when {
+                reportando -> {
+                    Text(stringResource(R.string.rep_por_que), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                    val ayuda = stringResource(R.string.rep_ayuda)
+                    MOTIVOS_REPORTE.forEach { (codigo, m) ->
+                        val texto = stringResource(m)
+                        Fila(Iconos.Bandera, texto) {
+                            vm.red.reportar("publicacion", "${p.id}", "$codigo: $texto"); vm.red.ocultar(p.id)
+                            if (codigo == "autolesion") android.widget.Toast.makeText(ctx, ayuda, android.widget.Toast.LENGTH_LONG).show()
+                            onCerrar()
+                        }
+                    }
+                }
+                porque -> {
+                    Text(stringResource(R.string.menu_por_que), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                    Text(motivoTexto(motivo), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
+                    Text(stringResource(R.string.menu_por_que_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                }
+                else -> {
+                    Fila(Iconos.Estrella, stringResource(R.string.menu_por_que)) { porque = true }
+                    if (p.autor.usuario != yo) {
+                        Fila(Iconos.Chulo, stringResource(R.string.menu_me_interesa)) { vm.red.interesa(p, true); onCerrar() }
+                        Fila(Iconos.Cerrar, stringResource(R.string.menu_no_me_interesa)) { vm.red.interesa(p, false); onCerrar() }
+                        Fila(Iconos.Persona, stringResource(R.string.menu_silenciar, p.autor.usuario)) { vm.red.silenciar(p.autor.usuario); onCerrar() }
+                    }
+                    Fila(Iconos.Enlace, stringResource(R.string.menu_copiar_enlace)) {
+                        (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                            .setPrimaryClip(android.content.ClipData.newPlainText("", ClienteSocial.enlacePublicacion(p.id))); onCerrar()
+                    }
+                    if (p.autor.usuario != yo && yo != null) {
+                        Fila(Iconos.Candado, stringResource(R.string.menu_bloquear, p.autor.usuario), peligro = true) { vm.red.bloquear(p.autor.usuario, true); onCerrar() }
+                        Fila(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { reportando = true }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Los motivos de reporte: el código que entiende el servidor y su texto (lo de menores, primero). */
+val MOTIVOS_REPORTE = listOf(
+    "menor_en_riesgo" to R.string.rep_menor, "desnudos" to R.string.rep_desnudos, "acoso" to R.string.rep_acoso, "odio" to R.string.rep_odio,
+    "autolesion" to R.string.rep_autolesion, "spam" to R.string.rep_spam, "menor_de_edad" to R.string.rep_menor_de_edad,
+    "derechos" to R.string.rep_autor, "falso" to R.string.rep_falso, "otro" to R.string.rep_otro,
+)
+
+/* ----- Estado de tu cuenta y moderación ----- */
+
+@Composable
+fun EstadoCuenta(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val estado by vm.red.estadoCuenta.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.cargarEstadoCuenta() }
+    Cabecera(stringResource(R.string.mod_estado), vm::cerrar)
+    val e = estado ?: run { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
+    val fecha = { t: Long -> java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(t)) }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val ahora = System.currentTimeMillis()
+        when {
+            e.cerrada -> Text(stringResource(R.string.mod_cerrada), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            e.suspendidaHasta > ahora -> Text(stringResource(R.string.mod_suspendida_hasta, fecha(e.suspendidaHasta)), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            e.restringidaHasta > ahora -> Text(stringResource(R.string.mod_restringida_hasta, fecha(e.restringidaHasta)), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
+            e.faltas.isEmpty() -> Text(stringResource(R.string.mod_todo_bien), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        }
+        e.faltas.forEach { x ->
+            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp)) {
+                Text(x.regla, style = MaterialTheme.typography.titleSmall, color = f.texto)
+                Text(stringResource(R.string.mod_falta_vence, fecha(x.cuando), fecha(x.vence)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+        }
+        Pista(stringResource(R.string.mod_como_funciona))
+    }
+}
+
+/** La cola de revisión: solo para la cuenta que modera (lo decide el servidor). */
+@Composable
+fun Moderacion(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val casos by vm.red.casos.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.cargarCasos() }
+    Cabecera(stringResource(R.string.mod_titulo), vm::cerrar)
+    val l = casos
+    when {
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+        l.isEmpty() -> Pista(stringResource(R.string.mod_vacio), Modifier.padding(16.dp))
+        else -> l.forEach { c ->
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("${c.que} · ${c.motivos.entries.joinToString { "${it.key} ×${it.value}" }}", style = MaterialTheme.typography.labelMedium,
+                    color = if ("menor_en_riesgo" in c.motivos) MaterialTheme.colorScheme.error else f.acentoTexto)
+                c.autor?.let { Text("@${it.usuario} · ${stringResource(R.string.mod_faltas, c.faltasAutor)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave) }
+                Text(c.contenido.take(600), style = MaterialTheme.typography.bodySmall, color = f.texto, maxLines = 8, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.mod_personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Pildora(stringResource(R.string.mod_sin_falta)) { vm.red.decidir(c, "sin_falta") }
+                    Pildora(stringResource(R.string.mod_falta), acento = true) { vm.red.decidir(c, "falta") }
+                    Pildora(stringResource(R.string.mod_grave)) { vm.red.decidir(c, "falta_grave") }
+                    Pildora(stringResource(R.string.mod_cerrar)) { vm.red.decidir(c, "cerrar") }
+                }
+            }
+        }
+    }
+    Pista(stringResource(R.string.mod_menores), Modifier.padding(16.dp))
+}
+
+@Composable
+private fun motivoTexto(m: io.github.fogonapps.cajon.RedSocial.Companion.Motivo?): String = when (m) {
+    is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TienesLaObra -> stringResource(R.string.red_porque_obra, m.titulo)
+    is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TeGustaElCreador -> stringResource(R.string.red_porque_creador, m.creador)
+    is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TusEtiquetas -> stringResource(R.string.red_porque_etiqueta, m.etiqueta)
+    io.github.fogonapps.cajon.RedSocial.Companion.Motivo.Nueva -> stringResource(R.string.red_porque_nueva)
+    null -> stringResource(R.string.menu_por_que_sigues)
 }

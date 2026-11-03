@@ -120,6 +120,10 @@ sealed interface Pantalla {
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
     data object ElegirCancion : Pantalla
+    data object AjustesAvisos : Pantalla
+    data object PalabrasOcultas : Pantalla
+    data object EstadoCuenta : Pantalla
+    data object Moderacion : Pantalla
     /** Lo público que lleva una #etiqueta. */
     data class EtiquetaRed(val etiqueta: String) : Pantalla
     data object Apariencia : Pantalla
@@ -272,6 +276,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun palabraOculta(p: String, si: Boolean) = cambiar { e ->
+        val limpia = p.trim().lowercase().take(40)
+        if (limpia.isEmpty()) e else e.copy(ajustes = e.ajustes.copy(cambio = ahora(),
+            palabrasOcultas = if (si) (e.ajustes.palabrasOcultas + limpia).distinct().take(200) else e.ajustes.palabrasOcultas - limpia))
+    }
+
     fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
 
     /** El chat de la red, cifrado de extremo a extremo. */
@@ -293,6 +303,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             sincronizar()
+            // La sincronización con el PC (por un Gist de GitHub) ya no está: la cuenta de la red la reemplaza. Se
+            // desconecta una vez (el Gist queda en la cuenta de GitHub de la persona; no se borra nada).
+            if (caja.tokenGithub != null) { caja.tokenGithub = null; caja.gist = null; _sync.value = Sync(EstadoSync.APAGADA) }
+            io.github.fogonapps.cajon.AvisosRed.programar(getApplication())
             red.revisarServidor()
             red.revisarSinLeer()
             red.cargarFeed()
