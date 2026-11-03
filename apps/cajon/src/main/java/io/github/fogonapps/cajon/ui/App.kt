@@ -168,6 +168,15 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             }
                             Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             Pantalla.Licencias -> Licencias(vm)
+                            Pantalla.CuentaRed -> CuentaRed(vm, estado)
+                            Pantalla.Red -> PantallaRed(vm)
+                            is Pantalla.PerfilRed -> PerfilRed(vm, p.usuario)
+                            is Pantalla.PublicacionRed -> PublicacionRed(vm, p.id)
+                            Pantalla.AvisosRed -> AvisosRed(vm)
+                            Pantalla.GuardadosRed -> GuardadosRed(vm)
+                            is Pantalla.GenteRed -> GenteRed(vm, p.usuario, p.seguidores)
+                            Pantalla.BloqueadosRed -> BloqueadosRed(vm)
+                            is Pantalla.Publicar -> Publicar(vm, estado, p.obra)
                         }
                         if (conScroll) Espacio(40.dp)
                     }

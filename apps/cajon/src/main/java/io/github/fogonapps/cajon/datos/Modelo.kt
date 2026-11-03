@@ -241,6 +241,27 @@ object Visibilidad {
     fun de(v: String?) = v?.takeIf { it in TODAS } ?: PRIVADA
 }
 
+/**
+ * Una publicación hecha a mano para la red (una foto, unas palabras, sobre una obra o no). Vive en el cajón como todo
+ * lo demás (se respalda y se sincroniza) y se sube a Fogón Social con su [visibilidad]; borrarla la deja `borrada`.
+ */
+@Serializable
+data class PublicacionPropia(
+    val clave: String,
+    val cuando: Long,
+    val texto: String = "",
+    /** El id de la obra de la que habla, si es de una. */
+    val obra: String = "",
+    /** El nombre de la imagen en Fogón Social (ya subida), si lleva foto. */
+    val imagen: String = "",
+    /** [Visibilidad.PUBLICA] o [Visibilidad.AMIGOS] (los seguidores). */
+    val visibilidad: String = Visibilidad.PUBLICA,
+    /** Cuenta algo del final: en la red sale tapado hasta tocarlo. */
+    val spoiler: Boolean = false,
+    val cambio: Long = 0,
+    val borrada: Boolean = false,
+)
+
 /** Los huecos de "destacados" del perfil (los ids que se guardan: no se cambian). */
 object Destacados {
     const val PELICULA = "pelicula"
@@ -355,6 +376,8 @@ data class Estado(
     val gustos: List<Gusto> = emptyList(),
     /** El perfil, ver [Perfil]. */
     val perfil: Perfil = Perfil(),
+    /** Lo que la persona publicó a mano en la red (con foto o texto), ver [PublicacionPropia]. */
+    val publicaciones: List<PublicacionPropia> = emptyList(),
 ) {
     /** Lo que se ve (sin lo borrado). */
     val vivas get() = obras.filter { !it.borrada }

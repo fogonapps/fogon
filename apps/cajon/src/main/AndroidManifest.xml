@@ -27,6 +27,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Los enlaces de la red (un perfil /@usuario o una publicación /p/<id>) abren la app. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="fogonapps.duckdns.org" />
+                <data android:pathPrefix="/@" />
+                <data android:pathPrefix="/p/" />
+            </intent-filter>
         </activity>
 
         <receiver android:name=".WidgetCursoReceptor" android:exported="true" android:label="@string/widget_nombre">

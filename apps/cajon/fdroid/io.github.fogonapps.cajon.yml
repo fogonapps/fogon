@@ -7,6 +7,8 @@ Categories:
   - Note
 # TMDB (películas y series) es un servicio que no es libre, pero es opcional (con la clave de cada persona)
 # y la app sirve sin él; quien revise puede pedir la antifunción NonFreeNet.
+# La red (opcional) usa un solo servidor, el de Fogón (libre, código en servidor/): le corresponde TetheredNet
+# mientras la dirección del servidor no se pueda cambiar en la app.
 License: GPL-3.0-or-later
 AuthorName: Fogón
 SourceCode: https://github.com/fogonapps/fogon

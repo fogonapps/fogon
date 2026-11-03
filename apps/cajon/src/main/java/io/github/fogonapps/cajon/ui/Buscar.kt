@@ -112,6 +112,12 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE
 
+            // Personas de la red (en "Todo", las primeras tres; en "Personas", todas).
+            if (b.personas.isNotEmpty()) {
+                item("personas-titulo") { Titulo(stringResource(R.string.red_personas), if (todo) ({ vm.cambiarSeccion(Secciones.PERSONAS) }) else null) }
+                items(b.personas.take(maximo(3)), key = { "persona-" + it.usuario }) { p -> FilaPersona(p, { vm.abrir(Pantalla.PerfilRed(p.usuario)) }) }
+            } else if (b.seccion == Secciones.PERSONAS && "personas" !in b.cargando) item("sin-personas") { Pista(stringResource(R.string.red_nadie_encontrado), Modifier.padding(16.dp)) }
+
             // Si se buscó un género o una etiqueta: primero lo del cajón que la lleva (artistas y obras), después lo de afuera.
             val genero = b.genero
             var hayDelCajon = false
@@ -226,11 +232,13 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
                 Column(Modifier.weight(1f)) {
                     Text(nombreSeccion(s), style = MaterialTheme.typography.bodyLarge, color = f.texto)
                     Text(stringResource(when (s) { Secciones.PELICULAS -> R.string.seccion_peliculas_pista; Secciones.SERIES -> R.string.seccion_series_pista
-                        Secciones.ANIMES -> R.string.seccion_animes_pista; Secciones.MUSICA -> R.string.seccion_musica_pista; else -> R.string.seccion_libros_pista }),
+                        Secciones.ANIMES -> R.string.seccion_animes_pista; Secciones.MUSICA -> R.string.seccion_musica_pista
+                        Secciones.PERSONAS -> R.string.red_personas_pista; else -> R.string.seccion_libros_pista }),
                         style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 }
             }
         }
+        if (b.seccion == Secciones.PERSONAS) { Pista(stringResource(R.string.red_personas_pista)); Espacio(40.dp); return@Column }
         BotonSecundario(stringResource(R.string.agregar_a_mano), { vm.reemplazar(Pantalla.EditarObra(null, tipoAMano(b.seccion))) }, Modifier.fillMaxWidth())
         // Los géneros, para buscar por uno (como en las apps de música), en todas las secciones: los del cajón primero,
         // después los comunes de la sección. Tocar uno busca en la sección elegida, sin cambiarla.
@@ -337,6 +345,7 @@ fun nombreSeccion(s: String): String = stringResource(when (s) {
     Secciones.ANIMES -> R.string.seccion_animes
     Secciones.MUSICA -> R.string.seccion_musica
     Secciones.LIBROS -> R.string.seccion_libros
+    Secciones.PERSONAS -> R.string.red_personas
     else -> R.string.todo
 })
 
@@ -346,6 +355,7 @@ fun iconoSeccion(s: String) = when (s) {
     Secciones.ANIMES -> Iconos.de(Tipos.ANIME)
     Secciones.MUSICA -> Iconos.Disco
     Secciones.LIBROS -> Iconos.Libro
+    Secciones.PERSONAS -> Iconos.Gente
     else -> Iconos.Cajon
 }
 

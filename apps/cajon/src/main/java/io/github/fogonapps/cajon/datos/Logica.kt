@@ -60,6 +60,7 @@ object Logica {
         listas = unirPor(a.listas, b.listas, { it.id }, { it.cambio }),
         gustos = unirPor(a.gustos, b.gustos, { it.clave }, { it.cambio }),
         perfil = if (b.perfil.cambio > a.perfil.cambio) b.perfil else a.perfil,
+        publicaciones = unirPor(a.publicaciones, b.publicaciones, { it.clave }, { it.cambio }),
     )
 
     private fun <T> unirPor(a: List<T>, b: List<T>, id: (T) -> String, cambio: (T) -> Long): List<T> {
@@ -75,6 +76,7 @@ object Logica {
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
         gustos = e.gustos.distinctBy { it.clave },
+        publicaciones = e.publicaciones.distinctBy { it.clave },
         ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),
     )
 

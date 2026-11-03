@@ -16,6 +16,7 @@ import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
+import io.ktor.server.response.header
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -34,7 +35,11 @@ import java.util.concurrent.ConcurrentHashMap
  */
 fun main() {
     val datos = File(System.getenv("DATOS") ?: "datos").apply { mkdirs() }
-    val social = Social(Base(File(datos, "social.db").path), File(datos, "fotos"))
+    val usuario = System.getenv("SMTP_USUARIO").orEmpty()
+    val clave = System.getenv("SMTP_CLAVE").orEmpty()
+    val cartero = if (usuario.isNotBlank() && clave.isNotBlank()) CarteroSmtp(usuario, clave) else null
+    val social = Social(Base(File(datos, "social.db").path), File(datos, "fotos"), cartero = cartero ?: Cartero { _, _, _ -> throw Problema(503, "sin_correo") })
+    correoListo = cartero != null
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
 }
 
@@ -48,6 +53,11 @@ private class Limite(private val porMinuto: Int) {
         return m == minuto && n <= porMinuto
     }
 }
+
+const val VERSION = "0.2"
+
+/** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
+var correoListo = false
 
 fun Application.fogonSocial(social: Social) {
     install(ContentNegotiation) { json(JsonSocial) }
@@ -73,15 +83,28 @@ fun Application.fogonSocial(social: Social) {
 
     routing {
         route("/v1") {
-            get("/estado") { call.respond(mapOf("fogon" to "social", "version" to "0.1")) }
+            get("/estado") { call.respond(mapOf("fogon" to "social", "version" to VERSION, "correo" to correoListo.toString(), "politica" to Social.POLITICA)) }
 
+            // La dirección real llega de Caddy en X-Forwarded-For; sin él, la de la conexión.
+            fun ApplicationCall.ip() = request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteAddress
             post("/cuentas") {
-                // La dirección real llega de Caddy en X-Forwarded-For; sin él, la de la conexión.
-                val ip = call.request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: call.request.origin.remoteAddress
-                if (!registros.pasa("registro:$ip")) throw Problema(429, "despacio")
-                call.respond(HttpStatusCode.Created, social.crearCuenta(call.receive()))
+                if (!registros.pasa("registro:${call.ip()}")) throw Problema(429, "despacio")
+                call.respond(HttpStatusCode.Created, social.crearSinCorreo(call.receive()))
             }
+            post("/acceso/codigo") {
+                if (!registros.pasa("codigo:${call.ip()}")) throw Problema(429, "despacio")
+                social.pedirCodigo(call.receive<PedirCodigo>().correo); call.respond(HttpStatusCode.NoContent)
+            }
+            post("/acceso") {
+                if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
+                call.respond(social.entrar(call.receive()))
+            }
+            post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
+            get("/cuenta") { call.respond(social.miCuenta(call.yo())) }
             delete("/cuenta") { social.borrarCuenta(call.yo()); call.respond(HttpStatusCode.NoContent) }
+            put("/cuenta") { social.ajustar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/usuarios/{usuario}/libre") { call.respond(mapOf("libre" to social.usuarioLibre(call.usuario()))) }
 
             put("/perfil") { social.subirPerfil(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/foto") {
@@ -96,7 +119,16 @@ fun Application.fogonSocial(social: Social) {
 
             put("/publicaciones") { social.subirPublicaciones(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/actividad") { call.respond(social.actividad(call.yo(), call.request.queryParameters["antes"]?.toLongOrNull())) }
+            get("/explorar") { call.respond(social.explorar(call.lector(), call.request.queryParameters["antes"]?.toLongOrNull())) }
             get("/guardados") { call.respond(social.guardados(call.yo())) }
+            put("/imagenes") {
+                val yo = call.yo()
+                call.respond(HttpStatusCode.Created, social.subirImagen(yo, call.receiveChannel().readRemaining(900_001).readByteArray()))
+            }
+            get("/imagenes/{nombre}") {
+                call.response.header("Cache-Control", "public, max-age=31536000, immutable")
+                call.respondBytes(social.imagen(call.parameters["nombre"] ?: ""), ContentType.Image.JPEG)
+            }
             get("/publicaciones/{id}") { call.respond(social.publicacion(call.lector(), call.id()) ?: throw Problema(404, "no_existe")) }
             post("/publicaciones/{id}/megusta") { social.meGusta(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/publicaciones/{id}/megusta") { social.meGusta(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
@@ -109,13 +141,23 @@ fun Application.fogonSocial(social: Social) {
             }
             delete("/comentarios/{id}") { social.borrarComentario(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
 
-            get("/amigos") { call.respond(social.amigos(call.yo())) }
-            post("/amigos/{usuario}") { social.pedirAmistad(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
-            delete("/amigos/{usuario}") { social.quitarAmistad(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            post("/seguir/{usuario}") { call.respond(mapOf("relacion" to social.seguir(call.yo(), call.usuario()))) }
+            delete("/seguir/{usuario}") { social.dejarDeSeguir(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            delete("/seguidores/{usuario}") { social.quitarSeguidor(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            get("/seguidores/{usuario}") { call.respond(social.lista(call.lector(), call.usuario(), seguidores = true)) }
+            get("/siguiendo/{usuario}") { call.respond(social.lista(call.lector(), call.usuario(), seguidores = false)) }
+            get("/solicitudes") { call.respond(social.solicitudes(call.yo())) }
+            post("/solicitudes/{usuario}") { social.aceptar(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            delete("/solicitudes/{usuario}") { social.quitarSeguidor(call.yo(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            get("/avisos") { call.respond(social.avisos(call.yo(), call.request.queryParameters["antes"]?.toLongOrNull())) }
+            get("/avisos/sin-leer") { call.respond(mapOf("n" to social.sinLeer(call.yo()))) }
+            post("/avisos/leidos") { social.leidos(call.yo()); call.respond(HttpStatusCode.NoContent) }
+            get("/bloqueos") { call.respond(social.bloqueados(call.yo())) }
             post("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }
 
             post("/reportes") { social.reportar(call.lector(), call.receive()); call.respond(HttpStatusCode.Created) }
         }
+        paginasWeb(social)
     }
 }

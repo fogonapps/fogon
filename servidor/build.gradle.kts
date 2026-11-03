@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.fogonapps"
-version = "0.1"
+version = "0.2"
 
 kotlin { jvmToolchain(21) }
 
@@ -17,6 +17,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktor")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
+    implementation("org.eclipse.angus:angus-mail:2.0.5")
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktor")
     testImplementation(kotlin("test"))
 }

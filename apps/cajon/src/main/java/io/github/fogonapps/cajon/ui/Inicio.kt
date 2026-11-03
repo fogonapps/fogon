@@ -125,6 +125,9 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         Carrusel(enCurso, vm, conProgreso = true)
     }
 
+    // Lo último de tu gente en la red (o la invitación a entrar).
+    FeedInicio(vm)
+
     ParaTi(vm, e)
 
     // El diario: lo último.

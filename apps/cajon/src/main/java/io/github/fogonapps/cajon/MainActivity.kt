@@ -42,10 +42,25 @@ class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(Idioma.envolver(base))
 
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        abrirEnlace(intent)
+    }
+
+    /** Un enlace de la red: /@usuario abre ese perfil y /p/<id> esa publicación. */
+    private fun abrirEnlace(intent: android.content.Intent?) {
+        val ruta = intent?.takeIf { it.action == android.content.Intent.ACTION_VIEW }?.data?.path ?: return
+        when {
+            ruta.startsWith("/@") -> ruta.removePrefix("/@").trim('/').takeIf { it.isNotBlank() }?.let { vm.abrir(Pantalla.PerfilRed(it.lowercase())) }
+            ruta.startsWith("/p/") -> ruta.removePrefix("/p/").trim('/').toLongOrNull()?.let { vm.abrir(Pantalla.PublicacionRed(it)) }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val arranque = installSplashScreen()
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
+        if (savedInstanceState == null) abrirEnlace(intent)
         setContent {
             val apariencia by AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.

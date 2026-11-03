@@ -101,6 +101,20 @@ sealed interface Pantalla {
     /** Ajustar el tamaño y la posición de la foto ([portada] = false) o de la portada del perfil. */
     data class AjustarImagenPerfil(val portada: Boolean) : Pantalla
     data object Manifiesto : Pantalla
+    /* La red (Fogón Social) */
+    /** Entrar o crear la cuenta, y su configuración. */
+    data object CuentaRed : Pantalla
+    /** El feed completo: de quienes sigue y explorar. */
+    data object Red : Pantalla
+    data class PerfilRed(val usuario: String) : Pantalla
+    data class PublicacionRed(val id: Long) : Pantalla
+    data object AvisosRed : Pantalla
+    data object GuardadosRed : Pantalla
+    /** Seguidores ([seguidores]) o seguidos de alguien. */
+    data class GenteRed(val usuario: String, val seguidores: Boolean) : Pantalla
+    data object BloqueadosRed : Pantalla
+    /** Publicar unas palabras con o sin foto, sobre [obra] si viene de una ficha. */
+    data class Publicar(val obra: String? = null) : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
 }
@@ -117,8 +131,10 @@ object Secciones {
     const val ANIMES = "animes"
     const val MUSICA = "musica"
     const val LIBROS = "libros"
-    /** Los filtros del buscador (películas, series y animes). */
-    val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS)
+    /** Personas de la red (Fogón Social), por su @usuario o su nombre. */
+    const val PERSONAS = "personas"
+    /** Los filtros del buscador (películas, series y animes, y personas de la red). */
+    val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS, PERSONAS)
     val DE_CINE = setOf(CINE, PELICULAS, SERIES, ANIMES)
     fun de(tipo: String) = when (tipo) { Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; Tipos.SERIE -> SERIES; Tipos.ANIME -> ANIMES; else -> PELICULAS }
     fun tipos(s: String) = when (s) {
@@ -143,6 +159,8 @@ data class Busqueda(
     val directores: List<ArtistaEncontrado> = emptyList(),
     /** Si lo buscado es un género (de los del cajón o de los comunes): se buscan artistas y álbumes de ese género. */
     val genero: String? = null,
+    /** Personas de la red que coinciden (Fogón Social). */
+    val personas: List<io.github.fogonapps.cajon.datos.PersonaSocial> = emptyList(),
     val cargando: Set<String> = emptySet(),
     val errores: Map<String, Int> = emptyMap(),
 )
@@ -199,10 +217,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Lo último que esta pantalla escribió en el disco, para distinguirlo de un cambio de afuera. */
     @Volatile private var ultimoGuardado: Estado? = null
 
+    /** La red de El Cajón (Fogón Social), opcional. */
+    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) })
+
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             sincronizar()
+            red.revisarServidor()
+            red.revisarSinLeer()
+            red.cargarFeed()
             pasarALatino()
             buscarPortadas()
             // Lo escuchado: lo de Spotify (si está conectado) y lo anotado mientras la app estaba cerrada.
@@ -234,6 +258,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         guardado?.cancel()
         guardado = viewModelScope.launch { delay(300); guardarYa() }
         if (caja.tokenGithub != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(4000); sincronizar() } }
+        red.sincronizar()
     }
 
     suspend fun guardarYa() {
@@ -302,6 +327,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 catch (e: SinRed) { _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to R.string.buscar_sin_red)) }
                 finally { _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando - nombre) }
             }
+            // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
+            if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) launch {
+                _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + "personas")
+                val gente = runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).buscar(t) }.getOrDefault(emptyList())
+                _busqueda.value = _busqueda.value.copy(personas = gente, cargando = _busqueda.value.cargando - "personas")
+            }
+            if (seccion == Secciones.PERSONAS) return@launch
             fun poner(r: List<Encontrado>) {
                 val grupos = r.groupBy { it.tipo }
                 _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)

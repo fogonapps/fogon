@@ -49,6 +49,22 @@ object Iconos {
     /** Tres reguladores: los ajustes. */
     val Ajustes = dibujo("ajustes", trazo("M4 7h16M4 12h16M4 17h16", 2.2f),
         relleno("M9 4.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8zM15 9.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8zM7.4 14.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8z"))
+    /* La red */
+    /** Un globo de conversación: comentar. */
+    val Comentario = dibujo("comentario", relleno("M4 5.6h16v10.6h-9.2L6.4 20v-3.8H4z"))
+    /** Una cinta de marcador: guardar. */
+    val Guardar = dibujo("guardar", relleno("M6.4 3.8h11.2v16.6L12 16.6l-5.6 3.8z"))
+    /** Una campana: los avisos. */
+    val Campana = dibujo("campana", relleno("M12 3.6a5.6 5.6 0 0 1 5.6 5.6v4.2l1.8 3H4.6l1.8-3V9.2A5.6 5.6 0 0 1 12 3.6z"), trazo("M10 19.6a2.2 2.2 0 0 0 4 0", 2.2f))
+    /** Un candado: privado o solo para seguidores. */
+    val Candado = dibujo("candado", relleno("M5.6 10.6h12.8v9.8H5.6z"), trazo("M8.4 10.6V8a3.6 3.6 0 0 1 7.2 0v2.6", 2.4f))
+    /** Dos personas: la red, tu gente. */
+    val Gente = dibujo("gente", relleno("M9 4.6a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3.4 19.4c0-3.6 2.4-6 5.6-6s5.6 2.4 5.6 6z"),
+        relleno("M16.4 6.2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.6 13.6c3 0 5 2.2 5 5.8h-4.2c0-2.4-.6-4.2-2-5.4z"))
+    /** Un avión de papel: enviar. */
+    val Enviar = dibujo("enviar", relleno("M3.6 11.4 20.4 4l-5.2 16.4-3.4-6.6z"))
+    /** Una banderita: reportar. */
+    val Bandera = dibujo("bandera", trazo("M5.6 20.4V4", 2.4f), relleno("M6.6 4.4h11.6l-2.6 4 2.6 4H6.6z"))
     val Mas = IconosFogon.Mas
     val Atras = IconosFogon.Atras
     val Cerrar = IconosFogon.Cerrar

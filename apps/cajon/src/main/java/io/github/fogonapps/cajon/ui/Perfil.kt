@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -262,6 +263,18 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
         BotonSecundario(stringResource(R.string.compartir_perfil), { compartiendo = true }, Modifier.weight(1f))
         BotonIcono(Iconos.Corazon, stringResource(R.string.tus_gustos), grande = true) { vm.abrir(Pantalla.TusGustos) }
+    }
+    // La red: tu cuenta (o crearla) y el enlace de tu perfil.
+    if (!publico) {
+        val red by vm.red.usuario.collectAsStateWithLifecycle()
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val u = red
+            if (u == null) BotonSecundario(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+            else {
+                BotonSecundario(stringResource(R.string.red_en_la_red, u), { vm.abrir(Pantalla.PerfilRed(u)) }, Modifier.weight(1f))
+                BotonIcono(Iconos.Gente, stringResource(R.string.red_tu_cuenta), grande = true) { vm.abrir(Pantalla.CuentaRed) }
+            }
+        }
     }
     Chips(listOf(false to stringResource(R.string.como_lo_ves), true to stringResource(R.string.como_lo_verian)), publico) { publico = it }
     if (publico) Pista(stringResource(R.string.vista_publica_pista))

@@ -105,6 +105,18 @@ class CajaFuerte(context: Context) {
         get() = leer("spotify_renovar")
         set(v) = escribir("spotify_renovar", v)
 
+    /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
+    var tokenSocial: String?
+        get() = leer("social")
+        set(v) = escribir("social", v)
+    var usuarioSocial: String?
+        get() = prefs.getString("usuario_social", null)
+        set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }
+    /** La versión de la política que aceptó (si cambia, se vuelve a pedir). */
+    var politicaSocial: String?
+        get() = prefs.getString("politica_social", null)
+        set(v) = prefs.edit { if (v == null) remove("politica_social") else putString("politica_social", v) }
+
     /** Lo de la sincronización que no es secreto: el usuario, el Gist y la última vez. */
     var usuario: String?
         get() = prefs.getString("usuario", null)

@@ -135,6 +135,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
 
     Seccion(stringResource(R.string.fogon))
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        BotonSecundario(stringResource(R.string.red_tu_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.manifiesto), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
