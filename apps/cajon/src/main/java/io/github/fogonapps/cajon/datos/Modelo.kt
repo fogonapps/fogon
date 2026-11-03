@@ -284,7 +284,15 @@ object PartesPerfil {
     const val CIFRAS = "cifras"
     const val EVOLUCION = "evolucion"
     const val DIARIO = "diario"
-    val TODAS = listOf(DESTACADOS, FAVORITAS, CIFRAS, EVOLUCION, DIARIO)
+    /** En la red: los artistas que más le gustan. */
+    const val MUSICA = "musica"
+    /** En la red: los géneros que dijo que le gustan. */
+    const val GUSTOS = "gustos"
+    /** En la red: lo que guardó de otras personas. */
+    const val GUARDADAS = "guardadas"
+    val TODAS = listOf(DESTACADOS, FAVORITAS, MUSICA, GUSTOS, CIFRAS, EVOLUCION, DIARIO, GUARDADAS)
+    /** Cómo quedan al crear la cuenta en la red, si la persona no eligió otra cosa: lo que hace que el perfil tenga sentido, a la vista. */
+    val AL_CREAR_CUENTA = mapOf(DESTACADOS to "publica", FAVORITAS to "publica", MUSICA to "publica", GUSTOS to "publica", CIFRAS to "publica")
 
     const val C_TERMINADAS = "terminadas"
     const val C_HORAS_CINE = "horas_cine"
@@ -327,7 +335,10 @@ data class Perfil(
     /** Cómo se ve la foto dentro de su círculo y la portada dentro de su franja. */
     val encuadreFoto: Encuadre = Encuadre(),
     val encuadrePortada: Encuadre = Encuadre(),
-    /** La canción del perfil: "<id del álbum en el cajón>|<título de la canción>"; vacío = ninguna. */
+    /**
+     * La canción del perfil: "v2|título|artista|álbum|carátula" (elegida de internet) o, de antes,
+     * "<id del álbum en el cajón>|<título>"; vacío = ninguna. Ver `RedSocial.cancionDe`.
+     */
     val cancion: String = "",
     val cambio: Long = 0,
 )

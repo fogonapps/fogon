@@ -124,6 +124,12 @@ class RedSocial(
             _correo.value = i.correo == "true"
             if (i.politica.isNotBlank()) politica = i.politica
         }
+        // Cuentas creadas antes de que existieran estas partes: lo que hace que el perfil tenga sentido queda a la vista, una sola vez
+        // (lo que la persona ya eligió se respeta).
+        if (_usuario.value != null && !caja.partesRedPuestas) {
+            cambiar { e -> e.copy(perfil = e.perfil.copy(visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
+            caja.partesRedPuestas = true
+        }
         if (_usuario.value != null) intentar {
             val c = cliente().miCuenta()
             _privada.value = c.privada; _correoCuenta.value = c.correo
@@ -172,10 +178,11 @@ class RedSocial(
         caja.tokenSocial = a.token
         caja.usuarioSocial = a.usuario
         caja.politicaSocial = politica
+        caja.partesRedPuestas = true
         _usuario.value = a.usuario
         _acceso.value = Acceso()
-        // El usuario de la red es el del perfil.
-        cambiar { e -> e.copy(perfil = e.perfil.copy(usuario = a.usuario, cambio = System.currentTimeMillis())) }
+        // El usuario de la red es el del perfil; y lo que hace que el perfil tenga sentido queda a la vista (si no eligió otra cosa).
+        cambiar { e -> e.copy(perfil = e.perfil.copy(usuario = a.usuario, visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
         decir(if (a.nueva) R.string.red_bienvenida else R.string.red_entraste)
         sincronizarYa()
         cargarFeed()
@@ -295,6 +302,12 @@ class RedSocial(
     }
 
     fun cargarGuardados() = lanzar { _guardados.value = cliente().guardados() }
+
+    /** Las guardadas que alguien muestra en su perfil, y lo que lleva una #etiqueta (clave → lista). */
+    private val _listas = MutableStateFlow<Map<String, List<PublicacionSocial>>>(emptyMap())
+    val listas: StateFlow<Map<String, List<PublicacionSocial>>> = _listas
+    fun cargarGuardadasDe(usuario: String) = lanzar { _listas.value = _listas.value + ("guardadas:$usuario" to cliente().guardadasDe(usuario)) }
+    fun cargarEtiqueta(etiqueta: String) = lanzar { _listas.value = _listas.value + ("#$etiqueta" to cliente().conEtiqueta(etiqueta)) }
 
     fun comentar(id: Long, texto: String) = lanzar {
         cliente().comentar(id, texto.trim())
@@ -457,29 +470,92 @@ class RedSocial(
             if (o.fuente.isNotBlank()) put("fuente", o.fuente)
         }
 
-        /**
-         * Explorar, ordenado por tus gustos: primero lo que habla de obras que tienes o te gustan, de sus creadores y
-         * de tus géneros; a igualdad, lo más visto y lo más reciente.
-         */
-        fun ordenarPorGustos(lista: List<PublicacionSocial>, e: Estado): List<PublicacionSocial> {
-            val fuentes = e.vivas.filter { it.fuente.isNotBlank() }.associate { it.fuente to (if (it.meGusta || it.nota >= 8) 3 else 1) }
-            val creadores = e.vivas.map { it.creador.lowercase() }.filter { it.isNotBlank() }.toSet() + e.artistasVivos.map { it.nombre.lowercase() }
-            val gustos = e.gustos.filter { !it.borrada }.map { it.clave.substringAfter(':').lowercase() }.toSet()
-            fun puntos(p: PublicacionSocial): Double {
-                val d = p.datos
-                fun s(k: String) = (d[k] as? JsonPrimitive)?.content.orEmpty().lowercase()
-                var x = (fuentes[s("fuente")] ?: 0) * 2.0
-                if (s("creador").isNotBlank() && s("creador") in creadores) x += 2
-                if (gustos.any { it.isNotBlank() && (it in s("titulo") || it == s("creador")) }) x += 1.5
-                return x + kotlin.math.ln(1.0 + p.vistas + p.megusta * 3) * 0.3
-            }
-            return lista.sortedWith(compareByDescending<PublicacionSocial> { puntos(it) }.thenByDescending { it.cuando })
+        /** Por qué sale una publicación en Explorar (lo que se muestra en la tarjeta). */
+        sealed interface Motivo {
+            data class TienesLaObra(val titulo: String) : Motivo
+            data class TeGustaElCreador(val creador: String) : Motivo
+            data class TusEtiquetas(val etiqueta: String) : Motivo
+            data object Nueva : Motivo
         }
 
-        /** La canción del perfil: el álbum y el título, si sigue en el cajón. */
-        fun cancionDe(e: Estado): Pair<Obra, String>? {
-            val (id, titulo) = e.perfil.cancion.split("|", limit = 2).takeIf { it.size == 2 } ?: return null
-            return e.vivas.firstOrNull { it.id == id }?.let { it to titulo }
+        private fun texto(p: PublicacionSocial, k: String) = (p.datos[k] as? JsonPrimitive)?.content.orEmpty()
+        private fun etiquetas(s: String) = Regex("#([\\p{L}\\p{N}_]{2,40})").findAll(s).map { it.groupValues[1].lowercase() }.toSet()
+
+        /** Lo que el teléfono sabe de la persona para ordenar (se calcula una vez por lista; nada de esto sale del teléfono). */
+        private class Gusto(e: Estado) {
+            val obras = e.vivas.filter { it.fuente.isNotBlank() }.associateBy { it.fuente }
+            val creadores = (e.vivas.filter { it.meGusta || it.nota >= 7 || it.estado == io.github.fogonapps.cajon.datos.Estados.TERMINADO }.map { it.creador } +
+                e.artistasVivos.filter { it.favorito || it.nota >= 7 }.map { it.nombre }).map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
+            val dichos = e.gustos.filter { !it.borrada }
+            val generos = dichos.filter { it.clave.startsWith("genero:") && it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }
+                .map { it.clave.removePrefix("genero:").lowercase().filter { c -> c.isLetterOrDigit() } }.toSet()
+            val fuera = dichos.filter { it.senal in setOf(io.github.fogonapps.cajon.datos.Senales.EXCLUIR, io.github.fogonapps.cajon.datos.Senales.NO_INTERESA,
+                io.github.fogonapps.cajon.datos.Senales.NO_RECOMENDAR, io.github.fogonapps.cajon.datos.Senales.NO_GUSTA) }.map { it.clave.lowercase() }.toSet()
+            val susEtiquetas = e.publicaciones.flatMap { etiquetas(it.texto) }.toSet() +
+                e.vivas.flatMap { o -> o.registros.flatMap { etiquetas(it.texto) } }.toSet()
+        }
+
+        /** La afinidad (0 a 1) y su motivo principal. */
+        private fun afinidad(p: PublicacionSocial, g: Gusto): Pair<Double, Motivo?> {
+            var bruta = 0.0; var motivo: Motivo? = null
+            g.obras[texto(p, "fuente")]?.let { o ->
+                bruta += when { o.nota in 1..4 || o.estado == io.github.fogonapps.cajon.datos.Estados.ABANDONADO -> -3.0; o.meGusta || o.nota >= 8 -> 3.0; else -> 1.0 }
+                if (bruta > 0) motivo = Motivo.TienesLaObra(o.titulo)
+            }
+            val creador = texto(p, "creador").lowercase().trim()
+            if (creador.isNotBlank() && creador in g.creadores) { bruta += 2; if (motivo == null) motivo = Motivo.TeGustaElCreador(texto(p, "creador")) }
+            val suyas = etiquetas(texto(p, "texto"))
+            val comunes = suyas.filter { it in g.susEtiquetas || it in g.generos }
+            if (comunes.isNotEmpty()) { bruta += minOf(2.0, comunes.size.toDouble()); if (motivo == null) motivo = Motivo.TusEtiquetas(comunes.first()) }
+            return (bruta / 6).coerceIn(0.0, 1.0) to motivo
+        }
+
+        private fun excluida(p: PublicacionSocial, g: Gusto) =
+            "obra:${texto(p, "fuente")}".lowercase() in g.fuera || "artista:${texto(p, "creador")}".lowercase() in g.fuera
+
+        /**
+         * Explorar, ordenado en el teléfono: puntaje = afinidad con lo
+         * tuyo + 0,6 × calidad (la del servidor, igual para todos) + 0,4 × frescura (la mitad cada 3 días). Cada cinco,
+         * una nueva con pocas vistas, para que tenga su oportunidad; nunca dos seguidas de la misma persona ni de la
+         * misma obra, y máximo dos por persona cada veinte. Lo que marcaste que no te interesa no sale.
+         */
+        fun ordenarPorGustos(lista: List<PublicacionSocial>, e: Estado, ahora: Long = System.currentTimeMillis()): List<Pair<PublicacionSocial, Motivo?>> {
+            val g = Gusto(e)
+            val puntuadas = lista.filter { !excluida(it, g) }.map { p ->
+                val (a, motivo) = afinidad(p, g)
+                val horas = ((ahora - p.cuando) / 3_600_000.0).coerceAtLeast(0.0)
+                val s = a + 0.6 * (p.calidad.coerceIn(0.0, 2.0) / 2) + 0.4 * Math.pow(2.0, -horas / 72)
+                Triple(p, s, motivo)
+            }
+            val esNueva = { p: PublicacionSocial -> p.vistas < 30 && ahora - p.cuando < 72 * 3_600_000L }
+            val nuevas = puntuadas.filter { esNueva(it.first) }.sortedByDescending { it.second }.toMutableList()
+            val resto = puntuadas.filterNot { esNueva(it.first) }.sortedByDescending { it.second }.toMutableList()
+            val salida = mutableListOf<Pair<PublicacionSocial, Motivo?>>()
+            val porAutor = HashMap<String, Int>()
+            fun puede(p: PublicacionSocial): Boolean {
+                val ultima = salida.lastOrNull()?.first
+                if (ultima != null && (ultima.autor.usuario == p.autor.usuario || texto(ultima, "fuente").let { it.isNotBlank() && it == texto(p, "fuente") })) return false
+                return (porAutor[p.autor.usuario] ?: 0) < 2 + salida.size / 20 * 2
+            }
+            while (nuevas.isNotEmpty() || resto.isNotEmpty()) {
+                val tocaNueva = (salida.size + 1) % 5 == 0 && nuevas.isNotEmpty()
+                val fuente = if (tocaNueva || resto.isEmpty()) nuevas else resto
+                val i = fuente.indexOfFirst { puede(it.first) }.takeIf { it >= 0 } ?: 0   // si nada cumple, la mejor
+                val (p, _, motivo) = fuente.removeAt(i)
+                salida += p to (if (tocaNueva && motivo == null) Motivo.Nueva else motivo)
+                porAutor[p.autor.usuario] = (porAutor[p.autor.usuario] ?: 0) + 1
+            }
+            return salida
+        }
+
+        /** La canción del perfil (de cualquiera de los dos formatos de [Perfil.cancion]). */
+        data class CancionPerfil(val titulo: String, val artista: String, val album: String, val portada: String)
+
+        fun cancionDe(e: Estado): CancionPerfil? {
+            val c = e.perfil.cancion
+            if (c.startsWith("v2|")) return c.split("|").let { p -> if (p.size >= 5 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4]) else null }
+            val (id, titulo) = c.split("|", limit = 2).takeIf { it.size == 2 } ?: return null
+            return e.vivas.firstOrNull { it.id == id }?.let { CancionPerfil(titulo, it.creador, it.titulo, it.portada) }
         }
 
         /** El perfil que se sube: la identidad y las partes que la persona marcó como públicas o para sus seguidores. */
@@ -488,13 +564,23 @@ class RedSocial(
             val porId = e.vivas.associateBy { it.id }
             fun parte(nombre: String, datos: kotlinx.serialization.json.JsonElement): Pair<String, ParteSubida>? =
                 Visibilidad.de(p.visibilidad[nombre]).takeIf { it != Visibilidad.PRIVADA }?.let { nombre to ParteSubida(it, datos) }
+            // Los artistas que más le gustan (corazón, nota y escuchas) y los géneros que dijo.
+            val artistas = e.musicosVivos.sortedWith(compareByDescending<io.github.fogonapps.cajon.datos.Artista> { it.favorito }.thenByDescending { it.nota }).take(12)
+            val generos = e.gustos.filter { !it.borrada && it.clave.startsWith("genero:") && it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave.removePrefix("genero:") }.take(20)
+            val terminadas = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.TERMINADO }.groupingBy { it.tipo }.eachCount()
             val partes = listOfNotNull(
+                parte(PartesPerfil.MUSICA, JsonArray(artistas.map { a -> buildJsonObject { put("nombre", a.nombre); put("foto", https(a.foto)) } })).takeIf { artistas.isNotEmpty() },
+                parte(PartesPerfil.GUSTOS, JsonArray(generos.map { JsonPrimitive(it) })).takeIf { generos.isNotEmpty() },
+                parte(PartesPerfil.CIFRAS, JsonObject(terminadas.mapValues { JsonPrimitive(it.value) })).takeIf { terminadas.isNotEmpty() },
+                parte(PartesPerfil.GUARDADAS, JsonPrimitive("")),
                 parte(PartesPerfil.FAVORITAS, JsonArray(e.ajustes.favoritas.mapNotNull { porId[it]?.let(::obraBreve) })),
                 parte(PartesPerfil.DESTACADOS, JsonObject(p.destacados.mapNotNull { (hueco, id) ->
                     porId[id]?.let { o -> hueco to JsonObject(obraBreve(o) + (p.porQue[hueco]?.let { mapOf("porQue" to JsonPrimitive(it)) } ?: emptyMap())) }
                 }.toMap())),
-            ).toMap() + listOfNotNull(cancionDe(e)?.let { (album, titulo) ->
-                "cancion" to ParteSubida(Visibilidad.PUBLICA, JsonObject(obraBreve(album) + mapOf("cancion" to JsonPrimitive(titulo))))
+            ).toMap() + listOfNotNull(cancionDe(e)?.let { c ->
+                "cancion" to ParteSubida(Visibilidad.PUBLICA, buildJsonObject {
+                    put("cancion", c.titulo); put("creador", c.artista); put("titulo", c.album); put("portada", https(c.portada))
+                })
             })
             return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), https(p.portada), p.enlaces.filter { it.startsWith("http") }.take(5), partes)
         }

@@ -73,10 +73,18 @@ class Base(ruta: String) {
                     id INTEGER PRIMARY KEY, de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     para INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL, sobre TEXT NOT NULL, firma TEXT NOT NULL)""")
                 s.execute("CREATE INDEX IF NOT EXISTS mensajes_para ON mensajes(para, id)")
-                // Quién vio cada publicación (una vez por cuenta): para contar las vistas.
+                // Las vistas: un contador por publicación, y para no contar dos veces la misma cuenta, solo una huella
+                // (HMAC con un secreto del servidor) que se borra a los 14 días. No queda un historial de quién vio qué.
+                columna(s, "publicaciones", "n_vistas INTEGER NOT NULL DEFAULT 0")
+                val viejas = s.executeQuery("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'vistas'").use { it.next() } &&
+                    s.executeQuery("PRAGMA table_info(vistas)").use { r -> buildList { while (r.next()) add(r.getString("name")) } }.contains("cuenta")
+                if (viejas) {
+                    s.execute("UPDATE publicaciones SET n_vistas = (SELECT COUNT(*) FROM vistas v WHERE v.pub = publicaciones.id)")
+                    s.execute("DROP TABLE vistas")
+                }
                 s.execute("""CREATE TABLE IF NOT EXISTS vistas(
-                    pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
-                    PRIMARY KEY(pub, cuenta)) WITHOUT ROWID""")
+                    huella TEXT PRIMARY KEY, pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuando INTEGER NOT NULL) WITHOUT ROWID""")
+                s.execute("CREATE INDEX IF NOT EXISTS vistas_cuando ON vistas(cuando)")
                 // La nota de cada persona: unas palabras (y una obra, si quiere) que duran 24 horas.
                 s.execute("""CREATE TABLE IF NOT EXISTS notas(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, datos TEXT NOT NULL DEFAULT '{}', cuando INTEGER NOT NULL)""")

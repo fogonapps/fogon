@@ -52,7 +52,8 @@ import kotlin.random.Random
 /** Las pantallas que se abren encima de las pestañas. */
 sealed interface Pantalla {
     /** Buscar algo para agregar, empezando en la [seccion] (ver [Secciones]). */
-    data class Buscar(val seccion: String) : Pantalla
+    /** [elegirPara]: "destacado:<hueco>" o "favorita" si se busca para ponerlo en el perfil (no para ver la previa). */
+    data class Buscar(val seccion: String, val elegirPara: String? = null) : Pantalla
     /**
      * Una obra encontrada afuera, antes de agregarla. [personas]: quienes la firman, si la fuente los da (todos los
      * artistas de un álbum); no se guardan en la obra, solo sirven para abrir su ficha sin guardarlos.
@@ -119,6 +120,8 @@ sealed interface Pantalla {
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
     data object ElegirCancion : Pantalla
+    /** Lo público que lleva una #etiqueta. */
+    data class EtiquetaRed(val etiqueta: String) : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
 }
@@ -163,6 +166,8 @@ data class Busqueda(
     val directores: List<ArtistaEncontrado> = emptyList(),
     /** Si lo buscado es un género (de los del cajón o de los comunes): se buscan artistas y álbumes de ese género. */
     val genero: String? = null,
+    /** Si se busca para poner algo en el perfil (ver [Pantalla.Buscar.elegirPara]). */
+    val elegirPara: String? = null,
     /** Personas de la red que coinciden (Fogón Social). */
     val personas: List<io.github.fogonapps.cajon.datos.PersonaSocial> = emptyList(),
     val cargando: Set<String> = emptySet(),
@@ -223,6 +228,50 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** La red de El Cajón (Fogón Social), opcional. */
     val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) })
+    /**
+     * Pone en el perfil algo encontrado afuera: si no está en el cajón, se agrega (terminado y con corazón, sin anotar
+     * nada en el diario) y sus datos completos llegan después. Vuelve al perfil.
+     */
+    private fun elegirParaPerfil(r: Encontrado, para: String) {
+        val e = _estado.value ?: return
+        val id = L.porFuente(e, r.fuente)?.id ?: agregar(Obra("", r.tipo, r.titulo, anio = r.anio, creador = r.creador, portada = r.portada, fuente = r.fuente,
+            publica = r.publica, votos = r.votos), Estados.QUIERO, abrirFicha = false).also { if (it.isNotEmpty()) actualizarDatos(it, callado = true) }
+        if (id.isEmpty()) return
+        cambiarObra(id) { it.copy(estado = Estados.TERMINADO, meGusta = true) }
+        ponerEnPerfil(para, id)
+    }
+
+    private fun elegirArtistaParaPerfil(a: ArtistaEncontrado, para: String) {
+        val e = _estado.value ?: return
+        val id = e.artistasVivos.firstOrNull { it.fuente == a.fuente }?.id ?: nuevoId("a").also { nuevo ->
+            cambiar { s -> s.copy(artistas = s.artistas + Artista(nuevo, a.nombre, a.fuente, a.pais, a.desde, a.tipo, foto = a.foto, favorito = true, cambio = ahora())) }
+        }
+        ponerEnPerfil(para, id)
+    }
+
+    private fun ponerEnPerfil(para: String, id: String) {
+        when {
+            para.startsWith("destacado:") -> ponerDestacado(para.removePrefix("destacado:"), id)
+            para == "favorita" && id !in (_estado.value?.ajustes?.favoritas ?: emptyList()) -> favorita(id)
+        }
+        // Cierra el buscador (y la pantalla de elegir, si se vino de ahí) y vuelve al perfil.
+        _pila.value = _pila.value.dropLast(1).let { if (it.lastOrNull() is Pantalla.ElegirDestacado) it.dropLast(1) else it }
+        avisar(tx(R.string.puesto_en_perfil))
+    }
+
+    /** Canciones de afuera para la canción del perfil. */
+    private val _canciones = MutableStateFlow<List<io.github.fogonapps.cajon.datos.MusicBrainz.CancionEncontrada>?>(emptyList())
+    val canciones: StateFlow<List<io.github.fogonapps.cajon.datos.MusicBrainz.CancionEncontrada>?> = _canciones
+    private var buscandoCancion: Job? = null
+    fun buscarCancion(q: String) {
+        buscandoCancion?.cancel()
+        if (q.trim().length < 2) { _canciones.value = emptyList(); return }
+        buscandoCancion = viewModelScope.launch {
+            delay(400); _canciones.value = null
+            _canciones.value = runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarCanciones(q.trim()) }.getOrDefault(emptyList())
+        }
+    }
+
     fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
 
     /** El chat de la red, cifrado de extremo a extremo. */
@@ -293,7 +342,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun abrir(p: Pantalla) {
         // Cada búsqueda nueva empieza en blanco, en el tipo pedido.
-        if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(seccion = Secciones.paraBuscar(p.seccion)) }
+        if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(seccion = Secciones.paraBuscar(p.seccion), elegirPara = p.elegirPara) }
+        // Buscando para el perfil: tocar un artista lo elige en vez de abrir su ficha.
+        if (p is Pantalla.PreviaArtista && _pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let { elegirArtistaParaPerfil(p.artista, it); return }
         _pila.value = _pila.value + p
     }
     fun cerrar() { _pila.value = _pila.value.dropLast(1) }
@@ -432,6 +483,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Trae los datos completos de algo encontrado y lo muestra antes de agregarlo (o abre su ficha si ya está). */
     fun abrirEncontrado(r: Encontrado) {
         val e = _estado.value ?: return
+        if (_pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let { elegirParaPerfil(r, it); return }
         L.porFuente(e, r.fuente)?.let { abrir(Pantalla.Ficha(it.id)); return }
         // Se abre ya, con lo que trajo la búsqueda; lo demás (sinopsis, canciones, géneros) llega después y
         // reemplaza la previa si la persona sigue en ella. Así no hay que esperar a MusicBrainz (1 consulta por segundo).

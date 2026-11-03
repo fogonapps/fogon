@@ -67,6 +67,9 @@ fun Tu(vm: CajonViewModel, e: Estado) {
         }
     }
     if (favoritas.isEmpty()) Pista(stringResource(R.string.favoritas_pista))
+    if (favoritas.size < 4) Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+        Pildora(stringResource(R.string.buscar_en_internet), Iconos.Buscar) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO, "favorita")) }
+    }
 
     // De qué año.
     Chips(listOf<Pair<Int?, String>>(anioActual to "$anioActual", anioActual - 1 to "${anioActual - 1}", null to stringResource(R.string.siempre)), anio) { anio = it }

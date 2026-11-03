@@ -91,7 +91,9 @@ private fun nombreVisibilidad(v: String): String = stringResource(when (Visibili
 @Composable
 private fun nombreParte(p: String): String = stringResource(when (p) {
     PartesPerfil.DESTACADOS -> R.string.parte_destacados; PartesPerfil.FAVORITAS -> R.string.tus_favoritas_titulo
-    PartesPerfil.CIFRAS -> R.string.parte_cifras; PartesPerfil.EVOLUCION -> R.string.parte_evolucion; else -> R.string.tu_diario
+    PartesPerfil.CIFRAS -> R.string.parte_cifras; PartesPerfil.EVOLUCION -> R.string.parte_evolucion
+    PartesPerfil.MUSICA -> R.string.parte_musica; PartesPerfil.GUSTOS -> R.string.parte_gustos; PartesPerfil.GUARDADAS -> R.string.parte_guardadas
+    else -> R.string.tu_diario
 })
 
 @Composable
@@ -285,8 +287,8 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         }
     }
-    io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { (album, titulo) ->
-        TarjetaCancion(titulo, album.creador, album.titulo, album.portada, onCambiar = if (publico) null else ({ vm.abrir(Pantalla.ElegirCancion) }))
+    io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
+        TarjetaCancion(c.titulo, c.artista, c.album, c.portada, onCambiar = if (publico) null else ({ vm.abrir(Pantalla.ElegirCancion) }))
     } ?: if (!publico) Row(Modifier.padding(horizontal = 16.dp)) { Pildora(stringResource(R.string.cancion_poner), Iconos.Tocar) { vm.abrir(Pantalla.ElegirCancion) } } else Unit
     Chips(listOf(false to stringResource(R.string.como_lo_ves), true to stringResource(R.string.como_lo_verian)), publico) { publico = it }
     if (publico) Pista(stringResource(R.string.vista_publica_pista))
@@ -611,6 +613,13 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
  * Elegir lo que va en un hueco de destacados, de lo que ya está en el cajón (del tipo del hueco; "me marcó" y
  * "descubrimiento", cualquier obra, con unas palabras de por qué).
  */
+/** En qué sección del buscador se busca cada hueco de los destacados. */
+private fun seccionDeHueco(h: String) = when (h) {
+    Destacados.PELICULA -> io.github.fogonapps.cajon.Secciones.PELICULAS; Destacados.SERIE -> io.github.fogonapps.cajon.Secciones.SERIES
+    Destacados.ANIME -> io.github.fogonapps.cajon.Secciones.ANIMES; Destacados.LIBRO -> io.github.fogonapps.cajon.Secciones.LIBROS
+    Destacados.ALBUM, Destacados.ARTISTA -> io.github.fogonapps.cajon.Secciones.MUSICA; else -> io.github.fogonapps.cajon.Secciones.TODO
+}
+
 @Composable
 fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
     val f = FogonTema.actual
@@ -627,6 +636,7 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
             if (actual != null) BotonRiso(stringResource(R.string.guardar), { vm.ponerDestacado(hueco, actual, porQue); vm.cerrar() }, Modifier.fillMaxWidth())
         }
         if (actual != null) BotonSecundario(stringResource(R.string.quitar_de_aqui), { vm.ponerDestacado(hueco, null); vm.cerrar() }, Modifier.fillMaxWidth())
+        BotonRiso(stringResource(R.string.buscar_en_internet), { vm.abrir(Pantalla.Buscar(seccionDeHueco(hueco), "destacado:$hueco")) }, Modifier.fillMaxWidth())
         CampoTexto(texto, { texto = it }, stringResource(R.string.buscar_en_tu_cajon), Modifier.fillMaxWidth())
     }
     val q = Logica.tituloLimpio(texto)

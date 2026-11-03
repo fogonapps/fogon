@@ -680,6 +680,20 @@ object MusicBrainz {
                 .thenByDescending { it["count"].entero() ?: 0 })
             .take(25).map { deGrupo(it) }
 
+    /** Una canción encontrada (para la canción del perfil): con su álbum y la carátula del álbum. */
+    data class CancionEncontrada(val titulo: String, val artista: String, val album: String, val portada: String)
+
+    /** Canciones por título (y artista, si se escribe), con la carátula de su álbum (Cover Art Archive). */
+    suspend fun buscarCanciones(texto: String): List<CancionEncontrada> =
+        pedir("recording", "query" to texto, "limit" to "25").arr("recordings").map { it.jsonObject }
+            .filter { (it["score"].entero() ?: 0) >= 60 }.mapNotNull { r ->
+                val artista = r.arr("artist-credit").joinToString("") { c -> c.jsonObject["name"].texto() + c.jsonObject["joinphrase"].texto() }
+                val rel = r.arr("releases").map { it.jsonObject }.firstOrNull { (it["release-group"] as? JsonObject)?.get("primary-type").texto() == "Album" }
+                    ?: r.arr("releases").firstOrNull()?.jsonObject
+                val rg = (rel?.get("release-group") as? JsonObject)?.get("id").texto()
+                CancionEncontrada(r["title"].texto(), artista, rel?.get("title").texto(), if (rg.isBlank()) "" else caratula(rg, 250))
+            }.distinctBy { (it.titulo + "|" + it.artista).lowercase() }.take(20)
+
     /** Los artistas parecidos de verdad (MusicBrainz da un puntaje de 0 a 100; los de menos de 70 casi nunca son). */
     suspend fun buscarArtistas(texto: String): List<ArtistaEncontrado> =
         pedir("artist", "query" to texto, "limit" to "20").arr("artists").map { it.jsonObject }.filter { (it["score"].entero() ?: 0) >= 70 }.map { a ->

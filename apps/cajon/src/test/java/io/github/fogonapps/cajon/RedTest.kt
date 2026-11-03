@@ -59,3 +59,29 @@ class RedTest {
         assertTrue(unido.publicaciones.first { it.clave == "p1" }.borrada)
     }
 }
+
+class OrdenTest {
+    private val ahora = 1_800_000_000_000L
+    private fun pub(id: Long, autor: String, horas: Int, vistas: Int = 100, calidad: Double = 1.0, fuente: String = "", creador: String = "") =
+        io.github.fogonapps.cajon.datos.PublicacionSocial(id, io.github.fogonapps.cajon.datos.PersonaSocial(autor), "foto", ahora - horas * 3_600_000L, "publica",
+            kotlinx.serialization.json.buildJsonObject { if (fuente.isNotBlank()) put("fuente", kotlinx.serialization.json.JsonPrimitive(fuente)); if (creador.isNotBlank()) put("creador", kotlinx.serialization.json.JsonPrimitive(creador)) },
+            vistas = vistas, calidad = calidad)
+
+    @Test fun afinidadDiversidadYNuevas() {
+        val e = Estado(obras = listOf(Obra("o1", "pelicula", "Matrix", fuente = "tmdb:movie:603", meGusta = true)),
+            gustos = listOf(io.github.fogonapps.cajon.datos.Gusto("artista:spam", "Spam", io.github.fogonapps.cajon.datos.Senales.NO_INTERESA)))
+        val lista = listOf(
+            pub(1, "ana", 100), pub(2, "ana", 100), pub(3, "ana", 100),
+            pub(4, "beto", 200, fuente = "tmdb:movie:603"),          // vieja pero de algo que te gusta
+            pub(5, "caro", 100), pub(6, "dani", 100), pub(7, "eva", 100),
+            pub(8, "nuevo", 2, vistas = 3),                          // nueva, pocas vistas
+            pub(9, "x", 1, creador = "spam"),                        // no te interesa
+        )
+        val orden = io.github.fogonapps.cajon.RedSocial.ordenarPorGustos(lista, e, ahora)
+        assertEquals(4L, orden.first().first.id)                     // lo tuyo primero
+        assertTrue(orden.first().second is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TienesLaObra)
+        assertTrue(orden.none { it.first.id == 9L })
+        assertEquals(8L, orden[4].first.id)                          // la nueva, en el quinto lugar
+        orden.zipWithNext().forEach { (a, b) -> assertTrue(a.first.autor.usuario != b.first.autor.usuario) }
+    }
+}

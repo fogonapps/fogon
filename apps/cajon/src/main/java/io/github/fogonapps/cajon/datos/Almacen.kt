@@ -117,6 +117,11 @@ class CajaFuerte(context: Context) {
         get() = leer("chat_llaves")
         set(v) = escribir("chat_llaves", v)
 
+    /** Ya se pusieron a la vista las partes del perfil de la red (una vez, al crear la cuenta o la primera vez que se abre). */
+    var partesRedPuestas: Boolean
+        get() = prefs.getBoolean("partes_red_puestas", false)
+        set(v) = prefs.edit { putBoolean("partes_red_puestas", v) }
+
     /** La versión de la política que aceptó (si cambia, se vuelve a pedir). */
     var politicaSocial: String?
         get() = prefs.getString("politica_social", null)

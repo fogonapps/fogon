@@ -54,7 +54,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.4"
+const val VERSION = "0.6"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -121,6 +121,8 @@ fun Application.fogonSocial(social: Social) {
             get("/actividad") { call.respond(social.actividad(call.yo(), call.request.queryParameters["antes"]?.toLongOrNull())) }
             get("/explorar") { call.respond(social.explorar(call.lector(), call.request.queryParameters["antes"]?.toLongOrNull())) }
             get("/guardados") { call.respond(social.guardados(call.yo())) }
+            get("/perfiles/{usuario}/guardadas") { call.respond(social.guardadasDe(call.lector(), call.usuario())) }
+            get("/etiquetas/{etiqueta}") { call.respond(social.conEtiqueta(call.lector(), call.parameters["etiqueta"] ?: "", call.request.queryParameters["antes"]?.toLongOrNull())) }
             put("/imagenes") {
                 val yo = call.yo()
                 call.respond(HttpStatusCode.Created, social.subirImagen(yo, call.receiveChannel().readRemaining(900_001).readByteArray()))

@@ -672,10 +672,33 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="red_al_dia">You’re all caught up</string>
+  <string name="red_al_dia_texto">You’ve seen what’s new. Come back later, or log something in your cajón.</string>
+  <string name="red_porque_obra">Because you have “%1$s” in your cajón</string>
+  <string name="red_porque_creador">Because you like %1$s</string>
+  <string name="red_porque_etiqueta">Because you like #%1$s</string>
+  <string name="red_porque_nueva">New: give it a chance</string>
+  <string name="red_etiquetas_pista">Use #tags so people find it (for example #indiefilm).</string>
+  <string name="parte_musica">Music</string>
+  <string name="parte_gustos">Taste</string>
+  <string name="parte_guardadas">Saved</string>
+  <string name="red_ajustes_cuenta">Account settings</string>
+  <string name="red_me_gusta_cifra">likes</string>
+  <string name="red_poner_bio">Add a bio</string>
+  <string name="red_que_ven_pista">You choose what others see in Edit profile → who sees each part (taste, music, saved…).</string>
+  <string name="red_gustos_vacios">Hasn’t shared their taste yet.</string>
+  <string name="red_gustos_vacios_propio">Add your favorite film, series, album and book to your profile and they show here.</string>
+  <string name="red_musica_vacia_propio">Heart your favorite artists and they show here.</string>
+  <string name="red_ir_a_mi_perfil">Go to my profile</string>
+  <string name="red_etiqueta_vacia">Nobody has used this tag yet.</string>
+  <string name="buscar_en_internet">Search online</string>
+  <string name="puesto_en_perfil">Done: it’s on your profile</string>
+  <string name="cancion_en_internet">Online</string>
+  <string name="cancion_de_tu_cajon">From your cajón</string>
   <string name="cancion_sin_app">No music app can play it</string>
   <string name="cancion_tocar">Play the song</string>
   <string name="cancion_elegir">Your song</string>
-  <string name="cancion_elegir_pista">Pick a song from the albums in your cajón. It shows on your profile and whoever taps it hears it in their music app.</string>
+  <string name="cancion_elegir_pista">Search for any song. It shows on your profile and whoever taps it hears it in their music app.</string>
   <string name="cancion_buscar">Search for a song</string>
   <string name="cancion_quitar">Remove the song</string>
   <string name="cancion_sin_albumes">Add albums to your cajón and their songs show up here.</string>

@@ -31,6 +31,8 @@ class ErrorSocial(val codigo: Int, val error: String) : IOException("HTTP $codig
 data class PublicacionSocial(
     val id: Long, val autor: PersonaSocial, val tipo: String, val cuando: Long, val visibilidad: String, val datos: JsonObject,
     val megusta: Int = 0, val comentarios: Int = 0, val yoMeGusta: Boolean = false, val yoGuardo: Boolean = false, val vistas: Int = 0,
+    /** Qué tan bien le fue comparada con lo normal (1 = normal), la misma para todos: la calcula el servidor. */
+    val calidad: Double = 1.0, val guardados: Int = 0,
 )
 
 @Serializable data class ComentarioSocial(val id: Long, val autor: PersonaSocial, val texto: String, val cuando: Long, val puedoBorrar: Boolean = false)
@@ -42,6 +44,7 @@ data class PerfilSocial(
     /** "yo", "sigo", "pendiente" o "nada". */
     val relacion: String = "nada", val meSigue: Boolean = false,
     val seguidores: Int = 0, val siguiendo: Int = 0, val cuantas: Int = 0, val cerrada: Boolean = false,
+    val megusta: Int = 0, val guardadasVisibles: Boolean = false,
 )
 
 @Serializable data class AvisoSocial(val id: Long, val tipo: String, val de: PersonaSocial, val objeto: String = "", val cuando: Long, val leido: Boolean = false)
@@ -143,6 +146,8 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun publicacion(id: Long) = leer(PublicacionSocial.serializer(), pedir("/publicaciones/$id"))
+    suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))
+    suspend fun conEtiqueta(etiqueta: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/etiquetas/${cod(etiqueta.removePrefix("#"))}"))
     suspend fun guardados() = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/guardados"))
     suspend fun meGusta(id: Long, si: Boolean) { pedir("/publicaciones/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun guardar(id: Long, si: Boolean) { pedir("/publicaciones/$id/guardar", if (si) "POST" else "DELETE") }

@@ -173,8 +173,8 @@ class SocialTest {
         val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
         s.subirPublicaciones(ana, listOf(pub("1", Vis.PUBLICA, 10)))
         val id = s.explorar(beto, null).single().id
-        s.vio(beto, listOf(id, id)); s.vio(ana, listOf(id))
-        assertEquals(2, s.publicacion(null, id)!!.vistas)                        // una vez por cuenta
+        s.vio(beto, listOf(id, id)); s.vio(beto, listOf(id)); s.vio(ana, listOf(id))
+        assertEquals(1, s.publicacion(null, id)!!.vistas)                        // una vez por cuenta, y la autora no cuenta
         s.seguir(beto, "ana")
         s.ponerNota(ana, NotaNueva("viendo Matrix"))
         assertEquals(listOf("ana"), s.notas(beto).map { it.persona.usuario })
@@ -184,6 +184,36 @@ class SocialTest {
         assertEquals(1, s.avisos(ana, null).size)
         s.borrarAvisos(ana, s.avisos(ana, null).single().id)
         assertEquals(0, s.avisos(ana, null).size)
+    }
+
+    @Test fun etiquetasYGuardadas() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.subirPublicaciones(ana, listOf(PublicacionSubida("1", Vis.PUBLICA, 10, "foto", buildJsonObject { put("texto", "Qué peli #Cine_Colombiano #matrix") })))
+        assertEquals(1, s.conEtiqueta(beto, "#cine_colombiano", null).size)
+        assertEquals(1, s.conEtiqueta(null, "MATRIX", null).size)
+        assertEquals(0, s.conEtiqueta(null, "otra", null).size)
+        val id = s.conEtiqueta(null, "matrix", null).single().id
+        s.meGusta(beto, id, true); s.guardar(beto, id, true)
+        assertEquals(1, s.verPerfil(null, "ana").megusta)
+        // Las guardadas de beto: privadas hasta que él diga.
+        assertFailsWith<Problema> { s.guardadasDe(ana, "beto") }
+        s.subirPerfil(beto, PerfilSubido(partes = mapOf("guardadas" to Parte(Vis.PUBLICA, JsonPrimitive("")))))
+        assertEquals(1, s.guardadasDe(ana, "beto").size)
+    }
+
+    @Test fun explorarConCalidad() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val gente = (1..5).map { s.cuentaDe(s.crearCuenta(NuevaCuenta("persona$it")).token)!! }
+        s.subirPublicaciones(ana, listOf(pub("buena", Vis.PUBLICA, System.currentTimeMillis() - 1000), pub("otra", Vis.PUBLICA, System.currentTimeMillis() - 2000)))
+        val lista = s.explorar(gente[0], null)
+        val buena = lista.first { it.datos["titulo"].toString().contains("buena") }.id
+        gente.forEach { g -> s.vio(g, listOf(buena)); s.meGusta(g, buena, true); s.guardar(g, buena, true) }
+        val otra = s.explorar(gente[0], null)
+        assertTrue(otra.first { it.id == buena }.calidad > otra.first { it.id != buena }.calidad)
+        assertTrue(otra.all { it.calidad in 0.0..3.0 })
     }
 
     @Test fun imagenes() {

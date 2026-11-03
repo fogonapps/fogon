@@ -51,6 +51,9 @@ data class Persona(val usuario: String, val nombre: String, val foto: Boolean, v
 data class Publicacion(
     val id: Long, val autor: Persona, val tipo: String, val cuando: Long, val visibilidad: String, val datos: JsonObject,
     val megusta: Int, val comentarios: Int, val yoMeGusta: Boolean, val yoGuardo: Boolean, val vistas: Int = 0,
+    /** Qué tan bien le fue comparada con lo normal (1 = normal; de 0 a 3), igual para todos: ver [Social.explorar]. */
+    val calidad: Double = 1.0,
+    val guardados: Int = 0,
 )
 
 @Serializable
@@ -71,6 +74,10 @@ data class PerfilVisto(
     val cuantas: Int,
     /** Es privada y quien mira no la sigue: solo ve el nombre, la foto y las cifras. */
     val cerrada: Boolean,
+    /** Cuántos me gusta recibieron sus publicaciones. */
+    val megusta: Int = 0,
+    /** Si quien mira puede ver sus guardadas (lo decide la persona en su perfil, parte "guardadas"). */
+    val guardadasVisibles: Boolean = false,
 )
 
 @Serializable
@@ -114,6 +121,13 @@ class Social(
 ) {
 
     private val dirImagenes get() = java.io.File(dirFotos, "i")
+
+    /** El secreto de las huellas de las vistas: al azar, una vez, en la carpeta de datos (no sale del servidor). */
+    private val secreto: ByteArray by lazy {
+        val f = java.io.File(dirFotos.parentFile ?: dirFotos, "secreto")
+        if (f.exists() && f.length() >= 32) f.readBytes()
+        else ByteArray(32).also { java.security.SecureRandom().nextBytes(it); f.parentFile?.mkdirs(); f.writeBytes(it); f.setReadable(false, false); f.setReadable(true, true) }
+    }
 
     /* ----- Cuentas ----- */
 
@@ -324,9 +338,11 @@ class Social(
             )
         }
         val meSigue = lector != null && sigue(id, lector)
+        val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ?", id) { it.getInt(1) }.first() }
+        val guardadas = relacion == "yo" || p.partes["guardadas"]?.let { ve(it.visibilidad) } == true
         return PerfilVisto(
             persona(id), p.bio, p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
-            pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada,
+            pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
         )
     }
 
@@ -382,14 +398,15 @@ class Social(
         leer("""SELECT p.id, p.cuenta, p.visibilidad, p.cuando, p.datos, c.usuario, c.nombre, c.foto, c.privada,
                     (SELECT COUNT(*) FROM megusta m WHERE m.pub = p.id),
                     (SELECT COUNT(*) FROM comentarios k WHERE k.pub = p.id),
-                    (SELECT COUNT(*) FROM vistas v WHERE v.pub = p.id),
+                    p.n_vistas,
                     EXISTS(SELECT 1 FROM megusta m WHERE m.pub = p.id AND m.cuenta = ?),
-                    EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?)
+                    EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
+                    (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta)
                 FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE $donde""", lector, lector, *args) { r ->
             val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
-                r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12))
+                r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15))
         }
     }
 
@@ -402,12 +419,46 @@ class Social(
         filas(yo, """(p.cuenta = ? OR p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1))
                 AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100)).map { it.second }
 
-    /** Para descubrir: lo público más reciente de cuentas públicas que todavía no sigue (sin bloqueados). */
-    fun explorar(lector: Long?, antes: Long?, n: Int = 40): List<Publicacion> =
-        filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ?
+    /**
+     * Para descubrir: candidatos iguales para todos (el servidor no perfila a nadie; el teléfono los ordena según los
+     * gustos de la persona, que nunca salen de él). Lo público de cuentas públicas que todavía no sigue: 70 % lo más
+     * reciente de la semana, 20 % lo mejor de lo demás (cota de Wilson) y 10 % lo nuevo con pocas
+     * vistas, para que tenga su oportunidad. Cada una con su [Publicacion.calidad].
+     */
+    fun explorar(lector: Long?, antes: Long?, n: Int = 200): List<Publicacion> {
+        val ahora = ahora()
+        // Las 1000 más recientes: la semana y lo nuevo salen de ahí, y en una red chiquita también lo más viejo completa.
+        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ?
                 AND (? IS NULL OR (p.cuenta <> ? AND p.cuenta NOT IN (SELECT a FROM seguir WHERE de = ?)
                     AND p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
-                ORDER BY p.cuando DESC LIMIT ?""", antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector, n.coerceIn(1, 100)).map { it.second }
+                ORDER BY p.cuando DESC LIMIT 1000""", antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector)
+            .map { it.second.copy(calidad = calidad(it.second)) }
+        val tope = n.coerceIn(1, 200)
+        val semana = todas.filter { ahora - it.cuando < 7L * 24 * 3600_000 }.take((tope * 0.7).toInt())
+        val mejores = (todas - semana.toSet()).sortedByDescending { wilson(it.megusta + it.guardados, it.vistas) }.take((tope * 0.2).toInt())
+        val nuevas = (todas - semana.toSet() - mejores.toSet()).filter { it.vistas < 30 && ahora - it.cuando < 72 * 3600_000L }.take(tope - semana.size - mejores.size)
+        val elegidas = (semana + mejores + nuevas).distinctBy { it.id }
+        // Si falta para completar, lo más reciente que quede.
+        return (elegidas + (todas - elegidas.toSet())).take(tope).sortedByDescending { it.cuando }
+    }
+
+    /**
+     * Qué tan bien le fue a una publicación, comparada con lo normal: tasas por vista con promedio bayesiano (como si
+     * llevara [M] vistas normales, para que dos me gusta en tres vistas no la pongan arriba de todo). Guardar y comentar
+     * valen más que un me gusta (sirvió, no solo enganchó).
+     */
+    private fun calidad(p: Publicacion): Double {
+        fun t(n: Int, previa: Double) = (n + M * previa) / (p.vistas.coerceAtLeast(n) + M)
+        val q = t(p.megusta, PREVIA_MEGUSTA) + 2 * t(p.guardados, PREVIA_GUARDADO) + 3 * t(p.comentarios, PREVIA_COMENTARIO)
+        return (q / (PREVIA_MEGUSTA + 2 * PREVIA_GUARDADO + 3 * PREVIA_COMENTARIO)).coerceIn(0.0, 3.0)
+    }
+
+    /** Cota inferior de Wilson (95 %) de la tasa [si] de [n]. */
+    private fun wilson(si: Int, n: Int): Double {
+        if (n <= 0) return 0.0
+        val z = 1.96; val p = (si.toDouble() / n).coerceAtMost(1.0)
+        return (p + z * z / (2 * n) - z * kotlin.math.sqrt((p * (1 - p) + z * z / (4 * n)) / n)) / (1 + z * z / n)
+    }
 
     fun meGusta(yo: Long, pub: Long, si: Boolean) {
         val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
@@ -418,6 +469,22 @@ class Social(
     fun guardar(yo: Long, pub: Long, si: Boolean) {
         publicacion(yo, pub) ?: throw Problema(404, "no_existe")
         b.usar { if (si) cambiar("INSERT OR IGNORE INTO guardados(pub, cuenta, cuando) VALUES(?,?,?)", pub, yo, ahora()) else cambiar("DELETE FROM guardados WHERE pub = ? AND cuenta = ?", pub, yo) }
+    }
+
+    /** Las guardadas de [usuario], si las muestra a quien mira ([PerfilVisto.guardadasVisibles]). */
+    fun guardadasDe(lector: Long?, usuario: String): List<Publicacion> {
+        val id = idDe(usuario)
+        if (!verPerfil(lector, usuario).guardadasVisibles) throw Problema(403, "privada")
+        return guardados(id).filter { pub -> publicacion(lector, pub.id) != null }
+    }
+
+    /** Lo público que lleva la etiqueta #[etiqueta] (en sus palabras), lo más reciente primero. */
+    fun conEtiqueta(lector: Long?, etiqueta: String, antes: Long?): List<Publicacion> {
+        val e = etiqueta.trim().removePrefix("#").lowercase().filter { it.isLetterOrDigit() || it == '_' }.take(40)
+        if (e.length < 2) return emptyList()
+        return filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ? AND lower(p.datos) LIKE ? ESCAPE '\'
+                ORDER BY p.cuando DESC LIMIT 60""", antes ?: Long.MAX_VALUE, "%#" + e.replace("_", "\\_") + "%")
+            .filter { (autor, _) -> lector == null || (!bloqueado(autor, lector) && !bloqueado(lector, autor)) }.map { it.second }
     }
 
     fun guardados(yo: Long): List<Publicacion> =
@@ -518,11 +585,23 @@ class Social(
         }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.map(::persona)
     }
 
-    /** Cuenta que [yo] vio estas publicaciones (una vez por cuenta; solo las que puede ver). */
+    /**
+     * Cuenta que [yo] vio estas publicaciones: una vez por cuenta (por una huella HMAC que se borra a los 14 días, sin
+     * guardar quién vio qué), sin contar al autor ni lo que no puede ver.
+     */
     fun vio(yo: Long, ids: List<Long>) {
+        b.usar { cambiar("DELETE FROM vistas WHERE cuando < ?", ahora() - 14L * 24 * 3600_000) }
         ids.distinct().take(100).forEach { id ->
-            if (publicacion(yo, id) != null) b.usar { cambiar("INSERT OR IGNORE INTO vistas(pub, cuenta) VALUES(?,?)", id, yo) }
+            val p = filas(yo, "p.id = ?", id).firstOrNull() ?: return@forEach
+            if (p.first == yo || !puedeVer(yo, p.first, p.second.visibilidad)) return@forEach
+            val nueva = b.usar { cambiar("INSERT OR IGNORE INTO vistas(huella, pub, cuando) VALUES(?,?,?)", huellaVista(yo, id), id, ahora()) }
+            if (nueva > 0) b.usar { cambiar("UPDATE publicaciones SET n_vistas = n_vistas + 1 WHERE id = ?", id) }
         }
+    }
+
+    private fun huellaVista(cuenta: Long, pub: Long): String {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256").apply { init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256")) }
+        return mac.doFinal("$cuenta:$pub".toByteArray()).joinToString("") { "%02x".format(it) }
     }
 
     /* ----- Notas de 24 horas ----- */
@@ -641,6 +720,11 @@ class Social(
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val POLITICA = "2026-11-03"
+        /** Lo normal al empezar, sin datos (hipótesis: recalcular con los contadores cuando haya gente). */
+        private const val PREVIA_MEGUSTA = 0.08
+        private const val PREVIA_GUARDADO = 0.02
+        private const val PREVIA_COMENTARIO = 0.02
+        private const val M = 20.0
         private val azar = java.security.SecureRandom()
         val CORREO = Regex("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}")
         /** Igual que en El Cajón (`Logica.usuarioLimpio`): 3 a 30 de letras, números, punto y guion bajo. */

@@ -672,10 +672,33 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="red_al_dia">Estás al día</string>
+  <string name="red_al_dia_texto">Ya viste lo de ahora. Vuelve más tarde, o anota algo en tu cajón.</string>
+  <string name="red_porque_obra">Porque tienes «%1$s» en tu cajón</string>
+  <string name="red_porque_creador">Porque te gusta %1$s</string>
+  <string name="red_porque_etiqueta">Porque te gusta #%1$s</string>
+  <string name="red_porque_nueva">Nueva: dale una oportunidad</string>
+  <string name="red_etiquetas_pista">Usa #etiquetas para que lo encuentren (por ejemplo #cinecolombiano).</string>
+  <string name="parte_musica">Música</string>
+  <string name="parte_gustos">Gustos</string>
+  <string name="parte_guardadas">Guardadas</string>
+  <string name="red_ajustes_cuenta">Ajustes de la cuenta</string>
+  <string name="red_me_gusta_cifra">me gusta</string>
+  <string name="red_poner_bio">Agregar una biografía</string>
+  <string name="red_que_ven_pista">Lo que ven los demás lo eliges en Editar perfil → quién ve cada parte (gustos, música, guardadas…).</string>
+  <string name="red_gustos_vacios">Todavía no comparte sus gustos.</string>
+  <string name="red_gustos_vacios_propio">Pon tu película, serie, álbum y libro favoritos en tu perfil y salen aquí.</string>
+  <string name="red_musica_vacia_propio">Marca con corazón a tus artistas favoritos y salen aquí.</string>
+  <string name="red_ir_a_mi_perfil">Ir a mi perfil</string>
+  <string name="red_etiqueta_vacia">Todavía nadie usó esta etiqueta.</string>
+  <string name="buscar_en_internet">Buscar en internet</string>
+  <string name="puesto_en_perfil">Listo: está en tu perfil</string>
+  <string name="cancion_en_internet">En internet</string>
+  <string name="cancion_de_tu_cajon">De tu cajón</string>
   <string name="cancion_sin_app">No hay una app de música que pueda tocarla</string>
   <string name="cancion_tocar">Tocar la canción</string>
   <string name="cancion_elegir">Tu canción</string>
-  <string name="cancion_elegir_pista">Elige una canción de los álbumes de tu cajón. Sale en tu perfil y quien la toque la escucha en su app de música.</string>
+  <string name="cancion_elegir_pista">Busca la canción que quieras. Sale en tu perfil y quien la toque la escucha en su app de música.</string>
   <string name="cancion_buscar">Buscar una canción</string>
   <string name="cancion_quitar">Quitar la canción</string>
   <string name="cancion_sin_albumes">Agrega álbumes a tu cajón y aquí salen sus canciones.</string>
