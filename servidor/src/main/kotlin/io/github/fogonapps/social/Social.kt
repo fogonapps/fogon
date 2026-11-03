@@ -50,7 +50,7 @@ data class Persona(val usuario: String, val nombre: String, val foto: Boolean, v
 @Serializable
 data class Publicacion(
     val id: Long, val autor: Persona, val tipo: String, val cuando: Long, val visibilidad: String, val datos: JsonObject,
-    val megusta: Int, val comentarios: Int, val yoMeGusta: Boolean, val yoGuardo: Boolean,
+    val megusta: Int, val comentarios: Int, val yoMeGusta: Boolean, val yoGuardo: Boolean, val vistas: Int = 0,
 )
 
 @Serializable
@@ -93,6 +93,9 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NuevoComentario(val texto: String)
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
+/** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
+@Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
+@Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
 @Serializable data class Llaves(val cifrar: String, val firmar: String)
 /** Un mensaje cifrado para alguien: [sobre] es el texto cifrado (base64) y [firma], la firma de quien lo manda. */
@@ -379,13 +382,14 @@ class Social(
         leer("""SELECT p.id, p.cuenta, p.visibilidad, p.cuando, p.datos, c.usuario, c.nombre, c.foto, c.privada,
                     (SELECT COUNT(*) FROM megusta m WHERE m.pub = p.id),
                     (SELECT COUNT(*) FROM comentarios k WHERE k.pub = p.id),
+                    (SELECT COUNT(*) FROM vistas v WHERE v.pub = p.id),
                     EXISTS(SELECT 1 FROM megusta m WHERE m.pub = p.id AND m.cuenta = ?),
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?)
                 FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE $donde""", lector, lector, *args) { r ->
             val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
-                r.getInt(10), r.getInt(11), r.getInt(12) == 1, r.getInt(13) == 1)
+                r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12))
         }
     }
 
@@ -514,6 +518,31 @@ class Social(
         }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.map(::persona)
     }
 
+    /** Cuenta que [yo] vio estas publicaciones (una vez por cuenta; solo las que puede ver). */
+    fun vio(yo: Long, ids: List<Long>) {
+        ids.distinct().take(100).forEach { id ->
+            if (publicacion(yo, id) != null) b.usar { cambiar("INSERT OR IGNORE INTO vistas(pub, cuenta) VALUES(?,?)", id, yo) }
+        }
+    }
+
+    /* ----- Notas de 24 horas ----- */
+
+    fun ponerNota(yo: Long, n: NotaNueva) {
+        val t = n.texto.trim().take(60)
+        if (t.isEmpty()) { b.usar { cambiar("DELETE FROM notas WHERE cuenta = ?", yo) }; return }
+        val datos = JsonSocial.encodeToString(JsonObject.serializer(), n.datos)
+        if (datos.length > 4000) throw Problema(413, "muy_grande")
+        b.usar { cambiar("INSERT INTO notas(cuenta, texto, datos, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET texto = excluded.texto, datos = excluded.datos, cuando = excluded.cuando", yo, t, datos, ahora()) }
+    }
+
+    /** Las notas vigentes (24 horas) de quienes sigue y la suya; las de cuentas públicas que lo siguen también. */
+    fun notas(yo: Long): List<Nota> = b.usar {
+        leer("""SELECT n.cuenta, n.texto, n.datos, n.cuando FROM notas n WHERE n.cuando > ? AND (n.cuenta = ?
+                OR n.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)) ORDER BY (n.cuenta = ?) DESC, n.cuando DESC LIMIT 60""",
+            ahora() - 24 * 3600_000L, yo, yo, yo) { arrayOf(it.getLong(1), it.getString(2), it.getString(3), it.getLong(4)) }
+    }.filter { !bloqueado(yo, it[0] as Long) }
+        .map { Nota(persona(it[0] as Long), it[1] as String, JsonSocial.parseToJsonElement(it[2] as String) as JsonObject, it[3] as Long) }
+
     /* ----- Chat (cifrado de extremo a extremo: aquí solo pasan sobres cerrados) ----- */
 
     fun ponerLlaves(yo: Long, l: Llaves) {
@@ -568,6 +597,11 @@ class Social(
     fun sinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE para = ? AND leido = 0", yo) { it.getInt(1) }.first() }
 
     fun leidos(yo: Long) { b.usar { cambiar("UPDATE avisos SET leido = 1 WHERE para = ?", yo) } }
+
+    /** Borra un aviso ([id]) o todos (null). */
+    fun borrarAvisos(yo: Long, id: Long?) {
+        b.usar { if (id == null) cambiar("DELETE FROM avisos WHERE para = ?", yo) else cambiar("DELETE FROM avisos WHERE para = ? AND id = ?", yo, id) }
+    }
 
     /* ----- Reportes ----- */
 

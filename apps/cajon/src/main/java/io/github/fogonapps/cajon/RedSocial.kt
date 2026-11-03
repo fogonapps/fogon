@@ -91,6 +91,9 @@ class RedSocial(
     val privada: StateFlow<Boolean> = _privada
     private val _correoCuenta = MutableStateFlow("")
     val correoCuenta: StateFlow<String> = _correoCuenta
+    private val _notas = MutableStateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>>(emptyList())
+    /** Las notas de 24 horas de tu gente (la tuya primero). */
+    val notas: StateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>> = _notas
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando
 
@@ -345,6 +348,38 @@ class RedSocial(
 
     fun reportar(que: String, objeto: String, motivo: String) = lanzar { cliente().reportar(que, objeto, motivo); decir(R.string.red_reportado) }
 
+    /* ----- Vistas y notas ----- */
+
+    private val porContar = java.util.Collections.synchronizedSet(LinkedHashSet<Long>())
+    private var contando: Job? = null
+    /** Una publicación que se vio en pantalla: se juntan y se mandan juntas a los 3 segundos. */
+    fun vista(id: Long) {
+        if (_usuario.value == null || !porContar.add(id)) return
+        contando?.cancel()
+        contando = scope.launch { delay(3000); val ids = synchronized(porContar) { porContar.toList() }; runCatching { cliente().vio(ids) } }
+    }
+
+    fun cargarNotas() { if (_usuario.value != null) lanzar { _notas.value = cliente().notas() } }
+
+    /** Pone (o quita, si está vacía) tu nota de 24 horas; con [obra], va con su portada. */
+    fun ponerNota(texto: String, obra: Obra? = null) = lanzar {
+        cliente().ponerNota(io.github.fogonapps.cajon.datos.NotaNueva(texto.trim().take(60), obra?.let(::obraBreve) ?: JsonObject(emptyMap())))
+        _notas.value = cliente().notas()
+    }
+
+    /** Quita de la red una entrada del diario o una lista (la vuelve privada en el cajón). */
+    fun quitarDeLaRed(clave: String) {
+        when {
+            clave.startsWith("r:") -> { val (_, obra, reg) = clave.split(":", limit = 3)
+                cambiar { e -> e.copy(obras = e.obras.map { o -> if (o.id != obra) o else o.copy(cambio = System.currentTimeMillis(),
+                    registros = o.registros.map { if (it.id == reg) it.copy(visibilidad = Visibilidad.PRIVADA) else it }) }) } }
+            clave.startsWith("l:") -> { val id = clave.removePrefix("l:")
+                cambiar { e -> e.copy(listas = e.listas.map { if (it.id == id) it.copy(visibilidad = Visibilidad.PRIVADA, cambio = System.currentTimeMillis()) else it }) } }
+            clave.startsWith("f:") -> { borrarPropia(clave.removePrefix("f:")); return }
+        }
+        sincronizarYa(); cargarFeed(); decir(R.string.red_quitada)
+    }
+
     /* ----- Avisos ----- */
 
     fun cargarAvisos() = lanzar {
@@ -352,6 +387,11 @@ class RedSocial(
         _solicitudes.value = cliente().solicitudes()
         cliente().leidos()
         _sinLeer.value = 0
+    }
+
+    fun borrarAviso(id: Long?) = lanzar {
+        cliente().borrarAvisos(id)
+        _avisos.value = if (id == null) emptyList() else _avisos.value?.filter { it.id != id }
     }
 
     fun revisarSinLeer() {
@@ -417,6 +457,31 @@ class RedSocial(
             if (o.fuente.isNotBlank()) put("fuente", o.fuente)
         }
 
+        /**
+         * Explorar, ordenado por tus gustos: primero lo que habla de obras que tienes o te gustan, de sus creadores y
+         * de tus géneros; a igualdad, lo más visto y lo más reciente.
+         */
+        fun ordenarPorGustos(lista: List<PublicacionSocial>, e: Estado): List<PublicacionSocial> {
+            val fuentes = e.vivas.filter { it.fuente.isNotBlank() }.associate { it.fuente to (if (it.meGusta || it.nota >= 8) 3 else 1) }
+            val creadores = e.vivas.map { it.creador.lowercase() }.filter { it.isNotBlank() }.toSet() + e.artistasVivos.map { it.nombre.lowercase() }
+            val gustos = e.gustos.filter { !it.borrada }.map { it.clave.substringAfter(':').lowercase() }.toSet()
+            fun puntos(p: PublicacionSocial): Double {
+                val d = p.datos
+                fun s(k: String) = (d[k] as? JsonPrimitive)?.content.orEmpty().lowercase()
+                var x = (fuentes[s("fuente")] ?: 0) * 2.0
+                if (s("creador").isNotBlank() && s("creador") in creadores) x += 2
+                if (gustos.any { it.isNotBlank() && (it in s("titulo") || it == s("creador")) }) x += 1.5
+                return x + kotlin.math.ln(1.0 + p.vistas + p.megusta * 3) * 0.3
+            }
+            return lista.sortedWith(compareByDescending<PublicacionSocial> { puntos(it) }.thenByDescending { it.cuando })
+        }
+
+        /** La canción del perfil: el álbum y el título, si sigue en el cajón. */
+        fun cancionDe(e: Estado): Pair<Obra, String>? {
+            val (id, titulo) = e.perfil.cancion.split("|", limit = 2).takeIf { it.size == 2 } ?: return null
+            return e.vivas.firstOrNull { it.id == id }?.let { it to titulo }
+        }
+
         /** El perfil que se sube: la identidad y las partes que la persona marcó como públicas o para sus seguidores. */
         fun perfilDe(e: Estado): PerfilSubido {
             val p = e.perfil
@@ -428,7 +493,9 @@ class RedSocial(
                 parte(PartesPerfil.DESTACADOS, JsonObject(p.destacados.mapNotNull { (hueco, id) ->
                     porId[id]?.let { o -> hueco to JsonObject(obraBreve(o) + (p.porQue[hueco]?.let { mapOf("porQue" to JsonPrimitive(it)) } ?: emptyMap())) }
                 }.toMap())),
-            ).toMap()
+            ).toMap() + listOfNotNull(cancionDe(e)?.let { (album, titulo) ->
+                "cancion" to ParteSubida(Visibilidad.PUBLICA, JsonObject(obraBreve(album) + mapOf("cancion" to JsonPrimitive(titulo))))
+            })
             return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), https(p.portada), p.enlaces.filter { it.startsWith("http") }.take(5), partes)
         }
 
@@ -468,7 +535,9 @@ class RedSocial(
                         put("propia", p.clave)
                     }))
             }
+            // Con su clave adentro, para poder quitarla de la red desde la publicación.
             return (delDiario + listas + propias).sortedByDescending { it.cuando }.take(2000)
+                .map { it.copy(datos = JsonObject(it.datos + ("clave" to JsonPrimitive(it.clave)))) }
         }
     }
 }

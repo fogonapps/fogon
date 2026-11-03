@@ -118,11 +118,12 @@ sealed interface Pantalla {
     /** Las conversaciones del chat; con [obra], para mandarla a alguien. */
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
+    data object ElegirCancion : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
 }
 
-enum class Pestana { INICIO, CINE, MUSICA, LIBROS }
+enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS }
 
 /** Los apartados de la app (y de la búsqueda): cine, música y libros. */
 object Secciones {
@@ -222,6 +223,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** La red de El Cajón (Fogón Social), opcional. */
     val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) })
+    fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
+
     /** El chat de la red, cifrado de extremo a extremo. */
     val chat = Chat(app, viewModelScope, caja, red) { avisar(tx(it)) }
 

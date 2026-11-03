@@ -285,6 +285,9 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         }
     }
+    io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { (album, titulo) ->
+        TarjetaCancion(titulo, album.creador, album.titulo, album.portada, onCambiar = if (publico) null else ({ vm.abrir(Pantalla.ElegirCancion) }))
+    } ?: if (!publico) Row(Modifier.padding(horizontal = 16.dp)) { Pildora(stringResource(R.string.cancion_poner), Iconos.Tocar) { vm.abrir(Pantalla.ElegirCancion) } } else Unit
     Chips(listOf(false to stringResource(R.string.como_lo_ves), true to stringResource(R.string.como_lo_verian)), publico) { publico = it }
     if (publico) Pista(stringResource(R.string.vista_publica_pista))
 

@@ -225,6 +225,7 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
     val f = FogonTema.actual
     // Con su propio scroll: los géneros de abajo no caben en la pantalla.
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LoDelMomento(vm, b.seccion)
         Secciones.BUSQUEDA.drop(1).forEach { s ->
             Row(Modifier.fillMaxWidth().vidrio().clickable { vm.cambiarSeccion(s) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -252,6 +253,42 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
             lista.forEach { g -> Pildora(g) { vm.buscar(g) } }
         }
         Espacio(40.dp)
+    }
+}
+
+/** Lo del momento, para mirar sin escribir: portadas de lo más visto, leído y escuchado (según la sección). */
+@Composable
+private fun LoDelMomento(vm: CajonViewModel, seccion: String) {
+    val f = FogonTema.actual
+    val o by vm.paraElegir.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.cargarParaElegir() }
+    if (seccion == Secciones.PERSONAS) return
+    val obras = when {
+        seccion == Secciones.TODO -> (o.cine.take(9) + o.libros.take(3))
+        seccion in Secciones.DE_CINE -> o.cine
+        seccion == Secciones.LIBROS -> o.libros
+        else -> emptyList()
+    }.filter { it.portada.isNotBlank() }.take(12)
+    val artistas = if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) o.artistas.filter { it.foto.isNotBlank() }.take(8) else emptyList()
+    if (obras.isEmpty() && artistas.isEmpty()) return
+    Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
+    obras.chunked(3).forEach { fila ->
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            fila.forEach { r ->
+                Box(Modifier.weight(1f).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrirEncontrado(r) }) {
+                    Portada(r.portada, r.tipo, r.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                }
+            }
+            repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
+        }
+    }
+    if (artistas.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        artistas.forEach { a ->
+            Column(Modifier.width(76.dp).clip(io.github.fogonapps.identidad.forma(14.dp)).clickable { vm.abrir(Pantalla.PreviaArtista(a)) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                FotoArtista(a.foto, a.nombre, 68.dp)
+                Text(a.nombre, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1)
+            }
+        }
     }
 }
 

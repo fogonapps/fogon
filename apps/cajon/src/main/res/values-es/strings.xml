@@ -461,7 +461,7 @@
     <item quantity="one">%1$d canción · %2$s</item>
     <item quantity="other">%1$d canciones · %2$s</item>
   </plurals>
-  <string name="para_ti">Para ti</string>
+  <string name="para_ti">Te podría gustar</string>
   <string name="actualizar">Actualizar</string>
   <string name="para_ti_vacio">Cuéntame tus gustos, o califica lo que viste, leíste o escuchaste (o márcalo con el corazón), y aquí aparecen recomendaciones.</string>
   <string name="para_ti_cine">Películas, series y animes</string>
@@ -473,7 +473,7 @@
   <string name="de_autor">De %1$s</string>
   <string name="tus_gustos">Tus gustos</string>
   <string name="cuentame_gustos">Cuéntame tus gustos</string>
-  <string name="cuentame_gustos_pista">Elige qué quieres que te recomiende, los géneros que te gustan (y los que no) y algo de lo que te gusta. Así "Para ti" acierta desde el primer día.</string>
+  <string name="cuentame_gustos_pista">Elige qué quieres que te recomiende, los géneros que te gustan (y los que no) y algo de lo que te gusta. Así "Te podría gustar" acierta desde el primer día.</string>
   <string name="ahora_no">Ahora no</string>
   <string name="porque_genero">Te gusta: %1$s</string>
   <string name="para_explorar">Para explorar algo distinto</string>
@@ -488,7 +488,7 @@
   <string name="excluir_pista">Nunca se recomienda nada suyo.</string>
   <string name="excluir_genero">Nada de este género:</string>
   <string name="elegir_gustos_explica">Todo es opcional y se cambia cuando quieras en "Tus gustos". Lo que elijas aquí no entra a tu cajón: solo sirve para recomendarte.</string>
-  <string name="que_recomiendo">Qué quieres en "Para ti"</string>
+  <string name="que_recomiendo">Qué quieres en "Te podría gustar"</string>
   <string name="generos_que_te_gustan">Géneros</string>
   <string name="generos_pista">Toca una vez si te gusta y otra si no te gusta; una tercera lo deja como estaba.</string>
   <string name="lo_que_te_gusta">Lo que te gusta</string>
@@ -628,10 +628,10 @@
   <string name="portada_lista">Portada de la lista</string>
   <string name="quien_ve_lista">Quién vería esta lista</string>
   <string name="decir_no">Decir que no</string>
-  <string name="gustos_como_decir_no">Después, en “Para ti”, mantén presionada una recomendación para decir que no.</string>
+  <string name="gustos_como_decir_no">Después, en “Te podría gustar”, mantén presionada una recomendación para decir que no.</string>
   <string name="tut_como">Cómo se usa</string>
   <string name="tut_como_buscar">Toca + para buscar y guardar.</string>
-  <string name="tut_como_no">En “Para ti”, mantén presionado algo para decir que no.</string>
+  <string name="tut_como_no">En “Te podría gustar”, mantén presionado algo para decir que no.</string>
   <string name="tut_como_favoritas">En cualquier título, toca la estrella para ponerlo en tus favoritas.</string>
   <string name="buscando">Buscando…</string>
   <string-array name="generos_anime">
@@ -672,6 +672,40 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="cancion_sin_app">No hay una app de música que pueda tocarla</string>
+  <string name="cancion_tocar">Tocar la canción</string>
+  <string name="cancion_elegir">Tu canción</string>
+  <string name="cancion_elegir_pista">Elige una canción de los álbumes de tu cajón. Sale en tu perfil y quien la toque la escucha en su app de música.</string>
+  <string name="cancion_buscar">Buscar una canción</string>
+  <string name="cancion_quitar">Quitar la canción</string>
+  <string name="cancion_sin_albumes">Agrega álbumes a tu cajón y aquí salen sus canciones.</string>
+  <string name="cancion_poner">Poner una canción</string>
+  <string name="lo_del_momento">Lo del momento</string>
+  <string name="red_borrar_avisos">Borrar avisos</string>
+  <string name="red_borrar_avisos_seguro">¿Borrar todos los avisos?</string>
+  <string name="red_si_borrar_avisos">Sí, borrar todos</string>
+  <string name="red_borrar_aviso">Borrar este aviso</string>
+  <string name="red_hoy">Hoy</string>
+  <string name="red_ultimos_7">Últimos 7 días</string>
+  <string name="red_antes">Antes</string>
+  <string name="chat_borrar">Borrar la conversación</string>
+  <string name="chat_borrar_seguro">Se borra de este teléfono (lo que ya recibió la otra persona se queda en el suyo).</string>
+  <string name="red_paso1_titulo">1 · Cuéntanos qué te gusta</string>
+  <string name="red_paso1_texto">Elige películas, series, artistas y libros de lo más visto, escuchado y leído. Con eso se arma lo que ves aquí.</string>
+  <string name="red_paso1_boton">Elegir lo que me gusta</string>
+  <string name="red_paso2_titulo">2 · Crea tu cuenta</string>
+  <string name="red_paso2_texto">Para seguir a otras personas, publicar, comentar y escribir mensajes. Mientras tanto, mira lo que comparte la gente en Explorar.</string>
+  <string name="red_feed_sin_cuenta">Con tu cuenta, aquí sale lo de las personas que sigues.</string>
+  <string name="red_tu_nota">Tu nota</string>
+  <string name="red_nota_pon">Pon una nota</string>
+  <string name="red_nota_pista">¿Qué estás viendo, leyendo o escuchando? (24 h)</string>
+  <string name="red_nota_poner">Poner la nota</string>
+  <string name="red_nota_quitar">Quitar la nota</string>
+  <string name="red_vistas">vistas</string>
+  <string name="red_millones">%1$s mill.</string>
+  <string name="red_miles">%1$s mil</string>
+  <string name="red_quitar_de_la_red">Quitar de Para ti (vuelve a ser privada)</string>
+  <string name="red_quitada">Quitada de la red</string>
   <string name="compartir_como_imagen">Compartir como imagen</string>
   <string name="chat_titulo">Mensajes</string>
   <string name="chat_mandar_a">Mandar a…</string>
@@ -818,7 +852,7 @@
   <string name="red_tipo_lista">una lista</string>
   <string name="red_tipo_publico">publicó</string>
   <string name="red_tipo_resena">una reseña</string>
-  <string name="red_titulo">La red</string>
+  <string name="red_titulo">Para ti</string>
   <string name="red_tu_correo">Tu correo</string>
   <string name="red_tu_cuenta">Tu cuenta en la red</string>
   <string name="red_usuario">Usuario</string>

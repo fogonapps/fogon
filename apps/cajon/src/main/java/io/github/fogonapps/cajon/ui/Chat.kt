@@ -54,6 +54,8 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
     Cabecera(stringResource(if (o != null) R.string.chat_mandar_a else R.string.chat_titulo), vm::cerrar)
     if (usuario == null) { Pista(stringResource(R.string.red_invita_texto), Modifier.padding(16.dp)); return }
+    LaunchedEffect(Unit) { vm.red.cargarNotas() }
+    if (o == null) FilaNotas(vm, e)
     o?.let { Pista(stringResource(R.string.chat_mandar_obra, it.titulo), Modifier.padding(horizontal = 16.dp)) }
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         IconoRiso(Iconos.Candado, null, tamano = 16.dp, tinta = f.textoSuave)
@@ -102,6 +104,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
     var texto by rememberSaveable { mutableStateOf("") }
     var elegir by remember { mutableStateOf(false) }
     var verNumero by remember { mutableStateOf(false) }
+    var borrar by remember { mutableStateOf(false) }
     val numero by produceState<String?>(null, usuario, verNumero) { if (verNumero) value = vm.chat.numeroSeguridad(usuario) }
     // Mientras está abierta, revisa cada 8 segundos si llegó algo.
     LaunchedEffect(usuario) { while (true) { vm.chat.recibir(); vm.chat.marcarLeida(usuario); delay(8000) } }
@@ -109,7 +112,12 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
         Row {
             BotonIcono(Iconos.Candado, stringResource(R.string.chat_numero)) { verNumero = !verNumero }
             BotonIcono(Iconos.Persona, stringResource(R.string.red_ver_perfil)) { vm.abrir(Pantalla.PerfilRed(usuario)) }
+            BotonIcono(Iconos.Borrar, stringResource(R.string.chat_borrar)) { borrar = !borrar }
         }
+    }
+    if (borrar) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pista(stringResource(R.string.chat_borrar_seguro), Modifier.weight(1f))
+        Pildora(stringResource(R.string.red_si_borrar), acento = true) { vm.chat.borrarConversacion(usuario); vm.cerrar() }
     }
     if (verNumero) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(18.dp)).background(f.superficie).border(f.borde, f.linea, forma(18.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)) {

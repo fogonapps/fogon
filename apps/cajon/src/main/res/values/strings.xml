@@ -461,7 +461,7 @@
     <item quantity="one">%1$d song · %2$s</item>
     <item quantity="other">%1$d songs · %2$s</item>
   </plurals>
-  <string name="para_ti">For you</string>
+  <string name="para_ti">You might like</string>
   <string name="actualizar">Refresh</string>
   <string name="para_ti_vacio">Tell me what you like, or rate what you watched, read or listened to (or heart it), and recommendations show up here.</string>
   <string name="para_ti_cine">Films, series and anime</string>
@@ -473,7 +473,7 @@
   <string name="de_autor">By %1$s</string>
   <string name="tus_gustos">Your taste</string>
   <string name="cuentame_gustos">Tell me what you like</string>
-  <string name="cuentame_gustos_pista">Pick what you want recommended, the genres you like (and the ones you don’t) and some things you love. That way “For you” gets it right from day one.</string>
+  <string name="cuentame_gustos_pista">Pick what you want recommended, the genres you like (and the ones you don’t) and some things you love. That way “You might like” gets it right from day one.</string>
   <string name="ahora_no">Not now</string>
   <string name="porque_genero">You like: %1$s</string>
   <string name="para_explorar">To explore something different</string>
@@ -488,7 +488,7 @@
   <string name="excluir_pista">Nothing of theirs is ever recommended.</string>
   <string name="excluir_genero">Nothing of this genre:</string>
   <string name="elegir_gustos_explica">Everything is optional and can be changed anytime in “Your taste”. What you pick here doesn’t go into your cajón: it’s only used for recommendations.</string>
-  <string name="que_recomiendo">What you want in “For you”</string>
+  <string name="que_recomiendo">What you want in “You might like”</string>
   <string name="generos_que_te_gustan">Genres</string>
   <string name="generos_pista">Tap once if you like it and again if you don’t; a third tap leaves it as it was.</string>
   <string name="lo_que_te_gusta">What you like</string>
@@ -628,10 +628,10 @@
   <string name="portada_lista">List cover</string>
   <string name="quien_ve_lista">Who would see this list</string>
   <string name="decir_no">Say no</string>
-  <string name="gustos_como_decir_no">Later, in “For you”, long-press a recommendation to say no.</string>
+  <string name="gustos_como_decir_no">Later, in “You might like”, long-press a recommendation to say no.</string>
   <string name="tut_como">How it works</string>
   <string name="tut_como_buscar">Tap + to search and save.</string>
-  <string name="tut_como_no">In “For you”, long-press something to say no.</string>
+  <string name="tut_como_no">In “You might like”, long-press something to say no.</string>
   <string name="tut_como_favoritas">On any title, tap the star to add it to your favorites.</string>
   <string name="buscando">Searching…</string>
   <string-array name="generos_anime">
@@ -672,6 +672,40 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="cancion_sin_app">No music app can play it</string>
+  <string name="cancion_tocar">Play the song</string>
+  <string name="cancion_elegir">Your song</string>
+  <string name="cancion_elegir_pista">Pick a song from the albums in your cajón. It shows on your profile and whoever taps it hears it in their music app.</string>
+  <string name="cancion_buscar">Search for a song</string>
+  <string name="cancion_quitar">Remove the song</string>
+  <string name="cancion_sin_albumes">Add albums to your cajón and their songs show up here.</string>
+  <string name="cancion_poner">Add a song</string>
+  <string name="lo_del_momento">Trending now</string>
+  <string name="red_borrar_avisos">Delete notifications</string>
+  <string name="red_borrar_avisos_seguro">Delete all notifications?</string>
+  <string name="red_si_borrar_avisos">Yes, delete all</string>
+  <string name="red_borrar_aviso">Delete this notification</string>
+  <string name="red_hoy">Today</string>
+  <string name="red_ultimos_7">Last 7 days</string>
+  <string name="red_antes">Earlier</string>
+  <string name="chat_borrar">Delete conversation</string>
+  <string name="chat_borrar_seguro">It’s deleted from this phone (what the other person already got stays on theirs).</string>
+  <string name="red_paso1_titulo">1 · Tell us what you like</string>
+  <string name="red_paso1_texto">Pick films, series, artists and books from the most watched, heard and read. That shapes what you see here.</string>
+  <string name="red_paso1_boton">Pick what I like</string>
+  <string name="red_paso2_titulo">2 · Create your account</string>
+  <string name="red_paso2_texto">To follow people, post, comment and send messages. Meanwhile, see what people share in Explore.</string>
+  <string name="red_feed_sin_cuenta">With your account, posts from people you follow show up here.</string>
+  <string name="red_tu_nota">Your note</string>
+  <string name="red_nota_pon">Add a note</string>
+  <string name="red_nota_pista">What are you watching, reading or listening to? (24 h)</string>
+  <string name="red_nota_poner">Post note</string>
+  <string name="red_nota_quitar">Remove note</string>
+  <string name="red_vistas">views</string>
+  <string name="red_millones">%1$sM</string>
+  <string name="red_miles">%1$sK</string>
+  <string name="red_quitar_de_la_red">Remove from For you (make it private again)</string>
+  <string name="red_quitada">Removed from the network</string>
   <string name="compartir_como_imagen">Share as an image</string>
   <string name="chat_titulo">Messages</string>
   <string name="chat_mandar_a">Send to…</string>
@@ -818,7 +852,7 @@
   <string name="red_tipo_lista">a list</string>
   <string name="red_tipo_publico">posted</string>
   <string name="red_tipo_resena">a review</string>
-  <string name="red_titulo">The network</string>
+  <string name="red_titulo">For you</string>
   <string name="red_tu_correo">Your email</string>
   <string name="red_tu_cuenta">Your network account</string>
   <string name="red_usuario">Username</string>

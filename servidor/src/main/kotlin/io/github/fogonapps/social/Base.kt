@@ -73,6 +73,13 @@ class Base(ruta: String) {
                     id INTEGER PRIMARY KEY, de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     para INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL, sobre TEXT NOT NULL, firma TEXT NOT NULL)""")
                 s.execute("CREATE INDEX IF NOT EXISTS mensajes_para ON mensajes(para, id)")
+                // Quién vio cada publicación (una vez por cuenta): para contar las vistas.
+                s.execute("""CREATE TABLE IF NOT EXISTS vistas(
+                    pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    PRIMARY KEY(pub, cuenta)) WITHOUT ROWID""")
+                // La nota de cada persona: unas palabras (y una obra, si quiere) que duran 24 horas.
+                s.execute("""CREATE TABLE IF NOT EXISTS notas(
+                    cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, datos TEXT NOT NULL DEFAULT '{}', cuando INTEGER NOT NULL)""")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

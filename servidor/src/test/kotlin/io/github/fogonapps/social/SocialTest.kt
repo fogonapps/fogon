@@ -167,6 +167,25 @@ class SocialTest {
         assertFailsWith<Problema> { s.mandar(beto, "ana", SobreNuevo("x", "y")) }
     }
 
+    @Test fun vistasNotasYAvisos() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.subirPublicaciones(ana, listOf(pub("1", Vis.PUBLICA, 10)))
+        val id = s.explorar(beto, null).single().id
+        s.vio(beto, listOf(id, id)); s.vio(ana, listOf(id))
+        assertEquals(2, s.publicacion(null, id)!!.vistas)                        // una vez por cuenta
+        s.seguir(beto, "ana")
+        s.ponerNota(ana, NotaNueva("viendo Matrix"))
+        assertEquals(listOf("ana"), s.notas(beto).map { it.persona.usuario })
+        assertEquals(0, s.notas(ana).count { it.persona.usuario == "beto" })     // beto no tiene nota
+        s.ponerNota(ana, NotaNueva(""))                                          // vacía: se quita
+        assertEquals(0, s.notas(beto).size)
+        assertEquals(1, s.avisos(ana, null).size)
+        s.borrarAvisos(ana, s.avisos(ana, null).single().id)
+        assertEquals(0, s.avisos(ana, null).size)
+    }
+
     @Test fun imagenes() {
         val s = nuevo()
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!

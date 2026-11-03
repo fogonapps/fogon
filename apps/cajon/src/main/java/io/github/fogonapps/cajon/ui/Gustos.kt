@@ -259,7 +259,8 @@ fun ElegirGustos(vm: CajonViewModel, e: Estado) {
     LaunchedEffect(Unit) { vm.cargarParaElegir() }
     val opciones by vm.paraElegir.collectAsStateWithLifecycle()
     val tmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
-    val terminar = { vm.gustosListos(); vm.cerrar() }
+    // Al terminar: si todavía no hay cuenta en la red, el paso 2 de Para ti es crearla.
+    val terminar = { vm.gustosListos(); if (vm.red.usuario.value == null) vm.reemplazar(Pantalla.CuentaRed) else vm.cerrar() }
     Cabecera(stringResource(R.string.cuentame_gustos), terminar)
     Pista(stringResource(R.string.elegir_gustos_explica))
 

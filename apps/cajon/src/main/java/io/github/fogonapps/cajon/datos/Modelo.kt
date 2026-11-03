@@ -327,6 +327,8 @@ data class Perfil(
     /** Cómo se ve la foto dentro de su círculo y la portada dentro de su franja. */
     val encuadreFoto: Encuadre = Encuadre(),
     val encuadrePortada: Encuadre = Encuadre(),
+    /** La canción del perfil: "<id del álbum en el cajón>|<título de la canción>"; vacío = ninguna. */
+    val cancion: String = "",
     val cambio: Long = 0,
 )
 

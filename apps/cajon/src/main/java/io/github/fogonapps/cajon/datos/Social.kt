@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -29,7 +30,7 @@ class ErrorSocial(val codigo: Int, val error: String) : IOException("HTTP $codig
 @Serializable
 data class PublicacionSocial(
     val id: Long, val autor: PersonaSocial, val tipo: String, val cuando: Long, val visibilidad: String, val datos: JsonObject,
-    val megusta: Int = 0, val comentarios: Int = 0, val yoMeGusta: Boolean = false, val yoGuardo: Boolean = false,
+    val megusta: Int = 0, val comentarios: Int = 0, val yoMeGusta: Boolean = false, val yoGuardo: Boolean = false, val vistas: Int = 0,
 )
 
 @Serializable data class ComentarioSocial(val id: Long, val autor: PersonaSocial, val texto: String, val cuando: Long, val puedoBorrar: Boolean = false)
@@ -69,6 +70,8 @@ data class PerfilSubido(
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
+@Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
+@Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
 @Serializable private data class SobreNuevo(val sobre: String, val firma: String)
 @Serializable data class Sobre(val id: Long, val de: PersonaSocial, val cuando: Long, val sobre: String, val firma: String)
 
@@ -155,6 +158,11 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
+
+    suspend fun vio(ids: List<Long>) { pedir("/vistas", "POST", json(ListSerializer(Long.serializer()), ids)) }
+    suspend fun ponerNota(n: NotaNueva) { pedir("/nota", "PUT", json(NotaNueva.serializer(), n)) }
+    suspend fun notas() = leer(ListSerializer(NotaSocial.serializer()), pedir("/notas"))
+    suspend fun borrarAvisos(id: Long? = null) { pedir("/avisos" + (id?.let { "/$it" } ?: ""), "DELETE") }
 
     /* Avisos y reportes */
     suspend fun avisos(antes: Long? = null) = leer(ListSerializer(AvisoSocial.serializer()), pedir("/avisos" + (antes?.let { "?antes=$it" } ?: "")))

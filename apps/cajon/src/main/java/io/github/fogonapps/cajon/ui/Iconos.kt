@@ -63,6 +63,8 @@ object Iconos {
         relleno("M16.4 6.2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.6 13.6c3 0 5 2.2 5 5.8h-4.2c0-2.4-.6-4.2-2-5.4z"))
     /** Un avión de papel: enviar. */
     val Enviar = dibujo("enviar", relleno("M3.6 11.4 20.4 4l-5.2 16.4-3.4-6.6z"))
+    /** Un triángulo: tocar (reproducir). */
+    val Tocar = dibujo("tocar", relleno("M7.4 4.6v14.8L19.6 12z"))
     /** Una banderita: reportar. */
     val Bandera = dibujo("bandera", trazo("M5.6 20.4V4", 2.4f), relleno("M6.6 4.4h11.6l-2.6 4 2.6 4H6.6z"))
     val Mas = IconosFogon.Mas
