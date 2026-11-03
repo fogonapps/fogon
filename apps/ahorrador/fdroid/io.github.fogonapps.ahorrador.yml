@@ -18,9 +18,9 @@ Repo: https://github.com/fogonapps/fogon.git
 Binaries: https://github.com/fogonapps/el-ahorrador/releases/download/v%v/ElAhorrador-%v.apk
 
 Builds:
-  - versionName: "1.8.2"
-    versionCode: 14
-    commit: 9b534275e8709a13b10d10743aae194a5c95decd
+  - versionName: "1.8.3"
+    versionCode: 15
+    commit: d6a46df975e7e7fceaf3d69d8d745d71ac292432
     subdir: apps/ahorrador
     gradle:
       - yes
@@ -29,5 +29,5 @@ AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a
 
 AutoUpdateMode: Version ahorrador-v%v
 UpdateCheckMode: Tags ^ahorrador-v
-CurrentVersion: "1.8.2"
-CurrentVersionCode: 14
+CurrentVersion: "1.8.3"
+CurrentVersionCode: 15

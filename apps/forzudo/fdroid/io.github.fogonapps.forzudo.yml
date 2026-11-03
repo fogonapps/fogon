@@ -19,9 +19,9 @@ Repo: https://github.com/fogonapps/fogon.git
 Binaries: https://github.com/fogonapps/el-forzudo/releases/download/v%v/ElForzudo-%v.apk
 
 Builds:
-  - versionName: "1.14.2"
-    versionCode: 27
-    commit: 9b534275e8709a13b10d10743aae194a5c95decd
+  - versionName: "1.14.3"
+    versionCode: 28
+    commit: d6a46df975e7e7fceaf3d69d8d745d71ac292432
     subdir: apps/forzudo
     gradle:
       - yes
@@ -30,5 +30,5 @@ AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a
 
 AutoUpdateMode: Version forzudo-v%v
 UpdateCheckMode: Tags ^forzudo-v
-CurrentVersion: "1.14.2"
-CurrentVersionCode: 27
+CurrentVersion: "1.14.3"
+CurrentVersionCode: 28
