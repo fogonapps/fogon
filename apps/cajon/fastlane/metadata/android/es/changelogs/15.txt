@@ -1,0 +1,1 @@
+Los títulos de películas, series y animes ahora vienen en español latino ("Eterno resplandor de una mente sin recuerdos", no "¡Olvídate de mí!"), y lo escrito con el título latino se enlaza solo. Lo ya enlazado se corrige al actualizar.

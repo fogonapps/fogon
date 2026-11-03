@@ -1,0 +1,1 @@
+El personaje va una sola vez en el Inicio: sale el circulito de la cabecera.

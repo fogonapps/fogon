@@ -1,0 +1,1 @@
+Personaje nuevo: el muñeco de Fogón levanta la barra, con la cabeza de estrella en el color de la app y el cuerpo en puntos. El tutorial también tiene al muñeco: saluda, anota, corre, sube al podio y lleva su caja.

@@ -1,0 +1,1 @@
+Primera versión: calorías y macros del día, agua, 185 alimentos con valores de USDA y porciones caseras, código de barras opcional (Open Food Facts), 16 recetas colombianas, menú de la semana, lista de mercado, metas calculadas o a mano, progreso, conexión con El Forzudo, widget y respaldo. En español e inglés.

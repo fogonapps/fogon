@@ -1,0 +1,301 @@
+package io.github.fogonapps.forzudo.ui
+
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import io.github.fogonapps.identidad.tarjetaFogon
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.forma
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.animation.animateContentSize
+import io.github.fogonapps.identidad.rebote
+import io.github.fogonapps.identidad.aparecerConRebote
+import io.github.fogonapps.identidad.estallido
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.border
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.Personaje
+import io.github.fogonapps.identidad.R as RId
+import io.github.fogonapps.forzudo.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import io.github.fogonapps.identidad.fondoFogon
+import io.github.fogonapps.identidad.brillo
+import io.github.fogonapps.forzudo.GymViewModel
+import io.github.fogonapps.forzudo.Pantalla
+import io.github.fogonapps.forzudo.Pestana
+import io.github.fogonapps.forzudo.datos.duracion
+import kotlinx.coroutines.delay
+
+/** Pide confirmación: (título, texto opcional, acción si dice que sí). */
+typealias Confirmar = (String, String?, () -> Unit) -> Unit
+
+val LocalConfirmar = staticCompositionLocalOf<Confirmar> { { _, _, si -> si() } }
+
+private data class Pregunta(val titulo: String, val texto: String?, val si: () -> Unit)
+
+@Composable
+fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
+    val e by vm.estado.collectAsStateWithLifecycle()
+    val pila by vm.pila.collectAsStateWithLifecycle()
+    val pestana by vm.pestana.collectAsStateWithLifecycle()
+    val sync by vm.sync.collectAsStateWithLifecycle()
+    val descanso by vm.descanso.collectAsStateWithLifecycle()
+    val f = FogonTema.actual
+    val snack = remember { SnackbarHostState() }
+    var pregunta by remember { mutableStateOf<Pregunta?>(null) }
+
+    LaunchedEffect(Unit) { vm.mensajes.collect { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(it) } }
+
+    val estado = e
+    if (estado == null) {
+        Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
+            Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.cargando), tamano = 140.dp)
+        }
+        return
+    }
+
+    CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
+        Box(Modifier.fillMaxSize().fondoFogon(f)) {
+            Scaffold(
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
+                bottomBar = {
+                    Column {
+                        val confirmar = LocalConfirmar.current
+                        if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmar, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
+                        BarraPestanas(
+                            listOf(
+                                Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), Iconos.Inicio),
+                                Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), Iconos.Pesa),
+                                Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), Iconos.Rango),
+                                Triple(Pestana.PERFIL, stringResource(R.string.pestana_perfil), Iconos.Persona),
+                            ),
+                            pestana, vm::irA,
+                        )
+                    }
+                },
+            ) { pad ->
+                // Cada pestaña con su propio scroll (al cambiar, empieza arriba)
+                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana -> Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
+                    // Inicio y Rangos llevan su propia cabecera gigante.
+                    if (pestana == Pestana.ENTRENAR || pestana == Pestana.PERFIL) Text(
+                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos; Pestana.PERFIL -> R.string.pestana_perfil }),
+                        style = MaterialTheme.typography.headlineLarge, color = f.texto,
+                        modifier = Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp),
+                    )
+                    when (pestana) {
+                        Pestana.INICIO -> Inicio(vm, estado)
+                        Pestana.ENTRENAR -> Entrenar(vm, estado)
+                        Pestana.RANGOS -> Rangos(vm, estado)
+                        Pestana.PERFIL -> Perfil(vm, estado, sync, onExportar, onImportar)
+                    }
+                } }
+            }
+
+            // Pantallas encima de las pestañas
+            io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
+                Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
+                    Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
+                        when (p) {
+                            is Pantalla.Vivo -> Vivo(vm, estado)
+                            is Pantalla.Resumen -> Resumen(vm, estado, p.r)
+                            is Pantalla.Detalle -> Detalle(vm, estado, p.id)
+                            is Pantalla.Entreno -> EntrenoGuardado(vm, estado, p.id)
+                            is Pantalla.Musculo -> MusculoPantalla(vm, estado, p.id)
+                            is Pantalla.Programas -> Programas(vm, estado)
+                            is Pantalla.Editor -> Editor(vm, estado, p.rid)
+                            is Pantalla.Cambiar -> Cambiar(vm, p)
+                            is Pantalla.Zoom -> Zoom(vm, p.id, p.i)
+                            is Pantalla.AcercaDe -> AcercaDe(vm)
+                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
+                            is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }
+                            is Pantalla.Licencias -> Licencias(vm)
+                            is Pantalla.Preguntas -> Preguntas(vm)
+                            is Pantalla.Reporte -> Reporte(vm)
+                        }
+                    }
+                    if (p is Pantalla.Vivo) Box(Modifier.align(Alignment.BottomCenter)) { BarraDescanso(vm, descanso) }
+                    SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(bottom = 90.dp)) { AvisoTinta(it.visuals.message) }
+                }
+            }
+
+            // Tutorial inicial (se puede saltar; se vuelve a ver desde Perfil)
+            val verTutorial by vm.tutorial.collectAsStateWithLifecycle()
+            if (verTutorial) Tutorial(vm, estado.nombre)
+
+            pregunta?.let { q ->
+                AlertDialog(
+                    onDismissRequest = { pregunta = null },
+                    title = { Text(q.titulo) },
+                    text = q.texto?.let { { Text(it) } },
+                    confirmButton = { TextButton({ pregunta = null; q.si() }) { Text(stringResource(R.string.si_continuar), fontWeight = FontWeight.Bold) } },
+                    dismissButton = { TextButton({ pregunta = null }) { Text(stringResource(R.string.volver)) } },
+                )
+            }
+        }
+    }
+}
+
+
+/**
+ * La barra de pestañas: una píldora de vidrio que flota. La activa es una píldora de la primera tinta con su
+ * ícono y su nombre; las demás, solo el ícono (el nombre lo dicen los lectores de pantalla).
+ */
+@Composable
+private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonapps.identidad.Dibujo>>, actual: T, onElegir: (T) -> Unit) {
+    val f = FogonTema.actual
+    val forma = io.github.fogonapps.identidad.FormaPildora
+    Row(
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 12.dp)
+            .clip(forma).background(f.barra).border(f.borde, f.linea, forma).selectableGroup().padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
+    ) {
+        pestanas.forEach { (p, nombre, icono) ->
+            val activa = p == actual
+            Row(
+                Modifier.animateContentSize(io.github.fogonapps.identidad.resorte()).rebote(0.92f).height(48.dp).clip(forma)
+                    .background(androidx.compose.animation.animateColorAsState(if (activa) f.tinta1 else f.tinta1.copy(alpha = 0f), label = "pestana").value)
+                    .selectable(activa, role = androidx.compose.ui.semantics.Role.Tab) { onElegir(p) }
+                    .semantics { contentDescription = nombre }
+                    .padding(horizontal = if (activa) 16.dp else 13.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (activa) f.sobreTinta1 else f.textoSuave)
+                if (activa) Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.sobreTinta1, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** Aviso con la identidad: tinta sobre papel invertido, y la chispa en los récords. */
+@Composable
+private fun AvisoTinta(mensaje: String) {
+    val record = mensaje.startsWith(io.github.fogonapps.forzudo.MARCA_RECORD)
+    Row(
+        Modifier.fillMaxWidth().padding(12.dp).clip(io.github.fogonapps.identidad.FormaPildora).background(FogonTema.actual.pildora).padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // En los récords, la chispa salta con un estallido de puntos y el teléfono vibra.
+        if (record) {
+            val haptico = androidx.compose.ui.platform.LocalHapticFeedback.current
+            LaunchedEffect(mensaje) { haptico.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm) }
+            Box(Modifier.aparecerConRebote(60).estallido(FogonTema.actual.tinta1, alcance = 12.dp, retraso = 120)) {
+                io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
+            }
+        }
+        Text(mensaje.removePrefix(io.github.fogonapps.forzudo.MARCA_RECORD), color = FogonTema.actual.sobrePildora, fontWeight = if (record) FontWeight.Bold else FontWeight.Normal)
+    }
+}
+
+@Composable
+private fun BarraEntreno(titulo: String, inicio: Long, onCancelar: () -> Unit, onAbrir: () -> Unit) {
+    val f = FogonTema.actual
+    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) { while (true) { ahora = System.currentTimeMillis(); delay(1000) } }
+    Row(
+        Modifier.fillMaxWidth().background(f.paleta.tinta).clickable(onClick = onAbrir).heightIn(min = 52.dp).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.entreno_en_curso, titulo), color = f.paleta.sobreTinta, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text(duracion(ahora - inicio), color = f.paleta.sobreTinta, style = MaterialTheme.typography.titleMedium)
+        IconButton(onCancelar) { io.github.fogonapps.identidad.IconoRiso(Iconos.Cerrar, stringResource(R.string.cancelar_entreno), tinta = f.sobreTinta1, corrida = null) }
+    }
+}
+
+@Composable
+private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Descanso?) {
+    val f = FogonTema.actual
+    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(d) { while (d != null) { ahora = System.currentTimeMillis(); delay(250) } }
+    AnimatedVisibility(d != null, enter = slideInVertically { it }, exit = slideOutVertically { it }) {
+        val dd = d ?: return@AnimatedVisibility
+        val rest = maxOf(0L, (dd.fin - ahora + 999) / 1000)
+        Row(Modifier.fillMaxWidth().padding(12.dp).tarjetaFogon(forma(22.dp)).padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MedidorDescanso(if (dd.total > 0) rest.toFloat() / dd.total else 0f, "${rest / 60}:${(rest % 60).toString().padStart(2, '0')}")
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    io.github.fogonapps.identidad.BotonSecundario("−15", { vm.ajustarDescanso(-15) }, Modifier.weight(1f))
+                    io.github.fogonapps.identidad.BotonSecundario("+15", { vm.ajustarDescanso(15) }, Modifier.weight(1f))
+                }
+                io.github.fogonapps.identidad.BotonRiso(stringResource(R.string.saltar), { vm.pararDescanso() }, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+/**
+ * El descanso como un medidor con marcas finas (ver docs/IDENTIDAD.md → ADN visual): las marcas
+ * alrededor, el arco de lo que falta en el acento y una bolita blanca en la punta.
+ */
+@Composable
+private fun MedidorDescanso(falta: Float, texto: String) {
+    val f = FogonTema.actual
+    val marcas = f.texto.copy(alpha = 0.5f); val arco = f.paleta.tinta; val bola = f.pildora
+    val descripcion = stringResource(R.string.descanso_queda, texto)
+    Box(Modifier.size(108.dp).semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.Canvas(Modifier.size(108.dp)) {
+            val c = center; val r = size.minDimension / 2
+            for (i in 0 until 60) {
+                val a = Math.toRadians(i * 6.0 - 90)
+                val largo = if (i % 5 == 0) 0.16f else 0.1f
+                val x = kotlin.math.cos(a).toFloat(); val y = kotlin.math.sin(a).toFloat()
+                drawLine(marcas, androidx.compose.ui.geometry.Offset(c.x + x * r * (1 - largo), c.y + y * r * (1 - largo)),
+                    androidx.compose.ui.geometry.Offset(c.x + x * r, c.y + y * r), strokeWidth = 2f)
+            }
+            val ri = r * 0.74f
+            drawArc(arco, -90f, 360f * falta.coerceIn(0f, 1f), false,
+                topLeft = androidx.compose.ui.geometry.Offset(c.x - ri, c.y - ri), size = androidx.compose.ui.geometry.Size(ri * 2, ri * 2),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            val a = Math.toRadians(360.0 * falta.coerceIn(0f, 1f) - 90)
+            drawCircle(bola, 5.dp.toPx(), androidx.compose.ui.geometry.Offset(c.x + kotlin.math.cos(a).toFloat() * ri, c.y + kotlin.math.sin(a).toFloat() * ri))
+        }
+        Text(texto, fontFamily = FogonTema.actual.cifras, fontSize = 26.sp, color = f.texto)
+    }
+}

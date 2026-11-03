@@ -1,0 +1,1 @@
+New in Settings: “Find covers”. What you added by hand or brought from another app is looked up on TMDB and MusicBrainz and, when it's the same work, linked with its cover.

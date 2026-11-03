@@ -1,0 +1,4 @@
+-keepattributes *Annotation*, InnerClasses
+-keep,includedescriptorclasses class io.github.fogonapps.ahorrador.**$$serializer { *; }
+-keepclassmembers class io.github.fogonapps.ahorrador.** { *** Companion; }
+-keepclasseswithmembers class io.github.fogonapps.ahorrador.** { kotlinx.serialization.KSerializer serializer(...); }

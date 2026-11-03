@@ -1,0 +1,1045 @@
+[
+ {
+  "key": "vol5",
+  "name": "Volumen · 5 días",
+  "level": "Avanzado",
+  "goal": "Ganar músculo",
+  "desc": "Tu rutina actual: Torso/Pierna ×2 + un día de cuerpo completo ligero. Mucho volumen para crecer.",
+  "routines": [
+   {
+    "id": "L",
+    "title": "Torso A",
+    "dow": 1,
+    "items": [
+     {
+      "id": "press-banca",
+      "sets": 3
+     },
+     {
+      "id": "jalon-amplio",
+      "sets": 3
+     },
+     {
+      "id": "press-hombro",
+      "sets": 3
+     },
+     {
+      "id": "remo-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "curl-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "triceps-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "M",
+    "title": "Pierna A",
+    "dow": 2,
+    "items": [
+     {
+      "id": "goblet",
+      "sets": 3
+     },
+     {
+      "id": "prensa",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3
+     },
+     {
+      "id": "extension",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla",
+      "sets": 3,
+      "lo": 12,
+      "hi": 20
+     },
+     {
+      "id": "plancha",
+      "sets": 3
+     },
+     {
+      "id": "elev-piernas",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "X",
+    "title": "Full body ligero",
+    "dow": 3,
+    "light": true,
+    "items": [
+     {
+      "id": "press-banca-ligero",
+      "sets": 3
+     },
+     {
+      "id": "jalon-estrecho",
+      "sets": 3
+     },
+     {
+      "id": "rdl-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "curl-polea",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cabeza",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "J",
+    "title": "Torso B",
+    "dow": 4,
+    "items": [
+     {
+      "id": "press-inclinado",
+      "sets": 3
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3
+     },
+     {
+      "id": "aperturas",
+      "sets": 3
+     },
+     {
+      "id": "face-pull",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "curl-martillo",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cuerda",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "V",
+    "title": "Pierna B",
+    "dow": 5,
+    "items": [
+     {
+      "id": "smith",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 180
+     },
+     {
+      "id": "rdl-barra",
+      "sets": 3
+     },
+     {
+      "id": "zancadas",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3
+     },
+     {
+      "id": "elev-piernas",
+      "sets": 3,
+      "lo": 12,
+      "hi": 12
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "key": "vol4",
+  "name": "Volumen · 4 días",
+  "level": "Intermedio",
+  "goal": "Ganar músculo",
+  "desc": "Torso / Pierna dos veces por semana. Gran equilibrio entre volumen y descanso; ideal en semanas de trabajo pesadas.",
+  "routines": [
+   {
+    "id": "t1",
+    "title": "Torso A",
+    "dow": 1,
+    "items": [
+     {
+      "id": "press-banca",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3
+     },
+     {
+      "id": "press-hombro-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "jalon-amplio",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "curl-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cuerda",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "p1",
+    "title": "Pierna A",
+    "dow": 2,
+    "items": [
+     {
+      "id": "smith",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 180
+     },
+     {
+      "id": "rdl-barra",
+      "sets": 3
+     },
+     {
+      "id": "prensa",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla",
+      "sets": 3
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "t2",
+    "title": "Torso B",
+    "dow": 4,
+    "items": [
+     {
+      "id": "press-inclinado",
+      "sets": 3
+     },
+     {
+      "id": "jalon-estrecho",
+      "sets": 3
+     },
+     {
+      "id": "press-pecho-maquina",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12
+     },
+     {
+      "id": "remo-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "face-pull",
+      "sets": 3
+     },
+     {
+      "id": "curl-martillo",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cabeza",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "p2",
+    "title": "Pierna B",
+    "dow": 5,
+    "items": [
+     {
+      "id": "prensa",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12
+     },
+     {
+      "id": "hip-thrust",
+      "sets": 3
+     },
+     {
+      "id": "bulgara",
+      "sets": 3
+     },
+     {
+      "id": "extension",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral-sentado",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla-sentado",
+      "sets": 3
+     },
+     {
+      "id": "elev-piernas",
+      "sets": 3
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "key": "full3",
+  "name": "Cuerpo completo · 3 días",
+  "level": "Base",
+  "goal": "Ganar músculo",
+  "desc": "Todo el cuerpo en cada sesión. Perfecto para empezar o para semanas en que solo puedes ir 3 días.",
+  "routines": [
+   {
+    "id": "f1",
+    "title": "Full body A",
+    "dow": 1,
+    "items": [
+     {
+      "id": "smith",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 180
+     },
+     {
+      "id": "press-banca",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10
+     },
+     {
+      "id": "jalon-amplio",
+      "sets": 3
+     },
+     {
+      "id": "rdl-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "f2",
+    "title": "Full body B",
+    "dow": 3,
+    "items": [
+     {
+      "id": "prensa",
+      "sets": 3
+     },
+     {
+      "id": "press-inclinado",
+      "sets": 3
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3
+     },
+     {
+      "id": "curl-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "triceps-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "f3",
+    "title": "Full body C",
+    "dow": 5,
+    "items": [
+     {
+      "id": "goblet",
+      "sets": 3
+     },
+     {
+      "id": "press-hombro",
+      "sets": 3
+     },
+     {
+      "id": "jalon-estrecho",
+      "sets": 3
+     },
+     {
+      "id": "hip-thrust",
+      "sets": 3
+     },
+     {
+      "id": "face-pull",
+      "sets": 3
+     },
+     {
+      "id": "elev-piernas",
+      "sets": 3
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "key": "def4",
+  "name": "Definición · 4 días",
+  "level": "Intermedio",
+  "goal": "Perder grasa",
+  "desc": "Mantén pesados los ejercicios principales para conservar el músculo; accesorios con más repeticiones y descansos cortos. La grasa se pierde sobre todo con la dieta (comer un poco menos de lo que gastas) y caminando más.",
+  "routines": [
+   {
+    "id": "d1",
+    "title": "Torso A",
+    "dow": 1,
+    "items": [
+     {
+      "id": "press-banca",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 150
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "press-hombro-mancuernas",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "jalon-amplio",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "laterales",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "curl-mancuerna",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 45
+     },
+     {
+      "id": "triceps-cuerda",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 45
+     }
+    ]
+   },
+   {
+    "id": "d2",
+    "title": "Pierna A",
+    "dow": 2,
+    "items": [
+     {
+      "id": "smith",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 150
+     },
+     {
+      "id": "rdl-barra",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 120
+     },
+     {
+      "id": "prensa",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 90
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 60
+     },
+     {
+      "id": "pantorrilla",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     }
+    ]
+   },
+   {
+    "id": "d3",
+    "title": "Torso B",
+    "dow": 4,
+    "items": [
+     {
+      "id": "press-inclinado",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 120
+     },
+     {
+      "id": "jalon-estrecho",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "aperturas",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "remo-mancuerna",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "face-pull",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "curl-martillo",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 45
+     },
+     {
+      "id": "triceps-cabeza",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 45
+     }
+    ]
+   },
+   {
+    "id": "d4",
+    "title": "Pierna B",
+    "dow": 5,
+    "items": [
+     {
+      "id": "prensa",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 120
+     },
+     {
+      "id": "hip-thrust",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "zancadas-mancuernas",
+      "sets": 3,
+      "lo": 10,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "extension",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "curl-femoral-sentado",
+      "sets": 3,
+      "lo": 12,
+      "hi": 15,
+      "rest": 45
+     },
+     {
+      "id": "pantorrilla-sentado",
+      "sets": 3,
+      "lo": 15,
+      "hi": 20,
+      "rest": 45
+     },
+     {
+      "id": "plancha",
+      "sets": 3,
+      "lo": 30,
+      "hi": 60,
+      "rest": 45
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "key": "fuerza4",
+  "name": "Fuerza · 4 días",
+  "level": "Avanzado",
+  "goal": "Ganar fuerza",
+  "desc": "Básicos con barra a pocas repeticiones y descansos largos. Exige buena técnica: hazla cuando domines sentadilla, press y peso muerto.",
+  "routines": [
+   {
+    "id": "s1",
+    "title": "Sentadilla + Banca",
+    "dow": 1,
+    "items": [
+     {
+      "id": "sentadilla",
+      "sets": 4,
+      "lo": 4,
+      "hi": 6,
+      "rest": 180
+     },
+     {
+      "id": "press-banca",
+      "sets": 4,
+      "lo": 4,
+      "hi": 6,
+      "rest": 180
+     },
+     {
+      "id": "remo-barra",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 120
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3,
+      "lo": 10,
+      "hi": 15,
+      "rest": 60
+     }
+    ]
+   },
+   {
+    "id": "s2",
+    "title": "Peso muerto + Militar",
+    "dow": 2,
+    "items": [
+     {
+      "id": "peso-muerto",
+      "sets": 3,
+      "lo": 3,
+      "hi": 5,
+      "rest": 240
+     },
+     {
+      "id": "press-militar",
+      "sets": 4,
+      "lo": 4,
+      "hi": 6,
+      "rest": 180
+     },
+     {
+      "id": "dominadas",
+      "sets": 3,
+      "lo": 5,
+      "hi": 10,
+      "rest": 150
+     },
+     {
+      "id": "curl-barra",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 90
+     }
+    ]
+   },
+   {
+    "id": "s3",
+    "title": "Sentadilla + Inclinado",
+    "dow": 4,
+    "items": [
+     {
+      "id": "sentadilla",
+      "sets": 3,
+      "lo": 6,
+      "hi": 8,
+      "rest": 180
+     },
+     {
+      "id": "press-inclinado-barra",
+      "sets": 4,
+      "lo": 5,
+      "hi": 8,
+      "rest": 150
+     },
+     {
+      "id": "jalon-amplio",
+      "sets": 3,
+      "lo": 8,
+      "hi": 10,
+      "rest": 120
+     },
+     {
+      "id": "rdl-barra",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 150
+     }
+    ]
+   },
+   {
+    "id": "s4",
+    "title": "Banca + Glúteo",
+    "dow": 5,
+    "items": [
+     {
+      "id": "press-banca",
+      "sets": 3,
+      "lo": 6,
+      "hi": 8,
+      "rest": 150
+     },
+     {
+      "id": "press-hombro-mancuernas",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 120
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 90
+     },
+     {
+      "id": "hip-thrust",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 120
+     },
+     {
+      "id": "triceps-polea",
+      "sets": 3,
+      "lo": 8,
+      "hi": 12,
+      "rest": 60
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "key": "ppl6",
+  "name": "Empuje / Tirón / Pierna · 6 días",
+  "level": "Élite",
+  "goal": "Ganar músculo",
+  "desc": "Cada músculo dos veces por semana con mucho volumen. Muy exigente: solo si duermes bien y tu trabajo te deja recuperarte.",
+  "routines": [
+   {
+    "id": "e1",
+    "title": "Empuje 1",
+    "dow": 1,
+    "items": [
+     {
+      "id": "press-banca",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10
+     },
+     {
+      "id": "press-inclinado",
+      "sets": 3
+     },
+     {
+      "id": "press-hombro",
+      "sets": 3
+     },
+     {
+      "id": "laterales",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cuerda",
+      "sets": 3
+     },
+     {
+      "id": "triceps-cabeza",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "r1",
+    "title": "Tirón 1",
+    "dow": 2,
+    "items": [
+     {
+      "id": "jalon-amplio",
+      "sets": 3
+     },
+     {
+      "id": "remo-maquina",
+      "sets": 3
+     },
+     {
+      "id": "remo-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "face-pull",
+      "sets": 3
+     },
+     {
+      "id": "curl-mancuerna",
+      "sets": 3
+     },
+     {
+      "id": "curl-martillo",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "l1",
+    "title": "Pierna 1",
+    "dow": 3,
+    "items": [
+     {
+      "id": "smith",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10,
+      "rest": 180
+     },
+     {
+      "id": "rdl-barra",
+      "sets": 3
+     },
+     {
+      "id": "prensa",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral",
+      "sets": 3
+     },
+     {
+      "id": "extension",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla",
+      "sets": 3
+     },
+     {
+      "id": "crunch-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "e2",
+    "title": "Empuje 2",
+    "dow": 4,
+    "items": [
+     {
+      "id": "press-inclinado-barra",
+      "sets": 3,
+      "lo": 6,
+      "hi": 10
+     },
+     {
+      "id": "press-banca-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "press-hombro-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "laterales-polea",
+      "sets": 3
+     },
+     {
+      "id": "press-frances",
+      "sets": 3
+     },
+     {
+      "id": "triceps-polea",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "r2",
+    "title": "Tirón 2",
+    "dow": 5,
+    "items": [
+     {
+      "id": "jalon-estrecho",
+      "sets": 3
+     },
+     {
+      "id": "remo-t",
+      "sets": 3
+     },
+     {
+      "id": "pullover-polea",
+      "sets": 3
+     },
+     {
+      "id": "pajaros",
+      "sets": 3
+     },
+     {
+      "id": "curl-polea",
+      "sets": 3
+     },
+     {
+      "id": "curl-inclinado",
+      "sets": 3
+     }
+    ]
+   },
+   {
+    "id": "l2",
+    "title": "Pierna 2",
+    "dow": 6,
+    "items": [
+     {
+      "id": "hack",
+      "sets": 3
+     },
+     {
+      "id": "rdl-mancuernas",
+      "sets": 3
+     },
+     {
+      "id": "bulgara",
+      "sets": 3
+     },
+     {
+      "id": "curl-femoral-sentado",
+      "sets": 3
+     },
+     {
+      "id": "hip-thrust",
+      "sets": 3
+     },
+     {
+      "id": "pantorrilla-sentado",
+      "sets": 3
+     },
+     {
+      "id": "elev-colgado",
+      "sets": 3
+     }
+    ]
+   }
+  ]
+ }
+]

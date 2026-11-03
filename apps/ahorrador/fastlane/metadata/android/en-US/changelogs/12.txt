@@ -1,0 +1,1 @@
+Search transactions by note, category, account or amount, with filters. Tap a category in the summary to see its transactions. The monthly chart shows the amounts, and the comparison with last month is at this point of the month.

@@ -1,0 +1,1 @@
+Busca movimientos por nota, categoría, cuenta o valor, con filtros. Toca una categoría del resumen para ver sus movimientos. La gráfica de los meses muestra los valores, y la comparación con el mes anterior es a esta altura del mes.

@@ -1,0 +1,1 @@
+Quick add: just the calories of something that isn’t in the database. Fiber and sugar for foods, recipes and the day. Going over the carbs or fat goal is marked.

@@ -1,0 +1,1 @@
+Fotos de artistas: ahora se piden todas (antes solo las primeras 50). Las carátulas de álbumes tienen más tiempo para cargar.

@@ -1,0 +1,1 @@
+Genres are tags: tap one to see your artists and albums in that genre and discover more; you can also search them. A short biography for each artist (from Wikipedia). Your unlinked artists link themselves and get a photo and biography. Artist trivia only shows when it has something.

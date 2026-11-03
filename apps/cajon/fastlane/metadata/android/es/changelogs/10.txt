@@ -1,0 +1,1 @@
+Nuevo en Ajustes: «Buscar portadas». Lo que agregaste a mano o trajiste de otra app se busca en TMDB y MusicBrainz y, si es la misma obra, se enlaza con su portada.

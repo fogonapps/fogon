@@ -1,0 +1,1 @@
+First version: films, series, anime, books, albums and artists in one cajón, with stars, reviews, a diary, up next, episodes, pages, rated tracks, lists, yearly stats, challenges, share as image, import from Letterboxd and Goodreads, and sync through your GitHub. In Spanish and English.

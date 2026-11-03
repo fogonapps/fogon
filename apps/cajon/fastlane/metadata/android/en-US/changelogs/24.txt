@@ -1,0 +1,1 @@
+Connect Spotify step by step: opens Spotify to create your app, copies the address in one tap, pastes the Client ID and, if something fails, tells you which step to check.

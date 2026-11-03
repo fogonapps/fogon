@@ -1,0 +1,1 @@
+Categorías editables en 50/30/20 y kakeibo. Movimiento más suave. Dona del mes y comparación con los meses anteriores. Calendario de pagos. Importar el extracto del banco en CSV. Reto de ahorro de 52 semanas. Recordatorio diario opcional. Widget para la pantalla de inicio. Respaldo de todas las apps de Fogón en un solo archivo.

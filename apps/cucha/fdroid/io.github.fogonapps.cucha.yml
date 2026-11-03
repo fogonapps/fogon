@@ -1,0 +1,83 @@
+# Borrador de la receta para fdroiddata (metadata/io.github.fogonapps.cucha.yml).
+# No la lee nadie desde aquí: se copia a un fork de gitlab.com/fdroid/fdroiddata al pedir la inclusión.
+# Antes de mandarla: poner el hash completo del commit de la etiqueta en `commit` y pasarla por
+# `fdroid rewritemeta`, `fdroid lint` y `fdroid build` (ver docs/PUBLICAR.md → F-Droid).
+Categories:
+  - Diet
+  - Health Manager
+License: GPL-3.0-or-later
+AuthorName: Fogón
+SourceCode: https://github.com/fogonapps/fogon
+IssueTracker: https://github.com/fogonapps/fogon/issues
+Changelog: https://github.com/fogonapps/la-cucha/releases
+
+AutoName: La Cucha
+
+RepoType: git
+Repo: https://github.com/fogonapps/fogon.git
+# F-Droid compila desde el código y publica nuestro APK firmado solo si sale idéntico.
+Binaries: https://github.com/fogonapps/la-cucha/releases/download/v%v/LaCucha-%v.apk
+
+Builds:
+  - versionName: "1.1"
+    versionCode: 2
+    commit: e9234abccaafc4ad8a2d713230b0dd85380bae77
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.2"
+    versionCode: 3
+    commit: 50a58962df8461df0dffb2d6f71b555d5ec72fc2
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.3"
+    versionCode: 4
+    commit: 31393e79e5a09b236c6cc16cb5de34c4586fffe4
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.3.1"
+    versionCode: 5
+    commit: e14f174afff51606449632bddcc15ef25cfd30b5
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.3.2"
+    versionCode: 6
+    commit: 0e3c43c06da1cb3e8ecee818c8c639b183541499
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.4"
+    versionCode: 7
+    commit: 6dbf35835cf9d2c6a31ce962c2cbbc8bc354b83e
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.5"
+    versionCode: 8
+    commit: 3673fc92de56ba36478192aa5bd9986714783d73
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+  - versionName: "1.6"
+    versionCode: 9
+    commit: 4e561b08427bae88747f9aa3f7084cb85e2c1609
+    subdir: apps/cucha
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a993d8e5
+
+AutoUpdateMode: Version cucha-v%v
+UpdateCheckMode: Tags ^cucha-v
+CurrentVersion: "1.6"
+CurrentVersionCode: 9

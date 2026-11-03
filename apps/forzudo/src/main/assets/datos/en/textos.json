@@ -1,0 +1,366 @@
+{
+ "ejercicios": {
+  "press-banca": {
+   "n": "Bench press",
+   "cue": "Shoulder blades together and down, feet planted. Lower to the bottom of your chest with elbows at about 45°."
+  },
+  "press-banca-ligero": {
+   "n": "Bench press (light)",
+   "cue": "Same technique as the bench press. Finish with about 3 reps left in the tank."
+  },
+  "press-banca-mancuernas": {
+   "n": "Dumbbell bench press",
+   "cue": "Lower the dumbbells to the sides of your chest under control and press them together at the top without clashing them."
+  },
+  "press-pecho-maquina": {
+   "n": "Machine chest press",
+   "cue": "Set the seat so the handles are at chest height. Press without lifting your back off the pad."
+  },
+  "press-inclinado": {
+   "n": "Incline dumbbell press",
+   "cue": "Bench at 30–45°. Shoulder blades together; lower to chest height."
+  },
+  "press-inclinado-barra": {
+   "n": "Incline barbell press",
+   "cue": "Bench at 30–45°. Lower the bar to your upper chest, elbows at about 45°."
+  },
+  "aperturas": {
+   "n": "Pec deck fly",
+   "cue": "Arms slightly bent and locked in place, as if hugging a tree."
+  },
+  "aperturas-mancuernas": {
+   "n": "Dumbbell fly",
+   "cue": "Elbows slightly bent; open until you feel a stretch in your chest, without going too low."
+  },
+  "cruce-poleas": {
+   "n": "Cable crossover",
+   "cue": "Step forward, arms slightly bent; bring your hands together in front of your chest and squeeze for 1 second."
+  },
+  "flexiones": {
+   "n": "Push-ups",
+   "cue": "Body in a straight line, hands a little wider than your shoulders; chest close to the floor."
+  },
+  "fondos": {
+   "n": "Parallel bar dips",
+   "cue": "Lean your torso forward and lower until your shoulders are level with your elbows."
+  },
+  "jalon-amplio": {
+   "n": "Wide-grip lat pulldown",
+   "cue": "Chest up; pull the bar to your upper chest driving with your elbows. No swinging."
+  },
+  "jalon-estrecho": {
+   "n": "Close-grip lat pulldown",
+   "cue": "Hands closer together: drive your elbows toward your ribs."
+  },
+  "jalon-v": {
+   "n": "V-grip lat pulldown",
+   "cue": "Palms facing each other; pull the handle to your chest leaning back just slightly."
+  },
+  "dominadas": {
+   "n": "Pull-ups",
+   "cue": "From straight arms, pull up until your chin clears the bar; lower under control."
+  },
+  "remo-mancuerna": {
+   "n": "Dumbbell row",
+   "cue": "Back straight and parallel to the floor; pull the dumbbell toward your hip. Reps per arm."
+  },
+  "remo-maquina": {
+   "n": "Machine or cable row",
+   "cue": "Chest up; drive your elbows back and squeeze your back for 1 second."
+  },
+  "remo-barra": {
+   "n": "Barbell row",
+   "cue": "Torso leaning about 45°, back straight; pull the bar to your belly button."
+  },
+  "remo-t": {
+   "n": "T-bar row",
+   "cue": "Chest up and back straight; pull with your elbows close to your body."
+  },
+  "pullover-polea": {
+   "n": "Cable pullover",
+   "cue": "Arms almost straight; bring the bar down to your thighs in an arc."
+  },
+  "press-hombro": {
+   "n": "Machine shoulder press",
+   "cue": "Back against the pad; lower until your hands are at ear height."
+  },
+  "press-hombro-mancuernas": {
+   "n": "Dumbbell shoulder press",
+   "cue": "Seated with back support; press up without arching your lower back."
+  },
+  "press-militar": {
+   "n": "Barbell overhead press",
+   "cue": "Standing, glutes and abs tight; press the bar in a straight line overhead."
+  },
+  "laterales": {
+   "n": "Lateral raises",
+   "cue": "Raise to shoulder height, elbows slightly bent, no momentum."
+  },
+  "laterales-polea": {
+   "n": "Cable lateral raises",
+   "cue": "The cable keeps tension at the bottom; raise to shoulder height under control."
+  },
+  "face-pull": {
+   "n": "Face pull",
+   "cue": "Rope at face height; pull toward your ears, spreading your hands apart."
+  },
+  "pajaros": {
+   "n": "Dumbbell rear delt fly",
+   "cue": "Bent forward, open your arms out to the sides with elbows slightly bent."
+  },
+  "posterior-polea": {
+   "n": "Cable rear delt fly",
+   "cue": "Cross the cables and open backward at shoulder height."
+  },
+  "curl-mancuerna": {
+   "n": "Dumbbell biceps curl",
+   "cue": "Elbows still and close to your body. Lower slowly, 2–3 seconds."
+  },
+  "curl-polea": {
+   "n": "Cable biceps curl",
+   "cue": "Elbows still; the cable keeps tension through the whole range."
+  },
+  "curl-barra": {
+   "n": "Barbell curl",
+   "cue": "Elbows close to your body; curl without swinging your back."
+  },
+  "curl-predicador": {
+   "n": "Preacher curl",
+   "cue": "Arms resting on the pad; lower almost to full extension without locking the elbow."
+  },
+  "curl-inclinado": {
+   "n": "Incline dumbbell curl",
+   "cue": "Seated on an incline bench, arms hanging back; a big stretch for the biceps."
+  },
+  "curl-martillo": {
+   "n": "Hammer curl",
+   "cue": "Palms facing each other, elbows still."
+  },
+  "triceps-polea": {
+   "n": "Cable triceps pushdown (bar)",
+   "cue": "Elbows fixed at your sides; only your forearms move."
+  },
+  "triceps-cuerda": {
+   "n": "Rope triceps pushdown",
+   "cue": "At the bottom, pull the rope ends apart and outward."
+  },
+  "triceps-cabeza": {
+   "n": "Overhead triceps extension",
+   "cue": "Facing away from the cable, elbows forward; stretch well back."
+  },
+  "press-frances": {
+   "n": "EZ-bar skull crusher",
+   "cue": "Lying down, lower the bar toward your forehead moving only at the elbows."
+  },
+  "patada-triceps": {
+   "n": "Triceps kickback",
+   "cue": "Elbow tucked in and fixed; extend your arm fully backward."
+  },
+  "press-cerrado": {
+   "n": "Close-grip bench press",
+   "cue": "Hands shoulder-width apart, elbows tucked; lower to the bottom of your chest."
+  },
+  "fondos-banco": {
+   "n": "Bench dips",
+   "cue": "Hands on the bench behind you; lower by bending your elbows backward."
+  },
+  "goblet": {
+   "n": "Goblet squat",
+   "cue": "Dumbbell held against your chest; knees tracking over your toes; thighs parallel or lower."
+  },
+  "smith": {
+   "n": "Smith machine squat",
+   "cue": "Knees tracking over your toes, back straight; lower to parallel."
+  },
+  "sentadilla": {
+   "n": "Barbell squat",
+   "cue": "Bar on your upper traps, chest up; lower to parallel or below with a neutral back."
+  },
+  "hack": {
+   "n": "Machine hack squat",
+   "cue": "Back against the pad; go deep without lifting your heels."
+  },
+  "prensa": {
+   "n": "Leg press",
+   "cue": "Your hips never leave the seat. Don’t lock your knees at the top."
+  },
+  "extension": {
+   "n": "Leg extension",
+   "cue": "Squeeze for 1 second at the top. No jerking or momentum."
+  },
+  "zancadas": {
+   "n": "Walking lunges",
+   "cue": "Long step, torso upright; your back knee almost touches the floor. Reps per leg."
+  },
+  "zancadas-mancuernas": {
+   "n": "Dumbbell lunges",
+   "cue": "Dumbbells at your sides; long step and torso upright. Reps per leg."
+  },
+  "bulgara": {
+   "n": "Bulgarian split squat",
+   "cue": "Back foot on a bench; lower straight down with your torso leaning slightly forward. Reps per leg."
+  },
+  "curl-femoral": {
+   "n": "Lying leg curl",
+   "cue": "Hips pressed into the bench; curl up under control and lower slowly."
+  },
+  "curl-femoral-sentado": {
+   "n": "Seated leg curl",
+   "cue": "Set the pad over your ankles; curl all the way and return slowly."
+  },
+  "rdl-mancuernas": {
+   "n": "Dumbbell Romanian deadlift",
+   "cue": "Hips back, back straight, knees just slightly bent."
+  },
+  "rdl-barra": {
+   "n": "Barbell Romanian deadlift",
+   "cue": "Bar close to your legs the whole way. If your back rounds, lower the weight."
+  },
+  "peso-muerto": {
+   "n": "Deadlift",
+   "cue": "Bar against your shins, neutral back; push the floor away with your legs."
+  },
+  "hip-thrust": {
+   "n": "Barbell hip thrust",
+   "cue": "Upper back on the bench; drive your hips up squeezing your glutes and look ahead."
+  },
+  "puente-gluteo": {
+   "n": "Barbell glute bridge",
+   "cue": "Lying on the floor; drive your hips up squeezing your glutes for 1 second at the top."
+  },
+  "pantorrilla": {
+   "n": "Standing machine calf raise",
+   "cue": "Lower to a full stretch and pause 1 second at the bottom. No bouncing."
+  },
+  "pantorrilla-sentado": {
+   "n": "Seated calf raise",
+   "cue": "Knees under the pad; rise as high as you can and stretch well at the bottom."
+  },
+  "crunch-polea": {
+   "n": "Kneeling cable crunch",
+   "cue": "Round your back bringing your chest toward your knees. Your hips don’t move."
+  },
+  "crunch": {
+   "n": "Floor crunch",
+   "cue": "Lift only your shoulders off the floor squeezing your abs; don’t pull on your neck."
+  },
+  "plancha": {
+   "n": "Plank",
+   "cue": "Body in a straight line, glutes squeezed, without letting your hips sag."
+  },
+  "rueda": {
+   "n": "Ab wheel rollout",
+   "cue": "From your knees, roll forward with your abs tight without arching your back."
+  },
+  "elev-piernas": {
+   "n": "Leg raises",
+   "cue": "Lower back pressed into the floor or bench. Lower slowly."
+  },
+  "elev-colgado": {
+   "n": "Hanging leg raises",
+   "cue": "Hanging from the bar, raise your legs without swinging."
+  }
+ },
+ "equipos": {
+  "Mancuernas": "Dumbbells",
+  "Máquina": "Machine",
+  "Polea": "Cable",
+  "Peso corporal": "Bodyweight",
+  "Barra": "Barbell"
+ },
+ "musculos": {
+  "pecho": "Chest",
+  "espalda": "Back",
+  "hombros": "Shoulders",
+  "biceps": "Biceps",
+  "triceps": "Triceps",
+  "cuads": "Quads",
+  "femorales": "Hamstrings & glutes",
+  "pantorrillas": "Calves",
+  "abdomen": "Abs"
+ },
+ "rangos": [
+  "Iron",
+  "Bronze",
+  "Silver",
+  "Gold",
+  "Platinum",
+  "Diamond"
+ ],
+ "programas": {
+  "vol5": {
+   "name": "Volume · 5 days",
+   "level": "Advanced",
+   "goal": "Build muscle",
+   "desc": "Upper/Lower twice + one light full-body day. Lots of volume to grow.",
+   "rutinas": {
+    "L": "Upper A",
+    "M": "Lower A",
+    "X": "Light full body",
+    "J": "Upper B",
+    "V": "Lower B"
+   }
+  },
+  "vol4": {
+   "name": "Volume · 4 days",
+   "level": "Intermediate",
+   "goal": "Build muscle",
+   "desc": "Upper / Lower twice a week. A great balance of volume and rest; ideal for heavy work weeks.",
+   "rutinas": {
+    "t1": "Upper A",
+    "p1": "Lower A",
+    "t2": "Upper B",
+    "p2": "Lower B"
+   }
+  },
+  "full3": {
+   "name": "Full body · 3 days",
+   "level": "Base",
+   "goal": "Build muscle",
+   "desc": "The whole body every session. Perfect for getting started or for weeks when you can only go 3 days.",
+   "rutinas": {
+    "f1": "Full body A",
+    "f2": "Full body B",
+    "f3": "Full body C"
+   }
+  },
+  "def4": {
+   "name": "Cut · 4 days",
+   "level": "Intermediate",
+   "goal": "Lose fat",
+   "desc": "Keep the main lifts heavy to hold on to muscle; accessories with more reps and short rests. Fat is lost mostly through diet (eating a little less than you burn) and walking more.",
+   "rutinas": {
+    "d1": "Upper A",
+    "d2": "Lower A",
+    "d3": "Upper B",
+    "d4": "Lower B"
+   }
+  },
+  "fuerza4": {
+   "name": "Strength · 4 days",
+   "level": "Advanced",
+   "goal": "Build strength",
+   "desc": "Barbell basics at low reps with long rests. It demands good technique: do it once you’ve mastered the squat, press and deadlift.",
+   "rutinas": {
+    "s1": "Squat + Bench",
+    "s2": "Deadlift + Overhead press",
+    "s3": "Squat + Incline",
+    "s4": "Bench + Glutes"
+   }
+  },
+  "ppl6": {
+   "name": "Push / Pull / Legs · 6 days",
+   "level": "Elite",
+   "goal": "Build muscle",
+   "desc": "Every muscle twice a week with lots of volume. Very demanding: only if you sleep well and your job lets you recover.",
+   "rutinas": {
+    "e1": "Push 1",
+    "r1": "Pull 1",
+    "l1": "Legs 1",
+    "e2": "Push 2",
+    "r2": "Pull 2",
+    "l2": "Legs 2"
+   }
+  }
+ }
+}

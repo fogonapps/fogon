@@ -1,0 +1,1 @@
+First version: the day's calories and macros, water, 185 foods with USDA values and home portions, optional barcode lookup (Open Food Facts), 16 Colombian recipes, weekly menu, shopping list, calculated or manual goals, progress, El Forzudo link, widget and backup. In Spanish and English.

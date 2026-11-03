@@ -1,0 +1,1 @@
+In search, Films, Series and Anime as separate filters instead of Film.

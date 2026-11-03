@@ -1,0 +1,1 @@
+First version: quick keypad logging, accounts and credit card, envelopes, 50/30/20, kakeibo, goals, fixed payments with reminders, debts, 4×1000 tax, lock and backup. In Spanish and English.

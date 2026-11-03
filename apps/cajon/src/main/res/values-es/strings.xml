@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="cargando">Cargando</string>
+  <string name="hola">¡Hola!</string>
+  <string name="hola_nombre">Hola, %1$s</string>
+  <string name="ajustes">Ajustes</string>
+  <string name="agregar">Agregar</string>
+  <string name="pestana_inicio">Inicio</string>
+  <string name="pestana_listas">Listas</string>
+  <string name="vacio_titulo">Tu cajón está vacío</string>
+  <string name="vacio_texto">Aquí guardas todo lo que ves, lees y escuchas: películas, series, animes, libros y discos, con tu nota y tu diario.</string>
+  <string name="agregar_lo_primero">Agrega lo primero</string>
+  <string name="este_anio">En %1$d</string>
+  <string name="en_curso">En curso</string>
+  <string name="tu_diario">Tu diario</string>
+  <string name="ver_todo">Ver todo</string>
+  <string name="otra_vez">Otra vez</string>
+  <string name="me_gusta">Me gusta</string>
+  <string name="pendientes">Pendientes</string>
+  <string name="retos_del_anio">Retos de %1$d</string>
+  <string name="cambiar">Cambiar</string>
+  <string name="va_en_pagina">Va en la página %1$d</string>
+  <string name="buscar_en_cajon">Buscar en tu cajón</string>
+  <string name="todo">Todo</string>
+  <string name="cajon_nada">Nada con esos filtros.</string>
+  <string name="orden_recientes">Recientes</string>
+  <string name="orden_nota">Mejor nota</string>
+  <string name="orden_anio">Año</string>
+  <string name="orden_titulo">A–Z</string>
+  <string name="tipo_peliculas">Películas</string>
+  <string name="tipo_pelicula">Película</string>
+  <string name="tipo_series">Series</string>
+  <string name="tipo_serie">Serie</string>
+  <string name="tipo_animes">Animes</string>
+  <string name="tipo_anime">Anime</string>
+  <string name="tipo_libros">Libros</string>
+  <string name="tipo_libro">Libro</string>
+  <string name="tipo_albumes">Álbumes</string>
+  <string name="tipo_album">Álbum</string>
+  <string name="tipo_artistas">Artistas</string>
+  <string name="tipo_artista">Artista</string>
+  <string name="estado_por_ver">Por ver</string>
+  <string name="estado_por_leer">Por leer</string>
+  <string name="estado_por_escuchar">Por escuchar</string>
+  <string name="estado_pendiente">Pendiente</string>
+  <string name="estado_viendo">Viendo</string>
+  <string name="estado_leyendo">Leyendo</string>
+  <string name="estado_escuchando">Escuchando</string>
+  <string name="estado_en_curso">En curso</string>
+  <string name="estado_visto">Visto</string>
+  <string name="estado_leido">Leído</string>
+  <string name="estado_escuchado">Escuchado</string>
+  <string name="estado_terminado">Terminado</string>
+  <string name="estado_abandonado">Abandonado</string>
+  <string name="buscar_pista">Nombre, título original…</string>
+  <string name="buscar_falta_tmdb">Para buscar películas, series y animes hace falta tu clave de TMDB (es gratis). También puedes agregarlos a mano.</string>
+  <string name="buscar_tmdb_mala">TMDB no aceptó tu clave. Revísala en Ajustes.</string>
+  <string name="buscar_sin_red">No se pudo buscar: revisa tu conexión a internet.</string>
+  <string name="poner_clave_tmdb">Poner mi clave de TMDB</string>
+  <string name="agregar_a_mano">Agregar a mano</string>
+  <string name="buscar_nada">No encontré «%1$s».</string>
+  <string name="ya_en_cajon">Ya está en tu cajón</string>
+  <string name="no_esta_a_mano">¿No está? Agrégalo a mano</string>
+  <string name="fuente_tmdb">Películas, series y animes: TMDB, con tu propia clave.</string>
+  <string name="fuente_open_library">Libros: Open Library (Internet Archive), datos abiertos.</string>
+  <string name="fuente_musicbrainz">Música: MusicBrainz (datos de dominio público) y carátulas del Cover Art Archive.</string>
+  <string name="minutos_n">%1$d min</string>
+  <string name="horas_minutos">%1$d h %2$d min</string>
+  <string name="canciones">Canciones</string>
+  <string name="sinopsis">Sinopsis</string>
+  <string name="leer_mas">Leer más</string>
+  <string name="ya_no_esta">Esto ya no está.</string>
+  <string name="compartir">Compartir</string>
+  <string name="corregir_datos">Corregir los datos</string>
+  <string name="tu_nota">Tu nota</string>
+  <string name="quitar_favorita">Quitar de tus cuatro favoritas</string>
+  <string name="poner_favorita">Poner en tus cuatro favoritas</string>
+  <string name="agregar_a_lista">Agregar a una lista</string>
+  <string name="tu_resena">Tu reseña</string>
+  <string name="resena_pista">Qué te pareció (solo tú la ves, a menos que la compartas)</string>
+  <string name="datos_curiosos">Datos curiosos y notas</string>
+  <string name="etiquetas">Etiquetas</string>
+  <string name="empezada">Empezaste</string>
+  <string name="terminada">Terminaste</string>
+  <string name="actualizar_datos">Actualizar los datos de afuera</string>
+  <string name="borrar">Borrar</string>
+  <string name="borrar_obra_pregunta">¿Borrar «%1$s»?</string>
+  <string name="borrar_obra_texto">Se borra con tu nota, tu reseña y su diario. Si sincronizas, también se borra en el PC.</string>
+  <string name="tu_lectura">Tu lectura</string>
+  <string name="pagina_de">Página %1$d de %2$d</string>
+  <string name="voy_en_pagina">Voy en la página…</string>
+  <string name="guardar">Guardar</string>
+  <string name="canciones_pista">Califica cada canción y marca tus favoritas, como en un tracklist.</string>
+  <string name="cancion_favorita">Canción favorita</string>
+  <string name="nota_de">Nota de %1$s</string>
+  <string name="tus_favoritas">Tus favoritas: %1$s</string>
+  <string name="cuando">Cuándo</string>
+  <string name="otra_vez_pregunta">Ya lo había visto, leído o escuchado</string>
+  <string name="unas_palabras">Unas palabras sobre esta vez</string>
+  <string name="borrar_registro_pregunta">¿Borrar esta entrada del diario?</string>
+  <string name="titulo">Título</string>
+  <string name="titulo_original">Título original (opcional)</string>
+  <string name="anio">Año</string>
+  <string name="paginas_campo">Páginas</string>
+  <string name="minutos_campo">Minutos</string>
+  <string name="autor">Autor</string>
+  <string name="director">Director</string>
+  <string name="creador">Creador</string>
+  <string name="temporadas_campo">Episodios por temporada</string>
+  <string name="temporadas_pista">Por ejemplo «10, 8, 12» son tres temporadas de 10, 8 y 12 episodios.</string>
+  <string name="canciones_campo">Canciones, una por línea</string>
+  <string name="a_mano_pista">Los géneros, las etiquetas y la portada se ponen después, en su ficha.</string>
+  <string name="y_mas">y %1$d más</string>
+  <string name="marca_compartir">El Cajón · Fogón</string>
+  <string name="nueva">Nueva</string>
+  <string name="listas_vacio">Todavía no tienes listas. Arma la primera: «Ghibli en orden», «Mis 10 de terror»…</string>
+  <string name="listas_automaticas">Siempre a mano</string>
+  <string name="lo_que_me_gusto">Lo que me gustó</string>
+  <string name="ordenar">Ordenar</string>
+  <string name="listo">Listo</string>
+  <string name="subir">Subir</string>
+  <string name="bajar">Bajar</string>
+  <string name="lista_vacia">La lista está vacía. Desde la ficha de cualquier obra toca «Agregar a una lista».</string>
+  <string name="editar_lista">Editar la lista</string>
+  <string name="nueva_lista">Nueva lista</string>
+  <string name="nombre">Nombre</string>
+  <string name="descripcion">Descripción (opcional)</string>
+  <string name="numerada">Con números (ranking)</string>
+  <string name="numerada_pista">Para listas donde el orden importa: tus 10 mejores, una saga en orden.</string>
+  <string name="borrar_lista">Borrar la lista</string>
+  <string name="borrar_lista_pregunta">¿Borrar la lista «%1$s»?</string>
+  <string name="borrar_lista_texto">Lo que tiene adentro sigue en tu cajón.</string>
+  <string name="diario_vacio">Tu diario está vacío. En la ficha de algo, toca «Anotar en el diario».</string>
+  <string name="tus_favoritas_titulo">Tus cuatro favoritas</string>
+  <string name="favoritas_pista">En la ficha de algo, toca la estrella de arriba para ponerlo aquí.</string>
+  <string name="siempre">Siempre</string>
+  <string name="en_el_anio">En %1$d</string>
+  <string name="desde_siempre">Desde siempre</string>
+  <string name="horas_de_cine">horas de cine</string>
+  <string name="paginas_leidas">páginas leídas</string>
+  <string name="canciones_escuchadas">canciones escuchadas</string>
+  <string name="en_tu_diario">entradas en tu diario</string>
+  <string name="racha">días seguidos</string>
+  <string name="tus_notas">Tus notas</string>
+  <string name="nota_media">Tu nota media: %1$s estrellas</string>
+  <string name="por_mes">Por mes</string>
+  <string name="tus_generos">Tus géneros</string>
+  <string name="tus_creadores">Tus directores, autores y artistas</string>
+  <string name="mas">Más</string>
+  <string name="retos_pista">Cuántas obras de cada tipo quieres terminar este año. Deja en blanco las que no.</string>
+  <string name="meta">Meta</string>
+  <string name="llevas_de">Llevas %1$d de %2$d</string>
+  <string name="buscar_artista">Buscar un artista</string>
+  <string name="buscar_o_nuevo_artista">Buscar o agregar un artista</string>
+  <string name="agregar_artista">Agregar «%1$s»</string>
+  <string name="artistas_vacio">Los artistas de tus álbumes aparecen aquí solos. También puedes buscarlos.</string>
+  <string name="guardar_artista">Guardar el artista</string>
+  <string name="desde_anio">desde %1$d</string>
+  <string name="en_tu_cajon">En tu cajón</string>
+  <string name="discografia">Discografía</string>
+  <string name="borrar_artista_pregunta">¿Borrar a %1$s?</string>
+  <string name="borrar_artista_texto">Sus álbumes siguen en tu cajón.</string>
+  <string name="tu_nombre">Tu nombre</string>
+  <string name="buscar_afuera">Buscar en internet</string>
+  <string name="clave_tmdb">Clave de TMDB</string>
+  <string name="clave_tmdb_lista">Lista: ya puedes buscar películas, series y animes.</string>
+  <string name="clave_tmdb_falta">Sin clave: películas, series y animes se agregan a mano.</string>
+  <string name="libros_y_musica_sin_clave">Los libros y la música no necesitan clave.</string>
+  <string name="sync_titulo">Sincronizar con tu PC</string>
+  <string name="sync_apagada">Apagada</string>
+  <string name="sync_conectada">Conectada como %1$s</string>
+  <string name="sync_para_pc">Tu cajón en el teléfono y en el PC, igual en los dos.</string>
+  <string name="opciones">Opciones</string>
+  <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
+  <string name="idioma">Idioma</string>
+  <string name="idioma_telefono">El del teléfono</string>
+  <string name="traer_de_otras">Traer de otras apps</string>
+  <string name="traer_de_otras_pista">Elige el archivo que te deja exportar Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Se suma a lo que ya tienes, sin repetir.</string>
+  <string name="elegir_archivo">Elegir el archivo</string>
+  <string name="respaldo">Respaldo</string>
+  <string name="respaldo_pista">Guarda todo en un archivo cuando quieras (las claves no van).</string>
+  <string name="guardar_respaldo">Guardar un respaldo</string>
+  <string name="recuperar_respaldo">Recuperar un respaldo</string>
+  <string name="recuperar_pregunta">¿Recuperar un respaldo?</string>
+  <string name="recuperar_texto">Se junta con lo que tienes ahora; si algo está en los dos, gana lo más reciente.</string>
+  <string name="fogon">Fogón</string>
+  <string name="manifiesto">Manifiesto</string>
+  <string name="acerca_de">Acerca de El Cajón</string>
+  <string name="acerca_de_corto">Acerca de</string>
+  <string name="tmdb_explica">Para buscar películas, series y animes, El Cajón usa TMDB, la base de cine más grande y abierta. TMDB pide que cada persona use su propia clave: es gratis y se saca una sola vez.</string>
+  <string name="tmdb_pasos">1. Crea una cuenta gratis en themoviedb.org.\n2. En Ajustes → API, pide una clave (uso personal).\n3. Copia la «API Key» (o el «API Read Access Token») y pégala aquí.</string>
+  <string name="abrir_tmdb">Abrir TMDB</string>
+  <string name="pega_clave">Pega aquí tu clave</string>
+  <string name="quitar_clave">Quitar la clave</string>
+  <string name="tmdb_privacidad">La clave queda cifrada en este teléfono y solo se usa para buscar. No va en el respaldo ni en la sincronización.</string>
+  <string name="tmdb_aviso">El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
+  <string name="sync_explica">Conecta tu GitHub y tu cajón se guarda solo en un archivo privado de tu cuenta (un Gist secreto). La versión de PC de El Cajón lee ese mismo archivo, así que tienes lo mismo en los dos. Es opcional.</string>
+  <string name="sync_pasos">1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.</string>
+  <string name="crear_token">Crear token</string>
+  <string name="pega_token">Pega aquí tu token (ghp_…)</string>
+  <string name="conectar">Conectar</string>
+  <string name="sync_sincronizando">Sincronizando…</string>
+  <string name="sync_ultima">Última vez: %1$s</string>
+  <string name="sincronizar_ahora">Sincronizar ahora</string>
+  <string name="desconectar">Desconectar</string>
+  <string name="desconectar_pregunta">¿Desconectar GitHub?</string>
+  <string name="desconectar_texto">Lo de este teléfono se queda. El archivo en tu GitHub también (bórralo allá si quieres).</string>
+  <string name="sync_privacidad">El token queda cifrado en este teléfono. El archivo es secreto: solo lo ve quien tenga el enlace o tu cuenta.</string>
+  <string name="sync_token_vencido">El token no es válido o ya venció.</string>
+  <string name="sync_sin_permiso">El token no tiene permiso para gists.</string>
+  <string name="sync_sin_conexion">No se pudo conectar con GitHub.</string>
+  <string name="licencias">Licencias</string>
+  <string name="lic_tmdb">Datos de películas, series y animes con la API de TMDB, con la clave de cada persona (licencia gratis para uso no comercial). El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
+  <string name="lic_open_library">Datos y portadas de libros de Open Library, un proyecto del Internet Archive.</string>
+  <string name="lic_musicbrainz">Datos de música de MusicBrainz (núcleo de datos CC0, de dominio público). Carátulas del Cover Art Archive (MusicBrainz e Internet Archive); cada carátula es de su dueño.</string>
+  <string name="lic_coil">Coil, para cargar las portadas. Apache License 2.0.</string>
+  <string name="si_continuar">Sí, continuar</string>
+  <string name="volver">Volver</string>
+  <string name="cancelar">Cancelar</string>
+  <string name="siguiente">Siguiente</string>
+  <string name="empezar">Empezar</string>
+  <string name="tut_hola">¡Hola! Soy El Cajón</string>
+  <string name="tut_hola_texto">Guardo todo lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario. Sin anuncios y sin rastreo.</string>
+  <string name="tut_tengo_respaldo">Tengo un respaldo</string>
+  <string name="tut_nombre">¿Cómo te llamo?</string>
+  <string name="tut_privado">Todo se queda en tu teléfono. Solo se usa internet para buscar y, si lo activas, para sincronizar con tu PC.</string>
+  <string name="importar_titulo">¿Recuperar este respaldo?</string>
+  <string name="importar_texto">Se junta con lo que tienes ahora; si algo está en los dos, gana lo más reciente.</string>
+  <string name="importar_si">Recuperar</string>
+  <string name="aviso_agregada">Al cajón: %1$s</string>
+  <string name="aviso_sin_detalles">No se pudieron traer todos los datos; se agrega con lo que hay.</string>
+  <string name="aviso_datos_al_dia">Datos al día</string>
+  <string name="aviso_registrado">Anotado en tu diario</string>
+  <string name="aviso_favoritas_cuatro">Son cuatro favoritas: salió la más vieja</string>
+  <string name="aviso_clave_corta">Pega la clave completa</string>
+  <string name="aviso_probando_clave">Probando la clave…</string>
+  <string name="aviso_clave_lista">Clave guardada</string>
+  <string name="aviso_token_corto">Pega el token completo</string>
+  <string name="aviso_conectando">Conectando con GitHub…</string>
+  <string name="aviso_token_invalido">Ese token no es válido</string>
+  <string name="aviso_sin_github">No se pudo conectar con GitHub</string>
+  <string name="aviso_no_es_de_otra_app">Ese archivo no parece de Letterboxd ni de Goodreads.</string>
+  <string name="aviso_importado">Respaldo recuperado</string>
+  <string name="aviso_respaldo_guardado">Respaldo guardado</string>
+  <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de El Cajón</string>
+  <string name="aviso_no_compartido">No se pudo compartir</string>
+  <string name="widget_nombre">El Cajón</string>
+  <string name="widget_descripcion">Lo que llevas este año y lo que estás viendo, leyendo o escuchando</string>
+  <string name="widget_este_anio">Terminadas en %1$d</string>
+  <string name="widget_en_curso">Ahora: %1$s</string>
+  <string name="widget_nada_en_curso">Nada en curso</string>
+  <plurals name="terminadas">
+    <item quantity="one">terminada</item>
+    <item quantity="other">terminadas</item>
+  </plurals>
+  <plurals name="obras_n">
+    <item quantity="one">%d obra</item>
+    <item quantity="other">%d obras</item>
+  </plurals>
+  <plurals name="albumes_n">
+    <item quantity="one">%d álbum</item>
+    <item quantity="other">%d álbumes</item>
+  </plurals>
+  <plurals name="temporadas">
+    <item quantity="one">%d temporada</item>
+    <item quantity="other">%d temporadas</item>
+  </plurals>
+  <plurals name="episodios">
+    <item quantity="one">%d episodio</item>
+    <item quantity="other">%d episodios</item>
+  </plurals>
+  <plurals name="paginas">
+    <item quantity="one">%d página</item>
+    <item quantity="other">%d páginas</item>
+  </plurals>
+  <plurals name="canciones">
+    <item quantity="one">%d canción</item>
+    <item quantity="other">%d canciones</item>
+  </plurals>
+  <plurals name="pendientes_n">
+    <item quantity="one">Tienes %d pendiente en tu cajón.</item>
+    <item quantity="other">Tienes %d pendientes en tu cajón.</item>
+  </plurals>
+  <plurals name="aviso_importadas">
+    <item quantity="one">%1$d de %2$s (%3$d nueva)</item>
+    <item quantity="other">%1$d de %2$s (%3$d nuevas)</item>
+  </plurals>
+  <string-array name="creditos">
+    <item>Personaje y diseño: Fogón (GPL-3.0-or-later).</item>
+    <item>Películas, series y animes: TMDB (con tu clave).</item>
+    <item>Libros: Open Library.</item>
+    <item>Música: MusicBrainz y Cover Art Archive.</item>
+  </string-array>
+  <string name="buscar">Buscar</string>
+  <string name="buscar_y_agregar">Buscar y agregar</string>
+  <string name="borrar_texto">Borrar el texto</string>
+  <string name="ver_mas">Ver más</string>
+  <string name="fuentes_busqueda">Cine: TMDB (con tu clave). Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library.</string>
+  <string name="seccion_cine">Cine</string>
+  <string name="seccion_musica">Música</string>
+  <string name="seccion_libros">Libros</string>
+  <string name="seccion_musica_pista">Álbumes y artistas</string>
+  <string name="seccion_libros_pista">Novelas, cuentos, ensayos, poesía…</string>
+  <string name="vistas_en">vistas en %1$d</string>
+  <string name="leidos_en">leídos en %1$d</string>
+  <string name="escuchados_en">escuchados en %1$d</string>
+  <string name="tu_cajon">Tu cajón</string>
+  <string name="apartado_vacio">Todavía no hay nada aquí. Toca Buscar para agregar.</string>
+  <string name="todo_tu_cajon">Todo tu cajón</string>
+  <string name="tus_cifras">Tus cifras</string>
+  <string name="foto_de">Foto: %1$s</string>
+  <string name="lic_wikimedia">Fotos de artistas, escritores y directores de Wikimedia Commons, encontradas por Wikidata (datos CC0) o por la imagen libre de su artículo de Wikipedia; de directores, también las de TMDB, y de escritores, las de Open Library. Antes de usarla, la app revisa en el teléfono que tenga buen tamaño y una cara; si ninguna pasa, no hay foto y la persona puede elegir otra o subir la suya. Cada foto de Commons tiene su propia licencia libre y su autor, que se muestran en la ficha. Las biografías breves son la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito.</string>
+  <plurals name="peliculas_vistas">
+    <item quantity="one">película vista</item>
+    <item quantity="other">películas vistas</item>
+  </plurals>
+  <plurals name="series_vistas">
+    <item quantity="one">serie vista</item>
+    <item quantity="other">series vistas</item>
+  </plurals>
+  <plurals name="animes_vistos">
+    <item quantity="one">anime visto</item>
+    <item quantity="other">animes vistos</item>
+  </plurals>
+  <plurals name="albumes_escuchados">
+    <item quantity="one">álbum escuchado</item>
+    <item quantity="other">álbumes escuchados</item>
+  </plurals>
+  <plurals name="artistas_guardados">
+    <item quantity="one">artista</item>
+    <item quantity="other">artistas</item>
+  </plurals>
+  <plurals name="libros_leidos">
+    <item quantity="one">libro leído</item>
+    <item quantity="other">libros leídos</item>
+  </plurals>
+  <string name="artista_persona">Persona</string>
+  <string name="artista_grupo">Grupo</string>
+  <string name="artista_orquesta">Orquesta</string>
+  <string name="artista_coro">Coro</string>
+  <string name="horas_de_series">horas de series</string>
+  <string name="nombre_tmdb">TMDB</string>
+  <string name="nombre_open_library">Open Library</string>
+  <string name="nombre_musicbrainz">MusicBrainz</string>
+  <plurals name="nota_publica">
+    <item quantity="one">%1$s de %2$d en %3$s · %4$s voto</item>
+    <item quantity="many">%1$s de %2$d en %3$s · %4$s votos</item>
+    <item quantity="other">%1$s de %2$d en %3$s · %4$s votos</item>
+  </plurals>
+  <string name="tipo_autores">Escritores</string>
+  <string name="tipo_autor">Escritor</string>
+  <string name="tipo_directores">Directores</string>
+  <string name="tipo_director">Director</string>
+  <string name="sus_libros">Sus libros</string>
+  <string name="filmografia">Filmografía</string>
+  <string name="personas_vacio">Todavía no guardas a nadie. Búscalo y guárdalo para ver su obra.</string>
+  <string name="portadas_avance">Buscando portadas: %1$d de %2$d revisadas · %3$d encontradas</string>
+  <string name="anotar_visto">Anotar cuándo lo vi</string>
+  <string name="anotar_leido">Anotar cuándo lo leí</string>
+  <string name="anotar_escuchado">Anotar cuándo lo escuché</string>
+  <string name="cuando_visto">Cuándo lo viste</string>
+  <string name="cuando_leido">Cuándo lo leíste</string>
+  <string name="cuando_escuchado">Cuándo lo escuchaste</string>
+  <string name="agregar_datos_curiosos">Agregar datos curiosos</string>
+  <string name="biografia">Biografía</string>
+  <string name="bio_credito">Texto de Wikipedia, con licencia CC BY-SA 4.0.</string>
+  <string name="generos">Géneros</string>
+  <string name="agregar_genero">Agregar género</string>
+  <string name="editar">Editar</string>
+  <string name="genero_en_tu_cajon">%1$s en tu cajón</string>
+    <string name="cambiar_portada">Cambiar la portada</string>
+    <string name="falta_tmdb_ficha">Para traer la portada, la sinopsis y los episodios de películas, series y animes hace falta una clave de TMDB (gratis, se saca en un minuto).</string>
+    <string name="agregar_etiqueta">Agregar etiqueta</string>
+    <string name="agregar_episodio_favorito">Agregar episodio favorito</string>
+    <string name="episodios_favoritos">Episodios favoritos</string>
+    <string name="temporada_episodio">T%1$s · E%2$s</string>
+    <string name="temporada_n_corta">T%1$d</string>
+    <string name="episodio_numero">Episodio %1$d</string>
+    <string name="subir_imagen">Subir una imagen</string>
+    <string name="subir_imagen_pista">Una foto de tu edición, de tu disco o la que te guste. Se queda en este teléfono.</string>
+    <string name="sin_otras_portadas">No hay otras portadas para elegir. Puedes subir una imagen.</string>
+    <string name="elegir_otra">Elegir otra</string>
+    <string name="aviso_imagen_no">No se pudo usar esa imagen</string>
+    <string name="enlazar_pista">No está enlazado: búscalo y elige cuál es, para traer su foto, su biografía y sus obras.</string>
+    <string name="enlazar_musicbrainz">Buscar en MusicBrainz</string>
+    <string name="sin_resultados">No se encontró. Revisa cómo está escrito el nombre.</string>
+  <string name="cambiar_foto">Cambiar la foto</string>
+  <string name="enlazar_open_library">Buscar en Open Library</string>
+  <string name="enlazar_tmdb">Buscar en TMDB</string>
+  <string name="bio_credito_tmdb">Texto de TMDB.</string>
+  <string name="bio_credito_open_library">Texto de Open Library.</string>
+  <string name="elegir_foto">Elegir una foto</string>
+  <string name="cambiar_fondo">Cambiar el fondo</string>
+  <string name="portada_nombre">Portada</string>
+  <string name="fondo_nombre">Fondo</string>
+  <string name="aviso_borradas">Borrado: %1$d</string>
+  <string name="elegidas_n">%1$d elegidas</string>
+  <string name="borrar_n">Borrar (%1$d)</string>
+  <string name="cambiar_estado">Cambiar estado</string>
+  <string name="a_una_lista">A una lista</string>
+  <string name="borrar_n_pregunta">¿Borrar %1$d?</string>
+  <string name="borrar_n_texto">Se borran con tus notas, reseñas y diario. Si sincronizas, también en el PC.</string>
+  <string name="elegir_varios_pista">Mantén presionado para elegir varios.</string>
+  <string name="subir_foto_pista">Una foto que te guste, del teléfono. Se queda en este teléfono.</string>
+  <string name="seccion_peliculas">Películas</string>
+  <string name="seccion_series">Series</string>
+  <string name="seccion_animes">Animes</string>
+  <string name="seccion_peliculas_pista">Películas de todas partes, con su póster y sinopsis</string>
+  <string name="seccion_series_pista">Series con sus temporadas y episodios</string>
+  <string name="seccion_animes_pista">Anime japonés, en serie o en película</string>
+  <string name="escucha_servicio">El Cajón: lo que escuchas</string>
+  <string name="aviso_agregado_cajon">Agregado a tu cajón: %1$s</string>
+  <string name="aviso_spotify_no">No se conectó con Spotify.</string>
+  <string name="aviso_spotify_listo">Spotify conectado. Trayendo lo tuyo…</string>
+  <string name="aviso_spotify_traido">Traído de Spotify: %1$d nuevos en tu cajón.</string>
+  <string name="aviso_spotify_basico">Ese historial no trae los álbumes. Pide a Spotify el "historial de reproducción ampliado".</string>
+  <string name="aviso_spotify_historial">Historial de Spotify: %1$d canciones de %2$d álbumes.</string>
+  <string name="musica_que_escuchas">La música que escuchas</string>
+  <string name="anotar_escuchas">Anotar lo que escucho</string>
+  <string name="anotar_escuchas_pista">Spotify, YouTube Music o cualquier app: lo que suena (al menos 30 segundos) llega a "Escuchado hace poco". Solo se guarda en este teléfono.</string>
+  <string name="dar_acceso">Dar acceso</string>
+  <string name="dar_acceso_pista">Android pide "acceso a notificaciones" para dejar ver qué canción suena. El Cajón no lee tus notificaciones.</string>
+  <string name="agregar_solos">Agregar solos los álbumes que escuche</string>
+  <string name="agregar_solos_pista">Con 5 canciones distintas de un álbum, se agrega como escuchado, con su día en el diario.</string>
+  <string name="apps_que_suenan">Anotar de estas apps</string>
+  <string name="spotify_titulo">Spotify</string>
+  <string name="spotify_conectado">Conectado. Trae lo que escuchas, tus álbumes guardados y los artistas que sigues.</string>
+  <string name="spotify_cliente">Client ID</string>
+  <string name="spotify_conectar">Conectar Spotify</string>
+  <string name="spotify_traer">Traer de Spotify ahora</string>
+  <string name="spotify_desconectar">Desconectar Spotify</string>
+  <string name="spotify_resumen">Opcional, si tienes Premium: trae lo que escuchas, tus álbumes guardados y los artistas que sigues. Se conecta en 4 pasos.</string>
+  <string name="spotify_explica">Spotify no deja que una app libre se conecte sola: cada persona crea su propia “app” en Spotify (gratis, un par de minutos) y El Cajón la usa solo para leer. Necesitas Spotify Premium.</string>
+  <string name="spotify_paso1">Crea tu app en Spotify</string>
+  <string name="spotify_paso1_pista">Entra con tu cuenta de Spotify. Ponle cualquier nombre y descripción, por ejemplo “Mi cajón”.</string>
+  <string name="spotify_crear_app">Abrir Spotify para crear la app</string>
+  <string name="spotify_paso2">Pon la dirección de vuelta</string>
+  <string name="spotify_paso2_pista">En el mismo formulario, en “Redirect URIs” pega esta dirección y toca Add. Más abajo marca “Web API”, acepta los términos y guarda.</string>
+  <string name="spotify_copiar">Copiar la dirección</string>
+  <string name="spotify_copiada">Copiada</string>
+  <string name="spotify_paso3">Copia el Client ID</string>
+  <string name="spotify_paso3_pista">Al guardar, Spotify muestra tu app: copia el “Client ID” (32 letras y números), vuelve aquí y pégalo.</string>
+  <string name="spotify_pegar">Pegar lo que copié</string>
+  <string name="spotify_no_es_cliente">Eso no parece un Client ID: son 32 letras (de la a a la f) y números.</string>
+  <string name="spotify_paso4">Conecta</string>
+  <string name="spotify_paso4_pista">Se abre Spotify para que aceptes. Al terminar, vuelve a El Cajón.</string>
+  <string name="spotify_esperando">Esperando a Spotify…</string>
+  <string name="spotify_esperando_pista">Si Spotify mostró un error, casi siempre es la dirección del paso 2 (debe ser exacta) o el Client ID. Cancela, revísalos y conecta otra vez.</string>
+  <string name="spotify_err_cancelado">No se aceptó en Spotify. Cuando quieras, conecta otra vez.</string>
+  <string name="spotify_err_tiempo">Spotify no volvió. Revisa que la dirección del paso 2 esté guardada exactamente igual y conecta otra vez.</string>
+  <string name="spotify_err_cliente">Spotify no reconoce ese Client ID. Cópialo otra vez desde tu app (paso 3).</string>
+  <string name="spotify_err_permiso">Spotify no dejó leer tu cuenta: hace falta Premium y entrar con la misma cuenta con la que creaste la app.</string>
+  <string name="spotify_err_red">No se pudo hablar con Spotify. Revisa el internet y prueba otra vez.</string>
+  <string name="spotify_privacidad">El Client ID y el permiso se guardan cifrados solo en este teléfono. El Cajón solo lee: nunca cambia nada en tu Spotify. Lo puedes desconectar en Ajustes.</string>
+  <string name="spotify_historial_pista">¿Más atrás? Pide a Spotify tu "historial de reproducción ampliado" (Cuenta → Privacidad) y elige el ZIP en "Traer de otras apps".</string>
+  <string name="escuchado_poco">Escuchado hace poco</string>
+  <string name="descartar">Descartar</string>
+  <string name="escuchado_vacio">Activa "Anotar lo que escucho" en Ajustes y aquí aparecen los álbumes que suenan en tus apps.</string>
+  <plurals name="canciones_app">
+    <item quantity="one">%1$d canción · %2$s</item>
+    <item quantity="other">%1$d canciones · %2$s</item>
+  </plurals>
+  <string name="para_ti">Para ti</string>
+  <string name="actualizar">Actualizar</string>
+  <string name="para_ti_vacio">Cuéntame tus gustos, o califica lo que viste, leíste o escuchaste (o márcalo con el corazón), y aquí aparecen recomendaciones.</string>
+  <string name="para_ti_cine">Películas, series y animes</string>
+  <string name="para_ti_artistas">Artistas que te pueden gustar</string>
+  <string name="para_ti_libros">Libros de tus escritores</string>
+  <string name="para_ti_pendientes">De tus pendientes, lo más tuyo</string>
+  <string name="porque_te_gusto">Porque te gustó %1$s</string>
+  <string name="como_artista">Como %1$s</string>
+  <string name="de_autor">De %1$s</string>
+  <string name="tus_gustos">Tus gustos</string>
+  <string name="cuentame_gustos">Cuéntame tus gustos</string>
+  <string name="cuentame_gustos_pista">Elige qué quieres que te recomiende, los géneros que te gustan (y los que no) y algo de lo que te gusta. Así "Para ti" acierta desde el primer día.</string>
+  <string name="ahora_no">Ahora no</string>
+  <string name="porque_genero">Te gusta: %1$s</string>
+  <string name="para_explorar">Para explorar algo distinto</string>
+  <string name="lo_mas_visto">Lo más visto ahora</string>
+  <string name="no_me_gusta">No me gusta</string>
+  <string name="no_me_gusta_pista">Sale de aquí y lo parecido baja.</string>
+  <string name="no_me_interesa">No me interesa</string>
+  <string name="no_me_interesa_pista">Sale de aquí; lo parecido apenas cambia.</string>
+  <string name="no_recomendar">No recomendar esto</string>
+  <string name="no_recomendar_pista">Solo esto deja de salir; tus gustos no cambian.</string>
+  <string name="excluir_a">Nada de %1$s</string>
+  <string name="excluir_pista">Nunca se recomienda nada suyo.</string>
+  <string name="excluir_genero">Nada de este género:</string>
+  <string name="elegir_gustos_explica">Todo es opcional y se cambia cuando quieras en "Tus gustos". Lo que elijas aquí no entra a tu cajón: solo sirve para recomendarte.</string>
+  <string name="que_recomiendo">Qué quieres en "Para ti"</string>
+  <string name="generos_que_te_gustan">Géneros</string>
+  <string name="generos_pista">Toca una vez si te gusta y otra si no te gusta; una tercera lo deja como estaba.</string>
+  <string name="lo_que_te_gusta">Lo que te gusta</string>
+  <string name="lo_que_te_gusta_pista">Toca lo que te guste de lo más visto, escuchado y leído.</string>
+  <string name="lo_mas_visto_semana">Lo más visto esta semana</string>
+  <string name="gustos_sin_tmdb">Con la clave de TMDB (Ajustes) también salen películas y series para elegir.</string>
+  <string name="artistas">Artistas</string>
+  <string name="lo_mas_leido">Lo más leído</string>
+  <string name="tus_gustos_explica">Lo que dijiste y lo que El Cajón aprendió de lo que guardas, calificas y escuchas, con lo reciente pesando más. Corrige lo que no sea así: lo que dices siempre gana.</string>
+  <string name="elegir_mis_gustos">Elegir mis gustos</string>
+  <string name="gustos_ahora">Lo tuyo de ahora</string>
+  <string name="gustos_generos">Géneros</string>
+  <string name="gustos_personas">Artistas, directores y escritores</string>
+  <string name="gustos_elegidos">Lo que elegiste</string>
+  <string name="gustos_no">Lo que no quieres</string>
+  <string name="excluido">Excluido: nunca se recomienda</string>
+  <string name="no_es_asi">No es así</string>
+  <string name="deshacer">Deshacer</string>
+  <string name="quitar">Quitar</string>
+  <string name="historial_para_ti">Lo que ya te mostré</string>
+  <string name="historial_para_ti_pista">Lo que sale varias veces sin que lo abras baja, y si sale mucho descansa un mes. Se guarda solo en este teléfono.</string>
+  <string name="borrar_historial_para_ti">Empezar de cero lo mostrado</string>
+  <string name="lo_dijiste">Lo dijiste</string>
+  <string name="aprendido">Aprendido</string>
+  <string name="de_ahora">De ahora</string>
+  <string name="seguro">Seguro</string>
+  <string name="poco_seguro">Poco seguro todavía</string>
+  <string name="gusto_anotado">Anotado. Lo puedes deshacer en "Tus gustos".</string>
+  <string-array name="generos_cine">
+    <item>Acción</item>
+    <item>Aventura</item>
+    <item>Animación</item>
+    <item>Comedia</item>
+    <item>Crimen</item>
+    <item>Documental</item>
+    <item>Drama</item>
+    <item>Fantasía</item>
+    <item>Terror</item>
+    <item>Misterio</item>
+    <item>Romance</item>
+    <item>Ciencia ficción</item>
+    <item>Suspenso</item>
+    <item>Bélica</item>
+    <item>Western</item>
+    <item>Familia</item>
+    <item>Historia</item>
+    <item>Música</item>
+  </string-array>
+  <string-array name="generos_musica">
+    <item>Rock</item>
+    <item>Pop</item>
+    <item>Hip hop</item>
+    <item>Rap</item>
+    <item>R&amp;B</item>
+    <item>Reggaetón</item>
+    <item>Salsa</item>
+    <item>Jazz</item>
+    <item>Electrónica</item>
+    <item>Metal</item>
+    <item>Indie</item>
+    <item>Clásica</item>
+    <item>Cumbia</item>
+    <item>Vallenato</item>
+    <item>Punk</item>
+    <item>Soul</item>
+    <item>Folk</item>
+    <item>Reggae</item>
+  </string-array>
+  <string-array name="generos_libros">
+    <item>Novela</item>
+    <item>Ciencia ficción</item>
+    <item>Fantasía</item>
+    <item>Terror</item>
+    <item>Policial</item>
+    <item>Romance</item>
+    <item>Historia</item>
+    <item>Biografía</item>
+    <item>Ensayo</item>
+    <item>Poesía</item>
+    <item>Filosofía</item>
+    <item>Psicología</item>
+    <item>Autoayuda</item>
+    <item>Clásicos</item>
+    <item>Juvenil</item>
+    <item>Cómic</item>
+  </string-array>
+  <string name="tu_perfil">Tu perfil</string>
+  <string name="editar_perfil">Editar perfil</string>
+  <string name="como_lo_ves">Como lo ves tú</string>
+  <string name="como_lo_verian">Como lo verían otros</string>
+  <string name="vista_publica_pista">Así se vería tu perfil cuando existan los perfiles públicos: sin lo privado ni lo que El Cajón aprendió de tus gustos. Por ahora nada sale de tu teléfono.</string>
+  <string name="completar_perfil">Completar tu perfil</string>
+  <string name="parte_destacados">Lo tuyo</string>
+  <string name="destacados_pista">Toca un hueco para elegir; mantén presionado para cambiarlo.</string>
+  <string name="dest_pelicula">Película favorita</string>
+  <string name="dest_serie">Serie favorita</string>
+  <string name="dest_anime">Anime favorito</string>
+  <string name="dest_album">Álbum favorito</string>
+  <string name="dest_libro">Libro favorito</string>
+  <string name="dest_artista">Artista favorito</string>
+  <string name="dest_marco">La obra que me marcó</string>
+  <string name="dest_descubrimiento">Mi descubrimiento del momento</string>
+  <string name="parte_cifras">En cifras</string>
+  <string name="parte_evolucion">Tu evolución</string>
+  <string name="cifra_terminadas">terminadas en %1$d</string>
+  <string name="cifra_nota">nota media</string>
+  <string name="descubrimientos_recientes">Descubrimientos recientes</string>
+  <string name="anio_resumen">%1$d en el diario</string>
+  <string name="solo_tu">Solo tú lo ves</string>
+  <string name="solo_tu_pista">Lo que El Cajón aprendió de tus gustos. Sirve para recomendarte y nunca sale en tu perfil.</string>
+  <string name="gustos_siempre">Lo tuyo de siempre</string>
+  <string name="vis_privada">Privada</string>
+  <string name="vis_amigos">Solo amigos</string>
+  <string name="vis_publica">Pública</string>
+  <string name="foto_y_portada">Foto y portada</string>
+  <string name="quitar_foto">Quitar la foto</string>
+  <string name="quitar_portada">Quitar la portada</string>
+  <string name="portada_del_cajon">Portada de tu cajón</string>
+  <string name="portada_del_cajon_pista">El fondo de una de tus películas, series o animes.</string>
+  <string name="sin_fondos">Todavía no hay fondos: salen de las películas, series y animes de TMDB.</string>
+  <string name="foto_perfil_pista">La foto y la portada que subes se quedan en este teléfono. La portada de tu cajón también se sincroniza.</string>
+  <string name="quien_eres">Quién eres</string>
+  <string name="nombre_usuario">Nombre de usuario</string>
+  <string name="bio">Unas palabras sobre ti</string>
+  <string name="enlaces">Enlaces</string>
+  <string name="enlaces_pista">Uno por línea, hasta 5 (tu Letterboxd, tu blog…).</string>
+  <string name="quien_lo_ve">Quién lo vería</string>
+  <string name="quien_lo_ve_pista">Todavía no hay perfiles públicos: esto queda listo para cuando existan. Cada lista y cada entrada del diario también tienen lo suyo.</string>
+  <string name="cifras_a_mostrar">Cifras que se muestran</string>
+  <string name="perfil_guardado">Perfil guardado.</string>
+  <string name="por_que">Por qué</string>
+  <string name="por_que_pista">Unas palabras (opcional). Si ya está elegida, toca Guardar; si no, elígela abajo.</string>
+  <string name="quitar_de_aqui">Quitar de aquí</string>
+  <string name="buscar_en_tu_cajon">Buscar en tu cajón</string>
+  <string name="quien_ve_entrada">Quién vería esta entrada</string>
+  <string name="como_el_diario">Como el diario</string>
+  <string name="portada_lista">Portada de la lista</string>
+  <string name="quien_ve_lista">Quién vería esta lista</string>
+  <string name="decir_no">Decir que no</string>
+  <string name="gustos_como_decir_no">Después, en “Para ti”, mantén presionada una recomendación para decir que no.</string>
+  <string name="tut_como">Cómo se usa</string>
+  <string name="tut_como_buscar">Toca + para buscar y guardar.</string>
+  <string name="tut_como_no">En “Para ti”, mantén presionado algo para decir que no.</string>
+  <string name="tut_como_favoritas">En cualquier título, toca la estrella para ponerlo en tus favoritas.</string>
+  <string name="buscando">Buscando…</string>
+  <string-array name="generos_anime">
+    <item>Shonen</item>
+    <item>Seinen</item>
+    <item>Shojo</item>
+    <item>Josei</item>
+    <item>Isekai</item>
+    <item>Mecha</item>
+    <item>Recuentos de la vida</item>
+    <item>Chicas mágicas</item>
+  </string-array>
+  <plurals name="cifra_en_cajon">
+    <item quantity="one">en tu cajón</item>
+    <item quantity="other">en tu cajón</item>
+  </plurals>
+  <plurals name="cifra_terminadas_anio">
+    <item quantity="one">terminada en %2$d</item>
+    <item quantity="other">terminadas en %2$d</item>
+  </plurals>
+  <plurals name="cifra_artistas">
+    <item quantity="one">artista</item>
+    <item quantity="other">artistas</item>
+  </plurals>
+  <string name="compartir_perfil">Compartir perfil</string>
+  <string name="chip_ahora">ahora: %1$s</string>
+  <string name="chip_descubrimiento">mi descubrimiento: %1$s</string>
+  <string name="chip_pagina">pág. %1$d de %2$d</string>
+  <string name="poner_foto">Poner foto</string>
+  <string name="cambiar_foto_perfil">Cambiar foto</string>
+  <string name="ajustar_foto">Ajustar la foto</string>
+  <string name="ajustar_portada">Ajustar la portada</string>
+  <string name="ajustar_pista">Pellizca para acercar o alejar y arrastra para moverla. Nada cambia hasta que guardes.</string>
+  <string name="ajustar_sin_imagen">Todavía no hay una imagen para ajustar.</string>
+  <string name="ajustar_tamano">Tamaño</string>
+  <string name="ajustar_horizontal">De lado a lado</string>
+  <string name="ajustar_vertical">De arriba a abajo</string>
+  <string name="ajustar_restablecer">Restablecer</string>
+</resources>

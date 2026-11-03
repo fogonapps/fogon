@@ -1,0 +1,1 @@
+Ahora en inglés y español (Perfil → Idioma). Cancela o termina el entreno en cualquier momento, también desde la barra del entreno en curso. Nueva pantalla para reportar fallos o sugerir mejoras.
