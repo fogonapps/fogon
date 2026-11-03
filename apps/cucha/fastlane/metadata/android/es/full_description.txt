@@ -1,4 +1,4 @@
-<p>La Cucha te ayuda a llevar lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios, sin rastreo, y sin internet salvo para buscar un código de barras si tú lo activas. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tu atención vale más que un anuncio.</p>
+<p>La Cucha te ayuda a llevar lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios, sin rastreo, y sin internet salvo para buscar un código de barras si tú lo activas. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Hoy:</b> las calorías que quedan, la proteína, los carbohidratos y la grasa, el agua y las cinco comidas del día.</li>

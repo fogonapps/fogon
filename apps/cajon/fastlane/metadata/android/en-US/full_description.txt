@@ -1,4 +1,4 @@
-<p>El Cajón keeps everything you watch, read and listen to: films, series, anime, books, albums and artists, in one place, with your rating and your diary. No ads, no tracking. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: your attention is worth more than an ad.</p>
+<p>El Cajón keeps everything you watch, read and listen to: films, series, anime, books, albums and artists, in one place, with your rating and your diary. No ads, no tracking. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Everything in one cajón:</b> films, series, anime, books and records, with cover (change it or upload your own), year, director or author, genres and synopsis.</li>

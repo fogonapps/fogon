@@ -1,1 +1,0 @@
-Refreshed manifesto and About screen: what we promise, in short (no subscriptions, no ads, no tracking). Internal fixes.

@@ -1,4 +1,4 @@
-<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios y sin rastreo. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tu atención vale más que un anuncio.</p>
+<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios y sin rastreo. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Todo en un cajón:</b> películas, series, animes, libros y discos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>

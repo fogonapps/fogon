@@ -1,4 +1,4 @@
-<p>El Forzudo es un cuaderno de entrenos de gimnasio. Sin anuncios, sin rastreo y gratis de verdad. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tu atención vale más que un anuncio.</p>
+<p>El Forzudo es un cuaderno de entrenos de gimnasio. Sin anuncios, sin rastreo y gratis de verdad. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Entrena y anota:</b> escoge tu rutina, anota peso y repeticiones de cada serie y márcala. Al marcarla arranca el descanso y te avisa cuando termina.</li>

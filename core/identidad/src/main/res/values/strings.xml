@@ -9,7 +9,7 @@
   <string name="fogon_lic_pista">This app is built with free pieces made by other people. These are their licenses; tap one to read the full text.</string>
   <string name="fogon_ocultar_texto">Hide text</string>
   <string name="fogon_ver_texto">Show full text</string>
-  <string name="fogon_lema">Your attention is worth more than an ad.</string>
+  <string name="fogon_lema">Yours from day one.</string>
   <string name="fogon_man_pregunta">Why should an app charge you every month, fill up with ads or keep an eye on what you do?</string>
   <string name="fogon_man_p1">For years, having an app on your phone meant accepting a deal nobody really signed: the app is \"free\", but we pay for it with our data, our time and our patience.</string>
   <string name="fogon_man_p2">Fogón is a small studio that makes apps for everyday life: training, looking after your money, eating better and keeping track of what you watch, read and listen to. Each one with its own face and its own character, cared for down to the last detail.</string>
@@ -25,7 +25,7 @@
   <string name="fogon_licencia_gpl">Licensed under GPL-3.0 or later.</string>
   <string name="fogon_aviso_salud">Health notice</string>
   <string-array name="fogon_promesas">
-    <item>No subscriptions: the app is complete from day one.</item>
+    <item>No subscriptions: the app comes complete, with no monthly charges.</item>
     <item>No ads.</item>
     <item>No tracking: what’s yours stays on your phone and you can export it whenever you want.</item>
   </string-array>

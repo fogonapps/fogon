@@ -9,7 +9,7 @@
   <string name="fogon_lic_pista">Esta app está hecha con piezas libres de otras personas. Estas son sus licencias; toca una para leer el texto completo.</string>
   <string name="fogon_ocultar_texto">Ocultar texto</string>
   <string name="fogon_ver_texto">Ver texto completo</string>
-  <string name="fogon_lema">Tu atención vale más que un anuncio.</string>
+  <string name="fogon_lema">Tuya desde el primer día.</string>
   <string name="fogon_man_pregunta">¿Por qué una app tendría que cobrarte cada mes, llenarse de anuncios o vigilar lo que haces?</string>
   <string name="fogon_man_p1">Durante años, tener una app en el teléfono significó aceptar un trato que nadie firmó de verdad: la app es \"gratis\", pero la pagamos con nuestros datos, nuestro tiempo y nuestra paciencia.</string>
   <string name="fogon_man_p2">Fogón es un estudio pequeño que hace apps para el día a día: entrenar, cuidar la plata, comer mejor y guardar lo que ves, lees y escuchas. Cada una con su propia cara y su propio carácter, cuidada hasta el último detalle.</string>
@@ -25,7 +25,7 @@
   <string name="fogon_licencia_gpl">Licencia GPL-3.0 o posterior.</string>
   <string name="fogon_aviso_salud">Aviso de salud</string>
   <string-array name="fogon_promesas">
-    <item>Sin suscripciones: la app está completa desde el primer día.</item>
+    <item>Sin suscripciones: la app viene completa, sin cobros cada mes.</item>
     <item>Sin anuncios.</item>
     <item>Sin rastreo: lo tuyo se queda en tu teléfono y lo exportas cuando quieras.</item>
   </string-array>

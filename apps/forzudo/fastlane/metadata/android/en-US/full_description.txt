@@ -1,4 +1,4 @@
-<p>El Forzudo ("The Strongman") is a gym workout log with no ads, no tracking and no cost. The app is in English and Spanish. It is part of <b>Fogón</b>, everyday apps with no subscriptions: your attention is worth more than an ad.</p>
+<p>El Forzudo ("The Strongman") is a gym workout log with no ads, no tracking and no cost. The app is in English and Spanish. It is part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Train and log:</b> pick a routine, enter weight and reps for each set and tick it. Ticking a set starts the rest timer, with a notification when it ends.</li>

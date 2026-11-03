@@ -1,4 +1,4 @@
-<p>El Ahorrador te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tu atención vale más que un anuncio.</p>
+<p>El Ahorrador te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Anota en segundos</b> con un teclado grande: gastos, ingresos, plata que pasas entre cuentas y ahorros.</li>

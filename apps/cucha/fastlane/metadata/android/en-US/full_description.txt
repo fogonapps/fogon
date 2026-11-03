@@ -1,4 +1,4 @@
-<p>La Cucha helps you keep track of what you eat: calories, protein, your recipes and the weekly menu. No ads, no tracking, and no internet except to look up a barcode if you turn that on. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: your attention is worth more than an ad.</p>
+<p>La Cucha helps you keep track of what you eat: calories, protein, your recipes and the weekly menu. No ads, no tracking, and no internet except to look up a barcode if you turn that on. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Today:</b> the calories you have left, protein, carbs and fat, water and the day’s five meals.</li>

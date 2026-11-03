@@ -2,7 +2,7 @@
 
 # Fogón
 
-**Tu atención vale más que un anuncio.**
+**Tuya desde el primer día.**
 
 > ¿Por qué una app tendría que cobrarte cada mes,
 > llenarse de anuncios o vigilar lo que haces?
@@ -19,7 +19,7 @@ No copiamos marcas ni hablamos mal de nadie. Hacemos las cosas a nuestra manera 
 
 ### Lo que prometemos
 
-- **Sin suscripciones:** la app está completa desde el primer día.
+- **Sin suscripciones:** la app viene completa, sin cobros cada mes.
 - **Sin anuncios.**
 - **Sin rastreo:** lo tuyo se queda en tu teléfono y lo exportas cuando quieras.
 

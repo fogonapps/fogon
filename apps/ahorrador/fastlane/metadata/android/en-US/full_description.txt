@@ -1,4 +1,4 @@
-<p>El Ahorrador helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: your attention is worth more than an ad.</p>
+<p>El Ahorrador helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Log in seconds</b> with a big keypad: expenses, income, transfers between accounts and savings.</li>
