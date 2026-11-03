@@ -391,11 +391,11 @@ class LogicaTest {
     }
 
     @Test fun perfilCultural() {
-        assertEquals("angel_salazar", Logica.usuarioLimpio("@Ángel Salazar!"))
-        assertEquals("https://letterboxd.com/angel", Logica.enlaceLimpio("letterboxd.com/angel"))
+        assertEquals("ambar_perez", Logica.usuarioLimpio("@Ámbar Pérez!"))
+        assertEquals("https://letterboxd.com/ambar", Logica.enlaceLimpio("letterboxd.com/ambar"))
         assertNull(Logica.enlaceLimpio("no es un enlace"))
         assertNull(Logica.enlaceLimpio("hola"))
-        assertEquals("letterboxd.com/angel", Logica.enlaceCorto("https://www.letterboxd.com/angel/"))
+        assertEquals("letterboxd.com/ambar", Logica.enlaceCorto("https://www.letterboxd.com/ambar/"))
         val a = Obra("1", Tipos.PELICULA, "A", nota = 10, generos = listOf("Drama"), registros = listOf(Registro("r1", "2025-03-01", nota = 10)))
         val b = Obra("2", Tipos.PELICULA, "B", nota = 6, generos = listOf("Drama"), registros = listOf(Registro("r2", "2025-05-01")))
         val c = Obra("3", Tipos.LIBRO, "C", meGusta = true, generos = listOf("Novela"), registros = listOf(Registro("r3", "2026-10-20")))
@@ -417,7 +417,7 @@ class LogicaTest {
         val gotico = "\uD835\uDD04\uD835\uDD2B\uD835\uDD24\uD835\uDD22\uD835\uDD29" // 𝔄𝔫𝔤𝔢𝔩: dos unidades por letra
         assertEquals(gotico, Logica.recortar(gotico, 40))
         assertEquals("\uD835\uDD04\uD835\uDD2B", Logica.recortar(gotico, 2)) // corta entre letras, nunca a la mitad de una
-        assertEquals("Ang", Logica.recortar("Angel", 3))
+        assertEquals("Amb", Logica.recortar("Ambar", 3))
         val raro = io.github.fogonapps.cajon.datos.Encuadre(zoom = 9f, x = -3f, y = Float.NaN).limpio()
         assertEquals(io.github.fogonapps.cajon.datos.Encuadre(4f, -1f, 0f), raro)
         // Un perfil de la 1.15 (con la letra elegida) se sigue leyendo; el encuadre viaja con la sincronización.

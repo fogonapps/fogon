@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /*
- * La Apariencia: cómo quiere ver la app cada persona (ver docs/IDENTIDAD.md → Vidrio y puntos). Hay cuatro
+ * La Apariencia: cómo quiere ver la app cada persona. Hay cuatro
  * temas: Grafito (casi negro con blanco, el que viene), el propio de la app (Gimnasio, Vino…), Claro y
  * Contraste. En cada uno se cambian solo el papel y las dos tintas: las letras, las tarjetas de vidrio y
  * los bordes salen de ellos (ver [Apariencia.colores]), así nada queda ilegible. Lo de comodidad (tamaño
@@ -170,7 +170,7 @@ class AlmacenApariencia private constructor(c: Context) {
     val estado: StateFlow<Apariencia> = _estado
 
     /**
-     * Versión 4 (vidrio y puntos, 24-10-2026): cuatro temas nuevos. Lo de cada tema se borra; el tema
+     * Versión 4 (vidrio y puntos): cuatro temas nuevos. Lo de cada tema se borra; el tema
      * elegido pasa al que más se le parece (Neutro → Claro, Noche → Grafito, Riso, Bosque y Durazno → el de
      * la app). Lo de comodidad se queda.
      */

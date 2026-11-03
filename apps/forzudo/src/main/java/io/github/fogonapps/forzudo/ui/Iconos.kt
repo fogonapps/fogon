@@ -9,7 +9,7 @@ import io.github.fogonapps.identidad.trazo
 
 /**
  * Los íconos de El Forzudo, gordos y líquidos como el personaje, para imprimirlos en dos tintas con
- * `IconoRiso` (ver docs/IDENTIDAD.md → Sistema riso → Íconos). Los de todas las apps están en [IconosFogon].
+ * `IconoRiso`. Los de todas las apps están en [IconosFogon].
  */
 object Iconos {
     val Inicio = IconosFogon.Inicio
@@ -43,7 +43,7 @@ object Iconos {
     )
 }
 
-/** Los muñequitos del tutorial: el mismo muñeco de Fogón (identidad/muneco), en dos capas (cuerpo y cabeza). */
+/** Los muñequitos del tutorial: el mismo muñeco de Fogón, en dos capas (cuerpo y cabeza). */
 val MUNIECOS: Map<Int, Int> = mapOf(
     io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cabeza,
     io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cabeza,

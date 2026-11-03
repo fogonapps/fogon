@@ -60,7 +60,7 @@ private data class Sobre(
 )
 
 /**
- * "Para ti" en Inicio (desde la 1.13 con el perfil de gustos): si todavía no contó sus gustos, se lo ofrece; cada
+ * "Para ti" en Inicio (con el perfil de gustos): si todavía no contó sus gustos, se lo ofrece; cada
  * recomendación dice por qué, y manteniéndola presionada se puede decir que no, con su matiz (ver [MenuNo]).
  */
 @OptIn(ExperimentalFoundationApi::class)

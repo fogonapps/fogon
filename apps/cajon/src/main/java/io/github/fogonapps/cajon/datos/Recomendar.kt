@@ -39,7 +39,7 @@ object Recomendar {
             o to x
         }.filter { it.second > 0 }.sortedByDescending { it.second }.take(n).map { it.first }
 
-    /* ----- El perfil de gustos (desde la 1.13) ----- */
+    /* ----- El perfil de gustos ----- */
 
     fun claveGenero(nombre: String) = "genero:" + Logica.tituloLimpio(nombre)
     fun clavePersona(nombre: String) = "artista:" + Logica.tituloLimpio(nombre)

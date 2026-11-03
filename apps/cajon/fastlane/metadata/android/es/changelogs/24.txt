@@ -1,1 +1,0 @@
-Conectar Spotify paso a paso: abre Spotify para crear tu app, copia la dirección con un toque, pega el Client ID y, si algo falla, te dice qué paso revisar.

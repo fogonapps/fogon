@@ -1,1 +1,0 @@
-Spanish titles for films, series and anime now come in Latin American Spanish, and items written with that title link on their own. What was already linked is fixed after updating.

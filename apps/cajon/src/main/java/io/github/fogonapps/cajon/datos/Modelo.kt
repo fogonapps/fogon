@@ -62,7 +62,7 @@ data class Registro(
     /** Ya la había visto/leído/escuchado antes. */
     val otraVez: Boolean = false,
     val texto: String = "",
-    /** Quién lo podría ver (desde la 1.14, ver [Visibilidad]); vacío = lo que diga el diario en el perfil. */
+    /** Quién lo podría ver (ver [Visibilidad]); vacío = lo que diga el diario en el perfil. */
     val visibilidad: String = "",
 )
 
@@ -110,7 +110,7 @@ data class Obra(
     val episodiosFavoritos: List<String> = emptyList(),
     /** La portada la eligió la persona (otra edición, otro póster o una imagen suya): al renovar los datos no se cambia. */
     val portadaPropia: Boolean = false,
-    /** El fondo lo eligió la persona (desde la 1.10): al renovar los datos no se cambia. */
+    /** El fondo lo eligió la persona: al renovar los datos no se cambia. */
     val fondoPropio: Boolean = false,
     /** Datos curiosos, notas sueltas. */
     val notas: String = "",
@@ -158,7 +158,7 @@ data class Artista(
     /** La foto la subió la persona (`file://`, solo en este teléfono): no se reemplaza con la de afuera. */
     val fotoPropia: Boolean = false,
     /**
-     * Ya se buscó y se revisó su foto (desde la 1.10): tiene una buena (con cara y de buen tamaño, ver `Fotos`) o
+     * Ya se buscó y se revisó su foto: tiene una buena (con cara y de buen tamaño, ver `Fotos`) o
      * ninguna de las fuentes la tiene. No se vuelve a buscar sola; "Cambiar la foto" deja elegir.
      */
     val fotoRevisada: Boolean = false,
@@ -178,7 +178,7 @@ data class Lista(
     val obras: List<String> = emptyList(),
     /** Si el orden importa (ranking): se muestran con número. */
     val numerada: Boolean = false,
-    /** La portada de la lista (desde la 1.14): el id de una de sus obras; vacío = la primera. */
+    /** La portada de la lista: el id de una de sus obras; vacío = la primera. */
     val portada: String = "",
     /** Quién la podría ver ([Visibilidad]); vacío = privada. */
     val visibilidad: String = "",
@@ -187,7 +187,7 @@ data class Lista(
 )
 
 /**
- * Lo que la persona dijo de sus gustos (desde la 1.13), para "Para ti": que algo le gusta, o lo contrario con su
+ * Lo que la persona dijo de sus gustos, para "Para ti": que algo le gusta, o lo contrario con su
  * matiz. Se guarda uno por [clave] y se sincroniza como las obras (gana el [cambio] más reciente; quitarlo lo deja
  * `borrada`). Lo que la app aprende sola no se guarda aquí: se calcula de lo del cajón (ver `Recomendar.perfil`);
  * aquí solo queda si la persona dijo que eso aprendido no es así ([Senales.QUITADO]).
@@ -230,7 +230,7 @@ object Senales {
 }
 
 /**
- * Quién podría ver cada parte del perfil (desde la 1.14). Todavía no hay perfiles públicos (ver README → A futuro):
+ * Quién podría ver cada parte del perfil. Todavía no hay perfiles públicos:
  * se guarda desde ya para que, cuando existan, cada cosa salga solo como la persona dijo. Sin decir, privada.
  */
 object Visibilidad {
@@ -278,7 +278,7 @@ object PartesPerfil {
 }
 
 /**
- * El perfil como biografía cultural (desde la 1.14): quién es la persona a través de lo que le gusta. Se sincroniza
+ * El perfil como biografía cultural: quién es la persona a través de lo que le gusta. Se sincroniza
  * entero (gana el [cambio] más reciente). La foto y la portada subidas son `file://` y se quedan en ese teléfono;
  * una portada elegida del cajón (el fondo de una película o serie) es una dirección y sí viaja.
  */
@@ -299,11 +299,11 @@ data class Perfil(
     /** Parte de [PartesPerfil] → [Visibilidad]. */
     val visibilidad: Map<String, String> = emptyMap(),
     /**
-     * Quedó de la 1.15 (la letra elegida del nombre). Desde la 1.16 no se usa: la persona pega su nombre con la letra
+     * La letra elegida del nombre, de antes. Ya no se usa: la persona pega su nombre con la letra
      * que quiera (caracteres de Unicode copiados de afuera). Se deja para leer respaldos viejos sin error.
      */
     val letraNombre: String = "",
-    /** Cómo se ve la foto dentro de su círculo y la portada dentro de su franja (desde la 1.16). */
+    /** Cómo se ve la foto dentro de su círculo y la portada dentro de su franja. */
     val encuadreFoto: Encuadre = Encuadre(),
     val encuadrePortada: Encuadre = Encuadre(),
     val cambio: Long = 0,
@@ -330,7 +330,7 @@ data class Ajustes(
     val favoritas: List<String> = emptyList(),
     /** Reto del año: cuántas obras de cada tipo ("libro" → 24). */
     val retos: Map<String, Int> = emptyMap(),
-    /** Lo que quiere en "Para ti" (tipos de `Tipos`; vacío = todo), elegido en "Tus gustos" (desde la 1.13). */
+    /** Lo que quiere en "Para ti" (tipos de `Tipos`; vacío = todo), elegido en "Tus gustos". */
     val categorias: List<String> = emptyList(),
     /** Ya pasó por "Cuéntame tus gustos" (o lo saltó): no se le vuelve a ofrecer en Inicio. */
     val gustosListos: Boolean = false,
@@ -348,12 +348,12 @@ data class Estado(
     val listas: List<Lista> = emptyList(),
     /**
      * Lo escuchado (ver `RegistroEscuchas`), solo cuando el estado sale del teléfono (Gist, respaldo, respaldo de
-     * todo Fogón; desde la 1.12): en el teléfono vive en su propio archivo y aquí va null. Al llegar se une con lo local.
+     * todo Fogón): en el teléfono vive en su propio archivo y aquí va null. Al llegar se une con lo local.
      */
     val escuchas: Oidos? = null,
-    /** Lo que dijo de sus gustos (desde la 1.13), ver [Gusto]. */
+    /** Lo que dijo de sus gustos, ver [Gusto]. */
     val gustos: List<Gusto> = emptyList(),
-    /** El perfil (desde la 1.14), ver [Perfil]. */
+    /** El perfil, ver [Perfil]. */
     val perfil: Perfil = Perfil(),
 ) {
     /** Lo que se ve (sin lo borrado). */

@@ -318,7 +318,7 @@ object Logica {
         return n
     }
 
-    /* ----- El perfil (desde la 1.14) ----- */
+    /* ----- El perfil ----- */
 
     /**
      * Las primeras [n] letras de [t] contando caracteres de verdad y no unidades de UTF-16: un nombre pegado con letras

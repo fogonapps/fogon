@@ -106,7 +106,7 @@ private fun Enlazar(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artis
 }
 
 /**
- * Una persona encontrada (artista, escritor o director), con su ficha completa antes de guardarla (desde la 1.15):
+ * Una persona encontrada (artista, escritor o director), con su ficha completa antes de guardarla:
  * foto con su crédito, datos, enlaces, biografía, lo suyo que ya está en el cajón y sus obras afuera. Nada se guarda
  * hasta tocar "Guardar"; la nota, los datos curiosos, los géneros y borrar quedan para la ficha de lo guardado.
  */

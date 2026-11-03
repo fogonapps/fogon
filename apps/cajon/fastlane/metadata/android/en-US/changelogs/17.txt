@@ -1,1 +1,0 @@
-Artist photos: all of them are now fetched (only the first 50 before). Album covers get more time to load.

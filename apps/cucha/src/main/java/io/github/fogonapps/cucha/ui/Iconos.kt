@@ -9,7 +9,7 @@ import io.github.fogonapps.identidad.relleno
 import io.github.fogonapps.identidad.trazo
 
 /**
- * Los íconos de La Cucha, gordos y llenos como el personaje (ver docs/IDENTIDAD.md → Sistema riso → Íconos).
+ * Los íconos de La Cucha, gordos y llenos como el personaje.
  * Los de todas las apps están en [IconosFogon].
  */
 object Iconos {

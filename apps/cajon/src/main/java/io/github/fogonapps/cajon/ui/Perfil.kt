@@ -139,8 +139,8 @@ private fun ImagenEncuadrada(url: String, encuadre: Encuadre, modifier: Modifier
 private class Contador(val valor: Int, @androidx.annotation.PluralsRes val etiqueta: Int, val abrir: () -> Unit)
 
 /**
- * Los tres contadores del perfil, en un solo lugar para cambiarlos fácil (Angel, 03-11-2026: "en tu cajón",
- * "terminadas en <año>" y "artistas", por confirmar). No hay seguidores: todavía no hay perfiles públicos.
+ * Los tres contadores del perfil, en un solo lugar para cambiarlos fácil: "en tu cajón",
+ * "terminadas en <año>" y "artistas". No hay seguidores: todavía no hay perfiles públicos.
  */
 private fun contadoresPerfil(vm: CajonViewModel, e: Estado, anio: Int) = listOf(
     Contador(e.vivas.size, R.plurals.cifra_en_cajon) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO) },
@@ -189,7 +189,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val anio = vm.hoy().year
     val descFoto = stringResource(if (p.foto.isBlank()) R.string.poner_foto else R.string.cambiar_foto_perfil)
 
-    // Arriba solo los ajustes; editar y compartir bajan a botones, como en las redes (desde la 1.15).
+    // Arriba solo los ajustes; editar y compartir bajan a botones, como en las redes.
     Cabecera(stringResource(R.string.tu_perfil), vm::cerrar) {
         BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
     }

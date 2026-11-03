@@ -90,10 +90,10 @@ sealed interface Pantalla {
     data object AcercaDe : Pantalla
     /** Reportar un fallo, algo que falta o una idea (igual en todas las apps de Fogón). */
     data object Reporte : Pantalla
-    /** "Cuéntame tus gustos" y "Tus gustos" (desde la 1.13). */
+    /** "Cuéntame tus gustos" y "Tus gustos". */
     data object ElegirGustos : Pantalla
     data object TusGustos : Pantalla
-    /** El perfil como biografía cultural (desde la 1.14), editarlo, elegir un destacado y la portada. */
+    /** El perfil como biografía cultural, editarlo, elegir un destacado y la portada. */
     data object Perfil : Pantalla
     data object EditarPerfil : Pantalla
     data class ElegirDestacado(val hueco: String) : Pantalla
@@ -117,7 +117,7 @@ object Secciones {
     const val ANIMES = "animes"
     const val MUSICA = "musica"
     const val LIBROS = "libros"
-    /** Los filtros del buscador (desde la 1.10.1: películas, series y animes en vez de "Cine"). */
+    /** Los filtros del buscador (películas, series y animes). */
     val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS)
     val DE_CINE = setOf(CINE, PELICULAS, SERIES, ANIMES)
     fun de(tipo: String) = when (tipo) { Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; Tipos.SERIE -> SERIES; Tipos.ANIME -> ANIMES; else -> PELICULAS }
@@ -595,7 +595,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun renovarSiHaceFalta(o: Obra) {
         val tmdb = o.fuente.startsWith("tmdb:")
         if (tmdb && caja.claveTmdb == null || o.fuente.isEmpty() || o.traida <= 0) return
-        // Lo de TMDB, cada 6 meses; lo agregado antes de la 1.2 (sin nota del público), una vez.
+        // Lo de TMDB, cada 6 meses; lo que se trajo sin la nota del público, una vez.
         if (tmdb && ahora() - o.traida > SEIS_MESES || o.publica == null && o.traida < ANTES_DE_NOTAS) actualizarDatos(o.id, callado = true)
     }
 
@@ -872,8 +872,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Tocar el nombre de un director, escritor o artista en una obra: abre su ficha, sin guardar nada (desde la 1.15;
-     * antes lo guardaba). Si ya está en el cajón, abre la suya; si no, lo busca en su fuente (MusicBrainz, Open
+     * Tocar el nombre de un director, escritor o artista en una obra: abre su ficha, sin guardar nada.
+     * Si ya está en el cajón, abre la suya; si no, lo busca en su fuente (MusicBrainz, Open
      * Library o TMDB) y abre la ficha de la persona encontrada; si no aparece, abre el buscador con su nombre.
      */
     fun abrirPersona(nombre: String, tipoObra: String) {
@@ -1487,7 +1487,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Los géneros para tocar en el buscador sin escribir (desde la 1.15, en todas las secciones): los del cajón de esa
+     * Los géneros para tocar en el buscador sin escribir (en todas las secciones): los del cajón de esa
      * sección primero y después los comunes de la sección ([cine], [anime], [musica], [libros], en el idioma de la app).
      * En Animes, los del anime antes que los de cine (sin "Animación", que ya lo son todos); en Todo, una mezcla.
      */
@@ -1551,7 +1551,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /* ----- El perfil (desde la 1.14) ----- */
+    /* ----- El perfil ----- */
 
     private fun cambiarPerfil(f: (io.github.fogonapps.cajon.datos.Perfil) -> io.github.fogonapps.cajon.datos.Perfil) =
         cambiar { e -> e.copy(perfil = f(e.perfil).copy(cambio = ahora())) }
@@ -1778,7 +1778,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             "Fantasía", "Romance", "Animación", "Documental", "Crimen", "Misterio", "Bélica", "Historia", "Biografía", "Musical", "Familiar",
             "Novela", "Cuento", "Poesía", "Ensayo", "Filosofía", "Psicología", "Realismo mágico", "Distopía", "Clásico", "Juvenil", "Shonen", "Seinen")
         private const val SEIS_MESES = 182L * 24 * 3600 * 1000
-        /** Cuándo empezó a guardarse la nota del público (1.2): lo traído antes se renueva una vez al abrirlo. */
+        /** Desde cuándo se guarda la nota del público: lo traído antes se renueva una vez al abrirlo. */
         private const val ANTES_DE_NOTAS = 1792990800000L
     }
 }

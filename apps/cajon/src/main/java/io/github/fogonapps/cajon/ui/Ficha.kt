@@ -100,7 +100,7 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
     // A Spotify, Wikipedia, IMDb, Letterboxd, Goodreads… (los que tenga).
     Enlaces(vm, o.fuente)
     if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (desde la 1.15, en todos los tipos).
+        // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (en todos los tipos).
         o.generos.forEach { g -> Pildora(g) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
     }
 }

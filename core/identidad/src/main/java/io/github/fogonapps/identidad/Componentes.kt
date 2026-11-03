@@ -215,7 +215,7 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Los personajes hechos con el muñeco (identidad/muneco): el cuerpo en semitono y la cabeza (la chispa). */
+/** Los personajes hechos con el muñeco: el cuerpo en semitono y la cabeza (la chispa). */
 private val CAPAS = mapOf(
     R.drawable.personaje_el_forzudo to (R.drawable.personaje_el_forzudo_cuerpo to R.drawable.personaje_el_forzudo_cabeza),
     R.drawable.personaje_el_ahorrador to (R.drawable.personaje_el_ahorrador_cuerpo to R.drawable.personaje_el_ahorrador_cabeza),
@@ -224,7 +224,7 @@ private val CAPAS = mapOf(
 )
 
 /**
- * El personaje de la app. Si es del muñeco (identidad/muneco), toma los colores del tema: el cuerpo en las
+ * El personaje de la app. Si es del muñeco, toma los colores del tema: el cuerpo en las
  * letras y la cabeza en la tinta (ver [PersonajeFogon]).
  */
 @Composable
@@ -249,13 +249,13 @@ fun caras(luz: Color, fondo: Color): androidx.compose.ui.graphics.ColorMatrix {
 }
 
 /**
- * La tinta de la cabeza del muñeco: siempre el color propio de la app, en todos los temas (Angel, 31-10-2026:
- * también el lima de El Forzudo sobre papel claro).
+ * La tinta de la cabeza del muñeco: siempre el color propio de la app, en todos los temas
+ * (también el lima de El Forzudo sobre papel claro).
  */
 fun tintaCabeza(f: Fogon): Color = f.marca
 
 /**
- * El muñeco de Fogón (identidad/muneco): el mismo cuerpo en bloques hace la acción de cada app. El cuerpo va en
+ * El muñeco de Fogón: el mismo cuerpo en bloques hace la acción de cada app. El cuerpo va en
  * el color de las letras del tema (oscuro en los claros, claro en los oscuros) con sus caras: la capa viene en
  * grises y lo que no da a la luz se acerca al fondo. La cabeza, la chispa, va en la tinta de la app.
  */
@@ -273,7 +273,7 @@ fun PersonajeFogon(
 }
 
 /**
- * Una ilustración 3D (identidad/ilustraciones): viene en gris y se tiñe con [tinta], así la misma imagen
+ * Una ilustración 3D: viene en gris y se tiñe con [tinta], así la misma imagen
  * sirve en todos los temas. Las luces del gris quedan como brillos de la tinta.
  */
 @Composable

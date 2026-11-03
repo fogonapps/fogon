@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Que ningún tema venga con letras que no se leen, en ninguna app (ver docs/IDENTIDAD.md → Vidrio y puntos). */
+/** Que ningún tema venga con letras que no se leen, en ninguna app. */
 class AparienciaTest {
     private val paletas = mapOf("Forzudo" to Paleta.Forzudo, "Ahorrador" to Paleta.Ahorrador, "Minga" to Paleta.Minga)
 

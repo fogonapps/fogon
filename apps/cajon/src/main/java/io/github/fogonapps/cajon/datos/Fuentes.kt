@@ -25,7 +25,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /*
- * De dónde salen los datos de las obras (verificado el 25-10-2026):
+ * De dónde salen los datos de las obras:
  *  - TMDB (películas, series, animes): con la clave de la propia persona (licencia gratis no comercial,
  *    personal e intransferible). Pide su logo y un aviso, y no guardar sus datos más de 6 meses sin renovarlos.
  *  - Open Library (libros): datos abiertos del Internet Archive, sin clave.
@@ -49,7 +49,7 @@ data class Encontrado(
     val votos: Int = 0,
     /** Sus otros títulos (TMDB: romaji, inglés, de otros países); solo se piden para comparar, ver [Logica.esLaMisma]. */
     val alias: List<String> = emptyList(),
-    /** Sus géneros, si la fuente los da en la lista (TMDB en recomendaciones y tendencias, desde la 1.13). */
+    /** Sus géneros, si la fuente los da en la lista (TMDB en recomendaciones y tendencias). */
     val generos: List<String> = emptyList(),
 )
 
@@ -203,7 +203,7 @@ class Tmdb(private val clave: String) {
     }
 
     /**
-     * Lo más visto de un género (desde la 1.15): `discover/movie` o `discover/tv` ([clase]) por popularidad, con su
+     * Lo más visto de un género: `discover/movie` o `discover/tv` ([clase]) por popularidad, con su
      * género ([generos]) o su palabra clave ([palabras]); con [anime], solo animación japonesa (género 16, en japonés).
      */
     suspend fun descubrir(clase: String, generos: String?, palabras: String?, anime: Boolean, idioma: String): List<Encontrado> {
@@ -324,7 +324,7 @@ class Tmdb(private val clave: String) {
             .take(30).map { imagen(it, "w342") }
 
     /**
-     * Todas las imágenes de un tipo (en todos los idiomas, desde la 1.10): primero las del idioma de la app, después
+     * Todas las imágenes de un tipo (en todos los idiomas): primero las del idioma de la app, después
      * las sin texto, las en inglés y las demás; dentro de cada grupo, las mejor votadas.
      */
     private suspend fun imagenes(fuente: String, cuales: String, idioma: String, tamano: String): List<String> {
@@ -406,7 +406,7 @@ object OpenLibrary {
         return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma, tope = 40)
     }
 
-    /** Los libros de un tema (un género, desde la 1.15), los más leídos por quienes usan Open Library primero. */
+    /** Los libros de un tema (un género), los más leídos por quienes usan Open Library primero. */
     suspend fun porTema(tema: String, idioma: String): List<Encontrado> {
         val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("subject", tema).addQueryParameter("sort", "readinglog")
             .addQueryParameter("lang", if (idioma == "en") "en" else "es").addQueryParameter("fields", CAMPOS).addQueryParameter("limit", "40").build()

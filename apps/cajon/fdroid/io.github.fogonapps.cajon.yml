@@ -1,7 +1,7 @@
 # Borrador de la receta para fdroiddata (metadata/io.github.fogonapps.cajon.yml).
 # No la lee nadie desde aquí: se copia a un fork de gitlab.com/fdroid/fdroiddata al pedir la inclusión.
 # Antes de mandarla: poner el hash completo del commit de la etiqueta en `commit` y pasarla por
-# `fdroid rewritemeta`, `fdroid lint` y `fdroid build` (ver docs/PUBLICAR.md → F-Droid).
+# `fdroid rewritemeta`, `fdroid lint` y `fdroid build`.
 Categories:
   - Multimedia
   - Note

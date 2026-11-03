@@ -271,7 +271,7 @@ private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Desca
 }
 
 /**
- * El descanso como un medidor con marcas finas (ver docs/IDENTIDAD.md → ADN visual): las marcas
+ * El descanso como un medidor con marcas finas: las marcas
  * alrededor, el arco de lo que falta en el acento y una bolita blanca en la punta.
  */
 @Composable

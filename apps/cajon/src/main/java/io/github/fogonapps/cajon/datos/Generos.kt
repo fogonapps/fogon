@@ -1,13 +1,13 @@
 package io.github.fogonapps.cajon.datos
 
 /**
- * Los géneros del buscador de cine y de libros (desde la 1.15; los de la música siguen en [Logica.GENEROS_COMUNES])
+ * Los géneros del buscador de cine y de libros (los de la música siguen en [Logica.GENEROS_COMUNES])
  * y cómo se buscan afuera: en TMDB por género (`with_genres`) o, si TMDB no lo tiene como género de series (o es
  * propio del anime), por palabra clave (`with_keywords`); en Open Library por tema (`subject`).
  *
  * Los nombres son los de `generos_cine`, `generos_anime` y `generos_libros` (strings.xml) en los dos idiomas, más
- * los que TMDB pone a las series ("Acción y aventura"). Los ids de palabras clave se revisaron en themoviedb.org el
- * 03-11-2026 (cuántas obras tiene cada una y que fueran las de verdad): no cambian, pero si TMDB borra una, ese
+ * los que TMDB pone a las series ("Acción y aventura"). Los ids de palabras clave se revisaron en themoviedb.org
+ * (cuántas obras tiene cada una y que fueran las de verdad): no cambian, pero si TMDB borra una, ese
  * género solo trae lo del cajón.
  */
 object Generos {

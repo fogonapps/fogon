@@ -1,1 +1,0 @@
-The character appears only once on the home screen: the little circle in the header is gone.

@@ -50,7 +50,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /*
- * El movimiento de Fogón (ver docs/IDENTIDAD.md → Vidrio y puntos → Movimiento): resortes suaves, como en
+ * El movimiento de Fogón: resortes suaves, como en
  * las apps de iPhone. Las pantallas entran desde la derecha y la de atrás se hunde un poco; los botones
  * se achican al tocarlos; las tarjetas suben al aparecer, una tras otra; los números ruedan cifra por cifra
  * y las ilustraciones aparecen con un rebote. Con "Menos movimiento" todo queda en un fundido corto o quieto.

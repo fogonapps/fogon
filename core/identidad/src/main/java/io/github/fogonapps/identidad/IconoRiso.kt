@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /*
- * Los íconos de Fogón son de línea redonda, todos igual (ver docs/IDENTIDAD.md → Vidrio y puntos → Íconos):
+ * Los íconos de Fogón son de línea redonda, todos igual:
  * el contorno de cada parte, de punta redonda, y nada relleno, salvo que se pida un [relleno] suave. Suelen
  * ir dentro de una ficha de vidrio redonda. Cada ícono es un [Dibujo] de 24×24 hecho de partes: rellenos
  * (se dibuja su contorno), trazos (líneas), huecos (contorno) y trazos de hueco (detalles).

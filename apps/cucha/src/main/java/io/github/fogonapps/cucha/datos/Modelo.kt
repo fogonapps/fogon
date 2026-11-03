@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class Nutrientes(
     val kcal: Double = 0.0, val proteina: Double = 0.0, val carbos: Double = 0.0, val grasa: Double = 0.0,
-    /** Desde la 1.5. Lo anotado antes y lo que no los trae (productos propios, anotar rápido) cuenta 0. */
+    /** Lo anotado antes de guardarse y lo que no los trae (productos propios, anotar rápido) cuenta 0. */
     val fibra: Double = 0.0, val azucar: Double = 0.0,
 ) {
     operator fun plus(o: Nutrientes) = Nutrientes(kcal + o.kcal, proteina + o.proteina, carbos + o.carbos, grasa + o.grasa, fibra + o.fibra, azucar + o.azucar)
@@ -168,7 +168,7 @@ data class Estado(
     /** Buscar productos por código de barras en Open Food Facts (usa internet). */
     val codigoBarras: Boolean = false,
     /**
-     * La foto propia de cada receta (desde la 1.6): id de receta → archivo en la carpeta de la app (`file://…`).
+     * La foto propia de cada receta: id de receta → archivo en la carpeta de la app (`file://…`).
      * Solo en este teléfono; sin foto, la receta muestra la figura de su tipo de plato.
      */
     val fotosRecetas: Map<String, String> = emptyMap(),

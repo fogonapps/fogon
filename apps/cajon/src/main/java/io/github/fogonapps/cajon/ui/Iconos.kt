@@ -46,7 +46,7 @@ object Iconos {
     val Trofeo = dibujo("trofeo", relleno("M7.2 4.4h9.6v4.8a4.8 4.8 0 0 1-9.6 0z"), trazo("M7.2 6.2H4.4a2.6 2.6 0 0 0 3 3.6M16.8 6.2h2.8a2.6 2.6 0 0 1-3 3.6M12 14v3.4M8.4 19.8h7.2", 2.2f))
     /** Flechas de ordenar. */
     val Ordenar = dibujo("ordenar", trazo("M7 5v14M4.4 16.4 7 19l2.6-2.6M13.6 7h6.4M13.6 12h4.6M13.6 17h2.8", 2.4f))
-    /** Tres reguladores: los ajustes (desde la 1.15; antes, la persona, igual que el perfil). */
+    /** Tres reguladores: los ajustes. */
     val Ajustes = dibujo("ajustes", trazo("M4 7h16M4 12h16M4 17h16", 2.2f),
         relleno("M9 4.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8zM15 9.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8zM7.4 14.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8z"))
     val Mas = IconosFogon.Mas

@@ -13,7 +13,7 @@ private fun gordo(nombre: String, ancho: Float, vararg d: String): Dibujo = dibu
 
 /**
  * Los íconos de El Ahorrador, gordos y llenos como el personaje, para imprimirlos en dos tintas con
- * `IconoRiso` (ver docs/IDENTIDAD.md → Sistema riso → Íconos). Los de todas las apps están en [IconosFogon].
+ * `IconoRiso`. Los de todas las apps están en [IconosFogon].
  */
 object Iconos {
     val Inicio = IconosFogon.Inicio

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import java.io.File
 
 /**
- * Lo que "Para ti" ya mostró (desde la 1.13): cuántas veces salió cada cosa, cuándo, y si la persona la abrió. Sirve
+ * Lo que "Para ti" ya mostró: cuántas veces salió cada cosa, cuándo, y si la persona la abrió. Sirve
  * para no repetir siempre lo mismo (ver `Recomendar.elegir`). Solo en este teléfono (`files/para_ti.json`): es un
  * detalle de cómo se muestra, no un gusto, así que no va en la sincronización. Hasta 600 cosas, las más recientes.
  */

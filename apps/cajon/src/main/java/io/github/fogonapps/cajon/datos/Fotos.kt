@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
  * retrato: claramente vertical (así son los retratos), o, si es cuadrada (como las carátulas) u horizontal
  * (escenarios, grupos a lo lejos), que se vea una cara de buen tamaño. Las carátulas de Cover Art Archive no cuentan. La cara la busca el detector que trae Android
  * (`android.media.FaceDetector`), sin internet ni servicios de Google; con lentes oscuros o gorra a veces no la ve,
- * por eso no se le pide a los retratos verticales (probado con los 144 músicos de Angel el 01-11-2026). Si ninguna
+ * por eso no se le pide a los retratos verticales. Si ninguna
  * pasa, no hay foto: mejor sin foto que una fea; la persona siempre puede elegir otra.
  */
 object Fotos {

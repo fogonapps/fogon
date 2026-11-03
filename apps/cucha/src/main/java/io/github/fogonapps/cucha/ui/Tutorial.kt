@@ -77,7 +77,7 @@ fun Tutorial(vm: CuchaViewModel, onImportar: () -> Unit) {
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 BotonRiso(stringResource(R.string.siguiente), { paso = 1 }, Modifier.fillMaxWidth())
                 BotonSecundario(stringResource(R.string.tut_tengo_respaldo), onImportar, Modifier.fillMaxWidth())
-                // El aviso de salud, también en el tutorial (docs/LEGAL.md → Aviso de salud).
+                // El aviso de salud, también en el tutorial.
                 Text(stringResource(R.string.aviso_salud), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
             }
             1 -> {

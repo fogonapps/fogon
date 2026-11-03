@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
-/** La letra de Fogón: Bricolage Grotesque (OFL), para todo. Ver docs/IDENTIDAD.md → Vidrio y puntos. */
+/** La letra de Fogón: Bricolage Grotesque (OFL), para todo. */
 val Bricolage = FontFamily(
     Font(R.font.bricolage_regular, FontWeight.Normal),
     Font(R.font.bricolage_medium, FontWeight.Medium),
@@ -134,8 +134,7 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
 }
 
 /**
- * El tema de las apps de Fogón. Por defecto, el tema Grafito
- * (docs/IDENTIDAD.md → Sistema riso); con [apariencia], lo que eligió la persona en Perfil → Apariencia.
+ * El tema de las apps de Fogón. Por defecto, el tema Grafito; con [apariencia], lo que eligió la persona en Perfil → Apariencia.
  */
 @Composable
 fun FogonTema(

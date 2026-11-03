@@ -3,7 +3,7 @@ package io.github.fogonapps.identidad
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 
-/** Tintas riso de Fogón. Ver docs/IDENTIDAD.md. */
+/** Tintas riso de Fogón. */
 object Tintas {
     val Tinta = Color(0xFF141210)
     val Papel = Color(0xFFEFE7DA)
@@ -24,7 +24,7 @@ object Tintas {
 }
 
 /**
- * Tintas de una app (ver docs/IDENTIDAD.md → Vidrio y puntos). Con ellas se arma el tema propio de la app
+ * Tintas de una app. Con ellas se arma el tema propio de la app
  * ([nombreTema]: Gimnasio, Vino…); en Grafito, Claro y Contraste la app solo pone su [tinta] como acento.
  *
  * - [tinta]: el acento. Botones principales, pestaña activa, el número grande. Va con texto [sobreTinta].
