@@ -115,6 +115,9 @@ sealed interface Pantalla {
     data object BloqueadosRed : Pantalla
     /** Publicar unas palabras con o sin foto, sobre [obra] si viene de una ficha. */
     data class Publicar(val obra: String? = null) : Pantalla
+    /** Las conversaciones del chat; con [obra], para mandarla a alguien. */
+    data class Chats(val obra: String? = null) : Pantalla
+    data class Conversacion(val usuario: String) : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
 }
@@ -219,6 +222,20 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** La red de El Cajón (Fogón Social), opcional. */
     val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) })
+    /** El chat de la red, cifrado de extremo a extremo. */
+    val chat = Chat(app, viewModelScope, caja, red) { avisar(tx(it)) }
+
+    private var buscandoGente: Job? = null
+    /** Buscar personas de la red (para empezar un chat), en [Busqueda.personas]. */
+    fun buscarPersonas(q: String) {
+        buscandoGente?.cancel()
+        if (q.trim().length < 2) { _busqueda.value = _busqueda.value.copy(personas = emptyList()); return }
+        buscandoGente = viewModelScope.launch {
+            delay(300)
+            val gente = runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).buscar(q.trim()) }.getOrDefault(emptyList())
+            _busqueda.value = _busqueda.value.copy(personas = gente)
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -227,6 +244,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             red.revisarServidor()
             red.revisarSinLeer()
             red.cargarFeed()
+            chat.recibir()
             pasarALatino()
             buscarPortadas()
             // Lo escuchado: lo de Spotify (si está conectado) y lo anotado mientras la app estaba cerrada.

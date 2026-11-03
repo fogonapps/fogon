@@ -177,6 +177,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.GenteRed -> GenteRed(vm, p.usuario, p.seguidores)
                             Pantalla.BloqueadosRed -> BloqueadosRed(vm)
                             is Pantalla.Publicar -> Publicar(vm, estado, p.obra)
+                            is Pantalla.Chats -> Chats(vm, estado, p.obra)
+                            is Pantalla.Conversacion -> Conversacion(vm, estado, p.usuario)
                         }
                         if (conScroll) Espacio(40.dp)
                     }

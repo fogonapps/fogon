@@ -65,6 +65,14 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS imagenes(
                     nombre TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL)""")
                 s.execute("DROP TABLE IF EXISTS solicitudes")
+                // El chat, cifrado de extremo a extremo: las llaves públicas de cada cuenta y los mensajes cifrados
+                // (el servidor no los puede leer). Se borran al entregarlos o a los 30 días.
+                s.execute("""CREATE TABLE IF NOT EXISTS llaves(
+                    cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, cifrar TEXT NOT NULL, firmar TEXT NOT NULL, cuando INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS mensajes(
+                    id INTEGER PRIMARY KEY, de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    para INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL, sobre TEXT NOT NULL, firma TEXT NOT NULL)""")
+                s.execute("CREATE INDEX IF NOT EXISTS mensajes_para ON mensajes(para, id)")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

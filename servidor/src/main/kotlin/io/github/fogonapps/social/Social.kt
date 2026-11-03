@@ -93,6 +93,11 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NuevoComentario(val texto: String)
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
+/** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
+@Serializable data class Llaves(val cifrar: String, val firmar: String)
+/** Un mensaje cifrado para alguien: [sobre] es el texto cifrado (base64) y [firma], la firma de quien lo manda. */
+@Serializable data class SobreNuevo(val sobre: String, val firma: String)
+@Serializable data class Sobre(val id: Long, val de: Persona, val cuando: Long, val sobre: String, val firma: String)
 @Serializable data class Error(val error: String)
 
 class Problema(val codigo: Int, val mensaje: String) : Exception(mensaje)
@@ -507,6 +512,43 @@ class Social(
             leer("""SELECT id FROM cuentas WHERE usuario LIKE ? ESCAPE '\' OR lower(nombre) LIKE ? ESCAPE '\'
                     ORDER BY (usuario = ?) DESC, (usuario LIKE ?) DESC, usuario LIMIT 30""", patron, patron, t, "$t%") { it.getLong(1) }
         }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.map(::persona)
+    }
+
+    /* ----- Chat (cifrado de extremo a extremo: aquí solo pasan sobres cerrados) ----- */
+
+    fun ponerLlaves(yo: Long, l: Llaves) {
+        if (l.cifrar.length !in 20..4000 || l.firmar.length !in 20..4000) throw Problema(400, "llaves")
+        b.usar { cambiar("INSERT INTO llaves(cuenta, cifrar, firmar, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET cifrar = excluded.cifrar, firmar = excluded.firmar, cuando = excluded.cuando",
+            yo, l.cifrar, l.firmar, ahora()) }
+    }
+
+    fun llaves(lector: Long?, usuario: String): Llaves {
+        val id = idDe(usuario)
+        if (lector != null && (bloqueado(id, lector) || bloqueado(lector, id))) throw Problema(404, "no_existe")
+        return b.usar { leer("SELECT cifrar, firmar FROM llaves WHERE cuenta = ?", id) { Llaves(it.getString(1), it.getString(2)) }.firstOrNull() } ?: throw Problema(404, "sin_llaves")
+    }
+
+    /** Deja un sobre para [usuario] (si no hay bloqueo); 300 por hora como mucho. */
+    fun mandar(yo: Long, usuario: String, s: SobreNuevo): Long {
+        val otro = idDe(usuario)
+        if (otro == yo) throw Problema(400, "eres_tu")
+        if (bloqueado(otro, yo) || bloqueado(yo, otro)) throw Problema(404, "no_existe")
+        if (s.sobre.length > 90_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
+        val n = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
+        if (n >= 300) throw Problema(429, "despacio")
+        return b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma) VALUES(?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma) }
+    }
+
+    /** Los sobres que le llegaron después de [desde]; los anteriores (ya recibidos) y los de más de 30 días se borran. */
+    fun recibir(yo: Long, desde: Long): List<Sobre> {
+        b.usar {
+            cambiar("DELETE FROM mensajes WHERE para = ? AND id <= ?", yo, desde)
+            cambiar("DELETE FROM mensajes WHERE cuando < ?", ahora() - 30L * 24 * 3600_000)
+        }
+        return b.usar { leer("SELECT id, de, cuando, sobre, firma FROM mensajes WHERE para = ? AND id > ? ORDER BY id LIMIT 200", yo, desde) {
+            arrayOf(it.getLong(1), it.getLong(2), it.getLong(3), it.getString(4), it.getString(5)) } }
+            .filter { !bloqueado(yo, it[1] as Long) }
+            .map { Sobre(it[0] as Long, persona(it[1] as Long), it[2] as Long, it[3] as String, it[4] as String) }
     }
 
     /* ----- Avisos ----- */

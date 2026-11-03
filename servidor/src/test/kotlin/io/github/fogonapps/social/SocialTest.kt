@@ -150,6 +150,23 @@ class SocialTest {
         assertEquals("beto@correo.co", s.miCuenta(s.cuentaDe(sin.token)!!).correo)
     }
 
+    @Test fun chatSoloSobres() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        assertFailsWith<Problema> { s.llaves(beto, "ana") }                       // todavía no puso llaves
+        s.ponerLlaves(ana, Llaves("c".repeat(40), "f".repeat(40)))
+        assertEquals("c".repeat(40), s.llaves(beto, "ana").cifrar)
+        val id = s.mandar(beto, "ana", SobreNuevo("cerrado", "firma"))
+        val llegan = s.recibir(ana, 0)
+        assertEquals(listOf("beto"), llegan.map { it.de.usuario })
+        assertEquals("cerrado", llegan.single().sobre)
+        assertEquals(0, s.recibir(ana, id).size)                                 // al confirmar, se borra
+        assertEquals(0, s.recibir(ana, 0).size)
+        s.bloquear(ana, "beto", true)
+        assertFailsWith<Problema> { s.mandar(beto, "ana", SobreNuevo("x", "y")) }
+    }
+
     @Test fun imagenes() {
         val s = nuevo()
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!

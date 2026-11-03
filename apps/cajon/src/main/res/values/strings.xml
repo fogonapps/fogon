@@ -672,6 +672,28 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="chat_titulo">Messages</string>
+  <string name="chat_mandar_a">Send to…</string>
+  <string name="chat_mandar_obra">Choose who to send “%1$s” to.</string>
+  <string name="chat_cifrado">End-to-end encrypted: not even the server can read them. Stored only on your phone.</string>
+  <string name="chat_buscar">Message… (@username or name)</string>
+  <string name="chat_vacio">No messages yet. Find someone above or message them from their profile.</string>
+  <string name="chat_no_se_lee">(this message couldn’t be opened)</string>
+  <string name="chat_tu">You:</string>
+  <string name="chat_numero">Safety number</string>
+  <string name="chat_numero_pista">If @%1$s sees the same number on their phone, nobody got in the middle of the conversation.</string>
+  <string name="chat_primero">Say something, or send a title from your cajón.</string>
+  <string name="chat_elige_obra">What are you sending?</string>
+  <string name="chat_mandar_una_obra">Send a title from your cajón</string>
+  <string name="chat_escribe">Write a message</string>
+  <string name="chat_en_tu_cajon">In your cajón · open</string>
+  <string name="chat_agregar">Search to add</string>
+  <string name="chat_mensaje">Message</string>
+  <string name="chat_mandar_a_alguien">Send it to someone</string>
+  <string name="chat_sin_llaves">That person can’t receive messages yet (they need El Cajón 1.18)</string>
+  <string name="chat_no_se_puede">You can’t message that account</string>
+  <string name="red_ver_perfil">See their profile</string>
+  <string name="lic_tink">Tink, for end-to-end encrypted chat. Apache License 2.0.</string>
   <string name="red_perfil_no_existe">This profile doesn’t exist or is gone.</string>
   <string name="red_pestana_siguiendo">Following</string>
   <string name="red_tus_seguidores">Your followers</string>

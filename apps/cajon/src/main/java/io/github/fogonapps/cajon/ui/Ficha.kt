@@ -250,6 +250,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         ElegirEstrellas(o.nota, { vm.ponerNota(o.id, it) }, descripcion = stringResource(R.string.tu_nota))
         BotonRiso(textoAnotar(o.tipo), { vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.agregar_a_lista), { vm.abrir(Pantalla.AgregarALista(o.id)) }, Modifier.fillMaxWidth())
+        BotonSecundario(stringResource(R.string.chat_mandar_a_alguien), { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Chats(o.id)) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.red_publicar_sobre), { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar(o.id)) }, Modifier.fillMaxWidth())
     }
 

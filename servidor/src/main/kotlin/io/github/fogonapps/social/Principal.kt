@@ -54,7 +54,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.2"
+const val VERSION = "0.3"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -152,6 +152,10 @@ fun Application.fogonSocial(social: Social) {
             get("/avisos") { call.respond(social.avisos(call.yo(), call.request.queryParameters["antes"]?.toLongOrNull())) }
             get("/avisos/sin-leer") { call.respond(mapOf("n" to social.sinLeer(call.yo()))) }
             post("/avisos/leidos") { social.leidos(call.yo()); call.respond(HttpStatusCode.NoContent) }
+            put("/llaves") { social.ponerLlaves(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/llaves/{usuario}") { call.respond(social.llaves(call.lector(), call.usuario())) }
+            post("/mensajes/{usuario}") { call.respond(HttpStatusCode.Created, mapOf("id" to social.mandar(call.yo(), call.usuario(), call.receive()))) }
+            get("/mensajes") { call.respond(social.recibir(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0)) }
             get("/bloqueos") { call.respond(social.bloqueados(call.yo())) }
             post("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }

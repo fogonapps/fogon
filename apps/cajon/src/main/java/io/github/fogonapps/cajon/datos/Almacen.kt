@@ -112,6 +112,11 @@ class CajaFuerte(context: Context) {
     var usuarioSocial: String?
         get() = prefs.getString("usuario_social", null)
         set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }
+    /** Las llaves del chat de este teléfono (keysets de Tink en JSON, con su parte secreta): solo aquí, cifradas. */
+    var chatLlaves: String?
+        get() = leer("chat_llaves")
+        set(v) = escribir("chat_llaves", v)
+
     /** La versión de la política que aceptó (si cambia, se vuelve a pedir). */
     var politicaSocial: String?
         get() = prefs.getString("politica_social", null)

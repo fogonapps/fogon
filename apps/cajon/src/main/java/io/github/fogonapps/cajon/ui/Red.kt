@@ -225,6 +225,7 @@ fun PantallaRed(vm: CajonViewModel) {
         Row {
             BotonIcono(Iconos.Buscar, stringResource(R.string.red_buscar_gente)) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
             if (usuario != null) {
+                BotonIcono(Iconos.Comentario, stringResource(R.string.chat_titulo)) { vm.abrir(Pantalla.Chats()) }
                 BotonIcono(Iconos.Guardar, stringResource(R.string.red_guardadas)) { vm.abrir(Pantalla.GuardadosRed) }
                 BotonIcono(Iconos.Campana, stringResource(R.string.red_avisos)) { vm.abrir(Pantalla.AvisosRed) }
             }
@@ -304,6 +305,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             p.relacion == "pendiente" -> BotonSecundario(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.fillMaxWidth())
             else -> BotonRiso(stringResource(if (p.meSigue) R.string.red_seguir_tambien else R.string.red_seguir), { vm.red.seguir(usuario) }, Modifier.fillMaxWidth())
         }
+        if (yo != null && p.relacion != "yo") Pildora(stringResource(R.string.chat_mensaje), Iconos.Comentario) { vm.abrir(Pantalla.Conversacion(usuario)) }
         if (menu) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pildora(stringResource(R.string.red_bloquear)) { menu = false; vm.red.bloquear(usuario, true); vm.cerrar() }
             Pildora(stringResource(R.string.red_reportar)) { menu = false; vm.red.reportar("cuenta", usuario, "") }

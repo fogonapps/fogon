@@ -346,6 +346,7 @@ fun Licencias(vm: CajonViewModel) {
             Licencia("MusicBrainz · Cover Art Archive", stringResource(R.string.lic_musicbrainz)),
             Licencia("Wikimedia Commons · Wikidata", stringResource(R.string.lic_wikimedia)),
             Licencia("Coil", stringResource(R.string.lic_coil), "apache-2.0.txt"),
+            Licencia("Tink", stringResource(R.string.lic_tink), "apache-2.0.txt"),
         ))
     }
 }

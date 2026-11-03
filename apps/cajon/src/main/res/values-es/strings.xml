@@ -672,6 +672,28 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="chat_titulo">Mensajes</string>
+  <string name="chat_mandar_a">Mandar a…</string>
+  <string name="chat_mandar_obra">Elige a quién mandarle «%1$s».</string>
+  <string name="chat_cifrado">Cifrado de extremo a extremo: ni el servidor puede leerlos. Se guardan solo en tu teléfono.</string>
+  <string name="chat_buscar">Escribir a… (@usuario o nombre)</string>
+  <string name="chat_vacio">Todavía no hay mensajes. Busca a alguien arriba o escríbele desde su perfil.</string>
+  <string name="chat_no_se_lee">(no se pudo abrir este mensaje)</string>
+  <string name="chat_tu">Tú:</string>
+  <string name="chat_numero">Número de seguridad</string>
+  <string name="chat_numero_pista">Si @%1$s ve el mismo número en su teléfono, nadie se metió en medio de la conversación.</string>
+  <string name="chat_primero">Dile algo, o mándale una obra de tu cajón.</string>
+  <string name="chat_elige_obra">¿Qué le mandas?</string>
+  <string name="chat_mandar_una_obra">Mandar una obra de tu cajón</string>
+  <string name="chat_escribe">Escribe un mensaje</string>
+  <string name="chat_en_tu_cajon">En tu cajón · abrir</string>
+  <string name="chat_agregar">Buscar para agregar</string>
+  <string name="chat_mensaje">Mensaje</string>
+  <string name="chat_mandar_a_alguien">Mandárselo a alguien</string>
+  <string name="chat_sin_llaves">Esa persona todavía no puede recibir mensajes (necesita El Cajón 1.18)</string>
+  <string name="chat_no_se_puede">No le puedes escribir a esa cuenta</string>
+  <string name="red_ver_perfil">Ver su perfil</string>
+  <string name="lic_tink">Tink, para cifrar el chat de extremo a extremo. Apache License 2.0.</string>
   <string name="red_perfil_no_existe">Este perfil no existe o ya no está.</string>
   <string name="red_pestana_siguiendo">Siguiendo</string>
   <string name="red_tus_seguidores">Tus seguidores</string>

@@ -68,6 +68,9 @@ data class PerfilSubido(
 @Serializable private data class Texto(val texto: String)
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
+@Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
+@Serializable private data class SobreNuevo(val sobre: String, val firma: String)
+@Serializable data class Sobre(val id: Long, val de: PersonaSocial, val cuando: Long, val sobre: String, val firma: String)
 
 /**
  * El cliente de Fogón Social, el servidor de Fogón (perfiles, seguir, feed, me gusta, comentarios, avisos). Todo es
@@ -146,6 +149,12 @@ class ClienteSocial(private val token: String? = null) {
     /** Sube una imagen (JPEG ya achicado) y devuelve su nombre, para ponerlo en la publicación ("imagen"). */
     suspend fun subirImagen(jpeg: ByteArray): String =
         JsonCajon.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content
+
+    /* Chat: solo pasan sobres cerrados (ver `Chat`) */
+    suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
+    suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
+    suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
+    suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
 
     /* Avisos y reportes */
     suspend fun avisos(antes: Long? = null) = leer(ListSerializer(AvisoSocial.serializer()), pedir("/avisos" + (antes?.let { "?antes=$it" } ?: "")))
