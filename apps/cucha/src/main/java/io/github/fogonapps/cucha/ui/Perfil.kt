@@ -222,9 +222,8 @@ fun AcercaDe(vm: CuchaViewModel) {
     Column {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
-            personaje = RId.drawable.personaje_la_cucha,
+            objeto = RId.drawable.objeto_cucha,
             nombreApp = stringResource(R.string.app_name),
-            nombrePersonaje = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
             creditos = stringArrayResource(R.array.creditos).toList(),
             onVerManifiesto = { vm.abrir(Pantalla.Manifiesto) },

@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Cajón"></p>
 
-Todo lo que ves, lees y escuchas en un mismo lugar: películas, series, animes, libros, álbumes y artistas, con tu nota, tu reseña y tu diario. Sin anuncios ni rastreo. El personaje carga su cajón de discos, como los que se esculcan en una tienda de vinilos.
+Todo lo que ves, lees y escuchas en un mismo lugar: películas, series, animes, libros, álbumes y artistas, con tu nota, tu reseña y tu diario. Sin anuncios ni rastreo. Su ícono es un cajón de discos, como los que se esculcan en una tienda de vinilos.
 
 - Descargar: [fogonapps/el-cajon](https://github.com/fogonapps/el-cajon/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-cajon`).
 - Novedades de cada versión: en las [versiones de El Cajón](https://github.com/fogonapps/el-cajon/releases).

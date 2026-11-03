@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="noche">#0D0C0A</color>
-    <!-- El fondo del ícono: blanco (el muñeco oscuro va encima). -->
-    <color name="icono_fondo">#FFFFFF</color>
+    <color name="noche">#080D0A</color>
+    <!-- El fondo del ícono: la tinta de Fogón (el objeto en puntos va encima). -->
+    <color name="icono_fondo">#141210</color>
 </resources>

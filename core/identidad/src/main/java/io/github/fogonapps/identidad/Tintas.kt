@@ -28,7 +28,7 @@ object Tintas {
  * ([nombreTema]: Gimnasio, Vino…); en Grafito, Claro y Contraste la app solo pone su [tinta] como acento.
  *
  * - [tinta]: el acento. Botones principales, pestaña activa, el número grande. Va con texto [sobreTinta].
- * - [segunda]: la segunda tinta: la sombra del personaje, barras de metas, el halo de puntos.
+ * - [segunda]: la segunda tinta: barras de metas, el halo de puntos.
  * - [fondo]: el papel oscuro del tema propio, con un matiz de su color.
  * - [brillo]: la luz suave que va arriba en el tema propio.
  * - [textoEnPapel]: el acento sobre papel claro (tema Claro, láminas).
@@ -47,16 +47,16 @@ data class Paleta(
     @StringRes val nombreTema: Int = R.string.fogon_estilo_marca,
 ) {
     companion object {
-        /** Gimnasio: lima sobre verde oliva casi negro. */
+        /** Gimnasio: azul de hierro sobre casi negro azulado (El Forzudo). */
         val Forzudo = Paleta(
-            tinta = Color(0xFFCDEB3A),
-            sobreTinta = Color(0xFF141609),
-            textoEnPapel = Color(0xFF4E6312),
-            textoEnTinta = Color(0xFFCDEB3A),
-            segunda = Color(0xFF5C7A12),
-            luz2 = Color(0xFF5C7A12),
-            fondo = Color(0xFF0C0D09),
-            brillo = Color(0xFF8CAA1E),
+            tinta = Color(0xFF2D5BFF),
+            sobreTinta = Color(0xFFFFFFFF),
+            textoEnPapel = Color(0xFF1F45D6),
+            textoEnTinta = Color(0xFF7A95FF),
+            segunda = Color(0xFF00A0E9),
+            luz2 = Color(0xFF00A0E9),
+            fondo = Color(0xFF090B12),
+            brillo = Color(0xFF2443B8),
             nombreTema = R.string.fogon_tema_gimnasio,
         )
 
@@ -73,22 +73,22 @@ data class Paleta(
             nombreTema = R.string.fogon_tema_brasa,
         )
 
-        /** Vino: rojo con ámbar sobre casi negro vinotinto. */
+        /** Billete: verde con ámbar sobre casi negro verdoso (El Ahorrador). */
         val Ahorrador = Paleta(
-            tinta = Color(0xFFF2384D),
-            sobreTinta = Color(0xFFFFFFFF),
-            textoEnPapel = Color(0xFFC21F35),
-            textoEnTinta = Color(0xFFFF6B7B),
+            tinta = Color(0xFF1FB45A),
+            sobreTinta = Color(0xFF06140B),
+            textoEnPapel = Color(0xFF13793C),
+            textoEnTinta = Color(0xFF45D47F),
             segunda = Color(0xFFF5B547),
             luz2 = Color(0xFFF5B547),
-            fondo = Color(0xFF0D0809),
-            brillo = Color(0xFFAA1830),
+            fondo = Color(0xFF080D0A),
+            brillo = Color(0xFF137A3C),
             nombreTema = R.string.fogon_tema_vino,
         )
 
         /** Cocina: naranja de fogón con verde de cilantro sobre casi negro tostado (La Cucha). */
         val Cucha = Paleta(
-            tinta = Color(0xFFFF8A4C),
+            tinta = Color(0xFFFF7A1A),
             sobreTinta = Color(0xFF140A05),
             textoEnPapel = Color(0xFFB84A12),
             textoEnTinta = Color(0xFFFF8A4C),
@@ -101,8 +101,8 @@ data class Paleta(
 
         /** Vinilo: violeta de disco con amarillo de cajón sobre casi negro violeta (El Cajón). */
         val Cajon = Paleta(
-            tinta = Color(0xFF9B7BFF),
-            sobreTinta = Color(0xFF0D0A16),
+            tinta = Color(0xFF8A63FF),
+            sobreTinta = Color(0xFFFFFFFF),
             textoEnPapel = Color(0xFF6C39FF),
             textoEnTinta = Color(0xFFA68BFF),
             segunda = Color(0xFFFFC93C),

@@ -79,7 +79,7 @@ import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
 import io.github.fogonapps.identidad.Logro
-import io.github.fogonapps.identidad.Personaje
+import io.github.fogonapps.identidad.Objeto
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.forzudo.BuildConfig
 import io.github.fogonapps.forzudo.GymViewModel
@@ -313,7 +313,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     val f = FogonTema.actual
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
-        // La tarjeta del final: el saludo, el volumen en puntos sobre su halo y el personaje.
+        // La tarjeta del final: el saludo, el volumen en puntos sobre su halo y la barra.
         Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).height(220.dp).tarjetaFogon(forma(30.dp))) {
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2, centro = androidx.compose.ui.geometry.Offset(0.85f, 0.25f)))
             Column(Modifier.padding(22.dp).fillMaxWidth(0.6f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -321,7 +321,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
                 Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
             NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
-            Personaje(RId.drawable.personaje_el_forzudo, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
+            Objeto(RId.drawable.objeto_forzudo, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
         }
         Box(Modifier.aparecer(1)) { Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}") }
         if (r.volumen >= 150) {
@@ -601,7 +601,7 @@ fun Editor(vm: GymViewModel, e: Estado, rid: String) {
             }
         }
         Seccion(stringResource(R.string.ejercicios_n, r.items.size)) {
-            if (r.items.isEmpty()) EstadoVacio(RId.drawable.personaje_el_forzudo, stringResource(R.string.rutina_vacia), stringResource(R.string.rutina_vacia_texto))
+            if (r.items.isEmpty()) EstadoVacio(RId.drawable.objeto_forzudo, stringResource(R.string.rutina_vacia), stringResource(R.string.rutina_vacia_texto))
             r.items.forEachIndexed { i, it ->
                 val c = vm.bib.cfg(it)
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon(forma(14.dp)).padding(12.dp),
@@ -727,9 +727,8 @@ fun AcercaDe(vm: GymViewModel) {
     Column {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
-            personaje = RId.drawable.personaje_el_forzudo,
+            objeto = RId.drawable.objeto_forzudo,
             nombreApp = stringResource(R.string.app_name),
-            nombrePersonaje = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
             creditos = stringArrayResource(R.array.creditos).toList(),
             onVerManifiesto = { vm.abrir(Pantalla.Manifiesto) },

@@ -62,7 +62,7 @@ import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PantallaApariencia
 import io.github.fogonapps.identidad.PestanaAnimada
 import io.github.fogonapps.identidad.PilaAnimada
-import io.github.fogonapps.identidad.Personaje
+import io.github.fogonapps.identidad.Objeto
 import io.github.fogonapps.identidad.fondoFogon
 import io.github.fogonapps.identidad.rebote
 import io.github.fogonapps.identidad.R as RId
@@ -100,7 +100,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Personaje(RId.drawable.personaje_el_cajon, stringResource(R.string.cargando), tamano = 140.dp)
+            Objeto(RId.drawable.objeto_cajon, stringResource(R.string.cargando), tamano = 140.dp)
         }
         return
     }

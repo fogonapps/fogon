@@ -110,7 +110,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     val confirmar = LocalConfirmar.current
 
     Column(Modifier.fillMaxWidth()) {
-        // Cabecera: el saludo y el botón para entrenar (el personaje ya va grande en la tarjeta de la racha).
+        // Cabecera: el saludo y el botón para entrenar (el objeto ya va grande en la tarjeta de la racha).
         val semana = hoy.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -153,7 +153,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             }
         }
 
-        // La racha: el número de puntos sobre su halo, la mejor racha en una píldora y el personaje.
+        // La racha: el número de puntos sobre su halo, la mejor racha en una píldora y la barra.
         Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).aparecer(2).height(230.dp).tarjetaFogon(forma(30.dp))) {
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 1f else 0.7f), centro = androidx.compose.ui.geometry.Offset(0.28f, 0.5f)))
             Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -162,7 +162,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
             }
             Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)) {
-                io.github.fogonapps.identidad.Personaje(RId.drawable.personaje_el_forzudo, null, tamano = 168.dp)
+                io.github.fogonapps.identidad.Objeto(RId.drawable.objeto_forzudo, null, tamano = 168.dp)
                 if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 20.dp)
             }
         }
@@ -239,7 +239,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         Seccion(stringResource(R.string.titulo_entrenos)) {
             val lista = e.sessions.sortedByDescending { it.date }
             if (lista.isEmpty()) {
-                EstadoVacio(RId.drawable.personaje_el_forzudo, stringResource(R.string.sin_entrenos), stringResource(R.string.sin_entrenos_texto))
+                EstadoVacio(RId.drawable.objeto_forzudo, stringResource(R.string.sin_entrenos), stringResource(R.string.sin_entrenos_texto))
             } else lista.forEachIndexed { i, s ->
                 // Las tarjetas entran una tras otra (las primeras; las de más abajo, juntas).
                 Box(Modifier.aparecer(i.coerceAtMost(8))) {
@@ -375,7 +375,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 // Lo más grande que quepa a lo ancho: cada mayúscula mide unos [Fogon.anchoCifra] em.
                 val tam = if (ov == null) 44f else minOf(120f, 340f / (f.anchoCifra * palabra.length.coerceAtLeast(1)))
                 NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
-                Munieco(io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cuerpo, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), tamano = 120.dp)
+                io.github.fogonapps.identidad.ObjetoFogon(R.drawable.objeto_tut_rangos_puntos, R.drawable.objeto_tut_rangos_acento, null, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), tamano = 120.dp)
                 Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Insignia(ov?.rango, 40.dp)

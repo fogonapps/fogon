@@ -215,60 +215,45 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Los personajes hechos con el muñeco: el cuerpo en semitono y la cabeza (la chispa). */
+/** Los objetos de las apps (identidad Trama): los puntos y el acento, en dos capas. */
 private val CAPAS = mapOf(
-    R.drawable.personaje_el_forzudo to (R.drawable.personaje_el_forzudo_cuerpo to R.drawable.personaje_el_forzudo_cabeza),
-    R.drawable.personaje_el_ahorrador to (R.drawable.personaje_el_ahorrador_cuerpo to R.drawable.personaje_el_ahorrador_cabeza),
-    R.drawable.personaje_la_cucha to (R.drawable.personaje_la_cucha_cuerpo to R.drawable.personaje_la_cucha_cabeza),
-    R.drawable.personaje_el_cajon to (R.drawable.personaje_el_cajon_cuerpo to R.drawable.personaje_el_cajon_cabeza),
+    R.drawable.objeto_forzudo to (R.drawable.objeto_forzudo_puntos to R.drawable.objeto_forzudo_acento),
+    R.drawable.objeto_ahorrador to (R.drawable.objeto_ahorrador_puntos to R.drawable.objeto_ahorrador_acento),
+    R.drawable.objeto_cucha to (R.drawable.objeto_cucha_puntos to R.drawable.objeto_cucha_acento),
+    R.drawable.objeto_cajon to (R.drawable.objeto_cajon_puntos to R.drawable.objeto_cajon_acento),
 )
 
 /**
- * El personaje de la app. Si es del muñeco, toma los colores del tema: el cuerpo en las
- * letras y la cabeza en la tinta (ver [PersonajeFogon]).
+ * El objeto de la app (la barra, la moneda, la olla, el cajón de discos). Si tiene capas, toma los colores del
+ * tema (ver [ObjetoFogon]); si no, se dibuja tal cual.
  */
 @Composable
-fun Personaje(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp) {
+fun Objeto(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp) {
     val capas = CAPAS[recurso]
     if (capas == null) {
         Image(painterResource(recurso), contentDescription = descripcion, modifier = modifier.size(tamano))
         return
     }
-    PersonajeFogon(capas.first, capas.second, descripcion, modifier, tamano)
+    ObjetoFogon(capas.first, capas.second, descripcion, modifier, tamano)
 }
 
-/**
- * Tiñe una capa en grises: el blanco queda en [luz] y lo oscuro se acerca a [fondo] (hasta casi la mitad), así se
- * ven las caras de los bloques en cualquier tema. Cada canal = luz + k·(fondo − luz)·(1 − gris).
- */
-fun caras(luz: Color, fondo: Color): androidx.compose.ui.graphics.ColorMatrix {
-    val k = 0.45f
-    fun fila(l: Float, fo: Float) = floatArrayOf(-k * (fo - l), 0f, 0f, 0f, (l + k * (fo - l)) * 255f)
-    val r = fila(luz.red, fondo.red); val g = fila(luz.green, fondo.green); val b = fila(luz.blue, fondo.blue)
-    return androidx.compose.ui.graphics.ColorMatrix(r + g + b + floatArrayOf(0f, 0f, 0f, 1f, 0f))
-}
+/** La tinta de los puntos del objeto: siempre el color propio de la app, en todos los temas. */
+fun tintaObjeto(f: Fogon): Color = f.marca
 
 /**
- * La tinta de la cabeza del muñeco: siempre el color propio de la app, en todos los temas
- * (también el lima de El Forzudo sobre papel claro).
- */
-fun tintaCabeza(f: Fogon): Color = f.marca
-
-/**
- * El muñeco de Fogón: el mismo cuerpo en bloques hace la acción de cada app. El cuerpo va en
- * el color de las letras del tema (oscuro en los claros, claro en los oscuros) con sus caras: la capa viene en
- * grises y lo que no da a la luz se acerca al fondo. La cabeza, la chispa, va en la tinta de la app.
+ * Un objeto en trama: los puntos (más grandes donde le da la luz) van en la tinta de la app y el acento (la chispa,
+ * la cuchara, la etiqueta del disco) en el color de las letras del tema.
  */
 @Composable
-fun PersonajeFogon(
-    @DrawableRes cuerpo: Int, @DrawableRes cabeza: Int,
+fun ObjetoFogon(
+    @DrawableRes puntos: Int, @DrawableRes acento: Int,
     descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp,
 ) {
     val f = FogonTema.actual
     val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion } else Modifier
     Box(modifier.size(tamano).then(sem)) {
-        Image(painterResource(cuerpo), null, Modifier.matchParentSize(), colorFilter = ColorFilter.colorMatrix(caras(f.texto, f.fondo)))
-        Image(painterResource(cabeza), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tintaCabeza(f)))
+        Image(painterResource(puntos), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tintaObjeto(f)))
+        Image(painterResource(acento), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(f.texto))
     }
 }
 
@@ -296,15 +281,15 @@ fun Chispa(modifier: Modifier = Modifier, tamano: Dp = 18.dp, descripcion: Strin
     Image(painterResource(R.drawable.chispa), contentDescription = descripcion, modifier = modifier.size(tamano))
 }
 
-/** Pantalla vacía con el personaje de la app. */
+/** Pantalla vacía con el objeto de la app. */
 @Composable
-fun EstadoVacio(@DrawableRes personaje: Int, titulo: String, texto: String, modifier: Modifier = Modifier) {
+fun EstadoVacio(@DrawableRes objeto: Int, titulo: String, texto: String, modifier: Modifier = Modifier) {
     Column(
         modifier.fillMaxWidth().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Personaje(personaje, null, tamano = 140.dp)
+        Objeto(objeto, null, tamano = 140.dp)
         Text(titulo, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, color = FogonTema.actual.texto)
         Text(texto, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = FogonTema.actual.textoSuave)
     }
@@ -322,9 +307,8 @@ fun Logro(texto: String, modifier: Modifier = Modifier) {
 /** Pantalla "Acerca de", igual en todas las apps de Fogón. */
 @Composable
 fun AcercaDeFogon(
-    @DrawableRes personaje: Int,
+    @DrawableRes objeto: Int,
     nombreApp: String,
-    nombrePersonaje: String,
     version: String,
     creditos: List<String>,
     onVerManifiesto: () -> Unit,
@@ -340,9 +324,9 @@ fun AcercaDeFogon(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Personaje(personaje, nombrePersonaje, tamano = 150.dp)
+        Objeto(objeto, nombreApp, tamano = 150.dp)
         Text(nombreApp, style = MaterialTheme.typography.headlineMedium, color = f.texto)
-        Text(if (nombrePersonaje == nombreApp) stringResource(R.string.fogon_version, version) else "$nombrePersonaje · " + stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        Text(stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(
             painterResource(if (f.oscuro) R.drawable.fogon_logotipo_claro else R.drawable.fogon_logotipo),
             contentDescription = stringResource(R.string.fogon_hecha),

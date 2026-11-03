@@ -171,7 +171,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) })
     }
 
-    // La meta que va más cerca, con el personaje empujando su moneda.
+    // La meta que va más cerca, con su moneda.
     e.metas.maxByOrNull { L.progreso(e, it) }?.let { m ->
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).aparecer(3).vidrio().clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.METAS) }
@@ -251,7 +251,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     // Últimos movimientos
     Seccion(stringResource(R.string.ultimos)) { TextButton({ vm.abrir(Pantalla.Movimientos()) }) { Text(stringResource(R.string.ver_todos)) } }
     val ultimos = recientes(e.movimientos).take(6)
-    if (ultimos.isEmpty()) EstadoVacio(RId.drawable.personaje_el_ahorrador, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
+    if (ultimos.isEmpty()) EstadoVacio(RId.drawable.objeto_ahorrador, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
     else ultimos.forEach { m -> FilaMovimiento(e, m) { vm.abrir(Pantalla.Anotar(m.tipo, m.id)) } }
 }
 

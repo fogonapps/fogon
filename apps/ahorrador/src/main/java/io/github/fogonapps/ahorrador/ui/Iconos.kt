@@ -12,7 +12,7 @@ import io.github.fogonapps.identidad.trazo
 private fun gordo(nombre: String, ancho: Float, vararg d: String): Dibujo = dibujo(nombre, *d.map { trazo(it, ancho) }.toTypedArray())
 
 /**
- * Los íconos de El Ahorrador, gordos y llenos como el personaje, para imprimirlos en dos tintas con
+ * Los íconos de El Ahorrador, gordos y llenos, para imprimirlos en dos tintas con
  * `IconoRiso`. Los de todas las apps están en [IconosFogon].
  */
 object Iconos {

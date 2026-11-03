@@ -147,9 +147,8 @@ fun AcercaDe(vm: AhorradorViewModel) {
     Column {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
-            personaje = RId.drawable.personaje_el_ahorrador,
+            objeto = RId.drawable.objeto_ahorrador,
             nombreApp = stringResource(R.string.app_name),
-            nombrePersonaje = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
             creditos = stringArrayResource(R.array.creditos).toList(),
             onVerManifiesto = { vm.abrir(Pantalla.Manifiesto) },

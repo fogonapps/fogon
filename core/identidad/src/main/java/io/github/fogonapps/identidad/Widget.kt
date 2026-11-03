@@ -30,20 +30,20 @@ import androidx.glance.unit.ColorProvider
 
 /*
  * La tarjeta de los widgets de Fogón (Glance): el papel del tema elegido en la app, una etiqueta, el número grande,
- * una línea de abajo y, a la derecha, el personaje en las tintas del tema. Al tocarla se abre la app.
+ * una línea de abajo y, a la derecha, el objeto de la app en las tintas del tema. Al tocarla se abre la app.
  * Los widgets no pueden usar las letras de la app: van con la del teléfono.
  */
 
 /** Los colores del tema que eligió la persona, para el widget. */
 fun coloresWidget(c: Context, paleta: Paleta): Fogon = fogonDe(paleta, AlmacenApariencia.de(c).estado.value)
 
-/** Las capas del muñeco para teñirlo en el widget: el cuerpo y la cabeza. */
-data class CapasPersonaje(val cuerpo: Int, val cabeza: Int)
+/** Las capas del objeto de la app para teñirlo en el widget: los puntos y el acento. */
+data class CapasObjeto(val puntos: Int, val acento: Int)
 
-val CAPAS_FORZUDO = CapasPersonaje(R.drawable.personaje_el_forzudo_cuerpo, R.drawable.personaje_el_forzudo_cabeza)
-val CAPAS_AHORRADOR = CapasPersonaje(R.drawable.personaje_el_ahorrador_cuerpo, R.drawable.personaje_el_ahorrador_cabeza)
-val CAPAS_CUCHA = CapasPersonaje(R.drawable.personaje_la_cucha_cuerpo, R.drawable.personaje_la_cucha_cabeza)
-val CAPAS_CAJON = CapasPersonaje(R.drawable.personaje_el_cajon_cuerpo, R.drawable.personaje_el_cajon_cabeza)
+val CAPAS_FORZUDO = CapasObjeto(R.drawable.objeto_forzudo_puntos, R.drawable.objeto_forzudo_acento)
+val CAPAS_AHORRADOR = CapasObjeto(R.drawable.objeto_ahorrador_puntos, R.drawable.objeto_ahorrador_acento)
+val CAPAS_CUCHA = CapasObjeto(R.drawable.objeto_cucha_puntos, R.drawable.objeto_cucha_acento)
+val CAPAS_CAJON = CapasObjeto(R.drawable.objeto_cajon_puntos, R.drawable.objeto_cajon_acento)
 
 @Composable
 fun TarjetaWidget(
@@ -51,7 +51,7 @@ fun TarjetaWidget(
     etiqueta: String,
     numero: String,
     pie: String,
-    personaje: CapasPersonaje,
+    objeto: CapasObjeto,
     abrir: Action,
     boton: Pair<String, Action>? = null,
 ) {
@@ -74,8 +74,8 @@ fun TarjetaWidget(
             }
         }
         Box(GlanceModifier.size(76.dp), contentAlignment = Alignment.Center) {
-            Image(ImageProvider(personaje.cuerpo), null, GlanceModifier.size(76.dp), colorFilter = ColorFilter.tint(ColorProvider(f.texto)))
-            Image(ImageProvider(personaje.cabeza), null, GlanceModifier.size(76.dp), colorFilter = ColorFilter.tint(ColorProvider(tintaCabeza(f))))
+            Image(ImageProvider(objeto.puntos), null, GlanceModifier.size(76.dp), colorFilter = ColorFilter.tint(ColorProvider(tintaObjeto(f))))
+            Image(ImageProvider(objeto.acento), null, GlanceModifier.size(76.dp), colorFilter = ColorFilter.tint(ColorProvider(f.texto)))
         }
     }
 }

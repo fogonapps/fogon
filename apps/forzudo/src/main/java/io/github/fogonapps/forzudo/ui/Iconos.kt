@@ -8,7 +8,7 @@ import io.github.fogonapps.identidad.relleno
 import io.github.fogonapps.identidad.trazo
 
 /**
- * Los íconos de El Forzudo, gordos y líquidos como el personaje, para imprimirlos en dos tintas con
+ * Los íconos de El Forzudo, gordos y líquidos, para imprimirlos en dos tintas con
  * `IconoRiso`. Los de todas las apps están en [IconosFogon].
  */
 object Iconos {
@@ -41,19 +41,4 @@ object Iconos {
             relleno("M12.6 10h4.4v4h-4.4z"), relleno("M7 15.5h4.4v4H7z"), relleno("M12.6 15.5h4.4v4h-4.4z"),
         ),
     )
-}
-
-/** Los muñequitos del tutorial: el mismo muñeco de Fogón, en dos capas (cuerpo y cabeza). */
-val MUNIECOS: Map<Int, Int> = mapOf(
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_hola_cabeza,
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_anota_cabeza,
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_racha_cabeza,
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_rangos_cabeza,
-    io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_cuerpo to io.github.fogonapps.forzudo.R.drawable.munieco_tut_datos_cabeza,
-)
-
-/** Un muñequito del tutorial, teñido con las tintas del tema. */
-@androidx.compose.runtime.Composable
-fun Munieco(recurso: Int, modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier, tamano: androidx.compose.ui.unit.Dp) {
-    io.github.fogonapps.identidad.PersonajeFogon(recurso, MUNIECOS.getValue(recurso), null, modifier, tamano)
 }

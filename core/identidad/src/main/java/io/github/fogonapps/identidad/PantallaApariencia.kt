@@ -238,7 +238,7 @@ private fun FilaMuestras(titulo: String, actual: Color, lista: List<Color>, onEl
     }
 }
 
-/** La vista previa: el papel con su luz, el número de puntos, una tarjeta de vidrio con su botón y el personaje. */
+/** La vista previa: el papel con su luz, el número de puntos, una tarjeta de vidrio con su botón y el objeto de la app. */
 @Composable
 private fun VistaPrevia(paleta: Paleta) {
     val f = FogonTema.actual
@@ -257,12 +257,14 @@ private fun VistaPrevia(paleta: Paleta) {
                 Text(stringResource(R.string.fogon_ap_muestra_boton), style = MaterialTheme.typography.labelLarge, color = f.sobreTinta1)
             }
         }
-        Personaje(PERSONAJE_DE[paleta] ?: R.drawable.personaje_la_minga, null, Modifier.align(Alignment.TopEnd).padding(10.dp), tamano = 84.dp)
+        val objeto = OBJETO_DE[paleta]
+        if (objeto != null) Objeto(objeto, null, Modifier.align(Alignment.TopEnd).padding(10.dp), tamano = 84.dp)
+        else Chispa(Modifier.align(Alignment.TopEnd).padding(24.dp), tamano = 56.dp)
     }
 }
 
-/** El personaje de cada app, para la vista previa. */
-private val PERSONAJE_DE = mapOf(Paleta.Forzudo to R.drawable.personaje_el_forzudo, Paleta.Ahorrador to R.drawable.personaje_el_ahorrador, Paleta.Cucha to R.drawable.personaje_la_cucha, Paleta.Cajon to R.drawable.personaje_el_cajon)
+/** El objeto de cada app, para la vista previa. */
+private val OBJETO_DE = mapOf(Paleta.Forzudo to R.drawable.objeto_forzudo, Paleta.Ahorrador to R.drawable.objeto_ahorrador, Paleta.Cucha to R.drawable.objeto_cucha, Paleta.Cajon to R.drawable.objeto_cajon)
 
 /** Miniatura de un tema: su papel con su luz, una tarjeta de vidrio y sus dos tintas. */
 @Composable

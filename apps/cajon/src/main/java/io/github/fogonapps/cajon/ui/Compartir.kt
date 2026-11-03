@@ -32,7 +32,7 @@ import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
-import io.github.fogonapps.identidad.Personaje
+import io.github.fogonapps.identidad.Objeto
 import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.identidad.haloPuntos
 import kotlinx.coroutines.launch
@@ -104,7 +104,7 @@ fun TarjetaLista(l: Lista, obras: List<Obra>) {
 private fun Marca() {
     val f = FogonTema.actual
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Personaje(RId.drawable.personaje_el_cajon, null, tamano = 36.dp)
+        Objeto(RId.drawable.objeto_cajon, null, tamano = 36.dp)
         Text(stringResource(R.string.marca_compartir), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
     }
 }

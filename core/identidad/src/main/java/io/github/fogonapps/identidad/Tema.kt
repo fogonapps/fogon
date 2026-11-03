@@ -59,9 +59,9 @@ data class Fogon(
     /** La primera tinta: botones, pestaña activa, días cumplidos. Lo de encima va en [sobreTinta1]. */
     val tinta1: Color = paleta.tinta,
     val sobreTinta1: Color = paleta.sobreTinta,
-    /** La segunda tinta: la sombra del personaje, barras de metas, el halo de puntos. */
+    /** La segunda tinta: barras de metas, el halo de puntos. */
     val tinta2: Color = paleta.segunda,
-    /** El color propio de la app (la tinta de su paleta, sin el tema): la cabeza del muñeco. */
+    /** El color propio de la app (la tinta de su paleta, sin el tema): los puntos de su objeto. */
     val marca: Color = paleta.tinta,
     /** Ya no hay tinta corrida: queda en 0 por compatibilidad. */
     val desfase: Dp = 0.dp,
