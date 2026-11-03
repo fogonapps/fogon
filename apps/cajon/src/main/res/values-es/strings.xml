@@ -672,6 +672,7 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="compartir_como_imagen">Compartir como imagen</string>
   <string name="chat_titulo">Mensajes</string>
   <string name="chat_mandar_a">Mandar a…</string>
   <string name="chat_mandar_obra">Elige a quién mandarle «%1$s».</string>

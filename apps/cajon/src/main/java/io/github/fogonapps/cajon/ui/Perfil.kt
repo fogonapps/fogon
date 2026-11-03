@@ -257,11 +257,20 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }
     }
 
-    // Editar, compartir y tus gustos: solo en la vista propia.
+    // Editar, compartir y tus gustos: solo en la vista propia. Con cuenta en la red, compartir da el enlace del
+    // perfil (y la tarjeta como imagen queda al lado); sin cuenta, la tarjeta.
+    val cuentaRed by vm.red.usuario.collectAsStateWithLifecycle()
+    val contexto = androidx.compose.ui.platform.LocalContext.current
     if (!publico) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
-        BotonSecundario(stringResource(R.string.compartir_perfil), { compartiendo = true }, Modifier.weight(1f))
+        val u = cuentaRed
+        BotonSecundario(stringResource(R.string.compartir_perfil), {
+            if (u == null) compartiendo = true
+            else contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
+                .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.cajon.datos.ClienteSocial.enlacePerfil(u)), null))
+        }, Modifier.weight(1f))
+        if (u != null) BotonIcono(Iconos.Imagen, stringResource(R.string.compartir_como_imagen), grande = true) { compartiendo = true }
         BotonIcono(Iconos.Corazon, stringResource(R.string.tus_gustos), grande = true) { vm.abrir(Pantalla.TusGustos) }
     }
     // La red: tu cuenta (o crearla) y el enlace de tu perfil.

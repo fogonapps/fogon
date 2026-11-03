@@ -1,0 +1,1 @@
+Share profile now gives the link to your network profile (if you have an account); the image card is on the button next to it.
