@@ -214,76 +214,10 @@ private fun ElegirCategorias(vm: CajonViewModel, e: Estado) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ElegirGustos(vm: CajonViewModel, e: Estado) {
-    val f = FogonTema.actual
-    LaunchedEffect(Unit) { vm.cargarParaElegir() }
-    val opciones by vm.paraElegir.collectAsStateWithLifecycle()
-    val tmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
     // Al terminar: si todavía no hay cuenta en la red, el paso 2 de Para ti es crearla.
     val terminar = { vm.gustosListos(); if (vm.red.usuario.value == null) vm.reemplazar(Pantalla.CuentaRed) else vm.cerrar() }
     Cabecera(stringResource(R.string.cuentame_gustos), terminar)
-    val momento by vm.momento.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.cargarMomento() }
-    val p = remember(e) { vm.perfil() }
-    val dichos = e.gustosVivos.filter { it.senal == Senales.GUSTA }.map { it.clave }.toSet()
-    @Composable
-    fun Obras(titulo: String, lista: List<io.github.fogonapps.cajon.datos.Encontrado>) {
-        if (lista.isEmpty()) return
-        Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(lista, key = { it.fuente }) { x ->
-                val clave = "obra:" + x.fuente
-                val si = clave in dichos
-                Column(Modifier.width(104.dp).clip(forma(12.dp)).clickable {
-                    vm.decirGusto(clave, x.titulo, if (si) null else Senales.GUSTA, x.tipo, x.portada, x.fuente, x.creador, x.generos)
-                }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Box {
-                        Portada(x.portada, x.tipo, x.titulo, Modifier.fillMaxWidth(), conTitulo = false)
-                        if (si) Elegido(Modifier.align(Alignment.TopEnd).padding(6.dp))
-                    }
-                    Text(x.titulo, style = MaterialTheme.typography.labelLarge, color = if (si) f.tinta1 else f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-    }
-    if (p.quiere(Tipos.PELICULA) || p.quiere(Tipos.SERIE) || p.quiere(Tipos.ANIME)) {
-        if (tmdb) Obras(stringResource(R.string.lo_mas_visto_semana), opciones.cine.filter { p.quiere(it.tipo) })
-        else {
-            // Sin clave de TMDB: las series nuevas con su portada y lo más buscado del cine, por su nombre.
-            Obras(stringResource(R.string.seccion_series), momento.obras[Tipos.SERIE].orEmpty())
-            val buscados = (momento.buscados[Tipos.PELICULA].orEmpty() + momento.buscados[Tipos.ANIME].orEmpty()).take(16)
-            if (buscados.isNotEmpty()) {
-                Text(stringResource(R.string.seccion_peliculas), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
-                FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    buscados.forEach { x ->
-                        val clave = "obra:" + x.tmdb.ifBlank { "wd:" + x.wikidata }
-                        val si = clave in dichos
-                        Pildora(x.titulo, if (si) Iconos.Chulo else null, acento = si) { vm.decirGusto(clave, x.titulo, if (si) null else Senales.GUSTA, Tipos.PELICULA, "", x.tmdb) }
-                    }
-                }
-            }
-        }
-    }
-    if (p.quiere(Tipos.ALBUM)) Obras(stringResource(R.string.momento_musica), momento.obras[Tipos.ALBUM].orEmpty())
-    if (p.quiere(Tipos.ALBUM) && opciones.artistas.isNotEmpty()) {
-        Text(stringResource(R.string.artistas), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(opciones.artistas, key = { it.mbid }) { a ->
-                val clave = Recomendar.clavePersona(a.nombre)
-                val si = clave in dichos
-                Column(Modifier.width(96.dp).clip(forma(12.dp)).clickable {
-                    vm.decirGusto(clave, a.nombre, if (si) null else Senales.GUSTA, TIPO_ARTISTA, a.foto, a.fuente)
-                }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Box {
-                        FotoArtista(a.foto, a.nombre, 88.dp, a.tipo)
-                        if (si) Elegido(Modifier.align(Alignment.TopEnd))
-                    }
-                    Text(a.nombre, style = MaterialTheme.typography.labelLarge, color = if (si) f.tinta1 else f.texto, maxLines = 2,
-                        overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                }
-            }
-        }
-    }
-    if (p.quiere(Tipos.LIBRO)) Obras(stringResource(R.string.lo_mas_leido), (momento.obras[Tipos.LIBRO].orEmpty() + opciones.libros).distinctBy { it.fuente })
+    FilasDeGustos(vm, e)
     Seccion(stringResource(R.string.que_recomiendo))
     ElegirCategorias(vm, e)
     Column(Modifier.padding(16.dp)) { BotonRiso(stringResource(R.string.listo), terminar, Modifier.fillMaxWidth()) }

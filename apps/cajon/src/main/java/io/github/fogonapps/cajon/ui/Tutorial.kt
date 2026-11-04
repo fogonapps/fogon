@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +74,20 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Text(stringResource(R.string.tut_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
                 CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre))
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-                BotonRiso(stringResource(R.string.siguiente), { paso = 3 }, Modifier.fillMaxWidth())
+                BotonRiso(stringResource(R.string.siguiente), { paso = 2 }, Modifier.fillMaxWidth())
+            }
+            // Lo que te gusta: obras y artistas concretos (con eso el cajón no arranca vacío). Al menos 3.
+            2 -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val e by vm.estado.collectAsStateWithLifecycle()
+                Text(stringResource(R.string.cuentame_gustos), style = MaterialTheme.typography.headlineSmall, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp))
+                Text(stringResource(R.string.gustos_elige_minimo), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
+                e?.let { estado ->
+                    FilasDeGustos(vm, estado)
+                    val n = elegidasIniciales(vm, estado)
+                    Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
+                        BotonRiso(if (n >= 3) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = n >= 3)
+                    }
+                }
             }
             else -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 PasoDaleVida(Paleta.Cajon, AlmacenApariencia.de(LocalContext.current))

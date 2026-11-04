@@ -245,6 +245,12 @@ class Tmdb(private val clave: String) {
             "with_original_language" to "ja", "air_date.gte" to desde, "include_adult" to "false"), "tv", idioma)
     }
 
+    /** El póster de una película o serie por su fuente ("tmdb:movie:157336"). */
+    suspend fun poster(fuente: String): String {
+        val (_, clase, id) = fuente.split(":")
+        return imagen(pedir("$clase/$id")["poster_path"].texto(), "w342")
+    }
+
     /** Lo más visto de la semana de una sola clase ("movie" o "tv"); el anime sale de [descubrir] con anime = true. */
     suspend fun tendenciasDe(clase: String, idioma: String): List<Encontrado> = lista(pedir("trending/$clase/week", "language" to lengua(idioma)), clase, idioma)
 

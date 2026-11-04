@@ -1,0 +1,2143 @@
+[
+{
+"id": "interstellar",
+"tipo": "pelicula",
+"titulo": "Interestelar",
+"anio": 2014,
+"fuente": "tmdb:movie:157336",
+"parecidos": [
+"inception",
+"arrival",
+"the_martian",
+"blade_runner_2049",
+"dune",
+"oppenheimer"
+]
+},
+{
+"id": "inception",
+"tipo": "pelicula",
+"titulo": "El Origen",
+"anio": 2010,
+"fuente": "tmdb:movie:27205",
+"parecidos": [
+"interstellar",
+"matrix",
+"dark_knight",
+"fight_club",
+"blade_runner_2049"
+]
+},
+{
+"id": "dark_knight",
+"tipo": "pelicula",
+"titulo": "Batman: El caballero de la noche",
+"anio": 2008,
+"fuente": "tmdb:movie:155",
+"parecidos": [
+"joker",
+"inception",
+"gladiator",
+"mad_max"
+]
+},
+{
+"id": "la_la_land",
+"tipo": "pelicula",
+"titulo": "La La Land: Una historia de amor",
+"anio": 2016,
+"fuente": "tmdb:movie:313369",
+"parecidos": [
+"eterno_resplandor",
+"whiplash",
+"before_sunrise",
+"her",
+"about_time",
+"500_days"
+]
+},
+{
+"id": "eterno_resplandor",
+"tipo": "pelicula",
+"titulo": "Eterno resplandor de una mente sin recuerdos",
+"anio": 2004,
+"fuente": "tmdb:movie:38",
+"parecidos": [
+"her",
+"lost_translation",
+"500_days",
+"amelie",
+"la_la_land",
+"about_time"
+]
+},
+{
+"id": "whiplash",
+"tipo": "pelicula",
+"titulo": "Whiplash: Música y Obsesión",
+"anio": 2014,
+"fuente": "tmdb:movie:244786",
+"parecidos": [
+"la_la_land",
+"social_network",
+"drive",
+"joker"
+]
+},
+{
+"id": "parasite",
+"tipo": "pelicula",
+"titulo": "Parásitos",
+"anio": 2019,
+"fuente": "tmdb:movie:496243",
+"parecidos": [
+"get_out",
+"everything",
+"roma",
+"joker"
+]
+},
+{
+"id": "pulp_fiction",
+"tipo": "pelicula",
+"titulo": "Tiempos Violentos",
+"anio": 1994,
+"fuente": "tmdb:movie:680",
+"parecidos": [
+"fight_club",
+"padrino",
+"no_country",
+"drive"
+]
+},
+{
+"id": "padrino",
+"tipo": "pelicula",
+"titulo": "El Padrino",
+"anio": 1972,
+"fuente": "tmdb:movie:238",
+"parecidos": [
+"pulp_fiction",
+"shawshank",
+"no_country",
+"gladiator"
+]
+},
+{
+"id": "fight_club",
+"tipo": "pelicula",
+"titulo": "El club de la pelea",
+"anio": 1999,
+"fuente": "tmdb:movie:550",
+"parecidos": [
+"pulp_fiction",
+"matrix",
+"joker",
+"inception"
+]
+},
+{
+"id": "matrix",
+"tipo": "pelicula",
+"titulo": "Matrix",
+"anio": 1999,
+"fuente": "tmdb:movie:603",
+"parecidos": [
+"inception",
+"blade_runner_2049",
+"star_wars",
+"fight_club"
+]
+},
+{
+"id": "forrest_gump",
+"tipo": "pelicula",
+"titulo": "Forrest Gump",
+"anio": 1994,
+"fuente": "tmdb:movie:13",
+"parecidos": [
+"shawshank",
+"titanic",
+"back_future",
+"up"
+]
+},
+{
+"id": "titanic",
+"tipo": "pelicula",
+"titulo": "Titanic",
+"anio": 1997,
+"fuente": "tmdb:movie:597",
+"parecidos": [
+"notebook",
+"forrest_gump",
+"pride_film",
+"gladiator"
+]
+},
+{
+"id": "shawshank",
+"tipo": "pelicula",
+"titulo": "Sueño de fuga",
+"anio": 1994,
+"fuente": "tmdb:movie:278",
+"parecidos": [
+"forrest_gump",
+"padrino",
+"gladiator"
+]
+},
+{
+"id": "coco",
+"tipo": "pelicula",
+"titulo": "Coco",
+"anio": 2017,
+"fuente": "tmdb:movie:354912",
+"parecidos": [
+"up",
+"intensamente",
+"toy_story",
+"spider_verse",
+"chihiro"
+]
+},
+{
+"id": "toy_story",
+"tipo": "pelicula",
+"titulo": "Toy Story",
+"anio": 1995,
+"fuente": "tmdb:movie:862",
+"parecidos": [
+"up",
+"coco",
+"intensamente"
+]
+},
+{
+"id": "up",
+"tipo": "pelicula",
+"titulo": "Up: Una Aventura de Altura",
+"anio": 2009,
+"fuente": "tmdb:movie:14160",
+"parecidos": [
+"coco",
+"intensamente",
+"toy_story",
+"about_time"
+]
+},
+{
+"id": "intensamente",
+"tipo": "pelicula",
+"titulo": "Intensa-Mente",
+"anio": 2015,
+"fuente": "tmdb:movie:150540",
+"parecidos": [
+"up",
+"coco",
+"toy_story"
+]
+},
+{
+"id": "spider_verse",
+"tipo": "pelicula",
+"titulo": "Spider-Man: Un nuevo universo",
+"anio": 2018,
+"fuente": "tmdb:movie:324857",
+"parecidos": [
+"everything",
+"coco",
+"arcane"
+]
+},
+{
+"id": "everything",
+"tipo": "pelicula",
+"titulo": "Todo en todas partes al mismo tiempo",
+"anio": 2022,
+"fuente": "tmdb:movie:545611",
+"parecidos": [
+"parasite",
+"spider_verse",
+"eterno_resplandor"
+]
+},
+{
+"id": "dune",
+"tipo": "pelicula",
+"titulo": "Duna",
+"anio": 2021,
+"fuente": "tmdb:movie:438631",
+"parecidos": [
+"interstellar",
+"blade_runner_2049",
+"lotr",
+"arrival",
+"star_wars"
+]
+},
+{
+"id": "barbie",
+"tipo": "pelicula",
+"titulo": "Barbie",
+"anio": 2023,
+"fuente": "tmdb:movie:346698",
+"parecidos": [
+"mean_girls",
+"mujercitas",
+"everything"
+]
+},
+{
+"id": "oppenheimer",
+"tipo": "pelicula",
+"titulo": "Oppenheimer",
+"anio": 2023,
+"fuente": "tmdb:movie:872585",
+"parecidos": [
+"interstellar",
+"social_network",
+"dark_knight"
+]
+},
+{
+"id": "joker",
+"tipo": "pelicula",
+"titulo": "Guasón",
+"anio": 2019,
+"fuente": "tmdb:movie:475557",
+"parecidos": [
+"dark_knight",
+"fight_club",
+"whiplash",
+"drive"
+]
+},
+{
+"id": "her",
+"tipo": "pelicula",
+"titulo": "Ella",
+"anio": 2013,
+"fuente": "tmdb:movie:152601",
+"parecidos": [
+"eterno_resplandor",
+"lost_translation",
+"arrival",
+"about_time"
+]
+},
+{
+"id": "lost_translation",
+"tipo": "pelicula",
+"titulo": "Perdidos en Tokio",
+"anio": 2003,
+"fuente": "tmdb:movie:153",
+"parecidos": [
+"her",
+"before_sunrise",
+"eterno_resplandor",
+"amelie"
+]
+},
+{
+"id": "amelie",
+"tipo": "pelicula",
+"titulo": "Amélie",
+"anio": 2001,
+"fuente": "tmdb:movie:194",
+"parecidos": [
+"eterno_resplandor",
+"grand_budapest",
+"500_days"
+]
+},
+{
+"id": "laberinto_fauno",
+"tipo": "pelicula",
+"titulo": "El laberinto del fauno",
+"anio": 2006,
+"fuente": "tmdb:movie:1417",
+"parecidos": [
+"chihiro",
+"roma",
+"y_tu_mama"
+]
+},
+{
+"id": "roma",
+"tipo": "pelicula",
+"titulo": "Roma",
+"anio": 2018,
+"fuente": "tmdb:movie:426426",
+"parecidos": [
+"y_tu_mama",
+"laberinto_fauno",
+"parasite"
+]
+},
+{
+"id": "y_tu_mama",
+"tipo": "pelicula",
+"titulo": "Y tu mamá también",
+"anio": 2001,
+"fuente": "tmdb:movie:1391",
+"parecidos": [
+"roma",
+"call_me",
+"laberinto_fauno"
+]
+},
+{
+"id": "before_sunrise",
+"tipo": "pelicula",
+"titulo": "Antes del Amanecer",
+"anio": 1995,
+"fuente": "tmdb:movie:76",
+"parecidos": [
+"lost_translation",
+"la_la_land",
+"call_me",
+"about_time"
+]
+},
+{
+"id": "arrival",
+"tipo": "pelicula",
+"titulo": "La Llegada",
+"anio": 2016,
+"fuente": "tmdb:movie:329865",
+"parecidos": [
+"interstellar",
+"her",
+"dune",
+"blade_runner_2049"
+]
+},
+{
+"id": "blade_runner_2049",
+"tipo": "pelicula",
+"titulo": "Blade Runner 2049",
+"anio": 2017,
+"fuente": "tmdb:movie:335984",
+"parecidos": [
+"dune",
+"matrix",
+"arrival",
+"drive"
+]
+},
+{
+"id": "the_martian",
+"tipo": "pelicula",
+"titulo": "Misión Rescate",
+"anio": 2015,
+"fuente": "tmdb:movie:286217",
+"parecidos": [
+"interstellar",
+"arrival",
+"jurassic_park"
+]
+},
+{
+"id": "grand_budapest",
+"tipo": "pelicula",
+"titulo": "El Gran Hotel Budapest",
+"anio": 2014,
+"fuente": "tmdb:movie:120467",
+"parecidos": [
+"amelie",
+"la_la_land"
+]
+},
+{
+"id": "get_out",
+"tipo": "pelicula",
+"titulo": "¡Huye!",
+"anio": 2017,
+"fuente": "tmdb:movie:419430",
+"parecidos": [
+"midsommar",
+"parasite",
+"the_shining"
+]
+},
+{
+"id": "midsommar",
+"tipo": "pelicula",
+"titulo": "Midsommar: el terror no espera la noche",
+"anio": 2019,
+"fuente": "tmdb:movie:530385",
+"parecidos": [
+"get_out",
+"the_shining"
+]
+},
+{
+"id": "the_shining",
+"tipo": "pelicula",
+"titulo": "El resplandor",
+"anio": 1980,
+"fuente": "tmdb:movie:694",
+"parecidos": [
+"midsommar",
+"get_out"
+]
+},
+{
+"id": "mad_max",
+"tipo": "pelicula",
+"titulo": "Mad Max: Furia en el camino",
+"anio": 2015,
+"fuente": "tmdb:movie:76341",
+"parecidos": [
+"dark_knight",
+"gladiator",
+"dune"
+]
+},
+{
+"id": "gladiator",
+"tipo": "pelicula",
+"titulo": "Gladiador",
+"anio": 2000,
+"fuente": "tmdb:movie:98",
+"parecidos": [
+"lotr",
+"padrino",
+"mad_max"
+]
+},
+{
+"id": "lotr",
+"tipo": "pelicula",
+"titulo": "El señor de los anillos: La comunidad del anillo",
+"anio": 2001,
+"fuente": "tmdb:movie:120",
+"parecidos": [
+"star_wars",
+"dune",
+"gladiator"
+]
+},
+{
+"id": "star_wars",
+"tipo": "pelicula",
+"titulo": "La guerra de las galaxias",
+"anio": 1977,
+"fuente": "tmdb:movie:11",
+"parecidos": [
+"lotr",
+"back_future",
+"jurassic_park",
+"matrix"
+]
+},
+{
+"id": "back_future",
+"tipo": "pelicula",
+"titulo": "Volver al Futuro",
+"anio": 1985,
+"fuente": "tmdb:movie:105",
+"parecidos": [
+"star_wars",
+"jurassic_park",
+"forrest_gump"
+]
+},
+{
+"id": "jurassic_park",
+"tipo": "pelicula",
+"titulo": "Parque Jurásico",
+"anio": 1993,
+"fuente": "tmdb:movie:329",
+"parecidos": [
+"back_future",
+"star_wars",
+"the_martian"
+]
+},
+{
+"id": "mean_girls",
+"tipo": "pelicula",
+"titulo": "Chicas Pesadas",
+"anio": 2004,
+"fuente": "tmdb:movie:10625",
+"parecidos": [
+"barbie",
+"500_days"
+]
+},
+{
+"id": "notebook",
+"tipo": "pelicula",
+"titulo": "Diario de una pasión",
+"anio": 2004,
+"fuente": "tmdb:movie:11036",
+"parecidos": [
+"titanic",
+"pride_film",
+"about_time"
+]
+},
+{
+"id": "pride_film",
+"tipo": "pelicula",
+"titulo": "Orgullo y Prejuicio",
+"anio": 2005,
+"fuente": "tmdb:movie:4348",
+"parecidos": [
+"mujercitas",
+"notebook"
+]
+},
+{
+"id": "mujercitas",
+"tipo": "pelicula",
+"titulo": "Mujercitas",
+"anio": 2019,
+"fuente": "tmdb:movie:331482",
+"parecidos": [
+"pride_film",
+"barbie",
+"call_me"
+]
+},
+{
+"id": "call_me",
+"tipo": "pelicula",
+"titulo": "Llámame por tu nombre",
+"anio": 2017,
+"fuente": "tmdb:movie:398818",
+"parecidos": [
+"before_sunrise",
+"mujercitas",
+"y_tu_mama"
+]
+},
+{
+"id": "social_network",
+"tipo": "pelicula",
+"titulo": "Red Social",
+"anio": 2010,
+"fuente": "tmdb:movie:37799",
+"parecidos": [
+"whiplash",
+"oppenheimer"
+]
+},
+{
+"id": "about_time",
+"tipo": "pelicula",
+"titulo": "Cuestión de tiempo",
+"anio": 2013,
+"fuente": "tmdb:movie:122906",
+"parecidos": [
+"500_days",
+"notebook",
+"eterno_resplandor"
+]
+},
+{
+"id": "500_days",
+"tipo": "pelicula",
+"titulo": "(500) días con ella",
+"anio": 2009,
+"fuente": "tmdb:movie:19913",
+"parecidos": [
+"eterno_resplandor",
+"about_time",
+"la_la_land"
+]
+},
+{
+"id": "drive",
+"tipo": "pelicula",
+"titulo": "Drive: El escape",
+"anio": 2011,
+"fuente": "tmdb:movie:64690",
+"parecidos": [
+"joker",
+"blade_runner_2049",
+"no_country"
+]
+},
+{
+"id": "no_country",
+"tipo": "pelicula",
+"titulo": "Sin lugar para los débiles",
+"anio": 2007,
+"fuente": "tmdb:movie:6977",
+"parecidos": [
+"drive",
+"padrino",
+"pulp_fiction"
+]
+},
+{
+"id": "breaking_bad",
+"tipo": "serie",
+"titulo": "Breaking Bad",
+"anio": 2008,
+"fuente": "tmdb:tv:1396",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/501/1253519.jpg",
+"parecidos": [
+"better_call_saul",
+"narcos",
+"sopranos",
+"the_wire"
+]
+},
+{
+"id": "better_call_saul",
+"tipo": "serie",
+"titulo": "Better Call Saul",
+"anio": 2015,
+"fuente": "tmdb:tv:60059",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/501/1253515.jpg",
+"parecidos": [
+"breaking_bad",
+"succession"
+]
+},
+{
+"id": "the_office",
+"tipo": "serie",
+"titulo": "La Oficina",
+"anio": 2005,
+"fuente": "tmdb:tv:2316",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/481/1204342.jpg",
+"parecidos": [
+"parks",
+"b99",
+"modern_family",
+"friends",
+"himym"
+]
+},
+{
+"id": "friends",
+"tipo": "serie",
+"titulo": "Friends",
+"anio": 1994,
+"fuente": "tmdb:tv:1668",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/41/104565.jpg",
+"parecidos": [
+"himym",
+"the_office",
+"modern_family"
+]
+},
+{
+"id": "stranger_things",
+"tipo": "serie",
+"titulo": "Stranger Things",
+"anio": 2016,
+"fuente": "tmdb:tv:66732",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/595/1489169.jpg",
+"parecidos": [
+"dark",
+"wednesday"
+]
+},
+{
+"id": "got",
+"tipo": "serie",
+"titulo": "Juego De Tronos",
+"anio": 2011,
+"fuente": "tmdb:tv:1399",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/498/1245274.jpg",
+"parecidos": [
+"the_crown",
+"last_of_us",
+"the_boys"
+]
+},
+{
+"id": "sopranos",
+"tipo": "serie",
+"titulo": "Los Soprano",
+"anio": 1999,
+"fuente": "tmdb:tv:1398",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/4/11341.jpg",
+"parecidos": [
+"the_wire",
+"mad_men",
+"breaking_bad",
+"succession"
+]
+},
+{
+"id": "the_wire",
+"tipo": "serie",
+"titulo": "Los Vigilantes",
+"anio": 2002,
+"fuente": "tmdb:tv:1438",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/504/1260189.jpg",
+"parecidos": [
+"sopranos",
+"narcos",
+"true_detective"
+]
+},
+{
+"id": "dark",
+"tipo": "serie",
+"titulo": "Dark",
+"anio": 2017,
+"fuente": "tmdb:tv:70523",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/504/1262352.jpg",
+"parecidos": [
+"stranger_things",
+"black_mirror",
+"severance"
+]
+},
+{
+"id": "casa_papel",
+"tipo": "serie",
+"titulo": "La casa de papel",
+"anio": 2017,
+"fuente": "tmdb:tv:71446",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/376/940830.jpg",
+"parecidos": [
+"narcos",
+"squid_game",
+"peaky"
+]
+},
+{
+"id": "narcos",
+"tipo": "serie",
+"titulo": "Narcos",
+"anio": 2015,
+"fuente": "tmdb:tv:63351",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/498/1246087.jpg",
+"parecidos": [
+"breaking_bad",
+"casa_papel",
+"peaky"
+]
+},
+{
+"id": "peaky",
+"tipo": "serie",
+"titulo": "Peaky Blinders",
+"anio": 2013,
+"fuente": "tmdb:tv:60574",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/48/122213.jpg",
+"parecidos": [
+"narcos",
+"sopranos",
+"the_crown"
+]
+},
+{
+"id": "the_crown",
+"tipo": "serie",
+"titulo": "The Crown",
+"anio": 2016,
+"fuente": "tmdb:tv:65494",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/632/1580063.jpg",
+"parecidos": [
+"succession",
+"mad_men"
+]
+},
+{
+"id": "succession",
+"tipo": "serie",
+"titulo": "Succession",
+"anio": 2018,
+"fuente": "tmdb:tv:76331",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/453/1134275.jpg",
+"parecidos": [
+"the_crown",
+"mad_men",
+"the_bear"
+]
+},
+{
+"id": "the_bear",
+"tipo": "serie",
+"titulo": "El Oso",
+"anio": 2022,
+"fuente": "tmdb:tv:136315",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/629/1574642.jpg",
+"parecidos": [
+"succession",
+"fleabag",
+"severance"
+]
+},
+{
+"id": "severance",
+"tipo": "serie",
+"titulo": "Severance",
+"anio": 2022,
+"fuente": "tmdb:tv:95396",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/548/1371406.jpg",
+"parecidos": [
+"black_mirror",
+"dark",
+"the_bear"
+]
+},
+{
+"id": "last_of_us",
+"tipo": "serie",
+"titulo": "The Last of Us",
+"anio": 2023,
+"fuente": "tmdb:tv:100088",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/563/1409008.jpg",
+"parecidos": [
+"chernobyl",
+"got",
+"the_boys"
+]
+},
+{
+"id": "fleabag",
+"tipo": "serie",
+"titulo": "Fleabag",
+"anio": 2016,
+"fuente": "tmdb:tv:67070",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/192/482341.jpg",
+"parecidos": [
+"the_bear",
+"modern_family"
+]
+},
+{
+"id": "black_mirror",
+"tipo": "serie",
+"titulo": "Black Mirror",
+"anio": 2011,
+"fuente": "tmdb:tv:42009",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/564/1411764.jpg",
+"parecidos": [
+"severance",
+"dark",
+"rick_morty"
+]
+},
+{
+"id": "sherlock",
+"tipo": "serie",
+"titulo": "Sherlock",
+"anio": 2010,
+"fuente": "tmdb:tv:19885",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/171/428042.jpg",
+"parecidos": [
+"true_detective",
+"dark"
+]
+},
+{
+"id": "himym",
+"tipo": "serie",
+"titulo": "Cómo conocí a tu madre",
+"anio": 2005,
+"fuente": "tmdb:tv:1100",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/0/2451.jpg",
+"parecidos": [
+"friends",
+"b99"
+]
+},
+{
+"id": "b99",
+"tipo": "serie",
+"titulo": "Brooklyn Nine-Nine",
+"anio": 2013,
+"fuente": "tmdb:tv:48891",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/402/1007484.jpg",
+"parecidos": [
+"the_office",
+"parks",
+"himym"
+]
+},
+{
+"id": "modern_family",
+"tipo": "serie",
+"titulo": "Una Familia Moderna",
+"anio": 2009,
+"fuente": "tmdb:tv:1421",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/359/898320.jpg",
+"parecidos": [
+"the_office",
+"friends"
+]
+},
+{
+"id": "mandalorian",
+"tipo": "serie",
+"titulo": "The Mandalorian",
+"anio": 2019,
+"fuente": "tmdb:tv:82856",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/501/1253498.jpg",
+"parecidos": [
+"the_boys",
+"arcane",
+"last_of_us"
+]
+},
+{
+"id": "wednesday",
+"tipo": "serie",
+"titulo": "Merlina",
+"anio": 2022,
+"fuente": "tmdb:tv:119051",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/586/1466410.jpg",
+"parecidos": [
+"stranger_things",
+"euphoria"
+]
+},
+{
+"id": "squid_game",
+"tipo": "serie",
+"titulo": "El juego del calamar",
+"anio": 2021,
+"fuente": "tmdb:tv:93405",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/576/1440521.jpg",
+"parecidos": [
+"casa_papel",
+"black_mirror"
+]
+},
+{
+"id": "euphoria",
+"tipo": "serie",
+"titulo": "Euphoria",
+"anio": 2019,
+"fuente": "tmdb:tv:85552",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/621/1552657.jpg",
+"parecidos": [
+"wednesday",
+"succession"
+]
+},
+{
+"id": "mad_men",
+"tipo": "serie",
+"titulo": "Mad Men",
+"anio": 2007,
+"fuente": "tmdb:tv:1104",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/2/5589.jpg",
+"parecidos": [
+"sopranos",
+"succession",
+"the_crown"
+]
+},
+{
+"id": "chernobyl",
+"tipo": "serie",
+"titulo": "Chernobyl",
+"anio": 2019,
+"fuente": "tmdb:tv:87108",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/193/482599.jpg",
+"parecidos": [
+"last_of_us",
+"true_detective"
+]
+},
+{
+"id": "true_detective",
+"tipo": "serie",
+"titulo": "True Detective",
+"anio": 2014,
+"fuente": "tmdb:tv:46648",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/490/1226764.jpg",
+"parecidos": [
+"chernobyl",
+"the_wire",
+"sherlock"
+]
+},
+{
+"id": "arcane",
+"tipo": "serie",
+"titulo": "Arcane",
+"anio": 2021,
+"fuente": "tmdb:tv:94605",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/536/1340287.jpg",
+"parecidos": [
+"shingeki",
+"bojack",
+"spider_verse"
+]
+},
+{
+"id": "bojack",
+"tipo": "serie",
+"titulo": "BoJack Horseman",
+"anio": 2014,
+"fuente": "tmdb:tv:61222",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/405/1012627.jpg",
+"parecidos": [
+"rick_morty",
+"arcane",
+"fleabag"
+]
+},
+{
+"id": "rick_morty",
+"tipo": "serie",
+"titulo": "Rick y Morty",
+"anio": 2013,
+"fuente": "tmdb:tv:60625",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/626/1566363.jpg",
+"parecidos": [
+"bojack",
+"black_mirror"
+]
+},
+{
+"id": "parks",
+"tipo": "serie",
+"titulo": "Construyendo un parque",
+"anio": 2009,
+"fuente": "tmdb:tv:8592",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/481/1204341.jpg",
+"parecidos": [
+"the_office",
+"b99"
+]
+},
+{
+"id": "the_boys",
+"tipo": "serie",
+"titulo": "The Boys",
+"anio": 2019,
+"fuente": "tmdb:tv:76479",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/619/1547768.jpg",
+"parecidos": [
+"mandalorian",
+"last_of_us"
+]
+},
+{
+"id": "shingeki",
+"tipo": "anime",
+"titulo": "Attack on Titan",
+"anio": 2013,
+"fuente": "tmdb:tv:1429",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/632/1582290.jpg",
+"parecidos": [
+"kimetsu",
+"jujutsu",
+"fma",
+"chainsaw"
+]
+},
+{
+"id": "death_note",
+"tipo": "anime",
+"titulo": "Death Note",
+"anio": 2006,
+"fuente": "tmdb:tv:13916",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/499/1249019.jpg",
+"parecidos": [
+"evangelion",
+"fma",
+"hxh"
+]
+},
+{
+"id": "fma",
+"tipo": "anime",
+"titulo": "Fullmetal Alchemist: Brotherhood",
+"anio": 2009,
+"fuente": "tmdb:tv:31911",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/485/1214095.jpg",
+"parecidos": [
+"hxh",
+"shingeki",
+"naruto"
+]
+},
+{
+"id": "naruto",
+"tipo": "anime",
+"titulo": "Naruto",
+"anio": 2002,
+"fuente": "tmdb:tv:46260",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/3/9744.jpg",
+"parecidos": [
+"one_piece",
+"dbz",
+"hxh",
+"kimetsu"
+]
+},
+{
+"id": "one_piece",
+"tipo": "anime",
+"titulo": "One Piece",
+"anio": 1999,
+"fuente": "tmdb:tv:37854",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/504/1262497.jpg",
+"parecidos": [
+"naruto",
+"dbz",
+"hxh"
+]
+},
+{
+"id": "kimetsu",
+"tipo": "anime",
+"titulo": "Demon Slayer: Kimetsu no Yaiba",
+"anio": 2019,
+"fuente": "tmdb:tv:85937",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/456/1140750.jpg",
+"parecidos": [
+"jujutsu",
+"shingeki",
+"chainsaw"
+]
+},
+{
+"id": "jujutsu",
+"tipo": "anime",
+"titulo": "Jujutsu Kaisen",
+"anio": 2020,
+"fuente": "tmdb:tv:95479",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/608/1521905.jpg",
+"parecidos": [
+"chainsaw",
+"kimetsu",
+"hxh"
+]
+},
+{
+"id": "bebop",
+"tipo": "anime",
+"titulo": "Cowboy Bebop",
+"anio": 1998,
+"fuente": "tmdb:tv:30991",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/178/446548.jpg",
+"parecidos": [
+"evangelion",
+"death_note"
+]
+},
+{
+"id": "evangelion",
+"tipo": "anime",
+"titulo": "Neon Genesis Evangelion",
+"anio": 1995,
+"fuente": "tmdb:tv:890",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/11/27792.jpg",
+"parecidos": [
+"bebop",
+"death_note",
+"shingeki"
+]
+},
+{
+"id": "hxh",
+"tipo": "anime",
+"titulo": "Hunter × Hunter",
+"anio": 2011,
+"fuente": "tmdb:tv:46298",
+"parecidos": [
+"fma",
+"naruto",
+"jujutsu"
+]
+},
+{
+"id": "frieren",
+"tipo": "anime",
+"titulo": "Frieren: Más allá del final del viaje",
+"anio": 2023,
+"fuente": "tmdb:tv:209867",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/539/1348667.jpg",
+"parecidos": [
+"spy_family",
+"haikyu",
+"your_name"
+]
+},
+{
+"id": "chainsaw",
+"tipo": "anime",
+"titulo": "Chainsaw Man",
+"anio": 2022,
+"fuente": "tmdb:tv:114410",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/422/1056726.jpg",
+"parecidos": [
+"jujutsu",
+"kimetsu",
+"spy_family"
+]
+},
+{
+"id": "your_name",
+"tipo": "anime",
+"titulo": "Tu nombre",
+"anio": 2016,
+"fuente": "tmdb:movie:372058",
+"parecidos": [
+"chihiro",
+"totoro",
+"frieren"
+]
+},
+{
+"id": "chihiro",
+"tipo": "anime",
+"titulo": "El viaje de Chihiro",
+"anio": 2001,
+"fuente": "tmdb:movie:129",
+"parecidos": [
+"totoro",
+"your_name",
+"laberinto_fauno"
+]
+},
+{
+"id": "totoro",
+"tipo": "anime",
+"titulo": "Mi vecino Totoro",
+"anio": 1988,
+"fuente": "tmdb:movie:8392",
+"parecidos": [
+"chihiro",
+"your_name"
+]
+},
+{
+"id": "spy_family",
+"tipo": "anime",
+"titulo": "SPY×FAMILY",
+"anio": 2022,
+"fuente": "tmdb:tv:120089",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/590/1477119.jpg",
+"parecidos": [
+"frieren",
+"haikyu",
+"chainsaw"
+]
+},
+{
+"id": "haikyu",
+"tipo": "anime",
+"titulo": "Haikyu!!",
+"anio": 2014,
+"fuente": "tmdb:tv:60863",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/65/164065.jpg",
+"parecidos": [
+"spy_family",
+"naruto"
+]
+},
+{
+"id": "dbz",
+"tipo": "anime",
+"titulo": "Dragon Ball Z",
+"anio": 1989,
+"fuente": "tmdb:tv:12971",
+"imagen": "https://static.tvmaze.com/uploads/images/medium_portrait/11/29190.jpg",
+"parecidos": [
+"naruto",
+"one_piece"
+]
+},
+{
+"id": "cien_anos",
+"tipo": "libro",
+"titulo": "Cien años de soledad",
+"anio": 1967,
+"fuente": "ol:OL274505W",
+"imagen": "https://covers.openlibrary.org/b/id/12627383-M.jpg",
+"parecidos": [
+"amor_colera",
+"pedro_paramo",
+"casa_espiritus",
+"rayuela",
+"ficciones"
+]
+},
+{
+"id": "amor_colera",
+"tipo": "libro",
+"titulo": "El amor en los tiempos del cólera",
+"anio": 1985,
+"fuente": "ol:OL274518W",
+"imagen": "https://covers.openlibrary.org/b/id/10096404-M.jpg",
+"parecidos": [
+"cien_anos",
+"casa_espiritus"
+]
+},
+{
+"id": "principito",
+"tipo": "libro",
+"titulo": "El Principito",
+"anio": 1943,
+"fuente": "ol:OL10263W",
+"imagen": "https://covers.openlibrary.org/b/id/10708272-M.jpg",
+"parecidos": [
+"alquimista",
+"hobbit"
+]
+},
+{
+"id": "1984",
+"tipo": "libro",
+"titulo": "1984",
+"anio": 1949,
+"fuente": "ol:OL1168083W",
+"imagen": "https://covers.openlibrary.org/b/id/9267242-M.jpg",
+"parecidos": [
+"mundo_feliz",
+"fahrenheit",
+"metamorfosis"
+]
+},
+{
+"id": "mundo_feliz",
+"tipo": "libro",
+"titulo": "Un mundo feliz",
+"anio": 1932,
+"fuente": "ol:OL64365W",
+"imagen": "https://covers.openlibrary.org/b/id/8231823-M.jpg",
+"parecidos": [
+"1984",
+"fahrenheit"
+]
+},
+{
+"id": "fahrenheit",
+"tipo": "libro",
+"titulo": "Fahrenheit 451",
+"anio": 1953,
+"fuente": "ol:OL103123W",
+"imagen": "https://covers.openlibrary.org/b/id/12993656-M.jpg",
+"parecidos": [
+"1984",
+"mundo_feliz"
+]
+},
+{
+"id": "gatsby",
+"tipo": "libro",
+"titulo": "El gran Gatsby",
+"anio": 1925,
+"fuente": "ol:OL468431W",
+"imagen": "https://covers.openlibrary.org/b/id/10590366-M.jpg",
+"parecidos": [
+"guardian",
+"orgullo_libro",
+"ruisenor"
+]
+},
+{
+"id": "ruisenor",
+"tipo": "libro",
+"titulo": "Matar un ruiseñor",
+"anio": 1960,
+"fuente": "ol:OL3140822W",
+"imagen": "https://covers.openlibrary.org/b/id/14351077-M.jpg",
+"parecidos": [
+"gatsby",
+"guardian"
+]
+},
+{
+"id": "orgullo_libro",
+"tipo": "libro",
+"titulo": "Orgullo y prejuicio",
+"anio": 1813,
+"fuente": "ol:OL66554W",
+"imagen": "https://covers.openlibrary.org/b/id/14348537-M.jpg",
+"parecidos": [
+"gatsby",
+"evelyn_hugo"
+]
+},
+{
+"id": "hp1",
+"tipo": "libro",
+"titulo": "Harry Potter y la piedra filosofal",
+"anio": 1997,
+"fuente": "ol:OL82563W",
+"imagen": "https://covers.openlibrary.org/b/id/15155833-M.jpg",
+"parecidos": [
+"hobbit",
+"hunger",
+"nombre_viento",
+"lotr_libro"
+]
+},
+{
+"id": "hobbit",
+"tipo": "libro",
+"titulo": "El hobbit",
+"anio": 1937,
+"fuente": "ol:OL27482W",
+"imagen": "https://covers.openlibrary.org/b/id/14627509-M.jpg",
+"parecidos": [
+"lotr_libro",
+"hp1",
+"nombre_viento"
+]
+},
+{
+"id": "lotr_libro",
+"tipo": "libro",
+"titulo": "El señor de los anillos",
+"anio": 1954,
+"fuente": "ol:OL27448W",
+"imagen": "https://covers.openlibrary.org/b/id/14625765-M.jpg",
+"parecidos": [
+"hobbit",
+"dune_libro",
+"nombre_viento"
+]
+},
+{
+"id": "dune_libro",
+"tipo": "libro",
+"titulo": "Dune",
+"anio": 1965,
+"fuente": "ol:OL893414W",
+"imagen": "https://covers.openlibrary.org/b/id/11481354-M.jpg",
+"parecidos": [
+"lotr_libro",
+"hail_mary",
+"1984"
+]
+},
+{
+"id": "hunger",
+"tipo": "libro",
+"titulo": "Los juegos del hambre",
+"anio": 2008,
+"fuente": "ol:OL5735363W",
+"imagen": "https://covers.openlibrary.org/b/id/12646537-M.jpg",
+"parecidos": [
+"hp1",
+"romper_circulo"
+]
+},
+{
+"id": "alquimista",
+"tipo": "libro",
+"titulo": "El alquimista",
+"anio": 1988,
+"fuente": "ol:OL796465W",
+"imagen": "https://covers.openlibrary.org/b/id/7414780-M.jpg",
+"parecidos": [
+"principito",
+"sombra_viento"
+]
+},
+{
+"id": "sapiens",
+"tipo": "libro",
+"titulo": "Sapiens",
+"anio": 2011,
+"fuente": "ol:OL17075811W",
+"imagen": "https://covers.openlibrary.org/b/id/8634250-M.jpg",
+"parecidos": [
+"habitos"
+]
+},
+{
+"id": "habitos",
+"tipo": "libro",
+"titulo": "Hábitos atómicos",
+"anio": 2018,
+"fuente": "ol:OL17930368W",
+"imagen": "https://covers.openlibrary.org/b/id/12539702-M.jpg",
+"parecidos": [
+"sapiens"
+]
+},
+{
+"id": "guardian",
+"tipo": "libro",
+"titulo": "El guardián entre el centeno",
+"anio": 1951,
+"fuente": "ol:OL3335245W",
+"imagen": "https://covers.openlibrary.org/b/id/9273490-M.jpg",
+"parecidos": [
+"gatsby",
+"tokio_blues"
+]
+},
+{
+"id": "crimen",
+"tipo": "libro",
+"titulo": "Crimen y castigo",
+"anio": 1866,
+"fuente": "ol:OL166894W",
+"imagen": "https://covers.openlibrary.org/b/id/9411873-M.jpg",
+"parecidos": [
+"metamorfosis",
+"quijote"
+]
+},
+{
+"id": "quijote",
+"tipo": "libro",
+"titulo": "Don Quijote de la Mancha",
+"anio": 1605,
+"fuente": "ol:OL503666W",
+"imagen": "https://covers.openlibrary.org/b/id/14428305-M.jpg",
+"parecidos": [
+"crimen",
+"cien_anos"
+]
+},
+{
+"id": "sombra_viento",
+"tipo": "libro",
+"titulo": "La sombra del viento",
+"anio": 2001,
+"fuente": "ol:OL278437W",
+"imagen": "https://covers.openlibrary.org/b/id/10107644-M.jpg",
+"parecidos": [
+"perfume",
+"alquimista",
+"cien_anos"
+]
+},
+{
+"id": "rayuela",
+"tipo": "libro",
+"titulo": "Rayuela",
+"anio": 1963,
+"fuente": "ol:OL14860424W",
+"imagen": "https://covers.openlibrary.org/b/id/1047466-M.jpg",
+"parecidos": [
+"ficciones",
+"cien_anos",
+"pedro_paramo"
+]
+},
+{
+"id": "pedro_paramo",
+"tipo": "libro",
+"titulo": "Pedro Páramo",
+"anio": 1955,
+"fuente": "ol:OL1731119W",
+"imagen": "https://covers.openlibrary.org/b/id/5419076-M.jpg",
+"parecidos": [
+"cien_anos",
+"rayuela"
+]
+},
+{
+"id": "casa_espiritus",
+"tipo": "libro",
+"titulo": "La casa de los espíritus",
+"anio": 1982,
+"fuente": "ol:OL1905255W",
+"imagen": "https://covers.openlibrary.org/b/id/3205226-M.jpg",
+"parecidos": [
+"cien_anos",
+"amor_colera"
+]
+},
+{
+"id": "tokio_blues",
+"tipo": "libro",
+"titulo": "Tokio blues",
+"anio": 1987,
+"fuente": "ol:OL2625457W",
+"imagen": "https://covers.openlibrary.org/b/id/2237620-M.jpg",
+"parecidos": [
+"kafka_orilla",
+"guardian"
+]
+},
+{
+"id": "kafka_orilla",
+"tipo": "libro",
+"titulo": "Kafka en la orilla",
+"anio": 2002,
+"fuente": "ol:OL2625431W",
+"imagen": "https://covers.openlibrary.org/b/id/4982600-M.jpg",
+"parecidos": [
+"tokio_blues",
+"metamorfosis"
+]
+},
+{
+"id": "nombre_viento",
+"tipo": "libro",
+"titulo": "El nombre del viento",
+"anio": 2007,
+"fuente": "ol:OL8479867W",
+"imagen": "https://covers.openlibrary.org/b/id/11480483-M.jpg",
+"parecidos": [
+"hobbit",
+"lotr_libro",
+"hp1"
+]
+},
+{
+"id": "romper_circulo",
+"tipo": "libro",
+"titulo": "Romper el círculo",
+"anio": 2016,
+"fuente": "ol:OL18020194W",
+"imagen": "https://covers.openlibrary.org/b/id/10473609-M.jpg",
+"parecidos": [
+"evelyn_hugo",
+"hunger"
+]
+},
+{
+"id": "evelyn_hugo",
+"tipo": "libro",
+"titulo": "Los siete maridos de Evelyn Hugo",
+"anio": 2017,
+"fuente": "ol:OL18203673W",
+"imagen": "https://covers.openlibrary.org/b/id/8354226-M.jpg",
+"parecidos": [
+"romper_circulo",
+"orgullo_libro"
+]
+},
+{
+"id": "hail_mary",
+"tipo": "libro",
+"titulo": "Proyecto Hail Mary",
+"anio": 2021,
+"fuente": "ol:OL21745884W",
+"imagen": "https://covers.openlibrary.org/b/id/11200092-M.jpg",
+"parecidos": [
+"marciano_libro",
+"dune_libro"
+]
+},
+{
+"id": "marciano_libro",
+"tipo": "libro",
+"titulo": "El marciano",
+"anio": 2011,
+"fuente": "ol:OL17091839W",
+"imagen": "https://covers.openlibrary.org/b/id/11447888-M.jpg",
+"parecidos": [
+"hail_mary",
+"dune_libro"
+]
+},
+{
+"id": "perfume",
+"tipo": "libro",
+"titulo": "El perfume",
+"anio": 1985,
+"fuente": "ol:OL10834W",
+"imagen": "https://covers.openlibrary.org/b/id/10910286-M.jpg",
+"parecidos": [
+"sombra_viento",
+"metamorfosis"
+]
+},
+{
+"id": "metamorfosis",
+"tipo": "libro",
+"titulo": "La metamorfosis",
+"anio": 1915,
+"fuente": "ol:OL498556W",
+"imagen": "https://covers.openlibrary.org/b/id/12820198-M.jpg",
+"parecidos": [
+"crimen",
+"kafka_orilla",
+"ficciones"
+]
+},
+{
+"id": "ficciones",
+"tipo": "libro",
+"titulo": "Ficciones",
+"anio": 1944,
+"fuente": "ol:OL110971W",
+"imagen": "https://covers.openlibrary.org/b/id/10832290-M.jpg",
+"parecidos": [
+"rayuela",
+"metamorfosis"
+]
+},
+{
+"id": "bad_bunny",
+"tipo": "artista",
+"titulo": "Bad Bunny",
+"fuente": "mb:artist:89aa5ecb-59ad-46f5-b3eb-2d424e941f19",
+"parecidos": [
+"karol_g",
+"feid",
+"rosalia"
+]
+},
+{
+"id": "taylor",
+"tipo": "artista",
+"titulo": "Taylor Swift",
+"fuente": "mb:artist:20244d07-534f-4eff-b4d4-930878889970",
+"parecidos": [
+"olivia",
+"lana",
+"harry_styles"
+]
+},
+{
+"id": "beatles",
+"tipo": "artista",
+"titulo": "The Beatles",
+"fuente": "mb:artist:b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+"parecidos": [
+"queen",
+"pink_floyd",
+"coldplay"
+]
+},
+{
+"id": "queen",
+"tipo": "artista",
+"titulo": "Queen",
+"fuente": "mb:artist:0383dadf-2a4e-4d10-a46a-e9e041da8eb3",
+"parecidos": [
+"beatles",
+"mj",
+"nirvana"
+]
+},
+{
+"id": "radiohead",
+"tipo": "artista",
+"titulo": "Radiohead",
+"fuente": "mb:artist:a74b1b7f-71a5-4011-9441-d0b5e4122711",
+"parecidos": [
+"arctic",
+"pink_floyd",
+"tame_impala"
+]
+},
+{
+"id": "daft_punk",
+"tipo": "artista",
+"titulo": "Daft Punk",
+"fuente": "mb:artist:056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+"parecidos": [
+"gorillaz",
+"tame_impala",
+"weeknd"
+]
+},
+{
+"id": "soda",
+"tipo": "artista",
+"titulo": "Soda Stereo",
+"fuente": "mb:artist:3f8a5e5b-c24b-4068-9f1c-afad8829e06b",
+"parecidos": [
+"cerati",
+"los_bunkers",
+"cafe_tacvba",
+"enjambre"
+]
+},
+{
+"id": "shakira",
+"tipo": "artista",
+"titulo": "Shakira",
+"fuente": "mb:artist:bf24ca37-25f4-4e34-9aec-460b94364cfc",
+"parecidos": [
+"juanes",
+"karol_g"
+]
+},
+{
+"id": "karol_g",
+"tipo": "artista",
+"titulo": "Karol G",
+"fuente": "mb:artist:de22adae-f8ac-414f-b653-b0162611bd60",
+"parecidos": [
+"bad_bunny",
+"feid",
+"shakira"
+]
+},
+{
+"id": "billie",
+"tipo": "artista",
+"titulo": "Billie Eilish",
+"fuente": "mb:artist:f4abc0b5-3f7a-4eff-8f78-ac078dbce533",
+"parecidos": [
+"olivia",
+"lana",
+"sza"
+]
+},
+{
+"id": "kendrick",
+"tipo": "artista",
+"titulo": "Kendrick Lamar",
+"fuente": "mb:artist:381086ea-f511-4aba-bdf9-71c753dc5077",
+"parecidos": [
+"frank_ocean",
+"sza",
+"weeknd"
+]
+},
+{
+"id": "frank_ocean",
+"tipo": "artista",
+"titulo": "Frank Ocean",
+"fuente": "mb:artist:6df08c91-b91d-4b59-95fe-b51a2e1b06d3",
+"parecidos": [
+"kendrick",
+"sza",
+"tame_impala"
+]
+},
+{
+"id": "weeknd",
+"tipo": "artista",
+"titulo": "The Weeknd",
+"fuente": "mb:artist:c8b03190-306c-4120-bb0b-6f2ebfc06ea9",
+"parecidos": [
+"dua",
+"bruno_mars",
+"frank_ocean"
+]
+},
+{
+"id": "arctic",
+"tipo": "artista",
+"titulo": "Arctic Monkeys",
+"fuente": "mb:artist:ada7a83c-e3e1-40f1-93f9-3e73dbc9298a",
+"parecidos": [
+"radiohead",
+"tame_impala",
+"nirvana"
+]
+},
+{
+"id": "gorillaz",
+"tipo": "artista",
+"titulo": "Gorillaz",
+"fuente": "mb:artist:e21857d5-3256-4547-afb3-4b6ded592596",
+"parecidos": [
+"daft_punk",
+"arctic"
+]
+},
+{
+"id": "rosalia",
+"tipo": "artista",
+"titulo": "Rosalía",
+"fuente": "mb:artist:25f3abd9-63b5-471a-bd25-feb9672dfa11",
+"parecidos": [
+"bad_bunny",
+"mon_laferte"
+]
+},
+{
+"id": "mon_laferte",
+"tipo": "artista",
+"titulo": "Mon Laferte",
+"fuente": "mb:artist:ab966c0f-e526-46ae-b492-82c27b87f81f",
+"parecidos": [
+"enjambre",
+"cafe_tacvba",
+"rosalia"
+]
+},
+{
+"id": "cafe_tacvba",
+"tipo": "artista",
+"titulo": "Café Tacvba",
+"fuente": "mb:artist:c2b37a39-c66a-44b2-b190-a69485ae5d95",
+"parecidos": [
+"soda",
+"enjambre",
+"mon_laferte"
+]
+},
+{
+"id": "enjambre",
+"tipo": "artista",
+"titulo": "Enjambre",
+"fuente": "mb:artist:acc7cb5a-8f3a-4f61-b199-a62d45374dec",
+"parecidos": [
+"los_bunkers",
+"cafe_tacvba",
+"mon_laferte"
+]
+},
+{
+"id": "los_bunkers",
+"tipo": "artista",
+"titulo": "Los Bunkers",
+"fuente": "mb:artist:e99f6d62-f62b-4e1e-8593-33d5696d85f0",
+"parecidos": [
+"enjambre",
+"soda",
+"cerati"
+]
+},
+{
+"id": "coldplay",
+"tipo": "artista",
+"titulo": "Coldplay",
+"fuente": "mb:artist:cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+"parecidos": [
+"beatles",
+"harry_styles"
+]
+},
+{
+"id": "nirvana",
+"tipo": "artista",
+"titulo": "Nirvana",
+"fuente": "mb:artist:5b11f4ce-a62d-471e-81fc-a69a8278c7da",
+"parecidos": [
+"arctic",
+"queen"
+]
+},
+{
+"id": "pink_floyd",
+"tipo": "artista",
+"titulo": "Pink Floyd",
+"fuente": "mb:artist:83d91898-7763-47d7-b03b-b92132375c47",
+"parecidos": [
+"radiohead",
+"beatles"
+]
+},
+{
+"id": "mj",
+"tipo": "artista",
+"titulo": "Michael Jackson",
+"fuente": "mb:artist:f27ec8db-af05-4f36-916e-3d57f91ecf5e",
+"parecidos": [
+"bruno_mars",
+"queen",
+"weeknd"
+]
+},
+{
+"id": "dua",
+"tipo": "artista",
+"titulo": "Dua Lipa",
+"fuente": "mb:artist:6f1a58bf-9b1b-49cf-a44a-6cefad7ae04f",
+"parecidos": [
+"weeknd",
+"harry_styles",
+"olivia"
+]
+},
+{
+"id": "harry_styles",
+"tipo": "artista",
+"titulo": "Harry Styles",
+"fuente": "mb:artist:7eb1ce54-a355-41f9-8d68-e018b096d427",
+"parecidos": [
+"taylor",
+"dua",
+"coldplay"
+]
+},
+{
+"id": "tame_impala",
+"tipo": "artista",
+"titulo": "Tame Impala",
+"fuente": "mb:artist:63aa26c3-d59b-4da4-84ac-716b54f1ef4d",
+"parecidos": [
+"arctic",
+"frank_ocean",
+"daft_punk"
+]
+},
+{
+"id": "bruno_mars",
+"tipo": "artista",
+"titulo": "Bruno Mars",
+"fuente": "mb:artist:afb680f2-b6eb-4cd7-a70b-a63b25c763d5",
+"parecidos": [
+"mj",
+"weeknd",
+"dua"
+]
+},
+{
+"id": "juanes",
+"tipo": "artista",
+"titulo": "Juanes",
+"fuente": "mb:artist:8b0f05ce-354e-4121-9e0b-8b4732ea844f",
+"parecidos": [
+"shakira",
+"soda"
+]
+},
+{
+"id": "feid",
+"tipo": "artista",
+"titulo": "Feid",
+"fuente": "mb:artist:eaee97f6-f2e4-414a-966c-f31a1fb4696a",
+"parecidos": [
+"karol_g",
+"bad_bunny"
+]
+},
+{
+"id": "bts",
+"tipo": "artista",
+"titulo": "BTS",
+"fuente": "mb:artist:0d79fe8e-ba27-4859-bb8c-2f255f346853",
+"parecidos": [
+"dua",
+"harry_styles"
+]
+},
+{
+"id": "olivia",
+"tipo": "artista",
+"titulo": "Olivia Rodrigo",
+"fuente": "mb:artist:6925db17-f35e-42f3-a4eb-84ee6bf5d4b0",
+"parecidos": [
+"taylor",
+"billie"
+]
+},
+{
+"id": "lana",
+"tipo": "artista",
+"titulo": "Lana Del Rey",
+"fuente": "mb:artist:b7539c32-53e7-4908-bda3-81449c367da6",
+"parecidos": [
+"billie",
+"taylor"
+]
+},
+{
+"id": "cerati",
+"tipo": "artista",
+"titulo": "Gustavo Cerati",
+"fuente": "mb:artist:979d01bc-a4da-4c80-8cc1-be40bd35cd5e",
+"parecidos": [
+"soda",
+"los_bunkers"
+]
+},
+{
+"id": "sza",
+"tipo": "artista",
+"titulo": "SZA",
+"fuente": "mb:artist:272989c8-5535-492d-a25c-9f58803e027f",
+"parecidos": [
+"frank_ocean",
+"kendrick",
+"billie"
+]
+}
+]

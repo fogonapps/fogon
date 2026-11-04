@@ -1518,6 +1518,45 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /* ----- Gustos para empezar ----- */
+
+    /** La lista de obras y artistas conocidos para elegir gustos (ver `ObraInicial`). */
+    val iniciales: List<io.github.fogonapps.cajon.datos.ObraInicial> by lazy {
+        runCatching { io.github.fogonapps.cajon.datos.Iniciales.leer(getApplication<android.app.Application>().assets.open("datos/gustos.json").bufferedReader().use { it.readText() }) }
+            .getOrDefault(emptyList())
+    }
+    private val _imagenesIniciales = MutableStateFlow<Map<String, String>>(emptyMap())
+    /** id → imagen que se trajo aparte: el póster de TMDB (con clave) o la foto del artista (Wikimedia). */
+    val imagenesIniciales: StateFlow<Map<String, String>> = _imagenesIniciales
+    private val inicialesPedidas = mutableSetOf<String>()
+
+    fun cargarImagenesIniciales(ids: List<String>) {
+        val porId = iniciales.associateBy { it.id }
+        val faltan = ids.filter { it !in inicialesPedidas }.mapNotNull { porId[it] }.filter { it.imagen.isBlank() }
+        if (faltan.isEmpty()) return
+        inicialesPedidas += faltan.map { it.id }
+        val clave = caja.claveTmdb
+        viewModelScope.launch {
+            val artistas = faltan.filter { it.tipo == TIPO_ARTISTA }
+            if (artistas.isNotEmpty()) runCatching {
+                val fotos = Wikimedia.fotos(artistas.map { it.fuente.removePrefix("mb:artist:") })
+                _imagenesIniciales.value = _imagenesIniciales.value + artistas.mapNotNull { a -> fotos[a.fuente.removePrefix("mb:artist:")]?.let { a.id to it } }
+            }
+            if (clave != null) faltan.filter { it.fuente.startsWith("tmdb:") }.forEach { o ->
+                runCatching { Tmdb(clave).poster(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { _imagenesIniciales.value = _imagenesIniciales.value + (o.id to it) }
+            }
+        }
+    }
+
+    fun claveInicial(o: io.github.fogonapps.cajon.datos.ObraInicial) =
+        if (o.tipo == TIPO_ARTISTA) io.github.fogonapps.cajon.datos.Recomendar.clavePersona(o.titulo) else "obra:" + o.fuente
+
+    /** Le gusta (o ya no) una de la lista para empezar: queda en sus gustos, como lo demás que dice. */
+    fun gustaInicial(o: io.github.fogonapps.cajon.datos.ObraInicial, si: Boolean) {
+        val imagen = o.imagen.ifBlank { _imagenesIniciales.value[o.id].orEmpty() }
+        decirGusto(claveInicial(o), o.titulo, if (si) io.github.fogonapps.cajon.datos.Senales.GUSTA else null, o.tipo, imagen, o.fuente)
+    }
+
     /* ----- Lo del momento ----- */
 
     /**

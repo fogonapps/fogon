@@ -672,6 +672,9 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="gustos_elige_minimo">Pick at least 3: what you watch, listen to or read. Tap one and similar ones show up.</string>
+  <string name="gustos_faltan">%1$d to go</string>
+  <string name="gustos_recargar">Show others</string>
   <string name="red_correo_no_existe">%1$s doesn\'t have an account yet</string>
   <string name="red_registrarme">Create my account with this email</string>
   <string name="red_olvide">Forgot your password?</string>
