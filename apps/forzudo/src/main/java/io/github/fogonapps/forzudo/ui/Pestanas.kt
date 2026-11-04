@@ -162,7 +162,13 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
             }
             Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)) {
-                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, cara = io.github.fogonapps.identidad.Cara.DECIDIDO, tamano = 110.dp)
+                // Su cara sigue tu racha: feliz si va andando, sorprendido si es tu mejor racha, decidido para empezar.
+                val cara = when {
+                    racha.actual > 0 && racha.actual >= racha.mejor -> io.github.fogonapps.identidad.Cara.SORPRESA
+                    racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
+                    else -> io.github.fogonapps.identidad.Cara.DECIDIDO
+                }
+                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, cara = cara, tamano = 110.dp)
                 if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 20.dp)
             }
         }

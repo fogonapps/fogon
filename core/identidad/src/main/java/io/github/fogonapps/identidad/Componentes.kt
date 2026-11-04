@@ -1,6 +1,14 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.ui.text.font.FontFamily
@@ -279,13 +287,41 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
 /**
  * El personaje de la app con la [cara] del momento: blanco, con su sombra y sus ojitos. En los temas claros lleva
  * detrás un círculo suave del color de la app, para que no se pierda sobre el papel claro.
+ *
+ * Está vivo: aparece con un rebote, respira (sube y baja muy poquito), parpadea cada tanto y, al cambiar de cara,
+ * pasa de una a otra con un fundido. Con "Menos movimiento" se queda quieto.
  */
 @Composable
 fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, cara: Cara = Cara.NORMAL, tamano: Dp = 160.dp) {
     val f = FogonTema.actual
+    val quieto = f.menosMovimiento
+    // El parpadeo: la cara de ojos cerrados un instante, cada 3 a 6 segundos (no en las que ya los tienen cerrados).
+    var parpado by remember { mutableStateOf(false) }
+    if (!quieto && cara !in setOf(Cara.DORMIDO, Cara.FELIZ, Cara.GUINO)) {
+        LaunchedEffect(cara) {
+            while (true) {
+                kotlinx.coroutines.delay(3000L + (kotlin.random.Random.nextFloat() * 3000).toLong())
+                parpado = true; kotlinx.coroutines.delay(140); parpado = false
+            }
+        }
+    }
+    val entrada = remember { androidx.compose.animation.core.Animatable(if (quieto) 1f else 0.6f) }
+    LaunchedEffect(Unit) { if (entrada.value < 1f) entrada.animateTo(1f, resorteAlegre()) }
+    val respira = androidx.compose.animation.core.rememberInfiniteTransition(label = "respira")
+    val r by respira.animateFloat(
+        0f, if (quieto) 0f else 1f,
+        androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween<Float>(1800), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "respira",
+    )
     Box(modifier.size(tamano), contentAlignment = Alignment.Center) {
         if (!f.oscuro) Box(Modifier.fillMaxWidth(0.86f).aspectRatio(1f).background(f.marca.copy(alpha = 0.28f), androidx.compose.foundation.shape.CircleShape))
-        Image(painterResource(imagenPersonaje(quien, cara)), contentDescription = descripcion, modifier = Modifier.matchParentSize())
+        androidx.compose.animation.Crossfade(if (parpado) Cara.DORMIDO else cara, Modifier.matchParentSize().graphicsLayer {
+            scaleX = entrada.value * (1f - r * 0.015f); scaleY = entrada.value * (1f + r * 0.03f)
+            translationY = -r * tamano.toPx() * 0.015f
+            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+        }, animationSpec = androidx.compose.animation.core.tween(if (parpado) 60 else 220), label = "cara") { c ->
+            Image(painterResource(imagenPersonaje(quien, c)), contentDescription = descripcion, modifier = Modifier.fillMaxSize())
+        }
     }
 }
 

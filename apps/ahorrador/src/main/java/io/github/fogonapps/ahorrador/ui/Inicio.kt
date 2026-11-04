@@ -144,9 +144,10 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         }
     }
 
-    // Lo que tienes: el número de puntos sobre su halo, y el mes en una línea.
+    // Lo que tienes: el número de puntos sobre su halo, el mes en una línea y El Ahorrador, que pone la cara del mes.
+    Box(Modifier.fillMaxWidth().aparecer(1)) {
     Column(
-        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).aparecer(1).height(150.dp)
+        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).height(150.dp)
             .haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 0.9f else 0.6f), centro = androidx.compose.ui.geometry.Offset(0.5f, 0.45f)),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
@@ -161,6 +162,15 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
                 modifier = Modifier.padding(top = 8.dp).clip(FormaPildora).background(f.tinta1).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
                     .padding(horizontal = 14.dp, vertical = 6.dp))
         }
+    }
+    // Gastaste más de lo que entró: miedo; guardaste más de una quinta parte: feliz; si no, tranquilo.
+    val entro = L.ingresos(e, mes); val salio = L.gastos(e, mes)
+    val cara = when {
+        entro > 0 && salio > entro -> io.github.fogonapps.identidad.Cara.MIEDO
+        entro > 0 && entro - salio > entro / 5 -> io.github.fogonapps.identidad.Cara.FELIZ
+        else -> io.github.fogonapps.identidad.Cara.NORMAL
+    }
+    io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, Modifier.align(Alignment.BottomEnd).padding(end = 12.dp), cara = cara, tamano = 64.dp)
     }
 
     // Las acciones, en una tarjeta de vidrio.

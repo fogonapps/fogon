@@ -1,0 +1,1 @@
+Los personajes se mueven: aparecen con un rebote, respiran y parpadean. El Ahorrador ahora está en la pantalla principal y pone la cara de tu mes.

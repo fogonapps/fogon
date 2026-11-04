@@ -131,6 +131,15 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Dato(stringResource(R.string.comido), "${total.kcal.roundToInt()} kcal")
                 Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal")
+                // La Cucha pone la cara del día: dormida si no has comido nada, sorprendida si te pasaste,
+                // feliz si ya vas cerca de tu meta.
+                val cara = when {
+                    total.kcal <= 0.0 -> io.github.fogonapps.identidad.Cara.DORMIDO
+                    quedan < 0 -> io.github.fogonapps.identidad.Cara.SORPRESA
+                    total.kcal >= e.metas.kcal * 0.6 -> io.github.fogonapps.identidad.Cara.FELIZ
+                    else -> io.github.fogonapps.identidad.Cara.NORMAL
+                }
+                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, Modifier.align(Alignment.End), cara = cara, tamano = 64.dp)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -171,9 +180,6 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
     }
 
     if (d?.anotados.isNullOrEmpty() && dia == hoy) {
-        Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) {
-            Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 72.dp)
-        }
         Pista(stringResource(R.string.hoy_vacio), centro = true)
     }
 }
