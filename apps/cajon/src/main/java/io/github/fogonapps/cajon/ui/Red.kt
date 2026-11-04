@@ -298,7 +298,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
             Text(stringResource(R.string.red_paso2_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
             BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
         }
-    } else FilaNotas(vm, e)
+    }
     Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(R.string.red_pestana_siguiendo, R.string.red_explorar).forEachIndexed { i, t ->
             val elegida = pestana == i
@@ -402,6 +402,7 @@ private fun InvitaCuenta(vm: CajonViewModel) {
 
 /* ----- El perfil de otra persona (o el propio, como lo ve la red) ----- */
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val f = FogonTema.actual
@@ -411,14 +412,32 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val listas by vm.red.listas.collectAsStateWithLifecycle()
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var menu by remember { mutableStateOf(false) }
+    var hoja by remember { mutableStateOf<String?>(null) }
     var pestana by rememberSaveable(usuario) { mutableStateOf(0) }
     LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
     val p = perfiles[usuario]
     val propio = usuario == yo
-    Cabecera("@$usuario", vm::cerrar) {
+    Cabecera("@$usuario", vm::cerrar, chico = true) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BotonIcono(Iconos.Compartir, stringResource(R.string.compartir_perfil), grande = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            if (yo != null) BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = !menu }
+            if (yo != null) Box {
+                BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = true }
+                // El menú de los tres puntos, desplegado desde ellos (como en las redes).
+                val portapapeles = androidx.compose.ui.platform.LocalClipboardManager.current
+                val copiado = stringResource(R.string.red_enlace_copiado)
+                androidx.compose.material3.DropdownMenu(menu, { menu = false }, shape = forma(24.dp), containerColor = f.superficie) {
+                    @Composable
+                    fun Opcion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
+                        val color = if (peligro) MaterialTheme.colorScheme.error else f.texto
+                        androidx.compose.material3.DropdownMenuItem({ Text(texto, style = MaterialTheme.typography.bodyLarge, color = color) }, { menu = false; onClick() },
+                            leadingIcon = { IconoRiso(icono, null, tamano = 22.dp, tinta = color) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 6.dp))
+                    }
+                    Opcion(Iconos.Enlace, stringResource(R.string.red_copiar_enlace)) { portapapeles.setText(androidx.compose.ui.text.AnnotatedString(ClienteSocial.enlacePerfil(usuario))); vm.decir(copiado) }
+                    Opcion(Iconos.Compartir, stringResource(R.string.compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
+                    Opcion(Iconos.Cerrar, stringResource(R.string.red_bloquear)) { hoja = "bloquear" }
+                    Opcion(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { hoja = "reportar" }
+                }
+            }
         }
     }
     if (p == null) {
@@ -472,10 +491,22 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             }
         }
     }
-    if (menu) Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Pildora(stringResource(R.string.compartir_perfil)) { menu = false; compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-        Pildora(stringResource(R.string.red_bloquear)) { menu = false; vm.red.bloquear(usuario, true); vm.cerrar() }
-        Pildora(stringResource(R.string.red_reportar)) { menu = false; vm.red.reportar("cuenta", usuario, "") }
+    // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.
+    hoja?.let { h ->
+        androidx.compose.material3.ModalBottomSheet({ hoja = null }, containerColor = f.fondo) {
+            Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+                if (h == "reportar") {
+                    Text(stringResource(R.string.red_por_que_reportas), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                    MOTIVOS_REPORTE.forEach { (codigo, m) -> val tx = stringResource(m)
+                        FilaMenu(Iconos.Bandera, tx) { vm.red.reportar("cuenta", usuario, "$codigo: $tx"); hoja = null } }
+                } else {
+                    Text(stringResource(R.string.red_bloquear_a, usuario), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                    Text(stringResource(R.string.chat_bloquear_seguro), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
+                    FilaMenu(Iconos.Cerrar, stringResource(R.string.red_bloquear), peligro = true) { vm.red.bloquear(usuario, true); hoja = null; vm.cerrar() }
+                    FilaMenu(Iconos.Atras, stringResource(R.string.cancelar)) { hoja = null }
+                }
+            }
+        }
     }
     (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada")) }
     if (p.cerrada) {

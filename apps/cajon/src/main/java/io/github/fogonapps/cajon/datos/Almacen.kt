@@ -105,6 +105,11 @@ class CajaFuerte(context: Context) {
         get() = leer("spotify_renovar")
         set(v) = escribir("spotify_renovar", v)
 
+    /** La portada del perfil ya subida a la red: "archivo local|dirección en el servidor" (para no subirla otra vez). */
+    var portadaSubida: String?
+        get() = prefs.getString("portada_subida", null)
+        set(v) = prefs.edit { if (v == null) remove("portada_subida") else putString("portada_subida", v) }
+
     /** La frase del saludo de esta franja del día ("franja\tclave\tobra"): no cambia hasta la próxima franja. */
     var fraseGuardada: String?
         get() = prefs.getString("frase_guardada", null)

@@ -672,6 +672,13 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="red_por_que">Por qué ves esto</string>
+  <string name="red_me_interesa">Me interesa</string>
+  <string name="excluir_genero_de">No mostrar más %1$s</string>
+  <string name="red_enlace_copiado">Enlace copiado</string>
+  <string name="red_copiar_enlace">Copiar enlace del perfil</string>
+  <string name="red_por_que_reportas">¿Por qué reportas esta cuenta?</string>
+  <string name="red_bloquear_a">¿Bloquear a @%1$s?</string>
   <string name="momento_plataforma_vacia">No hay nada reciente en %1$s para tu país ahora</string>
   <string name="momento_credito_justwatch">Dónde ver: datos de JustWatch</string>
   <string name="mod_pista">Reportes y frases propuestas por revisar</string>

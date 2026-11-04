@@ -300,8 +300,8 @@ class RedSocial(
     private suspend fun subirAhora() {
         val e = estado() ?: return
         if (_usuario.value == null) return
-        val ahora = perfilDe(e) to publicacionesDe(e)
         intentar {
+            val ahora = perfilDe(e).copy(portada = portadaEnLaRed(e.perfil.portada)) to publicacionesDe(e)
             if (ahora != ultimo) {
                 cliente().subirPerfil(ahora.first)
                 cliente().subirPublicaciones(ahora.second)
@@ -314,6 +314,19 @@ class RedSocial(
                 ultimaFoto = foto
             }
         }
+    }
+
+    /**
+     * La portada como la ve la red: si es una imagen del teléfono, se sube una vez (JPEG de hasta 1600 px) y queda su
+     * dirección en el servidor; si ya es de internet, esa misma.
+     */
+    private suspend fun portadaEnLaRed(portada: String): String {
+        if (portada.isBlank() || portada.startsWith("https://")) return portada.takeIf { it.startsWith("https://") }.orEmpty()
+        caja.portadaSubida?.split('|')?.takeIf { it.size == 2 && it[0] == portada }?.let { return it[1] }
+        val jpg = jpeg(portada, 1600, 900_000) ?: return ""
+        val url = ClienteSocial.imagen(cliente().subirImagen(jpg))
+        caja.portadaSubida = "$portada|$url"
+        return url
     }
 
     /* ----- Feed, perfiles y publicaciones ----- */

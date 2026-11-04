@@ -167,9 +167,12 @@ fun <T> Selector(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> U
     }
 }
 
-/** Barra superior de las pantallas que se abren encima: atrás (círculo blanco), título y algo a la derecha. */
+/**
+ * Barra superior de las pantallas que se abren encima: atrás (círculo blanco), título y algo a la derecha. [chico]: el
+ * título en letra de texto (el @usuario de un perfil).
+ */
 @Composable
-fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atras, derecha: @Composable () -> Unit = {}) {
+fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atras, chico: Boolean = false, derecha: @Composable () -> Unit = {}) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -177,7 +180,8 @@ fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atra
             .clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
             IconoRiso(icono, stringResource(R.string.volver), tamano = 22.dp, corrida = null)
         }
-        Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 26.sp, modifier = Modifier.weight(1f))
+        if (chico) Text(titulo, style = MaterialTheme.typography.titleMedium, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        else Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 26.sp, modifier = Modifier.weight(1f))
         derecha()
     }
 }

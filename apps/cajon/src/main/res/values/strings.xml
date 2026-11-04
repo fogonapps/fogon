@@ -672,6 +672,13 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="red_por_que">Why you\'re seeing this</string>
+  <string name="red_me_interesa">Interested</string>
+  <string name="excluir_genero_de">Don\'t show %1$s anymore</string>
+  <string name="red_enlace_copiado">Link copied</string>
+  <string name="red_copiar_enlace">Copy profile link</string>
+  <string name="red_por_que_reportas">Why are you reporting this account?</string>
+  <string name="red_bloquear_a">Block @%1$s?</string>
   <string name="momento_plataforma_vacia">Nothing recent on %1$s for your country right now</string>
   <string name="momento_credito_justwatch">Where to watch: data from JustWatch</string>
   <string name="mod_pista">Reports and suggested phrases to review</string>

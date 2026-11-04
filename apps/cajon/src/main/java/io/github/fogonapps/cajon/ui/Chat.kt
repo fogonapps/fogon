@@ -315,7 +315,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
 
 /** Una fila de un menú de abajo. */
 @Composable
-private fun FilaMenu(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
+fun FilaMenu(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
     val f = FogonTema.actual
     val color = if (peligro) MaterialTheme.colorScheme.error else f.texto
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),

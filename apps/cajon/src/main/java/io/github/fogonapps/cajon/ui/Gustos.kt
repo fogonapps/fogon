@@ -56,7 +56,7 @@ import io.github.fogonapps.identidad.forma
 /** Algo de "Para ti" sobre lo que la persona puede decir que no (lo que el menú necesita saber). */
 private data class Sobre(
     val clave: String, val nombre: String, val tipo: String, val imagen: String = "", val fuente: String = "",
-    val creador: String = "", val generos: List<String> = emptyList(),
+    val creador: String = "", val generos: List<String> = emptyList(), val motivo: String = "",
 )
 
 /**
@@ -102,10 +102,11 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
         Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 6.dp))
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(lista, key = { it.first.fuente }) { (x, por) ->
+                val motivo = if (libros && por.tipo == Recomendar.Por.SEMILLA) stringResource(R.string.de_autor, por.texto) else porque(por)
                 Column(Modifier.width(112.dp).clip(forma(12.dp)).combinedClickable(
                     onClick = { vm.abiertaRecomendacion("obra:" + x.fuente); vm.abrirEncontrado(x) },
                     onLongClickLabel = decirNo,
-                    onLongClick = { menu = Sobre("obra:" + x.fuente, x.titulo, x.tipo, x.portada, x.fuente, x.creador, x.generos) },
+                    onLongClick = { menu = Sobre("obra:" + x.fuente, x.titulo, x.tipo, x.portada, x.fuente, x.creador, x.generos, motivo) },
                 ), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Portada(x.portada, x.tipo, x.titulo, Modifier.fillMaxWidth(), conTitulo = false)
                     Text(x.titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -121,10 +122,11 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
         Text(stringResource(R.string.para_ti_artistas), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 6.dp))
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(rec.artistas, key = { it.first.mbid }) { (a, por) ->
+                val motivo = porque(por, persona = true)
                 Column(Modifier.width(100.dp).clip(forma(12.dp)).combinedClickable(
                     onClick = { vm.abiertaRecomendacion(Recomendar.clavePersona(a.nombre)); vm.abrir(Pantalla.PreviaArtista(a)) },
                     onLongClickLabel = decirNo,
-                    onLongClick = { menu = Sobre(Recomendar.clavePersona(a.nombre), a.nombre, TIPO_ARTISTA, a.foto, a.fuente) },
+                    onLongClick = { menu = Sobre(Recomendar.clavePersona(a.nombre), a.nombre, TIPO_ARTISTA, a.foto, a.fuente, motivo = motivo) },
                 ), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     FotoArtista(a.foto, a.nombre, 92.dp, a.tipo)
                     Text(a.nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
@@ -145,45 +147,38 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
 private const val TIPO_ARTISTA = "artista"
 
 /**
- * Decir que no, con su matiz: no me gusta (baja lo parecido), no me interesa (no ahora), no recomendar esto (sin
- * decir nada de los gustos) o excluir un género o una persona entera. Todo se deshace en "Tus gustos".
+ * El menú de una recomendación (con el dedo apretado), como en las redes: por qué ves esto, me interesa, no me
+ * interesa, no me gusta, no recomendar esto y quitar a una persona o un género entero. Todo se deshace en "Tus gustos".
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun MenuNo(vm: CajonViewModel, s: Sobre, onCerrar: () -> Unit) {
     val f = FogonTema.actual
+    var verPorque by remember { mutableStateOf(false) }
     fun decir(senal: String) {
         vm.decirGusto(s.clave, s.nombre, senal, s.tipo, s.imagen, s.fuente, s.creador, s.generos, desdeParaTi = true); onCerrar()
     }
-    Dialog(onCerrar) {
-        Column(Modifier.clip(forma(28.dp)).background(f.fondo).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(s.nombre, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            OpcionNo(stringResource(R.string.no_me_gusta), stringResource(R.string.no_me_gusta_pista)) { decir(Senales.NO_GUSTA) }
-            OpcionNo(stringResource(R.string.no_me_interesa), stringResource(R.string.no_me_interesa_pista)) { decir(Senales.NO_INTERESA) }
-            if (s.tipo != TIPO_ARTISTA) OpcionNo(stringResource(R.string.no_recomendar), stringResource(R.string.no_recomendar_pista)) { decir(Senales.NO_RECOMENDAR) }
-            if (s.tipo == TIPO_ARTISTA) OpcionNo(stringResource(R.string.excluir_a, s.nombre), stringResource(R.string.excluir_pista)) { decir(Senales.EXCLUIR) }
+    androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = f.fondo) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp).verticalScroll(rememberScrollState())) {
+            Row(Modifier.padding(horizontal = 24.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (s.tipo == TIPO_ARTISTA) FotoArtista(s.imagen, s.nombre, 48.dp) else Portada(s.imagen, s.tipo, s.nombre, Modifier.width(40.dp), conTitulo = false)
+                Text(s.nombre, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            FilaMenu(Iconos.Comentario, stringResource(R.string.red_por_que)) { verPorque = !verPorque }
+            if (verPorque && s.motivo.isNotBlank()) Text(s.motivo, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(start = 64.dp, end = 24.dp, bottom = 8.dp))
+            FilaMenu(Iconos.Chulo, stringResource(R.string.red_me_interesa)) { decir(Senales.GUSTA) }
+            FilaMenu(Iconos.Cerrar, stringResource(R.string.no_me_interesa)) { decir(Senales.NO_INTERESA) }
+            FilaMenu(Iconos.Corazon, stringResource(R.string.no_me_gusta)) { decir(Senales.NO_GUSTA) }
+            if (s.tipo != TIPO_ARTISTA) FilaMenu(Iconos.Borrar, stringResource(R.string.no_recomendar)) { decir(Senales.NO_RECOMENDAR) }
+            if (s.tipo == TIPO_ARTISTA) FilaMenu(Iconos.Persona, stringResource(R.string.excluir_a, s.nombre), peligro = true) { decir(Senales.EXCLUIR) }
             val persona = s.creador.split(",").first().trim()
-            if (s.tipo != TIPO_ARTISTA && persona.isNotEmpty()) OpcionNo(stringResource(R.string.excluir_a, persona), stringResource(R.string.excluir_pista)) {
+            if (s.tipo != TIPO_ARTISTA && persona.isNotEmpty()) FilaMenu(Iconos.Persona, stringResource(R.string.excluir_a, persona), peligro = true) {
                 vm.decirGusto(Recomendar.clavePersona(persona), persona, Senales.EXCLUIR, TIPO_ARTISTA, desdeParaTi = true); onCerrar()
             }
-            if (s.generos.isNotEmpty()) {
-                Text(stringResource(R.string.excluir_genero), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    s.generos.forEach { g -> Pildora(g, Iconos.Cerrar) { vm.decirGusto(Recomendar.claveGenero(g), g, Senales.EXCLUIR, desdeParaTi = true); onCerrar() } }
-                }
+            s.generos.take(2).forEach { g ->
+                FilaMenu(Iconos.Cerrar, stringResource(R.string.excluir_genero_de, g), peligro = true) { vm.decirGusto(Recomendar.claveGenero(g), g, Senales.EXCLUIR, desdeParaTi = true); onCerrar() }
             }
-            BotonSecundario(stringResource(R.string.cancelar), onCerrar, Modifier.fillMaxWidth())
         }
-    }
-}
-
-@Composable
-private fun OpcionNo(titulo: String, pista: String, onClick: () -> Unit) {
-    val f = FogonTema.actual
-    Column(Modifier.fillMaxWidth().vidrio().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp)) {
-        Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-        Text(pista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
     }
 }
 
