@@ -9,7 +9,6 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
-import io.github.fogonapps.identidad.CAPAS_CUCHA
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.TarjetaWidget
@@ -33,7 +32,7 @@ class WidgetCalorias : GlanceAppWidget() {
             TarjetaWidget(
                 f, c.getString(if (quedan >= 0) R.string.quedan_kcal else R.string.pasaste_kcal), "${kotlin.math.abs(quedan)}",
                 c.getString(R.string.widget_proteina, hoy.proteina.roundToInt(), e.metas.proteina),
-                CAPAS_CUCHA, actionStartActivity<MainActivity>(),
+                io.github.fogonapps.identidad.Quien.CUCHA, actionStartActivity<MainActivity>(),
                 boton = c.getString(R.string.anotar) to actionStartActivity(anotar),
             )
         }

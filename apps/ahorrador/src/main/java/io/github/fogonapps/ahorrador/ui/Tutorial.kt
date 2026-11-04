@@ -43,7 +43,7 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaRiso
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PasoDaleVida
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
 
 /** Nombre y explicación de cada sistema; se usan aquí y en Perfil. */
@@ -97,7 +97,7 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
     ) {
         when (paso) {
             0 -> {
-                Objeto(RId.drawable.objeto_ahorrador, null, Modifier.align(Alignment.CenterHorizontally), tamano = 170.dp)
+                Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 170.dp)
                 Text(stringResource(R.string.tut_hola), style = MaterialTheme.typography.headlineLarge, color = f.texto,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,

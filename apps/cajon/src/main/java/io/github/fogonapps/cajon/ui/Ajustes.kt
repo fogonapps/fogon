@@ -350,7 +350,7 @@ fun AcercaDe(vm: CajonViewModel) {
     Column {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
-            objeto = RId.drawable.objeto_cajon,
+            quien = io.github.fogonapps.identidad.Quien.CAJON,
             nombreApp = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
             creditos = stringArrayResource(R.array.creditos).toList(),

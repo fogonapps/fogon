@@ -48,7 +48,7 @@ import io.github.fogonapps.identidad.EstadoVacio
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.NumeroRiso
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.identidad.haloPuntos
@@ -131,14 +131,14 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     }
 
     if (e.vivas.isEmpty()) {
-        EstadoVacio(RId.drawable.objeto_cajon, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
+        EstadoVacio(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
         Column(Modifier.padding(horizontal = 24.dp)) {
             BotonRiso(stringResource(R.string.agregar_lo_primero), { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO)) }, Modifier.fillMaxWidth())
         }
         return
     }
 
-    // La tarjeta grande: lo terminado este año, en puntos sobre su halo, con el cajón de discos.
+    // La tarjeta grande: lo terminado este año, en puntos sobre su halo, con El Cajón.
     val total = c.porTipo.values.sum()
     Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio(forma(28.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f), centro = androidx.compose.ui.geometry.Offset(0.25f, 0.45f))
         .clickable { vm.abrir(Pantalla.Cifras) }) {
@@ -156,7 +156,9 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
                 }
             }
         }
-        Objeto(RId.drawable.objeto_cajon, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 120.dp)
+        // El Cajón pone la cara de lo que estás viendo o escuchando: la obra de la frase o lo último que tocaste.
+        val cara = remember(frase.obra, e.obras) { caraDe(io.github.fogonapps.cajon.datos.Caras.de(io.github.fogonapps.cajon.datos.Caras.obra(e, frase.obra))) }
+        Personaje(io.github.fogonapps.identidad.Quien.CAJON, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), cara = cara, tamano = 120.dp)
     }
 
     // ¿Qué te pareció? Lo último que terminaste sin nota: calificarlo con un toque o escribir la reseña.
@@ -360,3 +362,15 @@ private val TEXTOS_FRASES = mapOf(
 
 @Composable
 fun textoFrase(f: Frase): String = f.literal ?: if (f.obra != null) stringResource(f.texto, f.obra) else stringResource(f.texto)
+
+/** La cara (de `Caras`) como la del personaje. */
+fun caraDe(nombre: String): io.github.fogonapps.identidad.Cara = when (nombre) {
+    "feliz" -> io.github.fogonapps.identidad.Cara.FELIZ
+    "enamorado" -> io.github.fogonapps.identidad.Cara.ENAMORADO
+    "sorpresa" -> io.github.fogonapps.identidad.Cara.SORPRESA
+    "triste" -> io.github.fogonapps.identidad.Cara.TRISTE
+    "miedo" -> io.github.fogonapps.identidad.Cara.MIEDO
+    "decidido" -> io.github.fogonapps.identidad.Cara.DECIDIDO
+    "guino" -> io.github.fogonapps.identidad.Cara.GUINO
+    else -> io.github.fogonapps.identidad.Cara.NORMAL
+}

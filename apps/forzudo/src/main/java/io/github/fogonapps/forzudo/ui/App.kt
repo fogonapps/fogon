@@ -59,7 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.identidad.FogonTema
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.forzudo.R
 import androidx.compose.ui.res.stringResource
@@ -95,7 +95,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Objeto(RId.drawable.objeto_forzudo, stringResource(R.string.cargando), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.cargando), tamano = 140.dp)
         }
         return
     }

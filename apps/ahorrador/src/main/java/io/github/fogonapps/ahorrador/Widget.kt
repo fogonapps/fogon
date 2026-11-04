@@ -11,7 +11,6 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import io.github.fogonapps.ahorrador.datos.Formato
 import io.github.fogonapps.ahorrador.datos.mesDe
-import io.github.fogonapps.identidad.CAPAS_AHORRADOR
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.TarjetaWidget
@@ -33,7 +32,7 @@ class WidgetPlata : GlanceAppWidget() {
             TarjetaWidget(
                 f, c.getString(R.string.tienes), Formato.pesos(app.logica.patrimonio(e)),
                 c.getString(R.string.widget_salio, Formato.pesos(app.logica.gastos(e, mes))),
-                CAPAS_AHORRADOR, actionStartActivity<MainActivity>(),
+                io.github.fogonapps.identidad.Quien.AHORRADOR, actionStartActivity<MainActivity>(),
                 boton = c.getString(R.string.anotar) to actionStartActivity(anotar),
             )
         }

@@ -1,6 +1,5 @@
 package io.github.fogonapps.forzudo.ui
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
@@ -44,7 +43,9 @@ import androidx.compose.ui.unit.dp
 import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.FogonTema
-import io.github.fogonapps.identidad.ObjetoFogon
+import io.github.fogonapps.identidad.Cara
+import io.github.fogonapps.identidad.Personaje
+import io.github.fogonapps.identidad.Quien
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PasoDaleVida
 import io.github.fogonapps.identidad.fondoFogon
@@ -53,16 +54,16 @@ import io.github.fogonapps.forzudo.R
 import io.github.fogonapps.identidad.R as RId
 import kotlinx.coroutines.launch
 
-/** Un paso: su objeto en trama (los puntos y el acento), el título y el texto. */
-private data class Paso(@DrawableRes val puntos: Int, @DrawableRes val acento: Int, @StringRes val titulo: Int, @StringRes val texto: Int)
+/** Un paso: la cara de El Forzudo, el título y el texto. */
+private data class Paso(val cara: Cara, @StringRes val titulo: Int, @StringRes val texto: Int)
 
 private val pasos = listOf(
-    Paso(RId.drawable.objeto_forzudo_puntos, RId.drawable.objeto_forzudo_acento, R.string.tut_hola, R.string.tut_hola_texto),
-    Paso(R.drawable.objeto_tut_anota_puntos, R.drawable.objeto_tut_anota_acento, R.string.tut_anota, R.string.tut_anota_texto),
-    Paso(R.drawable.objeto_tut_racha_puntos, R.drawable.objeto_tut_racha_acento, R.string.tut_racha, R.string.tut_racha_texto),
-    Paso(R.drawable.objeto_tut_rangos_puntos, R.drawable.objeto_tut_rangos_acento, R.string.tut_rangos, R.string.tut_rangos_texto),
-    Paso(RId.drawable.objeto_forzudo_puntos, RId.drawable.objeto_forzudo_acento, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
-    Paso(R.drawable.objeto_tut_datos_puntos, R.drawable.objeto_tut_datos_acento, R.string.tut_datos, R.string.tut_datos_texto),
+    Paso(Cara.NORMAL, R.string.tut_hola, R.string.tut_hola_texto),
+    Paso(Cara.DECIDIDO, R.string.tut_anota, R.string.tut_anota_texto),
+    Paso(Cara.SORPRESA, R.string.tut_racha, R.string.tut_racha_texto),
+    Paso(Cara.FELIZ, R.string.tut_rangos, R.string.tut_rangos_texto),
+    Paso(Cara.NORMAL, R.string.tut_cuerpo, R.string.tut_cuerpo_texto),
+    Paso(Cara.GUINO, R.string.tut_datos, R.string.tut_datos_texto),
 )
 
 /** Los pasos con dibujo y, al final, "¡Dale vida!": la app viene en Neutro y aquí se elige el estilo. */
@@ -93,7 +94,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    ObjetoFogon(p.puntos, p.acento, null, tamano = 220.dp)
+                    Personaje(Quien.FORZUDO, null, cara = p.cara, tamano = 220.dp)
                     Text(stringResource(p.titulo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
                     Text(stringResource(p.texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
                     if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())

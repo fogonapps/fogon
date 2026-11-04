@@ -9,7 +9,6 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import io.github.fogonapps.forzudo.datos.inicioSemana
 import io.github.fogonapps.forzudo.datos.iso
-import io.github.fogonapps.identidad.CAPAS_FORZUDO
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.TarjetaWidget
@@ -33,7 +32,7 @@ class WidgetRacha : GlanceAppWidget() {
             TarjetaWidget(
                 f, c.resources.getQuantityString(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() },
                 "${racha.actual}", c.getString(R.string.widget_semana, hechos, dias.size),
-                CAPAS_FORZUDO, actionStartActivity<MainActivity>(),
+                io.github.fogonapps.identidad.Quien.FORZUDO, actionStartActivity<MainActivity>(),
             )
         }
     }

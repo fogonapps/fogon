@@ -1,6 +1,7 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
@@ -215,45 +216,76 @@ fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Los objetos de las apps (identidad Trama): los puntos y el acento, en dos capas. */
-private val CAPAS = mapOf(
-    R.drawable.objeto_forzudo to (R.drawable.objeto_forzudo_puntos to R.drawable.objeto_forzudo_acento),
-    R.drawable.objeto_ahorrador to (R.drawable.objeto_ahorrador_puntos to R.drawable.objeto_ahorrador_acento),
-    R.drawable.objeto_cucha to (R.drawable.objeto_cucha_puntos to R.drawable.objeto_cucha_acento),
-    R.drawable.objeto_cajon to (R.drawable.objeto_cajon_puntos to R.drawable.objeto_cajon_acento),
+/** Los personajes de Fogón: uno por app. */
+enum class Quien { FORZUDO, AHORRADOR, CUCHA, CAJON }
+
+/**
+ * Las caras de los personajes. Cada momento de la app tiene la suya: [DORMIDO] en los vacíos, [FELIZ] en los
+ * logros, [SORPRESA] en los récords, [ENAMORADO] en lo favorito, [TRISTE] cuando algo no se pudo, [MIEDO], [DECIDIDO]
+ * antes de empezar y [GUINO] cuando algo quedó listo.
+ */
+enum class Cara { NORMAL, FELIZ, DORMIDO, SORPRESA, ENAMORADO, TRISTE, MIEDO, DECIDIDO, GUINO }
+
+/** Las imágenes de cada personaje con cada cara. */
+private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
+    Quien.FORZUDO to mapOf(
+        Cara.NORMAL to R.drawable.personaje_forzudo_normal,
+        Cara.FELIZ to R.drawable.personaje_forzudo_feliz,
+        Cara.DORMIDO to R.drawable.personaje_forzudo_dormido,
+        Cara.SORPRESA to R.drawable.personaje_forzudo_sorpresa,
+        Cara.ENAMORADO to R.drawable.personaje_forzudo_enamorado,
+        Cara.TRISTE to R.drawable.personaje_forzudo_triste,
+        Cara.MIEDO to R.drawable.personaje_forzudo_miedo,
+        Cara.DECIDIDO to R.drawable.personaje_forzudo_decidido,
+        Cara.GUINO to R.drawable.personaje_forzudo_guino,
+    ),
+    Quien.AHORRADOR to mapOf(
+        Cara.NORMAL to R.drawable.personaje_ahorrador_normal,
+        Cara.FELIZ to R.drawable.personaje_ahorrador_feliz,
+        Cara.DORMIDO to R.drawable.personaje_ahorrador_dormido,
+        Cara.SORPRESA to R.drawable.personaje_ahorrador_sorpresa,
+        Cara.ENAMORADO to R.drawable.personaje_ahorrador_enamorado,
+        Cara.TRISTE to R.drawable.personaje_ahorrador_triste,
+        Cara.MIEDO to R.drawable.personaje_ahorrador_miedo,
+        Cara.DECIDIDO to R.drawable.personaje_ahorrador_decidido,
+        Cara.GUINO to R.drawable.personaje_ahorrador_guino,
+    ),
+    Quien.CUCHA to mapOf(
+        Cara.NORMAL to R.drawable.personaje_cucha_normal,
+        Cara.FELIZ to R.drawable.personaje_cucha_feliz,
+        Cara.DORMIDO to R.drawable.personaje_cucha_dormido,
+        Cara.SORPRESA to R.drawable.personaje_cucha_sorpresa,
+        Cara.ENAMORADO to R.drawable.personaje_cucha_enamorado,
+        Cara.TRISTE to R.drawable.personaje_cucha_triste,
+        Cara.MIEDO to R.drawable.personaje_cucha_miedo,
+        Cara.DECIDIDO to R.drawable.personaje_cucha_decidido,
+        Cara.GUINO to R.drawable.personaje_cucha_guino,
+    ),
+    Quien.CAJON to mapOf(
+        Cara.NORMAL to R.drawable.personaje_cajon_normal,
+        Cara.FELIZ to R.drawable.personaje_cajon_feliz,
+        Cara.DORMIDO to R.drawable.personaje_cajon_dormido,
+        Cara.SORPRESA to R.drawable.personaje_cajon_sorpresa,
+        Cara.ENAMORADO to R.drawable.personaje_cajon_enamorado,
+        Cara.TRISTE to R.drawable.personaje_cajon_triste,
+        Cara.MIEDO to R.drawable.personaje_cajon_miedo,
+        Cara.DECIDIDO to R.drawable.personaje_cajon_decidido,
+        Cara.GUINO to R.drawable.personaje_cajon_guino,
+    ),
 )
 
-/**
- * El objeto de la app (la barra, la moneda, la olla, el cajón de discos). Si tiene capas, toma los colores del
- * tema (ver [ObjetoFogon]); si no, se dibuja tal cual.
- */
-@Composable
-fun Objeto(@DrawableRes recurso: Int, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp) {
-    val capas = CAPAS[recurso]
-    if (capas == null) {
-        Image(painterResource(recurso), contentDescription = descripcion, modifier = modifier.size(tamano))
-        return
-    }
-    ObjetoFogon(capas.first, capas.second, descripcion, modifier, tamano)
-}
-
-/** La tinta de los puntos del objeto: siempre el color propio de la app, en todos los temas. */
-fun tintaObjeto(f: Fogon): Color = f.marca
+@DrawableRes fun imagenPersonaje(quien: Quien, cara: Cara = Cara.NORMAL): Int = IMAGENES.getValue(quien).getValue(cara)
 
 /**
- * Un objeto en trama: los puntos (más grandes donde le da la luz) van en la tinta de la app y el acento (la chispa,
- * la cuchara, la etiqueta del disco) en el color de las letras del tema.
+ * El personaje de la app con la [cara] del momento: blanco, con su sombra y sus ojitos. En los temas claros lleva
+ * detrás un círculo suave del color de la app, para que no se pierda sobre el papel claro.
  */
 @Composable
-fun ObjetoFogon(
-    @DrawableRes puntos: Int, @DrawableRes acento: Int,
-    descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 160.dp,
-) {
+fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, cara: Cara = Cara.NORMAL, tamano: Dp = 160.dp) {
     val f = FogonTema.actual
-    val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion } else Modifier
-    Box(modifier.size(tamano).then(sem)) {
-        Image(painterResource(puntos), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(tintaObjeto(f)))
-        Image(painterResource(acento), null, Modifier.matchParentSize(), colorFilter = ColorFilter.tint(f.texto))
+    Box(modifier.size(tamano), contentAlignment = Alignment.Center) {
+        if (!f.oscuro) Box(Modifier.fillMaxWidth(0.86f).aspectRatio(1f).background(f.marca.copy(alpha = 0.28f), androidx.compose.foundation.shape.CircleShape))
+        Image(painterResource(imagenPersonaje(quien, cara)), contentDescription = descripcion, modifier = Modifier.matchParentSize())
     }
 }
 
@@ -281,15 +313,15 @@ fun Chispa(modifier: Modifier = Modifier, tamano: Dp = 18.dp, descripcion: Strin
     Image(painterResource(R.drawable.chispa), contentDescription = descripcion, modifier = modifier.size(tamano))
 }
 
-/** Pantalla vacía con el objeto de la app. */
+/** Pantalla vacía con el personaje de la app, dormido. */
 @Composable
-fun EstadoVacio(@DrawableRes objeto: Int, titulo: String, texto: String, modifier: Modifier = Modifier) {
+fun EstadoVacio(quien: Quien, titulo: String, texto: String, modifier: Modifier = Modifier) {
     Column(
         modifier.fillMaxWidth().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Objeto(objeto, null, tamano = 140.dp)
+        Personaje(quien, null, cara = Cara.DORMIDO, tamano = 140.dp)
         Text(titulo, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, color = FogonTema.actual.texto)
         Text(texto, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = FogonTema.actual.textoSuave)
     }
@@ -307,7 +339,7 @@ fun Logro(texto: String, modifier: Modifier = Modifier) {
 /** Pantalla "Acerca de", igual en todas las apps de Fogón. */
 @Composable
 fun AcercaDeFogon(
-    @DrawableRes objeto: Int,
+    quien: Quien,
     nombreApp: String,
     version: String,
     creditos: List<String>,
@@ -324,7 +356,7 @@ fun AcercaDeFogon(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Objeto(objeto, nombreApp, tamano = 150.dp)
+        Personaje(quien, nombreApp, cara = Cara.FELIZ, tamano = 150.dp)
         Text(nombreApp, style = MaterialTheme.typography.headlineMedium, color = f.texto)
         Text(stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(

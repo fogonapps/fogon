@@ -60,7 +60,7 @@ import io.github.fogonapps.identidad.Chispa
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.ManifiestoFogon
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.Tintas
 import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.identidad.fondoFogon
@@ -87,7 +87,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Objeto(RId.drawable.objeto_ahorrador, stringResource(R.string.cargando), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.cargando), tamano = 140.dp)
         }
         return
     }
@@ -215,7 +215,7 @@ fun Bloqueada(onDesbloquear: () -> Unit) {
         Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Objeto(RId.drawable.objeto_ahorrador, null, tamano = 150.dp)
+        Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, cara = io.github.fogonapps.identidad.Cara.DORMIDO, tamano = 150.dp)
         io.github.fogonapps.identidad.IconoRiso(Iconos.Candado, null, tamano = 34.dp)
         Text(stringResource(R.string.bloqueada), style = MaterialTheme.typography.headlineSmall, color = f.texto)
         BotonRiso(stringResource(R.string.desbloquear), onDesbloquear)

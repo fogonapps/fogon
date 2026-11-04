@@ -251,7 +251,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     // Últimos movimientos
     Seccion(stringResource(R.string.ultimos)) { TextButton({ vm.abrir(Pantalla.Movimientos()) }) { Text(stringResource(R.string.ver_todos)) } }
     val ultimos = recientes(e.movimientos).take(6)
-    if (ultimos.isEmpty()) EstadoVacio(RId.drawable.objeto_ahorrador, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
+    if (ultimos.isEmpty()) EstadoVacio(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
     else ultimos.forEach { m -> FilaMovimiento(e, m) { vm.abrir(Pantalla.Anotar(m.tipo, m.id)) } }
 }
 

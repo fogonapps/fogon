@@ -60,7 +60,7 @@ import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PantallaApariencia
 import io.github.fogonapps.identidad.PestanaAnimada
 import io.github.fogonapps.identidad.PilaAnimada
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.fondoFogon
 import io.github.fogonapps.identidad.rebote
 import io.github.fogonapps.identidad.R as RId
@@ -99,7 +99,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Objeto(RId.drawable.objeto_cucha, stringResource(R.string.cargando), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.CUCHA, stringResource(R.string.cargando), tamano = 140.dp)
         }
         return
     }

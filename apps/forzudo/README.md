@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Forzudo"></p>
 
-Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. Su ícono es la barra con discos. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
+Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. Su personaje es una bolita con los bracitos levantados. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
 
 - Descargar: [fogonapps/el-forzudo](https://github.com/fogonapps/el-forzudo/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-forzudo`).
 - Novedades de cada versión: en las [versiones de El Forzudo](https://github.com/fogonapps/el-forzudo/releases).
@@ -33,7 +33,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. S
   - exportar e importar en JSON;
   - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub;
   - el respaldo de todas las apps de Fogón en un solo archivo.
-- **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. La barra de la app toma las tintas del tema. Además, tamaño de letra, menos movimiento y más contraste.
+- **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. El personaje de la app cambia de cara según el momento. Además, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 

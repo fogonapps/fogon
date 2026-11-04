@@ -269,7 +269,7 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
     var abonoReto by remember { mutableStateOf<Pair<Meta, Long>?>(null) }
     TarjetaReto(vm, e) { m, monto -> abonoReto = m to monto }
     if (e.metas.isEmpty()) {
-        EstadoVacio(RId.drawable.objeto_ahorrador, stringResource(R.string.metas_vacio_titulo), stringResource(R.string.metas_vacio_texto))
+        EstadoVacio(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.metas_vacio_titulo), stringResource(R.string.metas_vacio_texto))
     } else {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.en_metas), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))

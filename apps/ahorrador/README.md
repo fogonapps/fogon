@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Ahorrador"></p>
 
-Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Su ícono es una moneda con la chispa de Fogón.
+Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Su personaje es una ranita tranquila.
 
 - Descargar: [fogonapps/el-ahorrador](https://github.com/fogonapps/el-ahorrador/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-ahorrador`).
 - Novedades de cada versión: en las [versiones de El Ahorrador](https://github.com/fogonapps/el-ahorrador/releases).
@@ -32,7 +32,7 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
 - **4×1000:** si lo activas, la app anota sola el impuesto al sacar plata de una cuenta de banco.
 - **Candado:** pide la huella o el bloqueo del teléfono al abrir (Android 10 o más, y solo si el teléfono tiene bloqueo).
 - **Tus datos son tuyos:** respaldo y recuperación en JSON, exportar los movimientos en CSV para una hoja de cálculo y el respaldo de todas las apps de Fogón en un solo archivo.
-- **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. La moneda de la app toma las tintas del tema. Además, tamaño de letra, menos movimiento y más contraste.
+- **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. El personaje de la app cambia de cara según el momento. Además, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
 

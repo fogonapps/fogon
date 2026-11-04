@@ -457,10 +457,10 @@ private fun PanelStickers(vm: CajonViewModel, onMandar: (String) -> Unit) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             tuyos.forEach { s -> CeldaSticker(s.imagen, { onMandar(s.imagen) }, { quitar = s }) }
         }
-        // Los de Fogón: los objetos de las apps.
+        // Los de Fogón: los personajes de las apps.
         val deFogon = listOf(
-            RId.drawable.objeto_cajon to R.string.chat_sticker_cajon, RId.drawable.objeto_forzudo to R.string.chat_sticker_forzudo,
-            RId.drawable.objeto_ahorrador to R.string.chat_sticker_ahorrador, RId.drawable.objeto_cucha to R.string.chat_sticker_cucha,
+            RId.drawable.personaje_cajon_feliz to R.string.chat_sticker_cajon, RId.drawable.personaje_forzudo_feliz to R.string.chat_sticker_forzudo,
+            RId.drawable.personaje_ahorrador_feliz to R.string.chat_sticker_ahorrador, RId.drawable.personaje_cucha_feliz to R.string.chat_sticker_cucha,
             RId.drawable.chispa to R.string.chat_sticker_chispa,
         ).map { (r, n) -> Triple(r, n, stringResource(n)) }.filter { q.isEmpty() || q in it.third.lowercase() }
         if (deFogon.isNotEmpty()) {

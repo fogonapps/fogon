@@ -9,7 +9,6 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import io.github.fogonapps.cajon.datos.Estados
 import io.github.fogonapps.cajon.datos.Logica
-import io.github.fogonapps.identidad.CAPAS_CAJON
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.TarjetaWidget
@@ -31,7 +30,7 @@ class WidgetCurso : GlanceAppWidget() {
             TarjetaWidget(
                 f, c.getString(R.string.widget_este_anio, anio), "$total",
                 enCurso?.let { c.getString(R.string.widget_en_curso, it.titulo) } ?: c.getString(R.string.widget_nada_en_curso),
-                CAPAS_CAJON, actionStartActivity<MainActivity>(),
+                io.github.fogonapps.identidad.Quien.CAJON, actionStartActivity<MainActivity>(),
             )
         }
     }

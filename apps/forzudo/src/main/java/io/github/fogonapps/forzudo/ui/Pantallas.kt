@@ -79,7 +79,7 @@ import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
 import io.github.fogonapps.identidad.Logro
-import io.github.fogonapps.identidad.Objeto
+import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.forzudo.BuildConfig
 import io.github.fogonapps.forzudo.GymViewModel
@@ -321,7 +321,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
                 Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
             NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
-            Objeto(RId.drawable.objeto_forzudo, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
         }
         Box(Modifier.aparecer(1)) { Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}") }
         if (r.volumen >= 150) {
@@ -601,7 +601,7 @@ fun Editor(vm: GymViewModel, e: Estado, rid: String) {
             }
         }
         Seccion(stringResource(R.string.ejercicios_n, r.items.size)) {
-            if (r.items.isEmpty()) EstadoVacio(RId.drawable.objeto_forzudo, stringResource(R.string.rutina_vacia), stringResource(R.string.rutina_vacia_texto))
+            if (r.items.isEmpty()) EstadoVacio(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.rutina_vacia), stringResource(R.string.rutina_vacia_texto))
             r.items.forEachIndexed { i, it ->
                 val c = vm.bib.cfg(it)
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon(forma(14.dp)).padding(12.dp),
@@ -727,7 +727,7 @@ fun AcercaDe(vm: GymViewModel) {
     Column {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
-            objeto = RId.drawable.objeto_forzudo,
+            quien = io.github.fogonapps.identidad.Quien.FORZUDO,
             nombreApp = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
             creditos = stringArrayResource(R.array.creditos).toList(),
