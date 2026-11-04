@@ -153,24 +153,17 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             }
         }
 
-        // La racha: el número de puntos sobre su halo, la mejor racha en una píldora y la barra.
-        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).aparecer(2).height(230.dp).tarjetaFogon(forma(30.dp))) {
-            Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 1f else 0.7f), centro = androidx.compose.ui.geometry.Offset(0.28f, 0.5f)))
-            Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-                NumeroRiso("${racha.actual}", 104.sp, Modifier.semantics { contentDescription = "${racha.actual}" })
-                MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
-            }
-            Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)) {
-                // Su cara sigue tu racha: feliz si va andando, sorprendido si es tu mejor racha, decidido para empezar.
-                val cara = when {
-                    racha.actual > 0 && racha.actual >= racha.mejor -> io.github.fogonapps.identidad.Cara.SORPRESA
-                    racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
-                    else -> io.github.fogonapps.identidad.Cara.DECIDIDO
-                }
-                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, cara = cara, tamano = 110.dp)
-                if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 20.dp)
-            }
+        // La racha, en la tarjeta de El Forzudo: el número en puntos y la mejor racha a la izquierda; él a la derecha
+        // con la cara de tu racha (decidido para empezar, feliz si va andando, sorprendido en tu mejor racha).
+        val cara = when {
+            racha.actual > 0 && racha.actual >= racha.mejor -> io.github.fogonapps.identidad.Cara.SORPRESA
+            racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
+            else -> io.github.fogonapps.identidad.Cara.DECIDIDO
+        }
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, cara, Modifier.aparecer(2), tamano = 104.dp) {
+            Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+            NumeroRiso("${racha.actual}", 96.sp, Modifier.semantics { contentDescription = "${racha.actual}" })
+            MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
         }
         Text(stringResource(if (racha.actual > 0) R.string.racha_cumpliendo else R.string.racha_empezar),
             style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))

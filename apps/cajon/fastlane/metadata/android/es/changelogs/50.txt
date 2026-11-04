@@ -1,0 +1,1 @@
+Tu cajón se guarda en tu cuenta de verdad: al registrarte con tu correo eliges una contraseña y todo queda guardado (cifrado) desde ese momento. Al entrar, la app te dice si ese correo no tiene cuenta para que te registres, y si olvidaste la contraseña puedes poner otra con un código. Si ya tenías cuenta sin contraseña, créala desde tu perfil para guardar tu cajón.

@@ -35,9 +35,19 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 /** Cómo va entrar a la red: pedir el correo, poner el código, elegir el usuario (cuenta nueva). */
-enum class PasoAcceso { CORREO, CODIGO, USUARIO }
+/**
+ * Los pasos para entrar: el correo; si no tiene cuenta, decírselo (y registrarse); si tiene contraseña, la contraseña;
+ * el código (para registrarse, si olvidó la contraseña o si la cuenta todavía no tenía); y, si es nueva, el usuario.
+ */
+enum class PasoAcceso { CORREO, NO_EXISTE, CLAVE, CODIGO, USUARIO }
 
-data class Acceso(val paso: PasoAcceso = PasoAcceso.CORREO, val correo: String = "", val codigo: String = "", val ocupado: Boolean = false)
+/** Para qué es el código: cuenta nueva, olvidó la contraseña o la cuenta no tenía (en esos dos se pone una nueva). */
+enum class MotivoCodigo { NUEVA, OLVIDO, SIN_CLAVE }
+
+data class Acceso(
+    val paso: PasoAcceso = PasoAcceso.CORREO, val correo: String = "", val codigo: String = "", val ocupado: Boolean = false,
+    val motivo: MotivoCodigo = MotivoCodigo.NUEVA,
+)
 
 /**
  * La red de El Cajón (Fogón Social): la cuenta, el feed, los perfiles de otras personas, seguir, me gusta,
@@ -183,33 +193,74 @@ class RedSocial(
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
-    fun pedirCodigo(correo: String) = lanzar {
-        _acceso.value = _acceso.value.copy(ocupado = true)
+    /** El primer paso: con el correo se sabe si se registra, si entra con su contraseña o si tiene que crear una. */
+    fun revisarCorreo(correo: String) = lanzar {
+        val c = correo.trim().lowercase()
+        _acceso.value = Acceso(correo = c, ocupado = true)
         try {
-            ClienteSocial().pedirCodigo(correo.trim())
-            _acceso.value = Acceso(PasoAcceso.CODIGO, correo.trim())
+            val e = ClienteSocial().estadoCorreo(c)
+            when {
+                !e.existe -> _acceso.value = Acceso(PasoAcceso.NO_EXISTE, c)
+                e.conClave -> _acceso.value = Acceso(PasoAcceso.CLAVE, c)
+                else -> { ClienteSocial().pedirCodigo(c); _acceso.value = Acceso(PasoAcceso.CODIGO, c, motivo = MotivoCodigo.SIN_CLAVE) }
+            }
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
-    /** Con el código: entra; si el correo no tenía cuenta, pasa a elegir el usuario. */
-    fun entrar(codigo: String) = scope.launch {
+    /** Para ponerle correo a una cuenta hecha sin él: manda el código a [correo]. */
+    fun pedirCodigoVincular(correo: String) = lanzar {
+        ClienteSocial().pedirCodigo(correo.trim())
+        _acceso.value = Acceso(PasoAcceso.CODIGO, correo.trim())
+    }
+
+    /** Manda el código al correo ([motivo]: registrarse u olvidó la contraseña). */
+    fun pedirCodigo(motivo: MotivoCodigo) = lanzar {
+        val c = _acceso.value.correo
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try {
+            ClienteSocial().pedirCodigo(c)
+            _acceso.value = Acceso(PasoAcceso.CODIGO, c, motivo = motivo)
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    /**
+     * Con el código: si es cuenta nueva, pasa a elegir el usuario; si olvidó la contraseña o no tenía, entra con la
+     * [claveNueva] y con ella guarda la llave del cajón (si este teléfono no tenía la llave, lo guardado antes en la
+     * cuenta se reemplaza con lo de este teléfono, porque sin la contraseña vieja no se puede abrir).
+     */
+    fun entrar(codigo: String, claveNueva: String = "") = scope.launch {
         val a = _acceso.value
         _acceso.value = a.copy(ocupado = true)
         try {
-            entro(ClienteSocial().entrar(a.correo, codigo.trim()))
-        } catch (x: ErrorSocial) {
-            if (x.error == "cuenta_nueva") _acceso.value = Acceso(PasoAcceso.USUARIO, a.correo, codigo.trim())
-            else intentar { throw x }
-        } catch (x: IOException) { decir(R.string.red_sin_conexion) }
+            if (a.motivo == MotivoCodigo.NUEVA) {
+                try { entro(ClienteSocial().entrar(a.correo, codigo.trim())) }
+                catch (x: ErrorSocial) { if (x.error == "cuenta_nueva") _acceso.value = Acceso(PasoAcceso.USUARIO, a.correo, codigo.trim()) else throw x }
+            } else {
+                entro(ClienteSocial().entrar(a.correo, codigo.trim(), clave = claveNueva))
+                llaveNueva(claveNueva)
+            }
+        } catch (x: ErrorSocial) { intentar { throw x } }
+        catch (x: IOException) { decir(R.string.red_sin_conexion) }
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
-    /** Cuenta nueva con el correo ya comprobado. */
-    fun crearConCorreo(usuario: String, nombre: String) = lanzar {
+    /** La llave del cajón envuelta con una contraseña recién puesta (la de este teléfono, o una nueva). */
+    private suspend fun llaveNueva(clave: String) {
+        val llave = caja.llaveCajon ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()
+        cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, clave) })
+        caja.llaveCajon = llave
+        _cajonBloqueado.value = false
+        sincronizarCajon()
+    }
+
+    /** Cuenta nueva con el correo ya comprobado y su contraseña (con ella el cajón se guarda en la cuenta desde ya). */
+    fun crearConCorreo(usuario: String, nombre: String, clave: String) = lanzar {
         val a = _acceso.value
         _acceso.value = a.copy(ocupado = true)
-        try { entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica)) }
-        finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+        try {
+            entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica, clave))
+            llaveNueva(clave)
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
     fun volverAlCorreo() { _acceso.value = Acceso() }

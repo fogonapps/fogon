@@ -55,7 +55,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.13"
+const val VERSION = "0.14"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -106,6 +106,10 @@ fun Application.fogonSocial(social: Social) {
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.entrar(call.receive()))
+            }
+            post("/acceso/correo") {
+                if (!registros.pasa("correo:${call.ip()}")) throw Problema(429, "despacio")
+                call.respond(social.estadoCorreo(call.receive<PedirCodigo>().correo))
             }
             post("/acceso/clave") {
                 if (!registros.pasa("clave:${call.ip()}")) throw Problema(429, "despacio")

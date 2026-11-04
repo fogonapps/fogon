@@ -672,6 +672,11 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="red_correo_no_existe">%1$s doesn\'t have an account yet</string>
+  <string name="red_registrarme">Create my account with this email</string>
+  <string name="red_olvide">Forgot your password?</string>
+  <string name="red_sin_clave_crea">Your account has no password: create one to keep your cajón in your account</string>
+  <string name="red_olvido_aviso">What this phone has is saved to your account with the new password. What was saved with the old one can only be opened from a phone where you are already signed in.</string>
   <string name="nada_aqui">Nothing here yet</string>
   <string name="red_por_que">Why you\'re seeing this</string>
   <string name="red_me_interesa">Interested</string>
@@ -901,9 +906,6 @@
   <string name="menu_anotado_no">Noted: you’ll see less like this</string>
   <string name="menu_silenciado">Muted: you won’t see their posts</string>
   <string name="red_clave">Password</string>
-  <string name="red_mejor_codigo">Use a code by email instead</string>
-  <string name="red_con_clave">Sign in with password</string>
-  <string name="red_olvide_clave">Forgot your password? Sign in with the email code and set a new one in your account.</string>
   <string name="red_cambiar_usuario">Username</string>
   <string name="red_usuario_desde">You can change it again from %1$s.</string>
   <string name="red_usuario_regla">You can change it once every 7 days. Your link changes, and your old username stays reserved for you for 14 days.</string>

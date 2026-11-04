@@ -290,6 +290,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
             ConCuenta(sinLeerChat) { BotonIcono(Iconos.Enviar, stringResource(R.string.chat_titulo), grande = true, lleno = sinLeerChat > 0) { vm.abrir(Pantalla.Chats()) } }
         }
     }
+    CrearClaveAviso(vm)
     // Paso 1: lo que te gusta (con eso se ordena lo que ves). Paso 2: tu cuenta.
     if (!e.ajustes.gustosListos) { PasoGustos(vm); return }
     if (usuario == null) {
@@ -327,6 +328,26 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
                 Text(stringResource(R.string.red_al_dia_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
             }
         }
+    }
+}
+
+/**
+ * Para cuentas con correo y sin contraseña: crearla aquí mismo. Sin contraseña el cajón no se puede guardar cifrado
+ * en la cuenta, así que se pide donde se ve (tu perfil y Para ti).
+ */
+@Composable
+fun CrearClaveAviso(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val c = cuenta ?: return
+    if (c.conClave || c.correo.isBlank()) return
+    var clave by rememberSaveable { mutableStateOf("") }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.red_sin_clave_crea), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp),
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            supportingText = { Text(stringResource(R.string.red_clave_regla)) })
+        BotonRiso(stringResource(R.string.guardar), { vm.red.ponerClave(clave, "") { clave = "" } }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8)
     }
 }
 
@@ -891,30 +912,58 @@ private fun EntrarRed(vm: CajonViewModel, e: Estado) {
         Pista(stringResource(R.string.red_que_sube))
         if (correo == null) { LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea); return }
         val conCorreo = correo == true
-        if (conCorreo && acceso.paso == PasoAcceso.CORREO) {
-            var conClave by rememberSaveable { mutableStateOf(false) }
-            var clave by rememberSaveable { mutableStateOf("") }
-            OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
-                singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-            if (conClave) {
-                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
-                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrarConClave(correoTexto, clave) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && clave.length >= 8)
-                BotonSecundario(stringResource(R.string.red_mejor_codigo), { conClave = false }, Modifier.fillMaxWidth())
-            } else {
-                BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
-                BotonSecundario(stringResource(R.string.red_con_clave), { conClave = true }, Modifier.fillMaxWidth())
+        val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()
+        @Composable
+        fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
+            OutlinedTextField(valor, { onCambio(it.take(200)) }, Modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true, shape = forma(18.dp),
+                visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                supportingText = { Text(stringResource(R.string.red_clave_regla)) })
+        if (conCorreo) when (acceso.paso) {
+            // 1. El correo: la app sabe si registrarse, entrar con la contraseña o crear una.
+            PasoAcceso.CORREO -> {
+                OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
+                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+                BotonRiso(stringResource(R.string.siguiente), { vm.red.revisarCorreo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && "." in correoTexto)
+                return
             }
-            Pista(stringResource(R.string.red_olvide_clave))
-            return
-        }
-        if (conCorreo && acceso.paso == PasoAcceso.CODIGO) {
-            Pista(stringResource(R.string.red_revisa_correo, acceso.correo))
-            OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_codigo)) },
-                singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-            BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrar(codigo) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && codigo.length == 6)
-            BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
-            return
+            // No tiene cuenta: se lo dice y le ofrece registrarse con ese correo.
+            PasoAcceso.NO_EXISTE -> {
+                Text(stringResource(R.string.red_correo_no_existe, acceso.correo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                BotonRiso(stringResource(R.string.red_registrarme), { vm.red.pedirCodigo(io.github.fogonapps.cajon.MotivoCodigo.NUEVA) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado)
+                BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
+                return
+            }
+            // Tiene contraseña: la pide, con "¿Olvidaste tu contraseña?".
+            PasoAcceso.CLAVE -> {
+                var clave by rememberSaveable { mutableStateOf("") }
+                Text(acceso.correo, style = MaterialTheme.typography.titleMedium, color = f.texto)
+                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp),
+                    visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrarConClave(acceso.correo, clave) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && clave.length >= 8)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pildora(stringResource(R.string.red_olvide)) { vm.red.pedirCodigo(io.github.fogonapps.cajon.MotivoCodigo.OLVIDO) }
+                    Pildora(stringResource(R.string.red_otro_correo)) { vm.red.volverAlCorreo() }
+                }
+                return
+            }
+            // El código: para registrarse, o con una contraseña nueva (si la olvidó o la cuenta no tenía).
+            PasoAcceso.CODIGO -> {
+                var nueva by rememberSaveable { mutableStateOf("") }
+                val conClaveNueva = acceso.motivo != io.github.fogonapps.cajon.MotivoCodigo.NUEVA
+                if (acceso.motivo == io.github.fogonapps.cajon.MotivoCodigo.SIN_CLAVE) Text(stringResource(R.string.red_sin_clave_crea), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                Pista(stringResource(R.string.red_revisa_correo, acceso.correo))
+                OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_codigo)) },
+                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+                if (conClaveNueva) {
+                    CampoClave(nueva, { nueva = it }, stringResource(R.string.red_clave_nueva))
+                    if (acceso.motivo == io.github.fogonapps.cajon.MotivoCodigo.OLVIDO) Pista(stringResource(R.string.red_olvido_aviso))
+                }
+                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrar(codigo, nueva) }, Modifier.fillMaxWidth(),
+                    habilitado = !acceso.ocupado && codigo.length == 6 && (!conClaveNueva || nueva.length >= 8))
+                BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
+                return
+            }
+            else -> Unit
         }
         // Cuenta nueva: el usuario, el nombre y la aceptación (con correo ya comprobado, o sin correo).
         Text(stringResource(R.string.red_elige_usuario), style = MaterialTheme.typography.titleMedium, color = f.texto)
@@ -929,9 +978,12 @@ private fun EntrarRed(vm: CajonViewModel, e: Estado) {
             Pildora(stringResource(R.string.red_politica)) { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }
             Pildora(stringResource(R.string.red_terminos)) { uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }
         }
-        val listo = !acceso.ocupado && acepto && usuario.length >= 3
+        // Con correo, la contraseña es obligatoria: con ella el cajón queda guardado (cifrado) en la cuenta.
+        var claveCuenta by rememberSaveable { mutableStateOf("") }
+        if (acceso.paso == PasoAcceso.USUARIO) CampoClave(claveCuenta, { claveCuenta = it }, stringResource(R.string.red_clave))
+        val listo = !acceso.ocupado && acepto && usuario.length >= 3 && (acceso.paso != PasoAcceso.USUARIO || claveCuenta.length >= 8)
         BotonRiso(stringResource(R.string.red_crear_cuenta), {
-            if (acceso.paso == PasoAcceso.USUARIO) vm.red.crearConCorreo(usuario, nombre) else vm.red.crearSinCorreo(usuario, nombre)
+            if (acceso.paso == PasoAcceso.USUARIO) vm.red.crearConCorreo(usuario, nombre, claveCuenta) else vm.red.crearSinCorreo(usuario, nombre)
         }, Modifier.fillMaxWidth(), habilitado = listo)
         if (!conCorreo) Pista(stringResource(R.string.red_sin_correo_aviso))
     }
@@ -969,7 +1021,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
                 Pista(stringResource(R.string.red_vincula_pista))
                 OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = "@" in correoTexto)
+                BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = "@" in correoTexto)
             }
         }
         // Tu usuario (una vez cada 7 días) y tu contraseña.

@@ -144,33 +144,26 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         }
     }
 
-    // Lo que tienes: el número de puntos sobre su halo, el mes en una línea y El Ahorrador, que pone la cara del mes.
-    Box(Modifier.fillMaxWidth().aparecer(1)) {
-    Column(
-        Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 6.dp).height(150.dp)
-            .haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 0.9f else 0.6f), centro = androidx.compose.ui.geometry.Offset(0.5f, 0.45f)),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-    ) {
-        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-        val total = Formato.pesos(L.patrimonio(e))
-        NumeroRiso(total, (if (total.length <= 10) 50 else if (total.length <= 13) 40 else 32).sp, color = f.texto)
-        Text(stringResource(R.string.inicio_mes, Formato.mes(mes), Formato.pesos(L.ingresos(e, mes)), Formato.pesos(L.gastos(e, mes))),
-            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp))
-        if (e.sistema == Sistema.SOBRES && L.porAsignar(e, mes) > 0) {
-            Text(stringResource(R.string.por_asignar_pista, Formato.pesos(L.porAsignar(e, mes))), style = MaterialTheme.typography.labelLarge,
-                color = f.sobreTinta1,
-                modifier = Modifier.padding(top = 8.dp).clip(FormaPildora).background(f.tinta1).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
-                    .padding(horizontal = 14.dp, vertical = 6.dp))
-        }
-    }
-    // Gastaste más de lo que entró: miedo; guardaste más de una quinta parte: feliz; si no, tranquilo.
+    // Lo que tienes, en la tarjeta de El Ahorrador: la cifra en puntos y el mes a la izquierda, él a la derecha con
+    // la cara del mes (miedo si salió más de lo que entró, feliz si guardaste más de una quinta parte).
     val entro = L.ingresos(e, mes); val salio = L.gastos(e, mes)
     val cara = when {
         entro > 0 && salio > entro -> io.github.fogonapps.identidad.Cara.MIEDO
         entro > 0 && entro - salio > entro / 5 -> io.github.fogonapps.identidad.Cara.FELIZ
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
-    io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, Modifier.align(Alignment.BottomEnd).padding(end = 12.dp), cara = cara, tamano = 64.dp)
+    io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1)) {
+        Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        val total = Formato.pesos(L.patrimonio(e))
+        NumeroRiso(total, (if (total.length <= 9) 40 else if (total.length <= 12) 32 else 26).sp, color = f.texto)
+        Text(stringResource(R.string.inicio_mes, Formato.mes(mes), Formato.pesos(entro), Formato.pesos(salio)),
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        if (e.sistema == Sistema.SOBRES && L.porAsignar(e, mes) > 0) {
+            Text(stringResource(R.string.por_asignar_pista, Formato.pesos(L.porAsignar(e, mes))), style = MaterialTheme.typography.labelLarge,
+                color = f.sobreTinta1,
+                modifier = Modifier.padding(top = 6.dp).clip(FormaPildora).background(f.tinta1).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
+                    .padding(horizontal = 14.dp, vertical = 6.dp))
+        }
     }
 
     // Las acciones, en una tarjeta de vidrio.

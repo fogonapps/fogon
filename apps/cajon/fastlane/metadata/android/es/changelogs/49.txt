@@ -1,1 +1,0 @@
-Los personajes se mueven: aparecen con un rebote, respiran y parpadean.

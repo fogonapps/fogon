@@ -61,9 +61,11 @@ data class PerfilSubido(
 
 @Serializable private data class Entrada(
     val correo: String = "", val codigo: String = "", val usuario: String = "", val nombre: String = "",
-    val acepta: String = "", val mayorDeEdad: Boolean = false,
+    val acepta: String = "", val mayorDeEdad: Boolean = false, val clave: String = "",
 )
 @Serializable private data class Correo(val correo: String)
+/** Si el correo tiene cuenta y contraseña (para registrarse o entrar). */
+@Serializable data class EstadoCorreo(val existe: Boolean = false, val conClave: Boolean = false)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false)
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
@@ -132,9 +134,10 @@ class ClienteSocial(private val token: String? = null) {
         leer(Acceso.serializer(), pedir("/cuentas", "POST", json(Entrada.serializer(), Entrada(usuario = usuario, nombre = nombre, acepta = politica, mayorDeEdad = true))))
     suspend fun pedirCodigo(correo: String) { pedir("/acceso/codigo", "POST", json(Correo.serializer(), Correo(correo))) }
     /** Entra con el código. Para una cuenta nueva el servidor responde "cuenta_nueva" hasta que lleguen [usuario] y la aceptación. */
-    suspend fun entrar(correo: String, codigo: String, usuario: String = "", nombre: String = "", politica: String = ""): Acceso =
+    suspend fun entrar(correo: String, codigo: String, usuario: String = "", nombre: String = "", politica: String = "", clave: String = ""): Acceso =
         leer(Acceso.serializer(), pedir("/acceso", "POST", json(Entrada.serializer(),
-            Entrada(correo, codigo, usuario, nombre, politica, mayorDeEdad = politica.isNotEmpty()))))
+            Entrada(correo, codigo, usuario, nombre, politica, mayorDeEdad = politica.isNotEmpty(), clave = clave))))
+    suspend fun estadoCorreo(correo: String) = leer(EstadoCorreo.serializer(), pedir("/acceso/correo", "POST", json(Correo.serializer(), Correo(correo))))
     suspend fun vincularCorreo(correo: String, codigo: String) { pedir("/cuenta/correo", "POST", json(Entrada.serializer(), Entrada(correo, codigo))) }
     suspend fun salir() { pedir("/salir", "POST") }
     suspend fun cajon() = leer(CajonCifrado.serializer(), pedir("/cajon"))

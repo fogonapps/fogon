@@ -92,7 +92,11 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val acepta: String = "",
     /** Dijo que tiene 18 años o más. */
     val mayorDeEdad: Boolean = false,
+    /** Con el código, la contraseña nueva: al crear la cuenta, si la olvidó o si la cuenta todavía no tenía. */
+    val clave: String = "",
 )
+/** Si un correo ya tiene cuenta y si tiene contraseña (para decirle a la persona si se registra o entra). */
+@Serializable data class EstadoCorreo(val existe: Boolean, val conClave: Boolean)
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean)
 @Serializable data class MiCuenta(
     val usuario: String, val nombre: String, val correo: String, val privada: Boolean,
@@ -148,6 +152,14 @@ class Social(
 
     /* ----- Cuentas ----- */
 
+    /** Si [correoDado] tiene cuenta y contraseña. */
+    fun estadoCorreo(correoDado: String): EstadoCorreo {
+        val correo = correoDado.trim().lowercase()
+        if (!CORREO.matches(correo) || correo.length > 120) throw Problema(400, "correo")
+        return b.usar { leer("SELECT clave IS NOT NULL FROM cuentas WHERE correo = ?", correo) { EstadoCorreo(true, it.getInt(1) == 1) }.firstOrNull() }
+            ?: EstadoCorreo(false, false)
+    }
+
     /** Manda un código de 6 números al correo (uno por minuto como mucho). Sirve para entrar o para crear la cuenta. */
     fun pedirCodigo(correoDado: String) {
         val correo = correoDado.trim().lowercase()
@@ -185,6 +197,11 @@ class Social(
                     u, Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
             }
             Triple(nuevo, u, true)
+        }
+        // Con el código comprobado se puede poner la contraseña (nueva cuenta, la olvidó o no tenía).
+        if (e.clave.isNotEmpty()) {
+            if (e.clave.length < 8 || e.clave.length > 200) throw Problema(400, "clave_corta")
+            b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(e.clave), id) }
         }
         b.usar { cambiar("DELETE FROM codigos WHERE correo = ?", correo) }
         return Acceso(usuario, sesionNueva(id), nueva)

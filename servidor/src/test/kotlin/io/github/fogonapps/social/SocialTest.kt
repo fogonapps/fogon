@@ -162,6 +162,27 @@ class SocialTest {
         assertTrue(s.verPerfil(beto, "ana").cerrada)
     }
 
+    @Test fun registroYOlvideLaClave() {
+        val dir = Files.createTempDirectory("social").toFile()
+        val buzon = mutableListOf<String>()
+        var reloj = 1_000_000L
+        val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"), ahora = { reloj }, cartero = { _, asunto, _ -> buzon += asunto })
+        fun codigo() = Regex("[0-9]{6}").find(buzon.last())!!.value
+        assertEquals(EstadoCorreo(false, false), s.estadoCorreo("bea@correo.co"))                   // no existe: se registra
+        s.pedirCodigo("bea@correo.co")
+        assertEquals("clave_corta", assertFailsWith<Problema> {
+            s.entrar(Entrada("bea@correo.co", codigo(), usuario = "bea", acepta = Social.POLITICA, mayorDeEdad = true, clave = "corta")) }.mensaje)
+        s.entrar(Entrada("bea@correo.co", codigo(), usuario = "bea", acepta = Social.POLITICA, mayorDeEdad = true, clave = "una frase larga"))
+        assertEquals(EstadoCorreo(true, true), s.estadoCorreo("Bea@correo.co"))                     // existe y entra con contraseña
+        s.entrarConClave(EntradaClave("bea@correo.co", "una frase larga"))
+        // La olvidó: con un código nuevo pone otra, y la vieja deja de servir.
+        reloj += 61_000; s.pedirCodigo("bea@correo.co")
+        s.entrar(Entrada("bea@correo.co", codigo(), clave = "otra frase larga"))
+        assertFailsWith<Problema> { s.entrarConClave(EntradaClave("bea@correo.co", "una frase larga")) }
+        s.entrarConClave(EntradaClave("bea@correo.co", "otra frase larga"))
+        assertFailsWith<Problema> { s.estadoCorreo("no-es-correo") }
+    }
+
     @Test fun entrarConCorreo() {
         val dir = Files.createTempDirectory("social").toFile()
         val buzon = mutableListOf<Pair<String, String>>()

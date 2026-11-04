@@ -17,6 +17,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.ui.res.stringResource
 import androidx.annotation.DrawableRes
@@ -322,6 +323,29 @@ fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier,
         }, animationSpec = androidx.compose.animation.core.tween(if (parpado) 60 else 220), label = "cara") { c ->
             Image(painterResource(imagenPersonaje(quien, c)), contentDescription = descripcion, modifier = Modifier.fillMaxSize())
         }
+    }
+}
+
+/**
+ * La tarjeta del personaje, la principal de cada app: a la izquierda lo importante (la cifra en puntos, una línea,
+ * una píldora) y a la derecha el personaje en su propio lugar, centrado de alto. Los textos nunca le pasan por
+ * encima: tienen su columna y el personaje la suya. Sobre la trama de puntos del tema.
+ */
+@Composable
+fun TarjetaPersonaje(
+    quien: Quien, cara: Cara, modifier: Modifier = Modifier, tamano: Dp = 96.dp,
+    onClick: (() -> Unit)? = null, contenido: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    val f = FogonTema.actual
+    val toque = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    Row(
+        modifier.fillMaxWidth().padding(horizontal = 16.dp).tarjetaFogon(forma(28.dp))
+            .haloPuntos(f.tinta2.copy(alpha = if (f.oscuro) 0.6f else 0.4f), centro = Offset(0.25f, 0.45f))
+            .then(toque).padding(start = 20.dp, top = 18.dp, bottom = 18.dp, end = 14.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), content = contenido)
+        Personaje(quien, null, cara = cara, tamano = tamano)
     }
 }
 

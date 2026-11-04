@@ -313,15 +313,11 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     val f = FogonTema.actual
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
-        // La tarjeta del final: el saludo, el volumen en puntos sobre su halo y la barra.
-        Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).height(220.dp).tarjetaFogon(forma(30.dp))) {
-            Box(Modifier.matchParentSize().haloPuntos(f.tinta2, centro = androidx.compose.ui.geometry.Offset(0.85f, 0.25f)))
-            Column(Modifier.padding(22.dp).fillMaxWidth(0.6f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
-                Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
-            Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 90.dp)
+        // La tarjeta del final, de El Forzudo: el saludo, la rutina y el volumen en puntos; él a la derecha, feliz.
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 16.dp).aparecer(0), tamano = 104.dp) {
+            Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+            Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            NumeroRiso(fmtVol(r.volumen), 40.sp, Modifier.padding(top = 8.dp))
         }
         Box(Modifier.aparecer(1)) { Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}") }
         if (r.volumen >= 150) {

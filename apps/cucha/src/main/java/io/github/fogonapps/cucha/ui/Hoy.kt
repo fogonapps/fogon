@@ -115,32 +115,33 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
         BotonIcono(Iconos.Persona, stringResource(R.string.perfil), grande = true) { vm.abrir(Pantalla.Perfil) }
     }
 
-    // Las calorías que quedan, en el anillo, y los macros.
+    // Las calorías que quedan, en el anillo, y La Cucha a la derecha con la cara del día (dormida sin nada anotado,
+    // sorprendida si te pasaste, feliz cerca de la meta); debajo, lo comido, la meta y los macros.
     val quedan = e.metas.kcal - total.kcal.roundToInt()
+    val cara = when {
+        total.kcal <= 0.0 -> io.github.fogonapps.identidad.Cara.DORMIDO
+        quedan < 0 -> io.github.fogonapps.identidad.Cara.SORPRESA
+        total.kcal >= e.metas.kcal * 0.6 -> io.github.fogonapps.identidad.Cara.FELIZ
+        else -> io.github.fogonapps.identidad.Cara.NORMAL
+    }
     Column(
         Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio().haloPuntos(f.tinta2.copy(alpha = 0.35f)).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Anillo((total.kcal / e.metas.kcal.coerceAtLeast(1)).toFloat(), Modifier.size(150.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Anillo((total.kcal / e.metas.kcal.coerceAtLeast(1)).toFloat(), Modifier.size(140.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NumeroRiso("${kotlin.math.abs(quedan)}", 34.sp)
+                    NumeroRiso("${kotlin.math.abs(quedan)}", 32.sp)
                     Text(stringResource(if (quedan >= 0) R.string.kcal_quedan else R.string.kcal_de_mas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
                 }
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Dato(stringResource(R.string.comido), "${total.kcal.roundToInt()} kcal")
-                Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal")
-                // La Cucha pone la cara del día: dormida si no has comido nada, sorprendida si te pasaste,
-                // feliz si ya vas cerca de tu meta.
-                val cara = when {
-                    total.kcal <= 0.0 -> io.github.fogonapps.identidad.Cara.DORMIDO
-                    quedan < 0 -> io.github.fogonapps.identidad.Cara.SORPRESA
-                    total.kcal >= e.metas.kcal * 0.6 -> io.github.fogonapps.identidad.Cara.FELIZ
-                    else -> io.github.fogonapps.identidad.Cara.NORMAL
-                }
-                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, Modifier.align(Alignment.End), cara = cara, tamano = 64.dp)
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = cara, tamano = 104.dp)
             }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            Dato(stringResource(R.string.comido), "${total.kcal.roundToInt()} kcal", Modifier.weight(1f))
+            Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal", Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             BarraMacro(stringResource(R.string.proteina), total.proteina, e.metas.proteina, f.tinta1, Modifier.weight(1f), pasarseEsMalo = false)
