@@ -172,7 +172,7 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
 
     if (d?.anotados.isNullOrEmpty() && dia == hoy) {
         Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) {
-            Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 110.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 72.dp)
         }
         Pista(stringResource(R.string.hoy_vacio), centro = true)
     }

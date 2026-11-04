@@ -158,7 +158,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         }
         // El Cajón pone la cara de lo que estás viendo o escuchando: la obra de la frase o lo último que tocaste.
         val cara = remember(frase.obra, e.obras) { caraDe(io.github.fogonapps.cajon.datos.Caras.de(io.github.fogonapps.cajon.datos.Caras.obra(e, frase.obra))) }
-        Personaje(io.github.fogonapps.identidad.Quien.CAJON, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), cara = cara, tamano = 120.dp)
+        Personaje(io.github.fogonapps.identidad.Quien.CAJON, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), cara = cara, tamano = 80.dp)
     }
 
     // ¿Qué te pareció? Lo último que terminaste sin nota: calificarlo con un toque o escribir la reseña.

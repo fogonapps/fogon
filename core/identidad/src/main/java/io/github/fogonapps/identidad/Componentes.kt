@@ -321,7 +321,7 @@ fun EstadoVacio(quien: Quien, titulo: String, texto: String, modifier: Modifier 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Personaje(quien, null, cara = Cara.DORMIDO, tamano = 140.dp)
+        Personaje(quien, null, cara = Cara.DORMIDO, tamano = 90.dp)
         Text(titulo, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, color = FogonTema.actual.texto)
         Text(texto, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = FogonTema.actual.textoSuave)
     }
@@ -356,7 +356,7 @@ fun AcercaDeFogon(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Personaje(quien, nombreApp, cara = Cara.FELIZ, tamano = 150.dp)
+        Personaje(quien, nombreApp, cara = Cara.FELIZ, tamano = 96.dp)
         Text(nombreApp, style = MaterialTheme.typography.headlineMedium, color = f.texto)
         Text(stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(

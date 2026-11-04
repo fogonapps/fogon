@@ -97,7 +97,7 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
     ) {
         when (paso) {
             0 -> {
-                Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 170.dp)
+                Personaje(io.github.fogonapps.identidad.Quien.AHORRADOR, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 110.dp)
                 Text(stringResource(R.string.tut_hola), style = MaterialTheme.typography.headlineLarge, color = f.texto,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,

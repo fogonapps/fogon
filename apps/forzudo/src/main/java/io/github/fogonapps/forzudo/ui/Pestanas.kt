@@ -162,7 +162,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                 MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))
             }
             Box(Modifier.align(Alignment.BottomEnd).padding(6.dp)) {
-                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, cara = io.github.fogonapps.identidad.Cara.DECIDIDO, tamano = 168.dp)
+                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, cara = io.github.fogonapps.identidad.Cara.DECIDIDO, tamano = 110.dp)
                 if (racha.actual > 0) Chispa(Modifier.align(Alignment.TopStart), tamano = 20.dp)
             }
         }
@@ -375,7 +375,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
                 // Lo más grande que quepa a lo ancho: cada mayúscula mide unos [Fogon.anchoCifra] em.
                 val tam = if (ov == null) 44f else minOf(120f, 340f / (f.anchoCifra * palabra.length.coerceAtLeast(1)))
                 NumeroRiso(palabra, tam.sp, Modifier.padding(start = 14.dp, top = 4.dp), color = colorRango, alto = tam.sp)
-                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 120.dp)
+                io.github.fogonapps.identidad.Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, null, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 80.dp)
                 Row(Modifier.align(Alignment.BottomStart).padding(start = 20.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Insignia(ov?.rango, 40.dp)

@@ -109,7 +109,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val estado = e
     if (estado == null) {
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Personaje(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.cargando), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.cargando), tamano = 90.dp)
         }
         return
     }

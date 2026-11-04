@@ -94,7 +94,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Personaje(Quien.FORZUDO, null, cara = p.cara, tamano = 220.dp)
+                    Personaje(Quien.FORZUDO, null, cara = p.cara, tamano = 140.dp)
                     Text(stringResource(p.titulo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
                     Text(stringResource(p.texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
                     if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())

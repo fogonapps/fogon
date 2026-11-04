@@ -70,7 +70,7 @@ fun Tutorial(vm: CuchaViewModel, onImportar: () -> Unit) {
     ) {
         when (paso) {
             0 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 170.dp)
+                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 110.dp)
                 Text(stringResource(R.string.tut_hola), style = MaterialTheme.typography.headlineLarge, color = f.texto,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,

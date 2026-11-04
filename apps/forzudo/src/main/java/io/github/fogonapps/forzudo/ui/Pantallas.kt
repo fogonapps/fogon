@@ -321,7 +321,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
                 Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
             NumeroRiso(fmtVol(r.volumen), 44.sp, Modifier.align(Alignment.BottomStart).padding(start = 22.dp, bottom = 18.dp))
-            Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 140.dp)
+            Personaje(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.app_name), Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 90.dp)
         }
         Box(Modifier.aparecer(1)) { Trio(stringResource(R.string.tiempo) to duracionPalabras(r.ms), stringResource(R.string.volumen) to fmtVol(r.volumen), stringResource(R.string.series) to "${r.series}") }
         if (r.volumen >= 150) {

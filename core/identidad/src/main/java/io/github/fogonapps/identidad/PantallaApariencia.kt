@@ -258,7 +258,7 @@ private fun VistaPrevia(paleta: Paleta) {
             }
         }
         val quien = QUIEN_DE[paleta]
-        if (quien != null) Personaje(quien, null, Modifier.align(Alignment.TopEnd).padding(10.dp), tamano = 84.dp)
+        if (quien != null) Personaje(quien, null, Modifier.align(Alignment.TopEnd).padding(10.dp), tamano = 60.dp)
         else Chispa(Modifier.align(Alignment.TopEnd).padding(24.dp), tamano = 56.dp)
     }
 }
