@@ -196,8 +196,18 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val descFoto = stringResource(if (p.foto.isBlank()) R.string.poner_foto else R.string.cambiar_foto_perfil)
     var pestana by rememberSaveable { mutableStateOf(if (yo == null) 1 else 0) }
 
+    // Arriba: con cuenta de moderación, su espacio (con lo pendiente); siempre, los ajustes.
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val casos by vm.red.casos.collectAsStateWithLifecycle()
+    val frasesPendientes by vm.red.frasesPendientes.collectAsStateWithLifecycle()
+    LaunchedEffect(cuenta?.admin) { if (cuenta?.admin == true) vm.red.cargarCasos() }
     Cabecera(yo?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
-        BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (cuenta?.admin == true) ConCuenta(casos.orEmpty().size + frasesPendientes.size) {
+                BotonIcono(Iconos.Bandera, stringResource(R.string.mod_titulo), grande = true) { vm.abrir(Pantalla.Moderacion) }
+            }
+            BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
+        }
     }
 
     // Portada, foto (con el + para cambiarla) y nombre.

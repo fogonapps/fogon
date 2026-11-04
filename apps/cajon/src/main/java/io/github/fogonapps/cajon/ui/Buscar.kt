@@ -29,6 +29,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -286,10 +289,44 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
     val buscados = tipos.flatMap { t -> m.buscados[t].orEmpty().map { t to it } }
         .let { l -> if (tipos.size == 1) l else l.sortedByDescending { it.second.vistas } }.take(if (compacto) 6 else 12)
     val artistas = if (!compacto && (seccion == Secciones.TODO || seccion == Secciones.MUSICA)) m.artistas.filter { it.foto.isNotBlank() }.take(10) else emptyList()
+    // Por plataforma (con la clave de TMDB): lo de moda en Netflix, Prime Video, Crunchyroll…
+    val conTmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
+    val enPlataforma by vm.enPlataforma.collectAsStateWithLifecycle()
+    val tipoPlataforma = tipos.singleOrNull()?.takeIf { it in setOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME) }
+    var plataforma by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
+    LaunchedEffect(plataforma, tipoPlataforma) { val p = plataforma; if (p != null && tipoPlataforma != null) vm.cargarPlataforma(p, tipoPlataforma) }
+    val dePlataforma = plataforma?.let { p -> tipoPlataforma?.let { enPlataforma["$p|$it"] } }
     if (obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty()) return
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        if (!compacto && conTmdb && tipoPlataforma != null) {
+            val nombres = if (tipoPlataforma == Tipos.ANIME) vm.plataformasAnime else vm.plataformasCine
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pildora(stringResource(R.string.todo), acento = plataforma == null) { plataforma = null }
+                nombres.forEach { n -> Pildora(nombrePlataforma(n), acento = plataforma == n) { plataforma = n } }
+            }
+        }
+        if (plataforma != null) {
+            val l = dePlataforma
+            when {
+                l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+                l.isEmpty() -> Pista(stringResource(R.string.momento_plataforma_vacia, nombrePlataforma(plataforma.orEmpty())))
+                else -> l.take(12).chunked(3).forEach { fila ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        fila.forEach { r ->
+                            Column(Modifier.weight(1f).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrirDelMomento(r) }) {
+                                Portada(r.portada, r.tipo, r.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                                Text(r.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                            }
+                        }
+                        repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
+                    }
+                }
+            }
+            Text(stringResource(R.string.momento_credito_justwatch), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+            return@Column
+        }
         if (obras.isNotEmpty()) {
             Text(stringResource(when (seccion) {
                 Secciones.MUSICA -> R.string.momento_musica; Secciones.LIBROS -> R.string.momento_libros
@@ -335,6 +372,9 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
         }
     }
 }
+
+/** El nombre de una plataforma como se dice aquí ("Amazon Prime Video" → "Prime Video"). */
+private fun nombrePlataforma(n: String) = when (n) { "Amazon Prime Video" -> "Prime Video"; "Disney Plus" -> "Disney+"; else -> n }
 
 private fun tipoAMano(seccion: String) = when (seccion) { Secciones.MUSICA -> Tipos.ALBUM; Secciones.LIBROS -> Tipos.LIBRO; Secciones.SERIES -> Tipos.SERIE; Secciones.ANIMES -> Tipos.ANIME; else -> Tipos.PELICULA }
 

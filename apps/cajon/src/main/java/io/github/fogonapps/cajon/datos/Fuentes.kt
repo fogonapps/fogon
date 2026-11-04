@@ -217,6 +217,27 @@ class Tmdb(private val clave: String) {
     /** Lo que más se está viendo esta semana (películas y series), para elegir gustos y para explorar. */
     suspend fun tendencias(idioma: String): List<Encontrado> = lista(pedir("trending/all/week", "language" to lengua(idioma)), null, idioma)
 
+    /**
+     * Las plataformas de un país (nombre → id), de lo que TMDB sabe por JustWatch (hay que darle el crédito a JustWatch
+     * donde se muestre).
+     */
+    suspend fun plataformas(region: String, idioma: String): Map<String, Int> =
+        listOf("movie", "tv").flatMap { c -> pedir("watch/providers/$c", "watch_region" to region, "language" to lengua(idioma)).arr("results") }
+            .mapNotNull { it as? JsonObject }.mapNotNull { p -> p["provider_id"].entero()?.let { p["provider_name"].texto() to it } }.toMap()
+
+    /**
+     * Lo que está de moda en una plataforma de [region]: lo más popular que se puede ver ahí, solo lo reciente (películas
+     * de los últimos dos años; series y anime con capítulos en los últimos dos meses).
+     */
+    suspend fun popularEn(proveedor: Int, clase: String, anime: Boolean, region: String, idioma: String): List<Encontrado> {
+        val hoy = java.time.LocalDate.now()
+        val params = listOfNotNull("language" to lengua(idioma), "sort_by" to "popularity.desc", "include_adult" to "false",
+            "with_watch_providers" to "$proveedor", "watch_region" to region,
+            if (clase == "movie") "primary_release_date.gte" to hoy.minusYears(2).toString() else "air_date.gte" to hoy.minusDays(60).toString(),
+            if (anime) "with_genres" to "16" else null, if (anime) "with_original_language" to "ja" else null)
+        return lista(pedir("discover/$clase", *params.toTypedArray()), clase, idioma)
+    }
+
     /** El anime que está al aire (con capítulos en el último mes), lo más popular primero. */
     suspend fun animeAlAire(idioma: String): List<Encontrado> {
         val desde = java.time.LocalDate.now().minusDays(30).toString()

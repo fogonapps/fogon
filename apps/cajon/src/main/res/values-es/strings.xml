@@ -672,6 +672,9 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="momento_plataforma_vacia">No hay nada reciente en %1$s para tu país ahora</string>
+  <string name="momento_credito_justwatch">Dónde ver: datos de JustWatch</string>
+  <string name="mod_pista">Reportes y frases propuestas por revisar</string>
   <string name="resenas">Reseñas</string>
   <string name="resenas_de_la_gente">De la gente</string>
   <string name="cifras_de">Tus cifras de %1$s</string>

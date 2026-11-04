@@ -672,6 +672,9 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="momento_plataforma_vacia">Nothing recent on %1$s for your country right now</string>
+  <string name="momento_credito_justwatch">Where to watch: data from JustWatch</string>
+  <string name="mod_pista">Reports and suggested phrases to review</string>
   <string name="resenas">Reviews</string>
   <string name="resenas_de_la_gente">From people</string>
   <string name="cifras_de">Your %1$s stats</string>

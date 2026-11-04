@@ -71,6 +71,8 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     // Tu cuenta: lo primero.
     Seccion(stringResource(R.string.aj_tu_cuenta))
     val u = usuario
+    val cuentaRed by vm.red.cuenta.collectAsStateWithLifecycle()
+    if (cuentaRed?.admin == true) FilaAjuste(Iconos.Bandera, stringResource(R.string.mod_titulo), stringResource(R.string.mod_pista)) { vm.abrir(Pantalla.Moderacion) }
     if (u == null) FilaAjuste(Iconos.Persona, stringResource(R.string.red_crear_cuenta), null) { vm.abrir(Pantalla.CuentaRed) }
     else {
         FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }

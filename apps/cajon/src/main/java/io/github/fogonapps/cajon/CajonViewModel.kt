@@ -1566,6 +1566,38 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Las plataformas que se ofrecen en lo del momento (como las nombra TMDB) y el país de este teléfono. */
+    val plataformasCine = listOf("Netflix", "Amazon Prime Video", "Disney Plus", "Max", "Apple TV+")
+    val plataformasAnime = listOf("Crunchyroll", "Netflix")
+    private fun region() = java.util.Locale.getDefault().country.takeIf { it.length == 2 } ?: "CO"
+    private var idsPlataformas: Map<String, Int>? = null
+    private val _enPlataforma = MutableStateFlow<Map<String, List<Encontrado>>>(emptyMap())
+    /** "plataforma|tipo" → lo de moda ahí. */
+    val enPlataforma: StateFlow<Map<String, List<Encontrado>>> = _enPlataforma
+    private val plataformaTraida = HashMap<String, Long>()
+
+    /** Trae lo de moda en una plataforma (con la clave de TMDB), como mucho cada 6 horas. */
+    fun cargarPlataforma(nombre: String, tipo: String) {
+        val clave = caja.claveTmdb ?: return
+        val k = "$nombre|$tipo"
+        if (System.currentTimeMillis() - (plataformaTraida[k] ?: 0) < 6 * 3600_000L) return
+        plataformaTraida[k] = System.currentTimeMillis()
+        viewModelScope.launch {
+            runCatching {
+                val t = Tmdb(clave)
+                val ids = idsPlataformas ?: t.plataformas(region(), idioma()).also { idsPlataformas = it }
+                val id = ids.entries.firstOrNull { it.key.equals(nombre, true) }?.value
+                    ?: ids.entries.firstOrNull { it.key.lowercase().startsWith(nombre.lowercase()) }?.value ?: return@runCatching
+                val lista = when (tipo) {
+                    Tipos.PELICULA -> t.popularEn(id, "movie", false, region(), idioma())
+                    Tipos.ANIME -> t.popularEn(id, "tv", true, region(), idioma())
+                    else -> t.popularEn(id, "tv", false, region(), idioma()).filter { it.tipo == Tipos.SERIE }
+                }.filter { it.portada.isNotBlank() }
+                _enPlataforma.value = _enPlataforma.value + (k to lista)
+            }.onFailure { plataformaTraida.remove(k) }
+        }
+    }
+
     /** Tocar algo de lo del momento: si se puede abrir (TMDB, MusicBrainz, Open Library), su previa; si no, se busca por su nombre. */
     fun abrirDelMomento(r: Encontrado) {
         if (r.fuente.startsWith("tvmaze:") || (r.fuente.startsWith("tmdb:") && caja.claveTmdb == null)) buscarEn(Secciones.de(r.tipo), r.titulo)

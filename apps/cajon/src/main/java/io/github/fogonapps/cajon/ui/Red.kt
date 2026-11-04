@@ -63,6 +63,7 @@ import io.github.fogonapps.cajon.datos.Visibilidad
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.forma
@@ -331,7 +332,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
 
 /** Un botón con su número arriba (lo que hay sin leer). */
 @Composable
-private fun ConCuenta(n: Int, boton: @Composable () -> Unit) {
+fun ConCuenta(n: Int, boton: @Composable () -> Unit) {
     val f = FogonTema.actual
     Box {
         boton()
@@ -415,12 +416,9 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val p = perfiles[usuario]
     val propio = usuario == yo
     Cabecera("@$usuario", vm::cerrar) {
-        Row {
-            if (propio) {
-                BotonIcono(Iconos.Lapiz, stringResource(R.string.editar_perfil)) { vm.abrir(Pantalla.EditarPerfil) }
-                BotonIcono(Iconos.Ajustes, stringResource(R.string.red_ajustes_cuenta)) { vm.abrir(Pantalla.CuentaRed) }
-            } else BotonIcono(Iconos.Compartir, stringResource(R.string.red_compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            if (yo != null && !propio) BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones)) { menu = !menu }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BotonIcono(Iconos.Compartir, stringResource(R.string.compartir_perfil), grande = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
+            if (yo != null) BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = !menu }
         }
     }
     if (p == null) {
@@ -428,27 +426,43 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         else LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
         return
     }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.fillMaxWidth().height(120.dp).clip(forma(20.dp)), contentScale = ContentScale.Crop)
-        AvatarRed(p.persona, 96.dp)
-        Text(p.persona.nombre.ifBlank { usuario }, style = MaterialTheme.typography.headlineSmall, color = f.texto, textAlign = TextAlign.Center)
-        if (p.meSigue && !propio) Etiqueta(stringResource(R.string.red_te_sigue), f.superficie, f.textoSuave)
-        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Cifra("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) }
-            Cifra("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) }
-            Cifra(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra), null)
+    // Igual que tu perfil: portada, la foto montada sobre su borde y el nombre al lado.
+    Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(110.dp).clip(forma(24.dp)).vidrio(forma(24.dp))
+            .haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
+            if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         }
-        if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodyMedium, color = f.texto, textAlign = TextAlign.Center)
-        else if (propio) Pildora(stringResource(R.string.red_poner_bio), Iconos.Lapiz) { vm.abrir(Pantalla.EditarPerfil) }
-        p.enlaces.forEach { e -> val uri = LocalUriHandler.current
-            Text(e.removePrefix("https://").removePrefix("http://").removePrefix("www."), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto, modifier = Modifier.clickable { runCatching { uri.openUri(e) } }) }
-        when {
-            propio -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
-                BotonSecundario(stringResource(R.string.red_compartir_perfil), { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }, Modifier.weight(1f))
+        Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) }
+            Column(Modifier.weight(1f).padding(top = 54.dp)) {
+                Text(p.persona.nombre.ifBlank { usuario }, fontFamily = f.titulos, fontSize = 26.sp, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
-            yo == null -> BotonRiso(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
-            else -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        }
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        @Composable
+        fun Cifra(valor: String, etiqueta: String, onClick: (() -> Unit)?) =
+            Column(Modifier.weight(1f).clip(forma(14.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(valor, fontFamily = f.cifras, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
+                Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 2)
+            }
+        Cifra("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) }
+        Cifra("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) }
+        Cifra(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra), null)
+    }
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+        if (p.enlaces.isNotEmpty()) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val uri = LocalUriHandler.current
+            p.enlaces.forEach { e -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(e), Iconos.Enlace) { runCatching { uri.openUri(e) } } }
+        }
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        when {
+            yo == null -> BotonRiso(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+            else -> {
                 when (p.relacion) {
                     "sigo" -> BotonSecundario(stringResource(R.string.red_dejar_de_seguir), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
                     "pendiente" -> BotonSecundario(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
@@ -457,11 +471,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 BotonSecundario(stringResource(R.string.chat_mensaje), { vm.abrir(Pantalla.Conversacion(usuario)) }, Modifier.weight(1f))
             }
         }
-        if (menu) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pildora(stringResource(R.string.red_compartir_perfil)) { menu = false; compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            Pildora(stringResource(R.string.red_bloquear)) { menu = false; vm.red.bloquear(usuario, true); vm.cerrar() }
-            Pildora(stringResource(R.string.red_reportar)) { menu = false; vm.red.reportar("cuenta", usuario, "") }
-        }
+    }
+    if (menu) Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pildora(stringResource(R.string.compartir_perfil)) { menu = false; compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
+        Pildora(stringResource(R.string.red_bloquear)) { menu = false; vm.red.bloquear(usuario, true); vm.cerrar() }
+        Pildora(stringResource(R.string.red_reportar)) { menu = false; vm.red.reportar("cuenta", usuario, "") }
     }
     (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada")) }
     if (p.cerrada) {
@@ -471,18 +485,18 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         }
         return
     }
-    // Las pestañas: publicaciones, gustos, música y guardadas (las que la persona deja ver).
+    // Las pestañas, como en tu perfil: publicaciones, favoritos, artistas y guardadas (las que la persona deja ver).
     val pestanas = listOfNotNull(
-        Triple(0, Iconos.Lista, R.string.red_publicaciones),
-        Triple(1, Iconos.Estrella, R.string.parte_gustos).takeIf { propio || p.partes.keys.any { it in setOf("destacados", "favoritas", "gustos", "cifras") } },
-        Triple(2, Iconos.Disco, R.string.parte_musica).takeIf { propio || "musica" in p.partes },
+        Triple(0, Iconos.Imagen, R.string.red_publicaciones),
+        Triple(1, Iconos.Estrella, R.string.parte_destacados).takeIf { p.partes.keys.any { it in setOf("destacados", "favoritas", "gustos", "cifras") } },
+        Triple(2, Iconos.Artista, R.string.tipo_artistas).takeIf { "musica" in p.partes },
         Triple(3, Iconos.Guardar, R.string.parte_guardadas).takeIf { p.guardadasVisibles },
     )
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-        pestanas.forEach { (i, icono, t) ->
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        pestanas.forEach { (i, icono, tx) ->
             val elegida = pestana == i
-            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent).clickable { pestana = i }.padding(horizontal = 18.dp, vertical = 8.dp)) {
-                IconoRiso(icono, stringResource(t), tamano = 22.dp, tinta = if (elegida) f.sobreTinta1 else f.textoSuave)
+            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent).clickable { pestana = i }.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                IconoRiso(icono, stringResource(tx), tamano = 22.dp, tinta = if (elegida) f.sobreTinta1 else f.textoSuave)
             }
         }
     }
@@ -931,7 +945,6 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
         } else Pista(stringResource(R.string.red_clave_pide_correo))
         FilaVidrio({ vm.abrir(Pantalla.GenteRed(usuario, true)) }) { Text(stringResource(R.string.red_tus_seguidores), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.abrir(Pantalla.EstadoCuenta) }) { Text(stringResource(R.string.mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
-        if (cuenta?.admin == true) FilaVidrio({ vm.abrir(Pantalla.Moderacion) }) { Text(stringResource(R.string.mod_titulo), color = f.acentoTexto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.abrir(Pantalla.BloqueadosRed) }) { Text(stringResource(R.string.red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }) { Text(stringResource(R.string.red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
