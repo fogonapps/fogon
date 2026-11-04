@@ -5,7 +5,15 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -123,7 +131,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                         Espacio(120.dp)
                     }
                 }
-                BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
+                BarraFlotante(pestana, Pestana.enOrden(estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
                 SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
             }
 
@@ -207,23 +215,46 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     }
 }
 
-/** La barra de pestañas: una píldora que flota, con el botón de agregar en el centro. */
+/** El ícono y el nombre de cada pestaña. */
+fun iconoPestana(p: Pestana): Dibujo = when (p) {
+    Pestana.INICIO -> Iconos.Inicio; Pestana.PARA_TI -> Iconos.Gente; Pestana.CINE -> Iconos.Pelicula
+    Pestana.MUSICA -> Iconos.Disco; Pestana.LIBROS -> Iconos.Libro
+}
+fun textoPestana(p: Pestana): Int = when (p) {
+    Pestana.INICIO -> R.string.pestana_inicio; Pestana.PARA_TI -> R.string.red_titulo; Pestana.CINE -> R.string.seccion_cine
+    Pestana.MUSICA -> R.string.seccion_musica; Pestana.LIBROS -> R.string.seccion_libros
+}
+
+/**
+ * La barra de pestañas: una píldora que flota, con las pestañas en el orden elegido y el botón de agregar al final.
+ * Con el dedo apretado se desliza por la barra y se cambia de pestaña al pasar por encima de cada una.
+ */
 @Composable
-private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAgregar: () -> Unit, modifier: Modifier = Modifier) {
+private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pestana) -> Unit, onAgregar: () -> Unit, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
-    val pestanas = listOf(
-        Triple(Pestana.INICIO, Iconos.Inicio, R.string.pestana_inicio),
-        Triple(Pestana.PARA_TI, Iconos.Gente, R.string.red_titulo),
-        Triple(Pestana.CINE, Iconos.Pelicula, R.string.seccion_cine),
-        Triple(Pestana.MUSICA, Iconos.Disco, R.string.seccion_musica),
-        Triple(Pestana.LIBROS, Iconos.Libro, R.string.seccion_libros),
-    )
+    val haptica = LocalHapticFeedback.current
+    // Dónde quedó cada pestaña dentro de la barra (para saber cuál está bajo el dedo).
+    val bordes = remember { mutableStateMapOf<Pestana, ClosedFloatingPointRange<Float>>() }
+    val alIr by rememberUpdatedState(onIr)
+    val alActual by rememberUpdatedState(actual)
     Row(
         modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth()
-            .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
+            .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp)
+            .pointerInput(Unit) {
+                var ultima: Pestana? = null
+                fun bajo(x: Float) = bordes.entries.firstOrNull { x in it.value }?.key
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { o -> ultima = alActual; bajo(o.x)?.let { if (it != ultima) { ultima = it; alIr(it) } }; haptica.performHapticFeedback(HapticFeedbackType.LongPress) },
+                    onDrag = { c, _ -> bajo(c.position.x)?.let { if (it != ultima) { ultima = it; haptica.performHapticFeedback(HapticFeedbackType.TextHandleMove); alIr(it) } } },
+                )
+            },
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
+        pestanas.forEach { pe ->
+            Box(Modifier.onGloballyPositioned { c -> val x = c.positionInParent().x; bordes[pe] = x..(x + c.size.width) }) {
+                BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual) { onIr(pe) }
+            }
+        }
         // Cinco pestañas y el +: se apretan un poco para que quepan en un teléfono angosto.
         val agregar = stringResource(R.string.buscar_y_agregar)
         Box(
@@ -231,7 +262,6 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAgregar: (
                 .clickable(onClick = onAgregar).semantics { contentDescription = agregar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
-        pestanas.drop(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
     }
 }
 

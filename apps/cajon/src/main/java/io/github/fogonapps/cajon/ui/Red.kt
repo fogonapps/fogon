@@ -490,7 +490,15 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             else if (g.isEmpty()) Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp)) else CuadriculaPublicaciones(vm, g)
         }
     }
-    if (propio) Pista(stringResource(R.string.red_que_ven_pista), Modifier.padding(16.dp))
+    if (propio) {
+        // Lo demás de tu perfil (cifras, evolución, diario, destacados): en el perfil del teléfono.
+        FilaVidrio({ vm.abrir(Pantalla.Perfil) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            IconoRiso(Iconos.Cifras, null, tamano = 20.dp, tinta = f.acentoTexto)
+            Text(stringResource(R.string.red_mas_de_tu_perfil), color = f.texto, modifier = Modifier.weight(1f))
+            IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+        }
+        Pista(stringResource(R.string.red_que_ven_pista), Modifier.padding(16.dp))
+    }
 }
 
 /** Las publicaciones en cuadrícula, con sus vistas: la foto, la portada de la obra o unas palabras. */

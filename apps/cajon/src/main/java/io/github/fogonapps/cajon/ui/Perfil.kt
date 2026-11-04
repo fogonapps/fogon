@@ -267,12 +267,12 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
         val u = cuentaRed
+        // Se comparte con el enlace del perfil (sin cuenta, primero se crea).
         BotonSecundario(stringResource(R.string.compartir_perfil), {
-            if (u == null) compartiendo = true
+            if (u == null) vm.abrir(Pantalla.CuentaRed)
             else contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                 .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.cajon.datos.ClienteSocial.enlacePerfil(u)), null))
         }, Modifier.weight(1f))
-        if (u != null) BotonIcono(Iconos.Imagen, stringResource(R.string.compartir_como_imagen), grande = true) { compartiendo = true }
         BotonIcono(Iconos.Corazon, stringResource(R.string.tus_gustos), grande = true) { vm.abrir(Pantalla.TusGustos) }
     }
     // La red: tu cuenta (o crearla) y el enlace de tu perfil.

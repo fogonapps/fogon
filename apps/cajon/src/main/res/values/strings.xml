@@ -224,7 +224,7 @@
   <string name="tut_hola_texto">I keep everything you watch, read and listen to, with your rating, review and diary. No ads, no tracking.</string>
   <string name="tut_tengo_respaldo">I have a backup</string>
   <string name="tut_nombre">What should I call you?</string>
-  <string name="tut_privado">Everything stays on your phone. Internet is only used to search and, if you turn it on, to sync with your PC.</string>
+  <string name="tut_privado">Everything is saved on your phone. If you create an account, it is also kept in it, encrypted so only you can open it.</string>
   <string name="importar_titulo">Restore this backup?</string>
   <string name="importar_texto">It’s merged with what you have; if something is in both, the newest wins.</string>
   <string name="importar_si">Restore</string>
@@ -672,6 +672,32 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="aj_orden_pestanas">Tab order</string>
+  <string name="aj_orden_pestanas_pista">Change the order of the bottom bar. Keep your finger pressed on the bar to slide between them.</string>
+  <string name="mover_antes">Move earlier</string>
+  <string name="mover_despues">Move later</string>
+  <string name="red_mas_de_tu_perfil">Your stats, your progress and your full profile</string>
+  <string name="que_te_parecio">What did you think?</string>
+  <string name="escribir_resena">Write a review</string>
+  <string name="frase_seguimos">Shall we keep going with %1$s?</string>
+  <string name="frase_que_tal">So, how was %1$s?</string>
+  <string name="frase_manana_1">Start the day with something good?</string>
+  <string name="frase_manana_2">Coffee and an episode: the perfect combo</string>
+  <string name="frase_tarde_1">A break with some good music?</string>
+  <string name="frase_tarde_2">What’s on for this afternoon?</string>
+  <string name="frase_noche_1">One more and off to bed? (we know you won’t)</string>
+  <string name="frase_noche_2">Binge night, right?</string>
+  <string name="frase_noche_3">What’s keeping us up tonight?</string>
+  <string name="frase_1">What are we watching today?</string>
+  <string name="frase_2">Got ghosted again? Movie time, then</string>
+  <string name="frase_3">Couch mode: on</string>
+  <string name="frase_4">A film, a series or a good album?</string>
+  <string name="frase_5">What’s playing today?</string>
+  <string name="frase_6">Today we read, watch or listen</string>
+  <string name="frase_7">Something to cry over or to laugh at?</string>
+  <string name="frase_8">The perfect plan is in your cajón</string>
+  <string name="frase_9">How about discovering something new today?</string>
+  <string name="frase_10">Relax, the cajón doesn’t judge</string>
   <string name="nube_titulo">Your cajón in your account</string>
   <string name="nube_pista">Save your whole cajón with your email, encrypted</string>
   <string name="nube_pista_activo">Saved and encrypted with your password</string>

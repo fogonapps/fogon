@@ -131,7 +131,13 @@ sealed interface Pantalla {
     data object Licencias : Pantalla
 }
 
-enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS }
+enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS;
+    companion object {
+        /** Las pestañas en el orden que eligió la persona (las que falten van al final, en su orden de siempre). */
+        fun enOrden(orden: List<String>): List<Pestana> =
+            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries).distinct()
+    }
+}
 
 /** Los apartados de la app (y de la búsqueda): cine, música y libros. */
 object Secciones {
@@ -284,6 +290,14 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun hayLlaveCajon() = caja.llaveCajon != null
+
+    /** Tu perfil, uno solo: con cuenta, como lo ve la red (con lo demás abajo); sin cuenta, el del teléfono. */
+    fun abrirMiPerfil() { abrir(red.usuario.value?.let { Pantalla.PerfilRed(it) } ?: Pantalla.Perfil) }
+
+    /** "¿Qué te pareció?": la nota, y si no estaba terminada, queda terminada hoy. */
+    fun calificarRapido(id: String, nota: Int) = cambiarObra(id) { o ->
+        o.copy(nota = nota, estado = Estados.TERMINADO, terminada = o.terminada ?: hoy().toString(), cambio = ahora())
+    }
 
     fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
 
@@ -1403,6 +1417,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Las categorías que quiere en "Para ti" (vacío = todas). */
+    /** Mueve una pestaña de abajo un lugar ([paso] -1 a la izquierda, 1 a la derecha). */
+    fun moverPestana(p: Pestana, paso: Int) = cambiar { e ->
+        val l = Pestana.enOrden(e.ajustes.ordenPestanas).toMutableList()
+        val i = l.indexOf(p); val j = i + paso
+        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(ordenPestanas = l.map { it.name }, cambio = ahora())) }
+    }
+
     fun elegirCategorias(tipos: List<String>) = cambiar { e -> e.copy(ajustes = e.ajustes.copy(categorias = tipos.distinct(), cambio = ahora())) }
 
     /** Terminó (o saltó) "Cuéntame tus gustos": se arma "Para ti" de nuevo con lo que dijo. */

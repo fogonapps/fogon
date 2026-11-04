@@ -370,6 +370,8 @@ data class Ajustes(
     val gustosListos: Boolean = false,
     /** Palabras que la persona no quiere ver en la red (publicaciones y comentarios que las lleven se esconden). */
     val palabrasOcultas: List<String> = emptyList(),
+    /** El orden de las pestañas de abajo (nombres de `Pestana`; vacío = el de siempre). */
+    val ordenPestanas: List<String> = emptyList(),
     val cambio: Long = 0,
 )
 

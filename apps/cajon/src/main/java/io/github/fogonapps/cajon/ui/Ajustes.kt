@@ -121,6 +121,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre), Modifier.fillMaxWidth())
         if (nombre.trim() != e.ajustes.nombre) BotonSecundario(stringResource(R.string.guardar), { vm.cambiarNombre(nombre) }, Modifier.fillMaxWidth())
     }
+    Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), stringResource(R.string.aj_orden_pestanas_pista)) { OrdenPestanas(vm, e) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }
 
     Seccion(stringResource(R.string.fogon))
@@ -129,6 +130,21 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/terminos") }
     FilaAjuste(Iconos.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }
+}
+
+/** El orden de las pestañas de abajo: cada una con flechas para moverla. */
+@Composable
+private fun OrdenPestanas(vm: CajonViewModel, e: Estado) {
+    val f = FogonTema.actual
+    val lista = io.github.fogonapps.cajon.Pestana.enOrden(e.ajustes.ordenPestanas)
+    lista.forEachIndexed { i, p ->
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconoRiso(iconoPestana(p), null, tamano = 20.dp, tinta = f.acentoTexto)
+            Text(stringResource(textoPestana(p)), color = f.texto, modifier = Modifier.weight(1f))
+            if (i > 0) BotonIcono(Iconos.Arriba, stringResource(R.string.mover_antes)) { vm.moverPestana(p, -1) }
+            if (i < lista.lastIndex) BotonIcono(Iconos.Abajo, stringResource(R.string.mover_despues)) { vm.moverPestana(p, 1) }
+        }
+    }
 }
 
 /** Una fila de los ajustes: ícono, título, una pista y la flecha. */

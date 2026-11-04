@@ -223,7 +223,7 @@
   <string name="tut_hola_texto">Guardo todo lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario. Sin anuncios y sin rastreo.</string>
   <string name="tut_tengo_respaldo">Tengo un respaldo</string>
   <string name="tut_nombre">¿Cómo te llamo?</string>
-  <string name="tut_privado">Todo se queda en tu teléfono. Solo se usa internet para buscar y, si lo activas, para sincronizar con tu PC.</string>
+  <string name="tut_privado">Todo se guarda en tu teléfono. Si creas una cuenta, también queda en ella, cifrado para que solo tú lo abras.</string>
   <string name="importar_titulo">¿Recuperar este respaldo?</string>
   <string name="importar_texto">Se junta con lo que tienes ahora; si algo está en los dos, gana lo más reciente.</string>
   <string name="importar_si">Recuperar</string>
@@ -672,6 +672,32 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="aj_orden_pestanas">Orden de las pestañas</string>
+  <string name="aj_orden_pestanas_pista">Cambia el orden de abajo. Deja el dedo apretado en la barra para deslizar entre ellas.</string>
+  <string name="mover_antes">Mover antes</string>
+  <string name="mover_despues">Mover después</string>
+  <string name="red_mas_de_tu_perfil">Tus cifras, tu evolución y todo tu perfil</string>
+  <string name="que_te_parecio">¿Qué te pareció?</string>
+  <string name="escribir_resena">Escribir la reseña</string>
+  <string name="frase_seguimos">¿Seguimos con %1$s?</string>
+  <string name="frase_que_tal">¿Y qué tal estuvo %1$s?</string>
+  <string name="frase_manana_1">¿Arrancamos el día con algo bueno?</string>
+  <string name="frase_manana_2">Café y un capítulo: el combo perfecto</string>
+  <string name="frase_tarde_1">¿Una pausa con buena música?</string>
+  <string name="frase_tarde_2">¿Qué se viene para esta tarde?</string>
+  <string name="frase_noche_1">¿Uno más y a dormir? (sabemos que no)</string>
+  <string name="frase_noche_2">Noche de maratón, ¿o qué?</string>
+  <string name="frase_noche_3">¿Con qué nos trasnochamos hoy?</string>
+  <string name="frase_1">¿Con qué nos proyectamos hoy?</string>
+  <string name="frase_2">¿Nos ghostearon otra vez? Pues peli</string>
+  <string name="frase_3">Modo sofá: activado</string>
+  <string name="frase_4">¿Peli, serie o un buen disco?</string>
+  <string name="frase_5">¿Qué suena hoy?</string>
+  <string name="frase_6">Hoy se lee, se ve o se escucha</string>
+  <string name="frase_7">¿Algo para llorar o para reír?</string>
+  <string name="frase_8">El plan perfecto está en tu cajón</string>
+  <string name="frase_9">¿Qué tal si hoy descubres algo nuevo?</string>
+  <string name="frase_10">Tranqui, que el cajón no juzga</string>
   <string name="nube_titulo">Tu cajón en tu cuenta</string>
   <string name="nube_pista">Guarda todo tu cajón con tu correo, cifrado</string>
   <string name="nube_pista_activo">Guardado y cifrado con tu contraseña</string>
