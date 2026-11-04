@@ -672,6 +672,7 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="nada_aqui">Nothing here yet</string>
   <string name="red_por_que">Why you\'re seeing this</string>
   <string name="red_me_interesa">Interested</string>
   <string name="excluir_genero_de">Don\'t show %1$s anymore</string>

@@ -704,6 +704,22 @@ class RedSocial(
         }
 
         /** El perfil que se sube: la identidad y las partes que la persona marcó como públicas o para sus seguidores. */
+        /** El valor de una cifra del perfil ([PartesPerfil].C_…), igual para tu perfil y para lo que ve la red. */
+        fun valorCifra(c: String, e: Estado, hoy: LocalDate): String {
+            val delAnio = io.github.fogonapps.cajon.datos.Logica.cifras(e, hoy.year)
+            val siempre = io.github.fogonapps.cajon.datos.Logica.cifras(e, null)
+            return when (c) {
+                PartesPerfil.C_TERMINADAS -> "${delAnio.porTipo.values.sum()}"
+                PartesPerfil.C_HORAS_CINE -> "${siempre.minutosCine / 60}"
+                PartesPerfil.C_HORAS_SERIES -> "${siempre.minutosSeries / 60}"
+                PartesPerfil.C_PAGINAS -> "${siempre.paginas}"
+                PartesPerfil.C_CANCIONES -> "${siempre.canciones}"
+                PartesPerfil.C_DIARIO -> "${siempre.registros}"
+                PartesPerfil.C_RACHA -> "${io.github.fogonapps.cajon.datos.Logica.racha(e, hoy)}"
+                else -> siempre.notaMedia?.let { "%.1f".format(it) } ?: "–"
+            }
+        }
+
         fun perfilDe(e: Estado): PerfilSubido {
             val p = e.perfil
             val porId = e.vivas.associateBy { it.id }
@@ -716,7 +732,10 @@ class RedSocial(
             val partes = listOfNotNull(
                 parte(PartesPerfil.MUSICA, JsonArray(artistas.map { a -> buildJsonObject { put("nombre", a.nombre); put("foto", https(a.foto)) } })).takeIf { artistas.isNotEmpty() },
                 parte(PartesPerfil.GUSTOS, JsonArray(generos.map { JsonPrimitive(it) })).takeIf { generos.isNotEmpty() },
-                parte(PartesPerfil.CIFRAS, JsonObject(terminadas.mapValues { JsonPrimitive(it.value) })).takeIf { terminadas.isNotEmpty() },
+                parte(PartesPerfil.CIFRAS, JsonObject(terminadas.mapValues { JsonPrimitive(it.value) } + mapOf(
+                    "anio" to JsonPrimitive(java.time.LocalDate.now().year),
+                    "valores" to JsonObject((p.cifras ?: PartesPerfil.CIFRAS_DE_SIEMPRE).associateWith { JsonPrimitive(valorCifra(it, e, java.time.LocalDate.now())) }),
+                ))),
                 parte(PartesPerfil.GUARDADAS, JsonPrimitive("")),
                 parte(PartesPerfil.FAVORITAS, JsonArray(e.ajustes.favoritas.mapNotNull { porId[it]?.let(::obraBreve) })),
                 parte(PartesPerfil.DESTACADOS, JsonObject(p.destacados.mapNotNull { (hueco, id) ->

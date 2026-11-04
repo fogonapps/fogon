@@ -1,0 +1,1 @@
+Every profile now looks like yours: posts, favorites, artists, lists, saved and stats, and empty sections say so. Choose who sees each part of your profile right there, your full stats can be shown and the three-dot menu is easier to read.

@@ -425,7 +425,8 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 // El menú de los tres puntos, desplegado desde ellos (como en las redes).
                 val portapapeles = androidx.compose.ui.platform.LocalClipboardManager.current
                 val copiado = stringResource(R.string.red_enlace_copiado)
-                androidx.compose.material3.DropdownMenu(menu, { menu = false }, shape = forma(24.dp), containerColor = f.superficie) {
+                androidx.compose.material3.DropdownMenu(menu, { menu = false }, shape = forma(24.dp), containerColor = f.fondo,
+                    border = androidx.compose.foundation.BorderStroke(f.borde, f.linea), shadowElevation = 12.dp) {
                     @Composable
                     fun Opcion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
                         val color = if (peligro) MaterialTheme.colorScheme.error else f.texto
@@ -516,12 +517,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         }
         return
     }
-    // Las pestañas, como en tu perfil: publicaciones, favoritos, artistas y guardadas (las que la persona deja ver).
-    val pestanas = listOfNotNull(
-        Triple(0, Iconos.Imagen, R.string.red_publicaciones),
-        Triple(1, Iconos.Estrella, R.string.parte_destacados).takeIf { p.partes.keys.any { it in setOf("destacados", "favoritas", "gustos", "cifras") } },
-        Triple(2, Iconos.Artista, R.string.tipo_artistas).takeIf { "musica" in p.partes },
-        Triple(3, Iconos.Guardar, R.string.parte_guardadas).takeIf { p.guardadasVisibles },
+    // Las mismas pestañas que tu perfil; lo que la persona no deja ver (o no tiene) dice que no hay nada.
+    val pestanas = listOf(
+        Triple(0, Iconos.Imagen, R.string.red_publicaciones), Triple(1, Iconos.Estrella, R.string.parte_destacados),
+        Triple(2, Iconos.Artista, R.string.tipo_artistas), Triple(3, Iconos.Lista, R.string.pestana_listas),
+        Triple(4, Iconos.Guardar, R.string.parte_guardadas), Triple(5, Iconos.Cifras, R.string.tus_cifras),
     )
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
         pestanas.forEach { (i, icono, tx) ->
@@ -532,14 +532,38 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         }
     }
     when (pestana) {
-        0 -> if (p.publicaciones.isEmpty()) Pista(stringResource(R.string.red_sin_publicaciones), Modifier.padding(16.dp)) else CuadriculaPublicaciones(vm, p.publicaciones)
+        0 -> if (p.publicaciones.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, p.publicaciones)
         1 -> GustosDelPerfil(vm, p, propio)
         2 -> MusicaDelPerfil(p, propio)
-        3 -> {
+        3 -> p.publicaciones.filter { it.tipo == "lista" }.let { l -> if (l.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, l) }
+        4 -> if (!p.guardadasVisibles) NadaAqui() else {
             LaunchedEffect(usuario) { vm.red.cargarGuardadasDe(usuario) }
             val g = listas["guardadas:$usuario"]
             if (g == null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-            else if (g.isEmpty()) Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp)) else CuadriculaPublicaciones(vm, g)
+            else if (g.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, g)
+        }
+        else -> CifrasDeLaRed(p)
+    }
+}
+
+/** Las cifras que la persona deja ver, como en tu pestaña de cifras (las de antes solo traían lo terminado por tipo). */
+@Composable
+private fun CifrasDeLaRed(p: io.github.fogonapps.cajon.datos.PerfilSocial) {
+    val f = FogonTema.actual
+    val c = p.partes["cifras"] as? JsonObject ?: run { NadaAqui(); return }
+    val anio = (c["anio"] as? JsonPrimitive)?.content?.toIntOrNull() ?: java.time.LocalDate.now().year
+    val valores = (c["valores"] as? JsonObject)?.mapValues { (it.value as? JsonPrimitive)?.content.orEmpty() }
+        ?: mapOf(io.github.fogonapps.cajon.datos.PartesPerfil.C_TERMINADAS to "${c.values.sumOf { (it as? JsonPrimitive)?.content?.toIntOrNull() ?: 0 }}")
+    if (valores.isEmpty()) { NadaAqui(); return }
+    valores.entries.chunked(2).forEach { fila ->
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            fila.forEach { (k, v) ->
+                Column(Modifier.weight(1f).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(v, fontFamily = f.cifras, fontSize = 26.sp, color = f.texto)
+                    Text(nombreCifra(k, anio), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
+            }
+            if (fila.size == 1) Box(Modifier.weight(1f))
         }
     }
 }
@@ -578,10 +602,7 @@ private fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.dat
     val destacados = (p.partes["destacados"] as? JsonObject)?.entries?.mapNotNull { (h, v) -> (v as? JsonObject)?.let { h to it } }.orEmpty()
     val favoritas = (p.partes["favoritas"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
     val generos = (p.partes["gustos"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
-    if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty()) {
-        Pista(stringResource(if (propio) R.string.red_gustos_vacios_propio else R.string.red_gustos_vacios), Modifier.padding(16.dp))
-        return
-    }
+    if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty()) { NadaAqui(); return }
     if (destacados.isNotEmpty()) {
         Seccion(stringResource(R.string.parte_destacados))
         destacados.chunked(3).forEach { fila ->
@@ -624,7 +645,7 @@ private fun nombreHuecoRed(h: String): String = stringResource(when (h) {
 private fun MusicaDelPerfil(p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
     val f = FogonTema.actual
     val artistas = (p.partes["musica"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
-    if (artistas.isEmpty()) { Pista(stringResource(if (propio) R.string.red_musica_vacia_propio else R.string.red_gustos_vacios), Modifier.padding(16.dp)); return }
+    if (artistas.isEmpty()) { NadaAqui(); return }
     artistas.chunked(3).forEach { fila ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             fila.forEach { a ->

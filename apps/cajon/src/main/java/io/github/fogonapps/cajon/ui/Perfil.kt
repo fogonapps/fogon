@@ -86,7 +86,7 @@ private fun nombreHueco(h: String): String = stringResource(when (h) {
 })
 
 @Composable
-private fun nombreVisibilidad(v: String): String = stringResource(when (Visibilidad.de(v)) {
+internal fun nombreVisibilidad(v: String): String = stringResource(when (Visibilidad.de(v)) {
     Visibilidad.PUBLICA -> R.string.vis_publica; Visibilidad.AMIGOS -> R.string.vis_amigos; else -> R.string.vis_privada
 })
 
@@ -99,7 +99,7 @@ private fun nombreParte(p: String): String = stringResource(when (p) {
 })
 
 @Composable
-private fun nombreCifra(c: String, anio: Int): String = when (c) {
+internal fun nombreCifra(c: String, anio: Int): String = when (c) {
     PartesPerfil.C_TERMINADAS -> stringResource(R.string.cifra_terminadas, anio)
     PartesPerfil.C_HORAS_CINE -> stringResource(R.string.horas_de_cine)
     PartesPerfil.C_HORAS_SERIES -> stringResource(R.string.horas_de_series)
@@ -194,7 +194,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val red = yo?.let { perfiles[it] }
     val anio = vm.hoy().year
     val descFoto = stringResource(if (p.foto.isBlank()) R.string.poner_foto else R.string.cambiar_foto_perfil)
-    var pestana by rememberSaveable { mutableStateOf(if (yo == null) 1 else 0) }
+    var pestana by rememberSaveable { mutableStateOf(0) }
 
     // Arriba: con cuenta de moderación, su espacio (con lo pendiente); siempre, los ajustes.
     val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
@@ -281,11 +281,11 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
 
     // Las pestañas, solo íconos.
     val pestanas = listOfNotNull(
-        Triple(0, Iconos.Imagen, R.string.red_publicaciones).takeIf { yo != null },
+        Triple(0, Iconos.Imagen, R.string.red_publicaciones),
         Triple(1, Iconos.Estrella, R.string.parte_destacados),
         Triple(2, Iconos.Artista, R.string.tipo_artistas),
         Triple(3, Iconos.Lista, R.string.pestana_listas),
-        Triple(4, Iconos.Guardar, R.string.parte_guardadas).takeIf { yo != null },
+        Triple(4, Iconos.Guardar, R.string.parte_guardadas),
         Triple(5, Iconos.Cifras, R.string.tus_cifras),
     )
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -297,9 +297,18 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }
     }
     fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
+    // Quién ve cada pestaña en la red (con cuenta): se elige aquí mismo.
+    val partesDe = mapOf(1 to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS), 2 to listOf(PartesPerfil.MUSICA),
+        4 to listOf(PartesPerfil.GUARDADAS), 5 to listOf(PartesPerfil.CIFRAS))
+    if (yo != null) partesDe[pestana]?.let { partes ->
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.quien_lo_ve), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+            Box(Modifier.weight(1f)) { ElegirVisibilidad(p.visibilidad[partes.first()] ?: "") { v -> partes.forEach { vm.visibilidadPerfil(it, v) } } }
+        }
+    }
     when (pestana) {
         0 -> when {
-            yo == null -> Unit
+            yo == null -> NadaAqui()
             red == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
             red.publicaciones.isEmpty() -> Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.red_publicar), Iconos.Lapiz, acento = true) { vm.abrir(Pantalla.Publicar()) } }
             else -> CuadriculaPublicaciones(vm, red.publicaciones)
@@ -396,16 +405,26 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                 Row { Pildora(stringResource(R.string.nueva_lista), Iconos.Mas) { vm.abrir(Pantalla.Listas) } }
             }
         }
-        4 -> yo?.let { u ->
+        4 -> if (yo == null) NadaAqui() else yo?.let { u ->
             LaunchedEffect(u) { vm.red.cargarGuardadasDe(u) }
             val g = listasRed["guardadas:$u"]
             when {
                 g == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-                g.isEmpty() -> Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp))
+                g.isEmpty() -> NadaAqui()
                 else -> CuadriculaPublicaciones(vm, g)
             }
         }
         else -> CifrasDelPerfil(vm, e, anio)
+    }
+}
+
+/** Lo que sale en una pestaña del perfil que no tiene nada (o que la persona no deja ver). */
+@Composable
+fun NadaAqui() {
+    val f = FogonTema.actual
+    Column(Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconoRiso(Iconos.Cajon, null, tamano = 32.dp, tinta = f.textoSuave)
+        Text(stringResource(R.string.nada_aqui), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
     }
 }
 
@@ -417,16 +436,7 @@ private fun CifrasDelPerfil(vm: CajonViewModel, e: Estado, anio: Int) {
     val cifras = e.perfil.cifras ?: PartesPerfil.CIFRAS_DE_SIEMPRE
     val delAnio = vm.L.cifras(e, anio)
     val siempre = vm.L.cifras(e, null)
-    fun valor(c: String): String = when (c) {
-        PartesPerfil.C_TERMINADAS -> "${delAnio.porTipo.values.sum()}"
-        PartesPerfil.C_HORAS_CINE -> "${siempre.minutosCine / 60}"
-        PartesPerfil.C_HORAS_SERIES -> "${siempre.minutosSeries / 60}"
-        PartesPerfil.C_PAGINAS -> "${siempre.paginas}"
-        PartesPerfil.C_CANCIONES -> "${siempre.canciones}"
-        PartesPerfil.C_DIARIO -> "${siempre.registros}"
-        PartesPerfil.C_RACHA -> "${vm.L.racha(e, vm.hoy())}"
-        else -> siempre.notaMedia?.let { cifra(it, vm.idioma()) } ?: "–"
-    }
+    fun valor(c: String): String = io.github.fogonapps.cajon.RedSocial.valorCifra(c, e, vm.hoy())
     cifras.chunked(2).forEach { fila ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             fila.forEach { c ->

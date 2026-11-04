@@ -672,6 +672,7 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="nada_aqui">Aquí no hay nada todavía</string>
   <string name="red_por_que">Por qué ves esto</string>
   <string name="red_me_interesa">Me interesa</string>
   <string name="excluir_genero_de">No mostrar más %1$s</string>

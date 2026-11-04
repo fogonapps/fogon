@@ -19,9 +19,9 @@ Repo: https://github.com/fogonapps/fogon.git
 Binaries: https://github.com/fogonapps/la-cucha/releases/download/v%v/LaCucha-%v.apk
 
 Builds:
-  - versionName: "1.7"
-    versionCode: 12
-    commit: ddac6fe6dec97c2f5fee5cc3ec19952c76214ee5
+  - versionName: "1.8"
+    versionCode: 13
+    commit: cd1e59fe66ab66e8c3a2fc55628b8771082e72f7
     subdir: apps/cucha
     gradle:
       - yes
@@ -30,5 +30,5 @@ AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a
 
 AutoUpdateMode: Version cucha-v%v
 UpdateCheckMode: Tags ^cucha-v
-CurrentVersion: "1.7"
-CurrentVersionCode: 12
+CurrentVersion: "1.8"
+CurrentVersionCode: 13
