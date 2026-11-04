@@ -29,6 +29,21 @@ class SocialTest {
     private fun pub(clave: String, vis: String, cuando: Long = 1) =
         PublicacionSubida(clave, vis, cuando, "diario", buildJsonObject { put("titulo", "Obra $clave") })
 
+    @Test fun frasesDelSaludo() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.votarFrase(ana, "frase_2", VotoFrase(1)); s.votarFrase(ana, "frase_2", VotoFrase(1))   // una por cuenta
+        s.votarFrase(beto, "frase_2", VotoFrase(-1))
+        assertEquals(ConteoFrase(1, 1), s.frases()["frase_2"])
+        s.votarFrase(beto, "frase_2", VotoFrase(0))                                              // quita su voto
+        assertEquals(ConteoFrase(1, 0), s.frases()["frase_2"])
+        assertFailsWith<Problema> { s.votarFrase(ana, "Frase con espacios", VotoFrase(1)) }
+        assertFailsWith<Problema> { s.votarFrase(ana, "frase_1", VotoFrase(5)) }
+        s.borrarCuenta(ana)
+        assertNull(s.frases()["frase_2"])                                                       // se va con la cuenta
+    }
+
     @Test fun seguirVisibilidadYBloqueos() {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!

@@ -82,7 +82,8 @@ private fun JsonObject.texto(clave: String) = (this[clave] as? JsonPrimitive)?.c
 fun AvatarRed(p: PersonaSocial, tamano: Dp = 44.dp) {
     val f = FogonTema.actual
     Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-        Text((p.nombre.ifBlank { p.usuario }).take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
+        Text((p.nombre.ifBlank { p.usuario }).take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto,
+            fontSize = androidx.compose.ui.unit.TextUnit(maxOf(16f, tamano.value * 0.4f), androidx.compose.ui.unit.TextUnitType.Sp))
         if (p.foto) coil3.compose.AsyncImage(ClienteSocial.foto(p.usuario), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
     }
 }

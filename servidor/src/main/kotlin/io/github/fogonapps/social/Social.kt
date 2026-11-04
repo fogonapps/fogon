@@ -112,6 +112,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
+@Serializable data class VotoFrase(val valor: Int)
+@Serializable data class ConteoFrase(val si: Int, val no: Int)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
@@ -718,6 +720,23 @@ class Social(
             ahora() - 24 * 3600_000L, yo, yo, yo) { arrayOf(it.getLong(1), it.getString(2), it.getString(3), it.getLong(4)) }
     }.filter { !bloqueado(yo, it[0] as Long) }
         .map { Nota(persona(it[0] as Long), it[1] as String, JsonSocial.parseToJsonElement(it[2] as String) as JsonObject, it[3] as Long) }
+
+    /* ----- Frases del saludo: la comunidad dice cuáles le gustan ----- */
+
+    /** Le gusta (1), no le gusta (-1) o quita su voto (0) a una frase. Solo claves cortas de letras, números y _. */
+    fun votarFrase(yo: Long, clave: String, v: VotoFrase) {
+        if (!Regex("[a-z0-9_]{1,40}").matches(clave) || v.valor !in -1..1) throw Problema(400, "frase")
+        b.usar {
+            if (v.valor == 0) cambiar("DELETE FROM frases WHERE clave = ? AND cuenta = ?", clave, yo)
+            else cambiar("INSERT INTO frases(clave, cuenta, valor, cuando) VALUES(?,?,?,?) ON CONFLICT(clave, cuenta) DO UPDATE SET valor = excluded.valor, cuando = excluded.cuando",
+                clave, yo, v.valor, ahora())
+        }
+    }
+
+    /** Cuántas personas dijeron que sí y que no a cada frase (solo los totales, sin quién). */
+    fun frases(): Map<String, ConteoFrase> = b.usar {
+        leer("SELECT clave, SUM(valor = 1), SUM(valor = -1) FROM frases GROUP BY clave LIMIT 500") { it.getString(1) to ConteoFrase(it.getInt(2), it.getInt(3)) }
+    }.toMap()
 
     /* ----- Chat (cifrado de extremo a extremo: aquí solo pasan sobres cerrados) ----- */
 

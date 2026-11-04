@@ -119,6 +119,7 @@ sealed interface Pantalla {
     /** Las conversaciones del chat; con [obra], para mandarla a alguien. */
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
+    data class InfoChat(val usuario: String) : Pantalla
     data object ElegirCancion : Pantalla
     data object AjustesAvisos : Pantalla
     data object PalabrasOcultas : Pantalla
@@ -295,6 +296,32 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun abrirMiPerfil() { abrir(red.usuario.value?.let { Pantalla.PerfilRed(it) } ?: Pantalla.Perfil) }
 
     /** "¿Qué te pareció?": la nota, y si no estaba terminada, queda terminada hoy. */
+    /** Los votos de la comunidad a las frases del saludo (se traen al abrir Inicio, como mucho cada 6 horas). */
+    private val _frasesComunidad = MutableStateFlow<Map<String, io.github.fogonapps.cajon.datos.Frases.Votos>>(emptyMap())
+    val frasesComunidad: StateFlow<Map<String, io.github.fogonapps.cajon.datos.Frases.Votos>> = _frasesComunidad
+    private var frasesTraidas = 0L
+
+    fun cargarFrases() {
+        if (System.currentTimeMillis() - frasesTraidas < 6 * 3600_000L) return
+        frasesTraidas = System.currentTimeMillis()
+        viewModelScope.launch {
+            runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).frases() }.getOrNull()
+                ?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
+        }
+    }
+
+    /**
+     * Lo que la persona dice de una frase: 1 le gusta (o la compartió), -1 no quiere verla más, 0 quita lo que dijo.
+     * Se guarda en su cajón y, si tiene cuenta, suma a lo que dice la comunidad (solo el voto, sin nada más).
+     */
+    fun votarFrase(clave: String, valor: Int) {
+        cambiar { e -> e.copy(ajustes = e.ajustes.copy(
+            frasesGusta = if (valor == 1) (e.ajustes.frasesGusta + clave).distinct() else e.ajustes.frasesGusta - clave,
+            frasesNo = if (valor == -1) (e.ajustes.frasesNo + clave).distinct() else e.ajustes.frasesNo - clave,
+            cambio = ahora())) }
+        if (caja.tokenSocial != null) viewModelScope.launch { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).votarFrase(clave, valor) } }
+    }
+
     fun calificarRapido(id: String, nota: Int) = cambiarObra(id) { o ->
         o.copy(nota = nota, estado = Estados.TERMINADO, terminada = o.terminada ?: hoy().toString(), cambio = ahora())
     }
@@ -349,6 +376,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
     fun txPlural(id: Int, n: Int, vararg a: Any): String = Idioma.envolver(getApplication()).resources.getQuantityString(id, n, *a)
     private fun avisar(m: String) { _mensajes.trySend(m) }
+    /** Un aviso corto abajo (desde una pantalla). */
+    fun decir(m: String) = avisar(m)
     private fun nuevoId(prefijo: String) = prefijo + System.currentTimeMillis().toString(36) + Random.nextInt(46656).toString(36)
     private fun ahora() = System.currentTimeMillis()
 

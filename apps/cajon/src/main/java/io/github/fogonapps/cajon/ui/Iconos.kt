@@ -57,6 +57,8 @@ object Iconos {
     /** Una campana: los avisos. */
     val Campana = dibujo("campana", relleno("M12 3.6a5.6 5.6 0 0 1 5.6 5.6v4.2l1.8 3H4.6l1.8-3V9.2A5.6 5.6 0 0 1 12 3.6z"), trazo("M10 19.6a2.2 2.2 0 0 0 4 0", 2.2f))
     /** Un candado: privado o solo para seguidores. */
+    /** Una hoja con la esquina doblada y una sonrisa: los stickers. */
+    val Sticker = dibujo("sticker", trazo("M4.6 4.6h9.8l5 5v9.8H4.6zM14.4 4.6v5h5M8.6 13.6a3.4 3.4 0 0 0 6.8 0", 2f))
     val Candado = dibujo("candado", relleno("M5.6 10.6h12.8v9.8H5.6z"), trazo("M8.4 10.6V8a3.6 3.6 0 0 1 7.2 0v2.6", 2.4f))
     /** Dos personas: la red, tu gente. */
     val Gente = dibujo("gente", relleno("M9 4.6a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3.4 19.4c0-3.6 2.4-6 5.6-6s5.6 2.4 5.6 6z"),

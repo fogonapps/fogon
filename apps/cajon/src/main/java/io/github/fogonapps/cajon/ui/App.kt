@@ -139,7 +139,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     // Las que tienen lista propia (buscar, el cajón de una lista larga) manejan su scroll.
-                    val conScroll = p !is Pantalla.Buscar
+                    val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         when (p) {
                             is Pantalla.Buscar -> Buscar(vm, estado, p)
@@ -188,6 +188,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.Publicar -> Publicar(vm, estado, p.obra)
                             is Pantalla.Chats -> Chats(vm, estado, p.obra)
                             is Pantalla.Conversacion -> Conversacion(vm, estado, p.usuario)
+                            is Pantalla.InfoChat -> InfoChat(vm, estado, p.usuario)
                             Pantalla.ElegirCancion -> ElegirCancion(vm, estado)
                             Pantalla.AjustesAvisos -> AjustesAvisos(vm)
                             Pantalla.PalabrasOcultas -> PalabrasOcultas(vm, estado)

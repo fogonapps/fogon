@@ -88,6 +88,10 @@ class Base(ruta: String) {
                 // La nota de cada persona: unas palabras (y una obra, si quiere) que duran 24 horas.
                 s.execute("""CREATE TABLE IF NOT EXISTS notas(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, datos TEXT NOT NULL DEFAULT '{}', cuando INTEGER NOT NULL)""")
+                // Las frases del saludo de El Cajón que gustan (1) o no (-1): una por cuenta; se van con la cuenta.
+                s.execute("""CREATE TABLE IF NOT EXISTS frases(
+                    clave TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, valor INTEGER NOT NULL,
+                    cuando INTEGER NOT NULL, PRIMARY KEY(clave, cuenta)) WITHOUT ROWID""")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

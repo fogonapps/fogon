@@ -83,6 +83,8 @@ data class PerfilSubido(
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
+@Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
+@Serializable data class VotoFrase(val valor: Int)
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
@@ -184,6 +186,10 @@ class ClienteSocial(private val token: String? = null) {
     /* Chat: solo pasan sobres cerrados (ver `Chat`) */
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
+    /** Los votos de la comunidad a las frases del saludo (clave → sí y no). */
+    suspend fun frases(): Map<String, ConteoFrase> = leer(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ConteoFrase.serializer()), pedir("/frases"))
+    suspend fun votarFrase(clave: String, valor: Int) { pedir("/frases/${cod(clave)}", "PUT", json(VotoFrase.serializer(), VotoFrase(valor))) }
+
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
     suspend fun mensajesSinLeer(): Int = JsonCajon.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))

@@ -372,6 +372,9 @@ data class Ajustes(
     val palabrasOcultas: List<String> = emptyList(),
     /** El orden de las pestañas de abajo (nombres de `Pestana`; vacío = el de siempre). */
     val ordenPestanas: List<String> = emptyList(),
+    /** Las frases del saludo que le gustan (o compartió) y las que no quiere ver (claves, ver `Frases`). */
+    val frasesGusta: List<String> = emptyList(),
+    val frasesNo: List<String> = emptyList(),
     val cambio: Long = 0,
 )
 
