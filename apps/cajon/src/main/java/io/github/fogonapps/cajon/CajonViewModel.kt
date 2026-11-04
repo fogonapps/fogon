@@ -123,6 +123,7 @@ sealed interface Pantalla {
     data object AjustesAvisos : Pantalla
     data object PalabrasOcultas : Pantalla
     data object EstadoCuenta : Pantalla
+    data object CajonEnCuenta : Pantalla
     data object Moderacion : Pantalla
     /** Lo público que lleva una #etiqueta. */
     data class EtiquetaRed(val etiqueta: String) : Pantalla
@@ -231,7 +232,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     @Volatile private var ultimoGuardado: Estado? = null
 
     /** La red de El Cajón (Fogón Social), opcional. */
-    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) })
+    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizar() })
     /**
      * Pone en el perfil algo encontrado afuera: si no está en el cajón, se agrega (terminado y con corazón, sin anotar
      * nada en el diario) y sus datos completos llegan después. Vuelve al perfil.
@@ -282,6 +283,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             palabrasOcultas = if (si) (e.ajustes.palabrasOcultas + limpia).distinct().take(200) else e.ajustes.palabrasOcultas - limpia))
     }
 
+    fun hayLlaveCajon() = caja.llaveCajon != null
+
     fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
 
     /** El chat de la red, cifrado de extremo a extremo. */
@@ -320,7 +323,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             launch { escuchas.oidos.drop(1).collect {
                 if (EscuchaMusica.agregarSolos(getApplication())) procesarOidos()
                 // Con la sincronización, lo escuchado también viaja (unos segundos después, como el resto).
-                if (caja.tokenGithub != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(15_000); sincronizar() } }
+                if (caja.llaveCajon != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(15_000); sincronizar() } }
             } }
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
@@ -341,7 +344,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         _estado.value = f(e)
         guardado?.cancel()
         guardado = viewModelScope.launch { delay(300); guardarYa() }
-        if (caja.tokenGithub != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(4000); sincronizar() } }
+        if (caja.llaveCajon != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(4000); sincronizar() } }
         red.sincronizar()
     }
 
@@ -1803,36 +1806,39 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private var sincronizarOtraVez = false
 
     /** Baja lo del Gist, lo une con lo de aquí y sube el resultado. */
+    /**
+     * El cajón guardado en la cuenta: trae el que está en el servidor (cifrado), lo abre con la llave de este teléfono,
+     * lo une con lo de aquí y sube el resultado cifrado. Si otro teléfono subió algo mientras tanto, vuelve a empezar.
+     */
     fun sincronizar() {
-        val token = caja.tokenGithub ?: return
+        val token = caja.tokenSocial ?: return
+        val llave = caja.llaveCajon ?: return
         if (sincronizando) { sincronizarOtraVez = true; return }
         sincronizando = true
         _sync.value = _sync.value.copy(estado = EstadoSync.SINCRONIZANDO, mensaje = null)
         viewModelScope.launch {
             try {
-                val c = ClienteGist(token)
-                val local = _estado.value ?: return@launch
-                val gist = caja.gist ?: c.buscarOCrear(JsonCajon.encodeToString(Estado.serializer(), paraAfuera(local))).also { caja.gist = it }
-                val remoto = c.leer(gist)?.let { runCatching { JsonCajon.decodeFromString(Estado.serializer(), it) }.getOrNull() }
+                val c = io.github.fogonapps.cajon.datos.ClienteSocial(token)
+                val guardado = c.cajon()
+                val remoto = guardado.sobre.takeIf { it.isNotBlank() }?.let { s ->
+                    withContext(kotlinx.coroutines.Dispatchers.Default) { runCatching { JsonCajon.decodeFromString(Estado.serializer(), io.github.fogonapps.cajon.datos.Nube.abrir(s, llave)) }.getOrNull() }
+                }
                 if (remoto != null) {
                     // Lo escuchado del otro equipo va a su archivo; el resto se une con el cajón.
                     escuchas.unir(remoto.escuchas)
-                    val unido = L.normalizar(L.unir(_estado.value ?: local, remoto.copy(escuchas = null)))
+                    val unido = L.normalizar(L.unir(_estado.value ?: return@launch, remoto.copy(escuchas = null)))
                     if (unido != _estado.value) { _estado.value = unido; guardarYa() }
                 }
-                c.escribir(gist, JsonCajon.encodeToString(Estado.serializer(), paraAfuera(_estado.value!!)))
+                val sobre = withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    io.github.fogonapps.cajon.datos.Nube.cerrar(JsonCajon.encodeToString(Estado.serializer(), paraAfuera(_estado.value!!)), llave)
+                }
+                c.guardarCajon(sobre, guardado.cambio)
                 caja.ultima = ahora()
-                _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuario, ultima = caja.ultima)
-            } catch (e: ErrorGitHub) {
-                if (e.codigo == 404) caja.gist = null
-                _sync.value = _sync.value.copy(
-                    estado = EstadoSync.ERROR,
-                    mensaje = when (e.codigo) {
-                        401 -> tx(R.string.sync_token_vencido)
-                        403, 404 -> tx(R.string.sync_sin_permiso)
-                        else -> tx(R.string.sync_sin_conexion)
-                    },
-                )
+                _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuarioSocial, ultima = caja.ultima)
+            } catch (e: io.github.fogonapps.cajon.datos.ErrorSocial) {
+                // Otro teléfono subió algo mientras tanto: se trae y se une otra vez.
+                if (e.error == "cambio") sincronizarOtraVez = true
+                else _sync.value = _sync.value.copy(estado = EstadoSync.ERROR, mensaje = tx(R.string.red_error))
             } catch (e: java.io.IOException) {
                 _sync.value = _sync.value.copy(estado = EstadoSync.SIN_CONEXION)
             } finally {

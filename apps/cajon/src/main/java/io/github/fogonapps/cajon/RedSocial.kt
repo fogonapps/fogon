@@ -51,7 +51,38 @@ class RedSocial(
     private val estado: () -> Estado?,
     private val cambiar: ((Estado) -> Estado) -> Unit,
     private val decir: (Int) -> Unit,
+    /** Sincronizar el cajón guardado en la cuenta (lo hace el ViewModel). */
+    private val sincronizarCajon: () -> Unit = {},
 ) {
+    /** El cajón guardado en la cuenta necesita la contraseña para abrirse en este teléfono (entró con el código). */
+    private val _cajonBloqueado = MutableStateFlow(false)
+    val cajonBloqueado: StateFlow<Boolean> = _cajonBloqueado
+
+    /**
+     * Arma o abre la llave del cajón con la contraseña: si el servidor ya tiene una llave envuelta, la abre; si no,
+     * crea una (o usa la de este teléfono) y la sube envuelta. Luego sincroniza.
+     */
+    private suspend fun llaveConClave(clave: String) {
+        val enServidor = cliente().cajon().llave
+        val llave = if (enServidor.isNotBlank()) withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.desenvolver(enServidor, clave) }
+        else (caja.llaveCajon ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()).also {
+            cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(it, clave) })
+        }
+        caja.llaveCajon = llave
+        _cajonBloqueado.value = false
+        sincronizarCajon()
+    }
+
+    /** Con la contraseña, abre en este teléfono el cajón guardado en la cuenta. */
+    fun desbloquearCajon(clave: String) = scope.launch {
+        try { intentar { llaveConClave(clave) } } catch (x: Exception) { decir(R.string.red_clave_mala) }
+    }
+
+    /** Después de entrar: si la cuenta ya tiene el cajón guardado y este teléfono no tiene la llave, pide la contraseña. */
+    private suspend fun revisarCajon() {
+        if (caja.llaveCajon != null) { sincronizarCajon(); return }
+        _cajonBloqueado.value = runCatching { cliente().cajon().llave.isNotBlank() }.getOrDefault(false)
+    }
     private fun cliente() = ClienteSocial(caja.tokenSocial)
 
     private val _usuario = MutableStateFlow(caja.usuarioSocial.takeIf { caja.tokenSocial != null })
@@ -138,6 +169,7 @@ class RedSocial(
             cambiar { e -> e.copy(perfil = e.perfil.copy(visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
             caja.partesRedPuestas = true
         }
+        if (_usuario.value != null) scope.launch { revisarCajon() }
         if (_usuario.value != null) intentar {
             val c = cliente().miCuenta()
             _privada.value = c.privada; _correoCuenta.value = c.correo; _cuenta.value = c
@@ -184,11 +216,23 @@ class RedSocial(
 
     fun entrarConClave(correo: String, clave: String) = lanzar {
         _acceso.value = _acceso.value.copy(ocupado = true)
-        try { entro(ClienteSocial().entrarConClave(correo.trim(), clave)) } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+        try {
+            entro(ClienteSocial().entrarConClave(correo.trim(), clave))
+            runCatching { llaveConClave(clave) }   // con la contraseña a mano, el cajón de la cuenta se abre solo
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
+    /** Crea o cambia la contraseña; con ella, la llave del cajón se vuelve a envolver (y si no había, se crea). */
     fun ponerClave(nueva: String, actual: String, listo: () -> Unit) = lanzar {
-        cliente().ponerClave(nueva, actual); decir(R.string.red_clave_lista); revisarServidor(); listo()
+        val llaveAntes = caja.llaveCajon ?: actual.takeIf { it.isNotBlank() }?.let { a ->
+            runCatching { cliente().cajon().llave.takeIf { it.isNotBlank() }?.let { io.github.fogonapps.cajon.datos.Nube.desenvolver(it, a) } }.getOrNull()
+        }
+        cliente().ponerClave(nueva, actual)
+        val llave = llaveAntes ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()
+        cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, nueva) })
+        caja.llaveCajon = llave
+        _cajonBloqueado.value = false
+        decir(R.string.red_clave_lista); revisarServidor(); sincronizarCajon(); listo()
     }
 
     fun cambiarUsuario(nuevo: String, listo: () -> Unit) = lanzar {
@@ -212,6 +256,7 @@ class RedSocial(
         sincronizarYa()
         cargarFeed()
         revisarServidor()
+        scope.launch { revisarCajon() }
     }
 
     /** Ponerle correo a una cuenta hecha sin él: primero [pedirCodigo] y luego esto con el código. */
@@ -227,7 +272,7 @@ class RedSocial(
     fun borrarCuenta() = lanzar { cliente().borrarCuenta(); olvidarCuenta(); decir(R.string.red_cuenta_borrada) }
 
     private fun olvidarCuenta() {
-        caja.tokenSocial = null; caja.usuarioSocial = null
+        caja.tokenSocial = null; caja.usuarioSocial = null; caja.llaveCajon = null; _cajonBloqueado.value = false
         _usuario.value = null
         AvisosRed.programar(app)
         _feed.value = null; _avisos.value = null; _guardados.value = null; _sinLeer.value = 0

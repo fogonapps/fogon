@@ -76,6 +76,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         Text(stringResource(R.string.red_invita_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
     } else FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
+    FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
     FilaAjuste(Iconos.Lapiz, stringResource(R.string.editar_perfil), stringResource(R.string.aj_editar_perfil_pista)) { vm.abrir(Pantalla.EditarPerfil) }
 
     Seccion(stringResource(R.string.aj_como_usas))
@@ -97,16 +98,8 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         Pista(stringResource(R.string.libros_y_musica_sin_clave), adentro = true)
     }
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
-    Desplegable(Iconos.Nube, stringResource(R.string.respaldo), stringResource(R.string.aj_respaldo_pista)) {
-        Pista(stringResource(R.string.respaldo_pista), adentro = true)
-        if (acciones != null) {
-            BotonSecundario(stringResource(R.string.guardar_respaldo), acciones.exportar, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(R.string.recuperar_respaldo), {
-                confirmar(vm.tx(R.string.recuperar_pregunta), vm.tx(R.string.recuperar_texto), acciones.importar)
-            }, Modifier.fillMaxWidth())
-        }
-        RespaldoTodoFogon(confirmar)
-    }
+    // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
+    if (acciones != null) FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista)) { acciones.exportar() }
     Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
         Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
         if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())

@@ -672,6 +672,25 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="nube_titulo">Tu cajón en tu cuenta</string>
+  <string name="nube_pista">Guarda todo tu cajón con tu correo, cifrado</string>
+  <string name="nube_pista_activo">Guardado y cifrado con tu contraseña</string>
+  <string name="nube_explica">Todo tu cajón (obras, notas, diario, listas, gustos, perfil y lo que escuchas) se guarda con tu cuenta. Si cambias de teléfono, entras con tu correo y contraseña y vuelve todo. Si usas dos teléfonos, se mantienen iguales.</string>
+  <string name="nube_cifrado">Va cifrado con tu contraseña antes de salir del teléfono: ni Fogón ni nadie más lo puede leer.</string>
+  <string name="nube_falta_clave">Para guardarlo, crea una contraseña: es la llave de tu cajón.</string>
+  <string name="nube_falta_correo">Primero vincula tu correo en tu cuenta; después creas la contraseña.</string>
+  <string name="nube_ya_tienes_clave">Ya tienes contraseña: escríbela para activar el guardado en este teléfono.</string>
+  <string name="nube_activar">Crear la contraseña y guardar mi cajón</string>
+  <string name="nube_bloqueado">Tu cajón ya está guardado en tu cuenta. Escribe tu contraseña para traerlo a este teléfono.</string>
+  <string name="nube_abrir">Traer mi cajón</string>
+  <string name="nube_guardando">Guardando…</string>
+  <string name="nube_sin_conexion">No se pudo guardar ahora; se intenta de nuevo solo.</string>
+  <string name="nube_guardado">Guardado %1$s</string>
+  <string name="nube_listo">Listo: se guarda solo con cada cambio.</string>
+  <string name="nube_guardar_ya">Guardar ahora</string>
+  <string name="nube_olvido">Importante: si olvidas la contraseña, lo guardado en tu cuenta no se puede recuperar (por eso nadie más puede leerlo). Lo de este teléfono sigue aquí.</string>
+  <string name="descargar_copia">Descargar una copia de tus datos</string>
+  <string name="descargar_copia_pista">Todo tu cajón en un archivo abierto (JSON), cuando quieras</string>
   <string name="rep_autolesion">Suicidio o autolesión</string>
   <string name="rep_menor_de_edad">Es de un menor de 18 años</string>
   <string name="rep_ayuda">Si alguien está en peligro, llama ya al 123 (emergencias en Colombia).</string>

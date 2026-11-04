@@ -54,7 +54,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.8"
+const val VERSION = "0.9"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -177,6 +177,12 @@ fun Application.fogonSocial(social: Social) {
             get("/notas") { call.respond(social.notas(call.yo())) }
             delete("/avisos") { social.borrarAvisos(call.yo(), null); call.respond(HttpStatusCode.NoContent) }
             delete("/avisos/{id}") { social.borrarAvisos(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            get("/cajon") { call.respond(social.cajon(call.yo())) }
+            put("/cajon") {
+                val antes = call.request.queryParameters["antes"]?.toLongOrNull() ?: 0
+                call.respond(mapOf("cambio" to social.guardarCajon(call.yo(), call.receive(), antes)))
+            }
+            put("/cajon/llave") { social.guardarLlave(call.yo(), call.receive<CajonCifrado>().llave); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta/estado") { call.respond(social.estadoCuenta(call.yo())) }
             get("/admin/casos") { call.respond(social.casos(call.yo())) }
             post("/admin/decidir") { social.decidir(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }

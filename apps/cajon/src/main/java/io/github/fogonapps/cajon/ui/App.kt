@@ -184,6 +184,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.AjustesAvisos -> AjustesAvisos(vm)
                             Pantalla.PalabrasOcultas -> PalabrasOcultas(vm, estado)
                             Pantalla.EstadoCuenta -> EstadoCuenta(vm)
+                            Pantalla.CajonEnCuenta -> CajonEnCuenta(vm)
                             Pantalla.Moderacion -> Moderacion(vm)
                             is Pantalla.EtiquetaRed -> EtiquetaRed(vm, p.etiqueta)
                         }

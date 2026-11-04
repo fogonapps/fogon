@@ -31,3 +31,17 @@ class CifradoTest {
         assertEquals(6, a.split(" ").size)
     }
 }
+
+class NubeTest {
+    @Test fun cajonCifradoConLaContrasena() {
+        val llave = io.github.fogonapps.cajon.datos.Nube.llaveNueva()
+        val envuelta = io.github.fogonapps.cajon.datos.Nube.envolver(llave, "una frase larga")
+        assertEquals(llave, io.github.fogonapps.cajon.datos.Nube.desenvolver(envuelta, "una frase larga"))
+        assertTrue(runCatching { io.github.fogonapps.cajon.datos.Nube.desenvolver(envuelta, "otra cosa") }.isFailure)
+        val json = """{"obras":[{"id":"o1","tipo":"pelicula","titulo":"Matrix"}]}""".repeat(50)
+        val sobre = io.github.fogonapps.cajon.datos.Nube.cerrar(json, llave)
+        assertTrue("Matrix" !in sobre && sobre.length < json.length)          // cifrado y comprimido
+        assertEquals(json, io.github.fogonapps.cajon.datos.Nube.abrir(sobre, llave))
+        assertTrue(runCatching { io.github.fogonapps.cajon.datos.Nube.abrir(sobre, io.github.fogonapps.cajon.datos.Nube.llaveNueva()) }.isFailure)
+    }
+}

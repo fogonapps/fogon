@@ -105,6 +105,11 @@ class Base(ruta: String) {
                 columna(s, "publicaciones", "oculta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "comentarios", "oculto INTEGER NOT NULL DEFAULT 0")
                 columna(s, "reportes", "estado TEXT NOT NULL DEFAULT 'abierto'")
+                // El cajón completo de cada cuenta, cifrado en el teléfono (el servidor no lo puede leer), y su llave
+                // envuelta con la contraseña de la persona (tampoco la puede abrir).
+                s.execute("""CREATE TABLE IF NOT EXISTS cajones(
+                    cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, sobre TEXT NOT NULL DEFAULT '',
+                    llave TEXT NOT NULL DEFAULT '', cambio INTEGER NOT NULL DEFAULT 0)""")
                 s.execute("""CREATE TABLE IF NOT EXISTS faltas(
                     id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     puntos INTEGER NOT NULL, regla TEXT NOT NULL, cuando INTEGER NOT NULL, vence INTEGER NOT NULL)""")

@@ -1199,3 +1199,52 @@ private fun motivoTexto(m: io.github.fogonapps.cajon.RedSocial.Companion.Motivo?
     io.github.fogonapps.cajon.RedSocial.Companion.Motivo.Nueva -> stringResource(R.string.red_porque_nueva)
     null -> stringResource(R.string.menu_por_que_sigues)
 }
+
+/* ----- Tu cajón guardado en tu cuenta ----- */
+
+@Composable
+fun CajonEnCuenta(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val bloqueado by vm.red.cajonBloqueado.collectAsStateWithLifecycle()
+    val sync by vm.sync.collectAsStateWithLifecycle()
+    val conLlave = vm.hayLlaveCajon()
+    var clave by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(Unit) { vm.red.revisarServidor() }
+    Cabecera(stringResource(R.string.nube_titulo), vm::cerrar)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.nube_explica), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        Pista(stringResource(R.string.nube_cifrado))
+        val oculto = androidx.compose.ui.text.input.PasswordVisualTransformation()
+        when {
+            usuario == null -> BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
+            bloqueado -> {
+                Text(stringResource(R.string.nube_bloqueado), style = MaterialTheme.typography.titleSmall, color = f.texto)
+                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp), visualTransformation = oculto)
+                BotonRiso(stringResource(R.string.nube_abrir), { vm.red.desbloquearCajon(clave); clave = "" }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8)
+            }
+            !conLlave -> {
+                Text(stringResource(if (cuenta?.correo.isNullOrBlank()) R.string.nube_falta_correo else R.string.nube_falta_clave), style = MaterialTheme.typography.titleSmall, color = f.texto)
+                if (!cuenta?.correo.isNullOrBlank()) {
+                    OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_nueva)) }, singleLine = true, shape = forma(18.dp),
+                        visualTransformation = oculto, supportingText = { Text(stringResource(R.string.red_clave_regla)) })
+                    BotonRiso(stringResource(R.string.nube_activar), { vm.red.ponerClave(clave, "") { clave = "" } }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8 && cuenta?.conClave != true)
+                    if (cuenta?.conClave == true) {
+                        Pista(stringResource(R.string.nube_ya_tienes_clave))
+                        BotonRiso(stringResource(R.string.nube_abrir), { vm.red.desbloquearCajon(clave); clave = "" }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8)
+                    }
+                } else BotonSecundario(stringResource(R.string.red_tu_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
+            }
+            else -> {
+                Text(when (sync.estado) {
+                    io.github.fogonapps.cajon.EstadoSync.SINCRONIZANDO -> stringResource(R.string.nube_guardando)
+                    io.github.fogonapps.cajon.EstadoSync.ERROR, io.github.fogonapps.cajon.EstadoSync.SIN_CONEXION -> stringResource(R.string.nube_sin_conexion)
+                    else -> if (sync.ultima > 0) stringResource(R.string.nube_guardado, haceCuanto(sync.ultima)) else stringResource(R.string.nube_listo)
+                }, style = MaterialTheme.typography.titleSmall, color = f.acentoTexto)
+                BotonSecundario(stringResource(R.string.nube_guardar_ya), { vm.sincronizar() }, Modifier.fillMaxWidth())
+            }
+        }
+        Pista(stringResource(R.string.nube_olvido))
+    }
+}

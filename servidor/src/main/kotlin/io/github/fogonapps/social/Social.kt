@@ -102,6 +102,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val admin: Boolean = false,
 )
 @Serializable data class EntradaClave(val correo: String, val clave: String)
+/** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
+@Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class CambioClave(val nueva: String, val actual: String = "")
 @Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
@@ -260,6 +262,30 @@ class Social(
         if (correo == null) throw Problema(400, "sin_correo")
         if (guardada != null && !conCodigo && !Claves.comprobar(c.actual, guardada)) throw Problema(400, "clave_mala")
         b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(c.nueva), yo) }
+    }
+
+    /* ----- El cajón guardado en la cuenta (cifrado de extremo a extremo) ----- */
+
+    fun cajon(yo: Long): CajonCifrado =
+        b.usar { leer("SELECT sobre, cambio, llave FROM cajones WHERE cuenta = ?", yo) { CajonCifrado(it.getString(1), it.getLong(2), it.getString(3)) }.firstOrNull() } ?: CajonCifrado()
+
+    /**
+     * Guarda el cajón cifrado. [CajonCifrado.cambio] es la versión que el teléfono tenía: si en el servidor hay una más
+     * nueva (otro teléfono subió algo), responde "cambio" y el teléfono primero la trae y la une.
+     */
+    fun guardarCajon(yo: Long, c: CajonCifrado, antes: Long): Long {
+        if (c.sobre.length > 12_000_000) throw Problema(413, "muy_grande")
+        val actual = cajon(yo).cambio
+        if (actual != antes) throw Problema(409, "cambio")
+        val nuevo = maxOf(ahora(), actual + 1)
+        b.usar { cambiar("INSERT INTO cajones(cuenta, sobre, cambio) VALUES(?,?,?) ON CONFLICT(cuenta) DO UPDATE SET sobre = excluded.sobre, cambio = excluded.cambio", yo, c.sobre, nuevo) }
+        return nuevo
+    }
+
+    /** La llave del cajón, envuelta con la contraseña (al crearla o cambiarla, el teléfono la vuelve a envolver). */
+    fun guardarLlave(yo: Long, llave: String) {
+        if (llave.length > 4000) throw Problema(413, "muy_grande")
+        b.usar { cambiar("INSERT INTO cajones(cuenta, llave) VALUES(?,?) ON CONFLICT(cuenta) DO UPDATE SET llave = excluded.llave", yo, llave) }
     }
 
     /* ----- Cambiar el usuario ----- */

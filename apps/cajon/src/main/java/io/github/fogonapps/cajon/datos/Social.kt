@@ -82,6 +82,7 @@ data class PerfilSubido(
 @Serializable private data class Texto(val texto: String)
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
+@Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
@@ -127,6 +128,11 @@ class ClienteSocial(private val token: String? = null) {
             Entrada(correo, codigo, usuario, nombre, politica, mayorDeEdad = politica.isNotEmpty()))))
     suspend fun vincularCorreo(correo: String, codigo: String) { pedir("/cuenta/correo", "POST", json(Entrada.serializer(), Entrada(correo, codigo))) }
     suspend fun salir() { pedir("/salir", "POST") }
+    suspend fun cajon() = leer(CajonCifrado.serializer(), pedir("/cajon"))
+    /** Guarda el cajón cifrado; [antes] es la versión que se trajo (si hay otra más nueva, ErrorSocial 409 "cambio"). */
+    suspend fun guardarCajon(sobre: String, antes: Long): Long =
+        JsonCajon.parseToJsonElement(pedir("/cajon?antes=$antes", "PUT", json(CajonCifrado.serializer(), CajonCifrado(sobre)))!!).jsonObject["cambio"]!!.jsonPrimitive.content.toLong()
+    suspend fun guardarLlaveCajon(envuelta: String) { pedir("/cajon/llave", "PUT", json(CajonCifrado.serializer(), CajonCifrado(llave = envuelta))) }
     suspend fun estadoCuenta() = leer(EstadoCuentaSocial.serializer(), pedir("/cuenta/estado"))
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
     suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }

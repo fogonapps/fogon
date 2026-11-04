@@ -112,6 +112,11 @@ class CajaFuerte(context: Context) {
     var usuarioSocial: String?
         get() = prefs.getString("usuario_social", null)
         set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }
+    /** La llave del cajón guardado en la cuenta (abierta, solo en este teléfono y cifrada aquí). Ver `Nube`. */
+    var llaveCajon: String?
+        get() = leer("llave_cajon")
+        set(v) = escribir("llave_cajon", v)
+
     /** Las llaves del chat de este teléfono (keysets de Tink en JSON, con su parte secreta): solo aquí, cifradas. */
     var chatLlaves: String?
         get() = leer("chat_llaves")

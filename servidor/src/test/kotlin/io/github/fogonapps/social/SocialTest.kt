@@ -295,6 +295,17 @@ class SocialTest {
         assertFailsWith<Problema> { s.verPerfil(null, "malo") }
     }
 
+    @Test fun cajonGuardado() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        assertEquals(0, s.cajon(ana).cambio)
+        val v1 = s.guardarCajon(ana, CajonCifrado("cifrado-1"), antes = 0)
+        assertFailsWith<Problema> { s.guardarCajon(ana, CajonCifrado("viejo"), antes = 0) }   // otro teléfono subió antes
+        val v2 = s.guardarCajon(ana, CajonCifrado("cifrado-2"), antes = v1)
+        s.guardarLlave(ana, "llave-envuelta")
+        assertEquals(CajonCifrado("cifrado-2", v2, "llave-envuelta"), s.cajon(ana))
+    }
+
     @Test fun imagenes() {
         val s = nuevo()
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!

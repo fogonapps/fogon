@@ -672,6 +672,25 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="nube_titulo">Your cajón in your account</string>
+  <string name="nube_pista">Save your whole cajón with your email, encrypted</string>
+  <string name="nube_pista_activo">Saved and encrypted with your password</string>
+  <string name="nube_explica">Your whole cajón (titles, notes, diary, lists, taste, profile and what you listen to) is saved with your account. If you change phones, sign in with your email and password and everything comes back. If you use two phones, they stay in sync.</string>
+  <string name="nube_cifrado">It’s encrypted with your password before leaving your phone: neither Fogón nor anyone else can read it.</string>
+  <string name="nube_falta_clave">To save it, create a password: it’s the key to your cajón.</string>
+  <string name="nube_falta_correo">First link your email in your account; then create the password.</string>
+  <string name="nube_ya_tienes_clave">You already have a password: type it to turn on saving on this phone.</string>
+  <string name="nube_activar">Create the password and save my cajón</string>
+  <string name="nube_bloqueado">Your cajón is already saved in your account. Type your password to bring it to this phone.</string>
+  <string name="nube_abrir">Bring my cajón</string>
+  <string name="nube_guardando">Saving…</string>
+  <string name="nube_sin_conexion">Couldn’t save right now; it will retry on its own.</string>
+  <string name="nube_guardado">Saved %1$s</string>
+  <string name="nube_listo">Done: it saves on its own with every change.</string>
+  <string name="nube_guardar_ya">Save now</string>
+  <string name="nube_olvido">Important: if you forget your password, what’s saved in your account can’t be recovered (that’s why nobody else can read it). What’s on this phone stays here.</string>
+  <string name="descargar_copia">Download a copy of your data</string>
+  <string name="descargar_copia_pista">Your whole cajón in an open file (JSON), whenever you want</string>
   <string name="rep_autolesion">Suicide or self-harm</string>
   <string name="rep_menor_de_edad">It belongs to someone under 18</string>
   <string name="rep_ayuda">If someone is in danger, call 123 now (emergencies in Colombia).</string>
