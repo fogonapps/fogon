@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.border
 import androidx.compose.material3.CircularProgressIndicator
@@ -236,8 +237,18 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     EditorEtiquetas("g" + o.id, stringResource(R.string.generos), o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
         { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_genero))
 
-    // El estado, como píldoras.
-    Selector(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado, { vm.ponerEstado(o.id, it) }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+    // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
+    var celebrando by remember(id) { mutableStateOf(false) }
+    Selector(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado, {
+        if (it == Estados.TERMINADO && o.estado != Estados.TERMINADO) celebrando = true
+        vm.ponerEstado(o.id, it)
+    }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+    if (celebrando) {
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.CAJON, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 8.dp).aparecer(0), tamano = 88.dp, celebrar = true) {
+            Text(stringResource(R.string.terminaste_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            Text(stringResource(R.string.terminaste_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+    }
 
     // La nota, el corazón y las favoritas.
     Column(Modifier.aparecer(1).fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

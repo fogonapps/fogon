@@ -1143,4 +1143,6 @@
   <string name="red_ver_todo">See all</string>
   <string name="red_vincula_pista">Link your email to sign in to this account on another phone.</string>
   <string name="red_vincular">Link</string>
+  <string name="terminaste_titulo">Finished!</string>
+  <string name="terminaste_texto">One more for your drawer.</string>
 </resources>
