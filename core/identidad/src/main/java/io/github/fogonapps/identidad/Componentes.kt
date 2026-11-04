@@ -1,6 +1,7 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.res.imageResource
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.graphicsLayer
@@ -333,7 +334,7 @@ fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier,
  */
 @Composable
 fun TarjetaPersonaje(
-    quien: Quien, cara: Cara, modifier: Modifier = Modifier, tamano: Dp = 96.dp,
+    quien: Quien, cara: Cara, modifier: Modifier = Modifier, tamano: Dp = 96.dp, celebrar: Boolean = false,
     onClick: (() -> Unit)? = null, contenido: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     val f = FogonTema.actual
@@ -345,7 +346,40 @@ fun TarjetaPersonaje(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), content = contenido)
-        Personaje(quien, null, cara = cara, tamano = tamano)
+        if (celebrar) Celebracion(quien, null, tamano = tamano) else Personaje(quien, null, cara = cara, tamano = tamano)
+    }
+}
+
+/** La celebración de cada personaje: 24 cuadros en una tira (salen de Blender). */
+private val TIRAS = mapOf(
+    Quien.FORZUDO to R.drawable.celebrar_forzudo, Quien.AHORRADOR to R.drawable.celebrar_ahorrador,
+    Quien.CUCHA to R.drawable.celebrar_cucha, Quien.CAJON to R.drawable.celebrar_cajon,
+)
+private const val CUADROS = 24
+
+/**
+ * El personaje celebra cuando terminas algo: salta con la cara feliz (El Forzudo levanta los bracitos, El Cajón da
+ * una vuelta en el aire) un par de veces y después se queda feliz. Con "Menos movimiento", solo feliz.
+ */
+@Composable
+fun Celebracion(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 96.dp, veces: Int = 2) {
+    val f = FogonTema.actual
+    var termino by remember { mutableStateOf(f.menosMovimiento) }
+    if (termino) { Personaje(quien, descripcion, modifier, cara = Cara.FELIZ, tamano = tamano); return }
+    val tira = androidx.compose.ui.graphics.ImageBitmap.imageResource(TIRAS.getValue(quien))
+    var cuadro by remember { mutableStateOf(0) }
+    LaunchedEffect(quien) {
+        repeat(veces) { for (k in 0 until CUADROS) { cuadro = k; kotlinx.coroutines.delay(45) } }
+        termino = true
+    }
+    val lado = tira.height
+    val pintor = remember(cuadro, tira) {
+        androidx.compose.ui.graphics.painter.BitmapPainter(tira, androidx.compose.ui.unit.IntOffset(cuadro * lado, 0), androidx.compose.ui.unit.IntSize(lado, lado))
+    }
+    Box(modifier.size(tamano), contentAlignment = Alignment.Center) {
+        if (!f.oscuro) Box(Modifier.fillMaxWidth(0.86f).aspectRatio(1f).background(f.marca.copy(alpha = 0.28f), androidx.compose.foundation.shape.CircleShape))
+        // La tira deja aire arriba para el salto: se dibuja un poco más grande para que el personaje mida lo mismo.
+        Image(pintor, descripcion, Modifier.fillMaxSize().graphicsLayer { scaleX = 1.18f; scaleY = 1.18f; translationY = -tamano.toPx() * 0.06f })
     }
 }
 

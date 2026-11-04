@@ -152,7 +152,9 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         entro > 0 && entro - salio > entro / 5 -> io.github.fogonapps.identidad.Cara.FELIZ
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
-    io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1)) {
+    // Si ya cumpliste una meta, El Ahorrador celebra.
+    val cumplida = e.metas.any { L.progreso(e, it) >= 1.0 }
+    io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1), celebrar = cumplida) {
         Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         val total = Formato.pesos(L.patrimonio(e))
         NumeroRiso(total, (if (total.length <= 9) 40 else if (total.length <= 12) 32 else 26).sp, color = f.texto)

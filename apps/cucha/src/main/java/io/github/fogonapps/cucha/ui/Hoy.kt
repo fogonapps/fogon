@@ -136,7 +136,10 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
                 }
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = cara, tamano = 104.dp)
+                // Llegaste a tu meta del día (sin pasarte): La Cucha celebra.
+                val llego = dia == hoy && quedan >= 0 && total.kcal >= e.metas.kcal * 0.9
+                if (llego) io.github.fogonapps.identidad.Celebracion(io.github.fogonapps.identidad.Quien.CUCHA, null, tamano = 104.dp)
+                else Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = cara, tamano = 104.dp)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {

@@ -313,8 +313,8 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     val f = FogonTema.actual
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
-        // La tarjeta del final, de El Forzudo: el saludo, la rutina y el volumen en puntos; él a la derecha, feliz.
-        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 16.dp).aparecer(0), tamano = 104.dp) {
+        // La tarjeta del final, de El Forzudo: el saludo, la rutina y el volumen en puntos; él a la derecha, celebrando.
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 16.dp).aparecer(0), tamano = 104.dp, celebrar = true) {
             Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
             Text("${r.titulo}, ${fechaCorta(r.fecha)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             NumeroRiso(fmtVol(r.volumen), 40.sp, Modifier.padding(top = 8.dp))

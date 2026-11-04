@@ -1,1 +1,0 @@
-Los personajes se mueven: aparecen con un rebote, respiran y parpadean. La Cucha ahora está en la tarjeta de las calorías y pone la cara de tu día.
