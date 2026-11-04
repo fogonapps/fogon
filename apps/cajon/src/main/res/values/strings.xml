@@ -176,7 +176,7 @@
   <string name="idioma">Language</string>
   <string name="idioma_telefono">Phone’s</string>
   <string name="traer_de_otras">Bring from other apps</string>
-  <string name="traer_de_otras_pista">Pick the file exported from Letterboxd (the ZIP or a CSV), Goodreads (the CSV) or Spotify (your history ZIP). It’s added to what you have, without duplicates.</string>
+  <string name="traer_de_otras_pista">Pick the file Netflix exports (your viewing activity CSV), Letterboxd (the ZIP or a CSV), Goodreads (the CSV) or Spotify (your history ZIP). From Netflix, Spotify and other apps you can also share something straight to El Cajón.</string>
   <string name="elegir_archivo">Choose file</string>
   <string name="respaldo">Backup</string>
   <string name="respaldo_pista">Save everything to a file whenever you like (keys aren’t included).</string>
@@ -672,6 +672,37 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="resenas">Reviews</string>
+  <string name="resenas_de_la_gente">From people</string>
+  <string name="cifras_de">Your %1$s stats</string>
+  <string name="genero_favorito">Favorite genre</string>
+  <string name="artista_favorito">Favorite artist</string>
+  <string name="autor_favorito">Favorite author</string>
+  <string name="creador_favorito">Most frequent creator</string>
+  <string name="paginas_por_libro">Pages per book</string>
+  <string name="reproducciones">Plays</string>
+  <string name="minutos_aprox">Minutes listened (approx.)</string>
+  <string name="lo_mas_escuchado">What you listen to most</string>
+  <string name="nota_media_corta">Average rating</string>
+  <string name="chat_respondiste">You replied</string>
+  <string name="chat_respondio">Replied</string>
+  <string name="chat_perfil">Profile</string>
+  <string name="chat_personalizar_corto">Customize</string>
+  <string name="chat_seguridad">Security</string>
+  <string name="chat_opciones">Options</string>
+  <string name="frase_momento_peli">Everyone is talking about %1$s, seen it yet?</string>
+  <string name="frase_momento_serie">%1$s is all anyone talks about, shall we?</string>
+  <string name="frase_momento_anime">Hooked on %1$s yet?</string>
+  <string name="frase_momento_disco">%1$s is on repeat everywhere this week</string>
+  <string name="frase_momento_libro">What about reading %1$s? It is everywhere</string>
+  <string name="frase_proponer">Suggest a phrase</string>
+  <string name="frase_propuesta_gracias">Thanks! If it fits, everyone will see it</string>
+  <string name="frase_propuesta_muchas">You suggested several today; more tomorrow</string>
+  <string name="frase_propuesta_mal">That phrase can\'t be sent (no links, 6 to 90 characters)</string>
+  <string name="mod_frases">Suggested phrases</string>
+  <string name="mod_aprobar">Approve</string>
+  <string name="mod_rechazar">Reject</string>
+  <string name="chat_nuevo">New message</string>
   <string name="momento_todo">The most watched, played and read this week</string>
   <string name="momento_visto">Most watched this week</string>
   <string name="momento_musica">The most played albums this week</string>
@@ -825,7 +856,7 @@
   <string name="aj_tu_cajon">Your cajón</string>
   <string name="aj_musica_pista">Log what you listen to and Spotify</string>
   <string name="aj_respaldo_pista">Save or restore your whole cajón to a file</string>
-  <string name="aj_traer_pista">Letterboxd, Goodreads and Spotify</string>
+  <string name="aj_traer_pista">Netflix, Letterboxd, Goodreads and Spotify</string>
   <string name="aj_apariencia_idioma">Appearance and language</string>
   <string name="aj_apariencia_pista">Theme, colors and type</string>
   <string name="notif_canal">The network</string>

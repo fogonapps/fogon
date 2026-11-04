@@ -120,6 +120,8 @@ sealed interface Pantalla {
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
     data class InfoChat(val usuario: String) : Pantalla
+    /** Las cifras de una sección (Cine, Música o Libros). */
+    data class CifrasDe(val seccion: String) : Pantalla
     data object ElegirCancion : Pantalla
     data object AjustesAvisos : Pantalla
     data object PalabrasOcultas : Pantalla
@@ -293,7 +295,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun hayLlaveCajon() = caja.llaveCajon != null
 
     /** Tu perfil, uno solo: con cuenta, como lo ve la red (con lo demás abajo); sin cuenta, el del teléfono. */
-    fun abrirMiPerfil() { abrir(red.usuario.value?.let { Pantalla.PerfilRed(it) } ?: Pantalla.Perfil) }
+    fun abrirMiPerfil() { abrir(Pantalla.Perfil) }
 
     /** "¿Qué te pareció?": la nota, y si no estaba terminada, queda terminada hoy. */
     /** Los votos de la comunidad a las frases del saludo (se traen al abrir Inicio, como mucho cada 6 horas). */
@@ -301,12 +303,35 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val frasesComunidad: StateFlow<Map<String, io.github.fogonapps.cajon.datos.Frases.Votos>> = _frasesComunidad
     private var frasesTraidas = 0L
 
+    private val _frasesDeLaGente = MutableStateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>>(emptyList())
+    /** Las frases que propuso la gente y aprobó el equipo, en el idioma de la app. */
+    val frasesDeLaGente: StateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>> = _frasesDeLaGente
+
     fun cargarFrases() {
         if (System.currentTimeMillis() - frasesTraidas < 6 * 3600_000L) return
         frasesTraidas = System.currentTimeMillis()
         viewModelScope.launch {
-            runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).frases() }.getOrNull()
-                ?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
+            val c = io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial)
+            runCatching { c.frases() }.getOrNull()?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
+            runCatching { c.frasesComunidad(idioma()) }.getOrNull()?.let { _frasesDeLaGente.value = it }
+        }
+    }
+
+    /** La frase ya elegida para [franja] (clave y obra), si hay. */
+    fun fraseGuardada(franja: String): Pair<String, String?>? =
+        caja.fraseGuardada?.split('\t')?.takeIf { it.size == 3 && it[0] == franja }?.let { it[1] to it[2].ifEmpty { null } }
+
+    fun guardarFrase(franja: String, clave: String, obra: String?) { caja.fraseGuardada = "$franja\t$clave\t${obra.orEmpty().replace('\t', ' ')}" }
+
+    /** Manda una frase para que el equipo la revise (con cuenta). */
+    fun proponerFrase(texto: String) {
+        viewModelScope.launch {
+            try {
+                io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).proponerFrase(texto.trim(), idioma())
+                avisar(tx(R.string.frase_propuesta_gracias))
+            } catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
+                avisar(tx(if (x.codigo == 429) R.string.frase_propuesta_muchas else R.string.frase_propuesta_mal))
+            } catch (x: java.io.IOException) { avisar(tx(R.string.red_sin_conexion)) }
         }
     }
 
@@ -609,6 +634,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun ponerNota(id: String, nota: Int) = cambiarObra(id) { it.copy(nota = nota.coerceIn(0, 10)) }
     fun meGusta(id: String) = cambiarObra(id) { it.copy(meGusta = !it.meGusta) }
     fun ponerResena(id: String, texto: String) = cambiarObra(id) { it.copy(resena = texto.take(10000)) }
+    fun visibilidadResena(id: String, v: String) = cambiarObra(id) { it.copy(resenaVisibilidad = v) }
     fun ponerNotas(id: String, texto: String) = cambiarObra(id) { it.copy(notas = texto.take(5000)) }
 
     fun ponerPagina(id: String, pagina: Int) = cambiarObra(id) { o ->
@@ -1521,7 +1547,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val servidor = async { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial().momento(l) }.getOrNull() }
                 val peliculas = intento { if (clave == null) emptyList() else Tmdb(clave).tendenciasDe("movie", l) }
                 val series = intento { if (clave == null) io.github.fogonapps.cajon.datos.TvMaze.estrenosDeHoy() else Tmdb(clave).tendenciasDe("tv", l).filter { it.tipo == Tipos.SERIE } }
-                val anime = intento { if (clave == null) emptyList() else Tmdb(clave).descubrir("tv", null, null, anime = true, idioma = l) }
+                val anime = intento { if (clave == null) emptyList() else Tmdb(clave).animeAlAire(l) }
                 val discos = intento { io.github.fogonapps.cajon.datos.ListenBrainz.discosDeLaSemana() }
                 val libros = intento { OpenLibrary.tendencias(l) }
                 val artistas = intento {
@@ -1957,7 +1983,37 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Importar de otras apps y respaldo ----- */
 
-    /** Un archivo de Letterboxd (ZIP o CSV) o de Goodreads (CSV). */
+    /**
+     * Lo que se compartió desde otra app (Netflix, Spotify, Prime, YouTube…): si trae un enlace de Netflix o de un
+     * álbum de Spotify, se busca la obra exacta en Wikidata y se abre; si no, se busca por lo que dice (sin enlaces
+     * ni el "Mira … en …" que agregan las apps).
+     */
+    fun recibirCompartido(texto: String) {
+        val t = texto.take(2000)
+        val netflix = Regex("netflix\\.com/(?:[a-z-]+/)?(?:title|watch)/(\\d+)").find(t)?.groupValues?.get(1)
+        val spotify = Regex("open\\.spotify\\.com/(?:intl-[a-z]+/)?album/([A-Za-z0-9]+)").find(t)?.groupValues?.get(1)
+        val citado = Regex("[«“\"]([^»”\"]{2,120})[»”\"]").find(t)?.groupValues?.get(1)
+        val limpio = (citado ?: t.replace(Regex("https?://\\S+"), " ")
+            .replace(Regex("(?i)\\b(mira|watch|escucha|listen to|check out|échale un vistazo a|ve)\\b"), " ")
+            .replace(Regex("(?i)\\b(en|on)\\s+(netflix|spotify|prime video|disney\\+?|max|hbo max|apple tv\\+?|youtube( music)?|crunchyroll)\\b.*"), " "))
+            .replace(Regex("\\s+"), " ").trim().trim('!', '.', ':', '-', '|')
+        viewModelScope.launch {
+            val exacta = runCatching {
+                when {
+                    netflix != null -> Wikimedia.deLaPlataforma("P1874", netflix, idioma())
+                    spotify != null -> Wikimedia.deLaPlataforma("P2205", spotify, idioma())
+                    else -> null
+                }
+            }.getOrNull()
+            if (exacta != null && exacta.fuente.isNotBlank() && (!exacta.fuente.startsWith("tmdb:") || caja.claveTmdb != null)) abrirEncontrado(exacta)
+            else {
+                abrir(Pantalla.Buscar(exacta?.let { Secciones.de(it.tipo) } ?: Secciones.TODO))
+                buscar(exacta?.titulo ?: limpio)
+            }
+        }
+    }
+
+    /** Un archivo de Letterboxd (ZIP o CSV), de Netflix o de Goodreads (CSV). */
     fun importarDeOtraApp(bytes: ByteArray, nombre: String) {
         // El historial de Spotify: sus escuchas van a "Escuchado hace poco" (y se agregan solas si está activado).
         Importar.spotify(bytes, nombre)?.let { h ->
@@ -1968,7 +2024,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             procesarOidos()
             return
         }
-        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
+        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora())
+            ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
         if (r == null || r.obras.isEmpty()) { avisar(tx(R.string.aviso_no_es_de_otra_app)); return }
         var nuevas = 0
         cambiar { e -> val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n; x }

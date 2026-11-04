@@ -29,6 +29,42 @@ class SocialTest {
     private fun pub(clave: String, vis: String, cuando: Long = 1) =
         PublicacionSubida(clave, vis, cuando, "diario", buildJsonObject { put("titulo", "Obra $clave") })
 
+    @Test fun resenasDeUnaObra() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        fun resena(clave: String, vis: String, fuente: String) = PublicacionSubida(clave, vis, 1, "resena",
+            buildJsonObject { put("titulo", "Matrix"); put("fuente", fuente); put("texto", "buenísima") })
+        s.subirPublicaciones(ana, listOf(resena("o:1", Vis.PUBLICA, "tmdb:movie:603"), resena("o:2", Vis.PUBLICA, "tmdb:movie:604"),
+            PublicacionSubida("r:1", Vis.PUBLICA, 2, "diario", buildJsonObject { put("fuente", "tmdb:movie:603") })))
+        s.subirPublicaciones(beto, listOf(resena("o:9", Vis.SEGUIDORES, "tmdb:movie:603")))
+        assertEquals(listOf("ana"), s.resenas(null, "tmdb:movie:603").map { it.autor.usuario })      // sin sesión: solo lo público, solo reseñas
+        s.seguir(ana, "beto")
+        assertEquals(setOf("ana", "beto"), s.resenas(ana, "tmdb:movie:603").map { it.autor.usuario }.toSet())   // y lo de quien sigue
+        s.bloquear(beto, "ana", true)
+        assertEquals(listOf("beto"), s.resenas(beto, "tmdb:movie:603").map { it.autor.usuario })     // sin las bloqueadas
+    }
+
+    @Test fun frasesPropuestas() {
+        val dir = Files.createTempDirectory("social").toFile()
+        val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"))
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val jefa = s.cuentaDe(s.crearCuenta(NuevaCuenta("moderadora")).token)!!
+        s.proponerFrase(ana, FraseNueva("¿Hoy toca maratón de terror?", "es"))
+        assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("mira https://x.co", "es")) }      // sin enlaces
+        assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("hola", "es")) }                   // muy corta
+        assertEquals(0, s.frasesComunidad("es").size)                                                // no sale sin aprobar
+        assertFailsWith<Problema> { s.frasesPendientes(ana) }                                        // solo el equipo
+        Base(java.io.File(dir, "s.db").path).usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", jefa) }
+        val pendiente = s.frasesPendientes(jefa).single()
+        assertEquals("ana", pendiente.de)
+        s.decidirFrase(jefa, DecisionFrase(pendiente.clave, true))
+        assertEquals(listOf("¿Hoy toca maratón de terror?"), s.frasesComunidad("es").map { it.texto })
+        assertEquals(0, s.frasesComunidad("en").size)
+        repeat(2) { s.proponerFrase(ana, FraseNueva("Otra frase más $it", "es")) }
+        assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("La cuarta del día", "es")) }    // 3 al día
+    }
+
     @Test fun frasesDelSaludo() {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!

@@ -44,17 +44,8 @@ import io.github.fogonapps.identidad.aparecer
 @Composable
 fun Artistas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
-    var texto by rememberSaveable { mutableStateOf("") }
-    Cabecera(stringResource(R.string.tipo_artistas), vm::cerrar) {
-        BotonIcono(Iconos.Buscar, stringResource(R.string.buscar_artista), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.MUSICA)) }
-    }
-    OutlinedTextField(texto, { texto = it.take(60) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), singleLine = true, shape = FormaPildora,
-        placeholder = { Text(stringResource(R.string.buscar_o_nuevo_artista)) },
-        leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) })
-    val lista = e.musicosVivos.filter { texto.isBlank() || normal(texto) in normal(it.nombre) }.sortedBy { normal(it.nombre) }
-    if (texto.isNotBlank() && lista.none { normal(it.nombre) == normal(texto) }) Box(Modifier.padding(16.dp)) {
-        BotonSecundario(stringResource(R.string.agregar_artista, texto.trim()), { vm.nuevoArtista(texto); texto = "" }, Modifier.fillMaxWidth())
-    }
+    Cabecera(stringResource(R.string.tipo_artistas), vm::cerrar)
+    val lista = e.musicosVivos.sortedBy { normal(it.nombre) }
     if (e.musicosVivos.isEmpty()) Pista(stringResource(R.string.artistas_vacio))
     lista.forEachIndexed { i, a ->
         val albumes = e.vivas.count { it.artista == a.id }

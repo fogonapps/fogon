@@ -175,7 +175,7 @@
   <string name="idioma">Idioma</string>
   <string name="idioma_telefono">El del teléfono</string>
   <string name="traer_de_otras">Traer de otras apps</string>
-  <string name="traer_de_otras_pista">Elige el archivo que te deja exportar Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Se suma a lo que ya tienes, sin repetir.</string>
+  <string name="traer_de_otras_pista">Elige el archivo que exporta Netflix (tu historial de actividad, el CSV), Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Desde Netflix, Spotify y otras apps también puedes compartir algo directo a El Cajón.</string>
   <string name="elegir_archivo">Elegir el archivo</string>
   <string name="respaldo">Respaldo</string>
   <string name="respaldo_pista">Guarda todo en un archivo cuando quieras (las claves no van).</string>
@@ -672,6 +672,37 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="resenas">Reseñas</string>
+  <string name="resenas_de_la_gente">De la gente</string>
+  <string name="cifras_de">Tus cifras de %1$s</string>
+  <string name="genero_favorito">Género favorito</string>
+  <string name="artista_favorito">Artista favorito</string>
+  <string name="autor_favorito">Autor favorito</string>
+  <string name="creador_favorito">Quien más aparece</string>
+  <string name="paginas_por_libro">Páginas por libro</string>
+  <string name="reproducciones">Reproducciones</string>
+  <string name="minutos_aprox">Minutos escuchados (aprox.)</string>
+  <string name="lo_mas_escuchado">Lo que más escuchas</string>
+  <string name="nota_media_corta">Nota media</string>
+  <string name="chat_respondiste">Respondiste</string>
+  <string name="chat_respondio">Respondió</string>
+  <string name="chat_perfil">Perfil</string>
+  <string name="chat_personalizar_corto">Personalizar</string>
+  <string name="chat_seguridad">Seguridad</string>
+  <string name="chat_opciones">Opciones</string>
+  <string name="frase_momento_peli">Todos hablan de %1$s, ¿ya la viste?</string>
+  <string name="frase_momento_serie">%1$s está en boca de todos, ¿le damos?</string>
+  <string name="frase_momento_anime">¿Ya te enganchaste con %1$s?</string>
+  <string name="frase_momento_disco">%1$s no para de sonar esta semana</string>
+  <string name="frase_momento_libro">¿Y si te lees %1$s, que está en todas partes?</string>
+  <string name="frase_proponer">Propón una frase</string>
+  <string name="frase_propuesta_gracias">¡Gracias! Si va, sale para todos</string>
+  <string name="frase_propuesta_muchas">Ya propusiste varias hoy; mañana más</string>
+  <string name="frase_propuesta_mal">Esa frase no se puede mandar (sin enlaces, de 6 a 90 letras)</string>
+  <string name="mod_frases">Frases propuestas</string>
+  <string name="mod_aprobar">Aprobar</string>
+  <string name="mod_rechazar">Rechazar</string>
+  <string name="chat_nuevo">Nuevo mensaje</string>
   <string name="momento_todo">Lo más visto, escuchado y leído de la semana</string>
   <string name="momento_visto">Lo más visto esta semana</string>
   <string name="momento_musica">Los discos más escuchados de la semana</string>
@@ -825,7 +856,7 @@
   <string name="aj_tu_cajon">Tu cajón</string>
   <string name="aj_musica_pista">Anotar lo que escuchas y Spotify</string>
   <string name="aj_respaldo_pista">Guardar o recuperar todo tu cajón en un archivo</string>
-  <string name="aj_traer_pista">Letterboxd, Goodreads y Spotify</string>
+  <string name="aj_traer_pista">Netflix, Letterboxd, Goodreads y Spotify</string>
   <string name="aj_apariencia_idioma">Apariencia e idioma</string>
   <string name="aj_apariencia_pista">Tema, colores y letra</string>
   <string name="notif_canal">La red</string>

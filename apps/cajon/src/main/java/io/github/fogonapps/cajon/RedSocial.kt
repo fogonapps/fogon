@@ -378,6 +378,8 @@ class RedSocial(
     private val _listas = MutableStateFlow<Map<String, List<PublicacionSocial>>>(emptyMap())
     val listas: StateFlow<Map<String, List<PublicacionSocial>>> = _listas
     fun cargarGuardadasDe(usuario: String) = lanzar { _listas.value = _listas.value + ("guardadas:$usuario" to cliente().guardadasDe(usuario)) }
+    /** Las reseñas de la gente sobre una obra (por su fuente), en [listas] con la clave "resenas:<fuente>". */
+    fun cargarResenas(fuente: String) = lanzar { _listas.value = _listas.value + ("resenas:$fuente" to ClienteSocial(caja.tokenSocial).resenas(fuente)) }
     fun cargarEtiqueta(etiqueta: String) = lanzar { _listas.value = _listas.value + ("#$etiqueta" to cliente().conEtiqueta(etiqueta)) }
 
     fun comentar(id: Long, texto: String) = lanzar {
@@ -502,7 +504,13 @@ class RedSocial(
 
     private val _casos = MutableStateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?>(null)
     val casos: StateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?> = _casos
-    fun cargarCasos() = lanzar { _casos.value = cliente().casos() }
+    fun cargarCasos() = lanzar { _casos.value = cliente().casos(); _frasesPendientes.value = cliente().frasesPendientes() }
+    private val _frasesPendientes = MutableStateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>>(emptyList())
+    /** Las frases que propuso la gente y esperan que alguien del equipo las apruebe. */
+    val frasesPendientes: StateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>> = _frasesPendientes
+    fun decidirFrase(clave: String, aprobar: Boolean) = lanzar {
+        cliente().decidirFrase(clave, aprobar); _frasesPendientes.value = _frasesPendientes.value.filter { it.clave != clave }
+    }
     fun decidir(c: io.github.fogonapps.cajon.datos.CasoModeracion, decision: String) = lanzar {
         val regla = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
         cliente().decidir(c.que, c.objeto, decision, regla)
@@ -727,6 +735,13 @@ class RedSocial(
                         }))
                 }
             }
+            // La reseña de cada obra (con su nota), si la persona no la dejó privada.
+            val resenas = e.vivas.filter { it.resena.isNotBlank() && Visibilidad.de(it.resenaVisibilidad) != Visibilidad.PRIVADA }.map { o ->
+                PublicacionSubida("o:${o.id}", Visibilidad.de(o.resenaVisibilidad), o.cambio, "resena", JsonObject(obraBreve(o) + buildJsonObject {
+                    if (o.nota > 0) put("estrellas", o.nota / 2.0)
+                    put("texto", o.resena.take(4000))
+                }))
+            }
             val listas = e.listas.filter { !it.borrada }.mapNotNull { l ->
                 val vis = Visibilidad.de(l.visibilidad).takeIf { it != Visibilidad.PRIVADA } ?: return@mapNotNull null
                 val obras = l.obras.mapNotNull { porId[it] }
@@ -746,7 +761,7 @@ class RedSocial(
                     }))
             }
             // Con su clave adentro, para poder quitarla de la red desde la publicación.
-            return (delDiario + listas + propias).sortedByDescending { it.cuando }.take(2000)
+            return (delDiario + resenas + listas + propias).sortedByDescending { it.cuando }.take(2000)
                 .map { it.copy(datos = JsonObject(it.datos + ("clave" to JsonPrimitive(it.clave)))) }
         }
     }

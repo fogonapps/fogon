@@ -62,14 +62,19 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     val c = vm.L.cifras(e, anio)
 
     // Arriba: tu nombre en grande con una frase cercana, publicar y tu foto (abre tu perfil).
-    // La frase: se elige con el momento, los votos de la comunidad y lo que dijo la persona (ver `Frases`).
-    // Tocarla pasa a otra; con el dedo apretado: me gusta, compartir o no verla más.
+    // La frase: se elige con el momento, los votos de la comunidad y lo que dijo la persona (ver `Frases`), y se queda
+    // toda la franja del día (mañana, tarde o noche) aunque se cierre la app. Tocarla pasa a otra.
     val comunidad by vm.frasesComunidad.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.cargarFrases() }
+    val deLaGente by vm.frasesDeLaGente.collectAsStateWithLifecycle()
+    val momento by vm.momento.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.cargarFrases(); vm.cargarMomento() }
     var vuelta by rememberSaveable { mutableStateOf(0) }
     var menuFrase by remember { mutableStateOf(false) }
-    val frase = remember(e.vivas.size, vm.hoy(), comunidad, e.ajustes.frasesNo, e.ajustes.frasesGusta, vuelta) {
-        fraseDelDia(e, vm.hoy().dayOfYear, java.time.LocalTime.now().hour, comunidad, vuelta)
+    val hora = java.time.LocalTime.now().hour
+    val franja = "${vm.hoy()}-${when (hora) { in 5..11 -> 0; in 12..18 -> 1; else -> 2 }}"
+    val frase = remember(franja, vuelta, e.ajustes.frasesNo, deLaGente) {
+        val guardada = if (vuelta == 0) vm.fraseGuardada(franja)?.takeIf { it.first !in e.ajustes.frasesNo }?.let { (c, o) -> fraseDeClave(c, o, deLaGente) } else null
+        guardada ?: fraseDelDia(e, vm.hoy().dayOfYear, hora, comunidad, vuelta, momento, deLaGente).also { vm.guardarFrase(franja, it.clave, it.obra) }
     }
     val textoDeFrase = textoFrase(frase)
     val gusta = frase.clave in e.ajustes.frasesGusta
@@ -94,7 +99,6 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         androidx.compose.material3.ModalBottomSheet({ menuFrase = false }, containerColor = f.fondo) {
             Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                 Text(textoDeFrase, style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                Pista(stringResource(R.string.frase_pista), Modifier.padding(horizontal = 24.dp))
                 FilaVidrio({ vm.votarFrase(frase.clave, if (gusta) 0 else 1); menuFrase = false }) {
                     IconoRiso(Iconos.Corazon, null, tamano = 20.dp, tinta = f.acentoTexto)
                     Text(stringResource(if (gusta) R.string.frase_ya_no_gusta else R.string.frase_me_gusta), color = f.texto, modifier = Modifier.weight(1f))
@@ -111,6 +115,16 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
                 FilaVidrio({ vm.votarFrase(frase.clave, -1); vuelta++; menuFrase = false }) {
                     IconoRiso(Iconos.Cerrar, null, tamano = 20.dp, tinta = f.texto)
                     Text(stringResource(R.string.frase_no_mostrar), color = f.texto, modifier = Modifier.weight(1f))
+                }
+                // Proponer una frase propia: el equipo la revisa y, si va, sale para todos.
+                var propia by rememberSaveable { mutableStateOf("") }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.OutlinedTextField(propia, { propia = it.take(90) }, Modifier.weight(1f), singleLine = true, shape = forma(22.dp),
+                        placeholder = { Text(stringResource(R.string.frase_proponer)) })
+                    BotonIcono(Iconos.Enviar, stringResource(R.string.frase_proponer), activo = propia.trim().length >= 6, lleno = true) {
+                        if (vm.red.usuario.value == null) vm.abrir(Pantalla.CuentaRed) else vm.proponerFrase(propia)
+                        propia = ""; menuFrase = false
+                    }
                 }
             }
         }
@@ -143,29 +157,6 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
             }
         }
         Objeto(RId.drawable.objeto_cajon, null, Modifier.align(Alignment.BottomEnd).padding(8.dp), tamano = 120.dp)
-    }
-
-    // Todo tu cajón, desde siempre: íconos con su número; cada uno lleva a su sección.
-    val terminadas = e.vivas.filter { it.estado == Estados.TERMINADO }
-    val cifras = listOf(
-        Triple(Tipos.PELICULA, terminadas.count { it.tipo == Tipos.PELICULA }, R.plurals.peliculas_vistas),
-        Triple(Tipos.SERIE, terminadas.count { it.tipo == Tipos.SERIE }, R.plurals.series_vistas),
-        Triple(Tipos.ANIME, terminadas.count { it.tipo == Tipos.ANIME }, R.plurals.animes_vistos),
-        Triple(Tipos.ALBUM, terminadas.count { it.tipo == Tipos.ALBUM }, R.plurals.albumes_escuchados),
-        Triple(CajonViewModel.TIPO_ARTISTA, e.musicosVivos.size, R.plurals.artistas_guardados),
-        Triple(Tipos.LIBRO, terminadas.count { it.tipo == Tipos.LIBRO }, R.plurals.libros_leidos),
-    )
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-        cifras.forEach { (t, n, etiqueta) ->
-            val nombre = pluralStringResource(etiqueta, n)
-            Column(Modifier.clip(forma(14.dp)).clickable {
-                vm.irA(when (t) { Tipos.LIBRO -> Pestana.LIBROS; Tipos.ALBUM, CajonViewModel.TIPO_ARTISTA -> Pestana.MUSICA; else -> Pestana.CINE })
-            }.padding(horizontal = 6.dp, vertical = 4.dp).semantics(mergeDescendants = true) { contentDescription = "$n $nombre" },
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                IconoRiso(Iconos.de(t), null, tamano = 20.dp, tinta = f.acentoTexto)
-                Text("$n", fontFamily = f.cifras, fontSize = 18.sp, color = f.texto)
-            }
-        }
     }
 
     // ¿Qué te pareció? Lo último que terminaste sin nota: calificarlo con un toque o escribir la reseña.
@@ -291,7 +282,7 @@ fun Carrusel(obras: List<Obra>, vm: CajonViewModel, conProgreso: Boolean) {
 
 /** La frase del saludo: una de la casa, o una sobre lo que tienes en curso o acabas de terminar. */
 /** La frase del saludo: su [clave] (para los votos), su texto y, si habla de algo, el nombre de eso. */
-data class Frase(val clave: String, val texto: Int, val obra: String? = null)
+data class Frase(val clave: String, val texto: Int, val obra: String? = null, val literal: String? = null)
 
 /**
  * Elige la frase del saludo. Las candidatas salen del momento (mañana, tarde, noche) y de lo que la persona tiene:
@@ -299,7 +290,10 @@ data class Frase(val clave: String, val texto: Int, val obra: String? = null)
  * escucha. Cada una con su peso, y [Frases.elegir] las mezcla con los votos de la comunidad y los suyos. [vuelta]
  * cambia el sorteo (tocar la frase).
  */
-fun fraseDelDia(e: Estado, dia: Int, hora: Int, comunidad: Map<String, Frases.Votos> = emptyMap(), vuelta: Int = 0): Frase {
+fun fraseDelDia(
+    e: Estado, dia: Int, hora: Int, comunidad: Map<String, Frases.Votos> = emptyMap(), vuelta: Int = 0,
+    momento: CajonViewModel.DelMomento = CajonViewModel.DelMomento(), deLaGente: List<io.github.fogonapps.cajon.datos.FraseComunidad> = emptyList(),
+): Frase {
     val ahora = System.currentTimeMillis()
     val dias = { d: Int -> ahora - d * 86_400_000L }
     val enCurso = e.vivas.filter { it.estado == Estados.EN_CURSO }.maxByOrNull { it.cambio }
@@ -307,23 +301,42 @@ fun fraseDelDia(e: Estado, dia: Int, hora: Int, comunidad: Map<String, Frases.Vo
     val encanto = e.vivas.filter { it.estado == Estados.TERMINADO && it.nota >= 4 && it.cambio > dias(14) }.maxByOrNull { it.cambio }
     val nueva = e.vivas.filter { it.estado == Estados.QUIERO && it.cambio > dias(7) }.maxByOrNull { it.cambio }
     val disco = e.vivas.filter { it.tipo == Tipos.ALBUM && it.creador.isNotBlank() && it.estado != Estados.QUIERO }.maxByOrNull { it.cambio }
+    // Lo del momento hace frases nuevas solas: lo que todos ven, escuchan o leen esta semana (lo que no tenga ya).
+    val propias = e.vivas.map { it.titulo.lowercase() }.toSet()
+    fun delMomento(t: String) = (momento.obras[t].orEmpty().map { it.titulo } + momento.buscados[t].orEmpty().map { it.titulo })
+        .firstOrNull { it.lowercase() !in propias }
+    val discoDeLaSemana = momento.obras[Tipos.ALBUM].orEmpty().firstOrNull { it.titulo.lowercase() !in propias }
     val obras = buildMap {
         enCurso?.let { put("frase_seguimos", it.titulo) }
         terminada?.takeIf { it.nota == 0 }?.let { put("frase_que_tal", it.titulo) }
         encanto?.let { put("frase_te_gusto", it.titulo) }
         nueva?.let { put("frase_play", it.titulo) }
         disco?.let { put("frase_artista", it.creador) }
+        delMomento(Tipos.PELICULA)?.let { put("frase_momento_peli", it) }
+        delMomento(Tipos.SERIE)?.let { put("frase_momento_serie", it) }
+        delMomento(Tipos.ANIME)?.let { put("frase_momento_anime", it) }
+        discoDeLaSemana?.let { put("frase_momento_disco", if (it.creador.isBlank()) it.titulo else "${it.titulo} (${it.creador})") }
+        delMomento(Tipos.LIBRO)?.let { put("frase_momento_libro", it) }
     }
     val candidatas = buildMap {
         obras.keys.forEach { put(it, 1.5) }
         (when (hora) { in 5..11 -> FRASES_MANANA; in 12..18 -> FRASES_TARDE; else -> FRASES_NOCHE }).forEach { put(it, 1.3) }
         FRASES_SIEMPRE.forEach { put(it, 1.0) }
+        deLaGente.forEach { put(it.clave, 1.0) }
     }
     val clave = Frases.elegir(candidatas, comunidad, e.ajustes.frasesGusta.toSet(), e.ajustes.frasesNo.toSet(), (dia * 24L + hora) * 7919 + vuelta)
         ?: FRASES_SIEMPRE.first()
-    return Frase(clave, TEXTOS_FRASES.getValue(clave), obras[clave])
+    return fraseDeClave(clave, obras[clave], deLaGente) ?: Frase(FRASES_SIEMPRE.first(), TEXTOS_FRASES.getValue(FRASES_SIEMPRE.first()))
 }
 
+/** Arma la frase de una clave (de la app, con su obra, o de la gente); null si ya no existe. */
+fun fraseDeClave(clave: String, obra: String?, deLaGente: List<io.github.fogonapps.cajon.datos.FraseComunidad>): Frase? {
+    TEXTOS_FRASES[clave]?.let { r -> return if (clave in CON_OBRA && obra == null) null else Frase(clave, r, obra) }
+    return deLaGente.firstOrNull { it.clave == clave }?.let { Frase(clave, 0, literal = it.texto) }
+}
+
+private val CON_OBRA = setOf("frase_seguimos", "frase_que_tal", "frase_te_gusto", "frase_play", "frase_artista",
+    "frase_momento_peli", "frase_momento_serie", "frase_momento_anime", "frase_momento_disco", "frase_momento_libro")
 private val FRASES_MANANA = listOf("frase_manana_1", "frase_manana_2")
 private val FRASES_TARDE = listOf("frase_tarde_1", "frase_tarde_2")
 private val FRASES_NOCHE = listOf("frase_noche_1", "frase_noche_2", "frase_noche_3")
@@ -331,6 +344,9 @@ private val FRASES_SIEMPRE = (1..22).map { "frase_$it" }
 private val TEXTOS_FRASES = mapOf(
     "frase_seguimos" to R.string.frase_seguimos, "frase_que_tal" to R.string.frase_que_tal, "frase_te_gusto" to R.string.frase_te_gusto,
     "frase_play" to R.string.frase_play, "frase_artista" to R.string.frase_artista,
+    "frase_momento_peli" to R.string.frase_momento_peli, "frase_momento_serie" to R.string.frase_momento_serie,
+    "frase_momento_anime" to R.string.frase_momento_anime, "frase_momento_disco" to R.string.frase_momento_disco,
+    "frase_momento_libro" to R.string.frase_momento_libro,
     "frase_manana_1" to R.string.frase_manana_1, "frase_manana_2" to R.string.frase_manana_2,
     "frase_tarde_1" to R.string.frase_tarde_1, "frase_tarde_2" to R.string.frase_tarde_2,
     "frase_noche_1" to R.string.frase_noche_1, "frase_noche_2" to R.string.frase_noche_2, "frase_noche_3" to R.string.frase_noche_3,
@@ -343,4 +359,4 @@ private val TEXTOS_FRASES = mapOf(
 )
 
 @Composable
-fun textoFrase(f: Frase): String = if (f.obra != null) stringResource(f.texto, f.obra) else stringResource(f.texto)
+fun textoFrase(f: Frase): String = f.literal ?: if (f.obra != null) stringResource(f.texto, f.obra) else stringResource(f.texto)

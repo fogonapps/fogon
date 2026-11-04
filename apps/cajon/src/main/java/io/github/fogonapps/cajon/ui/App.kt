@@ -99,6 +99,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val e by vm.estado.collectAsStateWithLifecycle()
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
+    val yoEnLaRed by vm.red.usuario.collectAsStateWithLifecycle()
     val f = FogonTema.actual
     val snack = remember { SnackbarHostState() }
     var pregunta by remember { mutableStateOf<Pregunta?>(null) }
@@ -156,6 +157,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Diario -> Diario(vm, estado)
                             Pantalla.Listas -> Listas(vm, estado)
                             Pantalla.Cifras -> Tu(vm, estado)
+                            is Pantalla.CifrasDe -> Tu(vm, estado, p.seccion)
                             Pantalla.Artistas -> Artistas(vm, estado)
                             Pantalla.Retos -> Retos(vm, estado)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
@@ -179,7 +181,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Licencias -> Licencias(vm)
                             Pantalla.CuentaRed -> CuentaRed(vm, estado)
                             Pantalla.Red -> PantallaRed(vm, estado)
-                            is Pantalla.PerfilRed -> PerfilRed(vm, p.usuario)
+                            // Tu propio perfil es uno solo, aunque se llegue desde la red.
+                            is Pantalla.PerfilRed -> if (p.usuario == yoEnLaRed) Perfil(vm, estado) else PerfilRed(vm, p.usuario)
                             is Pantalla.PublicacionRed -> PublicacionRed(vm, p.id)
                             Pantalla.AvisosRed -> AvisosRed(vm)
                             Pantalla.GuardadosRed -> GuardadosRed(vm)

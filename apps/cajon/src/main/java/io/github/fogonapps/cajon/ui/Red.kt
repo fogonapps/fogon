@@ -256,10 +256,7 @@ fun FeedInicio(vm: CajonViewModel) {
         lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
         lista.isEmpty() -> Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Pista(stringResource(R.string.red_feed_vacio))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Pildora(stringResource(R.string.red_buscar_gente), Iconos.Buscar) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
-                Pildora(stringResource(R.string.red_explorar), Iconos.Gente) { vm.irA(io.github.fogonapps.cajon.Pestana.PARA_TI) }
-            }
+            Row { Pildora(stringResource(R.string.red_explorar), Iconos.Gente) { vm.irA(io.github.fogonapps.cajon.Pestana.PARA_TI) } }
         }
         else -> lista.take(4).forEach { TarjetaPublicacion(vm, it) }
     }
@@ -280,19 +277,16 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
     val sinLeer by vm.red.sinLeer.collectAsStateWithLifecycle()
     var pestana by rememberSaveable { mutableStateOf(if (usuario == null) 1 else 0) }
     LaunchedEffect(pestana, usuario) { if (pestana == 0) vm.red.cargarFeed() else vm.red.cargarExplorar(); vm.red.cargarNotas(); vm.red.revisarSinLeer() }
-    Cabecera(stringResource(R.string.red_titulo), if (enPestana) null else vm::cerrar) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonIcono(Iconos.Buscar, stringResource(R.string.red_buscar_gente)) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
-            usuario?.let { u -> Box(Modifier.padding(horizontal = 4.dp).clip(CircleShape).clickable { vm.abrir(Pantalla.PerfilRed(u)) }) { AvatarRed(PersonaSocial(u, foto = true), 36.dp) } }
-            if (usuario != null) {
-                BotonIcono(Iconos.Comentario, stringResource(R.string.chat_titulo)) { vm.abrir(Pantalla.Chats()) }
-                Box {
-                    BotonIcono(Iconos.Campana, stringResource(R.string.red_avisos), tinta = if (sinLeer > 0) f.acentoTexto else null) { vm.abrir(Pantalla.AvisosRed) }
-                    if (sinLeer > 0) Box(Modifier.align(Alignment.TopEnd).clip(CircleShape).background(f.tinta1).padding(horizontal = 5.dp, vertical = 1.dp)) {
-                        Text(if (sinLeer > 9) "9+" else "$sinLeer", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
-                    }
-                }
-            }
+    // Arriba: tu foto al principio (abre tu perfil), el título y, a la derecha, avisos y mensajes con lo que tengan sin leer.
+    val chats by vm.chat.conversaciones.collectAsStateWithLifecycle()
+    val sinLeerChat = remember(chats) { vm.chat.sinLeer() }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (!enPestana) BotonIcono(Iconos.Atras, stringResource(R.string.volver)) { vm.cerrar() }
+        FotoPerfil(e.perfil.foto, 40.dp, e.perfil.encuadreFoto, descripcion = stringResource(R.string.tu_perfil)) { vm.abrirMiPerfil() }
+        Text(stringResource(R.string.red_titulo), style = MaterialTheme.typography.headlineSmall, color = f.texto, modifier = Modifier.weight(1f))
+        if (usuario != null) {
+            ConCuenta(sinLeer) { BotonIcono(Iconos.Campana, stringResource(R.string.red_avisos), grande = true) { vm.abrir(Pantalla.AvisosRed) } }
+            ConCuenta(sinLeerChat) { BotonIcono(Iconos.Enviar, stringResource(R.string.chat_titulo), grande = true, lleno = sinLeerChat > 0) { vm.abrir(Pantalla.Chats()) } }
         }
     }
     // Paso 1: lo que te gusta (con eso se ordena lo que ves). Paso 2: tu cuenta.
@@ -331,6 +325,18 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
                 Text(stringResource(R.string.red_al_dia), style = MaterialTheme.typography.titleMedium, color = f.texto)
                 Text(stringResource(R.string.red_al_dia_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
             }
+        }
+    }
+}
+
+/** Un botón con su número arriba (lo que hay sin leer). */
+@Composable
+private fun ConCuenta(n: Int, boton: @Composable () -> Unit) {
+    val f = FogonTema.actual
+    Box {
+        boton()
+        if (n > 0) Box(Modifier.align(Alignment.TopEnd).clip(CircleShape).background(f.tinta1).padding(horizontal = 5.dp, vertical = 1.dp)) {
+            Text(if (n > 9) "9+" else "$n", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
         }
     }
 }
@@ -491,20 +497,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             else if (g.isEmpty()) Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp)) else CuadriculaPublicaciones(vm, g)
         }
     }
-    if (propio) {
-        // Lo demás de tu perfil (cifras, evolución, diario, destacados): en el perfil del teléfono.
-        FilaVidrio({ vm.abrir(Pantalla.Perfil) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            IconoRiso(Iconos.Cifras, null, tamano = 20.dp, tinta = f.acentoTexto)
-            Text(stringResource(R.string.red_mas_de_tu_perfil), color = f.texto, modifier = Modifier.weight(1f))
-            IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
-        }
-        Pista(stringResource(R.string.red_que_ven_pista), Modifier.padding(16.dp))
-    }
 }
 
 /** Las publicaciones en cuadrícula, con sus vistas: la foto, la portada de la obra o unas palabras. */
 @Composable
-private fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) {
+fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) {
     val f = FogonTema.actual
     lista.chunked(3).forEach { fila ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -538,7 +535,6 @@ private fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.dat
     val generos = (p.partes["gustos"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
     if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty()) {
         Pista(stringResource(if (propio) R.string.red_gustos_vacios_propio else R.string.red_gustos_vacios), Modifier.padding(16.dp))
-        if (propio) Row(Modifier.padding(horizontal = 16.dp)) { Pildora(stringResource(R.string.red_ir_a_mi_perfil), Iconos.Persona) { vm.abrir(Pantalla.Perfil) } }
         return
     }
     if (destacados.isNotEmpty()) {
@@ -1193,6 +1189,20 @@ fun Moderacion(vm: CajonViewModel) {
                     Pildora(stringResource(R.string.mod_falta), acento = true) { vm.red.decidir(c, "falta") }
                     Pildora(stringResource(R.string.mod_grave)) { vm.red.decidir(c, "falta_grave") }
                     Pildora(stringResource(R.string.mod_cerrar)) { vm.red.decidir(c, "cerrar") }
+                }
+            }
+        }
+    }
+    val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
+    if (frases.isNotEmpty()) {
+        Seccion(stringResource(R.string.mod_frases))
+        frases.forEach { fr ->
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(fr.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                Text("@${fr.de} · ${fr.idioma}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Pildora(stringResource(R.string.mod_aprobar), acento = true) { vm.red.decidirFrase(fr.clave, true) }
+                    Pildora(stringResource(R.string.mod_rechazar)) { vm.red.decidirFrase(fr.clave, false) }
                 }
             }
         }

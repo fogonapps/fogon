@@ -73,23 +73,6 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Text(stringResource(R.string.tut_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
                 CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre))
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-                BotonRiso(stringResource(R.string.siguiente), { paso = 2 }, Modifier.fillMaxWidth())
-            }
-            // Sin muñeco: ya salió en el primer paso (uno por pantalla, y no en todas).
-            2 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(stringResource(R.string.tut_como), style = MaterialTheme.typography.headlineSmall, color = f.texto)
-                Column(Modifier.fillMaxWidth().tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    listOf(
-                        Iconos.Mas to R.string.tut_como_buscar,
-                        Iconos.Corazon to R.string.tut_como_no,
-                        Iconos.Estrella to R.string.tut_como_favoritas,
-                    ).forEach { (icono, texto) ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Ficha(f.tinta1, icono)
-                            Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
                 BotonRiso(stringResource(R.string.siguiente), { paso = 3 }, Modifier.fillMaxWidth())
             }
             else -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

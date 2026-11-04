@@ -92,6 +92,10 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS frases(
                     clave TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, valor INTEGER NOT NULL,
                     cuando INTEGER NOT NULL, PRIMARY KEY(clave, cuenta)) WITHOUT ROWID""")
+                // Frases que propone la gente para el saludo: salen para todos solo cuando una persona del equipo las aprueba.
+                s.execute("""CREATE TABLE IF NOT EXISTS frases_propuestas(
+                    id INTEGER PRIMARY KEY, cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL, texto TEXT NOT NULL, idioma TEXT NOT NULL,
+                    estado TEXT NOT NULL DEFAULT 'pendiente', cuando INTEGER NOT NULL)""")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

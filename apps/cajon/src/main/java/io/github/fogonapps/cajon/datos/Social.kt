@@ -88,6 +88,10 @@ data class PerfilSubido(
 @Serializable data class DelMomentoServidor(val dia: String = "", val peliculas: List<Buscado> = emptyList(), val series: List<Buscado> = emptyList(), val anime: List<Buscado> = emptyList())
 @Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
 @Serializable data class VotoFrase(val valor: Int)
+@Serializable data class FraseNueva(val texto: String, val idioma: String)
+/** Una frase propuesta por la gente (aprobada; con [de] cuando es para moderar). */
+@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String = "", val de: String = "")
+@Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
@@ -172,6 +176,8 @@ class ClienteSocial(private val token: String? = null) {
     /* Publicaciones */
     suspend fun subirPublicaciones(lista: List<PublicacionSubida>) { pedir("/publicaciones", "PUT", json(ListSerializer(PublicacionSubida.serializer()), lista)) }
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
+    /** Las reseñas de una obra que puede ver esta persona (las públicas y las de quienes sigue). */
+    suspend fun resenas(fuente: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/resenas?fuente=${cod(fuente)}"))
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun publicacion(id: Long) = leer(PublicacionSocial.serializer(), pedir("/publicaciones/$id"))
     suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))
@@ -193,6 +199,10 @@ class ClienteSocial(private val token: String? = null) {
 
     /** Los votos de la comunidad a las frases del saludo (clave → sí y no). */
     suspend fun frases(): Map<String, ConteoFrase> = leer(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ConteoFrase.serializer()), pedir("/frases"))
+    suspend fun frasesComunidad(idioma: String) = leer(ListSerializer(FraseComunidad.serializer()), pedir("/frases/comunidad?idioma=${cod(idioma)}"))
+    suspend fun proponerFrase(texto: String, idioma: String) { pedir("/frases/propuestas", "POST", json(FraseNueva.serializer(), FraseNueva(texto, idioma))) }
+    suspend fun frasesPendientes() = leer(ListSerializer(FraseComunidad.serializer()), pedir("/admin/frases"))
+    suspend fun decidirFrase(clave: String, aprobar: Boolean) { pedir("/admin/frases", "POST", json(DecisionFrase.serializer(), DecisionFrase(clave, aprobar))) }
     suspend fun votarFrase(clave: String, valor: Int) { pedir("/frases/${cod(clave)}", "PUT", json(VotoFrase.serializer(), VotoFrase(valor))) }
 
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }

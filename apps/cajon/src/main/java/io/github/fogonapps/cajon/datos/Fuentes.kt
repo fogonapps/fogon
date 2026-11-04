@@ -217,6 +217,13 @@ class Tmdb(private val clave: String) {
     /** Lo que más se está viendo esta semana (películas y series), para elegir gustos y para explorar. */
     suspend fun tendencias(idioma: String): List<Encontrado> = lista(pedir("trending/all/week", "language" to lengua(idioma)), null, idioma)
 
+    /** El anime que está al aire (con capítulos en el último mes), lo más popular primero. */
+    suspend fun animeAlAire(idioma: String): List<Encontrado> {
+        val desde = java.time.LocalDate.now().minusDays(30).toString()
+        return lista(pedir("discover/tv", "language" to lengua(idioma), "sort_by" to "popularity.desc", "with_genres" to "16",
+            "with_original_language" to "ja", "air_date.gte" to desde, "include_adult" to "false"), "tv", idioma)
+    }
+
     /** Lo más visto de la semana de una sola clase ("movie" o "tv"); el anime sale de [descubrir] con anime = true. */
     suspend fun tendenciasDe(clase: String, idioma: String): List<Encontrado> = lista(pedir("trending/$clase/week", "language" to lengua(idioma)), clase, idioma)
 
@@ -402,10 +409,12 @@ object OpenLibrary {
         return ordenar(pedirJson(u).jsonObject.arr("works").map { it.jsonObject }, idioma, tope = 40)
     }
 
-    /** Los libros más buscados de la semana en Open Library. */
+    /** Los libros de este año y el anterior que más se están buscando en Open Library (lo de ahora, no los clásicos de siempre). */
     suspend fun tendencias(idioma: String): List<Encontrado> {
-        val u = base.newBuilder().addPathSegments("trending/weekly.json").addQueryParameter("limit", "40").build()
-        return ordenar(pedirJson(u).jsonObject.arr("works").map { it.jsonObject }, idioma, tope = 24)
+        val anio = java.time.LocalDate.now().year
+        val u = base.newBuilder().addPathSegment("search.json").addQueryParameter("q", "first_publish_year:[${anio - 1} TO $anio]")
+            .addQueryParameter("sort", "trending").addQueryParameter("fields", CAMPOS).addQueryParameter("limit", "40").build()
+        return ordenar(pedirJson(u).jsonObject.arr("docs").map { it.jsonObject }, idioma, tope = 24)
     }
 
     /** Las obras de un autor por su nombre (cuando no se tiene su id de Open Library), las más editadas primero. */
@@ -893,6 +902,26 @@ object Wikimedia {
     private val commons = "https://commons.wikimedia.org/w/api.php".toHttpUrl()
 
     /**
+     * Lo que alguien compartió desde una plataforma, por su id en ella: Netflix (P1874) o un álbum de Spotify (P2205).
+     * Wikidata lo une con su id de TMDB o de MusicBrainz; devuelve la obra para abrirla, o null si no la conoce.
+     */
+    suspend fun deLaPlataforma(propiedad: String, id: String, idioma: String): Encontrado? {
+        if (propiedad !in setOf("P1874", "P2205") || !id.matches(Regex("[A-Za-z0-9]{4,40}"))) return null
+        val q = "SELECT ?l ?le ?pm ?pt ?rg WHERE { ?i wdt:$propiedad \"$id\" . OPTIONAL { ?i rdfs:label ?l FILTER(lang(?l) = \"$idioma\") } " +
+            "OPTIONAL { ?i rdfs:label ?le FILTER(lang(?le) = \"en\") } OPTIONAL { ?i wdt:P4947 ?pm } OPTIONAL { ?i wdt:P4983 ?pt } OPTIONAL { ?i wdt:P436 ?rg } } LIMIT 1"
+        val u = sparql.newBuilder().addQueryParameter("query", q).addQueryParameter("format", "json").build()
+        val b = ((pedirJson(u, mapOf("Accept" to "application/sparql-results+json")).jsonObject["results"] as? JsonObject)?.arr("bindings")?.firstOrNull() as? JsonObject) ?: return null
+        fun v(k: String) = (b[k] as? JsonObject)?.get("value").texto()
+        val titulo = v("l").ifBlank { v("le") }.ifBlank { return null }
+        return when {
+            v("pm").isNotBlank() -> Encontrado(Tipos.PELICULA, titulo, null, "", "", "tmdb:movie:${v("pm")}")
+            v("pt").isNotBlank() -> Encontrado(Tipos.SERIE, titulo, null, "", "", "tmdb:tv:${v("pt")}")
+            v("rg").isNotBlank() -> Encontrado(Tipos.ALBUM, titulo, null, "", MusicBrainz.caratula(v("rg"), 500), "mb:rg:${v("rg")}")
+            else -> Encontrado(if (propiedad == "P2205") Tipos.ALBUM else Tipos.PELICULA, titulo, null, "", "", "")
+        }
+    }
+
+    /**
      * id → dirección de la foto (400 px de ancho). Una sola consulta para varias personas. [propiedad] es cómo
      * Wikidata guarda el id: P434 (MusicBrainz, artistas) o P648 (Open Library, escritores).
      */
@@ -1003,6 +1032,8 @@ object TvMaze {
             .mapNotNull { s ->
                 val foto = (s["image"] as? JsonObject)?.get("medium").texto().replace("http://", "https://")
                 if (foto.isBlank() || s["language"].texto() !in setOf("English", "Spanish", "Japanese", "Korean")) return@mapNotNull null
+                // Solo series nuevas (de este año o el anterior), no las de toda la vida que estrenan capítulo.
+                if ((anioDe(s["premiered"].texto()) ?: 0) < java.time.LocalDate.now().year - 1) return@mapNotNull null
                 Encontrado(Tipos.SERIE, s["name"].texto(), anioDe(s["premiered"].texto()), "", foto, "tvmaze:${s["id"].entero()}")
             }.take(24)
     }

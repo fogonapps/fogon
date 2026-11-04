@@ -45,6 +45,49 @@ data class Importado(val obras: List<Obra>, val deDonde: String)
 
 object Importar {
 
+    /**
+     * El historial de Netflix (Cuenta → Perfil → Actividad → Descargar todo: NetflixViewingHistory.csv, con "Title" y
+     * "Date"). Lo que tiene "Temporada", "Capítulo"… es una serie (se junta por su nombre, en curso, con un registro por
+     * día); lo demás, una película vista. Null si no parece de Netflix.
+     */
+    fun netflix(texto: String, nuevoId: (String) -> String, ahora: Long): Importado? {
+        val filas = leerCsv(texto)
+        if (filas.isEmpty() || filas.first().keys.map { it.lowercase() }.toSet() != setOf("title", "date")) return null
+        val partes = Regex("(?i)^(temporada|season|parte|part|volumen|volume|libro|book|capítulo|capitulo|episodio|episode|chapter|serie limitada|limited series|miniserie|miniseries|colección|collection)\\b")
+        // La fecha viene según el país: d/m/aa o m/d/aa; si alguna tiene un día mayor que 12, se sabe cuál es.
+        val fechas = filas.mapNotNull { it["Date"] ?: it["date"] }.map { it.split('/', '-', '.') }
+        val diaPrimero = fechas.any { (it.getOrNull(0)?.toIntOrNull() ?: 0) > 12 } || fechas.none { (it.getOrNull(1)?.toIntOrNull() ?: 0) > 12 }
+        fun fecha(s: String): String? {
+            val p = s.split('/', '-', '.').mapNotNull { it.trim().toIntOrNull() }
+            if (p.size != 3) return null
+            if (s.length >= 10 && p[0] > 31) return "%04d-%02d-%02d".format(p[0], p[1], p[2])
+            val (d, m) = if (diaPrimero) p[0] to p[1] else p[1] to p[0]
+            val a = if (p[2] < 100) 2000 + p[2] else p[2]
+            return runCatching { java.time.LocalDate.of(a, m, d).toString() }.getOrNull()
+        }
+        data class Vista(val titulo: String, val serie: Boolean, val fechas: MutableSet<String> = sortedSetOf())
+        val vistas = LinkedHashMap<String, Vista>()
+        filas.forEach { f ->
+            val t = (f["Title"] ?: f["title"]).orEmpty().trim().ifBlank { return@forEach }
+            val trozos = t.split(": ")
+            val corte = trozos.indexOfFirst { it.trim().contains(partes) }
+            // Serie solo si después de la temporada viene el capítulo ("Dune: Parte Dos" es una película).
+            val (nombre, serie) = if (corte > 0 && corte < trozos.size - 1) trozos.take(corte).joinToString(": ") to true else t to false
+            val v = vistas.getOrPut(nombre.lowercase()) { Vista(nombre, serie) }
+            fecha((f["Date"] ?: f["date"]).orEmpty())?.let { v.fechas += it }
+        }
+        if (vistas.isEmpty()) return null
+        val obras = vistas.values.map { v ->
+            Obra(
+                id = nuevoId("o"), tipo = if (v.serie) Tipos.SERIE else Tipos.PELICULA, titulo = v.titulo,
+                estado = if (v.serie) Estados.EN_CURSO else Estados.TERMINADO,
+                registros = if (v.serie) emptyList() else v.fechas.map { Registro(nuevoId("g"), it) },
+                terminada = if (v.serie) null else v.fechas.maxOrNull(), empezada = v.fechas.minOrNull(), agregada = ahora, cambio = ahora,
+            )
+        }
+        return Importado(obras, "Netflix")
+    }
+
     /** El ZIP de Letterboxd o uno de sus CSV. Null si no parece de Letterboxd. */
     fun letterboxd(bytes: ByteArray, nombre: String, nuevoId: (String) -> String, ahora: Long): Importado? {
         val archivos: Map<String, String> = if (bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()) {

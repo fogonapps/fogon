@@ -72,6 +72,7 @@ import io.github.fogonapps.cajon.Sticker
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.PersonaSocial
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.identidad.legibleSobre
@@ -97,25 +98,15 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
     var buscar by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.chat.recibir() }
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
-    Cabecera(stringResource(if (o != null) R.string.chat_mandar_a else R.string.chat_titulo), vm::cerrar)
+    Cabecera(stringResource(if (o != null) R.string.chat_mandar_a else R.string.chat_titulo), vm::cerrar) {
+        if (o == null) BotonIcono(Iconos.Lapiz, stringResource(R.string.chat_nuevo), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
+    }
     if (usuario == null) { Pista(stringResource(R.string.red_invita_texto), Modifier.padding(16.dp)); return }
     LaunchedEffect(Unit) { vm.red.cargarNotas() }
     if (o == null) FilaNotas(vm, e)
     o?.let { Pista(stringResource(R.string.chat_mandar_obra, it.titulo), Modifier.padding(horizontal = 16.dp)) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        IconoRiso(Iconos.Candado, null, tamano = 16.dp, tinta = f.textoSuave)
-        Text(stringResource(R.string.chat_cifrado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-    }
-    // Empezar una conversación: buscar a alguien por su @usuario.
-    OutlinedTextField(buscar, { buscar = it.take(40); vm.buscarPersonas(it) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        placeholder = { Text(stringResource(R.string.chat_buscar)) }, singleLine = true, shape = forma(22.dp),
-        leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 18.dp, tinta = f.textoSuave) })
     fun abrir(u: String) {
         if (o != null) { vm.chat.enviar(u, "", o); vm.reemplazar(Pantalla.Conversacion(u)) } else vm.abrir(Pantalla.Conversacion(u))
-    }
-    if (buscar.trim().length >= 2) {
-        b.personas.filter { it.usuario != usuario }.forEach { p -> FilaPersona(p, { abrir(p.usuario) }) }
-        return
     }
     if (chats.isEmpty()) { Pista(stringResource(R.string.chat_vacio), Modifier.padding(16.dp)); return }
     chats.entries.sortedByDescending { it.value.lastOrNull()?.cuando ?: 0 }.forEach { (u, l) ->
@@ -215,7 +206,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                 AvatarRed(persona.copy(foto = persona.foto || personas[usuario] == null), 38.dp)
                 Column(Modifier.weight(1f)) {
                     Text(nombre, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(stringResource(R.string.chat_cifrado_corto), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
+                    Text("@$usuario", style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
                 }
             }
             BotonIcono(Iconos.Opciones, stringResource(R.string.chat_info)) { vm.abrir(Pantalla.InfoChat(usuario)) }
@@ -227,7 +218,9 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                 val anterior = alReves.getOrNull(i + 1)
                 Column {
                     if (anterior == null || diaDe(anterior.cuando) != dia) SeparadorDia(dia)
-                    Burbuja(vm, e, m, usuario, yo, nombre, estilo,
+                    // La foto de la otra persona va junto a su último mensaje seguido (como en los chats de siempre).
+                    val siguiente = alReves.getOrNull(i - 1)
+                    Burbuja(vm, e, m, usuario, yo, nombre, estilo, persona.takeIf { !m.mio && (siguiente == null || siguiente.mio) },
                         onResponder = { responder = m },
                         onMenu = { menuDe = m },
                         onIrA = { clave -> alReves.indexOfFirst { it.clave == clave }.takeIf { it >= 0 }?.let { alcance.launch { estado.animateScrollToItem(it) } } })
@@ -260,11 +253,17 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
             }
         }
         if (stickers) PanelStickers(vm) { s -> vm.chat.enviar(usuario, "", responde = responder, sticker = s); responder = null }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            BotonIcono(Iconos.Cajon, stringResource(R.string.chat_mandar_una_obra)) { elegir = !elegir; stickers = false }
-            BotonIcono(Iconos.Sticker, stringResource(R.string.chat_stickers), tinta = if (stickers) f.acentoTexto else null) { stickers = !stickers; elegir = false }
-            OutlinedTextField(texto, { texto = it.take(4000) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.chat_escribe)) }, shape = forma(22.dp), maxLines = 5)
-            BotonIcono(Iconos.Enviar, stringResource(R.string.red_enviar), activo = texto.isNotBlank() && !enviando, lleno = true) {
+        // La barra de escribir: una sola píldora, con mandar una obra a la izquierda y los stickers (o enviar) a la derecha.
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
+            .padding(horizontal = 6.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { elegir = !elegir; stickers = false }, contentAlignment = Alignment.Center) {
+                IconoRiso(Iconos.Cajon, stringResource(R.string.chat_mandar_una_obra), tamano = 20.dp, tinta = f.sobreTinta1)
+            }
+            androidx.compose.foundation.text.BasicTextField(texto, { texto = it.take(4000) }, Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 10.dp), maxLines = 5,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = f.texto), cursorBrush = androidx.compose.ui.graphics.SolidColor(f.acentoTexto),
+                decorationBox = { campo -> Box { if (texto.isEmpty()) Text(stringResource(R.string.chat_escribe), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave); campo() } })
+            if (texto.isBlank()) BotonIcono(Iconos.Sticker, stringResource(R.string.chat_stickers), tinta = if (stickers) f.acentoTexto else null) { stickers = !stickers; elegir = false }
+            else BotonIcono(Iconos.Enviar, stringResource(R.string.red_enviar), activo = !enviando, lleno = true) {
                 vm.chat.enviar(usuario, texto, responde = responder); texto = ""; responder = null
             }
         }
@@ -348,7 +347,7 @@ private fun SeparadorDia(dia: LocalDate) {
 @Composable
 private fun Burbuja(
     vm: CajonViewModel, e: Estado, m: MensajeChat, usuario: String, yo: String?, nombre: String, estilo: EstiloChat,
-    onResponder: () -> Unit, onMenu: () -> Unit, onIrA: (String) -> Unit,
+    foto: PersonaSocial?, onResponder: () -> Unit, onMenu: () -> Unit, onIrA: (String) -> Unit,
 ) {
     val f = FogonTema.actual
     val (fondoMio, letraMia) = coloresPropios(estilo)
@@ -368,8 +367,12 @@ private fun Burbuja(
             ) { _, d -> corrido = (corrido + d).coerceIn(0f, umbral * 1.5f) }
         }
         .offset { IntOffset(corrido.roundToInt(), 0) },
-        horizontalArrangement = if (m.mio) Arrangement.End else Arrangement.Start) {
-        Column(Modifier.widthIn(max = 290.dp).clip(forma(18.dp))
+        horizontalArrangement = if (m.mio) Arrangement.End else Arrangement.Start, verticalAlignment = Alignment.Bottom) {
+        if (!m.mio) {
+            if (foto != null) AvatarRed(foto, 28.dp) else Box(Modifier.size(28.dp))
+            Box(Modifier.width(8.dp))
+        }
+        Column(Modifier.widthIn(max = 280.dp).clip(forma(18.dp))
             .then(if (soloSticker) Modifier else Modifier.background(if (m.mio) fondoMio else f.superficie).border(f.borde, if (m.mio) fondoMio else f.linea, forma(18.dp)))
             .combinedClickable(onClick = {}, onLongClick = onMenu)
             .padding(horizontal = if (soloSticker) 0.dp else 12.dp, vertical = if (soloSticker) 0.dp else 8.dp),
@@ -382,6 +385,7 @@ private fun Burbuja(
             // A qué responde: tocarlo lleva a ese mensaje.
             m.responde?.let { r ->
                 val deMi = r.de == yo
+                Text(stringResource(if (m.mio) R.string.chat_respondiste else R.string.chat_respondio), style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
                 Row(Modifier.clip(forma(10.dp)).background(f.fondo.copy(alpha = 0.35f)).clickable { onIrA(r.k) }) {
                     Box(Modifier.width(3.dp).heightIn(min = 34.dp).background(if (m.mio) letraMia else f.tinta1))
                     Column(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
@@ -449,7 +453,7 @@ private fun PanelStickers(vm: CajonViewModel, onMandar: (String) -> Unit) {
         val q = buscar.trim().lowercase()
         val tuyos = guardados.filter { q.isEmpty() || q in it.nombre.lowercase() }
         Text(stringResource(R.string.chat_stickers_tuyos), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-        if (tuyos.isEmpty()) Pista(stringResource(if (q.isEmpty()) R.string.chat_stickers_vacio else R.string.chat_stickers_nada))
+        if (tuyos.isEmpty() && q.isNotEmpty()) Pista(stringResource(R.string.chat_stickers_nada))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             tuyos.forEach { s -> CeldaSticker(s.imagen, { onMandar(s.imagen) }, { quitar = s }) }
         }
@@ -505,6 +509,8 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
     var verNumero by remember { mutableStateOf(false) }
     var reportar by remember { mutableStateOf(false) }
     var confirmar by remember { mutableStateOf<String?>(null) }
+    var personalizar by remember { mutableStateOf(false) }
+    var opciones by remember { mutableStateOf(false) }
     val numero by produceState<String?>(null, usuario, verNumero) { if (verNumero) value = vm.chat.numeroSeguridad(usuario) }
     LaunchedEffect(usuario) { vm.chat.conocer(usuario) }
     Cabecera(stringResource(R.string.chat_info), vm::cerrar)
@@ -512,9 +518,17 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
         AvatarRed(persona.copy(foto = persona.foto || personas[usuario] == null), 112.dp)
         Text(persona.nombre.ifBlank { "@$usuario" }, style = MaterialTheme.typography.headlineSmall, color = f.texto)
         Text("@$usuario", style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Pildora(stringResource(R.string.red_ver_perfil), Iconos.Persona) { vm.abrir(Pantalla.PerfilRed(usuario)) }
-            Pildora(stringResource(R.string.chat_titulo), Iconos.Comentario) { vm.cerrar() }
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            @Composable
+            fun Accion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, onClick: () -> Unit) =
+                Column(Modifier.clip(forma(16.dp)).clickable(onClick = onClick).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconoRiso(icono, null, tamano = 26.dp, tinta = f.texto)
+                    Text(texto, style = MaterialTheme.typography.labelMedium, color = f.texto)
+                }
+            Accion(Iconos.Persona, stringResource(R.string.chat_perfil)) { vm.abrir(Pantalla.PerfilRed(usuario)) }
+            Accion(Iconos.Imagen, stringResource(R.string.chat_personalizar_corto)) { personalizar = !personalizar }
+            Accion(Iconos.Candado, stringResource(R.string.chat_seguridad)) { verNumero = !verNumero }
+            Accion(Iconos.Opciones, stringResource(R.string.chat_opciones)) { opciones = !opciones }
         }
     }
 
@@ -532,8 +546,8 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
         }
     }
 
-    Seccion(stringResource(R.string.chat_personalizar))
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    if (personalizar) Seccion(stringResource(R.string.chat_personalizar))
+    if (personalizar) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.chat_color_burbujas), style = MaterialTheme.typography.bodyMedium, color = f.texto)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(f.tinta1, f.tinta2, f.superficie).forEachIndexed { i, c ->
@@ -545,19 +559,19 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
         FilaInterruptor(stringResource(R.string.chat_letra_grande), estilo.letraGrande) { vm.chat.ponerEstilo(usuario, estilo.copy(letraGrande = it)) }
     }
 
-    Seccion(stringResource(R.string.chat_cifrado_corto))
-    FilaAjuste(Iconos.Candado, stringResource(R.string.chat_numero), stringResource(R.string.chat_cifrado)) { verNumero = !verNumero }
     if (verNumero) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(18.dp)).background(f.superficie).border(f.borde, f.linea, forma(18.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.chat_numero), style = MaterialTheme.typography.titleSmall, color = f.texto)
         Text(numero ?: "…", fontFamily = f.cifras, style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
         Text(stringResource(R.string.chat_numero_pista, usuario), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
     }
 
-    Seccion(stringResource(R.string.chat_acciones))
-    FilaAjuste(Iconos.Borrar, stringResource(R.string.chat_vaciar), null) { confirmar = "vaciar" }
-    FilaAjuste(Iconos.Borrar, stringResource(R.string.chat_borrar), null) { confirmar = "borrar" }
-    FilaAjuste(Iconos.Candado, stringResource(R.string.red_bloquear), null) { confirmar = "bloquear" }
-    FilaAjuste(Iconos.Bandera, stringResource(R.string.red_reportar), null) { reportar = !reportar }
+    if (opciones) {
+        FilaAjuste(Iconos.Borrar, stringResource(R.string.chat_vaciar), null) { confirmar = "vaciar" }
+        FilaAjuste(Iconos.Borrar, stringResource(R.string.chat_borrar), null) { confirmar = "borrar" }
+        FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloquear), null) { confirmar = "bloquear" }
+        FilaAjuste(Iconos.Bandera, stringResource(R.string.red_reportar), null) { reportar = !reportar }
+    }
     confirmar?.let { c ->
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pista(stringResource(when (c) { "vaciar" -> R.string.chat_vaciar_seguro; "borrar" -> R.string.chat_borrar_seguro; else -> R.string.chat_bloquear_seguro }), Modifier.weight(1f))

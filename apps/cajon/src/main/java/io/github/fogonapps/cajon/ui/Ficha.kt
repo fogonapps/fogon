@@ -262,12 +262,21 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
 
     Sinopsis(o.sinopsis)
 
-    // Lo que escribe la persona.
-    Seccion(stringResource(R.string.tu_resena))
+    // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
+    Seccion(stringResource(R.string.resenas))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         var resena by rememberSaveable(o.id) { mutableStateOf(o.resena) }
         OutlinedTextField(resena, { resena = it; vm.ponerResena(o.id, it) }, Modifier.fillMaxWidth(), minLines = 3,
             placeholder = { Text(stringResource(R.string.resena_pista)) })
+        if (resena.isNotBlank()) {
+            ElegirVisibilidad(o.resenaVisibilidad) { vm.visibilidadResena(o.id, it) }
+            val contexto = androidx.compose.ui.platform.LocalContext.current
+            val estrellas = if (o.nota > 0) "★".repeat(o.nota / 2) + (if (o.nota % 2 == 1) "½" else "") + " " else ""
+            Row { Pildora(stringResource(R.string.compartir), Iconos.Compartir) {
+                contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                    .putExtra(android.content.Intent.EXTRA_TEXT, "${o.titulo} $estrellas\n\n${resena.trim()}"), null))
+            } }
+        }
         // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).
         var notas by rememberSaveable(o.id) { mutableStateOf(o.notas) }
         var conNotas by rememberSaveable(o.id) { mutableStateOf(o.notas.isNotBlank()) }
@@ -275,6 +284,19 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
             label = { Text(stringResource(R.string.datos_curiosos)) })
         else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
     }
+    // Las de la gente (las públicas y las de quienes sigues).
+    if (o.fuente.isNotBlank()) {
+        val listasRed by vm.red.listas.collectAsStateWithLifecycle()
+        LaunchedEffect(o.fuente) { vm.red.cargarResenas(o.fuente) }
+        val yo by vm.red.usuario.collectAsStateWithLifecycle()
+        val deLaGente = listasRed["resenas:${o.fuente}"].orEmpty().filter { it.autor.usuario != yo }
+        if (deLaGente.isNotEmpty()) {
+            Text(stringResource(R.string.resenas_de_la_gente), style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.textoSuave,
+                modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp))
+            deLaGente.take(10).forEach { TarjetaPublicacion(vm, it) }
+        }
+    }
+
     // Las etiquetas propias ("para ver con amigos", "favorita de 2024"…): como los géneros, sin comas.
     EditorEtiquetas("e" + o.id, stringResource(R.string.etiquetas), o.etiquetas, { vm.sugerenciasEtiquetas(null) },
         { vm.ponerEtiquetasObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_etiqueta))

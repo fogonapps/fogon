@@ -105,6 +105,11 @@ class CajaFuerte(context: Context) {
         get() = leer("spotify_renovar")
         set(v) = escribir("spotify_renovar", v)
 
+    /** La frase del saludo de esta franja del día ("franja\tclave\tobra"): no cambia hasta la próxima franja. */
+    var fraseGuardada: String?
+        get() = prefs.getString("frase_guardada", null)
+        set(v) = prefs.edit { if (v == null) remove("frase_guardada") else putString("frase_guardada", v) }
+
     /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
     var tokenSocial: String?
         get() = leer("social")

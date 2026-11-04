@@ -113,6 +113,10 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class ImagenSubida(val nombre: String)
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
 @Serializable data class VotoFrase(val valor: Int)
+@Serializable data class FraseNueva(val texto: String, val idioma: String)
+/** Una frase de la comunidad: su clave para votar ("c" + id), el texto y quién la propuso (solo para moderar). */
+@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String, val de: String = "")
+@Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
 @Serializable data class ConteoFrase(val si: Int, val no: Int)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
@@ -510,6 +514,18 @@ class Social(
     fun publicacion(lector: Long?, id: Long): Publicacion? =
         filas(lector, "p.id = ? AND (p.oculta = 0 OR p.cuenta = ?)", id, lector ?: -1).firstOrNull()?.takeIf { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }?.second
 
+    /**
+     * Las reseñas de una obra (por su [fuente], "tmdb:movie:603"): las públicas de todos y, con sesión, las que deja ver
+     * a quien sigue; sin las de cuentas bloqueadas ni ocultas. Las más nuevas primero.
+     */
+    fun resenas(lector: Long?, fuente: String): List<Publicacion> {
+        if (fuente.isBlank() || fuente.length > 120) return emptyList()
+        return filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena' AND p.oculta = 0 AND c.cerrada = 0
+                AND (? IS NULL OR (p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
+                ORDER BY p.cuando DESC LIMIT 200""", fuente, lector, lector, lector)
+            .filter { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }.map { it.second }.take(50)
+    }
+
     /** El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. */
     fun actividad(yo: Long, antes: Long?, n: Int = 40): List<Publicacion> =
         filas(yo, """(p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)))
@@ -731,6 +747,40 @@ class Social(
             else cambiar("INSERT INTO frases(clave, cuenta, valor, cuando) VALUES(?,?,?,?) ON CONFLICT(clave, cuenta) DO UPDATE SET valor = excluded.valor, cuando = excluded.cuando",
                 clave, yo, v.valor, ahora())
         }
+    }
+
+    /** Propone una frase (hasta 3 al día por cuenta, de 6 a 90 letras, sin enlaces). */
+    fun proponerFrase(yo: Long, f: FraseNueva) {
+        val t = f.texto.trim().replace(Regex("\\s+"), " ")
+        if (t.codePointCount(0, t.length) !in 6..90 || Regex("(?i)https?://|www\\.|@\\w").containsMatchIn(t) || f.idioma !in setOf("es", "en")) throw Problema(400, "frase")
+        b.usar {
+            val hoy = leer("SELECT COUNT(*) FROM frases_propuestas WHERE cuenta = ? AND cuando > ?", yo, ahora() - 86_400_000L) { it.getInt(1) }.first()
+            if (hoy >= 3) throw Problema(429, "despacio")
+            cambiar("INSERT INTO frases_propuestas(cuenta, texto, idioma, cuando) VALUES(?,?,?,?)", yo, t, f.idioma, ahora())
+        }
+    }
+
+    /** Las frases aprobadas de un idioma. */
+    fun frasesComunidad(idioma: String): List<FraseComunidad> = b.usar {
+        leer("SELECT id, texto, idioma FROM frases_propuestas WHERE estado = 'aprobada' AND idioma = ? ORDER BY id DESC LIMIT 300", idioma) {
+            FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3))
+        }
+    }
+
+    /** Las que esperan moderación (solo el equipo). */
+    fun frasesPendientes(yo: Long): List<FraseComunidad> {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        return b.usar {
+            leer("SELECT f.id, f.texto, f.idioma, COALESCE(c.usuario, '') FROM frases_propuestas f LEFT JOIN cuentas c ON c.id = f.cuenta WHERE f.estado = 'pendiente' ORDER BY f.id LIMIT 100") {
+                FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), it.getString(4))
+            }
+        }
+    }
+
+    fun decidirFrase(yo: Long, d: DecisionFrase) {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        val id = d.clave.removePrefix("c").toLongOrNull() ?: throw Problema(400, "frase")
+        b.usar { cambiar("UPDATE frases_propuestas SET estado = ? WHERE id = ?", if (d.aprobar) "aprobada" else "rechazada", id) }
     }
 
     /** Cuántas personas dijeron que sí y que no a cada frase (solo los totales, sin quién). */

@@ -55,7 +55,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.11"
+const val VERSION = "0.13"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -177,6 +177,11 @@ fun Application.fogonSocial(social: Social) {
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }
             get("/momento") { call.respond(Momento.de(call.request.queryParameters["idioma"].orEmpty())) }
+            get("/resenas") { call.respond(social.resenas(call.lector(), call.request.queryParameters["fuente"].orEmpty())) }
+            get("/frases/comunidad") { call.respond(social.frasesComunidad(call.request.queryParameters["idioma"] ?: "es")) }
+            post("/frases/propuestas") { social.proponerFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.Created) }
+            get("/admin/frases") { call.respond(social.frasesPendientes(call.yo())) }
+            post("/admin/frases") { social.decidirFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/frases") { call.respond(social.frases()) }
             put("/frases/{clave}") { social.votarFrase(call.yo(), call.parameters["clave"].orEmpty(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             delete("/avisos") { social.borrarAvisos(call.yo(), null); call.respond(HttpStatusCode.NoContent) }

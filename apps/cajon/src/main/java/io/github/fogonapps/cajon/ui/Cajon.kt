@@ -73,13 +73,11 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     var tipo by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
     var artistas by rememberSaveable(seccion) { mutableStateOf(false) }
     var estado by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
-    var texto by rememberSaveable(seccion) { mutableStateOf("") }
+    val texto = ""
     var orden by rememberSaveable(seccion) { mutableStateOf(Orden.RECIENTES) }
     LaunchedEffect(seccion) { vm.completarFotos() }
 
-    Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp)) {
-        Pildora(stringResource(R.string.buscar), Iconos.Buscar, acento = true) { vm.abrir(Pantalla.Buscar(seccion)) }
-    }
+    Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp))
 
     // Las cifras del apartado: lo terminado este año en grande, y lo demás al lado.
     val anio = vm.hoy().year
@@ -87,7 +85,8 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     val obras = e.vivas.filter { it.tipo in tipos }
     val terminadasAnio = tipos.sumOf { delAnio.porTipo[it] ?: 0 }
     Row(Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio(forma(24.dp))
-        .haloPuntos(f.tinta2.copy(alpha = 0.3f), centro = androidx.compose.ui.geometry.Offset(0.2f, 0.5f)).padding(18.dp),
+        .haloPuntos(f.tinta2.copy(alpha = 0.3f), centro = androidx.compose.ui.geometry.Offset(0.2f, 0.5f))
+        .clickable { vm.abrir(Pantalla.CifrasDe(seccion)) }.padding(18.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f)) {
             NumeroRiso("$terminadasAnio", 48.sp)
@@ -125,12 +124,6 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         Chips(opciones, if (artistas) Personas.DIRECTOR else tipo) { if (it == Personas.DIRECTOR) artistas = true else { artistas = false; tipo = it } }
     } else Chips(listOf(false to nombreTipo(tipos.first()), true to nombreTipo(tipoPersona)), artistas) { artistas = it }
 
-    OutlinedTextField(
-        texto, { texto = it.take(40) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        placeholder = { Text(stringResource(R.string.buscar_en_cajon)) }, singleLine = true, shape = FormaPildora,
-        leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) },
-    )
-
     if (artistas) { CajonArtistas(vm, e, texto, esDeAqui, musica); return }
 
     val tipoEstados = tipo ?: tipos.first()
@@ -163,11 +156,10 @@ private fun BarraSeleccion(vm: CajonViewModel, e: Estado, tipoEstados: String, d
     val elegidas by vm.seleccion.collectAsStateWithLifecycle()
     // Solo las de este apartado (si se cambió de apartado con algo elegido, no cuenta).
     val aqui = elegidas.filter { id -> if (deObras) e.vivas.any { it.id == id } else e.artistasVivos.any { it.id == id } }
-    if (aqui.isEmpty()) { Pista(stringResource(R.string.elegir_varios_pista)); return }
+    if (aqui.isEmpty()) return
     // Atrás cancela la selección antes de salir del apartado.
     androidx.activity.compose.BackHandler { vm.limpiarSeleccion() }
     var que by rememberSaveable { mutableStateOf("") }
-    Pista(stringResource(R.string.elegir_varios_pista))
     // Flotando abajo, sobre la barra de navegación: así la cuadrícula no se corre al elegir (y el siguiente toque cae
     // donde se quería). Sin foco propio: lo de atrás se sigue tocando.
     val alto = with(androidx.compose.ui.platform.LocalDensity.current) { 22.dp.roundToPx() }

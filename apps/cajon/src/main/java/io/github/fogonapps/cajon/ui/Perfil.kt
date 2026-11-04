@@ -23,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
@@ -174,10 +176,8 @@ fun FotoPerfil(foto: String, tamano: androidx.compose.ui.unit.Dp, encuadre: Encu
 }
 
 /**
- * El perfil como biografía cultural: portada, foto, nombre, usuario, biografía y enlaces; lo que más le gusta
- * (destacados, la obra que lo marcó, su descubrimiento), las cuatro favoritas, las cifras que eligió, su evolución
- * por año, sus listas y su diario. "Como lo verían otros" muestra solo lo que no es privado, y lo que la app aprendió
- * de sus gustos nunca sale de "Solo tú lo ves".
+ * Tu perfil, el único: el mismo que ve la red (sin cuenta, solo en este teléfono). Arriba quién eres; debajo, por
+ * íconos: publicaciones, favoritos, artistas, listas, guardadas y cifras. Los ajustes, en el engranaje.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -185,19 +185,22 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     val uri = LocalUriHandler.current
     val acciones = LocalAcciones.current
+    val contexto = androidx.compose.ui.platform.LocalContext.current
     val p = e.perfil
-    var publico by rememberSaveable { mutableStateOf(false) }
-    var compartiendo by rememberSaveable { mutableStateOf(false) }
-    fun ve(parte: String) = !publico || Visibilidad.de(p.visibilidad[parte]) != Visibilidad.PRIVADA
+    val yo by vm.red.usuario.collectAsStateWithLifecycle()
+    val perfiles by vm.red.perfiles.collectAsStateWithLifecycle()
+    val listasRed by vm.red.listas.collectAsStateWithLifecycle()
+    LaunchedEffect(yo) { yo?.let { vm.red.verPerfil(it) } }
+    val red = yo?.let { perfiles[it] }
     val anio = vm.hoy().year
     val descFoto = stringResource(if (p.foto.isBlank()) R.string.poner_foto else R.string.cambiar_foto_perfil)
+    var pestana by rememberSaveable { mutableStateOf(if (yo == null) 1 else 0) }
 
-    // Arriba solo los ajustes; editar y compartir bajan a botones, como en las redes.
-    Cabecera(stringResource(R.string.tu_perfil), vm::cerrar) {
+    Cabecera(yo?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
         BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
     }
 
-    // Portada y foto, la foto montada sobre el borde de la portada y el nombre a su lado, debajo de la portada.
+    // Portada, foto (con el + para cambiarla) y nombre.
     Box(Modifier.aparecer(0).fillMaxWidth()) {
         Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(110.dp).clip(forma(24.dp)).vidrio(forma(24.dp))
             .haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
@@ -206,8 +209,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Box {
                 FotoPerfil(p.foto, 96.dp, p.encuadreFoto, borde = true)
-                // Cambiar la foto sin pasar por editar (solo en la vista propia): un círculo de la primera tinta con el +.
-                if (!publico && acciones != null) Box(Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 10.dp).size(48.dp).clip(CircleShape)
+                if (acciones != null) Box(Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 10.dp).size(48.dp).clip(CircleShape)
                     .clickable { acciones.elegirImagen { vm.subirImagenPerfil(false, it) } }
                     .semantics { contentDescription = descFoto; role = Role.Button }, contentAlignment = Alignment.Center) {
                     Box(Modifier.size(30.dp).clip(CircleShape).background(f.tinta1).border(2.dp, f.fondo, CircleShape), contentAlignment = Alignment.Center) {
@@ -215,42 +217,37 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                     }
                 }
             }
-            Column(Modifier.weight(1f).padding(top = 54.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                NombrePerfil(e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) }, 26.sp,
-                    if (e.ajustes.nombre.isBlank()) f.textoSuave else f.texto)
-                if (p.usuario.isNotBlank()) Text("@" + p.usuario, style = MaterialTheme.typography.bodyMedium, color = f.acentoTexto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Column(Modifier.weight(1f).padding(top = 54.dp)) {
+                NombrePerfil(e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) }, 26.sp, if (e.ajustes.nombre.isBlank()) f.textoSuave else f.texto)
             }
         }
     }
 
-    // Los contadores, como en las redes: tocar uno lleva a lo suyo (ver [contadoresPerfil]).
-    if (ve(PartesPerfil.CIFRAS)) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-        contadoresPerfil(vm, e, anio).forEach { c ->
-            Column(Modifier.weight(1f).clip(forma(14.dp)).clickable(onClick = c.abrir).padding(vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("${c.valor}", fontFamily = f.cifras, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
-                Text(pluralStringResource(c.etiqueta, c.valor, c.valor, anio), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2)
+    // Las cifras de arriba: con cuenta, las de la red; sin cuenta, las del cajón.
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        @Composable
+        fun Cifra(valor: String, etiqueta: String, onClick: () -> Unit) =
+            Column(Modifier.weight(1f).clip(forma(14.dp)).clickable(onClick = onClick).padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(valor, fontFamily = f.cifras, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
+                Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2)
             }
-        }
+        val u = yo
+        if (u != null && red != null) {
+            Cifra("${red.siguiendo}", stringResource(R.string.red_siguiendo)) { vm.abrir(Pantalla.GenteRed(u, false)) }
+            Cifra("${red.seguidores}", stringResource(R.string.red_seguidores)) { vm.abrir(Pantalla.GenteRed(u, true)) }
+            Cifra("${e.vivas.size}", pluralStringResource(R.plurals.cifra_en_cajon, e.vivas.size, e.vivas.size, anio)) { pestana = 5 }
+        } else contadoresPerfil(vm, e, anio).forEach { c -> Cifra("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir) }
     }
 
     Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Lo de ahora: lo último que empezó (con su página, si es un libro) o su descubrimiento del momento.
-        val vacio = p.bio.isBlank() && p.usuario.isBlank() && p.foto.isBlank()
-        if (!publico && vacio) BotonSecundario(stringResource(R.string.completar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.fillMaxWidth())
-        else {
-            val enCurso = if (ve(PartesPerfil.DIARIO)) e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }
-                .maxByOrNull { maxOf(it.empezada ?: "", vm.L.ultimaVez(it) ?: "") } else null
-            val descubrimiento = if (ve(PartesPerfil.DESTACADOS)) p.destacados[Destacados.DESCUBRIMIENTO]?.let { i -> e.vivas.firstOrNull { it.id == i } } else null
-            val o = enCurso ?: descubrimiento
-            if (o != null) Row(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
+        val enCurso = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }.maxByOrNull { maxOf(it.empezada ?: "", vm.L.ultimaVez(it) ?: "") }
+        enCurso?.let { o ->
+            Row(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
                 .clickable { vm.abrir(Pantalla.Ficha(o.id)) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconoRiso(Iconos.de(o.tipo), null, tamano = 16.dp, tinta = f.acentoTexto)
-                val pagina = if (o === enCurso && o.tipo == Tipos.LIBRO && o.pagina > 0 && o.paginas != null) " · " + stringResource(R.string.chip_pagina, o.pagina, o.paginas) else ""
-                Text(stringResource(if (o === enCurso) R.string.chip_ahora else R.string.chip_descubrimiento, o.titulo) + pagina,
-                    style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val pagina = if (o.tipo == Tipos.LIBRO && o.pagina > 0 && o.paginas != null) " · " + stringResource(R.string.chip_pagina, o.pagina, o.paginas) else ""
+                Text(stringResource(R.string.chip_ahora, o.titulo) + pagina, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodyLarge, color = f.texto)
@@ -259,63 +256,55 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }
     }
 
-    // Editar, compartir y tus gustos: solo en la vista propia. Con cuenta en la red, compartir da el enlace del
-    // perfil (y la tarjeta como imagen queda al lado); sin cuenta, la tarjeta.
-    val cuentaRed by vm.red.usuario.collectAsStateWithLifecycle()
-    val contexto = androidx.compose.ui.platform.LocalContext.current
-    if (!publico) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
-        val u = cuentaRed
-        // Se comparte con el enlace del perfil (sin cuenta, primero se crea).
-        BotonSecundario(stringResource(R.string.compartir_perfil), {
-            if (u == null) vm.abrir(Pantalla.CuentaRed)
-            else contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
+        val u = yo
+        if (u == null) BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+        else BotonSecundario(stringResource(R.string.compartir_perfil), {
+            contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                 .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.cajon.datos.ClienteSocial.enlacePerfil(u)), null))
         }, Modifier.weight(1f))
-        BotonIcono(Iconos.Corazon, stringResource(R.string.tus_gustos), grande = true) { vm.abrir(Pantalla.TusGustos) }
     }
-    // La red: tu cuenta (o crearla) y el enlace de tu perfil.
-    if (!publico) {
-        val red by vm.red.usuario.collectAsStateWithLifecycle()
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val u = red
-            if (u == null) BotonSecundario(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
-            else {
-                BotonSecundario(stringResource(R.string.red_en_la_red, u), { vm.abrir(Pantalla.PerfilRed(u)) }, Modifier.weight(1f))
-                BotonIcono(Iconos.Gente, stringResource(R.string.red_tu_cuenta), grande = true) { vm.abrir(Pantalla.CuentaRed) }
+    io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
+        TarjetaCancion(c.titulo, c.artista, c.album, c.portada, onCambiar = { vm.abrir(Pantalla.ElegirCancion) })
+    }
+
+    // Las pestañas, solo íconos.
+    val pestanas = listOfNotNull(
+        Triple(0, Iconos.Imagen, R.string.red_publicaciones).takeIf { yo != null },
+        Triple(1, Iconos.Estrella, R.string.parte_destacados),
+        Triple(2, Iconos.Artista, R.string.tipo_artistas),
+        Triple(3, Iconos.Lista, R.string.pestana_listas),
+        Triple(4, Iconos.Guardar, R.string.parte_guardadas).takeIf { yo != null },
+        Triple(5, Iconos.Cifras, R.string.tus_cifras),
+    )
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        pestanas.forEach { (i, icono, t) ->
+            val elegida = pestana == i
+            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent).clickable { pestana = i }.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                IconoRiso(icono, stringResource(t), tamano = 22.dp, tinta = if (elegida) f.sobreTinta1 else f.textoSuave)
             }
         }
     }
-    io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
-        TarjetaCancion(c.titulo, c.artista, c.album, c.portada, onCambiar = if (publico) null else ({ vm.abrir(Pantalla.ElegirCancion) }))
-    } ?: if (!publico) Row(Modifier.padding(horizontal = 16.dp)) { Pildora(stringResource(R.string.cancion_poner), Iconos.Tocar) { vm.abrir(Pantalla.ElegirCancion) } } else Unit
-    Chips(listOf(false to stringResource(R.string.como_lo_ves), true to stringResource(R.string.como_lo_verian)), publico) { publico = it }
-    if (publico) Pista(stringResource(R.string.vista_publica_pista))
-
-    @Composable
-    fun Titulo(texto: String, parte: String?) = Seccion(texto) {
-        if (!publico && parte != null) Text(nombreVisibilidad(p.visibilidad[parte] ?: ""), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
-    }
     fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
-
-    // Lo suyo: sus favoritos por tipo.
-    if (ve(PartesPerfil.DESTACADOS)) {
-        val puestos = Destacados.FAVORITOS.filter { !publico || p.destacados[it] != null }
-        if (puestos.isNotEmpty()) {
-            Titulo(stringResource(R.string.parte_destacados), PartesPerfil.DESTACADOS)
-            if (!publico) Pista(stringResource(R.string.destacados_pista))
-            puestos.chunked(3).forEach { fila ->
+    when (pestana) {
+        0 -> when {
+            yo == null -> Unit
+            red == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+            red.publicaciones.isEmpty() -> Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.red_publicar), Iconos.Lapiz, acento = true) { vm.abrir(Pantalla.Publicar()) } }
+            else -> CuadriculaPublicaciones(vm, red.publicaciones)
+        }
+        1 -> {
+            // Favoritos por tipo, las cuatro favoritas, la obra que te marcó y tu descubrimiento.
+            Destacados.FAVORITOS.chunked(3).forEach { fila ->
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     fila.forEach { h ->
                         val id = p.destacados[h]
                         val a = if (h == Destacados.ARTISTA) id?.let { i -> e.artistasVivos.firstOrNull { it.id == i } } else null
                         val o = if (h != Destacados.ARTISTA) obra(id) else null
                         Column(Modifier.weight(1f).clip(forma(12.dp)).combinedClickable(
-                            onClick = {
-                                when { a != null -> vm.abrir(Pantalla.VerArtista(a.id)); o != null -> vm.abrir(Pantalla.Ficha(o.id)); !publico -> vm.abrir(Pantalla.ElegirDestacado(h)) }
-                            },
-                            onLongClick = { if (!publico) vm.abrir(Pantalla.ElegirDestacado(h)) },
+                            onClick = { when { a != null -> vm.abrir(Pantalla.VerArtista(a.id)); o != null -> vm.abrir(Pantalla.Ficha(o.id)); else -> vm.abrir(Pantalla.ElegirDestacado(h)) } },
+                            onLongClick = { vm.abrir(Pantalla.ElegirDestacado(h)) },
                         ), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             when {
                                 a != null -> FotoArtista(a.foto, a.nombre, 96.dp, a.tipo)
@@ -332,80 +321,119 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                     repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
-        }
-        // La obra que lo marcó y su descubrimiento del momento: grandes, con sus palabras.
-        listOf(Destacados.MARCO, Destacados.DESCUBRIMIENTO).forEach { h ->
-            val o = obra(p.destacados[h])
-            if (o != null) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio().combinedClickable(
-                onClick = { vm.abrir(Pantalla.Ficha(o.id)) }, onLongClick = { if (!publico) vm.abrir(Pantalla.ElegirDestacado(h)) },
-            ).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Portada(o.portada, o.tipo, o.titulo, Modifier.width(92.dp), conTitulo = false)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(nombreHueco(h), style = MaterialTheme.typography.labelLarge, color = f.acentoTexto)
-                    Text(o.titulo, fontFamily = f.titulos, fontSize = 20.sp, lineHeight = 24.sp, color = f.texto, maxLines = 3)
-                    p.porQue[h]?.let { Text("“$it”", style = MaterialTheme.typography.bodyMedium, color = f.texto) }
-                }
-            } else if (!publico) FilaVidrio({ vm.abrir(Pantalla.ElegirDestacado(h)) }) {
-                Ficha(f.tinta1, Iconos.Estrella)
-                Text(nombreHueco(h), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-                IconoRiso(Iconos.Mas, null, tamano = 18.dp, tinta = f.textoSuave)
-            }
-        }
-    }
-
-    // Las cuatro favoritas.
-    val favoritas = e.ajustes.favoritas.mapNotNull { obra(it) }
-    if (ve(PartesPerfil.FAVORITAS) && (favoritas.isNotEmpty() || !publico)) {
-        Titulo(stringResource(R.string.tus_favoritas_titulo), PartesPerfil.FAVORITAS)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            for (i in 0 until 4) {
-                val o = favoritas.getOrNull(i)
-                Box(Modifier.weight(1f).clip(forma(10.dp)).clickable(enabled = o != null) { o?.let { vm.abrir(Pantalla.Ficha(it.id)) } }) {
-                    Portada(o?.portada ?: "", o?.tipo ?: Tipos.PELICULA, o?.titulo ?: "", Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
+            listOf(Destacados.MARCO, Destacados.DESCUBRIMIENTO).forEach { h ->
+                val o = obra(p.destacados[h])
+                if (o != null) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio().combinedClickable(
+                    onClick = { vm.abrir(Pantalla.Ficha(o.id)) }, onLongClick = { vm.abrir(Pantalla.ElegirDestacado(h)) },
+                ).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Portada(o.portada, o.tipo, o.titulo, Modifier.width(92.dp), conTitulo = false)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(nombreHueco(h), style = MaterialTheme.typography.labelLarge, color = f.acentoTexto)
+                        Text(o.titulo, fontFamily = f.titulos, fontSize = 20.sp, lineHeight = 24.sp, color = f.texto, maxLines = 3)
+                        p.porQue[h]?.let { Text("“$it”", style = MaterialTheme.typography.bodyMedium, color = f.texto) }
+                    }
+                } else FilaVidrio({ vm.abrir(Pantalla.ElegirDestacado(h)) }) {
+                    Ficha(f.tinta1, Iconos.Estrella)
+                    Text(nombreHueco(h), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
+                    IconoRiso(Iconos.Mas, null, tamano = 18.dp, tinta = f.textoSuave)
                 }
             }
-        }
-        if (favoritas.isEmpty()) Pista(stringResource(R.string.favoritas_pista))
-    }
-
-    // Las cifras que eligió mostrar.
-    val cifras = p.cifras ?: PartesPerfil.CIFRAS_DE_SIEMPRE
-    if (ve(PartesPerfil.CIFRAS) && cifras.isNotEmpty()) {
-        Titulo(stringResource(R.string.parte_cifras), PartesPerfil.CIFRAS)
-        val delAnio = vm.L.cifras(e, anio)
-        val siempre = vm.L.cifras(e, null)
-        fun valor(c: String): String = when (c) {
-            PartesPerfil.C_TERMINADAS -> "${delAnio.porTipo.values.sum()}"
-            PartesPerfil.C_HORAS_CINE -> "${siempre.minutosCine / 60}"
-            PartesPerfil.C_HORAS_SERIES -> "${siempre.minutosSeries / 60}"
-            PartesPerfil.C_PAGINAS -> "${siempre.paginas}"
-            PartesPerfil.C_CANCIONES -> "${siempre.canciones}"
-            PartesPerfil.C_DIARIO -> "${siempre.registros}"
-            PartesPerfil.C_RACHA -> "${vm.L.racha(e, vm.hoy())}"
-            else -> siempre.notaMedia?.let { cifra(it, vm.idioma()) } ?: "–"
-        }
-        cifras.chunked(2).forEach { fila ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                fila.forEach { c ->
-                    Column(Modifier.weight(1f).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(valor(c), fontFamily = f.cifras, fontSize = 26.sp, color = f.texto)
-                        Text(nombreCifra(c, anio), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            val favoritas = e.ajustes.favoritas.mapNotNull { obra(it) }
+            Seccion(stringResource(R.string.tus_favoritas_titulo))
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                for (i in 0 until 4) {
+                    val o = favoritas.getOrNull(i)
+                    Box(Modifier.weight(1f).clip(forma(10.dp)).clickable(enabled = o != null) { o?.let { vm.abrir(Pantalla.Ficha(it.id)) } }) {
+                        Portada(o?.portada ?: "", o?.tipo ?: Tipos.PELICULA, o?.titulo ?: "", Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
                     }
                 }
-                if (fila.size == 1) Spacer(Modifier.weight(1f))
             }
         }
-    }
-
-    // La evolución: año por año, y lo descubierto hace poco.
-    val anios = vm.L.evolucion(e)
-    val nuevos = vm.L.descubrimientos(e, vm.hoy())
-    if (ve(PartesPerfil.EVOLUCION) && (anios.isNotEmpty() || nuevos.isNotEmpty())) {
-        Titulo(stringResource(R.string.parte_evolucion), PartesPerfil.EVOLUCION)
-        if (nuevos.isNotEmpty()) {
-            Text(stringResource(R.string.descubrimientos_recientes), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
-            Carrusel(nuevos, vm, conProgreso = false)
+        2 -> {
+            // Los artistas con más discos en el cajón primero.
+            val artistas = e.musicosVivos.sortedByDescending { a -> e.vivas.count { it.artista == a.id } }
+            if (artistas.isEmpty()) Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.buscar_artista), Iconos.Mas) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.MUSICA)) } }
+            artistas.take(12).chunked(3).forEach { fila ->
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    fila.forEach { a ->
+                        Column(Modifier.weight(1f).clip(forma(14.dp)).clickable { vm.abrir(Pantalla.VerArtista(a.id)) }, horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FotoArtista(a.foto, a.nombre, 84.dp, a.tipo)
+                            Text(a.nombre, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                    repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+            if (artistas.size > 12) Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.ver_todo)) { vm.abrir(Pantalla.Artistas) } }
         }
+        3 -> {
+            val listas = e.listasVivas
+            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listas.forEach { l ->
+                    val obras = obrasDe(e, l)
+                    val tapa = obras.firstOrNull { it.id == l.portada } ?: obras.firstOrNull()
+                    FilaVidrio({ vm.abrir(Pantalla.VerLista(l.id)) }, adentro = true) {
+                        Portada(tapa?.portada ?: "", tapa?.tipo ?: Tipos.PELICULA, "", Modifier.width(44.dp), esquina = 6.dp, conTitulo = false)
+                        Column(Modifier.weight(1f)) {
+                            Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(pluralStringResource(R.plurals.obras_n, obras.size, obras.size) + " · " + nombreVisibilidad(l.visibilidad),
+                                style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                        }
+                    }
+                }
+                Row { Pildora(stringResource(R.string.nueva_lista), Iconos.Mas) { vm.abrir(Pantalla.Listas) } }
+            }
+        }
+        4 -> yo?.let { u ->
+            LaunchedEffect(u) { vm.red.cargarGuardadasDe(u) }
+            val g = listasRed["guardadas:$u"]
+            when {
+                g == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+                g.isEmpty() -> Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp))
+                else -> CuadriculaPublicaciones(vm, g)
+            }
+        }
+        else -> CifrasDelPerfil(vm, e, anio)
+    }
+}
+
+/** La pestaña de cifras del perfil: las que eligió mostrar, su evolución por año y, solo para la persona, lo que la app aprendió de sus gustos. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CifrasDelPerfil(vm: CajonViewModel, e: Estado, anio: Int) {
+    val f = FogonTema.actual
+    val cifras = e.perfil.cifras ?: PartesPerfil.CIFRAS_DE_SIEMPRE
+    val delAnio = vm.L.cifras(e, anio)
+    val siempre = vm.L.cifras(e, null)
+    fun valor(c: String): String = when (c) {
+        PartesPerfil.C_TERMINADAS -> "${delAnio.porTipo.values.sum()}"
+        PartesPerfil.C_HORAS_CINE -> "${siempre.minutosCine / 60}"
+        PartesPerfil.C_HORAS_SERIES -> "${siempre.minutosSeries / 60}"
+        PartesPerfil.C_PAGINAS -> "${siempre.paginas}"
+        PartesPerfil.C_CANCIONES -> "${siempre.canciones}"
+        PartesPerfil.C_DIARIO -> "${siempre.registros}"
+        PartesPerfil.C_RACHA -> "${vm.L.racha(e, vm.hoy())}"
+        else -> siempre.notaMedia?.let { cifra(it, vm.idioma()) } ?: "–"
+    }
+    cifras.chunked(2).forEach { fila ->
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            fila.forEach { c ->
+                Column(Modifier.weight(1f).vidrio().clickable { vm.abrir(Pantalla.Cifras) }.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(valor(c), fontFamily = f.cifras, fontSize = 26.sp, color = f.texto)
+                    Text(nombreCifra(c, anio), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
+            }
+            if (fila.size == 1) Spacer(Modifier.weight(1f))
+        }
+    }
+    Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pildora(stringResource(R.string.tus_cifras), Iconos.Cifras, acento = true) { vm.abrir(Pantalla.Cifras) }
+    }
+    val anios = vm.L.evolucion(e)
+    if (anios.isNotEmpty()) {
+        Seccion(stringResource(R.string.parte_evolucion))
         Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             anios.forEach { a ->
                 Row(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -423,113 +451,13 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         }
     }
-
-    // Lo que la app aprendió de sus gustos: solo para la persona, nunca en el perfil que verían otros.
-    if (!publico) {
-        val g = remember(e) { vm.perfil() }
-        val positivos = (g.generos + g.personas).filter { it.peso > 0 && !it.quitado }
-        val ahora = positivos.filter { it.reciente }.take(6)
-        val siempre = positivos.filter { !it.reciente }.take(6)
-        if (ahora.isNotEmpty() || siempre.isNotEmpty()) {
-            Seccion(stringResource(R.string.solo_tu)) { Pildora(stringResource(R.string.tus_gustos), Iconos.Corazon) { vm.abrir(Pantalla.TusGustos) } }
-            Pista(stringResource(R.string.solo_tu_pista))
-            @Composable
-            fun Grupo(t: String, l: List<io.github.fogonapps.cajon.datos.PesoGusto>) {
-                if (l.isEmpty()) return
-                Text(t, style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 6.dp))
-                FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    l.forEach { Etiqueta(it.nombre, f.superficie, f.texto) }
-                }
-            }
-            Grupo(stringResource(R.string.gustos_ahora), ahora)
-            Grupo(stringResource(R.string.gustos_siempre), siempre)
+    val g = remember(e) { vm.perfil() }
+    val positivos = (g.generos + g.personas).filter { it.peso > 0 && !it.quitado }
+    if (positivos.isNotEmpty()) {
+        Seccion(stringResource(R.string.solo_tu))
+        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            positivos.take(12).forEach { Etiqueta(it.nombre, f.superficie, f.texto) }
         }
-    }
-
-    // Sus listas (en la vista de otros, solo las que no son privadas).
-    val listas = e.listasVivas.filter { !publico || Visibilidad.de(it.visibilidad) != Visibilidad.PRIVADA }
-    if (listas.isNotEmpty()) {
-        Seccion(stringResource(R.string.pestana_listas))
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listas.forEach { l ->
-                val obras = obrasDe(e, l)
-                val tapa = obras.firstOrNull { it.id == l.portada } ?: obras.firstOrNull()
-                FilaVidrio({ vm.abrir(Pantalla.VerLista(l.id)) }, adentro = true) {
-                    Portada(tapa?.portada ?: "", tapa?.tipo ?: Tipos.PELICULA, "", Modifier.width(44.dp), esquina = 6.dp, conTitulo = false)
-                    Column(Modifier.weight(1f)) {
-                        Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(androidx.compose.ui.res.pluralStringResource(R.plurals.obras_n, obras.size, obras.size) +
-                            if (!publico) " · " + nombreVisibilidad(l.visibilidad) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                    }
-                }
-            }
-        }
-    }
-
-    // Su diario: lo último (en la vista de otros, sin lo privado).
-    if (ve(PartesPerfil.DIARIO)) {
-        val predet = p.visibilidad[PartesPerfil.DIARIO] ?: ""
-        val entradas = vm.L.diario(e).filter { d -> !publico || Visibilidad.de(d.registro.visibilidad.ifEmpty { predet }) != Visibilidad.PRIVADA }.take(5)
-        if (entradas.isNotEmpty()) {
-            Titulo(stringResource(R.string.tu_diario), PartesPerfil.DIARIO)
-            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                entradas.forEach { d ->
-                    FilaVidrio({ vm.abrir(Pantalla.Ficha(d.obra.id)) }, adentro = true) {
-                        Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(40.dp), esquina = 6.dp, conTitulo = false)
-                        Column(Modifier.weight(1f)) {
-                            Text(d.obra.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(fechaCorta(d.registro.fecha, vm.idioma()), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                        }
-                        if (d.registro.nota > 0) Estrellas(d.registro.nota)
-                    }
-                }
-            }
-        }
-    }
-
-    if (!publico) {
-        Seccion(stringResource(R.string.mas))
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilaVidrio({ vm.abrir(Pantalla.Cifras) }, adentro = true) {
-                Ficha(f.tinta2, Iconos.Cifras)
-                Text(stringResource(R.string.tus_cifras), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-                IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
-            }
-            FilaVidrio({ vm.abrir(Pantalla.Ajustes) }, adentro = true) {
-                Ficha(f.tinta1, Iconos.Ajustes)
-                Text(stringResource(R.string.ajustes), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-                IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
-            }
-        }
-    }
-
-    if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, e.ajustes.nombre.ifBlank { "El Cajón" }) }) { TarjetaPerfil(e) }
-}
-
-/** La tarjeta para compartir el perfil como imagen: quién es y lo que más le gusta. */
-@Composable
-private fun TarjetaPerfil(e: Estado) {
-    val f = FogonTema.actual
-    val p = e.perfil
-    Column(Modifier.width(320.dp).clip(forma(24.dp)).background(f.fondo).haloPuntos(f.tinta2.copy(alpha = 0.3f)).padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            FotoPerfil(p.foto, 72.dp, p.encuadreFoto)
-            Column {
-                NombrePerfil(e.ajustes.nombre.ifBlank { "El Cajón" }, 22.sp, f.texto)
-                if (p.usuario.isNotBlank()) Text("@" + p.usuario, style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
-            }
-        }
-        if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodySmall, color = f.texto, maxLines = 4)
-        val obras = Destacados.TODOS.filter { it != Destacados.ARTISTA }.mapNotNull { h -> p.destacados[h]?.let { id -> e.vivas.firstOrNull { it.id == id } } }
-            .ifEmpty { e.ajustes.favoritas.mapNotNull { id -> e.vivas.firstOrNull { it.id == id } } }.distinctBy { it.id }.take(6)
-        obras.chunked(3).forEach { fila ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                fila.forEach { o -> Box(Modifier.weight(1f)) { Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 8.dp, conTitulo = false) } }
-                repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-        Text("El Cajón · Fogón", style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
     }
 }
 
@@ -541,7 +469,7 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     val acciones = LocalAcciones.current
     val p = e.perfil
     var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
-    var usuario by rememberSaveable { mutableStateOf(p.usuario) }
+    val usuario = p.usuario
     var bio by rememberSaveable { mutableStateOf(p.bio) }
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
@@ -570,7 +498,6 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
             BotonSecundario(stringResource(R.string.ajustar_portada), { vm.abrir(Pantalla.AjustarImagenPerfil(true)) }, Modifier.weight(1f))
             BotonSecundario(stringResource(R.string.quitar_portada), { vm.quitarImagenPerfil(true) }, Modifier.weight(1f))
         }
-        Pista(stringResource(R.string.foto_perfil_pista), adentro = true)
     }
 
     Seccion(stringResource(R.string.quien_eres))
@@ -579,7 +506,6 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
         // aquí. La app no ofrece letras; el límite cuenta letras de verdad, no unidades de UTF-16 (ver Logica.recortar).
         OutlinedTextField(nombre, { nombre = Logica.recortar(it, 40) }, Modifier.fillMaxWidth(), singleLine = true,
             label = { Text(stringResource(R.string.tu_nombre)) })
-        CampoTexto(usuario, { usuario = Logica.usuarioLimpio(it) }, stringResource(R.string.nombre_usuario), Modifier.fillMaxWidth(), max = 30)
         OutlinedTextField(bio, { bio = it.take(200) }, Modifier.fillMaxWidth(), minLines = 3, label = { Text(stringResource(R.string.bio)) },
             supportingText = { Text("${bio.length}/200") })
         OutlinedTextField(enlaces, { enlaces = it.take(1000) }, Modifier.fillMaxWidth(), minLines = 2, label = { Text(stringResource(R.string.enlaces)) },
@@ -588,7 +514,6 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     }
 
     Seccion(stringResource(R.string.quien_lo_ve))
-    Pista(stringResource(R.string.quien_lo_ve_pista))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         PartesPerfil.TODAS.forEach { parte ->
             Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -78,21 +78,34 @@ object Momento {
             .map { it.jsonObject }.map { it["article"]!!.jsonPrimitive.content to (it["views"]?.jsonPrimitive?.longOrNull ?: 0) }
             .filter { (a, _) -> ':' !in a && a != "Main_Page" && a != "Wikipedia:Portada" }.take(1000)
         val vistas = articulos.associate { (a, v) -> a.replace('_', ' ') to v }
-        val valores = vistas.keys.joinToString(" ") { "\"" + it.replace("\\", "\\\\").replace("\"", "\\\"") + "\"@$idioma" }
         val clases = (PELICULAS + SERIES + ANIME).joinToString(" ") { "wd:$it" }
-        val consulta = """SELECT ?t ?i ?c ?pm ?pt WHERE { VALUES ?t { $valores } ?a schema:name ?t ; schema:about ?i ; schema:isPartOf <https://$idioma.wikipedia.org/> .
-            ?i wdt:P31 ?c . VALUES ?c { $clases } OPTIONAL { ?i wdt:P4947 ?pm } OPTIONAL { ?i wdt:P4983 ?pt } }"""
-        val filas = json.parseToJsonElement(pedir("https://query.wikidata.org/sparql", "format=json&query=" + URLEncoder.encode(consulta, "UTF-8")))
-            .jsonObject["results"]!!.jsonObject["bindings"] as JsonArray
+        // En tandas de 250 títulos (una consulta con los 1000 se pasa del tiempo de Wikidata), con un reintento.
+        val filas = vistas.keys.chunked(250).flatMap { tanda ->
+            val valores = tanda.joinToString(" ") { "\"" + it.replace("\\", "\\\\").replace("\"", "\\\"") + "\"@$idioma" }
+            val consulta = """SELECT ?t ?i ?c ?pm ?pt ?pub ?ini ?fin WHERE { VALUES ?t { $valores } ?a schema:name ?t ; schema:about ?i ; schema:isPartOf <https://$idioma.wikipedia.org/> .
+                ?i wdt:P31 ?c . VALUES ?c { $clases } OPTIONAL { ?i wdt:P4947 ?pm } OPTIONAL { ?i wdt:P4983 ?pt }
+                OPTIONAL { ?i wdt:P577 ?pub } OPTIONAL { ?i wdt:P580 ?ini } OPTIONAL { ?i wdt:P582 ?fin } }"""
+            val cuerpo = "format=json&query=" + URLEncoder.encode(consulta, "UTF-8")
+            val texto = runCatching { pedir("https://query.wikidata.org/sparql", cuerpo) }.getOrElse { Thread.sleep(5000); pedir("https://query.wikidata.org/sparql", cuerpo) }
+            json.parseToJsonElement(texto).jsonObject["results"]!!.jsonObject["bindings"] as JsonArray
+        }
         fun JsonObject.v(k: String) = (this[k] as? JsonObject)?.get("value")?.jsonPrimitive?.content.orEmpty()
-        data class Fila(val t: String, val i: String, val c: String, val tmdb: String)
+        data class Fila(val t: String, val i: String, val c: String, val tmdb: String, val pub: Int?, val ini: Int?, val fin: Int?)
+        fun anio(s: String) = s.take(4).toIntOrNull()
         val todas = filas.map { it.jsonObject }.map { f ->
             Fila(f.v("t"), f.v("i").substringAfterLast('/'), f.v("c").substringAfterLast('/'),
-                f.v("pm").takeIf { it.isNotBlank() }?.let { "tmdb:movie:$it" } ?: f.v("pt").takeIf { it.isNotBlank() }?.let { "tmdb:tv:$it" } ?: "")
+                f.v("pm").takeIf { it.isNotBlank() }?.let { "tmdb:movie:$it" } ?: f.v("pt").takeIf { it.isNotBlank() }?.let { "tmdb:tv:$it" } ?: "",
+                anio(f.v("pub")), anio(f.v("ini")), anio(f.v("fin")))
         }
         // Una obra puede tener varias clases: anime gana a serie y a película.
-        val porObra = todas.groupBy { it.i }.map { (_, l) ->
+        // Solo lo de ahora: películas de este año o el anterior; series y anime que empezaron hace poco o siguen al aire.
+        val este = dia.year
+        val porObra = todas.groupBy { it.i }.mapNotNull { (_, l) ->
             val clase = when { l.any { it.c in ANIME } -> "anime"; l.any { it.c in SERIES } -> "serie"; else -> "pelicula" }
+            val pub = l.mapNotNull { it.pub }.maxOrNull(); val ini = l.mapNotNull { it.ini }.maxOrNull(); val fin = l.mapNotNull { it.fin }.maxOrNull()
+            val reciente = if (clase == "pelicula") (pub ?: 0) >= este - 1
+                else (ini ?: pub ?: 0) >= este - 2 || (fin == null && ini != null) || (fin ?: 0) >= este
+            if (!reciente) return@mapNotNull null
             val f = l.first()
             clase to Buscado(limpiar(f.t), vistas[f.t] ?: 0, f.i, l.firstOrNull { it.tmdb.isNotBlank() }?.tmdb.orEmpty())
         }

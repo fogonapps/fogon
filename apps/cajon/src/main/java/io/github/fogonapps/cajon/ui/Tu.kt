@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,32 +46,21 @@ import io.github.fogonapps.identidad.haloPuntos
 import io.github.fogonapps.identidad.progresoAnimado
 
 @Composable
-fun Tu(vm: CajonViewModel, e: Estado) {
+fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
     val f = FogonTema.actual
     val anioActual = vm.hoy().year
     var anio by rememberSaveable { mutableStateOf<Int?>(anioActual) }
+    // Con una sección, las cifras solo de lo suyo.
+    val tipos = when (seccion) {
+        io.github.fogonapps.cajon.Secciones.MUSICA -> listOf(Tipos.ALBUM)
+        io.github.fogonapps.cajon.Secciones.LIBROS -> listOf(Tipos.LIBRO)
+        null -> Tipos.TODOS
+        else -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME)
+    }
+    val e = if (seccion == null) todo else remember(todo, seccion) { todo.copy(obras = todo.obras.filter { it.tipo in tipos }) }
     val c = vm.L.cifras(e, anio)
 
-    Cabecera(stringResource(R.string.tus_cifras), vm::cerrar) {
-        BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
-    }
-
-    // Las cuatro favoritas, como en un perfil.
-    Seccion(stringResource(R.string.tus_favoritas_titulo))
-    val favoritas = e.ajustes.favoritas.mapNotNull { id -> e.vivas.firstOrNull { it.id == id } }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        for (i in 0 until 4) {
-            val o = favoritas.getOrNull(i)
-            Box(Modifier.weight(1f).clip(forma(10.dp)).clickable(enabled = o != null) { o?.let { vm.abrir(Pantalla.Ficha(it.id)) } }) {
-                if (o != null) Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 10.dp)
-                else Portada("", "pelicula", "", Modifier.fillMaxWidth(), esquina = 10.dp)
-            }
-        }
-    }
-    if (favoritas.isEmpty()) Pista(stringResource(R.string.favoritas_pista))
-    if (favoritas.size < 4) Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Pildora(stringResource(R.string.buscar_en_internet), Iconos.Buscar) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO, "favorita")) }
-    }
+    Cabecera(if (seccion == null) stringResource(R.string.tus_cifras) else stringResource(R.string.cifras_de, nombreSeccion(seccion)), vm::cerrar)
 
     // De qué año.
     Chips(listOf<Pair<Int?, String>>(anioActual to "$anioActual", anioActual - 1 to "${anioActual - 1}", null to stringResource(R.string.siempre)), anio) { anio = it }
@@ -81,8 +72,8 @@ fun Tu(vm: CajonViewModel, e: Estado) {
         Text(anio?.let { stringResource(R.string.en_el_anio, it) } ?: stringResource(R.string.desde_siempre), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         NumeroRiso("$total", 60.sp)
         Text(pluralStringResource(R.plurals.terminadas, total, total), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Tipos.TODOS.forEach { t ->
+        if (tipos.size > 1) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            tipos.forEach { t ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     IconoRiso(Iconos.de(t), nombreTipo(t), tamano = 20.dp, tinta = f.textoSuave)
                     Text("${c.porTipo[t] ?: 0}", fontFamily = f.cifras, fontSize = 18.sp, color = f.texto)
@@ -91,19 +82,38 @@ fun Tu(vm: CajonViewModel, e: Estado) {
         }
     }
 
-    // Lo que suma.
-    Row(Modifier.aparecer(1).fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Caja(stringResource(R.string.horas_de_cine), "${c.minutosCine / 60}", Modifier.weight(1f))
-        Caja(stringResource(R.string.horas_de_series), "${c.minutosSeries / 60}", Modifier.weight(1f))
+    // Lo más tuyo: el género favorito y quien más aparece.
+    if (c.generos.isNotEmpty() || c.creadores.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        c.generos.firstOrNull()?.let { Caja(stringResource(R.string.genero_favorito), it.first, Modifier.weight(1f)) }
+        c.creadores.firstOrNull()?.let {
+            Caja(stringResource(when (seccion) { io.github.fogonapps.cajon.Secciones.MUSICA -> R.string.artista_favorito; io.github.fogonapps.cajon.Secciones.LIBROS -> R.string.autor_favorito
+                else -> R.string.creador_favorito }), it.first, Modifier.weight(1f))
+        }
     }
-    Row(Modifier.aparecer(2).fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Caja(stringResource(R.string.paginas_leidas), "${c.paginas}", Modifier.weight(1f))
-        Caja(stringResource(R.string.canciones_escuchadas), "${c.canciones}", Modifier.weight(1f))
+    // Lo que suma, según la sección.
+    @Composable
+    fun Fila(vararg cajas: Pair<String, String>) = Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        cajas.forEach { (t, v) -> Caja(t, v, Modifier.weight(1f)) }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Caja(stringResource(R.string.en_tu_diario), "${c.registros}", Modifier.weight(1f))
-        Caja(stringResource(R.string.racha), "${vm.L.racha(e, vm.hoy())}", Modifier.weight(1f))
+    val cine = seccion == null || tipos.contains(Tipos.PELICULA)
+    if (cine) Fila(stringResource(R.string.horas_de_cine) to "${c.minutosCine / 60}", stringResource(R.string.horas_de_series) to "${c.minutosSeries / 60}")
+    if (seccion == null) Fila(stringResource(R.string.paginas_leidas) to "${c.paginas}", stringResource(R.string.canciones_escuchadas) to "${c.canciones}")
+    if (seccion == io.github.fogonapps.cajon.Secciones.LIBROS) Fila(stringResource(R.string.paginas_leidas) to "${c.paginas}",
+        stringResource(R.string.paginas_por_libro) to "${if ((c.porTipo[Tipos.LIBRO] ?: 0) > 0) c.paginas / (c.porTipo[Tipos.LIBRO] ?: 1) else 0}")
+    if (seccion == io.github.fogonapps.cajon.Secciones.MUSICA) {
+        // Lo que sonó en tus apps de música: reproducciones y los minutos (calculados con 3,5 minutos por canción).
+        val oidos by vm.oidos.collectAsStateWithLifecycle()
+        val desde = anio?.let { java.time.LocalDate.of(it, 1, 1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() } ?: 0L
+        val hasta = anio?.let { java.time.LocalDate.of(it + 1, 1, 1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() } ?: Long.MAX_VALUE
+        val sonaron = oidos.albumes.filter { it.ultima in desde until hasta }
+        val veces = sonaron.sumOf { it.veces }
+        Fila(stringResource(R.string.canciones_escuchadas) to "${c.canciones}", stringResource(R.string.reproducciones) to "$veces")
+        Fila(stringResource(R.string.minutos_aprox) to "${(veces * 3.5).toInt()}", stringResource(R.string.artistas) to "${todo.musicosVivos.size}")
+        val masOido = sonaron.groupBy { it.artista }.mapValues { (_, l) -> l.sumOf { it.veces } }.entries.sortedByDescending { it.value }.take(5).map { it.key to it.value }
+        if (masOido.isNotEmpty()) { Seccion(stringResource(R.string.lo_mas_escuchado)); Tops(masOido) }
     }
+    if (seccion == null) Fila(stringResource(R.string.en_tu_diario) to "${c.registros}", stringResource(R.string.racha) to "${vm.L.racha(e, vm.hoy())}")
+    else Fila(stringResource(R.string.en_tu_diario) to "${c.registros}", stringResource(R.string.nota_media_corta) to (c.notaMedia?.let { cifra(it, vm.idioma()) } ?: "–"))
 
     // Las notas, como las barras de estrellas.
     if (c.notas.sum() > 0) {
@@ -135,6 +145,7 @@ fun Tu(vm: CajonViewModel, e: Estado) {
         Tops(c.creadores)
     }
 
+    if (seccion != null) return
     Seccion(stringResource(R.string.mas))
     FilaVidrio({ vm.abrir(Pantalla.Retos) }) {
         Ficha(f.tinta1, Iconos.Trofeo)

@@ -213,44 +213,8 @@ private fun ElegirCategorias(vm: CajonViewModel, e: Estado) {
 }
 
 /**
- * Un género que se toca para decir si gusta: nada → me gusta → no me gusta → nada. Lo dicho se guarda como
- * [io.github.fogonapps.cajon.datos.Gusto] con la clave del género.
- */
-@Composable
-private fun ChipGenero(vm: CajonViewModel, e: Estado, nombre: String) {
-    val clave = Recomendar.claveGenero(nombre)
-    val dicho = e.gustosVivos.firstOrNull { it.clave == clave }?.senal
-    val f = FogonTema.actual
-    val icono = when (dicho) { Senales.GUSTA -> Iconos.Corazon; Senales.NO_GUSTA, Senales.EXCLUIR -> Iconos.Cerrar; else -> null }
-    Row(
-        Modifier.clip(io.github.fogonapps.identidad.FormaPildora)
-            .background(if (dicho == Senales.GUSTA) f.tinta1 else f.superficie)
-            .border(f.borde, if (dicho == Senales.GUSTA) f.tinta1 else f.linea, io.github.fogonapps.identidad.FormaPildora)
-            .clickable {
-                val siguiente = when (dicho) { null -> Senales.GUSTA; Senales.GUSTA -> Senales.NO_GUSTA; else -> null }
-                vm.decirGusto(clave, nombre, siguiente)
-            }.padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (icono != null) IconoRiso(icono, null, tamano = 16.dp, tinta = if (dicho == Senales.GUSTA) f.sobreTinta1 else f.textoSuave)
-        Text(nombre, style = MaterialTheme.typography.labelLarge, color = when (dicho) {
-            Senales.GUSTA -> f.sobreTinta1; Senales.NO_GUSTA, Senales.EXCLUIR -> f.textoSuave; else -> f.texto
-        }, maxLines = 1)
-    }
-}
-
-/** Los géneros para elegir: los de su cajón (los más usados) y una lista base, sin repetir. */
-private fun generosParaElegir(e: Estado, tipos: List<String>, base: Array<String>, conArtistas: Boolean = false): List<String> {
-    val delCajon = (e.vivas.filter { it.tipo in tipos }.flatMap { it.generos } + if (conArtistas) e.musicosVivos.flatMap { it.generos } else emptyList())
-        .filter { it.isNotBlank() }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(18).map { it.key }
-    // Hasta 24: los suyos primero, después la lista base (en el idioma de la app).
-    return (delCajon + base).distinctBy { Logica.tituloLimpio(it) }.take(24)
-}
-
-/**
- * "Cuéntame tus gustos": qué quiere que le recomiende, qué géneros le gustan (o no) y, para que "Para ti" arranque
- * aunque el cajón esté vacío, lo que le gusta de lo más visto, escuchado y leído (tocar = me gusta). Lo elegido no
- * entra al cajón: solo sirve para recomendar.
+ * "Cuéntame tus gustos": obras, discos, artistas y libros concretos de lo que se ve, escucha y lee ahora (tocar = me
+ * gusta) y qué quiere que le recomiende. Lo elegido no entra al cajón: solo sirve para recomendar.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -262,29 +226,9 @@ fun ElegirGustos(vm: CajonViewModel, e: Estado) {
     // Al terminar: si todavía no hay cuenta en la red, el paso 2 de Para ti es crearla.
     val terminar = { vm.gustosListos(); if (vm.red.usuario.value == null) vm.reemplazar(Pantalla.CuentaRed) else vm.cerrar() }
     Cabecera(stringResource(R.string.cuentame_gustos), terminar)
-    Pista(stringResource(R.string.elegir_gustos_explica))
-
-    Seccion(stringResource(R.string.que_recomiendo))
-    ElegirCategorias(vm, e)
-
-    Seccion(stringResource(R.string.generos_que_te_gustan))
-    Pista(stringResource(R.string.generos_pista))
-    @Composable
-    fun Generos(titulo: String, lista: List<String>) {
-        Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
-        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            lista.forEach { ChipGenero(vm, e, it) }
-        }
-    }
+    val momento by vm.momento.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.cargarMomento() }
     val p = remember(e) { vm.perfil() }
-    if (p.quiere(Tipos.PELICULA) || p.quiere(Tipos.SERIE) || p.quiere(Tipos.ANIME))
-        Generos(stringResource(R.string.seccion_cine), generosParaElegir(e, listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME), stringArrayResource(R.array.generos_cine)))
-    if (p.quiere(Tipos.ALBUM)) Generos(stringResource(R.string.seccion_musica), generosParaElegir(e, listOf(Tipos.ALBUM), stringArrayResource(R.array.generos_musica), conArtistas = true))
-    if (p.quiere(Tipos.LIBRO)) Generos(stringResource(R.string.seccion_libros), generosParaElegir(e, listOf(Tipos.LIBRO), stringArrayResource(R.array.generos_libros)))
-
-    Seccion(stringResource(R.string.lo_que_te_gusta))
-    Pista(stringResource(R.string.lo_que_te_gusta_pista))
-    if (!opciones.listo) Pista(stringResource(R.string.cargando))
     val dichos = e.gustosVivos.filter { it.senal == Senales.GUSTA }.map { it.clave }.toSet()
     @Composable
     fun Obras(titulo: String, lista: List<io.github.fogonapps.cajon.datos.Encontrado>) {
@@ -308,8 +252,23 @@ fun ElegirGustos(vm: CajonViewModel, e: Estado) {
     }
     if (p.quiere(Tipos.PELICULA) || p.quiere(Tipos.SERIE) || p.quiere(Tipos.ANIME)) {
         if (tmdb) Obras(stringResource(R.string.lo_mas_visto_semana), opciones.cine.filter { p.quiere(it.tipo) })
-        else Pista(stringResource(R.string.gustos_sin_tmdb))
+        else {
+            // Sin clave de TMDB: las series nuevas con su portada y lo más buscado del cine, por su nombre.
+            Obras(stringResource(R.string.seccion_series), momento.obras[Tipos.SERIE].orEmpty())
+            val buscados = (momento.buscados[Tipos.PELICULA].orEmpty() + momento.buscados[Tipos.ANIME].orEmpty()).take(16)
+            if (buscados.isNotEmpty()) {
+                Text(stringResource(R.string.seccion_peliculas), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
+                FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    buscados.forEach { x ->
+                        val clave = "obra:" + x.tmdb.ifBlank { "wd:" + x.wikidata }
+                        val si = clave in dichos
+                        Pildora(x.titulo, if (si) Iconos.Chulo else null, acento = si) { vm.decirGusto(clave, x.titulo, if (si) null else Senales.GUSTA, Tipos.PELICULA, "", x.tmdb) }
+                    }
+                }
+            }
+        }
     }
+    if (p.quiere(Tipos.ALBUM)) Obras(stringResource(R.string.momento_musica), momento.obras[Tipos.ALBUM].orEmpty())
     if (p.quiere(Tipos.ALBUM) && opciones.artistas.isNotEmpty()) {
         Text(stringResource(R.string.artistas), style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 6.dp))
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -329,8 +288,9 @@ fun ElegirGustos(vm: CajonViewModel, e: Estado) {
             }
         }
     }
-    if (p.quiere(Tipos.LIBRO)) Obras(stringResource(R.string.lo_mas_leido), opciones.libros)
-    Pista(stringResource(R.string.gustos_como_decir_no), Modifier.padding(top = 12.dp))
+    if (p.quiere(Tipos.LIBRO)) Obras(stringResource(R.string.lo_mas_leido), (momento.obras[Tipos.LIBRO].orEmpty() + opciones.libros).distinctBy { it.fuente })
+    Seccion(stringResource(R.string.que_recomiendo))
+    ElegirCategorias(vm, e)
     Column(Modifier.padding(16.dp)) { BotonRiso(stringResource(R.string.listo), terminar, Modifier.fillMaxWidth()) }
 }
 

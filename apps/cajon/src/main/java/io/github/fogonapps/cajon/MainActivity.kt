@@ -49,6 +49,11 @@ class MainActivity : ComponentActivity() {
 
     /** Un enlace de la red: /@usuario abre ese perfil y /p/<id> esa publicación. */
     private fun abrirEnlace(intent: android.content.Intent?) {
+        // Compartido desde otra app (una peli de Netflix, un álbum de Spotify…): se busca para agregarlo.
+        if (intent?.action == android.content.Intent.ACTION_SEND && intent.type == "text/plain") {
+            intent.getStringExtra(android.content.Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }?.let { vm.recibirCompartido(it) }
+            return
+        }
         val ruta = intent?.takeIf { it.action == android.content.Intent.ACTION_VIEW }?.data?.path ?: return
         when {
             ruta.startsWith("/@") -> ruta.removePrefix("/@").trim('/').takeIf { it.isNotBlank() }?.let { vm.abrir(Pantalla.PerfilRed(it.lowercase())) }

@@ -71,19 +71,15 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     // Tu cuenta: lo primero.
     Seccion(stringResource(R.string.aj_tu_cuenta))
     val u = usuario
-    if (u == null) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.red_invita_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
-        Text(stringResource(R.string.red_invita_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
-    } else FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
-    FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
-    FilaAjuste(Iconos.Lapiz, stringResource(R.string.editar_perfil), stringResource(R.string.aj_editar_perfil_pista)) { vm.abrir(Pantalla.EditarPerfil) }
+    if (u == null) FilaAjuste(Iconos.Persona, stringResource(R.string.red_crear_cuenta), null) { vm.abrir(Pantalla.CuentaRed) }
+    else {
+        FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
+        FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
+    }
 
     Seccion(stringResource(R.string.aj_como_usas))
     FilaAjuste(Iconos.Campana, stringResource(R.string.aj_notificaciones), stringResource(R.string.aj_notificaciones_pista)) { vm.abrir(Pantalla.AjustesAvisos) }
     if (u != null) {
-        FilaAjuste(Iconos.Guardar, stringResource(R.string.red_guardadas), null) { vm.abrir(Pantalla.GuardadosRed) }
-        FilaAjuste(Iconos.Candado, stringResource(R.string.aj_privacidad), stringResource(R.string.aj_privacidad_pista)) { vm.abrir(Pantalla.CuentaRed) }
         FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloqueadas), null) { vm.abrir(Pantalla.BloqueadosRed) }
     }
     FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
@@ -116,12 +112,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     Seccion(stringResource(R.string.aj_apariencia_idioma))
     FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
     Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
-    Desplegable(Iconos.Persona, stringResource(R.string.tu_nombre), e.ajustes.nombre.ifBlank { null }) {
-        var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
-        CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre), Modifier.fillMaxWidth())
-        if (nombre.trim() != e.ajustes.nombre) BotonSecundario(stringResource(R.string.guardar), { vm.cambiarNombre(nombre) }, Modifier.fillMaxWidth())
-    }
-    Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), stringResource(R.string.aj_orden_pestanas_pista)) { OrdenPestanas(vm, e) }
+    Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), null) { OrdenPestanas(vm, e) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }
 
     Seccion(stringResource(R.string.fogon))
