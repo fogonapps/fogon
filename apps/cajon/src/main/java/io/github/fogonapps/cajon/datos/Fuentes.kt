@@ -217,6 +217,9 @@ class Tmdb(private val clave: String) {
     /** Lo que más se está viendo esta semana (películas y series), para elegir gustos y para explorar. */
     suspend fun tendencias(idioma: String): List<Encontrado> = lista(pedir("trending/all/week", "language" to lengua(idioma)), null, idioma)
 
+    /** Lo más visto de la semana de una sola clase ("movie" o "tv"); el anime sale de [descubrir] con anime = true. */
+    suspend fun tendenciasDe(clase: String, idioma: String): List<Encontrado> = lista(pedir("trending/$clase/week", "language" to lengua(idioma)), clase, idioma)
+
     /** Los otros títulos de una película o serie (romaji, inglés, de otros países): "Owari no Seraph" para "終わりのセラフ". */
     suspend fun titulosAlternativos(fuente: String): List<String> {
         val (_, clase, id) = fuente.split(":")
@@ -397,6 +400,12 @@ object OpenLibrary {
     suspend fun populares(idioma: String): List<Encontrado> {
         val u = base.newBuilder().addPathSegments("trending/yearly.json").addQueryParameter("limit", "60").build()
         return ordenar(pedirJson(u).jsonObject.arr("works").map { it.jsonObject }, idioma, tope = 40)
+    }
+
+    /** Los libros más buscados de la semana en Open Library. */
+    suspend fun tendencias(idioma: String): List<Encontrado> {
+        val u = base.newBuilder().addPathSegments("trending/weekly.json").addQueryParameter("limit", "40").build()
+        return ordenar(pedirJson(u).jsonObject.arr("works").map { it.jsonObject }, idioma, tope = 24)
     }
 
     /** Las obras de un autor por su nombre (cuando no se tiene su id de Open Library), las más editadas primero. */
@@ -595,6 +604,28 @@ object ListenBrainz {
     suspend fun populares(n: Int = 60): List<ArtistaEncontrado> {
         val u = "https://api.listenbrainz.org/1/stats/sitewide/artists".toHttpUrl().newBuilder()
             .addQueryParameter("count", "$n").addQueryParameter("range", "all_time").build()
+        val lista = ((pedirJson(u) as? JsonObject)?.get("payload") as? JsonObject)?.arr("artists") ?: return emptyList()
+        return lista.mapNotNull { it as? JsonObject }.filter { it["artist_mbid"].texto().matches(Regex("[0-9a-f-]{36}")) }
+            .distinctBy { it["artist_mbid"].texto() }.map { a -> ArtistaEncontrado(a["artist_mbid"].texto(), a["artist_name"].texto(), "", null, "", "") }
+    }
+
+    /** Los discos más escuchados de la semana en ListenBrainz (datos abiertos), con su carátula del Cover Art Archive. */
+    suspend fun discosDeLaSemana(n: Int = 40): List<Encontrado> {
+        val u = "https://api.listenbrainz.org/1/stats/sitewide/release-groups".toHttpUrl().newBuilder()
+            .addQueryParameter("count", "$n").addQueryParameter("range", "week").build()
+        val lista = ((pedirJson(u) as? JsonObject)?.get("payload") as? JsonObject)?.arr("release_groups") ?: return emptyList()
+        return lista.mapNotNull { it as? JsonObject }.filter { it["release_group_mbid"].texto().matches(Regex("[0-9a-f-]{36}")) }
+            .distinctBy { it["release_group_mbid"].texto() }.map { d ->
+                val caratula = d["caa_release_mbid"].texto().takeIf { it.isNotBlank() }?.let { "https://coverartarchive.org/release/$it/front-250" }
+                    ?: MusicBrainz.caratula(d["release_group_mbid"].texto(), 250)
+                Encontrado(Tipos.ALBUM, d["release_group_name"].texto(), null, d["artist_name"].texto(), caratula, "mb:rg:${d["release_group_mbid"].texto()}")
+            }
+    }
+
+    /** Los artistas más escuchados de la semana. */
+    suspend fun artistasDeLaSemana(n: Int = 30): List<ArtistaEncontrado> {
+        val u = "https://api.listenbrainz.org/1/stats/sitewide/artists".toHttpUrl().newBuilder()
+            .addQueryParameter("count", "$n").addQueryParameter("range", "week").build()
         val lista = ((pedirJson(u) as? JsonObject)?.get("payload") as? JsonObject)?.arr("artists") ?: return emptyList()
         return lista.mapNotNull { it as? JsonObject }.filter { it["artist_mbid"].texto().matches(Regex("[0-9a-f-]{36}")) }
             .distinctBy { it["artist_mbid"].texto() }.map { a -> ArtistaEncontrado(a["artist_mbid"].texto(), a["artist_name"].texto(), "", null, "", "") }
@@ -953,5 +984,26 @@ object Wikimedia {
             .replace(Regex("<(\\w+)[^>]*display:\\s*none[^>]*>.*?</\\1>", RegexOption.DOT_MATCHES_ALL), "")
             .replace(Regex("<[^>]+>"), "").replace("&amp;", "&").replace(Regex("\\s+"), " ").trim()
         return listOf(v("Artist"), v("LicenseShortName"), "Wikimedia Commons").filter { it.isNotBlank() }.joinToString(" · ")
+    }
+}
+
+/**
+ * TVmaze (datos CC BY-SA 4.0, sin clave): lo que se estrena hoy en las plataformas, para "lo del momento" de las series
+ * cuando no hay clave de TMDB. Se le da el crédito con un enlace en la pantalla.
+ */
+object TvMaze {
+    const val SITIO = "https://www.tvmaze.com"
+
+    suspend fun estrenosDeHoy(): List<Encontrado> {
+        val u = "https://api.tvmaze.com/schedule/web".toHttpUrl().newBuilder().addQueryParameter("date", java.time.LocalDate.now().toString()).build()
+        return (pedirJson(u) as? kotlinx.serialization.json.JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("_embedded") as? JsonObject }
+            .mapNotNull { it["show"] as? JsonObject }.distinctBy { it["id"].entero() }
+            // Las más seguidas primero ("weight" es lo popular que es en TVmaze), en los idiomas que más se ven aquí.
+            .sortedByDescending { it["weight"].entero() ?: 0 }
+            .mapNotNull { s ->
+                val foto = (s["image"] as? JsonObject)?.get("medium").texto().replace("http://", "https://")
+                if (foto.isBlank() || s["language"].texto() !in setOf("English", "Spanish", "Japanese", "Korean")) return@mapNotNull null
+                Encontrado(Tipos.SERIE, s["name"].texto(), anioDe(s["premiered"].texto()), "", foto, "tvmaze:${s["id"].entero()}")
+            }.take(24)
     }
 }

@@ -83,6 +83,9 @@ data class PerfilSubido(
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
+/** Lo que la gente está buscando en Wikipedia (lo calcula el servidor cada 12 horas), ver `Momento` en el servidor. */
+@Serializable data class Buscado(val titulo: String, val vistas: Long = 0, val wikidata: String = "", val tmdb: String = "")
+@Serializable data class DelMomentoServidor(val dia: String = "", val peliculas: List<Buscado> = emptyList(), val series: List<Buscado> = emptyList(), val anime: List<Buscado> = emptyList())
 @Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
 @Serializable data class VotoFrase(val valor: Int)
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
@@ -186,6 +189,8 @@ class ClienteSocial(private val token: String? = null) {
     /* Chat: solo pasan sobres cerrados (ver `Chat`) */
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
+    suspend fun momento(idioma: String): DelMomentoServidor = leer(DelMomentoServidor.serializer(), pedir("/momento?idioma=${cod(idioma)}"))
+
     /** Los votos de la comunidad a las frases del saludo (clave → sí y no). */
     suspend fun frases(): Map<String, ConteoFrase> = leer(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ConteoFrase.serializer()), pedir("/frases"))
     suspend fun votarFrase(clave: String, valor: Int) { pedir("/frases/${cod(clave)}", "PUT", json(VotoFrase.serializer(), VotoFrase(valor))) }

@@ -1,1 +1,0 @@
-Chat redesign: it starts at the bottom, shows the name (tap the photo for the profile), reply by swiping a message, delete for you or for everyone, share, clear the chat, customize it and send stickers: make your own from a photo, save the ones you get and search them by name. The Home phrase now learns: mark the ones you like and people's favorites show up more.

@@ -296,7 +296,7 @@
   <string name="buscar_y_agregar">Buscar y agregar</string>
   <string name="borrar_texto">Borrar el texto</string>
   <string name="ver_mas">Ver más</string>
-  <string name="fuentes_busqueda">Cine: TMDB (con tu clave). Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library.</string>
+  <string name="fuentes_busqueda">Cine: TMDB (con tu clave). Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.</string>
   <string name="seccion_cine">Cine</string>
   <string name="seccion_musica">Música</string>
   <string name="seccion_libros">Libros</string>
@@ -672,6 +672,13 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="momento_todo">Lo más visto, escuchado y leído de la semana</string>
+  <string name="momento_visto">Lo más visto esta semana</string>
+  <string name="momento_musica">Los discos más escuchados de la semana</string>
+  <string name="momento_libros">Los libros más buscados de la semana</string>
+  <string name="momento_estrenos">Se estrena hoy en las plataformas</string>
+  <string name="momento_buscado">Lo que más se busca hoy</string>
+  <string name="momento_credito_tvmaze">Estrenos: datos de TVmaze (CC BY-SA)</string>
   <string name="frase_11">¿Qué hay pa\' hoy?</string>
   <string name="frase_12">¿Plan de cobija y peli?</string>
   <string name="frase_13">¿Le damos play?</string>

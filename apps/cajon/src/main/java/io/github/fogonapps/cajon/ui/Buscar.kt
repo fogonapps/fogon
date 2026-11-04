@@ -205,6 +205,9 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 }
             }
 
+            // Lo del momento también debajo de los resultados (en todas las secciones).
+            item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
+
             item(key = "pie") {
                 val vacio = !hayDelCajon && b.cargando.isEmpty() && b.artistas.isEmpty() && b.autores.isEmpty() && b.directores.isEmpty() && b.obras.values.all { it.isEmpty() }
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -256,38 +259,79 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
     }
 }
 
-/** Lo del momento, para mirar sin escribir: portadas de lo más visto, leído y escuchado (según la sección). */
+/**
+ * Lo del momento, según la sección elegida: arriba lo más visto, escuchado o leído de la semana (con portada), después
+ * lo que más se busca hoy en Wikipedia (títulos para tocar y buscar) y, en música, los artistas de la semana.
+ * [compacto]: una sola fila y los más buscados, para debajo de los resultados.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun LoDelMomento(vm: CajonViewModel, seccion: String) {
+fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false) {
     val f = FogonTema.actual
-    val o by vm.paraElegir.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.cargarParaElegir() }
+    val m by vm.momento.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.cargarMomento() }
     if (seccion == Secciones.PERSONAS) return
-    val obras = when {
-        seccion == Secciones.TODO -> (o.cine.take(9) + o.libros.take(3))
-        seccion in Secciones.DE_CINE -> o.cine
-        seccion == Secciones.LIBROS -> o.libros
-        else -> emptyList()
-    }.filter { it.portada.isNotBlank() }.take(12)
-    val artistas = if (seccion == Secciones.TODO || seccion == Secciones.MUSICA) o.artistas.filter { it.foto.isNotBlank() }.take(8) else emptyList()
-    if (obras.isEmpty() && artistas.isEmpty()) return
-    Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
-    obras.chunked(3).forEach { fila ->
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            fila.forEach { r ->
-                Box(Modifier.weight(1f).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrirEncontrado(r) }) {
-                    Portada(r.portada, r.tipo, r.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+    val tipos = when (seccion) {
+        Secciones.PELICULAS, Secciones.CINE -> listOf(Tipos.PELICULA)
+        Secciones.SERIES -> listOf(Tipos.SERIE)
+        Secciones.ANIMES -> listOf(Tipos.ANIME)
+        Secciones.MUSICA -> listOf(Tipos.ALBUM)
+        Secciones.LIBROS -> listOf(Tipos.LIBRO)
+        else -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.ALBUM, Tipos.LIBRO)
+    }
+    // Con todo: un poco de cada tipo, intercalado.
+    val porTipo = tipos.map { m.obras[it].orEmpty() }
+    val obras = (if (tipos.size == 1) porTipo.first() else (0 until 4).flatMap { i -> porTipo.mapNotNull { it.getOrNull(i) } })
+        .distinctBy { it.fuente }.take(if (compacto) 3 else 12)
+    val buscados = tipos.flatMap { t -> m.buscados[t].orEmpty().map { t to it } }
+        .let { l -> if (tipos.size == 1) l else l.sortedByDescending { it.second.vistas } }.take(if (compacto) 6 else 12)
+    val artistas = if (!compacto && (seccion == Secciones.TODO || seccion == Secciones.MUSICA)) m.artistas.filter { it.foto.isNotBlank() }.take(10) else emptyList()
+    if (obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty()) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        if (obras.isNotEmpty()) {
+            Text(stringResource(when (seccion) {
+                Secciones.MUSICA -> R.string.momento_musica; Secciones.LIBROS -> R.string.momento_libros
+                Secciones.SERIES -> if (m.conTvMaze) R.string.momento_estrenos else R.string.momento_visto
+                Secciones.PELICULAS, Secciones.CINE, Secciones.ANIMES -> R.string.momento_visto
+                else -> R.string.momento_todo
+            }), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            obras.chunked(3).forEach { fila ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    fila.forEach { r ->
+                        Column(Modifier.weight(1f).clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.abrirDelMomento(r) }) {
+                            Portada(r.portada, r.tipo, r.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                            Text(r.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                        }
+                    }
+                    repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
                 }
             }
-            repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
         }
-    }
-    if (artistas.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        artistas.forEach { a ->
-            Column(Modifier.width(76.dp).clip(io.github.fogonapps.identidad.forma(14.dp)).clickable { vm.abrir(Pantalla.PreviaArtista(a)) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                FotoArtista(a.foto, a.nombre, 68.dp)
-                Text(a.nombre, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1)
+        if (buscados.isNotEmpty()) {
+            Text(stringResource(R.string.momento_buscado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                buscados.forEach { (t, x) ->
+                    Pildora(x.titulo, iconoSeccion(Secciones.de(t))) {
+                        if (x.tmdb.isNotBlank()) vm.abrirDelMomento(io.github.fogonapps.cajon.datos.Encontrado(t, x.titulo, null, "", "", x.tmdb))
+                        else vm.buscarEn(Secciones.de(t), x.titulo)
+                    }
+                }
             }
+        }
+        if (artistas.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            artistas.forEach { a ->
+                Column(Modifier.width(76.dp).clip(io.github.fogonapps.identidad.forma(14.dp)).clickable { vm.abrir(Pantalla.PreviaArtista(a)) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    FotoArtista(a.foto, a.nombre, 68.dp)
+                    Text(a.nombre, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1)
+                }
+            }
+        }
+        if (m.conTvMaze && Tipos.SERIE in tipos && m.obras[Tipos.SERIE].orEmpty().isNotEmpty()) {
+            val uri = androidx.compose.ui.platform.LocalUriHandler.current
+            Text(stringResource(R.string.momento_credito_tvmaze), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
+                modifier = Modifier.clip(io.github.fogonapps.identidad.forma(8.dp)).clickable { uri.openUri(io.github.fogonapps.cajon.datos.TvMaze.SITIO) })
         }
     }
 }

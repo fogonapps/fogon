@@ -1492,6 +1492,63 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /* ----- Lo del momento ----- */
+
+    /**
+     * Lo del momento, por sección: [obras] con portada (película, serie, anime, album, libro → lista) y [buscados], lo
+     * que más se busca hoy en Wikipedia (película, serie, anime → títulos). Se renueva si tiene más de 6 horas.
+     */
+    data class DelMomento(
+        val obras: Map<String, List<Encontrado>> = emptyMap(),
+        val buscados: Map<String, List<io.github.fogonapps.cajon.datos.Buscado>> = emptyMap(),
+        val artistas: List<ArtistaEncontrado> = emptyList(),
+        val conTvMaze: Boolean = false,
+        val cuando: Long = 0,
+    )
+
+    private val _momento = MutableStateFlow(DelMomento())
+    val momento: StateFlow<DelMomento> = _momento
+    private var trayendoMomento = false
+
+    fun cargarMomento() {
+        if (trayendoMomento || System.currentTimeMillis() - _momento.value.cuando < 6 * 3600_000L) return
+        trayendoMomento = true
+        val clave = caja.claveTmdb
+        val l = idioma()
+        viewModelScope.launch {
+            try {
+                fun <T> intento(b: suspend () -> List<T>) = async { runCatching { b() }.getOrDefault(emptyList()) }
+                val servidor = async { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial().momento(l) }.getOrNull() }
+                val peliculas = intento { if (clave == null) emptyList() else Tmdb(clave).tendenciasDe("movie", l) }
+                val series = intento { if (clave == null) io.github.fogonapps.cajon.datos.TvMaze.estrenosDeHoy() else Tmdb(clave).tendenciasDe("tv", l).filter { it.tipo == Tipos.SERIE } }
+                val anime = intento { if (clave == null) emptyList() else Tmdb(clave).descubrir("tv", null, null, anime = true, idioma = l) }
+                val discos = intento { io.github.fogonapps.cajon.datos.ListenBrainz.discosDeLaSemana() }
+                val libros = intento { OpenLibrary.tendencias(l) }
+                val artistas = intento {
+                    val a = io.github.fogonapps.cajon.datos.ListenBrainz.artistasDeLaSemana(24)
+                    val fotos = runCatching { Wikimedia.fotos(a.map { it.mbid }) }.getOrDefault(emptyMap())
+                    a.map { x -> fotos[x.mbid]?.let { x.copy(foto = it) } ?: x }
+                }
+                val s = servidor.await()
+                _momento.value = DelMomento(
+                    obras = mapOf(Tipos.PELICULA to peliculas.await(), Tipos.SERIE to series.await(), Tipos.ANIME to anime.await(),
+                        Tipos.ALBUM to discos.await(), Tipos.LIBRO to libros.await()).mapValues { (_, v) -> v.filter { it.portada.isNotBlank() } },
+                    buscados = if (s == null) emptyMap() else mapOf(Tipos.PELICULA to s.peliculas, Tipos.SERIE to s.series, Tipos.ANIME to s.anime),
+                    artistas = artistas.await(), conTvMaze = clave == null, cuando = System.currentTimeMillis(),
+                )
+            } finally { trayendoMomento = false }
+        }
+    }
+
+    /** Tocar algo de lo del momento: si se puede abrir (TMDB, MusicBrainz, Open Library), su previa; si no, se busca por su nombre. */
+    fun abrirDelMomento(r: Encontrado) {
+        if (r.fuente.startsWith("tvmaze:") || (r.fuente.startsWith("tmdb:") && caja.claveTmdb == null)) buscarEn(Secciones.de(r.tipo), r.titulo)
+        else abrirEncontrado(r)
+    }
+
+    /** Busca [texto] en [seccion] (sin salir del buscador). */
+    fun buscarEn(seccion: String, texto: String) { cambiarSeccion(seccion); buscar(texto) }
+
     /* ----- Enlaces a otros servicios ----- */
 
     private val _enlaces = MutableStateFlow<Map<String, List<io.github.fogonapps.cajon.datos.Enlace>>>(emptyMap())

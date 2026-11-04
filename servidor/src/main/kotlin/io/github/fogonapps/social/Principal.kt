@@ -40,6 +40,7 @@ fun main() {
     val cartero = if (usuario.isNotBlank() && clave.isNotBlank()) CarteroSmtp(usuario, clave) else null
     val social = Social(Base(File(datos, "social.db").path), File(datos, "fotos"), cartero = cartero ?: Cartero { _, _, _ -> throw Problema(503, "sin_correo") })
     correoListo = cartero != null
+    Momento.empezar()
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
 }
 
@@ -54,7 +55,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.10"
+const val VERSION = "0.11"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -175,6 +176,7 @@ fun Application.fogonSocial(social: Social) {
             post("/vistas") { social.vio(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }
+            get("/momento") { call.respond(Momento.de(call.request.queryParameters["idioma"].orEmpty())) }
             get("/frases") { call.respond(social.frases()) }
             put("/frases/{clave}") { social.votarFrase(call.yo(), call.parameters["clave"].orEmpty(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             delete("/avisos") { social.borrarAvisos(call.yo(), null); call.respond(HttpStatusCode.NoContent) }
