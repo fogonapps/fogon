@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,7 +75,7 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Text(stringResource(R.string.tut_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
                 CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre))
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-                BotonRiso(stringResource(R.string.siguiente), { paso = 2 }, Modifier.fillMaxWidth())
+                BotonRiso(stringResource(R.string.siguiente), { vm.cambiarNombre(nombre); paso = 2 }, Modifier.fillMaxWidth())
             }
             // Lo que te gusta: obras y artistas concretos (con eso el cajón no arranca vacío). Al menos 3.
             2 -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -85,13 +86,40 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                     FilasDeGustos(vm, estado)
                     val n = elegidasIniciales(vm, estado)
                     Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-                        BotonRiso(if (n >= 3) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = n >= 3)
+                        BotonRiso(if (n >= 3) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); vm.agregarIniciales(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = n >= 3)
                     }
                 }
             }
-            else -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Lo que se puede hacer: lo más interesante de la app, en cinco líneas.
+            3 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(stringResource(R.string.tut_funciones), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+                listOf(
+                    Iconos.Cajon to R.string.tut_funcion_cajon, Iconos.Gente to R.string.tut_funcion_red, Iconos.Racha to R.string.tut_funcion_momento,
+                    Iconos.Cifras to R.string.tut_funcion_cifras, Iconos.Compartir to R.string.tut_funcion_compartir,
+                ).forEachIndexed { i, (icono, texto) ->
+                    Row(Modifier.aparecer(i).fillMaxWidth().tarjetaFogon().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Ficha(f.tinta1, icono)
+                        Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
+                    }
+                }
+                BotonRiso(stringResource(R.string.siguiente), { paso = 4 }, Modifier.fillMaxWidth())
+            }
+            4 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 PasoDaleVida(Paleta.Cajon, AlmacenApariencia.de(LocalContext.current))
-                BotonRiso(stringResource(R.string.empezar), { vm.terminarTutorial(nombre) }, Modifier.fillMaxWidth())
+                BotonRiso(stringResource(R.string.siguiente), { paso = 5 }, Modifier.fillMaxWidth())
+            }
+            // Al final, la cuenta con tu correo (para guardar tu cajón); se puede dejar para después.
+            else -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                val e by vm.estado.collectAsStateWithLifecycle()
+                val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+                LaunchedEffect(usuario) { if (usuario != null) vm.terminarTutorial(nombre) }
+                Text(stringResource(R.string.tut_cuenta_titulo), style = MaterialTheme.typography.headlineSmall, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp))
+                Text(stringResource(R.string.tut_cuenta_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
+                LaunchedEffect(Unit) { vm.red.revisarServidor() }
+                e?.let { EntrarRed(vm, it, conIntro = false) }
+                Column(Modifier.padding(horizontal = 24.dp)) {
+                    BotonSecundario(stringResource(R.string.ahora_no), { vm.terminarTutorial(nombre) }, Modifier.fillMaxWidth())
+                }
             }
         }
     }

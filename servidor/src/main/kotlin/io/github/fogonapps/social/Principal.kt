@@ -18,6 +18,7 @@ import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.response.header
 import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -55,12 +56,12 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.14"
+const val VERSION = "0.15"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
 
-fun Application.fogonSocial(social: Social) {
+fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY"))) {
     install(ContentNegotiation) { json(JsonSocial) }
     install(StatusPages) {
         exception<Problema> { call, p -> call.respond(HttpStatusCode.fromValue(p.codigo), Error(p.mensaje)) }
@@ -69,6 +70,7 @@ fun Application.fogonSocial(social: Social) {
     }
     val general = Limite(120)
     val registros = Limite(5)
+    val pedidosCine = Limite(240)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
             val quien = call.request.header("Authorization") ?: call.request.origin.remoteAddress
@@ -106,6 +108,14 @@ fun Application.fogonSocial(social: Social) {
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.entrar(call.receive()))
+            }
+            // TMDB por el servidor (la clave solo vive aquí), ver Cine.
+            get("/tmdb/{ruta...}") {
+                if (!pedidosCine.pasa("cine:${call.ip()}")) throw Problema(429, "despacio")
+                val ruta = call.parameters.getAll("ruta").orEmpty().joinToString("/")
+                val params = call.request.queryParameters.entries().associate { it.key to it.value.firstOrNull().orEmpty() }
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { cine.pedir(ruta, params) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
             post("/acceso/correo") {
                 if (!registros.pasa("correo:${call.ip()}")) throw Problema(429, "despacio")

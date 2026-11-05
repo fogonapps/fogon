@@ -228,10 +228,6 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     Encabezado(o, vm, conGeneros = false)
 
     // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
-    if (o.fuente.isEmpty() && o.tipo != Tipos.LIBRO && o.tipo != Tipos.ALBUM && !vm.hayClaveTmdb()) Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.falta_tmdb_ficha), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        BotonSecundario(stringResource(R.string.poner_clave_tmdb), { vm.abrir(Pantalla.ClaveTmdb) }, Modifier.fillMaxWidth())
-    }
 
     // Los géneros, como etiquetas (tocar uno busca lo del cajón con ese género).
     EditorEtiquetas("g" + o.id, stringResource(R.string.generos), o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
@@ -424,7 +420,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
     val fuente = o?.fuente ?: a?.fuente.orEmpty()
     when {
         lista == null -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
-        lista.size <= 1 -> Pista(stringResource(if (fuente.startsWith("tmdb:") && !vm.hayClaveTmdb()) R.string.falta_tmdb_ficha else R.string.sin_otras_portadas))
+        lista.size <= 1 -> Pista(stringResource(R.string.sin_otras_portadas))
         else -> {
             Seccion(stringResource(R.string.elegir_otra))
             // Fondos en dos columnas (son anchos); portadas y fotos en tres.

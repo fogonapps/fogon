@@ -1355,10 +1355,9 @@
 "imagen": "https://covers.openlibrary.org/b/id/12627383-M.jpg",
 "parecidos": [
 "amor_colera",
-"pedro_paramo",
 "casa_espiritus",
-"rayuela",
-"ficciones"
+"pedro_paramo",
+"rayuela"
 ]
 },
 {
@@ -1370,7 +1369,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/10096404-M.jpg",
 "parecidos": [
 "cien_anos",
-"casa_espiritus"
+"casa_espiritus",
+"misma_estrella"
 ]
 },
 {
@@ -1381,8 +1381,9 @@
 "fuente": "ol:OL10263W",
 "imagen": "https://covers.openlibrary.org/b/id/10708272-M.jpg",
 "parecidos": [
-"alquimista",
-"hobbit"
+"alicia",
+"hobbit",
+"percy"
 ]
 },
 {
@@ -1393,9 +1394,9 @@
 "fuente": "ol:OL1168083W",
 "imagen": "https://covers.openlibrary.org/b/id/9267242-M.jpg",
 "parecidos": [
+"rebelion",
 "mundo_feliz",
-"fahrenheit",
-"metamorfosis"
+"fahrenheit"
 ]
 },
 {
@@ -1407,7 +1408,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/8231823-M.jpg",
 "parecidos": [
 "1984",
-"fahrenheit"
+"fahrenheit",
+"dune_libro"
 ]
 },
 {
@@ -1419,7 +1421,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/12993656-M.jpg",
 "parecidos": [
 "1984",
-"mundo_feliz"
+"mundo_feliz",
+"rebelion"
 ]
 },
 {
@@ -1431,8 +1434,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/10590366-M.jpg",
 "parecidos": [
 "guardian",
-"orgullo_libro",
-"ruisenor"
+"ruisenor",
+"orgullo_libro"
 ]
 },
 {
@@ -1444,6 +1447,7 @@
 "imagen": "https://covers.openlibrary.org/b/id/14351077-M.jpg",
 "parecidos": [
 "gatsby",
+"ana_frank",
 "guardian"
 ]
 },
@@ -1467,10 +1471,10 @@
 "fuente": "ol:OL82563W",
 "imagen": "https://covers.openlibrary.org/b/id/15155833-M.jpg",
 "parecidos": [
-"hobbit",
+"percy",
 "hunger",
-"nombre_viento",
-"lotr_libro"
+"hobbit",
+"crepusculo"
 ]
 },
 {
@@ -1482,8 +1486,9 @@
 "imagen": "https://covers.openlibrary.org/b/id/14627509-M.jpg",
 "parecidos": [
 "lotr_libro",
+"nombre_viento",
 "hp1",
-"nombre_viento"
+"juego_tronos"
 ]
 },
 {
@@ -1495,7 +1500,7 @@
 "imagen": "https://covers.openlibrary.org/b/id/14625765-M.jpg",
 "parecidos": [
 "hobbit",
-"dune_libro",
+"juego_tronos",
 "nombre_viento"
 ]
 },
@@ -1507,9 +1512,9 @@
 "fuente": "ol:OL893414W",
 "imagen": "https://covers.openlibrary.org/b/id/11481354-M.jpg",
 "parecidos": [
-"lotr_libro",
 "hail_mary",
-"1984"
+"marciano_libro",
+"lotr_libro"
 ]
 },
 {
@@ -1520,8 +1525,10 @@
 "fuente": "ol:OL5735363W",
 "imagen": "https://covers.openlibrary.org/b/id/12646537-M.jpg",
 "parecidos": [
-"hp1",
-"romper_circulo"
+"divergente",
+"crepusculo",
+"percy",
+"hp1"
 ]
 },
 {
@@ -1533,7 +1540,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/7414780-M.jpg",
 "parecidos": [
 "principito",
-"sombra_viento"
+"sombra_viento",
+"circe"
 ]
 },
 {
@@ -1544,7 +1552,8 @@
 "fuente": "ol:OL17075811W",
 "imagen": "https://covers.openlibrary.org/b/id/8634250-M.jpg",
 "parecidos": [
-"habitos"
+"habitos",
+"hail_mary"
 ]
 },
 {
@@ -1555,7 +1564,8 @@
 "fuente": "ol:OL17930368W",
 "imagen": "https://covers.openlibrary.org/b/id/12539702-M.jpg",
 "parecidos": [
-"sapiens"
+"sapiens",
+"alquimista"
 ]
 },
 {
@@ -1567,7 +1577,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/9273490-M.jpg",
 "parecidos": [
 "gatsby",
-"tokio_blues"
+"tokio_blues",
+"ruisenor"
 ]
 },
 {
@@ -1579,7 +1590,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/9411873-M.jpg",
 "parecidos": [
 "metamorfosis",
-"quijote"
+"quijote",
+"1984"
 ]
 },
 {
@@ -1602,9 +1614,10 @@
 "fuente": "ol:OL278437W",
 "imagen": "https://covers.openlibrary.org/b/id/10107644-M.jpg",
 "parecidos": [
-"perfume",
-"alquimista",
-"cien_anos"
+"codigo_davinci",
+"nombre_viento",
+"casa_espiritus",
+"perfume"
 ]
 },
 {
@@ -1616,8 +1629,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/1047466-M.jpg",
 "parecidos": [
 "ficciones",
-"cien_anos",
-"pedro_paramo"
+"pedro_paramo",
+"tokio_blues"
 ]
 },
 {
@@ -1629,7 +1642,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/5419076-M.jpg",
 "parecidos": [
 "cien_anos",
-"rayuela"
+"rayuela",
+"ficciones"
 ]
 },
 {
@@ -1641,7 +1655,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/3205226-M.jpg",
 "parecidos": [
 "cien_anos",
-"amor_colera"
+"amor_colera",
+"sombra_viento"
 ]
 },
 {
@@ -1653,7 +1668,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/2237620-M.jpg",
 "parecidos": [
 "kafka_orilla",
-"guardian"
+"guardian",
+"rayuela"
 ]
 },
 {
@@ -1676,9 +1692,9 @@
 "fuente": "ol:OL8479867W",
 "imagen": "https://covers.openlibrary.org/b/id/11480483-M.jpg",
 "parecidos": [
-"hobbit",
+"juego_tronos",
 "lotr_libro",
-"hp1"
+"hobbit"
 ]
 },
 {
@@ -1690,7 +1706,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/10473609-M.jpg",
 "parecidos": [
 "evelyn_hugo",
-"hunger"
+"misma_estrella",
+"chica_tren"
 ]
 },
 {
@@ -1702,7 +1719,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/8354226-M.jpg",
 "parecidos": [
 "romper_circulo",
-"orgullo_libro"
+"circe",
+"misma_estrella"
 ]
 },
 {
@@ -1738,7 +1756,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/10910286-M.jpg",
 "parecidos": [
 "sombra_viento",
-"metamorfosis"
+"dracula",
+"paciente"
 ]
 },
 {
@@ -1763,7 +1782,8 @@
 "imagen": "https://covers.openlibrary.org/b/id/10832290-M.jpg",
 "parecidos": [
 "rayuela",
-"metamorfosis"
+"metamorfosis",
+"pedro_paramo"
 ]
 },
 {
@@ -2138,6 +2158,199 @@
 "frank_ocean",
 "kendrick",
 "billie"
+]
+},
+{
+"id": "crepusculo",
+"tipo": "libro",
+"titulo": "Crepúsculo",
+"anio": 2005,
+"fuente": "ol:OL5720023W",
+"imagen": "https://covers.openlibrary.org/b/id/12641977-M.jpg",
+"parecidos": [
+"misma_estrella",
+"hunger",
+"divergente"
+]
+},
+{
+"id": "misma_estrella",
+"tipo": "libro",
+"titulo": "Bajo la misma estrella",
+"anio": 2010,
+"fuente": "ol:OL16444438W",
+"imagen": "https://covers.openlibrary.org/b/id/7418786-M.jpg",
+"parecidos": [
+"romper_circulo",
+"crepusculo",
+"evelyn_hugo"
+]
+},
+{
+"id": "codigo_davinci",
+"tipo": "libro",
+"titulo": "El código Da Vinci",
+"anio": 2003,
+"fuente": "ol:OL76837W",
+"imagen": "https://covers.openlibrary.org/b/id/9255229-M.jpg",
+"parecidos": [
+"chica_tren",
+"sombra_viento",
+"sherlock_libro"
+]
+},
+{
+"id": "percy",
+"tipo": "libro",
+"titulo": "Percy Jackson y el ladrón del rayo",
+"anio": 2005,
+"fuente": "ol:OL492658W",
+"imagen": "https://covers.openlibrary.org/b/id/7239831-M.jpg",
+"parecidos": [
+"hp1",
+"circe",
+"hunger"
+]
+},
+{
+"id": "ana_frank",
+"tipo": "libro",
+"titulo": "El diario de Ana Frank",
+"anio": 1944,
+"fuente": "ol:OL266178W",
+"imagen": "https://covers.openlibrary.org/b/id/8584021-M.jpg",
+"parecidos": [
+"ruisenor",
+"principito"
+]
+},
+{
+"id": "juego_tronos",
+"tipo": "libro",
+"titulo": "Juego de tronos",
+"anio": 1996,
+"fuente": "ol:OL257943W",
+"imagen": "https://covers.openlibrary.org/b/id/9269962-M.jpg",
+"parecidos": [
+"lotr_libro",
+"nombre_viento",
+"circe"
+]
+},
+{
+"id": "it_libro",
+"tipo": "libro",
+"titulo": "It (Eso)",
+"anio": 1986,
+"fuente": "ol:OL81613W",
+"imagen": "https://covers.openlibrary.org/b/id/8569284-M.jpg",
+"parecidos": [
+"dracula",
+"paciente",
+"chica_tren"
+]
+},
+{
+"id": "chica_tren",
+"tipo": "libro",
+"titulo": "La chica del tren",
+"anio": 2014,
+"fuente": "ol:OL17112428W",
+"imagen": "https://covers.openlibrary.org/b/id/7350360-M.jpg",
+"parecidos": [
+"paciente",
+"codigo_davinci",
+"it_libro"
+]
+},
+{
+"id": "sherlock_libro",
+"tipo": "libro",
+"titulo": "Estudio en escarlata",
+"anio": 1887,
+"fuente": "ol:OL262496W",
+"imagen": "https://covers.openlibrary.org/b/id/13405534-M.jpg",
+"parecidos": [
+"codigo_davinci",
+"dracula"
+]
+},
+{
+"id": "rebelion",
+"tipo": "libro",
+"titulo": "Rebelión en la granja",
+"anio": 1945,
+"fuente": "ol:OL1168007W",
+"imagen": "https://covers.openlibrary.org/b/id/11261770-M.jpg",
+"parecidos": [
+"1984",
+"mundo_feliz",
+"fahrenheit"
+]
+},
+{
+"id": "alicia",
+"tipo": "libro",
+"titulo": "Alicia en el país de las maravillas",
+"anio": 1865,
+"fuente": "ol:OL138052W",
+"imagen": "https://covers.openlibrary.org/b/id/10527843-M.jpg",
+"parecidos": [
+"principito",
+"hobbit",
+"hp1"
+]
+},
+{
+"id": "paciente",
+"tipo": "libro",
+"titulo": "La paciente silenciosa",
+"anio": 2018,
+"fuente": "ol:OL19096402W",
+"imagen": "https://covers.openlibrary.org/b/id/9407338-M.jpg",
+"parecidos": [
+"chica_tren",
+"codigo_davinci",
+"it_libro"
+]
+},
+{
+"id": "divergente",
+"tipo": "libro",
+"titulo": "Divergente",
+"anio": 2010,
+"fuente": "ol:OL15719630W",
+"imagen": "https://covers.openlibrary.org/b/id/13274634-M.jpg",
+"parecidos": [
+"hunger",
+"crepusculo",
+"1984"
+]
+},
+{
+"id": "circe",
+"tipo": "libro",
+"titulo": "Circe",
+"anio": 2018,
+"fuente": "ol:OL18012166W",
+"imagen": "https://covers.openlibrary.org/b/id/8739376-M.jpg",
+"parecidos": [
+"evelyn_hugo",
+"percy",
+"juego_tronos"
+]
+},
+{
+"id": "dracula",
+"tipo": "libro",
+"titulo": "Drácula",
+"anio": 1897,
+"fuente": "ol:OL85892W",
+"imagen": "https://covers.openlibrary.org/b/id/12216503-M.jpg",
+"parecidos": [
+"it_libro",
+"sherlock_libro",
+"perfume"
 ]
 }
 ]

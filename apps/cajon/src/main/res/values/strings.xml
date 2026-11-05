@@ -57,7 +57,6 @@
   <string name="buscar_falta_tmdb">Searching films, series and anime needs your TMDB key (it’s free). You can also add them by hand.</string>
   <string name="buscar_tmdb_mala">TMDB didn’t accept your key. Check it in Settings.</string>
   <string name="buscar_sin_red">Couldn’t search: check your internet connection.</string>
-  <string name="poner_clave_tmdb">Add my TMDB key</string>
   <string name="agregar_a_mano">Add by hand</string>
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
   <string name="ya_en_cajon">Already in your cajón</string>
@@ -162,11 +161,6 @@
   <string name="borrar_artista_pregunta">Delete %1$s?</string>
   <string name="borrar_artista_texto">Their albums stay in your cajón.</string>
   <string name="tu_nombre">Your name</string>
-  <string name="buscar_afuera">Online search</string>
-  <string name="clave_tmdb">TMDB key</string>
-  <string name="clave_tmdb_lista">Ready: you can search films, series and anime.</string>
-  <string name="clave_tmdb_falta">No key: films, series and anime are added by hand.</string>
-  <string name="libros_y_musica_sin_clave">Books and music don’t need a key.</string>
   <string name="sync_titulo">Sync with your PC</string>
   <string name="sync_apagada">Off</string>
   <string name="sync_conectada">Connected as %1$s</string>
@@ -188,12 +182,6 @@
   <string name="manifiesto">Manifesto</string>
   <string name="acerca_de">About El Cajón</string>
   <string name="acerca_de_corto">About</string>
-  <string name="tmdb_explica">To search films, series and anime, El Cajón uses TMDB, the largest open film database. TMDB asks each person to use their own key: it’s free and you only get it once.</string>
-  <string name="tmdb_pasos">1. Create a free account at themoviedb.org.\n2. In Settings → API, request a key (personal use).\n3. Copy the “API Key” (or the “API Read Access Token”) and paste it here.</string>
-  <string name="abrir_tmdb">Open TMDB</string>
-  <string name="pega_clave">Paste your key here</string>
-  <string name="quitar_clave">Remove key</string>
-  <string name="tmdb_privacidad">The key stays encrypted on this phone and is only used to search. It isn’t in backups or sync.</string>
   <string name="tmdb_aviso">El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="sync_explica">Connect your GitHub and your cajón saves itself to a private file in your account (a secret Gist). El Cajón on your PC reads that same file, so you have the same on both. It’s optional.</string>
   <string name="sync_pasos">1. Tap Create token (GitHub opens with everything ready).\n2. Under Expiration choose No expiration or 1 year.\n3. Scroll down, tap Generate token, copy it and paste it here.</string>
@@ -233,9 +221,6 @@
   <string name="aviso_datos_al_dia">Details refreshed</string>
   <string name="aviso_registrado">Logged in your diary</string>
   <string name="aviso_favoritas_cuatro">Top four only: the oldest one left</string>
-  <string name="aviso_clave_corta">Paste the whole key</string>
-  <string name="aviso_probando_clave">Checking the key…</string>
-  <string name="aviso_clave_lista">Key saved</string>
   <string name="aviso_token_corto">Paste the whole token</string>
   <string name="aviso_conectando">Connecting to GitHub…</string>
   <string name="aviso_token_invalido">That token isn’t valid</string>
@@ -370,8 +355,7 @@
   <string name="editar">Edit</string>
   <string name="genero_en_tu_cajon">%1$s in your cajón</string>
     <string name="cambiar_portada">Change cover</string>
-    <string name="falta_tmdb_ficha">To bring the poster, synopsis and episodes of movies, series and anime you need a TMDB key (free, takes a minute).</string>
-    <string name="agregar_etiqueta">Add tag</string>
+      <string name="agregar_etiqueta">Add tag</string>
     <string name="agregar_episodio_favorito">Add a favorite episode</string>
     <string name="episodios_favoritos">Favorite episodes</string>
     <string name="temporada_episodio">S%1$s · E%2$s</string>
@@ -493,10 +477,7 @@
   <string name="generos_pista">Tap once if you like it and again if you don’t; a third tap leaves it as it was.</string>
   <string name="lo_que_te_gusta">What you like</string>
   <string name="lo_que_te_gusta_pista">Tap what you like from the most watched, listened to and read.</string>
-  <string name="lo_mas_visto_semana">Most watched this week</string>
-  <string name="gustos_sin_tmdb">With a TMDB key (Settings) you can also pick films and series.</string>
   <string name="artistas">Artists</string>
-  <string name="lo_mas_leido">Most read</string>
   <string name="tus_gustos_explica">What you said and what El Cajón learned from what you save, rate and listen to, with recent things weighing more. Fix what’s wrong: what you say always wins.</string>
   <string name="elegir_mis_gustos">Pick my taste</string>
   <string name="gustos_ahora">Yours lately</string>
@@ -672,6 +653,14 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="tut_funciones">What you can do</string>
+  <string name="tut_funcion_cajon">Keep what you watch, read and listen to, with your rating, review and diary</string>
+  <string name="tut_funcion_red">In For you, follow your people, post reviews and chat with stickers</string>
+  <string name="tut_funcion_momento">Trending in every search: what is hot on Netflix, Prime, Crunchyroll and more</string>
+  <string name="tut_funcion_cifras">Your stats per section: film hours, pages, your favorite genre and artist</string>
+  <string name="tut_funcion_compartir">Share from Netflix or Spotify straight to your cajón, or bring your history</string>
+  <string name="tut_cuenta_titulo">Keep your cajón in your account</string>
+  <string name="tut_cuenta_texto">With your email and a password, everything is saved (encrypted) and you have it on any phone</string>
   <string name="gustos_elige_minimo">Pick at least 3: what you watch, listen to or read. Tap one and similar ones show up.</string>
   <string name="gustos_faltan">%1$d to go</string>
   <string name="gustos_recargar">Show others</string>
@@ -1106,7 +1095,7 @@
   <string name="red_publicar">Post</string>
   <string name="red_publicar_sobre">Post about this on the network</string>
   <string name="red_que_es">The El Cajón network: follow people, see what they watch, read and listen to, and share your reviews, diary, lists and photos.</string>
-  <string name="red_que_sube">Only what you mark as public or for your followers (in your profile, diary and lists) and what you post goes to the server. The rest of your cajón never leaves your phone.</string>
+  <string name="red_que_sube">Your cajón is saved encrypted in your account: nobody else can read it. Only what you mark as public or for your followers, and what you post, shows on the network.</string>
   <string name="red_que_quieres_decir">What do you want to say?</string>
   <string name="red_que_se_comparte">You choose what’s shared in your profile (who sees each part), in each diary entry and in each list.</string>
   <string name="red_quitar">Remove</string>

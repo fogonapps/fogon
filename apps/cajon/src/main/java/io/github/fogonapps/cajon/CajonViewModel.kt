@@ -85,7 +85,6 @@ sealed interface Pantalla {
     data object Retos : Pantalla
     data object Ajustes : Pantalla
     data object Sincronizar : Pantalla
-    data object ClaveTmdb : Pantalla
     /** Conectar Spotify, paso a paso. */
     data object ConectarSpotify : Pantalla
     data object AcercaDe : Pantalla
@@ -226,9 +225,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _sync = MutableStateFlow(Sync(if (caja.tokenGithub != null) EstadoSync.EN_NUBE else EstadoSync.APAGADA, caja.usuario, caja.ultima))
     val sync: StateFlow<Sync> = _sync
 
-    private val _tieneTmdb = MutableStateFlow(caja.claveTmdb != null)
-    fun hayClaveTmdb() = caja.claveTmdb != null
-    val tieneTmdb: StateFlow<Boolean> = _tieneTmdb
+    /**
+     * La clave de TMDB a usar: la propia (si la puso antes) o "" = por el servidor de Fogón. Nunca falta, así que todo
+     * lo de cine funciona sin pedirle nada a la persona.
+     */
+    private val claveCine: String? get() = caja.claveTmdb ?: ""
 
     private val _mensajes = Channel<String>(Channel.BUFFERED)
     val mensajes = _mensajes.receiveAsFlow()
@@ -506,7 +507,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 ?: generoCine?.let { t.trim() } ?: generoLibro?.let { t.trim() }
             if (local != null) _busqueda.value = _busqueda.value.copy(genero = local)
             if (deCine) {
-                val clave = caja.claveTmdb
+                val clave = claveCine
                 if (clave == null) _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + ("tmdb" to R.string.buscar_falta_tmdb))
                 else fuente("tmdb") {
                     // Lo de la sección y los directores, a la vez. En "Series" sin los animes; en "Animes", series y
@@ -592,7 +593,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun detalles(r: Encontrado): Obra = when {
-        r.fuente.startsWith("tmdb:") -> Tmdb(caja.claveTmdb ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
+        r.fuente.startsWith("tmdb:") -> Tmdb(claveCine ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
         r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
         else -> MusicBrainz.detalles(r)
     }
@@ -754,7 +755,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         // 1.9.3: con las partes del título y los autores en otro alfabeto se enlaza más: lo que no se había enlazado
         // (libros, cine, artistas) se vuelve a buscar una vez.
         if (caja.versionEnlace < 1) { caja.portadasRevisadas = emptySet(); caja.versionEnlace = 1 }
-        if (caja.versionCine >= 2 || caja.claveTmdb == null) return
+        if (caja.versionCine >= 2 || claveCine == null) return
         val e = _estado.value ?: return
         val cine = e.vivas.filter { it.tipo in setOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME) }
         caja.portadasRevisadas = caja.portadasRevisadas - cine.map { it.id }.toSet()
@@ -772,7 +773,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun completarDatos() {
         if (trabajoDatos?.isActive == true) return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val faltan = _estado.value?.vivas.orEmpty().filter { it.fuente.isNotEmpty() && it.traida <= 0L && (clave != null || !it.fuente.startsWith("tmdb:")) }
         if (faltan.isEmpty()) return
         trabajoDatos = viewModelScope.launch {
@@ -785,7 +786,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Las obras con datos de TMDB de hace más de 6 meses se renuevan al abrirlas (si hay clave e internet). */
     fun renovarSiHaceFalta(o: Obra) {
         val tmdb = o.fuente.startsWith("tmdb:")
-        if (tmdb && caja.claveTmdb == null || o.fuente.isEmpty() || o.traida <= 0) return
+        if (tmdb && claveCine == null || o.fuente.isEmpty() || o.traida <= 0) return
         // Lo de TMDB, cada 6 meses; lo que se trajo sin la nota del público, una vez.
         if (tmdb && ahora() - o.traida > SEIS_MESES || o.publica == null && o.traida < ANTES_DE_NOTAS) actualizarDatos(o.id, callado = true)
     }
@@ -805,7 +806,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         // Al abrir, al importar o al poner la clave: también los datos de lo que llegó enlazado sin ellos.
         completarDatos()
         if (trabajoPortadas?.isActive == true) return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val revisadas = caja.portadasRevisadas.toMutableSet()
         val pendientes = _estado.value?.vivas.orEmpty()
             .filter { it.fuente.isEmpty() && (it.tipo == Tipos.ALBUM || it.tipo == Tipos.LIBRO || clave != null) && it.id !in revisadas }
@@ -998,7 +999,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val faltan = _estado.value?.artistasVivos?.filter { !it.fotoPropia && !it.fotoRevisada && it.fuente.isNotEmpty() } ?: return
         if (faltan.isEmpty()) return
         fotosPedidas = true
-        val clave = caja.claveTmdb
+        val clave = claveCine
         viewModelScope.launch {
             fun id(a: Artista) = a.fuente.substringAfterLast(":")
             suspend fun porTandas(ids: List<String>, f: suspend (List<String>) -> Map<String, String>) =
@@ -1075,7 +1076,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val ya = e.artistasVivos.firstOrNull { L.tituloLimpio(it.nombre.trimEnd('.')) == L.tituloLimpio(n) &&
             (if (tipo == TIPO_ARTISTA) Personas.esMusico(it) else it.tipo == tipo) }
         if (ya != null) { abrir(Pantalla.VerArtista(ya.id)); return }
-        val clave = caja.claveTmdb
+        val clave = claveCine
         _buscandoPersona.value = n
         viewModelScope.launch {
             val encontrada = runCatching {
@@ -1143,7 +1144,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun bioDeAfuera(fuente: String): Pair<Pair<String, String>?, PersonaDeAfuera?> {
         val propiedad = propiedadDe(fuente) ?: return null to null
         val x = fuente.substringAfterLast(":")
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val dePedia = runCatching { Wikimedia.bio(x, idioma(), propiedad) }.getOrNull()
         val deFuente = if (propiedad == "P434") null else runCatching {
             if (propiedad == "P648") OpenLibrary.autor(x) else clave?.let { Tmdb(it).persona(x, idioma()) }
@@ -1358,7 +1359,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun cargarRecomendaciones(otraVez: Boolean = false) {
         if (recomendando?.isActive == true || (!otraVez && _recomendaciones.value != null)) return
         val e = _estado.value ?: return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val perfil = Rec.perfil(e, escuchas.oidos.value)
         val vistos = historial.todo()
         // Lo que ya está (también lo borrado): por fuente y por título o nombre.
@@ -1375,6 +1376,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     val semillas = Rec.semillas(e, cineQuiere, 8).filter { it.first.fuente.startsWith("tmdb:") }.map { Triple(it.first.fuente, it.second, it.first.titulo) } +
                         perfil.semillas.filter { it.fuente.startsWith("tmdb:") }.take(6).map { Triple(it.fuente, 0.7, it.nombre) }
                     semillas.distinctBy { it.first }.forEach { (f, p, titulo) -> runCatching { junta.sumar(t.recomendaciones(f, idioma()), p, titulo) } }
+                    // Las parecidas que Fogón escribió para lo que eligió de la lista para empezar (con su póster).
+                    curadas(e, cineQuiere.toSet()).forEach { (titulo, lista) ->
+                        junta.sumar(lista.take(4).map { x -> if (x.portada.isBlank()) x.copy(portada = runCatching { t.poster(x.fuente) }.getOrDefault("")) else x }, 1.0, titulo)
+                    }
                     // Sin semillas (o con pocas), lo que más se ve esta semana, según sus géneros.
                     if (semillas.size < 3) runCatching { junta.sumar(t.tendencias(idioma()), 0.0, "") }
                     val c = junta.candidatos({ "obra:" + it.fuente }, { it.generos }) {
@@ -1431,6 +1436,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                             junta.sumar(obras.filter { !Rec.yaLoTiene(it.titulo, suyos) }.take(10), v.first, nombre)
                         }
                     }
+                    // Las parecidas que Fogón escribió para los libros que le gustan (pesan más que "otro del mismo autor").
+                    curadas(e, setOf(Tipos.LIBRO)).forEach { (titulo, lista) -> junta.sumar(lista, 1.5, titulo) }
                     // Sin los que solo están en otro alfabeto (Open Library no tiene esa obra en el idioma de la app).
                     val c = junta.candidatos({ "obra:" + it.fuente }, persona = { it.creador }) {
                         it.fuente in fuentes || L.tituloLimpio(it.titulo) in titulos || it.portada.isBlank() || L.otroAlfabeto(it.titulo)
@@ -1441,6 +1448,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) })
             _recomendaciones.value = r
             historial.mostrado(r.cine.map { "obra:" + it.first.fuente } + r.libros.map { "obra:" + it.first.fuente } + r.artistas.map { Rec.clavePersona(it.first.nombre) })
+        }
+    }
+
+    /**
+     * Para recomendar: por cada obra de la lista para empezar que le gusta (la dijo o la tiene sin nota baja), sus
+     * parecidas de los [tipos] pedidos, como resultados de búsqueda (título → parecidas).
+     */
+    private fun curadas(e: Estado, tipos: Set<String>): List<Pair<String, List<Encontrado>>> {
+        val porId = iniciales.associateBy { it.id }
+        val dichos = e.gustosVivos.filter { it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave }.toSet()
+        val tiene = e.vivas.filter { it.nota == 0 || it.nota >= 7 }.map { it.fuente }.filter { it.isNotEmpty() }.toSet()
+        return iniciales.filter { it.tipo in tipos && (claveInicial(it) in dichos || it.fuente in tiene) }.map { o ->
+            o.titulo to o.parecidos.mapNotNull { porId[it] }.filter { it.tipo in tipos }.map { p -> Encontrado(p.tipo, p.titulo, p.anio, "", p.imagen, p.fuente) }
         }
     }
 
@@ -1503,7 +1523,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun cargarParaElegir() {
         if (_paraElegir.value.listo) return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         viewModelScope.launch {
             val cine = async { if (clave == null) emptyList() else runCatching { Tmdb(clave).tendencias(idioma()) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
             val artistas = async {
@@ -1535,7 +1555,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val faltan = ids.filter { it !in inicialesPedidas }.mapNotNull { porId[it] }.filter { it.imagen.isBlank() }
         if (faltan.isEmpty()) return
         inicialesPedidas += faltan.map { it.id }
-        val clave = caja.claveTmdb
+        val clave = claveCine
         viewModelScope.launch {
             val artistas = faltan.filter { it.tipo == TIPO_ARTISTA }
             if (artistas.isNotEmpty()) runCatching {
@@ -1546,6 +1566,27 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 runCatching { Tmdb(clave).poster(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { _imagenesIniciales.value = _imagenesIniciales.value + (o.id to it) }
             }
         }
+    }
+
+    /**
+     * Lo que eligió de la lista para empezar entra al cajón de una vez (las obras como vistas y con "me gusta", los
+     * artistas como favoritos), para que Inicio no arranque vacío y las recomendaciones tengan de dónde salir. Lo que
+     * ya estaba no se repite; los datos completos (sinopsis, géneros, fotos) llegan después, solos.
+     */
+    fun agregarIniciales() {
+        val e0 = _estado.value ?: return
+        val dichos = e0.gustosVivos.filter { it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave }.toSet()
+        val elegidas = iniciales.filter { claveInicial(it) in dichos }
+        val obras = elegidas.filter { it.tipo != TIPO_ARTISTA && L.porFuente(e0, it.fuente) == null }.map { o ->
+            Obra(nuevoId("o"), o.tipo, o.titulo, anio = o.anio, portada = o.imagen.ifBlank { _imagenesIniciales.value[o.id].orEmpty() }, fuente = o.fuente,
+                estado = Estados.TERMINADO, meGusta = true, agregada = ahora(), cambio = ahora())
+        }
+        val artistas = elegidas.filter { it.tipo == TIPO_ARTISTA && e0.artistasVivos.none { a -> a.fuente == it.fuente || io.github.fogonapps.cajon.datos.normal(a.nombre) == io.github.fogonapps.cajon.datos.normal(it.titulo) } }
+            .map { a -> Artista(nuevoId("a"), a.titulo, a.fuente, favorito = true, foto = _imagenesIniciales.value[a.id].orEmpty(), cambio = ahora()) }
+        if (obras.isEmpty() && artistas.isEmpty()) return
+        cambiar { e -> e.copy(obras = e.obras + obras, artistas = e.artistas + artistas) }
+        obras.forEach { actualizarDatos(it.id, callado = true) }
+        completarFotos()
     }
 
     fun claveInicial(o: io.github.fogonapps.cajon.datos.ObraInicial) =
@@ -1578,7 +1619,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun cargarMomento() {
         if (trayendoMomento || System.currentTimeMillis() - _momento.value.cuando < 6 * 3600_000L) return
         trayendoMomento = true
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val l = idioma()
         viewModelScope.launch {
             try {
@@ -1617,7 +1658,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Trae lo de moda en una plataforma (con la clave de TMDB), como mucho cada 6 horas. */
     fun cargarPlataforma(nombre: String, tipo: String) {
-        val clave = caja.claveTmdb ?: return
+        val clave = claveCine ?: return
         val k = "$nombre|$tipo"
         if (System.currentTimeMillis() - (plataformaTraida[k] ?: 0) < 6 * 3600_000L) return
         plataformaTraida[k] = System.currentTimeMillis()
@@ -1639,7 +1680,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Tocar algo de lo del momento: si se puede abrir (TMDB, MusicBrainz, Open Library), su previa; si no, se busca por su nombre. */
     fun abrirDelMomento(r: Encontrado) {
-        if (r.fuente.startsWith("tvmaze:") || (r.fuente.startsWith("tmdb:") && caja.claveTmdb == null)) buscarEn(Secciones.de(r.tipo), r.titulo)
+        if (r.fuente.startsWith("tvmaze:") || (r.fuente.startsWith("tmdb:") && claveCine == null)) buscarEn(Secciones.de(r.tipo), r.titulo)
         else abrirEncontrado(r)
     }
 
@@ -1672,7 +1713,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val clave = id + "|" + que
         if (_candidatas.value?.first == clave) return
         val e = _estado.value ?: return
-        val tmdb = caja.claveTmdb?.let { Tmdb(it) }
+        val tmdb = claveCine?.let { Tmdb(it) }
         val actual: String
         val traer: suspend () -> List<String>
         if (que == IMAGEN_FOTO) {
@@ -1757,7 +1798,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
         val k = "$id:$temporada"
         if (_episodios.value?.first == k) return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val cuantos = o.temporadas.firstOrNull { it.numero == temporada }?.episodios ?: 0
         // Sin TMDB, los números de episodio de la temporada (sin nombre).
         if (!o.fuente.startsWith("tmdb:tv:") || clave == null) { _episodios.value = k to (1..cuantos).map { it to "" }; return }
@@ -1783,7 +1824,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val a = _estado.value?.artistasVivos?.firstOrNull { it.id == id } ?: return
         _candidatosArtista.value = id to null
         viewModelScope.launch {
-            val clave = caja.claveTmdb
+            val clave = claveCine
             // Músicos en MusicBrainz; escritores en Open Library; directores en TMDB (con clave).
             val r = runCatching {
                 when {
@@ -1863,7 +1904,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Trae las obras de una persona (una vez por persona): discos de MusicBrainz, libros de Open Library o lo que dirigió en TMDB. */
     fun cargarDiscografia(fuente: String) {
         if (_discografia.value?.first == fuente) return
-        val clave = caja.claveTmdb
+        val clave = claveCine
         val traer: (suspend () -> List<Encontrado>) = when {
             fuente.startsWith("mb:artist:") -> ({ MusicBrainz.discografia(fuente.removePrefix("mb:artist:")) })
             fuente.startsWith("ol:author:") -> ({ OpenLibrary.obrasDe(fuente.removePrefix("ol:author:"), idioma()) })
@@ -1963,23 +2004,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- TMDB ----- */
 
-    fun ponerClaveTmdb(clave: String) {
-        val c = clave.trim()
-        if (c.length < 20) { avisar(tx(R.string.aviso_clave_corta)); return }
-        avisar(tx(R.string.aviso_probando_clave))
-        viewModelScope.launch {
-            try {
-                Tmdb(c).probar()
-                caja.claveTmdb = c; _tieneTmdb.value = true
-                buscarPortadas()   // ahora también las películas, series y animes
-                avisar(tx(R.string.aviso_clave_lista))
-                cerrar()
-                if (_busqueda.value.texto.isNotBlank()) buscar(_busqueda.value.texto)
-            } catch (e: ClaveMala) { avisar(tx(R.string.buscar_tmdb_mala)) } catch (e: Exception) { avisar(tx(R.string.buscar_sin_red)) }
-        }
-    }
-
-    fun quitarClaveTmdb() { caja.claveTmdb = null; _tieneTmdb.value = false }
 
     /* ----- Sincronización con el Gist ----- */
 
@@ -2076,7 +2100,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     else -> null
                 }
             }.getOrNull()
-            if (exacta != null && exacta.fuente.isNotBlank() && (!exacta.fuente.startsWith("tmdb:") || caja.claveTmdb != null)) abrirEncontrado(exacta)
+            if (exacta != null && exacta.fuente.isNotBlank() && (!exacta.fuente.startsWith("tmdb:") || claveCine != null)) abrirEncontrado(exacta)
             else {
                 abrir(Pantalla.Buscar(exacta?.let { Secciones.de(it.tipo) } ?: Secciones.TODO))
                 buscar(exacta?.titulo ?: limpio)

@@ -60,7 +60,6 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
     val acciones = LocalAcciones.current
-    val tmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val c = LocalContext.current
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
@@ -88,13 +87,6 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
 
     Seccion(stringResource(R.string.aj_tu_cajon))
-    Desplegable(Iconos.Pelicula, stringResource(R.string.buscar_afuera), stringResource(if (tmdb) R.string.clave_tmdb_lista else R.string.clave_tmdb_falta)) {
-        FilaVidrio({ vm.abrir(Pantalla.ClaveTmdb) }, adentro = true) {
-            Ficha(if (tmdb) f.tinta1 else f.linea, Iconos.Pelicula)
-            Text(stringResource(R.string.clave_tmdb), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-        }
-        Pista(stringResource(R.string.libros_y_musica_sin_clave), adentro = true)
-    }
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
     // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
     if (acciones != null) FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista)) { acciones.exportar() }
@@ -181,29 +173,6 @@ fun Reporte(vm: CajonViewModel) {
         Cabecera(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_titulo), vm::cerrar)
         io.github.fogonapps.identidad.ReporteFogon("El Cajón", BuildConfig.VERSION_NAME)
         androidx.compose.foundation.layout.Spacer(Modifier.height(40.dp))
-    }
-}
-
-/** Poner o quitar la clave de TMDB, con los pasos para sacarla. */
-@Composable
-fun ClaveTmdb(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val tiene by vm.tieneTmdb.collectAsStateWithLifecycle()
-    val uri = LocalUriHandler.current
-    var clave by rememberSaveable { mutableStateOf("") }
-    Cabecera(stringResource(R.string.clave_tmdb), vm::cerrar)
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.tmdb_explica), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        Text(stringResource(R.string.tmdb_pasos), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        BotonSecundario(stringResource(R.string.abrir_tmdb), { uri.openUri(Tmdb.URL_CLAVE) }, Modifier.fillMaxWidth())
-        OutlinedTextField(clave, { clave = it.trim().take(400) }, Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text(stringResource(R.string.pega_clave)) }, visualTransformation = PasswordVisualTransformation())
-        BotonRiso(stringResource(R.string.guardar), { vm.ponerClaveTmdb(clave) }, Modifier.fillMaxWidth(), habilitado = clave.length >= 20)
-        if (tiene) BotonSecundario(stringResource(R.string.quitar_clave), { vm.quitarClaveTmdb() }, Modifier.fillMaxWidth(), peligro = true)
-        Pista(stringResource(R.string.tmdb_privacidad), adentro = true)
-        // TMDB pide su logo junto al aviso (menos destacado que la marca de la app).
-        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.logo_tmdb), "TMDB", Modifier.padding(top = 4.dp).height(16.dp))
-        Pista(stringResource(R.string.tmdb_aviso), adentro = true)
     }
 }
 

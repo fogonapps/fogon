@@ -162,7 +162,6 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Retos -> Retos(vm, estado)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
                             Pantalla.Sincronizar -> Sincronizar(vm)
-                            Pantalla.ClaveTmdb -> ClaveTmdb(vm)
                             Pantalla.ConectarSpotify -> ConectarSpotify(vm)
                             Pantalla.AcercaDe -> AcercaDe(vm)
                             Pantalla.Reporte -> Reporte(vm)

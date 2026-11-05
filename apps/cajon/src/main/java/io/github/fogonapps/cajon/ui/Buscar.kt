@@ -203,7 +203,6 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 item(key = "e-$fuente") {
                     Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(error.let { stringResource(it) }, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                        if (fuente == "tmdb") BotonSecundario(stringResource(R.string.poner_clave_tmdb), { vm.abrir(Pantalla.ClaveTmdb) }, Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -290,7 +289,6 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
         .let { l -> if (tipos.size == 1) l else l.sortedByDescending { it.second.vistas } }.take(if (compacto) 6 else 12)
     val artistas = if (!compacto && (seccion == Secciones.TODO || seccion == Secciones.MUSICA)) m.artistas.filter { it.foto.isNotBlank() }.take(10) else emptyList()
     // Por plataforma (con la clave de TMDB): lo de moda en Netflix, Prime Video, Crunchyroll…
-    val conTmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
     val enPlataforma by vm.enPlataforma.collectAsStateWithLifecycle()
     val tipoPlataforma = tipos.singleOrNull()?.takeIf { it in setOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME) }
     var plataforma by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
@@ -300,7 +298,7 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
-        if (!compacto && conTmdb && tipoPlataforma != null) {
+        if (!compacto && tipoPlataforma != null) {
             val nombres = if (tipoPlataforma == Tipos.ANIME) vm.plataformasAnime else vm.plataformasCine
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pildora(stringResource(R.string.todo), acento = plataforma == null) { plataforma = null }

@@ -56,7 +56,6 @@
   <string name="buscar_falta_tmdb">Para buscar películas, series y animes hace falta tu clave de TMDB (es gratis). También puedes agregarlos a mano.</string>
   <string name="buscar_tmdb_mala">TMDB no aceptó tu clave. Revísala en Ajustes.</string>
   <string name="buscar_sin_red">No se pudo buscar: revisa tu conexión a internet.</string>
-  <string name="poner_clave_tmdb">Poner mi clave de TMDB</string>
   <string name="agregar_a_mano">Agregar a mano</string>
   <string name="buscar_nada">No encontré «%1$s».</string>
   <string name="ya_en_cajon">Ya está en tu cajón</string>
@@ -161,11 +160,6 @@
   <string name="borrar_artista_pregunta">¿Borrar a %1$s?</string>
   <string name="borrar_artista_texto">Sus álbumes siguen en tu cajón.</string>
   <string name="tu_nombre">Tu nombre</string>
-  <string name="buscar_afuera">Buscar en internet</string>
-  <string name="clave_tmdb">Clave de TMDB</string>
-  <string name="clave_tmdb_lista">Lista: ya puedes buscar películas, series y animes.</string>
-  <string name="clave_tmdb_falta">Sin clave: películas, series y animes se agregan a mano.</string>
-  <string name="libros_y_musica_sin_clave">Los libros y la música no necesitan clave.</string>
   <string name="sync_titulo">Sincronizar con tu PC</string>
   <string name="sync_apagada">Apagada</string>
   <string name="sync_conectada">Conectada como %1$s</string>
@@ -187,12 +181,6 @@
   <string name="manifiesto">Manifiesto</string>
   <string name="acerca_de">Acerca de El Cajón</string>
   <string name="acerca_de_corto">Acerca de</string>
-  <string name="tmdb_explica">Para buscar películas, series y animes, El Cajón usa TMDB, la base de cine más grande y abierta. TMDB pide que cada persona use su propia clave: es gratis y se saca una sola vez.</string>
-  <string name="tmdb_pasos">1. Crea una cuenta gratis en themoviedb.org.\n2. En Ajustes → API, pide una clave (uso personal).\n3. Copia la «API Key» (o el «API Read Access Token») y pégala aquí.</string>
-  <string name="abrir_tmdb">Abrir TMDB</string>
-  <string name="pega_clave">Pega aquí tu clave</string>
-  <string name="quitar_clave">Quitar la clave</string>
-  <string name="tmdb_privacidad">La clave queda cifrada en este teléfono y solo se usa para buscar. No va en el respaldo ni en la sincronización.</string>
   <string name="tmdb_aviso">El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
   <string name="sync_explica">Conecta tu GitHub y tu cajón se guarda solo en un archivo privado de tu cuenta (un Gist secreto). La versión de PC de El Cajón lee ese mismo archivo, así que tienes lo mismo en los dos. Es opcional.</string>
   <string name="sync_pasos">1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.</string>
@@ -232,9 +220,6 @@
   <string name="aviso_datos_al_dia">Datos al día</string>
   <string name="aviso_registrado">Anotado en tu diario</string>
   <string name="aviso_favoritas_cuatro">Son cuatro favoritas: salió la más vieja</string>
-  <string name="aviso_clave_corta">Pega la clave completa</string>
-  <string name="aviso_probando_clave">Probando la clave…</string>
-  <string name="aviso_clave_lista">Clave guardada</string>
   <string name="aviso_token_corto">Pega el token completo</string>
   <string name="aviso_conectando">Conectando con GitHub…</string>
   <string name="aviso_token_invalido">Ese token no es válido</string>
@@ -370,8 +355,7 @@
   <string name="editar">Editar</string>
   <string name="genero_en_tu_cajon">%1$s en tu cajón</string>
     <string name="cambiar_portada">Cambiar la portada</string>
-    <string name="falta_tmdb_ficha">Para traer la portada, la sinopsis y los episodios de películas, series y animes hace falta una clave de TMDB (gratis, se saca en un minuto).</string>
-    <string name="agregar_etiqueta">Agregar etiqueta</string>
+      <string name="agregar_etiqueta">Agregar etiqueta</string>
     <string name="agregar_episodio_favorito">Agregar episodio favorito</string>
     <string name="episodios_favoritos">Episodios favoritos</string>
     <string name="temporada_episodio">T%1$s · E%2$s</string>
@@ -493,10 +477,7 @@
   <string name="generos_pista">Toca una vez si te gusta y otra si no te gusta; una tercera lo deja como estaba.</string>
   <string name="lo_que_te_gusta">Lo que te gusta</string>
   <string name="lo_que_te_gusta_pista">Toca lo que te guste de lo más visto, escuchado y leído.</string>
-  <string name="lo_mas_visto_semana">Lo más visto esta semana</string>
-  <string name="gustos_sin_tmdb">Con la clave de TMDB (Ajustes) también salen películas y series para elegir.</string>
   <string name="artistas">Artistas</string>
-  <string name="lo_mas_leido">Lo más leído</string>
   <string name="tus_gustos_explica">Lo que dijiste y lo que El Cajón aprendió de lo que guardas, calificas y escuchas, con lo reciente pesando más. Corrige lo que no sea así: lo que dices siempre gana.</string>
   <string name="elegir_mis_gustos">Elegir mis gustos</string>
   <string name="gustos_ahora">Lo tuyo de ahora</string>
@@ -672,6 +653,14 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="tut_funciones">Lo que puedes hacer</string>
+  <string name="tut_funcion_cajon">Guarda lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario</string>
+  <string name="tut_funcion_red">En Para ti sigues a tu gente, publicas reseñas y chateas con stickers</string>
+  <string name="tut_funcion_momento">Lo del momento en cada búsqueda: lo que está pegando en Netflix, Prime, Crunchyroll y más</string>
+  <string name="tut_funcion_cifras">Tus cifras por sección: horas de cine, páginas, tu género y tu artista favoritos</string>
+  <string name="tut_funcion_compartir">Comparte desde Netflix o Spotify directo a tu cajón, o trae tu historial</string>
+  <string name="tut_cuenta_titulo">Guarda tu cajón en tu cuenta</string>
+  <string name="tut_cuenta_texto">Con tu correo y una contraseña, todo queda guardado (cifrado) y lo tienes en cualquier teléfono</string>
   <string name="gustos_elige_minimo">Elige al menos 3: lo que veas, escuches o leas. Al tocar una, salen parecidas.</string>
   <string name="gustos_faltan">Faltan %1$d</string>
   <string name="gustos_recargar">Ver otras</string>
@@ -1106,7 +1095,7 @@
   <string name="red_publicar">Publicar</string>
   <string name="red_publicar_sobre">Publicar sobre esto en la red</string>
   <string name="red_que_es">La red de El Cajón: sigue a otras personas, mira lo que ven, leen y escuchan, y comparte tus reseñas, tu diario, tus listas y tus fotos.</string>
-  <string name="red_que_sube">Al servidor solo va lo que marques como público o para tus seguidores (en tu perfil, tu diario, tus listas) y lo que publiques. Lo demás de tu cajón nunca sale del teléfono.</string>
+  <string name="red_que_sube">Tu cajón se guarda cifrado en tu cuenta: nadie más puede leerlo. En la red solo sale lo que marques como público o para tus seguidores, y lo que publiques.</string>
   <string name="red_que_quieres_decir">¿Qué quieres contar?</string>
   <string name="red_que_se_comparte">Lo que se comparte lo eliges en tu perfil (quién ve cada parte), en cada entrada del diario y en cada lista.</string>
   <string name="red_quitar">Quitar</string>

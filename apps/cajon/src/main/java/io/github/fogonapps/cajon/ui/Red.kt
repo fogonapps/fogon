@@ -897,7 +897,7 @@ fun CuentaRed(vm: CajonViewModel, e: Estado) {
 }
 
 @Composable
-private fun EntrarRed(vm: CajonViewModel, e: Estado) {
+internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) {
     val f = FogonTema.actual
     val correo by vm.red.correoDisponible.collectAsStateWithLifecycle()
     val acceso by vm.red.acceso.collectAsStateWithLifecycle()
@@ -908,8 +908,10 @@ private fun EntrarRed(vm: CajonViewModel, e: Estado) {
     var acepto by rememberSaveable { mutableStateOf(false) }
     val uri = LocalUriHandler.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.red_que_es), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        Pista(stringResource(R.string.red_que_sube))
+        if (conIntro) {
+            Text(stringResource(R.string.red_que_es), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+            Pista(stringResource(R.string.red_que_sube))
+        }
         if (correo == null) { LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea); return }
         val conCorreo = correo == true
         val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()

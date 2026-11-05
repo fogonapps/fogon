@@ -109,7 +109,11 @@ private fun anioDe(fecha: String) = fecha.take(4).toIntOrNull()
 
 /* =================== TMDB =================== */
 
-class Tmdb(private val clave: String) {
+/**
+ * TMDB. Sin clave propia ([clave] vacía), todo va por el servidor de Fogón (`/v1/tmdb/…`), que pone la clave de
+ * Fogón; con una clave propia (de antes), directo a TMDB.
+ */
+class Tmdb(private val clave: String = "") {
     /**
      * El idioma que se le pide a TMDB. En español, el latino (es-MX): los títulos de España ("¡Olvídate de mí!",
      * "Los mundos de Coraline") no son los que usa casi nadie en América. [ESPANA] es el de España, para los
@@ -117,7 +121,7 @@ class Tmdb(private val clave: String) {
      */
     private fun lengua(idioma: String) = if (idioma == "en") "en-US" else LATINO
 
-    private val base = "https://api.themoviedb.org/3".toHttpUrl()
+    private val base = (if (clave.isBlank()) "${ClienteSocial.SERVIDOR}/v1/tmdb" else "https://api.themoviedb.org/3").toHttpUrl()
 
     // Sirven las dos claves de TMDB: la "API Key" (v3, va en la dirección) y el token de lectura (v4, en la cabecera).
     private val esToken = clave.startsWith("eyJ")
@@ -125,7 +129,7 @@ class Tmdb(private val clave: String) {
     private suspend fun pedir(ruta: String, vararg params: Pair<String, String>): JsonObject {
         val u = base.newBuilder().addPathSegments(ruta.trimStart('/')).apply {
             params.forEach { (k, v) -> addQueryParameter(k, v) }
-            if (!esToken) addQueryParameter("api_key", clave)
+            if (!esToken && clave.isNotBlank()) addQueryParameter("api_key", clave)
         }.build()
         return pedirJson(u, if (esToken) mapOf("Authorization" to "Bearer $clave") else emptyMap()).jsonObject
     }
@@ -390,7 +394,6 @@ class Tmdb(private val clave: String) {
         const val LATINO = "es-MX"
         const val ESPANA = "es-ES"
         const val INGLES = "en-US"
-        const val URL_CLAVE = "https://www.themoviedb.org/settings/api"
         fun imagen(ruta: String, tamano: String) = if (ruta.isBlank()) "" else "https://image.tmdb.org/t/p/$tamano$ruta"
     }
 }

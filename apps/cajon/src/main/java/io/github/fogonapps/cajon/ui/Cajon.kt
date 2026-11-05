@@ -101,12 +101,6 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         }
     }
 
-    // Sin clave de TMDB, el cine no trae pósteres ni datos: se dice arriba, con el botón para ponerla.
-    val conTmdb by vm.tieneTmdb.collectAsStateWithLifecycle()
-    if (seccion == Secciones.CINE && !conTmdb) Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.falta_tmdb_ficha), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        io.github.fogonapps.identidad.BotonSecundario(stringResource(R.string.poner_clave_tmdb), { vm.abrir(Pantalla.ClaveTmdb) }, Modifier.fillMaxWidth())
-    }
 
     // En Música: los álbumes que sonaron en tus apps y todavía no están en el cajón.
     if (musica) EscuchadoHacePoco(vm)

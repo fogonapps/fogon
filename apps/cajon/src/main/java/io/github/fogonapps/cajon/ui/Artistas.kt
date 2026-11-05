@@ -174,7 +174,6 @@ private fun ObrasDeAfuera(vm: CajonViewModel, e: Estado, fuente: String, tipo: S
     val lista = disco?.takeIf { it.first == fuente }?.second
     when {
         disco?.first == "error:$fuente" -> Pista(stringResource(R.string.buscar_sin_red))
-        fuente.startsWith("tmdb:") && !vm.hayClaveTmdb() -> Pista(stringResource(R.string.buscar_falta_tmdb))
         lista == null -> Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
         lista.isEmpty() -> Pista(stringResource(R.string.cajon_nada))
         else -> lista.forEach { r ->
@@ -225,7 +224,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
 
     // Los géneros, como etiquetas: tocar una busca ese género; "Editar" deja quitar y agregar.
     if (Personas.esMusico(a)) Generos(vm, a)
-    if (a.fuente.isEmpty() && (a.tipo != Personas.DIRECTOR || vm.hayClaveTmdb())) Enlazar(vm, a)
+    if (a.fuente.isEmpty()) Enlazar(vm, a)
 
     // La biografía breve (de Wikipedia, con su crédito y su licencia).
     if (a.bio.isNotBlank()) {
