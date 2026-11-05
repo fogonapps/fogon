@@ -72,7 +72,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     var vuelta by rememberSaveable { mutableStateOf(0) }
     var menuFrase by remember { mutableStateOf(false) }
     val hora = java.time.LocalTime.now().hour
-    val franja = "${vm.hoy()}-${when (hora) { in 5..11 -> 0; in 12..18 -> 1; else -> 2 }}"
+    val franja = "${vm.hoy()}-${franjaDe(hora)}"
     val frase = remember(franja, vuelta, e.ajustes.frasesNo, deLaGente, ocultas) {
         val guardada = if (vuelta == 0) vm.fraseGuardada(franja)?.takeIf { it.first !in e.ajustes.frasesNo && it.first !in ocultas }?.let { (c, o) -> fraseDeClave(c, o, deLaGente) } else null
         guardada ?: fraseDelDia(e, vm.hoy().dayOfYear, hora, comunidad, vuelta, momento, deLaGente, ocultas).also { vm.guardarFrase(franja, it.clave, it.obra) }
@@ -325,7 +325,9 @@ fun fraseDelDia(
         obras.keys.forEach { put(it, 1.5) }
         (when (hora) { in 5..11 -> FRASES_MANANA; in 12..18 -> FRASES_TARDE; else -> FRASES_NOCHE }).forEach { put(it, 1.3) }
         FRASES_SIEMPRE.forEach { put(it, 1.0) }
-        deLaGente.forEach { put(it.clave, 1.0) }
+        // Las de la gente y del equipo: las de todo el día y las de esta franja (que pesan más).
+        val ahoraFranja = franjaDe(hora)
+        deLaGente.filter { it.franja == "todo" || it.franja == ahoraFranja }.forEach { put(it.clave, if (it.franja == "todo") 1.0 else 1.3) }
     }
     val clave = Frases.elegir(candidatas, comunidad, e.ajustes.frasesGusta.toSet(), e.ajustes.frasesNo.toSet() + ocultas, (dia * 24L + hora) * 7919 + vuelta)
         ?: FRASES_SIEMPRE.first()
@@ -340,6 +342,12 @@ fun fraseDeClave(clave: String, obra: String?, deLaGente: List<io.github.fogonap
 
 private val CON_OBRA = setOf("frase_seguimos", "frase_que_tal", "frase_te_gusto", "frase_play", "frase_artista",
     "frase_momento_peli", "frase_momento_serie", "frase_momento_anime", "frase_momento_disco", "frase_momento_libro")
+/** La franja del día de una hora: madrugada (0 a 4), mañana (5 a 11), tarde (12 a 18) o noche (19 a 23). */
+fun franjaDe(hora: Int) = when (hora) { in 0..4 -> "madrugada"; in 5..11 -> "manana"; in 12..18 -> "tarde"; else -> "noche" }
+
+/** La franja de una frase de la app ("todo" si sale a cualquier hora; las de noche también salen de madrugada). */
+fun franjaDeFrase(clave: String) = when (clave) { in FRASES_MANANA -> "manana"; in FRASES_TARDE -> "tarde"; in FRASES_NOCHE -> "noche"; else -> "todo" }
+
 private val FRASES_MANANA = listOf("frase_manana_1", "frase_manana_2")
 private val FRASES_TARDE = listOf("frase_tarde_1", "frase_tarde_2")
 private val FRASES_NOCHE = listOf("frase_noche_1", "frase_noche_2", "frase_noche_3")

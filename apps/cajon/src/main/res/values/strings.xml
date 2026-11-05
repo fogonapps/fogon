@@ -653,6 +653,11 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="franja_todo">All day</string>
+  <string name="franja_manana">Morning</string>
+  <string name="franja_tarde">Afternoon</string>
+  <string name="franja_noche">Night</string>
+  <string name="franja_madrugada">Late night</string>
   <string name="mod_reportes">Reports</string>
   <string name="mod_frases_saludo">Greeting phrases</string>
   <string name="mod_frase_nueva">A new phrase for everyone</string>

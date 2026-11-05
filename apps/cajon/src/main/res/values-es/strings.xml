@@ -653,6 +653,11 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="franja_todo">Todo el día</string>
+  <string name="franja_manana">Mañana</string>
+  <string name="franja_tarde">Tarde</string>
+  <string name="franja_noche">Noche</string>
+  <string name="franja_madrugada">Madrugada</string>
   <string name="mod_reportes">Reportes</string>
   <string name="mod_frases_saludo">Frases del saludo</string>
   <string name="mod_frase_nueva">Una frase nueva para todos</string>

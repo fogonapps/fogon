@@ -98,6 +98,8 @@ class Base(ruta: String) {
                     estado TEXT NOT NULL DEFAULT 'pendiente', cuando INTEGER NOT NULL)""")
                 // Frases de la app que el equipo quitó del saludo (por su clave).
                 s.execute("CREATE TABLE IF NOT EXISTS frases_ocultas(clave TEXT PRIMARY KEY)")
+                // En qué momento del día sale cada frase de la gente: todo, manana, tarde, noche o madrugada.
+                columna(s, "frases_propuestas", "franja TEXT NOT NULL DEFAULT 'todo'")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

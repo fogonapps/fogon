@@ -100,6 +100,20 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
     val yoEnLaRed by vm.red.usuario.collectAsStateWithLifecycle()
+    // Con cuenta en la red, se pide una vez el permiso de notificaciones (Android 13+): sin él no llegan avisos ni mensajes.
+    val ctxPermiso = androidx.compose.ui.platform.LocalContext.current
+    val pedirPermiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        io.github.fogonapps.cajon.AvisosRed.programar(ctxPermiso)
+    }
+    LaunchedEffect(yoEnLaRed) {
+        if (yoEnLaRed == null || android.os.Build.VERSION.SDK_INT < 33) return@LaunchedEffect
+        val ya = androidx.core.content.ContextCompat.checkSelfPermission(ctxPermiso, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val prefs = ctxPermiso.getSharedPreferences("permisos", android.content.Context.MODE_PRIVATE)
+        if (!ya && !prefs.getBoolean("notificaciones_pedido", false)) {
+            prefs.edit().putBoolean("notificaciones_pedido", true).apply()
+            pedirPermiso.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     val f = FogonTema.actual
     val snack = remember { SnackbarHostState() }
     var pregunta by remember { mutableStateOf<Pregunta?>(null) }

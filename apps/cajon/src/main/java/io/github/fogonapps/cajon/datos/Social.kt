@@ -90,9 +90,9 @@ data class PerfilSubido(
 @Serializable data class DelMomentoServidor(val dia: String = "", val peliculas: List<Buscado> = emptyList(), val series: List<Buscado> = emptyList(), val anime: List<Buscado> = emptyList())
 @Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
 @Serializable data class VotoFrase(val valor: Int)
-@Serializable data class FraseNueva(val texto: String, val idioma: String)
+@Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
 /** Una frase propuesta por la gente (aprobada; con [de] cuando es para moderar). */
-@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String = "", val de: String = "")
+@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String = "", val de: String = "", val franja: String = "todo")
 @Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
 @Serializable data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
@@ -205,7 +205,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun frasesComunidad(idioma: String) = leer(ListSerializer(FraseComunidad.serializer()), pedir("/frases/comunidad?idioma=${cod(idioma)}"))
     suspend fun proponerFrase(texto: String, idioma: String) { pedir("/frases/propuestas", "POST", json(FraseNueva.serializer(), FraseNueva(texto, idioma))) }
     suspend fun frasesOcultas() = leer(ListSerializer(kotlinx.serialization.serializer<String>()), pedir("/frases/ocultas"))
-    suspend fun agregarFrase(texto: String, idioma: String) = leer(FraseComunidad.serializer(), pedir("/admin/frases", "PUT", json(FraseNueva.serializer(), FraseNueva(texto, idioma))))
+    suspend fun agregarFrase(texto: String, idioma: String, franja: String) = leer(FraseComunidad.serializer(), pedir("/admin/frases", "PUT", json(FraseNueva.serializer(), FraseNueva(texto, idioma, franja))))
     suspend fun quitarFrase(clave: String) { pedir("/admin/frases/${cod(clave)}", "DELETE") }
     suspend fun frasesPendientes() = leer(ListSerializer(FraseComunidad.serializer()), pedir("/admin/frases"))
     suspend fun decidirFrase(clave: String, aprobar: Boolean) { pedir("/admin/frases", "POST", json(DecisionFrase.serializer(), DecisionFrase(clave, aprobar))) }

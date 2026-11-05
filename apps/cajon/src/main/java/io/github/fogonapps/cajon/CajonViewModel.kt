@@ -313,8 +313,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val frasesOcultas: StateFlow<Set<String>> = _frasesOcultas
 
     /** El equipo agrega o quita una frase (en Moderación); después se vuelven a traer. */
-    fun agregarFrase(texto: String, idioma: String) = viewModelScope.launch {
-        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).agregarFrase(texto.trim(), idioma) }
+    fun agregarFrase(texto: String, idioma: String, franja: String) = viewModelScope.launch {
+        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).agregarFrase(texto.trim(), idioma, franja) }
             .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
     }
     fun quitarFrase(clave: String) = viewModelScope.launch {

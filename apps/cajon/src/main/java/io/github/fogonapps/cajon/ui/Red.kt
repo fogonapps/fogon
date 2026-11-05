@@ -385,25 +385,34 @@ private fun FrasesDelEquipo(vm: CajonViewModel) {
     LaunchedEffect(Unit) { vm.cargarFrases(forzar = true) }
     var nueva by rememberSaveable { mutableStateOf("") }
     var idioma by rememberSaveable { mutableStateOf("es") }
+    var franja by rememberSaveable { mutableStateOf("todo") }
+    val franjas = listOf("todo" to R.string.franja_todo, "manana" to R.string.franja_manana, "tarde" to R.string.franja_tarde,
+        "noche" to R.string.franja_noche, "madrugada" to R.string.franja_madrugada)
+    val nombreFranja = franjas.associate { (k, r) -> k to stringResource(r) }
     Seccion(stringResource(R.string.mod_frases_saludo))
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(nueva, { nueva = it.take(90) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.mod_frase_nueva)) })
+        // Cuándo sale: todo el día o una franja.
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            franjas.forEach { (k, _) -> Pildora(nombreFranja.getValue(k), acento = franja == k) { franja = k } }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Pildora("ES", acento = idioma == "es") { idioma = "es" }
             Pildora("EN", acento = idioma == "en") { idioma = "en" }
             Box(Modifier.weight(1f))
-            BotonRiso(stringResource(R.string.mod_agregar), { vm.agregarFrase(nueva, idioma); nueva = "" }, habilitado = nueva.trim().length >= 4)
+            BotonRiso(stringResource(R.string.mod_agregar), { vm.agregarFrase(nueva, idioma, franja); nueva = "" }, habilitado = nueva.trim().length >= 4)
         }
     }
     // Todas, la más votada primero (sí menos no).
-    val textos = TEXTOS_FRASES.filterKeys { it !in ocultas }.map { (k, r) -> k to stringResource(r, "…") } + deLaGente.map { it.clave to it.texto }
-    textos.sortedByDescending { (k, _) -> votos[k]?.let { it.si - it.no } ?: 0 }.forEach { (k, texto) ->
+    val textos = TEXTOS_FRASES.filterKeys { it !in ocultas }.map { (k, r) -> Triple(k, stringResource(r, "…"), franjaDeFrase(k)) } +
+        deLaGente.map { Triple(it.clave, it.texto, it.franja) }
+    textos.sortedByDescending { (k, _, _) -> votos[k]?.let { it.si - it.no } ?: 0 }.forEach { (k, texto, fr) ->
         val v = votos[k]
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).tarjetaFogon().padding(start = 14.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto)
-                Text(stringResource(R.string.mod_votos, v?.si ?: 0, v?.no ?: 0), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+                Text(nombreFranja[fr].orEmpty() + " · " + stringResource(R.string.mod_votos, v?.si ?: 0, v?.no ?: 0), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
             }
             BotonIcono(Iconos.Borrar, stringResource(R.string.mod_quitar_frase)) { vm.quitarFrase(k) }
         }

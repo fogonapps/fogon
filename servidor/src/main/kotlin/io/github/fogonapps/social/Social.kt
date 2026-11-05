@@ -117,9 +117,9 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class ImagenSubida(val nombre: String)
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
 @Serializable data class VotoFrase(val valor: Int)
-@Serializable data class FraseNueva(val texto: String, val idioma: String)
+@Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
 /** Una frase de la comunidad: su clave para votar ("c" + id), el texto y quién la propuso (solo para moderar). */
-@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String, val de: String = "")
+@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String, val de: String = "", val franja: String = "todo")
 @Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
 @Serializable data class ConteoFrase(val si: Int, val no: Int)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
@@ -779,8 +779,8 @@ class Social(
 
     /** Las frases aprobadas de un idioma. */
     fun frasesComunidad(idioma: String): List<FraseComunidad> = b.usar {
-        leer("SELECT id, texto, idioma FROM frases_propuestas WHERE estado = 'aprobada' AND idioma = ? ORDER BY id DESC LIMIT 300", idioma) {
-            FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3))
+        leer("SELECT id, texto, idioma, franja FROM frases_propuestas WHERE estado = 'aprobada' AND idioma = ? ORDER BY id DESC LIMIT 300", idioma) {
+            FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), franja = it.getString(4))
         }
     }
 
@@ -794,6 +794,8 @@ class Social(
         }
     }
 
+    private val FRANJAS = setOf("todo", "manana", "tarde", "noche", "madrugada")
+
     /** Las que el equipo quitó (las de la app por su clave; las de la gente quedan rechazadas). */
     fun frasesOcultas(): List<String> = b.usar { leer("SELECT clave FROM frases_ocultas") { it.getString(1) } }
 
@@ -802,8 +804,9 @@ class Social(
         if (!esAdmin(yo)) throw Problema(403, "no_admin")
         val t = f.texto.trim().replace(Regex("\\s+"), " ")
         if (t.codePointCount(0, t.length) !in 4..90 || f.idioma !in setOf("es", "en")) throw Problema(400, "frase")
-        val id = b.usar { insertar("INSERT INTO frases_propuestas(cuenta, texto, idioma, estado, cuando) VALUES(?,?,?,'aprobada',?)", yo, t, f.idioma, ahora()) }
-        return FraseComunidad("c$id", t, f.idioma)
+        val franja = f.franja.takeIf { it in FRANJAS } ?: "todo"
+        val id = b.usar { insertar("INSERT INTO frases_propuestas(cuenta, texto, idioma, estado, cuando, franja) VALUES(?,?,?,'aprobada',?,?)", yo, t, f.idioma, ahora(), franja) }
+        return FraseComunidad("c$id", t, f.idioma, franja = franja)
     }
 
     /** El equipo quita una frase: de la gente (queda rechazada) o de la app (por su clave, la app deja de mostrarla). */

@@ -83,6 +83,10 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
             // Al cerrar o borrar la cuenta, el chat de este teléfono se va con ella.
             red.usuario.collect { u -> if (u == null && caja.chatLlaves != null) borrarTodo() else if (u != null) asegurarLlaves() }
         }
+        // Mientras la app está abierta, los mensajes nuevos llegan solos (no solo con la conversación abierta).
+        scope.launch {
+            while (true) { if (red.usuario.value != null) recibir().join(); kotlinx.coroutines.delay(30_000) }
+        }
     }
 
     private fun poner(c: Chats) {
@@ -102,7 +106,9 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         runCatching { ClienteSocial(caja.tokenSocial).ponerLlaves(withContext(Dispatchers.Default) { Cifrado.publicas(p) }) }
     }
 
-    private suspend fun llaves(usuario: String): LlavesPublicas = llavesDe[usuario] ?: ClienteSocial(caja.tokenSocial).llaves(usuario).also { llavesDe[usuario] = it }
+    /** Las llaves públicas de [usuario]; [frescas] las pide de nuevo (cambian si la persona entró en otro teléfono). */
+    private suspend fun llaves(usuario: String, frescas: Boolean = false): LlavesPublicas =
+        (if (frescas) null else llavesDe[usuario]) ?: ClienteSocial(caja.tokenSocial).llaves(usuario).also { llavesDe[usuario] = it }
 
     /** El número de seguridad con [usuario] (null si todavía no se puede saber). */
     suspend fun numeroSeguridad(usuario: String): String? = runCatching {
@@ -137,7 +143,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         val p = propias() ?: run { asegurarLlaves(); propias() } ?: return false
         _enviando.value = true
         try {
-            val suyas = try { llaves(usuario) } catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
+            val suyas = try { llaves(usuario, frescas = true) } catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
                 if (x.codigo == 404) { decir(R.string.chat_sin_llaves); return false } else throw x
             }
             val contenido = JsonCajon.encodeToString(Contenido.serializer(), c).toByteArray()
@@ -240,10 +246,11 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         val sobres = runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }.getOrNull() ?: return@launch
         for (s in sobres) {
             val de = s.de.usuario
-            val c = runCatching {
-                val bytes = withContext(Dispatchers.Default) { Cifrado.abrir(s.sobre, s.firma, de, yo, llaves(de), p) }
-                JsonCajon.decodeFromString(Contenido.serializer(), String(bytes))
-            }.getOrNull()
+            // Si no abre con las llaves que se tenían, se piden otra vez (la persona pudo cambiar de teléfono) y se reintenta.
+            fun abrirCon(l: LlavesPublicas) = JsonCajon.decodeFromString(Contenido.serializer(), String(Cifrado.abrir(s.sobre, s.firma, de, yo, l, p)))
+            val c = withContext(Dispatchers.Default) {
+                runCatching { abrirCon(llaves(de)) }.getOrNull() ?: runCatching { abrirCon(llaves(de, frescas = true)) }.getOrNull()
+            }
             when {
                 c == null -> agregar(de, MensajeChat("s${s.id}", false, s.cuando, noSeLee = true), s.id)
                 // La otra persona borró un mensaje suyo para todos.
