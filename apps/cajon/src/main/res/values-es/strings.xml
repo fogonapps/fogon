@@ -653,6 +653,11 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="mod_frases_saludo">Frases del saludo</string>
+  <string name="mod_frase_nueva">Una frase nueva para todos</string>
+  <string name="mod_agregar">Agregar</string>
+  <string name="mod_votos">%1$d les gusta · %2$d no</string>
+  <string name="mod_quitar_frase">Quitar esta frase</string>
   <string name="tut_funciones">Lo que puedes hacer</string>
   <string name="tut_funcion_cajon">Guarda lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario</string>
   <string name="tut_funcion_red">En Para ti sigues a tu gente, publicas reseñas y chateas con stickers</string>
@@ -733,7 +738,6 @@
   <string name="frase_te_gusto">%1$s te dejó pensando, ¿cierto?</string>
   <string name="frase_play">¿Ya le diste play a %1$s?</string>
   <string name="frase_artista">¿Otra vuelta con %1$s?</string>
-  <string name="frase_otra">Otra frase</string>
   <string name="frase_te_gusta">Te gusta esta frase</string>
   <string name="frase_me_gusta">Me gusta esta frase</string>
   <string name="frase_ya_no_gusta">Ya no me gusta</string>
@@ -963,10 +967,10 @@
   <string name="red_antes">Antes</string>
   <string name="chat_borrar">Borrar la conversación</string>
   <string name="chat_borrar_seguro">Se borra de este teléfono (lo que ya recibió la otra persona se queda en el suyo).</string>
-  <string name="red_paso1_titulo">1 · Cuéntanos qué te gusta</string>
+  <string name="red_paso1_titulo">Cuéntanos qué te gusta</string>
   <string name="red_paso1_texto">Elige películas, series, artistas y libros de lo más visto, escuchado y leído. Con eso se arma lo que ves aquí.</string>
   <string name="red_paso1_boton">Elegir lo que me gusta</string>
-  <string name="red_paso2_titulo">2 · Crea tu cuenta</string>
+  <string name="red_paso2_titulo">Crea tu cuenta</string>
   <string name="red_paso2_texto">Para seguir a otras personas, publicar, comentar y escribir mensajes. Mientras tanto, mira lo que comparte la gente en Explorar.</string>
   <string name="red_feed_sin_cuenta">Con tu cuenta, aquí sale lo de las personas que sigues.</string>
   <string name="red_tu_nota">Tu nota</string>

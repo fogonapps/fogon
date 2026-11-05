@@ -351,6 +351,45 @@ fun CrearClaveAviso(vm: CajonViewModel) {
     }
 }
 
+/**
+ * Las frases del saludo, para el equipo: agregar una (sale para todos) y ver todas (las de la app y las de la gente)
+ * ordenadas por lo que vota la comunidad, con su botón para quitarla.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun FrasesDelEquipo(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val votos by vm.frasesComunidad.collectAsStateWithLifecycle()
+    val deLaGente by vm.frasesDeLaGente.collectAsStateWithLifecycle()
+    val ocultas by vm.frasesOcultas.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.cargarFrases(forzar = true) }
+    var nueva by rememberSaveable { mutableStateOf("") }
+    var idioma by rememberSaveable { mutableStateOf("es") }
+    Seccion(stringResource(R.string.mod_frases_saludo))
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(nueva, { nueva = it.take(90) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.mod_frase_nueva)) })
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Pildora("ES", acento = idioma == "es") { idioma = "es" }
+            Pildora("EN", acento = idioma == "en") { idioma = "en" }
+            Box(Modifier.weight(1f))
+            BotonRiso(stringResource(R.string.mod_agregar), { vm.agregarFrase(nueva, idioma); nueva = "" }, habilitado = nueva.trim().length >= 4)
+        }
+    }
+    // Todas, la más votada primero (sí menos no).
+    val textos = TEXTOS_FRASES.filterKeys { it !in ocultas }.map { (k, r) -> k to stringResource(r, "…") } + deLaGente.map { it.clave to it.texto }
+    textos.sortedByDescending { (k, _) -> votos[k]?.let { it.si - it.no } ?: 0 }.forEach { (k, texto) ->
+        val v = votos[k]
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).tarjetaFogon().padding(start = 14.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto)
+                Text(stringResource(R.string.mod_votos, v?.si ?: 0, v?.no ?: 0), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+            }
+            BotonIcono(Iconos.Borrar, stringResource(R.string.mod_quitar_frase)) { vm.quitarFrase(k) }
+        }
+    }
+}
+
 /** Un botón con su número arriba (lo que hay sin leer). */
 @Composable
 fun ConCuenta(n: Int, boton: @Composable () -> Unit) {
@@ -1312,6 +1351,7 @@ fun Moderacion(vm: CajonViewModel) {
             }
         }
     }
+    FrasesDelEquipo(vm)
     val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
     if (frases.isNotEmpty()) {
         Seccion(stringResource(R.string.mod_frases))

@@ -67,14 +67,15 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     val comunidad by vm.frasesComunidad.collectAsStateWithLifecycle()
     val deLaGente by vm.frasesDeLaGente.collectAsStateWithLifecycle()
     val momento by vm.momento.collectAsStateWithLifecycle()
+    val ocultas by vm.frasesOcultas.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.cargarFrases(); vm.cargarMomento() }
     var vuelta by rememberSaveable { mutableStateOf(0) }
     var menuFrase by remember { mutableStateOf(false) }
     val hora = java.time.LocalTime.now().hour
     val franja = "${vm.hoy()}-${when (hora) { in 5..11 -> 0; in 12..18 -> 1; else -> 2 }}"
-    val frase = remember(franja, vuelta, e.ajustes.frasesNo, deLaGente) {
-        val guardada = if (vuelta == 0) vm.fraseGuardada(franja)?.takeIf { it.first !in e.ajustes.frasesNo }?.let { (c, o) -> fraseDeClave(c, o, deLaGente) } else null
-        guardada ?: fraseDelDia(e, vm.hoy().dayOfYear, hora, comunidad, vuelta, momento, deLaGente).also { vm.guardarFrase(franja, it.clave, it.obra) }
+    val frase = remember(franja, vuelta, e.ajustes.frasesNo, deLaGente, ocultas) {
+        val guardada = if (vuelta == 0) vm.fraseGuardada(franja)?.takeIf { it.first !in e.ajustes.frasesNo && it.first !in ocultas }?.let { (c, o) -> fraseDeClave(c, o, deLaGente) } else null
+        guardada ?: fraseDelDia(e, vm.hoy().dayOfYear, hora, comunidad, vuelta, momento, deLaGente, ocultas).also { vm.guardarFrase(franja, it.clave, it.obra) }
     }
     val textoDeFrase = textoFrase(frase)
     val gusta = frase.clave in e.ajustes.frasesGusta
@@ -82,11 +83,10 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         Column(Modifier.weight(1f)) {
             Text(e.ajustes.nombre.ifBlank { stringResource(R.string.hola) }, fontFamily = f.titulos, fontSize = 30.sp, color = f.texto, maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-            val otra = stringResource(R.string.frase_otra)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(textoDeFrase, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, maxLines = 2,
                     modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp))
-                        .combinedClickable(onClickLabel = otra, onClick = { vuelta++ }, onLongClick = { menuFrase = true }))
+                        .combinedClickable(onClick = {}, onLongClick = { menuFrase = true }))
                 if (gusta) IconoRiso(Iconos.Corazon, stringResource(R.string.frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto)
             }
         }
@@ -295,6 +295,7 @@ data class Frase(val clave: String, val texto: Int, val obra: String? = null, va
 fun fraseDelDia(
     e: Estado, dia: Int, hora: Int, comunidad: Map<String, Frases.Votos> = emptyMap(), vuelta: Int = 0,
     momento: CajonViewModel.DelMomento = CajonViewModel.DelMomento(), deLaGente: List<io.github.fogonapps.cajon.datos.FraseComunidad> = emptyList(),
+    ocultas: Set<String> = emptySet(),
 ): Frase {
     val ahora = System.currentTimeMillis()
     val dias = { d: Int -> ahora - d * 86_400_000L }
@@ -326,7 +327,7 @@ fun fraseDelDia(
         FRASES_SIEMPRE.forEach { put(it, 1.0) }
         deLaGente.forEach { put(it.clave, 1.0) }
     }
-    val clave = Frases.elegir(candidatas, comunidad, e.ajustes.frasesGusta.toSet(), e.ajustes.frasesNo.toSet(), (dia * 24L + hora) * 7919 + vuelta)
+    val clave = Frases.elegir(candidatas, comunidad, e.ajustes.frasesGusta.toSet(), e.ajustes.frasesNo.toSet() + ocultas, (dia * 24L + hora) * 7919 + vuelta)
         ?: FRASES_SIEMPRE.first()
     return fraseDeClave(clave, obras[clave], deLaGente) ?: Frase(FRASES_SIEMPRE.first(), TEXTOS_FRASES.getValue(FRASES_SIEMPRE.first()))
 }
@@ -343,7 +344,7 @@ private val FRASES_MANANA = listOf("frase_manana_1", "frase_manana_2")
 private val FRASES_TARDE = listOf("frase_tarde_1", "frase_tarde_2")
 private val FRASES_NOCHE = listOf("frase_noche_1", "frase_noche_2", "frase_noche_3")
 private val FRASES_SIEMPRE = (1..22).map { "frase_$it" }
-private val TEXTOS_FRASES = mapOf(
+internal val TEXTOS_FRASES = mapOf(
     "frase_seguimos" to R.string.frase_seguimos, "frase_que_tal" to R.string.frase_que_tal, "frase_te_gusto" to R.string.frase_te_gusto,
     "frase_play" to R.string.frase_play, "frase_artista" to R.string.frase_artista,
     "frase_momento_peli" to R.string.frase_momento_peli, "frase_momento_serie" to R.string.frase_momento_serie,

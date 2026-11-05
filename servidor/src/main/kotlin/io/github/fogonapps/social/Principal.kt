@@ -56,7 +56,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.15"
+const val VERSION = "0.16"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -194,6 +194,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/resenas") { call.respond(social.resenas(call.lector(), call.request.queryParameters["fuente"].orEmpty())) }
             get("/frases/comunidad") { call.respond(social.frasesComunidad(call.request.queryParameters["idioma"] ?: "es")) }
             post("/frases/propuestas") { social.proponerFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.Created) }
+            get("/frases/ocultas") { call.respond(social.frasesOcultas()) }
+            put("/admin/frases") { call.respond(HttpStatusCode.Created, social.agregarFrase(call.yo(), call.receive())) }
+            delete("/admin/frases/{clave}") { social.quitarFrase(call.yo(), call.parameters["clave"].orEmpty()); call.respond(HttpStatusCode.NoContent) }
             get("/admin/frases") { call.respond(social.frasesPendientes(call.yo())) }
             post("/admin/frases") { social.decidirFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/frases") { call.respond(social.frases()) }

@@ -308,13 +308,28 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Las frases que propuso la gente y aprobó el equipo, en el idioma de la app. */
     val frasesDeLaGente: StateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>> = _frasesDeLaGente
 
-    fun cargarFrases() {
-        if (System.currentTimeMillis() - frasesTraidas < 6 * 3600_000L) return
+    private val _frasesOcultas = MutableStateFlow<Set<String>>(emptySet())
+    /** Las frases de la app que el equipo quitó (no salen en el saludo). */
+    val frasesOcultas: StateFlow<Set<String>> = _frasesOcultas
+
+    /** El equipo agrega o quita una frase (en Moderación); después se vuelven a traer. */
+    fun agregarFrase(texto: String, idioma: String) = viewModelScope.launch {
+        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).agregarFrase(texto.trim(), idioma) }
+            .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
+    }
+    fun quitarFrase(clave: String) = viewModelScope.launch {
+        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).quitarFrase(clave) }
+            .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
+    }
+
+    fun cargarFrases(forzar: Boolean = false) {
+        if (!forzar && System.currentTimeMillis() - frasesTraidas < 6 * 3600_000L) return
         frasesTraidas = System.currentTimeMillis()
         viewModelScope.launch {
             val c = io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial)
             runCatching { c.frases() }.getOrNull()?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
             runCatching { c.frasesComunidad(idioma()) }.getOrNull()?.let { _frasesDeLaGente.value = it }
+            runCatching { c.frasesOcultas() }.getOrNull()?.let { _frasesOcultas.value = it.toSet() }
         }
     }
 

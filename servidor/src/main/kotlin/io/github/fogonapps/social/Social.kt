@@ -794,6 +794,28 @@ class Social(
         }
     }
 
+    /** Las que el equipo quitó (las de la app por su clave; las de la gente quedan rechazadas). */
+    fun frasesOcultas(): List<String> = b.usar { leer("SELECT clave FROM frases_ocultas") { it.getString(1) } }
+
+    /** El equipo agrega una frase directamente (sale para todos). */
+    fun agregarFrase(yo: Long, f: FraseNueva): FraseComunidad {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        val t = f.texto.trim().replace(Regex("\\s+"), " ")
+        if (t.codePointCount(0, t.length) !in 4..90 || f.idioma !in setOf("es", "en")) throw Problema(400, "frase")
+        val id = b.usar { insertar("INSERT INTO frases_propuestas(cuenta, texto, idioma, estado, cuando) VALUES(?,?,?,'aprobada',?)", yo, t, f.idioma, ahora()) }
+        return FraseComunidad("c$id", t, f.idioma)
+    }
+
+    /** El equipo quita una frase: de la gente (queda rechazada) o de la app (por su clave, la app deja de mostrarla). */
+    fun quitarFrase(yo: Long, clave: String) {
+        if (!esAdmin(yo)) throw Problema(403, "no_admin")
+        if (!Regex("[a-z0-9_]{1,40}").matches(clave)) throw Problema(400, "frase")
+        b.usar {
+            clave.removePrefix("c").toLongOrNull()?.takeIf { clave.startsWith("c") }?.let { cambiar("UPDATE frases_propuestas SET estado = 'rechazada' WHERE id = ?", it) }
+                ?: cambiar("INSERT OR IGNORE INTO frases_ocultas(clave) VALUES(?)", clave)
+        }
+    }
+
     fun decidirFrase(yo: Long, d: DecisionFrase) {
         if (!esAdmin(yo)) throw Problema(403, "no_admin")
         val id = d.clave.removePrefix("c").toLongOrNull() ?: throw Problema(400, "frase")

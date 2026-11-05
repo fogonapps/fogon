@@ -653,6 +653,11 @@
   <string name="ajustar_restablecer">Reset</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="mod_frases_saludo">Greeting phrases</string>
+  <string name="mod_frase_nueva">A new phrase for everyone</string>
+  <string name="mod_agregar">Add</string>
+  <string name="mod_votos">%1$d like it · %2$d don\'t</string>
+  <string name="mod_quitar_frase">Remove this phrase</string>
   <string name="tut_funciones">What you can do</string>
   <string name="tut_funcion_cajon">Keep what you watch, read and listen to, with your rating, review and diary</string>
   <string name="tut_funcion_red">In For you, follow your people, post reviews and chat with stickers</string>
@@ -733,7 +738,6 @@
   <string name="frase_te_gusto">%1$s left you thinking, right?</string>
   <string name="frase_play">Have you hit play on %1$s yet?</string>
   <string name="frase_artista">Another round with %1$s?</string>
-  <string name="frase_otra">Another phrase</string>
   <string name="frase_te_gusta">You like this phrase</string>
   <string name="frase_me_gusta">I like this phrase</string>
   <string name="frase_ya_no_gusta">I don\'t like it anymore</string>
@@ -963,10 +967,10 @@
   <string name="red_antes">Earlier</string>
   <string name="chat_borrar">Delete conversation</string>
   <string name="chat_borrar_seguro">It’s deleted from this phone (what the other person already got stays on theirs).</string>
-  <string name="red_paso1_titulo">1 · Tell us what you like</string>
+  <string name="red_paso1_titulo">Tell us what you like</string>
   <string name="red_paso1_texto">Pick films, series, artists and books from the most watched, heard and read. That shapes what you see here.</string>
   <string name="red_paso1_boton">Pick what I like</string>
-  <string name="red_paso2_titulo">2 · Create your account</string>
+  <string name="red_paso2_titulo">Create your account</string>
   <string name="red_paso2_texto">To follow people, post, comment and send messages. Meanwhile, see what people share in Explore.</string>
   <string name="red_feed_sin_cuenta">With your account, posts from people you follow show up here.</string>
   <string name="red_tu_nota">Your note</string>

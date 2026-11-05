@@ -96,6 +96,8 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS frases_propuestas(
                     id INTEGER PRIMARY KEY, cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL, texto TEXT NOT NULL, idioma TEXT NOT NULL,
                     estado TEXT NOT NULL DEFAULT 'pendiente', cuando INTEGER NOT NULL)""")
+                // Frases de la app que el equipo quitó del saludo (por su clave).
+                s.execute("CREATE TABLE IF NOT EXISTS frases_ocultas(clave TEXT PRIMARY KEY)")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")
