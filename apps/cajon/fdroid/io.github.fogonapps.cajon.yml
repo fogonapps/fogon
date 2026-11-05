@@ -23,9 +23,9 @@ Repo: https://github.com/fogonapps/fogon.git
 Binaries: https://github.com/fogonapps/el-cajon/releases/download/v%v/ElCajon-%v.apk
 
 Builds:
-  - versionName: "1.38"
-    versionCode: 54
-    commit: 9f8d074dc7f6bff5931da621202c06ac73876f41
+  - versionName: "1.39"
+    versionCode: 55
+    commit: 5042800855cada92f3bb8b56e1e1adbd964f7e60
     subdir: apps/cajon
     gradle:
       - yes
@@ -34,5 +34,5 @@ AllowedAPKSigningKeys: ce5406882e361cf18e3ece18fa348769e34d8fa6cc8dd53f74a77289a
 
 AutoUpdateMode: Version cajon-v%v
 UpdateCheckMode: Tags ^cajon-v
-CurrentVersion: "1.38"
-CurrentVersionCode: 54
+CurrentVersion: "1.39"
+CurrentVersionCode: 55
