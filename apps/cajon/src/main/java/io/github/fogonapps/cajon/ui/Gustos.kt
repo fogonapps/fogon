@@ -71,7 +71,10 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
     val r by vm.recomendaciones.collectAsStateWithLifecycle()
     var menu by remember { mutableStateOf<Sobre?>(null) }
     Seccion(stringResource(R.string.para_ti)) {
-        Pildora(stringResource(R.string.tus_gustos), Iconos.Corazon) { vm.abrir(Pantalla.TusGustos) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (r?.vacias == false) BotonIcono(Iconos.Repetir, stringResource(R.string.actualizar)) { vm.cargarRecomendaciones(otraVez = true) }
+            Pildora(stringResource(R.string.tus_gustos), Iconos.Corazon) { vm.abrir(Pantalla.TusGustos) }
+        }
     }
     if (!e.ajustes.gustosListos) Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().vidrio().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -84,9 +87,6 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
     if (rec.vacias) { Pista(stringResource(R.string.para_ti_vacio)); return }
     // Decir que no se aprende en el tutorial y al elegir gustos; aquí queda solo para lectores de pantalla.
     val decirNo = stringResource(R.string.decir_no)
-    Row(Modifier.padding(horizontal = 20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-        Pildora(stringResource(R.string.actualizar), Iconos.Repetir) { vm.cargarRecomendaciones(otraVez = true) }
-    }
 
     @Composable
     fun porque(p: Recomendar.Por, persona: Boolean = false): String = when (p.tipo) {

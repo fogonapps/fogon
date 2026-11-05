@@ -117,6 +117,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
+@Serializable data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList(), val quitar: List<String> = emptyList())
 @Serializable data class VotoFrase(val valor: Int)
 @Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
 /** Una frase de la comunidad: su clave para votar ("c" + id), el texto y quién la propuso (solo para moderar). */
@@ -476,6 +477,27 @@ class Social(
      * Sube todas las publicaciones de la persona: lo que ya estaba (por [PublicacionSubida.clave]) se actualiza sin
      * perder sus me gusta ni comentarios, lo nuevo se agrega y lo que ya no viene (lo volvió privado o lo borró) se quita.
      */
+    /**
+     * Sube publicaciones y quita solo las que el teléfono dice ([quitar], por clave). A diferencia de
+     * [subirPublicaciones], lo que falta en la lista no se borra: un teléfono nuevo o vacío no se lleva lo publicado.
+     */
+    fun subirCambios(yo: Long, c: CambiosPublicaciones) {
+        val actuales = b.usar { leer("SELECT clave FROM publicaciones WHERE cuenta = ?", yo) { it.getString(1) } }.toSet()
+        val quitar = c.quitar.map { it.take(80) }.toSet()
+        val lista = c.lista.filter { it.clave.take(80) !in quitar }
+        // Lo que ya estaba y no se pidió quitar, se queda: se vuelve a mandar tal cual (subirPublicaciones borra lo que no viene).
+        val quedan = actuales - quitar - lista.map { it.clave.take(80) }.toSet()
+        val viejas = if (quedan.isEmpty()) emptyList() else b.usar {
+            leer("SELECT clave, visibilidad, cuando, datos FROM publicaciones WHERE cuenta = ?", yo) { r ->
+                if (r.getString(1) !in quedan) null else {
+                    val d = JsonSocial.parseToJsonElement(r.getString(4)) as JsonObject
+                    PublicacionSubida(r.getString(1), r.getString(2), r.getLong(3), (d["tipo"] as? JsonPrimitive)?.content ?: "", JsonObject(d - "tipo"))
+                }
+            }.filterNotNull()
+        }
+        subirPublicaciones(yo, lista + viejas)
+    }
+
     fun subirPublicaciones(yo: Long, lista: List<PublicacionSubida>) {
         if (lista.size > 2000) throw Problema(413, "muy_grande")
         val buenas = lista.filter { it.visibilidad in Vis.SUBIBLES && it.clave.isNotBlank() }.distinctBy { it.clave }

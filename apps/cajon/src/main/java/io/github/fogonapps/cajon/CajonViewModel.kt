@@ -456,7 +456,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Tutorial y perfil ----- */
 
     fun terminarTutorial(nombre: String) = cambiar { e ->
-        e.copy(listo = true, ajustes = e.ajustes.copy(nombre = L.recortar(nombre.trim(), 40), cambio = ahora()))
+        e.copy(listo = true, ajustes = if (nombre.isBlank()) e.ajustes else e.ajustes.copy(nombre = L.recortar(nombre.trim(), 40), cambio = ahora()))
     }
 
     fun cambiarNombre(nombre: String) = cambiar { e -> e.copy(ajustes = e.ajustes.copy(nombre = L.recortar(nombre.trim(), 40), cambio = ahora())) }

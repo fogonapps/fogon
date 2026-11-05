@@ -69,7 +69,7 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                     }
                 }
                 BotonRiso(stringResource(R.string.siguiente), { paso = 1 }, Modifier.fillMaxWidth())
-                BotonSecundario(stringResource(R.string.tut_tengo_respaldo), acciones.importar, Modifier.fillMaxWidth())
+                BotonSecundario(stringResource(R.string.tut_tengo_respaldo), { paso = 5 }, Modifier.fillMaxWidth())
             }
             1 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(stringResource(R.string.tut_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)

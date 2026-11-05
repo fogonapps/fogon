@@ -110,7 +110,11 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         val lista = androidx.compose.foundation.lazy.rememberLazyListState()
         val llegadas = (b.artistas.size + b.autores.size + b.directores.size) * 1000 + b.obras.values.sumOf { it.size }
         val titulos = mapOf("artistas" to nombreTipo(CajonViewModel.TIPO_ARTISTA), "directores" to nombreTipo(Personas.DIRECTOR), "autores" to nombreTipo(Personas.AUTOR))
-        LaunchedEffect(llegadas) { if (lista.firstVisibleItemIndex <= 2 && !lista.isScrollInProgress) lista.scrollToItem(0) }
+        // (Se mira si la persona arrastró la lista, no en qué fila está: lo del momento va debajo de los resultados y, sin
+        // esto, la lista se quedaba pegada a él y los resultados quedaban arriba, fuera de la vista.)
+        var movida by remember(b.texto, b.seccion) { mutableStateOf(false) }
+        LaunchedEffect(lista) { lista.interactionSource.interactions.collect { if (it is androidx.compose.foundation.interaction.DragInteraction.Start) movida = true } }
+        LaunchedEffect(llegadas, b.texto, b.seccion) { if (!movida) lista.scrollToItem(0) }
         LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE

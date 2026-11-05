@@ -163,6 +163,16 @@ class SocialTest {
         assertTrue(s.verPerfil(beto, "ana").cerrada)
     }
 
+    @Test fun telefonoVacioNoBorraLoPublicado() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        s.subirCambios(ana, CambiosPublicaciones(listOf(pub("1", Vis.PUBLICA, 10), pub("2", Vis.PUBLICA, 11))))
+        s.subirCambios(ana, CambiosPublicaciones(emptyList()))                       // un teléfono nuevo, sin nada
+        assertEquals(2, s.explorar(null, null).size)
+        s.subirCambios(ana, CambiosPublicaciones(emptyList(), quitar = listOf("1")))  // quitar es explícito
+        assertEquals(listOf("Obra 2"), s.explorar(null, null).map { (it.datos["titulo"] as JsonPrimitive).content })
+    }
+
     @Test fun mensajesAlInstante(): Unit = kotlinx.coroutines.runBlocking {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!

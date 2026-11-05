@@ -89,6 +89,7 @@ data class PerfilSubido(
 @Serializable data class Buscado(val titulo: String, val vistas: Long = 0, val wikidata: String = "", val tmdb: String = "")
 @Serializable data class DelMomentoServidor(val dia: String = "", val peliculas: List<Buscado> = emptyList(), val series: List<Buscado> = emptyList(), val anime: List<Buscado> = emptyList())
 @Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
+@Serializable data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList(), val quitar: List<String> = emptyList())
 @Serializable data class VotoFrase(val valor: Int)
 @Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
 /** Una frase propuesta por la gente (aprobada; con [de] cuando es para moderar). */
@@ -177,6 +178,10 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun bloqueados() = leer(ListSerializer(PersonaSocial.serializer()), pedir("/bloqueos"))
 
     /* Publicaciones */
+    /** Sube publicaciones y quita solo las de [quitar] (lo que falta no se borra: un teléfono vacío no se lleva nada). */
+    suspend fun subirCambios(lista: List<PublicacionSubida>, quitar: List<String>) {
+        pedir("/publicaciones/cambios", "PUT", json(CambiosPublicaciones.serializer(), CambiosPublicaciones(lista, quitar)))
+    }
     suspend fun subirPublicaciones(lista: List<PublicacionSubida>) { pedir("/publicaciones", "PUT", json(ListSerializer(PublicacionSubida.serializer()), lista)) }
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
     /** Las reseñas de una obra que puede ver esta persona (las públicas y las de quienes sigue). */

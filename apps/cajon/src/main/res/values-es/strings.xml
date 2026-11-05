@@ -209,7 +209,7 @@
   <string name="empezar">Empezar</string>
   <string name="tut_hola">¡Hola! Soy El Cajón</string>
   <string name="tut_hola_texto">Guardo todo lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario. Sin anuncios y sin rastreo.</string>
-  <string name="tut_tengo_respaldo">Tengo un respaldo</string>
+  <string name="tut_tengo_respaldo">Ya tengo cuenta</string>
   <string name="tut_nombre">¿Cómo te llamo?</string>
   <string name="tut_privado">Todo se guarda en tu teléfono. Si creas una cuenta, también queda en ella, cifrado para que solo tú lo abras.</string>
   <string name="importar_titulo">¿Recuperar este respaldo?</string>
@@ -273,7 +273,7 @@
   </plurals>
   <string-array name="creditos">
     <item>Personaje y diseño: Fogón (GPL-3.0-or-later).</item>
-    <item>Películas, series y animes: TMDB (con tu clave).</item>
+    <item>Películas, series y animes: TMDB.</item>
     <item>Libros: Open Library.</item>
     <item>Música: MusicBrainz y Cover Art Archive.</item>
   </string-array>
@@ -281,7 +281,7 @@
   <string name="buscar_y_agregar">Buscar y agregar</string>
   <string name="borrar_texto">Borrar el texto</string>
   <string name="ver_mas">Ver más</string>
-  <string name="fuentes_busqueda">Cine: TMDB (con tu clave). Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.</string>
+  <string name="fuentes_busqueda">Cine: TMDB. Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.</string>
   <string name="seccion_cine">Cine</string>
   <string name="seccion_musica">Música</string>
   <string name="seccion_libros">Libros</string>
@@ -450,7 +450,7 @@
   <string name="para_ti_vacio">Cuéntame tus gustos, o califica lo que viste, leíste o escuchaste (o márcalo con el corazón), y aquí aparecen recomendaciones.</string>
   <string name="para_ti_cine">Películas, series y animes</string>
   <string name="para_ti_artistas">Artistas que te pueden gustar</string>
-  <string name="para_ti_libros">Libros de tus escritores</string>
+  <string name="para_ti_libros">Libros para ti</string>
   <string name="para_ti_pendientes">De tus pendientes, lo más tuyo</string>
   <string name="porque_te_gusto">Porque te gustó %1$s</string>
   <string name="como_artista">Como %1$s</string>
@@ -1049,7 +1049,7 @@
   <string name="red_correo_malo">Ese correo no se ve bien</string>
   <string name="red_correo_tomado">Ese correo ya es de otra cuenta</string>
   <string name="red_correo_vinculado">Correo vinculado: ya puedes entrar desde otro teléfono</string>
-  <string name="red_crear_cuenta">Crear mi cuenta en la red</string>
+  <string name="red_crear_cuenta">Crear mi cuenta</string>
   <string name="red_crear_para_seguir">Crea tu cuenta para seguirla</string>
   <string name="red_cuenta_borrada">Cuenta borrada</string>
   <string name="red_cuenta_privada">Cuenta privada</string>

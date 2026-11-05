@@ -105,6 +105,11 @@ class CajaFuerte(context: Context) {
         get() = leer("spotify_renovar")
         set(v) = escribir("spotify_renovar", v)
 
+    /** Las claves de lo que este teléfono ya publicó (para saber qué quitó; lo que nunca subió no se borra). */
+    var publicacionesSubidas: Set<String>
+        get() = prefs.getStringSet("publicaciones_subidas", emptySet()).orEmpty()
+        set(v) = prefs.edit { putStringSet("publicaciones_subidas", v) }
+
     /** La portada del perfil ya subida a la red: "archivo local|dirección en el servidor" (para no subirla otra vez). */
     var portadaSubida: String?
         get() = prefs.getString("portada_subida", null)

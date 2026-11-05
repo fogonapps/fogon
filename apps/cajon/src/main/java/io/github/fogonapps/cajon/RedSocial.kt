@@ -323,7 +323,7 @@ class RedSocial(
     fun borrarCuenta() = lanzar { cliente().borrarCuenta(); olvidarCuenta(); decir(R.string.red_cuenta_borrada) }
 
     private fun olvidarCuenta() {
-        caja.tokenSocial = null; caja.usuarioSocial = null; caja.llaveCajon = null; _cajonBloqueado.value = false
+        caja.tokenSocial = null; caja.usuarioSocial = null; caja.publicacionesSubidas = emptySet(); caja.llaveCajon = null; _cajonBloqueado.value = false
         _usuario.value = null
         AvisosRed.programar(app)
         _feed.value = null; _avisos.value = null; _guardados.value = null; _sinLeer.value = 0
@@ -355,7 +355,10 @@ class RedSocial(
             val ahora = perfilDe(e).copy(portada = portadaEnLaRed(e.perfil.portada)) to publicacionesDe(e)
             if (ahora != ultimo) {
                 cliente().subirPerfil(ahora.first)
-                cliente().subirPublicaciones(ahora.second)
+                // Solo se quita de la red lo que este teléfono había subido y ya no está; nunca lo que no conoce.
+                val claves = ahora.second.map { it.clave }.toSet()
+                cliente().subirCambios(ahora.second, (caja.publicacionesSubidas - claves).toList())
+                caja.publicacionesSubidas = claves
                 ultimo = ahora
             }
             val foto = e.perfil.foto

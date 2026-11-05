@@ -143,9 +143,10 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio(forma(28.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f), centro = androidx.compose.ui.geometry.Offset(0.25f, 0.45f))
         .clickable { vm.abrir(Pantalla.Cifras) }) {
         Column(Modifier.padding(20.dp).fillMaxWidth(0.62f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.este_anio, anio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-            NumeroRiso("$total", 56.sp)
-            Text(pluralStringResource(R.plurals.terminadas, total, total), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+            val enCajon = total == 0
+            Text(if (enCajon) stringResource(R.string.en_tu_cajon) else stringResource(R.string.este_anio, anio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+            NumeroRiso(if (enCajon) "${e.vivas.size}" else "$total", 56.sp)
+            if (!enCajon) Text(pluralStringResource(R.plurals.terminadas, total, total), style = MaterialTheme.typography.bodyMedium, color = f.texto)
             // Cuántas de cada tipo, en una línea de íconos.
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Tipos.TODOS.filter { (c.porTipo[it] ?: 0) > 0 }.forEach { t ->
