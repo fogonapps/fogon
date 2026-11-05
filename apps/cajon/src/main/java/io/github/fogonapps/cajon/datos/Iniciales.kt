@@ -25,7 +25,9 @@ object Iniciales {
 
     /** Al elegir [id]: sus parecidas que todavía no están, justo después de ella (la fila se corre a la derecha). */
     fun alElegir(mostradas: List<String>, id: String, todas: Map<String, ObraInicial>, cuantas: Int = 3): List<String> {
+        // Sus parecidas que no estén; si ya están todas (filas cortas, como el anime), otras del mismo tipo.
         val nuevas = todas[id]?.parecidos.orEmpty().filter { it !in mostradas && it in todas }.take(cuantas)
+            .ifEmpty { todas.keys.filter { it !in mostradas }.shuffled().take(2) }
         val i = mostradas.indexOf(id)
         return if (i < 0) mostradas + nuevas else mostradas.take(i + 1) + nuevas + mostradas.drop(i + 1)
     }
