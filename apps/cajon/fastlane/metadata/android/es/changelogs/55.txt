@@ -1,0 +1,1 @@
+Al elegir lo que te gusta, las parecidas aparecen al lado sin que la fila salte.

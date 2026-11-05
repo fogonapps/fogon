@@ -101,9 +101,8 @@ private fun FilaDeGustos(vm: CajonViewModel, e: Estado, tipo: String, titulo: St
                 if (si) vm.gustaInicial(o, false)
                 else {
                     vm.gustaInicial(o, true)
-                    val antes = mostradas.indexOf(id)
+                    // La fila no salta: la elegida se queda donde está y las parecidas entran a su derecha.
                     mostradas = Iniciales.alElegir(mostradas, id, porId)
-                    alcance.launch { estado.animateScrollToItem(antes.coerceAtLeast(0)) }
                 }
             }
         }
