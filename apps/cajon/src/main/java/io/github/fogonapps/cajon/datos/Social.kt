@@ -106,12 +106,12 @@ data class PerfilSubido(
  */
 class ClienteSocial(private val token: String? = null) {
 
-    private suspend fun pedir(ruta: String, metodo: String = "GET", cuerpo: okhttp3.RequestBody? = null): String? = withContext(Dispatchers.IO) {
+    private suspend fun pedir(ruta: String, metodo: String = "GET", cuerpo: okhttp3.RequestBody? = null, cliente: OkHttpClient = http): String? = withContext(Dispatchers.IO) {
         val req = Request.Builder().url(SERVIDOR + "/v1" + ruta).method(metodo, cuerpo ?: if (metodo in setOf("POST", "PUT")) ByteArray(0).toRequestBody() else null)
             .header("User-Agent", "ElCajon-Fogon")
             .apply { token?.let { header("Authorization", "Bearer $it") } }
             .build()
-        http.newCall(req).execute().use { r ->
+        cliente.newCall(req).execute().use { r ->
             val texto = r.body.string()
             if (!r.isSuccessful) {
                 val error = runCatching { JsonCajon.parseToJsonElement(texto).jsonObject["error"]!!.jsonPrimitive.content }.getOrDefault("")
@@ -214,6 +214,8 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
     suspend fun mensajesSinLeer(): Int = JsonCajon.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
+    /** Como [recibir], pero el servidor espera hasta 25 s a que llegue algo: con la app abierta, el mensaje llega al instante. */
+    suspend fun esperarMensajes(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes/esperar?desde=$desde", cliente = httpLargo))
 
     suspend fun vio(ids: List<Long>) { pedir("/vistas", "POST", json(ListSerializer(Long.serializer()), ids)) }
     suspend fun ponerNota(n: NotaNueva) { pedir("/nota", "PUT", json(NotaNueva.serializer(), n)) }
@@ -237,5 +239,7 @@ class ClienteSocial(private val token: String? = null) {
         private val JSON = "application/json".toMediaType()
         private val JPEG = "image/jpeg".toMediaType()
         private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
+        /** Para esperar mensajes (el servidor tiene la pregunta abierta hasta 25 s). */
+        private val httpLargo = http.newBuilder().readTimeout(40, TimeUnit.SECONDS).build()
     }
 }

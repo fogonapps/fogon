@@ -15,6 +15,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.nio.file.Files
 import kotlin.test.Test
+import kotlinx.coroutines.async
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -160,6 +161,19 @@ class SocialTest {
         // Quitar al seguidor: vuelve a estar cerrada para él.
         s.quitarSeguidor(ana, "beto")
         assertTrue(s.verPerfil(beto, "ana").cerrada)
+    }
+
+    @Test fun mensajesAlInstante(): Unit = kotlinx.coroutines.runBlocking {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        val espera = async(kotlinx.coroutines.Dispatchers.Default) { s.esperarMensajes(beto, 0, 10_000) }
+        kotlinx.coroutines.delay(300)
+        val inicio = System.currentTimeMillis()
+        s.mandar(ana, "beto", SobreNuevo("sobre", "firma"))
+        assertEquals(1, espera.await().size)
+        assertTrue(System.currentTimeMillis() - inicio < 2_000)              // llega al instante, no a los 10 s
+        assertEquals(0, s.esperarMensajes(ana, 0, 200).size)               // sin nada, espera y vuelve vacío
     }
 
     @Test fun registroYOlvideLaClave() {

@@ -1,1 +1,0 @@
-Chat works better: messages arrive on their own while you use the app, they open even if the other person switched phones, and the app asks permission to notify you of new messages.

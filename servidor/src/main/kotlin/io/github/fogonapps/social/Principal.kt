@@ -56,7 +56,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.17"
+const val VERSION = "0.18"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false
@@ -187,6 +187,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/llaves/{usuario}") { call.respond(social.llaves(call.lector(), call.usuario())) }
             post("/mensajes/{usuario}") { call.respond(HttpStatusCode.Created, mapOf("id" to social.mandar(call.yo(), call.usuario(), call.receive()))) }
             get("/mensajes") { call.respond(social.recibir(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0)) }
+            get("/mensajes/esperar") { call.respond(social.esperarMensajes(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0)) }
             post("/vistas") { social.vio(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }

@@ -83,9 +83,13 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
             // Al cerrar o borrar la cuenta, el chat de este teléfono se va con ella.
             red.usuario.collect { u -> if (u == null && caja.chatLlaves != null) borrarTodo() else if (u != null) asegurarLlaves() }
         }
-        // Mientras la app está abierta, los mensajes nuevos llegan solos (no solo con la conversación abierta).
+        // Mientras la app está abierta, la pregunta queda hecha en el servidor y los mensajes llegan al instante.
         scope.launch {
-            while (true) { if (red.usuario.value != null) recibir().join(); kotlinx.coroutines.delay(30_000) }
+            while (true) {
+                if (red.usuario.value == null || propias() == null) { kotlinx.coroutines.delay(5_000); continue }
+                val sobres = runCatching { ClienteSocial(caja.tokenSocial).esperarMensajes(_chats.value.ultimo) }.getOrNull()
+                if (sobres == null) kotlinx.coroutines.delay(5_000) else procesar(sobres)
+            }
         }
     }
 
@@ -240,11 +244,14 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
     }
 
     /** Trae los sobres nuevos, los abre y los guarda; al pedir los siguientes, el servidor borra los ya recibidos. */
-    fun recibir() = scope.launch {
-        val yo = red.usuario.value ?: return@launch
-        val p = propias() ?: return@launch
-        val sobres = runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }.getOrNull() ?: return@launch
-        for (s in sobres) {
+    fun recibir() = scope.launch { procesar(runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }.getOrNull() ?: return@launch) }
+
+    /** Abre y guarda los sobres que llegaron, y confirma (el servidor borra hasta el último). */
+    private suspend fun procesar(sobres: List<io.github.fogonapps.cajon.datos.Sobre>) = recibiendo.withLock {
+        val yo = red.usuario.value ?: return@withLock
+        val p = propias() ?: return@withLock
+        val nuevos = sobres.filter { it.id > _chats.value.ultimo }
+        for (s in nuevos) {
             val de = s.de.usuario
             // Si no abre con las llaves que se tenían, se piden otra vez (la persona pudo cambiar de teléfono) y se reintenta.
             fun abrirCon(l: LlavesPublicas) = JsonCajon.decodeFromString(Contenido.serializer(), String(Cifrado.abrir(s.sobre, s.firma, de, yo, l, p)))
@@ -259,8 +266,9 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
             }
         }
         // Confirmar lo recibido (el servidor borra hasta el último).
-        if (sobres.isNotEmpty()) runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }
+        if (nuevos.isNotEmpty()) runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }
     }
+    private val recibiendo = Mutex()
 
     fun sinLeer(): Int = _conversaciones.value.values.sumOf { l -> l.count { !it.mio && !it.leido } }
 

@@ -1,1 +1,0 @@
-El chat funciona mejor: los mensajes llegan solos mientras usas la app, se abren aunque la otra persona haya cambiado de teléfono, y la app pide permiso para avisarte de mensajes nuevos.

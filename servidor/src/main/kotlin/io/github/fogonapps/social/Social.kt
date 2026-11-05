@@ -1,5 +1,6 @@
 package io.github.fogonapps.social
 
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -852,7 +853,25 @@ class Social(
         if (s.sobre.length > 90_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
         val n = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
         if (n >= 300) throw Problema(429, "despacio")
-        return b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma) VALUES(?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma) }
+        val id = b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma) VALUES(?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma) }
+        timbre(otro).value = id   // quien espera (la app abierta) se entera al instante
+        return id
+    }
+
+    /** Un timbre por cuenta: suena cuando le llega un mensaje (lo escucha [esperarMensajes]). */
+    private val timbres = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.flow.MutableStateFlow<Long>>()
+    private fun timbre(cuenta: Long) = timbres.getOrPut(cuenta) { kotlinx.coroutines.flow.MutableStateFlow(0L) }
+
+    /**
+     * Como [recibir], pero si no hay nada nuevo espera hasta [espera] milisegundos a que llegue algo (la app abierta
+     * deja esta pregunta hecha y el mensaje le llega al instante, sin servicios de terceros).
+     */
+    suspend fun esperarMensajes(yo: Long, desde: Long, espera: Long = 25_000): List<Sobre> {
+        val antes = timbre(yo).value   // se mira antes de revisar: lo que llegue después cambia el número
+        val ya = recibir(yo, desde)
+        if (ya.isNotEmpty()) return ya
+        kotlinx.coroutines.withTimeoutOrNull(espera) { timbre(yo).first { it != antes } }
+        return recibir(yo, desde)
     }
 
     /** Los sobres que le llegaron después de [desde]; los anteriores (ya recibidos) y los de más de 30 días se borran. */
