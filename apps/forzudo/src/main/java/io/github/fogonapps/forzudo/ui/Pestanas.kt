@@ -160,7 +160,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
             else -> io.github.fogonapps.identidad.Cara.DECIDIDO
         }
-        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, cara, Modifier.aparecer(2), tamano = 104.dp) {
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, cara, Modifier.aparecer(2)) {
             Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
             NumeroRiso("${racha.actual}", 96.sp, Modifier.semantics { contentDescription = "${racha.actual}" })
             MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))

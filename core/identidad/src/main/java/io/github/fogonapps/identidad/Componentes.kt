@@ -1,6 +1,8 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.res.imageResource
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.layout.fillMaxSize
@@ -232,9 +234,9 @@ enum class Quien { FORZUDO, AHORRADOR, CUCHA, CAJON }
 /**
  * Las caras de los personajes. Cada momento de la app tiene la suya: [DORMIDO] en los vacíos, [FELIZ] en los
  * logros, [SORPRESA] en los récords, [ENAMORADO] en lo favorito, [TRISTE] cuando algo no se pudo, [MIEDO], [DECIDIDO]
- * antes de empezar y [GUINO] cuando algo quedó listo.
+ * antes de empezar y [GUINO] cuando algo quedó listo. [PARPADEO] (los ojos cerrados en una rayita) es solo para parpadear.
  */
-enum class Cara { NORMAL, FELIZ, DORMIDO, SORPRESA, ENAMORADO, TRISTE, MIEDO, DECIDIDO, GUINO }
+enum class Cara { NORMAL, FELIZ, DORMIDO, SORPRESA, ENAMORADO, TRISTE, MIEDO, DECIDIDO, GUINO, PARPADEO }
 
 /** Las imágenes de cada personaje con cada cara. */
 private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
@@ -248,6 +250,7 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
         Cara.MIEDO to R.drawable.personaje_forzudo_miedo,
         Cara.DECIDIDO to R.drawable.personaje_forzudo_decidido,
         Cara.GUINO to R.drawable.personaje_forzudo_guino,
+        Cara.PARPADEO to R.drawable.personaje_forzudo_parpadeo,
     ),
     Quien.AHORRADOR to mapOf(
         Cara.NORMAL to R.drawable.personaje_ahorrador_normal,
@@ -259,6 +262,7 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
         Cara.MIEDO to R.drawable.personaje_ahorrador_miedo,
         Cara.DECIDIDO to R.drawable.personaje_ahorrador_decidido,
         Cara.GUINO to R.drawable.personaje_ahorrador_guino,
+        Cara.PARPADEO to R.drawable.personaje_ahorrador_parpadeo,
     ),
     Quien.CUCHA to mapOf(
         Cara.NORMAL to R.drawable.personaje_cucha_normal,
@@ -270,6 +274,7 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
         Cara.MIEDO to R.drawable.personaje_cucha_miedo,
         Cara.DECIDIDO to R.drawable.personaje_cucha_decidido,
         Cara.GUINO to R.drawable.personaje_cucha_guino,
+        Cara.PARPADEO to R.drawable.personaje_cucha_parpadeo,
     ),
     Quien.CAJON to mapOf(
         Cara.NORMAL to R.drawable.personaje_cajon_normal,
@@ -281,6 +286,7 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
         Cara.MIEDO to R.drawable.personaje_cajon_miedo,
         Cara.DECIDIDO to R.drawable.personaje_cajon_decidido,
         Cara.GUINO to R.drawable.personaje_cajon_guino,
+        Cara.PARPADEO to R.drawable.personaje_cajon_parpadeo,
     ),
 )
 
@@ -297,13 +303,15 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
 fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, cara: Cara = Cara.NORMAL, tamano: Dp = 160.dp) {
     val f = FogonTema.actual
     val quieto = f.menosMovimiento
-    // El parpadeo: la cara de ojos cerrados un instante, cada 3 a 6 segundos (no en las que ya los tienen cerrados).
+    // El parpadeo: los ojos cerrados (una rayita) un instante, cada 3 a 6 segundos, de golpe y sin fundido. No en las
+    // caras que ya tienen los ojos cerrados (ni en La Cucha, que siempre los tiene en arquito).
     var parpado by remember { mutableStateOf(false) }
-    if (!quieto && cara !in setOf(Cara.DORMIDO, Cara.FELIZ, Cara.GUINO)) {
+    val cerrados = cara in setOf(Cara.DORMIDO, Cara.FELIZ, Cara.GUINO, Cara.PARPADEO) || (quien == Quien.CUCHA && cara == Cara.NORMAL)
+    if (!quieto && !cerrados) {
         LaunchedEffect(cara) {
             while (true) {
                 kotlinx.coroutines.delay(3000L + (kotlin.random.Random.nextFloat() * 3000).toLong())
-                parpado = true; kotlinx.coroutines.delay(140); parpado = false
+                parpado = true; kotlinx.coroutines.delay(130); parpado = false
             }
         }
     }
@@ -317,12 +325,12 @@ fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier,
     )
     Box(modifier.size(tamano), contentAlignment = Alignment.Center) {
         if (!f.oscuro) Box(Modifier.fillMaxWidth(0.86f).aspectRatio(1f).background(f.marca.copy(alpha = 0.28f), androidx.compose.foundation.shape.CircleShape))
-        androidx.compose.animation.Crossfade(if (parpado) Cara.DORMIDO else cara, Modifier.matchParentSize().graphicsLayer {
+        androidx.compose.animation.Crossfade(cara, Modifier.matchParentSize().graphicsLayer {
             scaleX = entrada.value * (1f - r * 0.015f); scaleY = entrada.value * (1f + r * 0.03f)
             translationY = -r * tamano.toPx() * 0.015f
             transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
-        }, animationSpec = androidx.compose.animation.core.tween(if (parpado) 60 else 220), label = "cara") { c ->
-            Image(painterResource(imagenPersonaje(quien, c)), contentDescription = descripcion, modifier = Modifier.fillMaxSize())
+        }, animationSpec = androidx.compose.animation.core.tween(220), label = "cara") { c ->
+            Image(painterResource(imagenPersonaje(quien, if (parpado && c == cara) Cara.PARPADEO else c)), contentDescription = descripcion, modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -372,14 +380,15 @@ fun Celebracion(quien: Quien, descripcion: String?, modifier: Modifier = Modifie
         repeat(veces) { for (k in 0 until CUADROS) { cuadro = k; kotlinx.coroutines.delay(45) } }
         termino = true
     }
-    val lado = tira.height
+    val lado = tira.width / CUADROS
     val pintor = remember(cuadro, tira) {
-        androidx.compose.ui.graphics.painter.BitmapPainter(tira, androidx.compose.ui.unit.IntOffset(cuadro * lado, 0), androidx.compose.ui.unit.IntSize(lado, lado))
+        androidx.compose.ui.graphics.painter.BitmapPainter(tira, androidx.compose.ui.unit.IntOffset(cuadro * lado, 0), androidx.compose.ui.unit.IntSize(lado, tira.height))
     }
     Box(modifier.size(tamano), contentAlignment = Alignment.Center) {
         if (!f.oscuro) Box(Modifier.fillMaxWidth(0.86f).aspectRatio(1f).background(f.marca.copy(alpha = 0.28f), androidx.compose.foundation.shape.CircleShape))
-        // La tira deja aire arriba para el salto: se dibuja un poco más grande para que el personaje mida lo mismo.
-        Image(pintor, descripcion, Modifier.fillMaxSize().graphicsLayer { scaleX = 1.18f; scaleY = 1.18f; translationY = -tamano.toPx() * 0.06f })
+        // Cada cuadro es más alto que ancho (aire arriba para el salto): el cuadro de abajo coincide con el personaje.
+        val alto = tira.height.toFloat() / lado
+        Image(pintor, descripcion, Modifier.requiredSize(tamano, tamano * alto).offset(y = -tamano * (alto - 1f) / 2f))
     }
 }
 
