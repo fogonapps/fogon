@@ -653,6 +653,7 @@
   <string name="ajustar_restablecer">Restablecer</string>
 
   <!-- La red (Fogón Social) -->
+  <string name="mod_reportes">Reportes</string>
   <string name="mod_frases_saludo">Frases del saludo</string>
   <string name="mod_frase_nueva">Una frase nueva para todos</string>
   <string name="mod_agregar">Agregar</string>

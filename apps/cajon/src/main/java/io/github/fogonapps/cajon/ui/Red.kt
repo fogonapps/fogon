@@ -351,6 +351,26 @@ fun CrearClaveAviso(vm: CajonViewModel) {
     }
 }
 
+/** Las frases que propuso la gente y esperan aprobación. */
+@Composable
+private fun FrasesPropuestas(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
+    if (frases.isNotEmpty()) {
+        Seccion(stringResource(R.string.mod_frases))
+        frases.forEach { fr ->
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(fr.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                Text("@${fr.de} · ${fr.idioma}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Pildora(stringResource(R.string.mod_aprobar), acento = true) { vm.red.decidirFrase(fr.clave, true) }
+                    Pildora(stringResource(R.string.mod_rechazar)) { vm.red.decidirFrase(fr.clave, false) }
+                }
+            }
+        }
+    }
+}
+
 /**
  * Las frases del saludo, para el equipo: agregar una (sale para todos) y ver todas (las de la app y las de la gente)
  * ordenadas por lo que vota la comunidad, con su botón para quitarla.
@@ -1330,7 +1350,15 @@ fun Moderacion(vm: CajonViewModel) {
     val f = FogonTema.actual
     val casos by vm.red.casos.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.red.cargarCasos() }
+    val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
     Cabecera(stringResource(R.string.mod_titulo), vm::cerrar)
+    // Dos secciones: los reportes y las frases del saludo (con las que propuso la gente).
+    var seccion by rememberSaveable { mutableStateOf(0) }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pildora(stringResource(R.string.mod_reportes) + casos?.size?.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Bandera, acento = seccion == 0) { seccion = 0 }
+        Pildora(stringResource(R.string.mod_frases_saludo) + frases.size.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
+    }
+    if (seccion == 1) { FrasesPropuestas(vm); FrasesDelEquipo(vm); return }
     val l = casos
     when {
         l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
@@ -1347,21 +1375,6 @@ fun Moderacion(vm: CajonViewModel) {
                     Pildora(stringResource(R.string.mod_falta), acento = true) { vm.red.decidir(c, "falta") }
                     Pildora(stringResource(R.string.mod_grave)) { vm.red.decidir(c, "falta_grave") }
                     Pildora(stringResource(R.string.mod_cerrar)) { vm.red.decidir(c, "cerrar") }
-                }
-            }
-        }
-    }
-    FrasesDelEquipo(vm)
-    val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
-    if (frases.isNotEmpty()) {
-        Seccion(stringResource(R.string.mod_frases))
-        frases.forEach { fr ->
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(fr.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text("@${fr.de} · ${fr.idioma}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Pildora(stringResource(R.string.mod_aprobar), acento = true) { vm.red.decidirFrase(fr.clave, true) }
-                    Pildora(stringResource(R.string.mod_rechazar)) { vm.red.decidirFrase(fr.clave, false) }
                 }
             }
         }
