@@ -1,1 +1,0 @@
-When picking what you like, similar ones appear next to it without the row jumping.
