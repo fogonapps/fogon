@@ -1232,11 +1232,11 @@ fun ElegirCancion(vm: CajonViewModel, e: Estado) {
 fun AjustesAvisos(vm: CajonViewModel) {
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences(io.github.fogonapps.cajon.AvisosRed.PREFS, android.content.Context.MODE_PRIVATE) }
-    var avisos by remember { mutableStateOf(prefs.getBoolean(io.github.fogonapps.cajon.AvisosRed.AVISOS, true)) }
-    var mensajes by remember { mutableStateOf(prefs.getBoolean(io.github.fogonapps.cajon.AvisosRed.MENSAJES, true)) }
+    var avisos by remember { mutableStateOf(io.github.fogonapps.cajon.AvisosRed.activo(prefs, vm.recursos.id, io.github.fogonapps.cajon.AvisosRed.AVISOS)) }
+    var mensajes by remember { mutableStateOf(io.github.fogonapps.cajon.AvisosRed.activo(prefs, vm.recursos.id, io.github.fogonapps.cajon.AvisosRed.MENSAJES)) }
     val permiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
     fun guardar() {
-        prefs.edit().putBoolean(io.github.fogonapps.cajon.AvisosRed.AVISOS, avisos).putBoolean(io.github.fogonapps.cajon.AvisosRed.MENSAJES, mensajes).apply()
+        prefs.edit().putBoolean("p${vm.recursos.id}.${io.github.fogonapps.cajon.AvisosRed.AVISOS}", avisos).putBoolean("p${vm.recursos.id}.${io.github.fogonapps.cajon.AvisosRed.MENSAJES}", mensajes).apply()
         if ((avisos || mensajes) && android.os.Build.VERSION.SDK_INT >= 33) permiso.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         io.github.fogonapps.cajon.AvisosRed.programar(ctx)
     }

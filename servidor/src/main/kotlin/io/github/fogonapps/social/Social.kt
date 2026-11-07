@@ -98,7 +98,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 )
 /** Si un correo ya tiene cuenta y si tiene contraseña (para decirle a la persona si se registra o entra). */
 @Serializable data class EstadoCorreo(val existe: Boolean, val conClave: Boolean)
-@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean, val borrarEl: Long)
+@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean, val borrarEl: Long, val idCuenta: String = "")
 @Serializable data class MiCuenta(
     val usuario: String, val nombre: String, val correo: String, val privada: Boolean,
     val conClave: Boolean = false,
@@ -108,7 +108,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val apodoDesde: Long,
     val borrarEl: Long = 0,
     val rol: String, val permisos: Set<String>,
-    val mfa: Boolean, val elevadaHasta: Long,
+    val mfa: Boolean, val elevadaHasta: Long, val idCuenta: String = "",
 )
 @Serializable data class EntradaClave(val correo: String, val clave: String)
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
@@ -156,11 +156,19 @@ class Social(
 
     private val dirImagenes get() = java.io.File(dirFotos, "i")
 
-    /** El secreto de las huellas de las vistas: al azar, una vez, en la carpeta de datos (no sale del servidor). */
+    /** El secreto de los identificadores opacos y las huellas de las vistas: al azar, una vez, en la carpeta de datos (no sale del servidor). */
     private val secreto: ByteArray by lazy {
         val f = java.io.File(dirFotos.parentFile ?: dirFotos, "secreto")
-        if (f.exists() && f.length() >= 32) f.readBytes()
+        if (f.exists()) f.readBytes().also { check(it.size >= 32) { "El secreto del servidor está incompleto; debe recuperarse del respaldo" } }
         else ByteArray(32).also { java.security.SecureRandom().nextBytes(it); f.parentFile?.mkdirs(); f.writeBytes(it); f.setReadable(false, false); f.setReadable(true, true) }
+    }
+
+    /** Identidad pública estable; el prefijo separa este uso de sesiones, vistas y otras huellas. */
+    private fun idCuenta(id: Long): String {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256"))
+        return java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(mac.doFinal("cuenta:$id".toByteArray(Charsets.UTF_8))).take(22)
     }
 
     /* ----- Cuentas ----- */
@@ -220,8 +228,8 @@ class Social(
             if (!USUARIO.matches(u)) throw Problema(400, "usuario")
             if (!usuarioLibre(u)) throw Problema(409, "usuario_tomado")
             val nuevo = b.usar {
-                insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio, correo, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?,?)",
-                    u, "retirado:" + Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
+                insertar("INSERT INTO cuentas(id, usuario, token, nombre, creada, cambio, correo, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?,?,?)",
+                    insertar("INSERT INTO secuencia_cuentas DEFAULT VALUES"), u, "retirado:" + Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
             }
             Triple(nuevo, u, true)
         }
@@ -235,7 +243,7 @@ class Social(
             avisarClave(id)
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
-        return Acceso(usuario, token, nueva, borrarEl(id))
+        return Acceso(usuario, token, nueva, borrarEl(id), idCuenta(id))
     }
 
     /** Revisa el código de [correo] (sin gastarlo); cada intento malo cuenta, y a los 5 se vence. */
@@ -352,7 +360,7 @@ class Social(
 
     fun miCuenta(yo: Long, token: String? = null): MiCuenta = b.usar {
         leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token))
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo))
         }.first()
     }
 
@@ -380,7 +388,7 @@ class Social(
             throw Problema(400, "clave_mala")
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
-        return Acceso(usuario, sesionNueva(id, dispositivo), false, borrarEl(id))
+        return Acceso(usuario, sesionNueva(id, dispositivo), false, borrarEl(id), idCuenta(id))
     }
 
     /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
@@ -452,8 +460,8 @@ class Social(
         val token = Base.tokenNuevo()
         b.usar {
             if (leer("SELECT 1 FROM cuentas WHERE usuario = ?", usuario) { 1 }.isNotEmpty()) throw Problema(409, "usuario_tomado")
-            val id = insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio) VALUES(?,?,?,?,?)",
-                usuario, "retirado:" + Base.huella(Base.tokenNuevo()), n.nombre.trim().take(40), ahora(), ahora())
+            val id = insertar("INSERT INTO cuentas(id, usuario, token, nombre, creada, cambio) VALUES(?,?,?,?,?,?)",
+                insertar("INSERT INTO secuencia_cuentas DEFAULT VALUES"), usuario, "retirado:" + Base.huella(Base.tokenNuevo()), n.nombre.trim().take(40), ahora(), ahora())
             cambiar("INSERT INTO sesiones(huella, cuenta, creada, ultimo_uso) VALUES(?,?,?,?)", Base.huella(token), id, ahora(), ahora())
         }
         return CuentaCreada(usuario, token)

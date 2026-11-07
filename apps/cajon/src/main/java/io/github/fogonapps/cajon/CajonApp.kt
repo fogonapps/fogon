@@ -14,10 +14,37 @@ import io.github.fogonapps.cajon.datos.crearAlmacen
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
 class CajonApp : Application(), SingletonImageLoader.Factory {
-    val almacen: DataStore<Estado> by lazy { crearAlmacen(this) }
-    val caja: CajaFuerte by lazy { CajaFuerte(this) }
-    /** Lo que se escucha (de cualquier app, Spotify o su historial), por álbum: ver [io.github.fogonapps.cajon.datos.RegistroEscuchas]. */
-    val escuchas by lazy { io.github.fogonapps.cajon.datos.RegistroEscuchas(this) }
+    private val porPerfil = mutableMapOf<String, RecursosPerfil>()
+    private val retirados = mutableSetOf<String>()
+    val migracion by lazy { io.github.fogonapps.cajon.datos.migracionPerfiles(this) }
+    lateinit var perfiles: io.github.fogonapps.cajon.datos.Perfiles
+        private set
+    private var confirmarMigracion = false
+    override fun onCreate() {
+        super.onCreate()
+        confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").let { it.exists() && it.readText() == "terminada" }
+        migracion.ejecutar()
+        perfiles = io.github.fogonapps.cajon.datos.Perfiles(filesDir)
+        perfiles.limpiarPendientes { id ->
+            io.github.fogonapps.cajon.datos.borrarClavesPerfil(this, id)
+            check(java.io.File(cacheDir, "compartir/$id").let { !it.exists() || it.deleteRecursively() })
+        }
+    }
+    @Synchronized fun recursos(id: String = perfiles.lista.activo): RecursosPerfil {
+        require(id !in retirados && perfiles.lista.perfiles.any { it.id == id })
+        return porPerfil.getOrPut(id) { RecursosPerfil(this, id, perfiles.directorio(id)) }
+    }
+    suspend fun cerrarRecursos(id: String) {
+        val recursos = synchronized(this) { retirados.add(id); porPerfil.remove(id) } ?: return
+        recursos.trabajo.cancel()
+        recursos.trabajo.join()
+    }
+    val almacen get() = recursos().almacen
+    val caja get() = recursos().caja
+    val escuchas get() = recursos().escuchas
+    fun arranqueCorrecto(id: String) {
+        if (id == "1" && confirmarMigracion) { migracion.confirmarArranque(); confirmarMigracion = false }
+    }
 
     /** Las portadas se guardan en la caché del teléfono (hasta 150 MB) para no bajarlas cada vez. */
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
@@ -37,4 +64,12 @@ class CajonApp : Application(), SingletonImageLoader.Factory {
         }
         .crossfade(true)
         .build()
+}
+
+/** Referencias inmutables: una respuesta tardía conserva siempre su directorio y sus claves. */
+class RecursosPerfil(app: CajonApp, val id: String, val directorio: java.io.File) {
+    val trabajo = kotlinx.coroutines.SupervisorJob()
+    val almacen = crearAlmacen(app, directorio, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + trabajo))
+    val caja = CajaFuerte(app, id)
+    val escuchas = io.github.fogonapps.cajon.datos.RegistroEscuchas(app, directorio)
 }

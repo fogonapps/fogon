@@ -1257,4 +1257,16 @@
   <string name="equipo_p_usuarios">Gestionar usuarios</string>
   <string name="equipo_p_equipo">Asignar equipo</string>
   <string name="equipo_p_registro">Ver registro</string>
+    <string name="perfiles_cambiar">Cambiar de cuenta</string>
+    <string name="perfiles_anadir">Añadir cuenta</string>
+    <string name="perfiles_limite">Puedes guardar hasta 5 perfiles en este teléfono.</string>
+    <string name="perfiles_local">Perfil local</string>
+    <string name="perfiles_activo">Activo</string>
+    <string name="perfiles_quitar">Quitar del teléfono</string>
+    <string name="perfiles_confirmar">Es el perfil que estás usando: se cerrará su sesión y se borrarán sus datos de este teléfono. Su cuenta de la red seguirá existiendo. Puedes descargar antes la copia JSON.</string>
+    <string name="perfiles_error">No se pudo cambiar o quitar el perfil. Inténtalo de nuevo.</string>
+    <string name="perfiles_copia">Descargar copia JSON</string>
+    <string name="perfiles_quitar_si">Quitar este perfil</string>
+    <string name="perfiles_quitar_cual">Quitar «%1$s» del teléfono</string>
+    <string name="perfiles_identidad_pendiente">No se pudo confirmar que esta cuenta corresponda a los datos guardados. Abre el perfil correspondiente o añade uno nuevo. Los datos se conservan.</string>
 </resources>

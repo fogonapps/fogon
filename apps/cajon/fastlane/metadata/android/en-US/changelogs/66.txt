@@ -1,2 +1,0 @@
-• Safer moderation: the team signs in with an authenticator app (two-step verification) and each person only sees what is theirs to handle.
-• Content removed by moderation can be reviewed and restored, and every action is logged.

@@ -275,6 +275,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                 .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.cajon.datos.ClienteSocial.enlacePerfil(u)), null))
         }, Modifier.weight(1f))
     }
+    SelectorPerfiles(vm)
     CrearClaveAviso(vm)
     io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
         TarjetaCancion(c.titulo, c.artista, c.album, c.portada, onCambiar = { vm.abrir(Pantalla.ElegirCancion) })

@@ -1,2 +1,0 @@
-• Moderación más segura: el equipo entra con una app de códigos (verificación en dos pasos) y cada persona solo ve lo que le toca.
-• Lo que se quita por moderación se puede revisar y restaurar, y todo queda registrado.

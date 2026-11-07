@@ -84,7 +84,7 @@ internal fun agregarMensajeChat(lista: List<MensajeChat>, mensaje: MensajeChat):
  * (`files/chats.json`): no van en el respaldo, ni en el Gist, ni quedan en el servidor, que solo pasa los sobres.
  */
 class Chat(private val app: Application, private val scope: CoroutineScope, private val caja: CajaFuerte, private val red: RedSocial, private val decir: (Int) -> Unit) {
-    private val archivo = File(app.filesDir, "chats.json")
+    private val archivo = File((app as CajonApp).recursos(caja.perfilId).directorio, "chats.json")
     private val candado = Mutex()
     private val _chats = MutableStateFlow(Chats())
     /** Conversación (el @usuario) → sus mensajes, del más viejo al más nuevo. */

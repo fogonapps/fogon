@@ -20,7 +20,12 @@ import java.time.LocalDate
 class WidgetCurso : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as CajonApp
-        val e = app.almacen.data.first()
+        var perfil = app.recursos()
+        var e = perfil.almacen.data.first()
+        while (app.perfiles.lista.activo != perfil.id) {
+            perfil = app.recursos()
+            e = perfil.almacen.data.first()
+        }
         val anio = LocalDate.now().year
         val total = Logica.cifras(e, anio).porTipo.values.sum()
         val enCurso = e.vivas.filter { it.estado == Estados.EN_CURSO }.maxByOrNull { it.cambio }

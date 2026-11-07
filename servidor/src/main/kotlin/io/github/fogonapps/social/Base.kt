@@ -25,6 +25,10 @@ class Base(ruta: String) {
                     id INTEGER PRIMARY KEY, usuario TEXT UNIQUE NOT NULL, token TEXT UNIQUE NOT NULL,
                     nombre TEXT NOT NULL DEFAULT '', perfil TEXT NOT NULL DEFAULT '{}', foto INTEGER NOT NULL DEFAULT 0,
                     creada INTEGER NOT NULL, cambio INTEGER NOT NULL)""")
+                // La identidad HMAC depende de este número: no puede volver a asignarse tras un borrado.
+                // Un asignador separado evita reconstruir cuentas y todas sus referencias existentes.
+                s.execute("CREATE TABLE IF NOT EXISTS secuencia_cuentas(id INTEGER PRIMARY KEY AUTOINCREMENT)")
+                s.execute("INSERT OR IGNORE INTO secuencia_cuentas(id) SELECT MAX(id) FROM cuentas HAVING COUNT(*) > 0")
                 s.execute("""CREATE TABLE IF NOT EXISTS publicaciones(
                     id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     clave TEXT NOT NULL, visibilidad TEXT NOT NULL, cuando INTEGER NOT NULL, datos TEXT NOT NULL,

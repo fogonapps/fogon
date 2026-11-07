@@ -219,8 +219,102 @@ data class Sync(val estado: EstadoSync, val usuario: String? = null, val ultima:
 
 class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val cajonApp = app as CajonApp
-    private val almacen = cajonApp.almacen
-    private val caja = cajonApp.caja
+    val recursos = cajonApp.recursos()
+    private val almacen = recursos.almacen
+    private val caja = recursos.caja
+    private val escuchas = recursos.escuchas
+    private val vigenciaPerfil = io.github.fogonapps.cajon.datos.VigenciaPerfil()
+    suspend fun detenerPerfil(esperar: Boolean = false) {
+        vigenciaPerfil.invalidar()
+        red.detenerPerfil()
+        cancelarSpotify()
+        val trabajo = viewModelScope.coroutineContext[kotlinx.coroutines.Job]
+        trabajo?.cancel()
+        if (esperar) trabajo?.join()
+        _estado.value?.let { e ->
+            almacen.updateData { e }
+            cajonApp.perfiles.actualizar(recursos.id, e.ajustes.nombre, caja.usuarioSocial.orEmpty(), e.perfil.foto)
+        }
+    }
+    var alCambiarPerfil: ((String, Boolean) -> Unit)? = null
+    fun perfilesTelefono() = cajonApp.perfiles.lista
+    fun cambiarPerfil(id: String) { alCambiarPerfil?.invoke(id, false) }
+    fun quitarPerfil() = viewModelScope.launch {
+        val token = caja.tokenSocial
+        try {
+            if (token != null) io.github.fogonapps.cajon.datos.ClienteSocial(token).salir()
+            val otro = cajonApp.perfiles.lista.perfiles.firstOrNull { it.id != recursos.id }
+                ?: cajonApp.perfiles.agregar(provisional = false) ?: return@launch
+            alCambiarPerfil?.invoke(otro.id, true)
+        } catch (x: kotlinx.coroutines.CancellationException) { throw x }
+        catch (_: Exception) { decir(tx(R.string.perfiles_error)) }
+    }
+    fun agregarPerfil() {
+        val nuevo = cajonApp.perfiles.agregar()
+        if (nuevo == null) decir(tx(R.string.perfiles_limite)) else alCambiarPerfil?.invoke(nuevo.id, false)
+    }
+    private suspend fun cuentaDuplicada(acceso: io.github.fogonapps.cajon.datos.Acceso): Boolean {
+        val usuario = acceso.usuario
+        val idCuenta = acceso.idCuenta.ifBlank {
+            io.github.fogonapps.cajon.datos.ClienteSocial(acceso.token).miCuenta().idCuenta
+        }
+        if (!vigenciaPerfil.vigente()) return true
+        var identidadPendiente = false
+        // Solo se consulta al servidor por perfiles antiguos que todavía no tienen identidad estable.
+        for (perfil in cajonApp.perfiles.lista.perfiles.filter { it.id != recursos.id && it.idCuenta.isBlank() }) {
+            val guardada = cajonApp.recursos(perfil.id).caja
+            val tokenGuardado = guardada.tokenSocial
+            if (tokenGuardado == null) {
+                if (perfil.usuario.equals(usuario, ignoreCase = true)) identidadPendiente = true
+                continue
+            }
+            val cuenta = try { io.github.fogonapps.cajon.datos.ClienteSocial(tokenGuardado).miCuenta() }
+            catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
+                if (x.codigo != 401) throw x
+                if (guardada.usuarioSocial.equals(usuario, ignoreCase = true)) identidadPendiente = true
+                continue
+            }
+            if (!vigenciaPerfil.vigente() || guardada.tokenSocial != tokenGuardado) return true
+            cajonApp.perfiles.completarIdCuenta(perfil.id, cuenta.idCuenta)
+            guardada.usuarioSocial = cuenta.usuario
+            cajonApp.perfiles.actualizar(perfil.id, perfil.apodo, cuenta.usuario, perfil.miniatura)
+            if (cuenta.idCuenta.isBlank() && cuenta.usuario.equals(usuario, ignoreCase = true)) identidadPendiente = true
+        }
+        val otro = cajonApp.perfiles.duplicado(recursos.id, idCuenta)
+        if (otro == null) {
+            val actual = cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }
+            val cuentaSinId = idCuenta.isBlank() && cajonApp.perfiles.lista.perfiles.any {
+                it.id != recursos.id && it.usuario.equals(usuario, ignoreCase = true)
+            }
+            val conflicto = actual.idCuenta.isNotBlank() && actual.idCuenta != idCuenta
+            if (identidadPendiente || cuentaSinId || conflicto) {
+                io.github.fogonapps.cajon.datos.ClienteSocial(acceso.token).salir()
+                if (vigenciaPerfil.vigente()) decir(tx(R.string.perfiles_identidad_pendiente))
+                return true
+            }
+            if (idCuenta.isNotBlank()) cajonApp.perfiles.completarIdCuenta(recursos.id, idCuenta)
+            return false
+        }
+        if (!vigenciaPerfil.vigente()) return true
+        // Conserva el cajón y las llaves existentes y renueva su sesión tras comprobar la identidad.
+        val destino = cajonApp.recursos(otro.id).caja
+        val anterior = destino.tokenSocial
+        destino.tokenSocial = acceso.token
+        destino.usuarioSocial = acceso.usuario
+        destino.perfilRedPendiente = true
+        if (anterior != null && anterior != acceso.token) {
+            try { io.github.fogonapps.cajon.datos.ClienteSocial(anterior).salir() }
+            catch (x: kotlinx.coroutines.CancellationException) { throw x }
+            catch (_: java.io.IOException) { /* La sesión renovada ya está guardada; la anterior puede haber vencido. */ }
+        }
+        if (!vigenciaPerfil.vigente()) return true
+        val estado = _estado.value
+        val vacio = io.github.fogonapps.cajon.datos.perfilProvisionalVacio(estado, escuchas.oidos.value) &&
+            caja.tokenGithub == null && caja.claveTmdb == null && caja.spotifyCliente == null && caja.spotifyRenovar == null && caja.chatLlaves == null
+        alCambiarPerfil?.invoke(otro.id, vacio && cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }.provisional)
+        return true
+    }
+
     val L = Logica
 
     private val _estado = MutableStateFlow<Estado?>(null)
@@ -269,7 +363,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     @Volatile private var ultimoGuardado: Estado? = null
 
     /** La red de El Cajón (Fogón Social), opcional. */
-    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizarCuenta() })
+    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizarCuenta() }, recursos.directorio, { acceso -> cuentaDuplicada(acceso) }, { idCuenta ->
+        if (vigenciaPerfil.vigente()) cajonApp.perfiles.completarIdCuenta(recursos.id, idCuenta)
+    })
     /**
      * Pone en el perfil algo encontrado afuera: si no está en el cajón, se agrega (terminado y con corazón, sin anotar
      * nada en el diario) y sus datos completos llegan después. Vuelve al perfil.
@@ -414,13 +510,21 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val almacenApariencia = io.github.fogonapps.identidad.AlmacenApariencia.de(app)
 
     private fun aplicarApariencia(e: Estado) {
-        e.apariencia?.paraTelefono()?.let { if (it != almacenApariencia.estado.value) almacenApariencia.aplicar(it) }
+        if (!vigenciaPerfil.vigente()) return
+        // El perfil migrado conserva la apariencia anterior aunque aún no estuviera dentro del estado.
+        (e.apariencia?.paraTelefono() ?: if (recursos.id == "1") almacenApariencia.estado.value else io.github.fogonapps.identidad.Apariencia()).let { if (it != almacenApariencia.estado.value) almacenApariencia.aplicar(it) }
     }
 
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             aplicarApariencia(requireNotNull(_estado.value))
+            guardarYa()
+            cajonApp.arranqueCorrecto(recursos.id)
+            if (cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }.provisional) {
+                _estado.value = _estado.value!!.copy(listo = true)
+                abrir(Pantalla.CuentaRed)
+            }
             launch {
                 almacenApariencia.estado.collect { a ->
                     val anterior = _estado.value?.apariencia
@@ -465,6 +569,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Todo cambio pasa por aquí: memoria, pantalla, 300 ms después el disco y 4 s después el Gist. */
     private fun cambiar(f: (Estado) -> Estado) {
+        if (!vigenciaPerfil.vigente()) return
         val e = _estado.value ?: return
         _estado.value = f(e)
         guardado?.cancel()
@@ -474,9 +579,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     suspend fun guardarYa() {
+        if (!vigenciaPerfil.vigente()) return
         val e = _estado.value ?: return
         ultimoGuardado = e
         almacen.updateData { e }
+        cajonApp.perfiles.actualizar(recursos.id, e.ajustes.nombre, caja.usuarioSocial.orEmpty(), e.perfil.foto)
         WidgetCurso.actualizar(getApplication())
     }
 
@@ -1236,7 +1343,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Lo que se escucha (cualquier app, Spotify o su historial) ----- */
 
-    private val escuchas get() = (getApplication<android.app.Application>() as CajonApp).escuchas
     /** Los álbumes escuchados (ver [RegistroEscuchas]). */
     val oidos: StateFlow<io.github.fogonapps.cajon.datos.Oidos> get() = escuchas.oidos
 
@@ -1405,7 +1511,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _recomendaciones = MutableStateFlow<Recomendaciones?>(null)
     val recomendaciones: StateFlow<Recomendaciones?> = _recomendaciones
     private var recomendando: Job? = null
-    private val historial by lazy { io.github.fogonapps.cajon.datos.HistorialParaTi(getApplication()) }
+    private val historial by lazy { io.github.fogonapps.cajon.datos.HistorialParaTi(getApplication(), recursos.directorio) }
 
     /** El perfil de gustos, al día con el cajón, lo dicho y lo escuchado (ver [Rec.perfil]). */
     fun perfil(): io.github.fogonapps.cajon.datos.PerfilGustos = _estado.value?.let { Rec.perfil(it, escuchas.oidos.value) } ?: io.github.fogonapps.cajon.datos.PerfilGustos()
@@ -1853,7 +1959,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: error("no es imagen")
         val escala = minOf(1f, tope.toFloat() / maxOf(original.width, original.height))
         val chica = android.graphics.Bitmap.createScaledBitmap(original, (original.width * escala).toInt().coerceAtLeast(1), (original.height * escala).toInt().coerceAtLeast(1), true)
-        val dir = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+        val dir = java.io.File(recursos.directorio, "portadas").apply { mkdirs() }
         dir.listFiles { f -> f.name.startsWith("$id-") }?.forEach { it.delete() }
         val f = java.io.File(dir, "$id-${System.currentTimeMillis()}.jpg")
         f.outputStream().use { chica.compress(android.graphics.Bitmap.CompressFormat.JPEG, 88, it) }
@@ -2117,7 +2223,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun sincronizarCuenta(): Boolean {
         val token = caja.tokenSocial ?: return false
         val llave = caja.llaveCajon ?: return false
-        fun mismaSesion() = caja.tokenSocial == token && caja.llaveCajon == llave
+        fun mismaSesion() = vigenciaPerfil.vigente() && caja.tokenSocial == token && caja.llaveCajon == llave
         _sync.value = _sync.value.copy(estado = EstadoSync.SINCRONIZANDO, mensaje = null)
         return try {
             val c = io.github.fogonapps.cajon.datos.ClienteSocial(token)

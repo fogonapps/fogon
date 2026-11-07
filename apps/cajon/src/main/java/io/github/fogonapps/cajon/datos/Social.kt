@@ -66,10 +66,10 @@ data class PerfilSubido(
 )
 @Serializable private data class Correo(val correo: String)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
-@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false, val borrarEl: Long = 0)
+@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false, val borrarEl: Long = 0, val idCuenta: String = "")
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
     val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
-    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0)
+    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "")
 @Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null)
 @Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")

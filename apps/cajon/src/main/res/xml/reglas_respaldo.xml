@@ -9,6 +9,7 @@
         <exclude domain="external" />
     </cloud-backup>
     <device-transfer>
-        <include domain="file" path="datastore/" />
+        <include domain="file" path="perfiles/" />
+        <include domain="file" path="perfiles.json" />
     </device-transfer>
 </data-extraction-rules>

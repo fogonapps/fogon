@@ -9,14 +9,14 @@ import java.io.File
  * para no repetir siempre lo mismo (ver `Recomendar.elegir`). Solo en este teléfono (`files/para_ti.json`): es un
  * detalle de cómo se muestra, no un gusto, así que no va en la sincronización. Hasta 600 cosas, las más recientes.
  */
-class HistorialParaTi(context: Context) {
+class HistorialParaTi(context: Context, directorio: File = context.filesDir) {
     @Serializable
     private data class Archivo(val vistos: Map<String, Visto> = emptyMap())
 
     @Serializable
     private data class Visto(val veces: Int = 0, val ultima: Long = 0, val abierta: Boolean = false)
 
-    private val archivo = File(context.filesDir, "para_ti.json")
+    private val archivo = File(directorio, "para_ti.json")
     private var vistos: Map<String, Visto> = runCatching {
         JsonCajon.decodeFromString(Archivo.serializer(), archivo.readText()).vistos
     }.getOrDefault(emptyMap())

@@ -66,7 +66,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.23"
+const val VERSION = "0.24"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false

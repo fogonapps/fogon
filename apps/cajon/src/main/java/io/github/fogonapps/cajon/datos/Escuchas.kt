@@ -45,8 +45,8 @@ data class Oidos(
 data class Escucha(val artista: String, val album: String, val cancion: String, val cuando: Long, val app: String, val paquete: String = "")
 
 /** El registro de escuchas: uno por proceso (lo usan la app y el servicio que escucha). */
-class RegistroEscuchas(context: Context) {
-    private val archivo = File(context.filesDir, "escuchas.json")
+class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
+    private val archivo = File(directorio, "escuchas.json")
     private val _oidos = MutableStateFlow(leer())
     val oidos: StateFlow<Oidos> = _oidos
 

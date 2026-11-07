@@ -25,20 +25,27 @@ import java.util.concurrent.TimeUnit
 class AvisosRed(contexto: Context, params: WorkerParameters) : Worker(contexto, params) {
     override fun doWork(): Result {
         val app = applicationContext as CajonApp
-        val token = app.caja.tokenSocial ?: return Result.success()
-        val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val (avisos, mensajes) = runCatching { runBlocking { ClienteSocial(token).let { it.sinLeer() to it.mensajesSinLeer() } } }.getOrNull() ?: return Result.retry()
-        val antes = prefs.getInt("avisos", 0) to prefs.getInt("mensajes", 0)
-        prefs.edit().putInt("avisos", avisos).putInt("mensajes", mensajes).apply()
-        val nuevosAvisos = avisos > antes.first && prefs.getBoolean(AVISOS, true)
-        val nuevosMensajes = mensajes > antes.second && prefs.getBoolean(MENSAJES, true)
-        if (!nuevosAvisos && !nuevosMensajes) return Result.success()
-        val texto = listOfNotNull(
-            if (nuevosAvisos) app.resources.getQuantityString(R.plurals.notif_avisos, avisos, avisos) else null,
-            if (nuevosMensajes) app.resources.getQuantityString(R.plurals.notif_mensajes, mensajes, mensajes) else null,
-        ).joinToString(" · ")
-        notificar(app, texto)
-        return Result.success()
+        var reintentar = false
+        for (perfil in app.perfiles.lista.perfiles) {
+            val caja = runCatching { app.recursos(perfil.id).caja }.getOrNull() ?: continue
+            val token = caja.tokenSocial ?: continue
+            val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val resultado = runCatching { runBlocking { ClienteSocial(token).let { it.sinLeer() to it.mensajesSinLeer() } } }.getOrNull()
+            if (resultado == null) { reintentar = true; continue }
+            if (caja.tokenSocial != token || app.perfiles.lista.perfiles.none { it.id == perfil.id }) continue
+            val (avisos, mensajes) = resultado
+            val antes = prefs.getInt("p${perfil.id}.avisos", 0) to prefs.getInt("p${perfil.id}.mensajes", 0)
+            prefs.edit().putInt("p${perfil.id}.avisos", avisos).putInt("p${perfil.id}.mensajes", mensajes).apply()
+            val nuevosAvisos = avisos > antes.first && activo(prefs, perfil.id, AVISOS)
+            val nuevosMensajes = mensajes > antes.second && activo(prefs, perfil.id, MENSAJES)
+            if (!nuevosAvisos && !nuevosMensajes) continue
+            val texto = listOfNotNull(
+                if (nuevosAvisos) app.resources.getQuantityString(R.plurals.notif_avisos, avisos, avisos) else null,
+                if (nuevosMensajes) app.resources.getQuantityString(R.plurals.notif_mensajes, mensajes, mensajes) else null,
+            ).joinToString(" · ")
+            notificar(app, texto, perfil.id, caja.usuarioSocial.orEmpty())
+        }
+        return if (reintentar) Result.retry() else Result.success()
     }
 
     companion object {
@@ -48,32 +55,39 @@ class AvisosRed(contexto: Context, params: WorkerParameters) : Worker(contexto, 
         private const val CANAL = "red"
         private const val TRABAJO = "avisos-red"
 
+        fun activo(prefs: android.content.SharedPreferences, perfil: String, tipo: String): Boolean =
+            prefs.getBoolean("p$perfil.$tipo", if (perfil == "1") prefs.getBoolean(tipo, true) else true)
+
         /** Prende o apaga la revisión periódica (prendida si hay cuenta y algo activo). */
         fun programar(c: Context) {
             val prefs = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val algo = prefs.getBoolean(AVISOS, true) || prefs.getBoolean(MENSAJES, true)
+            val app = c.applicationContext as CajonApp
+            val algo = app.perfiles.lista.perfiles.any { perfil ->
+                runCatching { app.recursos(perfil.id).caja.tokenSocial }.getOrNull() != null &&
+                    (activo(prefs, perfil.id, AVISOS) || activo(prefs, perfil.id, MENSAJES))
+            }
             val wm = WorkManager.getInstance(c)
-            if ((c.applicationContext as CajonApp).caja.tokenSocial == null || !algo) { wm.cancelUniqueWork(TRABAJO); return }
+            if (!algo) { wm.cancelUniqueWork(TRABAJO); return }
             val req = PeriodicWorkRequestBuilder<AvisosRed>(15, TimeUnit.MINUTES)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()).build()
             wm.enqueueUniquePeriodicWork(TRABAJO, ExistingPeriodicWorkPolicy.KEEP, req)
         }
 
-        fun vistoAvisos(c: Context, avisos: Int) { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("avisos", avisos).apply() }
+        fun vistoAvisos(c: Context, avisos: Int, perfil: String) { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("p$perfil.avisos", avisos).apply() }
 
         /** Al abrir la app ya se vio todo: lo de ahora no vuelve a avisar. */
-        fun visto(c: Context, avisos: Int, mensajes: Int) {
-            c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("avisos", avisos).putInt("mensajes", mensajes).apply()
+        fun visto(c: Context, avisos: Int, mensajes: Int, perfil: String) {
+            c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("p$perfil.avisos", avisos).putInt("p$perfil.mensajes", mensajes).apply()
         }
 
-        private fun notificar(c: Context, texto: String) {
+        private fun notificar(c: Context, texto: String, perfil: String, usuario: String) {
             val nm = c.getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(NotificationChannel(CANAL, c.getString(R.string.notif_canal), NotificationManager.IMPORTANCE_DEFAULT))
-            val abrir = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            val abrir = PendingIntent.getActivity(c, perfil.toInt(), Intent(c, MainActivity::class.java).putExtra("perfil", perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            val n = NotificationCompat.Builder(c, CANAL).setSmallIcon(R.drawable.ic_notificacion).setContentTitle(c.getString(R.string.notif_titulo))
+            val n = NotificationCompat.Builder(c, CANAL).setSmallIcon(R.drawable.ic_notificacion).setContentTitle(c.getString(R.string.notif_titulo) + " · @$usuario")
                 .setContentText(texto).setContentIntent(abrir).setAutoCancel(true).build()
-            runCatching { nm.notify(7, n) }
+            runCatching { nm.notify(perfil, 7, n) }
         }
     }
 }

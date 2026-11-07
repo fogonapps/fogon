@@ -75,7 +75,15 @@ class RedSocial(
     private val decir: (Int) -> Unit,
     /** Espera a descargar, descifrar, unir y guardar el cajón; false mantiene bloqueada la publicación. */
     private val sincronizarCajon: suspend () -> Boolean = { false },
+    private val directorio: java.io.File = app.filesDir,
+    private val cuentaDuplicada: suspend (io.github.fogonapps.cajon.datos.Acceso) -> Boolean = { false },
+    private val guardarIdCuenta: (String) -> Unit = {},
 ) {
+    fun detenerPerfil() {
+        sesion.invalidar()
+        recuperacionCajon.reiniciar()
+        sincronizacionesCajon.cancelar()
+    }
     init { caja.migrarPerfilRed() }
 
     /** El cajón guardado en la cuenta necesita la contraseña para abrirse en este teléfono (entró con el código). */
@@ -185,6 +193,10 @@ class RedSocial(
     private val _cuenta = MutableStateFlow<io.github.fogonapps.cajon.datos.MiCuenta?>(null)
     /** Lo de la cuenta en el servidor: correo, si tiene contraseña, desde cuándo puede cambiar el usuario. */
     val cuenta: StateFlow<io.github.fogonapps.cajon.datos.MiCuenta?> = _cuenta
+    private fun ponerCuenta(cuenta: io.github.fogonapps.cajon.datos.MiCuenta) {
+        guardarIdCuenta(cuenta.idCuenta)
+        _cuenta.value = cuenta
+    }
     private val _correoCuenta = MutableStateFlow("")
     val correoCuenta: StateFlow<String> = _correoCuenta
     private val _notas = MutableStateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>>(emptyList())
@@ -273,7 +285,7 @@ class RedSocial(
         if (_usuario.value != null) intentar(avisar = false) {
             val c = cliente().miCuenta()
             if (!sesion.vigente(marca)) return@intentar
-            _privada.value = c.privada; _correoCuenta.value = c.correo; _cuenta.value = c
+            _privada.value = c.privada; _correoCuenta.value = c.correo; ponerCuenta(c)
         }
     }
 
@@ -370,7 +382,7 @@ class RedSocial(
                     if (!sesion.vigente(marca)) return@intentar
                     cliente().subirFoto(imagen)
                     val ruta = withContext(Dispatchers.IO) {
-                        val carpeta = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+                        val carpeta = java.io.File(directorio, "portadas").apply { mkdirs() }
                         val archivo = java.io.File(carpeta, "perfil-red-${System.currentTimeMillis()}.jpg")
                         archivo.writeBytes(imagen)
                         android.net.Uri.fromFile(archivo).toString()
@@ -443,7 +455,7 @@ class RedSocial(
                 if (x.error != "apodo_espera") throw x
                 val cuenta = cliente().miCuenta()
                 if (sesion.vigente(marca)) {
-                    _cuenta.value = cuenta
+                    ponerCuenta(cuenta)
                     val fecha = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(cuenta.apodoDesde))
                     android.widget.Toast.makeText(app, io.github.fogonapps.identidad.Idioma.envolver(app).getString(R.string.red_apodo_desde, fecha), android.widget.Toast.LENGTH_LONG).show()
                 }
@@ -460,6 +472,7 @@ class RedSocial(
     }
 
     private suspend fun entro(a: io.github.fogonapps.cajon.datos.Acceso, nombreNuevo: String = ""): Boolean {
+        if (cuentaDuplicada(a)) return false
         sesion.invalidar()
         sincronizacionesCajon.cancelar()
         caja.tokenSocial = a.token
@@ -512,7 +525,7 @@ class RedSocial(
                     val bytes = cliente.descargarFoto(usuario)
                     if (!sesion.vigente(marca)) return@withLock
                     withContext(Dispatchers.IO) {
-                        val carpeta = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+                        val carpeta = java.io.File(directorio, "portadas").apply { mkdirs() }
                         val archivo = java.io.File(carpeta, "perfil-red-${System.currentTimeMillis()}.jpg")
                         archivo.writeBytes(bytes)
                         android.net.Uri.fromFile(archivo).toString()
@@ -593,7 +606,7 @@ class RedSocial(
         _correoPendiente.value = ""
         val cuenta = cliente.miCuenta()
         if (!sesion.vigente(marca)) return@seguridad
-        _cuenta.value = cuenta
+        ponerCuenta(cuenta)
         decir(R.string.red_correo_vinculado)
     }
 
@@ -905,7 +918,7 @@ class RedSocial(
         val marca = sesion.actual()
         val c = cliente().miCuenta()
         if (sesion.vigente(marca)) {
-            _cuenta.value = c
+            ponerCuenta(c)
             _equipoBloqueado.value = false
         }
     }
@@ -953,7 +966,7 @@ class RedSocial(
 
     fun revisarSinLeer() {
         if (_usuario.value == null) return
-        scope.launch { runCatching { _sinLeer.value = cliente().sinLeer(); AvisosRed.vistoAvisos(app, _sinLeer.value) } }
+        scope.launch { runCatching { _sinLeer.value = cliente().sinLeer(); AvisosRed.vistoAvisos(app, _sinLeer.value, caja.perfilId) } }
     }
 
     /* ----- Publicar a mano ----- */

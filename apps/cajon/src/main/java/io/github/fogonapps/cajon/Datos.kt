@@ -18,13 +18,16 @@ fun leerRespaldoCajon(texto: String): Estado? =
 class DatosCajon : ProveedorDatosFogon() {
     private val app get() = context!!.applicationContext as CajonApp
 
-    override suspend fun leer(): String =
-        JsonCajon.encodeToString(Estado.serializer(), app.almacen.data.first().copy(escuchas = app.escuchas.oidos.value))
+    override suspend fun leer(): String {
+        val perfil = app.recursos()
+        return JsonCajon.encodeToString(Estado.serializer(), perfil.almacen.data.first().copy(escuchas = perfil.escuchas.oidos.value))
+    }
 
     override suspend fun restaurar(texto: String): Boolean {
         val e = leerRespaldoCajon(texto) ?: return false
-        app.escuchas.unir(e.escuchas)
-        app.almacen.updateData { Logica.normalizar(e.copy(escuchas = null)) }
+        val perfil = app.recursos()
+        perfil.escuchas.unir(e.escuchas)
+        perfil.almacen.updateData { Logica.normalizar(e.copy(escuchas = null)) }
         WidgetCurso.actualizar(app)
         return true
     }

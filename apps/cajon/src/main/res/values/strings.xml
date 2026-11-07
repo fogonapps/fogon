@@ -1257,4 +1257,16 @@
   <string name="equipo_p_usuarios">Manage users</string>
   <string name="equipo_p_equipo">Assign team</string>
   <string name="equipo_p_registro">View audit log</string>
+    <string name="perfiles_cambiar">Switch account</string>
+    <string name="perfiles_anadir">Add account</string>
+    <string name="perfiles_limite">You can keep up to 5 profiles on this phone.</string>
+    <string name="perfiles_local">Local profile</string>
+    <string name="perfiles_activo">Active</string>
+    <string name="perfiles_quitar">Remove from phone</string>
+    <string name="perfiles_confirmar">This is the profile you are using: it will be signed out and its data deleted from this phone. The network account will still exist. You can download a JSON backup first.</string>
+    <string name="perfiles_error">Could not switch or remove the profile. Try again.</string>
+    <string name="perfiles_copia">Download JSON backup</string>
+    <string name="perfiles_quitar_si">Remove this profile</string>
+    <string name="perfiles_quitar_cual">Remove “%1$s” from this phone</string>
+    <string name="perfiles_identidad_pendiente">Could not confirm that this account matches the saved data. Open the matching profile or add a new one. Your data is preserved.</string>
 </resources>

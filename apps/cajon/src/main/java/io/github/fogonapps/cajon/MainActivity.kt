@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.FileProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -39,11 +40,43 @@ import java.io.File
 
 class MainActivity : ComponentActivity() {
     private val vm: CajonViewModel by viewModels()
+    private var cambiandoPerfil = false
+    private fun cambiarPerfil(id: String, descartar: Boolean = false) {
+        if (cambiandoPerfil) return
+        val app = application as CajonApp
+        if (id == app.perfiles.lista.activo || app.perfiles.lista.perfiles.none { it.id == id }) return
+        cambiandoPerfil = true
+        lifecycleScope.launch {
+            try {
+                val anterior = vm.recursos.id
+                vm.detenerPerfil(esperar = descartar)
+                (getSystemService(android.app.NotificationManager::class.java)).cancel(anterior, 7)
+                app.perfiles.cambiar(id)
+                if (descartar) {
+                    if (anterior == "1") app.migracion.confirmarArranque()
+                    app.cerrarRecursos(anterior)
+                    app.perfiles.quitar(anterior) { id ->
+                        io.github.fogonapps.cajon.datos.borrarClavesPerfil(app, id)
+                        check(File(cacheDir, "compartir/$id").let { !it.exists() || it.deleteRecursively() })
+                    }
+                }
+                WidgetCurso.actualizar(app)
+                viewModelStore.clear()
+                recreate()
+            } catch (_: Exception) {
+                viewModelStore.clear()
+                cambiandoPerfil = false
+                aviso(getString(R.string.perfiles_error))
+                recreate()
+            }
+        }
+    }
 
     override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(Idioma.envolver(base))
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
+        intent.getStringExtra("perfil")?.let { cambiarPerfil(it) }
         abrirEnlace(intent)
     }
 
@@ -64,6 +97,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val arranque = installSplashScreen()
         super.onCreate(savedInstanceState)
+        val perfilNotificado = intent?.getStringExtra("perfil")
+        if (savedInstanceState == null && perfilNotificado != null) {
+            val app = application as CajonApp
+            if (app.perfiles.lista.perfiles.any { it.id == perfilNotificado }) app.perfiles.cambiar(perfilNotificado)
+            intent.removeExtra("perfil")
+        }
+        vm.alCambiarPerfil = ::cambiarPerfil
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         if (savedInstanceState == null) abrirEnlace(intent)
         setContent {
@@ -80,20 +120,25 @@ class MainActivity : ComponentActivity() {
                 val pestana by vm.pestana.collectAsStateWithLifecycle()
                 BackHandler(enabled = pila.isNotEmpty() || pestana != Pestana.INICIO) { vm.atras() }
 
+                var perfilOperacion by rememberSaveable { mutableStateOf(vm.recursos.id) }
+                fun operacionVigente() = perfilOperacion == vm.recursos.id
                 val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-                    if (uri != null) runCatching {
+                    if (uri != null && !operacionVigente()) aviso(getString(R.string.perfiles_error))
+                    else if (uri != null) runCatching {
                         contentResolver.openOutputStream(uri, "wt")?.use { it.write(vm.exportarJson().encodeToByteArray()) }
                     }.onSuccess { aviso(getString(R.string.aviso_respaldo_guardado)) }.onFailure { aviso(getString(R.string.aviso_no_exportado)) }
                 }
                 var porImportar by remember { mutableStateOf<Estado?>(null) }
                 val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-                    if (uri != null) {
+                    if (uri != null && !operacionVigente()) aviso(getString(R.string.perfiles_error))
+                    else if (uri != null) {
                         val d = leer(uri)?.decodeToString()?.let { vm.leerRespaldo(it) }
                         if (d == null) aviso(getString(R.string.aviso_no_es_respaldo)) else porImportar = d
                     }
                 }
                 val deOtraApp = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-                    if (uri != null) {
+                    if (uri != null && !operacionVigente()) aviso(getString(R.string.perfiles_error))
+                    else if (uri != null) {
                         val bytes = leer(uri)
                         if (bytes == null) aviso(getString(R.string.aviso_no_es_de_otra_app))
                         else vm.importarDeOtraApp(bytes, uri.lastPathSegment ?: "")
@@ -116,9 +161,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 App(vm, Acciones(
-                    exportar = { exportar.launch("el-cajon-respaldo-${vm.hoy()}.json") },
-                    importar = { importar.launch(TIPOS_JSON) },
-                    deOtraApp = { deOtraApp.launch(TIPOS_OTRAS) },
+                    exportar = { perfilOperacion = vm.recursos.id; exportar.launch("el-cajon-respaldo-${vm.hoy()}.json") },
+                    importar = { perfilOperacion = vm.recursos.id; importar.launch(TIPOS_JSON) },
+                    deOtraApp = { perfilOperacion = vm.recursos.id; deOtraApp.launch(TIPOS_OTRAS) },
                     compartir = ::compartir,
                     elegirImagen = { cb -> alElegir = cb; imagen.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 ))
@@ -129,7 +174,7 @@ class MainActivity : ComponentActivity() {
     /** Pasa una imagen (una reseña, una lista) a otra app: WhatsApp, historias… */
     private fun compartir(imagen: Bitmap, titulo: String) {
         runCatching {
-            val dir = File(cacheDir, "compartir").apply { mkdirs() }
+            val dir = File(cacheDir, "compartir/${vm.recursos.id}").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
             val f = File(dir, "el-cajon.png")
             f.outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -152,12 +197,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        vm.sincronizar()
+        if (!cambiandoPerfil) vm.sincronizar()
     }
 
     override fun onStop() {
         super.onStop()
-        lifecycleScope.launch { vm.guardarYa() }
+        if (!cambiandoPerfil) lifecycleScope.launch { vm.guardarYa() }
     }
 
     companion object {

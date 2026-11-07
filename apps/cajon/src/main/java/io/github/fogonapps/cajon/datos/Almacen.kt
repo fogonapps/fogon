@@ -35,15 +35,21 @@ object SerializadorEstado : Serializer<Estado> {
     }
 }
 
-fun crearAlmacen(context: Context): DataStore<Estado> = DataStoreFactory.create(
+fun crearAlmacen(context: Context, directorio: File = context.filesDir, scope: kotlinx.coroutines.CoroutineScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())): DataStore<Estado> = crearAlmacenPerfil(directorio, scope)
+
+/** La misma fábrica que usa Android, comprobable con un sistema de archivos temporal. */
+internal fun crearAlmacenPerfil(directorio: File, scope: kotlinx.coroutines.CoroutineScope): DataStore<Estado> = DataStoreFactory.create(
     serializer = SerializadorEstado,
+    scope = scope,
     // Si el archivo se daña, se conserva una copia antes de empezar de cero.
-    corruptionHandler = ReplaceFileCorruptionHandler { _ ->
-        val f = File(context.filesDir, "datastore/estado.json")
-        runCatching { f.copyTo(File(context.filesDir, "estado-dañado-${System.currentTimeMillis()}.json")) }
+    corruptionHandler = ReplaceFileCorruptionHandler { error ->
+        // Durante la migración no se sustituye el cajón por uno vacío, ni siquiera ante corrupción.
+        if (File(directorio.parentFile?.parentFile, "migracion-perfiles-respaldo").exists()) throw error
+        val f = File(directorio, "datastore/estado.json")
+        f.copyTo(File(directorio, "estado-dañado-${System.currentTimeMillis()}.json"))
         Estado()
     },
-    produceFile = { File(context.filesDir, "datastore/estado.json") },
+    produceFile = { File(directorio, "datastore/estado.json") },
 )
 
 /**
@@ -51,7 +57,8 @@ fun crearAlmacen(context: Context): DataStore<Estado> = DataStoreFactory.create(
  * Android (AES-GCM). La llave nunca sale del hardware seguro del teléfono; en el disco solo queda el texto
  * cifrado. No van en el respaldo ni en el Gist.
  */
-class CajaFuerte(context: Context) {
+class CajaFuerte(context: Context, val perfilId: String) {
+    private val prefijo = "p$perfilId."
     private val prefs = context.getSharedPreferences("claves", Context.MODE_PRIVATE)
     private val alias = "cajon-claves"
 
@@ -69,7 +76,8 @@ class CajaFuerte(context: Context) {
         return gen.generateKey()
     }
 
-    private fun leer(nombre: String): String? {
+    private fun leer(clave: String): String? {
+        val nombre = prefijo + clave
         val datos = prefs.getString(nombre, null) ?: return null
         val iv = prefs.getString("$nombre.iv", null) ?: return null
         return runCatching {
@@ -79,7 +87,8 @@ class CajaFuerte(context: Context) {
         }.getOrNull()
     }
 
-    private fun escribir(nombre: String, v: String?, confirmar: Boolean = false, extras: SharedPreferences.Editor.() -> Unit = {}) {
+    private fun escribir(clave: String, v: String?, confirmar: Boolean = false, extras: SharedPreferences.Editor.() -> Unit = {}) {
+        val nombre = prefijo + clave
         if (v == null) { prefs.edit(commit = confirmar) { remove(nombre); remove("$nombre.iv"); extras() }; return }
         val c = Cipher.getInstance("AES/GCM/NoPadding")
         c.init(Cipher.ENCRYPT_MODE, llave())
@@ -109,69 +118,69 @@ class CajaFuerte(context: Context) {
 
     /** Las claves de lo que este teléfono ya publicó (para saber qué quitó; lo que nunca subió no se borra). */
     var publicacionesSubidas: Set<String>
-        get() = prefs.getStringSet("publicaciones_subidas", emptySet()).orEmpty()
-        set(v) = prefs.edit { putStringSet("publicaciones_subidas", v) }
+        get() = prefs.getStringSet(prefijo + "publicaciones_subidas", emptySet()).orEmpty()
+        set(v) = prefs.edit { putStringSet(prefijo + "publicaciones_subidas", v) }
 
     /** La portada del perfil ya subida a la red: "archivo local|dirección en el servidor" (para no subirla otra vez). */
     var portadaSubida: String?
-        get() = prefs.getString("portada_subida", null)
-        set(v) = prefs.edit { if (v == null) remove("portada_subida") else putString("portada_subida", v) }
+        get() = prefs.getString(prefijo + "portada_subida", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "portada_subida") else putString(prefijo + "portada_subida", v) }
 
     /** La frase del saludo de esta franja del día ("franja\tclave\tobra"): no cambia hasta la próxima franja. */
     var fraseGuardada: String?
-        get() = prefs.getString("frase_guardada", null)
-        set(v) = prefs.edit { if (v == null) remove("frase_guardada") else putString("frase_guardada", v) }
+        get() = prefs.getString(prefijo + "frase_guardada", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "frase_guardada") else putString(prefijo + "frase_guardada", v) }
 
     /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
     var tokenSocial: String?
         get() = leer("social")
-        set(v) = escribir("social", v, confirmar = true) { putBoolean("apariencia_cuenta_pendiente", v != null) }
+        set(v) = escribir("social", v, confirmar = true) { putBoolean(prefijo + "apariencia_cuenta_pendiente", v != null) }
     /** Al entrar, la primera apariencia descifrada tiene prioridad; persiste hasta recuperarla. */
     var aparienciaCuentaPendiente: Boolean
-        get() = prefs.getBoolean("apariencia_cuenta_pendiente", false)
-        set(v) = prefs.edit { putBoolean("apariencia_cuenta_pendiente", v) }
+        get() = prefs.getBoolean(prefijo + "apariencia_cuenta_pendiente", false)
+        set(v) = prefs.edit { putBoolean(prefijo + "apariencia_cuenta_pendiente", v) }
     var usuarioSocial: String?
-        get() = prefs.getString("usuario_social", null)
-        set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }
+        get() = prefs.getString(prefijo + "usuario_social", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "usuario_social") else putString(prefijo + "usuario_social", v) }
     /** Recuperación pendiente al entrar; persiste si se cierra la app sin red. */
     var perfilRedPendiente: Boolean
-        get() = prefs.getBoolean("perfil_red_pendiente", false)
-        set(v) = prefs.edit { putBoolean("perfil_red_pendiente", v) }
+        get() = prefs.getBoolean(prefijo + "perfil_red_pendiente", false)
+        set(v) = prefs.edit { putBoolean(prefijo + "perfil_red_pendiente", v) }
     /** Migra también las sesiones abiertas antes de recuperar la identidad al entrar. Escritura atómica. */
     fun migrarPerfilRed() {
-        val migrada = prefs.getBoolean("perfil_red_migrado", false)
+        val migrada = prefs.getBoolean(prefijo + "perfil_red_migrado", false)
         if (migrada) return
         val pendiente = perfilPendienteTrasMigrar(tokenSocial != null, migrada, perfilRedPendiente)
         prefs.edit(commit = true) {
-            putBoolean("perfil_red_pendiente", pendiente)
-            putBoolean("perfil_red_migrado", true)
+            putBoolean(prefijo + "perfil_red_pendiente", pendiente)
+            putBoolean(prefijo + "perfil_red_migrado", true)
         }
     }
 
     /** Solo la acción explícita de quitar la foto permite borrarla de la cuenta. */
     var borrarFotoRed: Boolean
-        get() = prefs.getBoolean("borrar_foto_red", false)
-        set(v) = prefs.edit { putBoolean("borrar_foto_red", v) }
+        get() = prefs.getBoolean(prefijo + "borrar_foto_red", false)
+        set(v) = prefs.edit { putBoolean(prefijo + "borrar_foto_red", v) }
 
     /** La llave del cajón guardado en la cuenta (abierta, solo en este teléfono y cifrada aquí). Ver `Nube`. */
     var llaveCajon: String?
         get() = leer("llave_cajon")
         set(v) = escribir("llave_cajon", v, confirmar = true) {
-            if (v == null || !permiteReemplazarCajon(v, reemplazarCajonRemoto)) remove("reemplazar_cajon_remoto")
+            if (v == null || !permiteReemplazarCajon(v, reemplazarCajonRemoto)) remove(prefijo + "reemplazar_cajon_remoto")
         }
 
     /** Huella de la única llave autorizada para reemplazar un cajón anterior ilegible; null normalmente. */
     var reemplazarCajonRemoto: String?
-        get() = prefs.getString("reemplazar_cajon_remoto", null)
+        get() = prefs.getString(prefijo + "reemplazar_cajon_remoto", null)
         set(v) = prefs.edit(commit = true) {
-            if (v == null) remove("reemplazar_cajon_remoto") else putString("reemplazar_cajon_remoto", v)
+            if (v == null) remove(prefijo + "reemplazar_cajon_remoto") else putString(prefijo + "reemplazar_cajon_remoto", v)
         }
 
     /** La llave cifrada y su autorización se guardan juntas: nunca queda la llave nueva sin su transición. */
     internal fun guardarLlaveRecuperada(recuperada: LlaveRecuperada) {
         if (!recuperada.reemplazar) { llaveCajon = recuperada.llave; return }
         escribir("llave_cajon", recuperada.llave, confirmar = true) {
-            putString("reemplazar_cajon_remoto", huellaLlaveCajon(recuperada.llave))
+            putString(prefijo + "reemplazar_cajon_remoto", huellaLlaveCajon(recuperada.llave))
         }
     }
 
@@ -182,24 +191,24 @@ class CajaFuerte(context: Context) {
 
     /** Ya se pusieron a la vista las partes del perfil de la red (una vez, al crear la cuenta o la primera vez que se abre). */
     var partesRedPuestas: Boolean
-        get() = prefs.getBoolean("partes_red_puestas", false)
-        set(v) = prefs.edit { putBoolean("partes_red_puestas", v) }
+        get() = prefs.getBoolean(prefijo + "partes_red_puestas", false)
+        set(v) = prefs.edit { putBoolean(prefijo + "partes_red_puestas", v) }
 
     /** La versión de la política que aceptó (si cambia, se vuelve a pedir). */
     var politicaSocial: String?
-        get() = prefs.getString("politica_social", null)
-        set(v) = prefs.edit { if (v == null) remove("politica_social") else putString("politica_social", v) }
+        get() = prefs.getString(prefijo + "politica_social", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "politica_social") else putString(prefijo + "politica_social", v) }
 
     /** Lo de la sincronización que no es secreto: el usuario, el Gist y la última vez. */
     var usuario: String?
-        get() = prefs.getString("usuario", null)
-        set(v) = prefs.edit { if (v == null) remove("usuario") else putString("usuario", v) }
+        get() = prefs.getString(prefijo + "usuario", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "usuario") else putString(prefijo + "usuario", v) }
     var gist: String?
-        get() = prefs.getString("gist", null)
-        set(v) = prefs.edit { if (v == null) remove("gist") else putString("gist", v) }
+        get() = prefs.getString(prefijo + "gist", null)
+        set(v) = prefs.edit { if (v == null) remove(prefijo + "gist") else putString(prefijo + "gist", v) }
     var ultima: Long
-        get() = prefs.getLong("ultima", 0)
-        set(v) = prefs.edit { putLong("ultima", v) }
+        get() = prefs.getLong(prefijo + "ultima", 0)
+        set(v) = prefs.edit { putLong(prefijo + "ultima", v) }
 
     /**
      * Las obras que "Buscar portadas" ya revisó sin encontrar (para no repetir cientos de consultas cada vez que se
@@ -207,23 +216,23 @@ class CajaFuerte(context: Context) {
      */
     var portadasRevisadas: Set<String>
         get() {
-            if (System.currentTimeMillis() - prefs.getLong("portadas_desde", 0) > 30L * 24 * 3600 * 1000) return emptySet()
-            return prefs.getStringSet("portadas_revisadas", emptySet()) ?: emptySet()
+            if (System.currentTimeMillis() - prefs.getLong(prefijo + "portadas_desde", 0) > 30L * 24 * 3600 * 1000) return emptySet()
+            return prefs.getStringSet(prefijo + "portadas_revisadas", emptySet()) ?: emptySet()
         }
         set(v) = prefs.edit {
-            if (prefs.getStringSet("portadas_revisadas", emptySet()).isNullOrEmpty() || v.isEmpty()) putLong("portadas_desde", System.currentTimeMillis())
-            putStringSet("portadas_revisadas", v)
+            if (prefs.getStringSet(prefijo + "portadas_revisadas", emptySet()).isNullOrEmpty() || v.isEmpty()) putLong(prefijo + "portadas_desde", System.currentTimeMillis())
+            putStringSet(prefijo + "portadas_revisadas", v)
         }
 
     /** 2 = los títulos de TMDB ya están en español latino (ver `CajonViewModel.pasarALatino`). Solo en este teléfono. */
     var versionCine: Int
-        get() = prefs.getInt("version_cine", 0)
-        set(v) = prefs.edit { putInt("version_cine", v) }
+        get() = prefs.getInt(prefijo + "version_cine", 0)
+        set(v) = prefs.edit { putInt(prefijo + "version_cine", v) }
 
     /** 1 = lo no enlazado se volvió a buscar con las reglas de la 1.9.3. Solo en este teléfono. */
     var versionEnlace: Int
-        get() = prefs.getInt("version_enlace", 0)
-        set(v) = prefs.edit { putInt("version_enlace", v) }
+        get() = prefs.getInt(prefijo + "version_enlace", 0)
+        set(v) = prefs.edit { putInt(prefijo + "version_enlace", v) }
 
     fun desconectarGithub() { tokenGithub = null; usuario = null; gist = null; ultima = 0 }
 }
