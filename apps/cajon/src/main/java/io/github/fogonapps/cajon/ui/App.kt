@@ -100,6 +100,10 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
     val yoEnLaRed by vm.red.usuario.collectAsStateWithLifecycle()
+    val equipoBloqueado by vm.red.equipoBloqueado.collectAsStateWithLifecycle()
+    LaunchedEffect(equipoBloqueado) {
+        if (equipoBloqueado && pila.lastOrNull() != Pantalla.Moderacion) vm.abrir(Pantalla.Moderacion)
+    }
     // Con cuenta en la red, se pide una vez el permiso de notificaciones (Android 13+): sin él no llegan avisos ni mensajes.
     val ctxPermiso = androidx.compose.ui.platform.LocalContext.current
     val pedirPermiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {

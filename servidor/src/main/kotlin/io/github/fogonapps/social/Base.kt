@@ -30,6 +30,9 @@ class Base(ruta: String) {
                     clave TEXT NOT NULL, visibilidad TEXT NOT NULL, cuando INTEGER NOT NULL, datos TEXT NOT NULL,
                     UNIQUE(cuenta, clave))""")
                 s.execute("CREATE INDEX IF NOT EXISTS pub_cuando ON publicaciones(cuenta, cuando)")
+                s.execute("""CREATE TABLE IF NOT EXISTS retiradas(
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    clave TEXT NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, clave))""")
                 s.execute("""CREATE TABLE IF NOT EXISTS solicitudes(
                     de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, a INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     cuando INTEGER NOT NULL, PRIMARY KEY(de, a))""")
@@ -141,10 +144,37 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS sesiones(
                     huella TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, creada INTEGER NOT NULL)""")
                 migrarSeguridad(this)
+                transaccion { migrarEquipo(this) }
+                s.execute("""CREATE TABLE IF NOT EXISTS intentos_mfa(
+                    cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,
+                    fallos INTEGER NOT NULL, desde INTEGER NOT NULL, bloqueada_hasta INTEGER NOT NULL,
+                    nivel INTEGER NOT NULL, ultimo_fallo INTEGER NOT NULL)""")
                 // Los códigos de acceso que se mandan al correo (solo su huella; duran 10 minutos y aguantan 5 intentos).
                 s.execute("""CREATE TABLE IF NOT EXISTS codigos(
                     correo TEXT PRIMARY KEY, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0, enviado INTEGER NOT NULL)""")
             }
+        }
+    }
+
+    private fun migrarEquipo(c: Connection) {
+        c.createStatement().use { s ->
+            val nueva = c.leer("SELECT name FROM sqlite_master WHERE name = 'roles'") { it.getString(1) }.isEmpty()
+            s.execute("CREATE TABLE IF NOT EXISTS roles(cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, rol TEXT NOT NULL, dado_por TEXT NOT NULL, cuando INTEGER NOT NULL)")
+            s.execute("CREATE TABLE IF NOT EXISTS permisos(cuenta INTEGER REFERENCES cuentas(id) ON DELETE CASCADE, permiso TEXT NOT NULL, dado_por TEXT NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, permiso))")
+            s.execute("CREATE TABLE IF NOT EXISTS mfa(cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, secreto_cifrado TEXT NOT NULL, activa INTEGER NOT NULL DEFAULT 0, creada INTEGER NOT NULL, ultimo_paso INTEGER NOT NULL DEFAULT -1)")
+            s.execute("CREATE TABLE IF NOT EXISTS codigos_recuperacion(cuenta INTEGER REFERENCES cuentas(id) ON DELETE CASCADE, huella TEXT NOT NULL, usado INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cuenta, huella))")
+            s.execute("CREATE TABLE IF NOT EXISTS registro_equipo(id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, accion TEXT NOT NULL, objeto TEXT NOT NULL, detalle TEXT NOT NULL, sesion TEXT NOT NULL, cuando INTEGER NOT NULL, huella_anterior TEXT NOT NULL, huella TEXT NOT NULL)")
+            if (nueva) {
+                s.execute("INSERT INTO roles SELECT id, 'administrador', 'servidor', creada FROM cuentas WHERE admin = 1")
+                c.leer("SELECT cuenta FROM roles") { it.getLong(1) }.forEach {
+                    c.registrarEquipo("servidor", "equipo_migrar", it.toString(), "administrador", "", System.currentTimeMillis())
+                }
+            }
+            for (tabla in listOf("publicaciones", "comentarios")) {
+                columna(s, tabla, "estado TEXT NOT NULL DEFAULT 'visible'")
+                columna(s, tabla, "retirado_hasta INTEGER NOT NULL DEFAULT 0")
+            }
+            s.execute("INSERT OR IGNORE INTO retiradas SELECT cuenta, clave, MAX(0, retirado_hasta - 7776000000) FROM publicaciones WHERE estado = 'retirado'")
         }
     }
 
@@ -228,6 +258,15 @@ class Base(ruta: String) {
 
     @Synchronized
     fun <T> usar(f: Connection.() -> T): T = con.f()
+
+    /** Una acción y su registro se confirman juntos; permite llamadas anidadas. */
+    fun <T> transaccion(f: Connection.() -> T): T = usar {
+        if (!autoCommit) return@usar f()
+        autoCommit = false
+        try { val resultado = f(); commit(); resultado }
+        catch (e: Throwable) { rollback(); throw e }
+        finally { autoCommit = true }
+    }
 
     fun cerrar() = con.close()
 

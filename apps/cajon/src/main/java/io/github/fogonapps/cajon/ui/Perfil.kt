@@ -200,10 +200,10 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
     val casos by vm.red.casos.collectAsStateWithLifecycle()
     val frasesPendientes by vm.red.frasesPendientes.collectAsStateWithLifecycle()
-    LaunchedEffect(cuenta?.admin) { if (cuenta?.admin == true) vm.red.cargarCasos() }
+    LaunchedEffect(cuenta?.permisos) { if (!cuenta?.permisos.isNullOrEmpty()) vm.red.cargarCasos() }
     Cabecera(yo?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar, chico = true) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (cuenta?.admin == true) ConCuenta(casos.orEmpty().size + frasesPendientes.size) {
+            if (!cuenta?.permisos.isNullOrEmpty()) ConCuenta(casos.orEmpty().size + frasesPendientes.size) {
                 BotonIcono(Iconos.Bandera, stringResource(R.string.mod_titulo), grande = true) { vm.abrir(Pantalla.Moderacion) }
             }
             BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }

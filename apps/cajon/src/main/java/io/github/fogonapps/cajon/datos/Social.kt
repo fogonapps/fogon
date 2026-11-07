@@ -68,9 +68,10 @@ data class PerfilSubido(
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false, val borrarEl: Long = 0)
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
-    val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0)
+    val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
+    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0)
 @Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
-    val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0)
+    val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null)
 @Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
 @Serializable data class FaltaSocial(val regla: String, val puntos: Int, val cuando: Long, val vence: Long)
 @Serializable data class EstadoCuentaSocial(val faltas: List<FaltaSocial> = emptyList(), val restringidaHasta: Long = 0, val suspendidaHasta: Long = 0,
@@ -163,6 +164,18 @@ class ClienteSocial(private val token: String? = null) {
         JsonCajon.parseToJsonElement(pedir("/cajon?antes=$antes", "PUT", json(CajonCifrado.serializer(), CajonCifrado(sobre)))!!).jsonObject["cambio"]!!.jsonPrimitive.content.toLong()
     suspend fun guardarLlaveCajon(envuelta: String) { pedir("/cajon/llave", "PUT", json(CajonCifrado.serializer(), CajonCifrado(llave = envuelta))) }
     suspend fun estadoCuenta() = leer(EstadoCuentaSocial.serializer(), pedir("/cuenta/estado"))
+    suspend fun activarMfa(factor: FactorMfa = FactorMfa()) = leer(InscripcionMfa.serializer(), pedir("/mfa/activar", "POST", json(FactorMfa.serializer(), factor)))
+    suspend fun confirmarMfa(codigo: String) = leer(CodigosMfa.serializer(), pedir("/mfa/confirmar", "POST", json(FactorMfa.serializer(), FactorMfa(codigo))))
+    suspend fun elevarMfa(factor: FactorMfa) = leer(ElevacionMfa.serializer(), pedir("/mfa/elevar", "POST", json(FactorMfa.serializer(), factor)))
+    suspend fun desactivarMfa(codigo: String) { pedir("/mfa/desactivar", "POST", json(FactorMfa.serializer(), FactorMfa(codigo))) }
+    suspend fun renovarMfa(codigo: String) = leer(CodigosMfa.serializer(), pedir("/mfa/recuperacion", "POST", json(FactorMfa.serializer(), FactorMfa(codigo))))
+    suspend fun equipo() = leer(ListSerializer(MiembroEquipo.serializer()), pedir("/admin/equipo"))
+    suspend fun cambiarEquipo(cambio: CambioEquipo, quitar: Boolean) { pedir("/admin/equipo", if (quitar) "DELETE" else "PUT", json(CambioEquipo.serializer(), cambio)) }
+    suspend fun registro(actor: String, accion: String, despues: Long): RegistroEquipo = convertirRegistro(pedir("/admin/registro?actor=${cod(actor)}&accion=${cod(accion)}&despues=$despues") ?: "[]")
+    suspend fun restaurar(caso: CasoModeracion) { pedir("/admin/restaurar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo(caso.que, caso.objeto))) }
+    suspend fun retirarPublicacion(objeto: String, motivo: String = "") { pedir("/admin/publicaciones/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("publicacion", objeto, motivo))) }
+    suspend fun retirarComentario(objeto: String, motivo: String = "") { pedir("/admin/comentarios/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("comentario", objeto, motivo))) }
+    suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
     suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }
     suspend fun entrarConClave(correo: String, clave: String): Acceso = leer(Acceso.serializer(), pedir("/acceso/clave", "POST", json(EntradaClave.serializer(), EntradaClave(correo, clave))))

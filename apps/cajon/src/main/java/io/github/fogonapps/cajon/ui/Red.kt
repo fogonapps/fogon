@@ -1084,6 +1084,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
         FormularioBorrado(vm) { borrar = false }
         return
     }
+    SeguridadEquipo(vm)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("@$usuario", style = MaterialTheme.typography.headlineSmall, color = f.texto)
         Text(ClienteSocial.enlacePerfil(usuario), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
@@ -1400,16 +1401,31 @@ fun Moderacion(vm: CajonViewModel) {
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
     val casos by vm.red.casos.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.cargarCasos() }
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val bloqueado by vm.red.equipoBloqueado.collectAsStateWithLifecycle()
+    val permisos = cuenta?.permisos.orEmpty()
+    var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(cuenta?.elevadaHasta) {
+        ahora = System.currentTimeMillis()
+        val hasta = cuenta?.elevadaHasta ?: 0
+        if (hasta > ahora) { kotlinx.coroutines.delay(hasta - ahora); ahora = System.currentTimeMillis() }
+    }
+    val requiere = cuenta?.let { io.github.fogonapps.cajon.datos.necesitaElevar(it, ahora) } ?: true
+    LaunchedEffect(requiere, bloqueado) { if (!requiere && !bloqueado) vm.red.cargarCasos() }
     val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
     Cabecera(stringResource(R.string.mod_titulo), vm::cerrar)
-    // Dos secciones: los reportes y las frases del saludo (con las que propuso la gente).
-    var seccion by rememberSaveable { mutableStateOf(0) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Pildora(stringResource(R.string.mod_reportes) + casos?.size?.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Bandera, acento = seccion == 0) { seccion = 0 }
-        Pildora(stringResource(R.string.mod_frases_saludo) + frases.size.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
+    if (requiere || bloqueado) { SeguridadEquipo(vm, elevar = true); return }
+    var seccion by rememberSaveable { mutableStateOf(if ("ver_reportes" in permisos) 0 else if ("gestionar_frases" in permisos) 1 else if ("asignar_equipo" in permisos) 2 else 3) }
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if ("ver_reportes" in permisos) Pildora(stringResource(R.string.mod_reportes) + casos?.size?.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Bandera, acento = seccion == 0) { seccion = 0 }
+        if ("gestionar_frases" in permisos) Pildora(stringResource(R.string.mod_frases_saludo) + frases.size.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
+        if ("asignar_equipo" in permisos) Pildora(stringResource(R.string.equipo_titulo), acento = seccion == 2) { seccion = 2 }
+        if ("ver_registro" in permisos) Pildora(stringResource(R.string.registro_titulo), acento = seccion == 3) { seccion = 3 }
     }
-    if (seccion == 1) { FrasesPropuestas(vm); FrasesDelEquipo(vm); return }
+    if (seccion == 2 && "asignar_equipo" in permisos) { Equipo(vm); return }
+    if (seccion == 3 && "ver_registro" in permisos) { RegistroEquipoPantalla(vm); return }
+    if (seccion == 1 && "gestionar_frases" in permisos) { FrasesPropuestas(vm); FrasesDelEquipo(vm); return }
+    if ("ver_reportes" !in permisos) return
     val l = casos
     when {
         l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
@@ -1432,15 +1448,19 @@ fun Moderacion(vm: CajonViewModel) {
                     style = MaterialTheme.typography.bodyMedium, color = f.texto)
                 else VistaContenidoReporte(c.contenido)
                 Text(pluralStringResource(R.plurals.mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                val acciones = io.github.fogonapps.cajon.datos.accionesModeracion(permisos, c.motivos.maxByOrNull { it.value }?.key.orEmpty(), c.faltasAutor)
+                if (io.github.fogonapps.cajon.datos.puedeRestaurar(c, permisos)) Pildora(stringResource(R.string.equipo_restaurar)) {
+                    confirmar(vm.tx(R.string.equipo_restaurar), vm.tx(R.string.equipo_restaurar_confirmar)) { vm.red.restaurar(c) }
+                }
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Pildora(stringResource(R.string.mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
-                    Pildora(stringResource(R.string.mod_falta)) {
+                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
+                    if ("falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_falta)) {
                         confirmar(vm.tx(R.string.mod_falta), vm.tx(R.string.mod_falta_confirmar)) { vm.red.decidir(c, "falta") }
                     }
-                    Pildora(stringResource(R.string.mod_grave)) {
+                    if ("falta_grave" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_grave)) {
                         confirmar(vm.tx(R.string.mod_grave), vm.tx(R.string.mod_grave_confirmar)) { vm.red.decidir(c, "falta_grave") }
                     }
-                    Pildora(stringResource(R.string.mod_cerrar)) {
+                    if ("cerrar" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_cerrar)) {
                         confirmar(vm.tx(R.string.mod_cerrar), vm.tx(R.string.mod_cerrar_confirmar)) { vm.red.decidir(c, "cerrar") }
                     }
                 }

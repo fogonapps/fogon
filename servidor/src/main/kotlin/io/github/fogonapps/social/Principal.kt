@@ -14,6 +14,7 @@ import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.header
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveText
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.response.header
@@ -36,12 +37,19 @@ import java.util.concurrent.ConcurrentHashMap
  * Fogón Social. Escucha solo en 127.0.0.1 (delante va Caddy, que pone el HTTPS). Se configura con variables de
  * entorno: `PUERTO` (8080), `DATOS` (la carpeta de la base y las fotos, ./datos).
  */
-fun main() {
+fun main(args: Array<String>) {
     val datos = File(System.getenv("DATOS") ?: "datos").apply { mkdirs() }
     val usuario = System.getenv("SMTP_USUARIO").orEmpty()
     val clave = System.getenv("SMTP_CLAVE").orEmpty()
     val cartero = if (usuario.isNotBlank() && clave.isNotBlank()) CarteroSmtp(usuario, clave) else null
-    val social = Social(Base(File(datos, "social.db").path), File(datos, "fotos"), cartero = cartero ?: Cartero { _, _, _ -> throw Problema(503, "sin_correo") })
+    val base = Base(File(datos, "social.db").path)
+    val avisos = cartero ?: Cartero { _, _, _ -> throw Problema(503, "sin_correo") }
+    if (args.isNotEmpty()) {
+        try { Equipo(base, datos, System::currentTimeMillis, avisos, null, configurarPrincipal = false).ordenLocal(args) }
+        finally { base.cerrar() }
+        return
+    }
+    val social = Social(base, File(datos, "fotos"), cartero = avisos, principal = System.getenv("PRINCIPAL"))
     correoListo = cartero != null
     Momento.empezar()
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
@@ -58,7 +66,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.22"
+const val VERSION = "0.23"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -86,16 +94,17 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val pedidosCine = Limite(240)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
-            val token = call.request.header("Authorization")?.removePrefix("Bearer ")?.trim()
+            val token = call.request.header("Authorization")?.trim()?.removePrefix("Bearer ")?.trim()
             val ruta = call.request.local.uri.substringBefore('?')
+            if (ruta.startsWith("/v1/admin/") || ruta.startsWith("/v1/mfa/")) call.response.header("Cache-Control", "no-store")
             if (ruta.startsWith("/v1/") && ruta !in setOf("/v1/cuenta", "/v1/cuenta/conservar", "/v1/cuenta/borrar", "/v1/salir") && !ruta.startsWith("/v1/acceso"))
                 social.cuentaDe(token)?.let { social.revisarBorrado(it) }
-            val quien = call.request.header("Authorization") ?: call.request.origin.remoteAddress
+            val quien = token?.takeIf { it.isNotEmpty() } ?: call.request.origin.remoteAddress
             if (!general.pasa(quien)) call.respond(HttpStatusCode.TooManyRequests, Error("despacio"))
         }
     })
 
-    fun ApplicationCall.token() = request.header("Authorization")?.removePrefix("Bearer ")?.trim()
+    fun ApplicationCall.token() = request.header("Authorization")?.trim()?.removePrefix("Bearer ")?.trim()
     // Toda escritura pasa por aquí: una cuenta suspendida o cerrada no puede usar la red, y una restringida no puede
     // publicar, comentar ni mandar mensajes (sí leer, ver su estado y borrar su cuenta).
     fun ApplicationCall.yo(): Long {
@@ -103,6 +112,11 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         val soloMirar = request.local.method == io.ktor.http.HttpMethod.Get || request.local.uri.startsWith("/v1/cuenta") || request.local.uri.startsWith("/v1/salir")
         if (!request.local.uri.startsWith("/v1/cuenta") && !request.local.uri.startsWith("/v1/sesiones")) social.revisarSancion(id, escribir = !soloMirar)
         return id
+    }
+    fun ApplicationCall.requiere(permiso: String): Long {
+        val yo = yo()
+        social.equipo.requiere(yo, permiso, token())
+        return yo
     }
     fun ApplicationCall.lector(): Long? = social.cuentaDe(token())
     fun ApplicationCall.id(): Long = parameters["id"]?.toLongOrNull() ?: throw Problema(400, "id")
@@ -154,7 +168,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
-            get("/cuenta") { call.respond(social.miCuenta(call.yo())) }
+            get("/cuenta") { call.respond(social.miCuenta(call.yo(), call.token())) }
             delete("/cuenta") { call.yo(); throw Problema(403, "actualiza_app") }
             post("/cuenta/borrar") { social.programarBorrado(call.yo(), call.token(), call.receive<Borrado>()); call.respond(HttpStatusCode.NoContent) }
             post("/cuenta/conservar") { social.conservarCuenta(call.yo()); call.respond(HttpStatusCode.NoContent) }
@@ -189,8 +203,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 call.respond(HttpStatusCode.Created, social.subirImagen(yo, call.receiveChannel().readRemaining(900_001).readByteArray()))
             }
             get("/imagenes/{nombre}") {
-                call.response.header("Cache-Control", "public, max-age=31536000, immutable")
-                call.respondBytes(social.imagen(call.parameters["nombre"] ?: ""), ContentType.Image.JPEG)
+                call.response.header("Cache-Control", "no-store")
+                call.respondBytes(social.imagen(call.parameters["nombre"] ?: "", call.lector(), call.token()), ContentType.Image.JPEG)
             }
             get("/publicaciones/{id}") { call.respond(social.publicacion(call.lector(), call.id()) ?: throw Problema(404, "no_existe")) }
             post("/publicaciones/{id}/megusta") { social.meGusta(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
@@ -228,10 +242,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/frases/comunidad") { call.respond(social.frasesComunidad(call.request.queryParameters["idioma"] ?: "es")) }
             post("/frases/propuestas") { social.proponerFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.Created) }
             get("/frases/ocultas") { call.respond(social.frasesOcultas()) }
-            put("/admin/frases") { call.respond(HttpStatusCode.Created, social.agregarFrase(call.yo(), call.receive())) }
-            delete("/admin/frases/{clave}") { social.quitarFrase(call.yo(), call.parameters["clave"].orEmpty()); call.respond(HttpStatusCode.NoContent) }
-            get("/admin/frases") { call.respond(social.frasesPendientes(call.yo())) }
-            post("/admin/frases") { social.decidirFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            put("/admin/frases") { call.respond(HttpStatusCode.Created, social.agregarFrase(call.requiere("gestionar_frases"), call.receive(), call.token())) }
+            delete("/admin/frases/{clave}") { social.quitarFrase(call.requiere("gestionar_frases"), call.parameters["clave"].orEmpty(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            get("/admin/frases") { call.respond(social.frasesPendientes(call.requiere("gestionar_frases"), call.token())) }
+            post("/admin/frases") { social.decidirFrase(call.requiere("gestionar_frases"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/frases") { call.respond(social.frases()) }
             put("/frases/{clave}") { social.votarFrase(call.yo(), call.parameters["clave"].orEmpty(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             delete("/avisos") { social.borrarAvisos(call.yo(), null); call.respond(HttpStatusCode.NoContent) }
@@ -243,8 +257,21 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             put("/cajon/llave") { social.guardarLlave(call.yo(), call.receive<CajonCifrado>().llave); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta/estado") { call.respond(social.estadoCuenta(call.yo())) }
-            get("/admin/casos") { call.respond(social.casos(call.yo())) }
-            post("/admin/decidir") { social.decidir(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            post("/mfa/activar") { call.respond(social.equipo.activar(call.yo(), call.receiveText().let { if (it.isBlank()) Factor() else JsonSocial.decodeFromString<Factor>(it) }, call.token())) }
+            post("/mfa/confirmar") { call.respond(social.equipo.confirmar(call.yo(), call.receive(), call.token())) }
+            post("/mfa/elevar") { call.respond(social.equipo.elevar(call.yo(), call.receive(), call.token())) }
+            post("/mfa/desactivar") { social.equipo.desactivar(call.yo(), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/mfa/recuperacion") { call.respond(social.equipo.regenerar(call.yo(), call.receive(), call.token())) }
+            get("/admin/equipo") { call.respond(social.equipo.listar(call.requiere("asignar_equipo"), call.token())) }
+            put("/admin/equipo") { social.equipo.cambiarEquipo(call.requiere("asignar_equipo"), call.receive(), false, call.token()); call.respond(HttpStatusCode.NoContent) }
+            delete("/admin/equipo") { social.equipo.cambiarEquipo(call.requiere("asignar_equipo"), call.receive(), true, call.token()); call.respond(HttpStatusCode.NoContent) }
+            get("/admin/registro") { call.respond(social.equipo.registroPaginado(call.requiere("ver_registro"), call.token(), call.request.queryParameters["actor"].orEmpty(), call.request.queryParameters["accion"].orEmpty(), call.request.queryParameters["despues"]?.toLongOrNull() ?: 0)) }
+            post("/admin/publicaciones/retirar") { social.retirar(call.requiere("gestionar_publicaciones"), call.receive<ContenidoEquipo>().copy(que = "publicacion"), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/comentarios/retirar") { social.retirar(call.requiere("moderar_comentarios"), call.receive<ContenidoEquipo>().copy(que = "comentario"), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/restaurar") { social.restaurar(call.requiere("gestionar_publicaciones"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/sanciones/levantar") { social.levantarSancion(call.requiere("gestionar_usuarios"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            get("/admin/casos") { call.respond(social.casos(call.requiere("ver_reportes"), call.token())) }
+            post("/admin/decidir") { social.decidir(call.requiere("sancionar"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/bloqueos") { call.respond(social.bloqueados(call.yo())) }
             post("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }

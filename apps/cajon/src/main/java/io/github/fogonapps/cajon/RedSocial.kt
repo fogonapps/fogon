@@ -7,6 +7,8 @@ import io.github.fogonapps.cajon.datos.AvisoSocial
 import io.github.fogonapps.cajon.datos.CajaFuerte
 import io.github.fogonapps.cajon.datos.ClienteSocial
 import io.github.fogonapps.cajon.datos.ComentarioSocial
+import io.github.fogonapps.cajon.datos.CasoModeracion
+import io.github.fogonapps.cajon.datos.necesitaElevar
 import io.github.fogonapps.cajon.datos.ErrorSocial
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.llaveParaRecuperacion
@@ -210,18 +212,25 @@ class RedSocial(
         sesion.intentar(marca, trabajo) { x ->
             if (x is ErrorSocial) {
                 if (x.codigo == 401) { olvidarCuenta(); decir(R.string.red_sesion_vencida) }
+                else if (x.codigo == 403 && x.error in setOf("mfa_requerida", "sesion_no_elevada", "elevacion_requerida")) {
+                    _cuenta.value = _cuenta.value?.copy(mfa = x.error != "mfa_requerida", elevadaHasta = 0)
+                    _equipoBloqueado.value = true
+                }
                 else if (x.error == "por_borrar") {
                     sincronizacionesCajon.cancelar(); subida?.cancel()
                     if (x.desde > 0) _borrarEl.value = x.desde
                 }
                 else if (avisar) decir(when (x.error) {
+                    "codigo_mfa", "recuperacion" -> R.string.equipo_codigo_error
+                    "sin_permiso" -> R.string.equipo_sin_permiso
+                    "equipo_propio", "solo_principal", "nivel_protegido", "reporte_propio" -> R.string.equipo_protegido
                     "usuario_tomado" -> R.string.red_usuario_tomado
                     "usuario" -> R.string.red_usuario_malo
                     "correo" -> R.string.red_correo_malo
                     "codigo" -> R.string.red_codigo_malo
                     "codigo_vencido", "sin_codigo" -> R.string.red_codigo_vencido
                     "actualiza_app" -> R.string.red_actualiza_app
-                    "cuenta_protegida" -> R.string.red_cuenta_protegida
+                    "cuenta_protegida" -> if (_equipoOcupado.value) R.string.equipo_protegido else R.string.red_cuenta_protegida
                     "por_borrar" -> R.string.red_por_borrar
                     "correo_tomado" -> R.string.red_correo_tomado
                     "despacio" -> R.string.red_despacio
@@ -608,7 +617,8 @@ class RedSocial(
         _usuario.value = null
         AvisosRed.programar(app)
         _feed.value = null; _avisos.value = null; _guardados.value = null; _sinLeer.value = 0
-        _perfiles.value = emptyMap(); _gente.value = emptyMap(); _correoCuenta.value = ""; _cuenta.value = null
+        _perfiles.value = emptyMap(); _gente.value = emptyMap(); _correoCuenta.value = ""; _cuenta.value = null; _equipoBloqueado.value = false
+        _casos.value = null; _frasesPendientes.value = emptyList()
     }
 
     fun cambiarPrivada(si: Boolean) = lanzar { cliente().privada(si); _privada.value = si }
@@ -878,6 +888,29 @@ class RedSocial(
         sincronizarYa(); cargarFeed(); decir(R.string.red_quitada)
     }
 
+    private val _equipoBloqueado = MutableStateFlow(false)
+    val equipoBloqueado: StateFlow<Boolean> = _equipoBloqueado
+    private val _equipoOcupado = MutableStateFlow(false)
+    val equipoOcupado: StateFlow<Boolean> = _equipoOcupado
+    suspend fun <T> operarEquipo(trabajo: suspend (ClienteSocial) -> T): T? {
+        if (_equipoOcupado.value) return null
+        _equipoOcupado.value = true
+        var resultado: T? = null
+        val marca = sesion.actual()
+        var ok = false
+        try { ok = intentar(marca = marca) { resultado = trabajo(cliente()) } } finally { _equipoOcupado.value = false }
+        return if (ok) resultado else null
+    }
+    suspend fun actualizarEquipo() {
+        val marca = sesion.actual()
+        val c = cliente().miCuenta()
+        if (sesion.vigente(marca)) {
+            _cuenta.value = c
+            _equipoBloqueado.value = false
+        }
+    }
+    fun restaurar(c: CasoModeracion) = lanzar { cliente().restaurar(c); cargarCasos() }
+
     /* ----- Moderación ----- */
 
     private val _estadoCuenta = MutableStateFlow<io.github.fogonapps.cajon.datos.EstadoCuentaSocial?>(null)
@@ -886,7 +919,12 @@ class RedSocial(
 
     private val _casos = MutableStateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?>(null)
     val casos: StateFlow<List<io.github.fogonapps.cajon.datos.CasoModeracion>?> = _casos
-    fun cargarCasos() = lanzar { _casos.value = cliente().casos(); _frasesPendientes.value = cliente().frasesPendientes() }
+    fun cargarCasos() = lanzar {
+        val c = _cuenta.value ?: return@lanzar
+        if (necesitaElevar(c, System.currentTimeMillis())) return@lanzar
+        if ("ver_reportes" in c.permisos) _casos.value = cliente().casos()
+        if ("gestionar_frases" in c.permisos) _frasesPendientes.value = cliente().frasesPendientes()
+    }
     private val _frasesPendientes = MutableStateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>>(emptyList())
     /** Las frases que propuso la gente y esperan que alguien del equipo las apruebe. */
     val frasesPendientes: StateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>> = _frasesPendientes

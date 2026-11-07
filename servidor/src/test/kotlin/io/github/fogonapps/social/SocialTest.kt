@@ -50,16 +50,24 @@ class SocialTest {
         val dir = Files.createTempDirectory("social").toFile()
         val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"))
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
-        val jefa = s.cuentaDe(s.crearCuenta(NuevaCuenta("moderadora")).token)!!
+        val tokenJefa = s.crearCuenta(NuevaCuenta("moderadora")).token
+        val jefa = s.cuentaDe(tokenJefa)!!
         s.proponerFrase(ana, FraseNueva("¿Hoy toca maratón de terror?", "es"))
         assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("mira https://x.co", "es")) }      // sin enlaces
         assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("hola", "es")) }                   // muy corta
         assertEquals(0, s.frasesComunidad("es").size)                                                // no sale sin aprobar
         assertFailsWith<Problema> { s.frasesPendientes(ana) }                                        // solo el equipo
-        Base(java.io.File(dir, "s.db").path).usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", jefa) }
-        val pendiente = s.frasesPendientes(jefa).single()
+        Base(java.io.File(dir, "s.db").path).let { base ->
+            base.usar {
+                cambiar("INSERT INTO roles VALUES(?, 'administrador', 'servidor', 0)", jefa)
+                cambiar("INSERT INTO mfa VALUES(?, '', 1, 0, -1)", jefa)
+                cambiar("UPDATE sesiones SET elevada_hasta = ? WHERE cuenta = ?", Long.MAX_VALUE, jefa)
+            }
+            base.cerrar()
+        }
+        val pendiente = s.frasesPendientes(jefa, tokenJefa).single()
         assertEquals("ana", pendiente.de)
-        s.decidirFrase(jefa, DecisionFrase(pendiente.clave, true))
+        s.decidirFrase(jefa, DecisionFrase(pendiente.clave, true), tokenJefa)
         assertEquals(listOf("¿Hoy toca maratón de terror?"), s.frasesComunidad("es").map { it.texto })
         assertEquals(0, s.frasesComunidad("en").size)
         repeat(2) { s.proponerFrase(ana, FraseNueva("Otra frase más $it", "es")) }
@@ -367,7 +375,8 @@ class SocialTest {
         val dir = Files.createTempDirectory("social").toFile()
         var reloj = 1_000_000_000_000L
         val s = Social(Base(java.io.File(dir, "s.db").path), java.io.File(dir, "fotos"), ahora = { reloj })
-        val admin = s.cuentaDe(s.crearCuenta(NuevaCuenta("moderadora")).token)!!
+        val tokenAdmin = s.crearCuenta(NuevaCuenta("moderadora")).token
+        val admin = s.cuentaDe(tokenAdmin)!!
         val malo = s.cuentaDe(s.crearCuenta(NuevaCuenta("malo")).token)!!
         val gente = (1..3).map { s.cuentaDe(s.crearCuenta(NuevaCuenta("persona$it")).token)!! }
         val nueva = s.cuentaDe(s.crearCuenta(NuevaCuenta("recien")).token)
@@ -384,15 +393,23 @@ class SocialTest {
         assertTrue(s.publicacion(malo, id) != null)                             // su autor la sigue viendo
         // Solo quien administra ve la cola y decide.
         assertFailsWith<Problema> { s.casos(gente[0]) }
-        Base(java.io.File(dir, "s.db").path).usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", admin) }
-        val caso = s.casos(admin).single()
+        Base(java.io.File(dir, "s.db").path).let { base ->
+            base.usar {
+                cambiar("INSERT INTO roles VALUES(?, 'administrador', 'servidor', 0)", admin)
+                cambiar("INSERT INTO mfa VALUES(?, '', 1, 0, -1)", admin)
+                cambiar("UPDATE sesiones SET elevada_hasta = ? WHERE cuenta = ?", Long.MAX_VALUE, admin)
+            }
+            base.cerrar()
+        }
+        val caso = s.casos(admin, tokenAdmin).single()
         assertEquals(4, caso.personas); assertEquals(3, caso.motivos["spam"])
-        s.decidir(admin, Decision("publicacion", "$id", "falta", "spam"))
+        s.decidir(admin, Decision("publicacion", "$id", "falta", "spam"), tokenAdmin)
         assertNull(s.publicacion(malo, id))
         assertEquals("sancion", s.avisos(malo, null).first().tipo)
         // Escala: 2 puntos = 24 h sin escribir; 3 = 7 días suspendida; 4 = cerrada.
         repeat(1) { s.subirPublicaciones(malo, listOf(pub("2", Vis.PUBLICA, reloj))); val i = s.explorar(gente[0], null).single().id
-            s.decidir(admin, Decision("publicacion", "$i", "falta", "spam")) }
+            s.reportar(gente[0], NuevoReporte("publicacion", "$i", "spam"))
+            s.decidir(admin, Decision("publicacion", "$i", "falta", "spam"), tokenAdmin) }
         assertFailsWith<Problema> { s.revisarSancion(malo, escribir = true) }
         s.revisarSancion(malo, escribir = false)                                // leer, sí
         assertEquals(2, s.estadoCuenta(malo).faltas.size)
@@ -404,7 +421,7 @@ class SocialTest {
         val i3 = s.explorar(gente[0], null).single().id
         s.reportar(gente[0], NuevoReporte("publicacion", "$i3", Moderacion.MENOR_EN_RIESGO))
         assertEquals(0, s.explorar(gente[1], null).size)                       // oculta al primer reporte
-        s.decidir(admin, Decision("publicacion", "$i3", "falta", Moderacion.MENOR_EN_RIESGO))
+        s.decidir(admin, Decision("publicacion", "$i3", "falta", Moderacion.MENOR_EN_RIESGO), tokenAdmin)
         assertTrue(s.estadoCuenta(malo).cerrada)
         assertFailsWith<Problema> { s.verPerfil(null, "malo") }
     }

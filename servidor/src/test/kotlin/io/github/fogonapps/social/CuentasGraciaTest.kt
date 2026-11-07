@@ -85,7 +85,7 @@ class CuentasGraciaTest {
         assertTrue(e.s.borrarEl(yo) > 0)
         e.s.conservarCuenta(yo)
         e.error("sin_codigo") { e.s.programarBorrado(yo, a.token, Borrado(codigo = e.codigo("ana@correo.co"))) }
-        e.base.usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", yo) }
+        e.base.usar { cambiar("INSERT INTO roles VALUES(?, 'administrador', 'servidor', 0)", yo) }
         e.error("cuenta_protegida") { e.s.programarBorrado(yo, a.token) }
         e.error("cuenta_protegida") { e.s.programarBorrado(yo, a.token, Borrado()) }
         assertEquals(0, e.s.borrarEl(yo))
@@ -184,7 +184,7 @@ class CuentasGraciaTest {
         }
         assertEquals(e.s.borrarEl(yo), Json.parseToJsonElement(acceso.bodyAsText()).jsonObject["borrarEl"]!!.jsonPrimitive.long)
         assertEquals(HttpStatusCode.NoContent, enviar("cuenta/conservar", "{}").status)
-        e.base.usar { cambiar("UPDATE cuentas SET admin = 1 WHERE id = ?", yo) }
+        e.base.usar { cambiar("INSERT INTO roles VALUES(?, 'administrador', 'servidor', 0)", yo) }
         assertEquals(HttpStatusCode.Forbidden, enviar("cuenta/borrar", "{}").status)
         assertEquals(HttpStatusCode.Forbidden, client.delete("/v1/cuenta") { header(HttpHeaders.Authorization, "Bearer ${a.token}") }.status)
     } }
