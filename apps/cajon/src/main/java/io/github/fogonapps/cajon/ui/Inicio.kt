@@ -80,15 +80,9 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     val textoDeFrase = textoFrase(frase)
     val gusta = frase.clave in e.ajustes.frasesGusta
     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(Modifier.weight(1f)) {
-            Text(e.ajustes.nombre.ifBlank { stringResource(R.string.hola) }, fontFamily = f.titulos, fontSize = 30.sp, color = f.texto, maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(textoDeFrase, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, maxLines = 2,
-                    modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp))
-                        .combinedClickable(onClick = {}, onLongClick = { menuFrase = true }))
-                if (gusta) IconoRiso(Iconos.Corazon, stringResource(R.string.frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto)
-            }
+        io.github.fogonapps.perfil.FraseFogon(e.ajustes.nombre.ifBlank { stringResource(R.string.hola) }, textoDeFrase, Modifier.weight(1f),
+            onMantener = { menuFrase = true }) {
+            if (gusta) IconoRiso(Iconos.Corazon, stringResource(R.string.frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto)
         }
         BotonIcono(Iconos.Lapiz, stringResource(R.string.red_publicar), grande = true, lleno = true) { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar()) }
         FotoPerfil(e.perfil.foto, 48.dp, descripcion = stringResource(R.string.tu_perfil)) { vm.abrirMiPerfil() }

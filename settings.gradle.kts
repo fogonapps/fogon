@@ -17,6 +17,7 @@ dependencyResolutionManagement {
 rootProject.name = "fogon"
 
 include(":core:identidad")
+include(":core:perfil")
 include(":apps:forzudo")
 include(":apps:ahorrador")
 include(":apps:cucha")

@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.perfil.CifraPerfil
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -555,16 +556,9 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         }
     }
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-        @Composable
-        fun Cifra(valor: String, etiqueta: String, onClick: (() -> Unit)?) =
-            Column(Modifier.weight(1f).clip(forma(14.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(valor, fontFamily = f.cifras, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
-                Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 2)
-            }
-        Cifra("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) }
-        Cifra("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) }
-        Cifra(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra), null)
+        CifraPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) }
+        CifraPerfil("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) }
+        CifraPerfil(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra), null)
     }
     Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodyLarge, color = f.texto)

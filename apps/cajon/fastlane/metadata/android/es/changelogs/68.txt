@@ -1,0 +1,2 @@
+• El botón «Cambiar de cuenta» queda alineado con el resto del perfil.
+• Mejoras internas para compartir el perfil entre las apps de Fogón.

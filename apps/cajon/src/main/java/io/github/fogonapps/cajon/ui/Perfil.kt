@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.perfil.CifraPerfil
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -235,18 +236,12 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
 
     // Las cifras de arriba: con cuenta, las de la red; sin cuenta, las del cajón.
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-        @Composable
-        fun Cifra(valor: String, etiqueta: String, onClick: () -> Unit) =
-            Column(Modifier.weight(1f).clip(forma(14.dp)).clickable(onClick = onClick).padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(valor, fontFamily = f.cifras, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
-                Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2)
-            }
         val u = yo
         if (u != null && red != null) {
-            Cifra("${red.siguiendo}", stringResource(R.string.red_siguiendo)) { vm.abrir(Pantalla.GenteRed(u, false)) }
-            Cifra("${red.seguidores}", stringResource(R.string.red_seguidores)) { vm.abrir(Pantalla.GenteRed(u, true)) }
-            Cifra("${e.vivas.size}", pluralStringResource(R.plurals.cifra_en_cajon, e.vivas.size, e.vivas.size, anio)) { pestana = 5 }
-        } else contadoresPerfil(vm, e, anio).forEach { c -> Cifra("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir) }
+            CifraPerfil("${red.siguiendo}", stringResource(R.string.red_siguiendo)) { vm.abrir(Pantalla.GenteRed(u, false)) }
+            CifraPerfil("${red.seguidores}", stringResource(R.string.red_seguidores)) { vm.abrir(Pantalla.GenteRed(u, true)) }
+            CifraPerfil("${e.vivas.size}", pluralStringResource(R.plurals.cifra_en_cajon, e.vivas.size, e.vivas.size, anio)) { pestana = 5 }
+        } else contadoresPerfil(vm, e, anio).forEach { c -> CifraPerfil("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir) }
     }
 
     Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -28,7 +29,7 @@ fun SelectorPerfiles(vm: CajonViewModel) {
     var abierto by remember { mutableStateOf(false) }
     var quitar by remember { mutableStateOf(false) }
     val acciones = LocalAcciones.current
-    BotonSecundario(stringResource(R.string.perfiles_cambiar), { abierto = true }, Modifier.fillMaxWidth())
+    BotonSecundario(stringResource(R.string.perfiles_cambiar), { abierto = true }, Modifier.fillMaxWidth().padding(horizontal = 16.dp))
     if (abierto) AlertDialog(
         onDismissRequest = { abierto = false },
         title = { Text(stringResource(R.string.perfiles_cambiar)) },
