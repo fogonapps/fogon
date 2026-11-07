@@ -797,7 +797,7 @@ fun PublicacionRed(vm: CajonViewModel, id: Long) {
     if (p.autor.usuario == yo) {
         val clave = p.datos.texto("clave").ifBlank { p.datos.texto("propia").takeIf { it.isNotBlank() }?.let { "f:$it" }.orEmpty() }
         if (clave.isNotBlank()) BotonSecundario(stringResource(if (clave.startsWith("f:")) R.string.red_borrar_publicacion else R.string.red_quitar_de_la_red),
-            { confirmar(vm.tx(if (clave.startsWith("f:")) R.string.red_borrar_publicacion else R.string.red_quitar_de_la_red), vm.tx(R.string.red_borrar_publicacion_confirmar)) { vm.red.quitarDeLaRed(clave); vm.cerrar() } }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), peligro = true)
+            { confirmar(vm.tx(if (clave.startsWith("f:")) R.string.red_borrar_publicacion else R.string.red_quitar_de_la_red), vm.tx(R.string.red_borrar_publicacion_confirmar)) { if (clave.startsWith("f:")) vm.red.borrarPublicacion(p.id, clave) else vm.red.quitarDeLaRed(clave); vm.cerrar() } }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), peligro = true)
     }
     Seccion(stringResource(R.string.red_comentarios))
     val palabras = (vm.estado.collectAsStateWithLifecycle().value?.ajustes?.palabrasOcultas).orEmpty()

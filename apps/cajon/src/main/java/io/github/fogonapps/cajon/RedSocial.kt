@@ -986,6 +986,15 @@ class RedSocial(
         } finally { _publicando.value = false }
     }
 
+    /**
+     * Borrar una publicación propia desde su pantalla: se pide al servidor por su id, así se borra aunque la haya
+     * subido otro teléfono o el cajón de la cuenta esté sin abrir; después se quita de lo cargado y del cajón local.
+     */
+    fun borrarPublicacion(id: Long, clave: String) = lanzar {
+        cliente().borrarPublicacion(id)
+        borrarPropia(clave.removePrefix("f:"))
+    }
+
     fun borrarPropia(clave: String) {
         val memoria = MemoriaPublicaciones(_feed.value, _explorar.value, _guardados.value, _vistas.value, _perfiles.value)
             .sinPropia(_usuario.value.orEmpty(), clave)

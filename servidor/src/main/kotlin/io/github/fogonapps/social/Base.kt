@@ -46,6 +46,10 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS megusta(
                     pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     PRIMARY KEY(pub, cuenta))""")
+                // «Útil» en las reseñas: distinto del me gusta, un voto por cuenta.
+                s.execute("""CREATE TABLE IF NOT EXISTS utiles(
+                    pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    cuando INTEGER NOT NULL, PRIMARY KEY(pub, cuenta))""")
                 s.execute("""CREATE TABLE IF NOT EXISTS guardados(
                     pub INTEGER NOT NULL REFERENCES publicaciones(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     cuando INTEGER NOT NULL, PRIMARY KEY(pub, cuenta))""")

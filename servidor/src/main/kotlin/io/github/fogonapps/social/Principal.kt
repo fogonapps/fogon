@@ -41,7 +41,10 @@ fun main(args: Array<String>) {
     val datos = File(System.getenv("DATOS") ?: "datos").apply { mkdirs() }
     val usuario = System.getenv("SMTP_USUARIO").orEmpty()
     val clave = System.getenv("SMTP_CLAVE").orEmpty()
-    val cartero = if (usuario.isNotBlank() && clave.isNotBlank()) CarteroSmtp(usuario, clave) else null
+    val cartero = if (usuario.isNotBlank() && clave.isNotBlank()) CarteroSmtp(usuario, clave,
+        servidor = System.getenv("SMTP_SERVIDOR")?.takeIf { it.isNotBlank() } ?: "smtp.gmail.com",
+        puerto = System.getenv("SMTP_PUERTO")?.toIntOrNull() ?: 587,
+        remitente = System.getenv("SMTP_REMITENTE")?.takeIf { it.isNotBlank() } ?: usuario) else null
     val base = Base(File(datos, "social.db").path)
     val avisos = cartero ?: Cartero { _, _, _ -> throw Problema(503, "sin_correo") }
     if (args.isNotEmpty()) {
@@ -66,7 +69,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.24"
+const val VERSION = "0.26"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -207,6 +210,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 call.respondBytes(social.imagen(call.parameters["nombre"] ?: "", call.lector(), call.token()), ContentType.Image.JPEG)
             }
             get("/publicaciones/{id}") { call.respond(social.publicacion(call.lector(), call.id()) ?: throw Problema(404, "no_existe")) }
+            delete("/publicaciones/{id}") { social.borrarPublicacion(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            post("/publicaciones/{id}/util") { social.util(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/publicaciones/{id}/util") { social.util(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             post("/publicaciones/{id}/megusta") { social.meGusta(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/publicaciones/{id}/megusta") { social.meGusta(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             post("/publicaciones/{id}/guardar") { social.guardar(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
@@ -238,7 +244,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }
             get("/momento") { call.respond(Momento.de(call.request.queryParameters["idioma"].orEmpty())) }
-            get("/resenas") { call.respond(social.resenas(call.lector(), call.request.queryParameters["fuente"].orEmpty())) }
+            get("/resenas") {
+                val q = call.request.queryParameters
+                call.respond(social.resenas(call.lector(), q["fuente"].orEmpty(), q["parte"].orEmpty(), q["orden"].orEmpty(), q["antes"]?.toLongOrNull()))
+            }
             get("/frases/comunidad") { call.respond(social.frasesComunidad(call.request.queryParameters["idioma"] ?: "es")) }
             post("/frases/propuestas") { social.proponerFrase(call.yo(), call.receive()); call.respond(HttpStatusCode.Created) }
             get("/frases/ocultas") { call.respond(social.frasesOcultas()) }

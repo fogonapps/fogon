@@ -244,6 +244,8 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))
     suspend fun conEtiqueta(etiqueta: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/etiquetas/${cod(etiqueta.removePrefix("#"))}"))
     suspend fun guardados() = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/guardados"))
+    /** Borra en el servidor una publicación propia por su id (aunque este teléfono no la haya subido). */
+    suspend fun borrarPublicacion(id: Long) { pedir("/publicaciones/$id", "DELETE") }
     suspend fun meGusta(id: Long, si: Boolean) { pedir("/publicaciones/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun guardar(id: Long, si: Boolean) { pedir("/publicaciones/$id/guardar", if (si) "POST" else "DELETE") }
     suspend fun comentarios(id: Long) = leer(ListSerializer(ComentarioSocial.serializer()), pedir("/publicaciones/$id/comentarios"))

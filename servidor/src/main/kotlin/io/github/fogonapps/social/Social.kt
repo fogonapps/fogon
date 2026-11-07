@@ -55,6 +55,9 @@ data class Publicacion(
     /** Qué tan bien le fue comparada con lo normal (1 = normal; de 0 a 3), igual para todos: ver [Social.explorar]. */
     val calidad: Double = 1.0,
     val guardados: Int = 0,
+    /** Votos de «útil» (solo en reseñas) y si quien mira la votó. */
+    val utiles: Int = 0,
+    val yoUtil: Boolean = false,
 )
 
 @Serializable
@@ -762,7 +765,9 @@ class Social(
                         // Si queda como contenedora de evidencia, deja de ser pública hasta su purga.
                         cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", it.first)
                     }
+                val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
                 buenas.forEach { p ->
+                    if (p.tipo == "resena" && !resenaValida(p.datos, mias)) return@forEach
                     val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
                     if (datos.length > 20_000) return@forEach
                     cambiar("""INSERT INTO publicaciones(cuenta, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?)
@@ -793,12 +798,15 @@ class Social(
                     p.n_vistas,
                     EXISTS(SELECT 1 FROM megusta m WHERE m.pub = p.id AND m.cuenta = ?),
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
-                    (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta)
-                FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE p.estado = 'visible' AND c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, *args) { r ->
+                    (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta),
+                    (SELECT COUNT(*) FROM utiles u WHERE u.pub = p.id AND u.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
+                    EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?)
+                FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE p.estado = 'visible' AND c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, lector, *args) { r ->
             val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
-                r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15))
+                r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15),
+                utiles = r.getInt(16), yoUtil = r.getInt(17) == 1)
         }
     }
 
@@ -810,13 +818,46 @@ class Social(
      * Las reseñas de una obra (por su [fuente], "tmdb:movie:603"): las públicas de todos y, con sesión, las que deja ver
      * a quien sigue; sin las de cuentas bloqueadas ni ocultas. Las más nuevas primero.
      */
-    fun resenas(lector: Long?, fuente: String): List<Publicacion> {
-        if (fuente.isBlank() || fuente.length > 120) return emptyList()
-        return filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena' AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0
+    fun resenas(lector: Long?, fuente: String, parte: String = "", orden: String = "", antes: Long? = null): List<Publicacion> {
+        if (fuente.isBlank() || fuente.length > 120 || parte.length > 80) return emptyList()
+        val porParte = if (parte.isBlank()) "" else " AND json_extract(p.datos, '$.parte') = ?"
+        val args = mutableListOf<Any?>(fuente).apply { if (parte.isNotBlank()) add(parte) }
+        val lista = filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena'$porParte AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0
                 AND (? IS NULL OR (p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
-                ORDER BY p.cuando DESC LIMIT 200""", fuente, lector, lector, lector)
-            .filter { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }.map { it.second }.take(50)
+                AND p.cuando < ? ORDER BY p.cuando DESC LIMIT 400""", *args.toTypedArray(), lector, lector, lector, antes ?: Long.MAX_VALUE)
+            .filter { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }.map { it.second }
+        // «utiles»: las que más gente encontró útiles primero (cota de Wilson sobre las vistas); sin orden, las más nuevas.
+        return if (orden == "utiles") lista.sortedWith(compareByDescending<Publicacion> { wilson(it.utiles, maxOf(it.vistas, it.utiles)) }.thenByDescending { it.cuando }).take(50)
+        else lista.take(50)
     }
+
+    /**
+     * El autor borra una publicación suya por su id, aunque este teléfono no la haya subido. Si guarda comentarios
+     * retenidos por moderación, deja de ser pública (como al quitarla por sincronización). Su clave queda en
+     * `retiradas` para que una sincronización vieja de otro teléfono no la vuelva a crear.
+     */
+    fun borrarPublicacion(yo: Long, id: Long) {
+        b.usar {
+            autoCommit = false
+            try {
+                val clave = leer("SELECT clave FROM publicaciones WHERE id = ? AND cuenta = ? AND estado = 'visible'", id, yo) { it.getString(1) }.firstOrNull()
+                    ?: throw Problema(404, "no_existe")
+                cambiar("INSERT OR IGNORE INTO retiradas(cuenta, clave, cuando) VALUES(?,?,?)", yo, clave, ahora())
+                cambiar("DELETE FROM publicaciones WHERE id = ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", id)
+                cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", id)
+                commit()
+            } catch (x: Exception) { rollback(); throw x } finally { autoCommit = true }
+        }
+    }
+
+    /** Marca o quita «útil» en una reseña ajena que [yo] puede ver. */
+    fun util(yo: Long, pub: Long, si: Boolean) {
+        val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
+        if (p.tipo != "resena") throw Problema(400, "no_es_resena")
+        if (idDe(p.autor.usuario) == yo) throw Problema(400, "propia")
+        b.usar { if (si) cambiar("INSERT OR IGNORE INTO utiles(pub, cuenta, cuando) VALUES(?,?,?)", pub, yo, ahora()) else cambiar("DELETE FROM utiles WHERE pub = ? AND cuenta = ?", pub, yo) }
+    }
+
 
     /** El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. */
     fun actividad(yo: Long, antes: Long?, n: Int = 40): List<Publicacion> =
@@ -1425,3 +1466,13 @@ class Social(
 internal fun fechaLegible(ms: Long): String =
     java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy, HH:mm '(UTC)'", java.util.Locale.forLanguageTag("es"))
         .withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(ms))
+
+/** Una reseña: texto de hasta 5000 caracteres, nota de 0 a 10 si la hay y hasta 4 fotos, todas subidas por la misma cuenta. */
+internal fun resenaValida(datos: Map<String, kotlinx.serialization.json.JsonElement>, imagenesPropias: Set<String>): Boolean {
+    val texto = (datos["texto"] as? JsonPrimitive)?.content.orEmpty()
+    if (texto.length > 5000) return false
+    val nota = (datos["nota"] as? JsonPrimitive)?.content?.toIntOrNull()
+    if (datos["nota"] != null && (nota == null || nota !in 0..10)) return false
+    val fotos = (datos["fotos"] as? kotlinx.serialization.json.JsonArray)?.map { (it as? JsonPrimitive)?.content.orEmpty() } ?: emptyList()
+    return fotos.size <= 4 && fotos.all { it in imagenesPropias }
+}

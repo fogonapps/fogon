@@ -16,11 +16,16 @@ fun interface Cartero {
 /**
  * Manda por SMTP con la cuenta de Fogón (Gmail, puerto 587 con STARTTLS y una contraseña de aplicación). Se configura
  * con `SMTP_USUARIO` y `SMTP_CLAVE` (en /etc/fogon-social/correo.env, que solo lee root); sin ellas, no manda nada.
+ * Opcionales: `SMTP_SERVIDOR` (por defecto smtp.gmail.com), `SMTP_PUERTO` (587, con STARTTLS) y `SMTP_REMITENTE`.
  */
-class CarteroSmtp(private val usuario: String, private val clave: String, private val servidor: String = "smtp.gmail.com") : Cartero {
+class CarteroSmtp(
+    private val usuario: String, private val clave: String, private val servidor: String = "smtp.gmail.com", private val puerto: Int = 587,
+    /** La dirección que aparece como remitente; por defecto, la misma cuenta. */
+    private val remitente: String = usuario,
+) : Cartero {
     private val sesion = Session.getInstance(
         Properties().apply {
-            put("mail.smtp.host", servidor); put("mail.smtp.port", "587")
+            put("mail.smtp.host", servidor); put("mail.smtp.port", puerto.toString())
             put("mail.smtp.auth", "true"); put("mail.smtp.starttls.enable", "true"); put("mail.smtp.starttls.required", "true")
             put("mail.smtp.connectiontimeout", "10000"); put("mail.smtp.timeout", "10000")
         },
@@ -29,7 +34,7 @@ class CarteroSmtp(private val usuario: String, private val clave: String, privat
 
     override fun enviar(para: String, asunto: String, texto: String) {
         val m = MimeMessage(sesion).apply {
-            setFrom(InternetAddress(usuario, "El Cajón", "UTF-8"))
+            setFrom(InternetAddress(remitente, "El Cajón", "UTF-8"))
             setRecipient(Message.RecipientType.TO, InternetAddress(para))
             setSubject(asunto, "UTF-8")
             setText(texto, "UTF-8")

@@ -1,2 +1,0 @@
-• The "Switch account" button now lines up with the rest of the profile.
-• Internal improvements to share the profile across Fogón apps.
