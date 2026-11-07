@@ -1,0 +1,5 @@
+• Safer sign-in: we always send you a code and you can ask for another one.
+• New "Where you are signed in" screen: see and close your sessions.
+• Your appearance (theme, colours and font) travels with your account.
+• Very common passwords are rejected and you get email alerts.
+• Notices now show during the tutorial.

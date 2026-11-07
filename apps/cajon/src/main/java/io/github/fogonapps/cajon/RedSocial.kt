@@ -1,5 +1,7 @@
 package io.github.fogonapps.cajon
 
+import io.github.fogonapps.cajon.datos.paraPantalla
+
 import android.app.Application
 import io.github.fogonapps.cajon.datos.AvisoSocial
 import io.github.fogonapps.cajon.datos.CajaFuerte
@@ -44,10 +46,10 @@ import java.time.ZoneOffset
 
 /** Cómo va entrar a la red: pedir el correo, poner el código, elegir el usuario (cuenta nueva). */
 /**
- * Los pasos para entrar: el correo; si no tiene cuenta, decírselo (y registrarse); si tiene contraseña, la contraseña;
- * el código (para registrarse, si olvidó la contraseña o si la cuenta todavía no tenía); y, si es nueva, el usuario.
+ * El correo lleva siempre al código. La respuesta cuenta_nueva continúa al registro;
+ * la contraseña es un camino independiente y también permite recuperar por código.
  */
-enum class PasoAcceso { CORREO, NO_EXISTE, CLAVE, CODIGO, USUARIO }
+enum class PasoAcceso { CORREO, CLAVE, CODIGO, USUARIO }
 
 /** Para qué es el código: cuenta nueva, olvidó la contraseña o la cuenta no tenía (en esos dos se pone una nueva). */
 enum class MotivoCodigo { NUEVA, OLVIDO, SIN_CLAVE }
@@ -195,6 +197,8 @@ class RedSocial(
                     "correo_tomado" -> R.string.red_correo_tomado
                     "despacio" -> R.string.red_despacio
                     "clave_mala" -> R.string.red_clave_mala
+                    "clave_comun" -> R.string.red_clave_comun
+                    "sin_correo" -> R.string.red_codigo_no_disponible
                     "clave_corta" -> R.string.red_clave_corta
                     "usuario_espera" -> R.string.red_usuario_espera
                     "suspendida" -> R.string.red_suspendida
@@ -235,31 +239,33 @@ class RedSocial(
         }
     }
 
-    /** Cuenta nueva sin correo (cuando el servidor no manda códigos). */
-    fun crearSinCorreo(usuario: String, nombre: String) = lanzar {
-        _acceso.value = _acceso.value.copy(ocupado = true)
-        try { entro(ClienteSocial().crearSinCorreo(usuario.trim().lowercase(), nombre.trim(), politica)) }
-        finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    /** El mismo envío para cualquier correo, sin consultar si tiene cuenta. */
+    fun revisarCorreo(correo: String) {
+        _acceso.value = Acceso(correo = correo.trim().lowercase())
+        pedirCodigo(MotivoCodigo.NUEVA)
     }
 
-    /** El primer paso: con el correo se sabe si se registra, si entra con su contraseña o si tiene que crear una. */
-    fun revisarCorreo(correo: String) = lanzar {
-        val c = correo.trim().lowercase()
-        _acceso.value = Acceso(correo = c, ocupado = true)
+    fun usarClave(correo: String) { _acceso.value = Acceso(PasoAcceso.CLAVE, correo.trim().lowercase()) }
+
+    private val _reenviarDesde = MutableStateFlow(0L)
+    val reenviarDesde: StateFlow<Long> = _reenviarDesde
+    fun reenviarCodigo() = lanzar {
+        if (_acceso.value.ocupado || android.os.SystemClock.elapsedRealtime() < _reenviarDesde.value) return@lanzar
+        _acceso.value = _acceso.value.copy(ocupado = true)
         try {
-            val e = ClienteSocial().estadoCorreo(c)
-            when {
-                !e.existe -> _acceso.value = Acceso(PasoAcceso.NO_EXISTE, c)
-                e.conClave -> _acceso.value = Acceso(PasoAcceso.CLAVE, c)
-                else -> { ClienteSocial().pedirCodigo(c); _acceso.value = Acceso(PasoAcceso.CODIGO, c, motivo = MotivoCodigo.SIN_CLAVE) }
-            }
+            ClienteSocial().pedirCodigo(_acceso.value.correo)
+            _reenviarDesde.value = android.os.SystemClock.elapsedRealtime() + 60_000
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
     /** Para ponerle correo a una cuenta hecha sin él: manda el código a [correo]. */
     fun pedirCodigoVincular(correo: String) = lanzar {
-        ClienteSocial().pedirCodigo(correo.trim())
-        _acceso.value = Acceso(PasoAcceso.CODIGO, correo.trim())
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try {
+            ClienteSocial().pedirCodigo(correo.trim())
+            _reenviarDesde.value = android.os.SystemClock.elapsedRealtime() + 60_000
+            _acceso.value = Acceso(PasoAcceso.CODIGO, correo.trim())
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
     /** Manda el código al correo ([motivo]: registrarse u olvidó la contraseña). */
@@ -268,6 +274,7 @@ class RedSocial(
         _acceso.value = _acceso.value.copy(ocupado = true)
         try {
             ClienteSocial().pedirCodigo(c)
+            _reenviarDesde.value = android.os.SystemClock.elapsedRealtime() + 60_000
             _acceso.value = Acceso(PasoAcceso.CODIGO, c, motivo = motivo)
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
@@ -283,15 +290,18 @@ class RedSocial(
         _acceso.value = a.copy(ocupado = true)
         try {
             if (a.motivo == MotivoCodigo.NUEVA) {
-                try { entro(ClienteSocial().entrar(a.correo, codigo.trim())) }
-                catch (x: ErrorSocial) { if (x.error == "cuenta_nueva") _acceso.value = Acceso(PasoAcceso.USUARIO, a.correo, codigo.trim()) else throw x }
+                entro(ClienteSocial().entrar(a.correo, codigo.trim()))
             } else {
                 if (entro(ClienteSocial().entrar(a.correo, codigo.trim(), clave = claveNueva))) {
                     marca = sesion.actual()
                     llaveNueva(claveNueva)
                 }
             }
-        } catch (x: ErrorSocial) { intentar(marca = marca) { throw x } }
+        } catch (x: ErrorSocial) {
+            if (sesion.vigente(marca) && io.github.fogonapps.cajon.datos.esCuentaNueva(x))
+                _acceso.value = Acceso(PasoAcceso.USUARIO, a.correo, codigo.trim())
+            else intentar(marca = marca) { throw x }
+        }
         catch (x: IOException) { if (sesion.vigente(marca)) decir(R.string.red_sin_conexion) }
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
@@ -311,12 +321,28 @@ class RedSocial(
     }
 
     /** Cuenta nueva con el correo ya comprobado y su contraseña (con ella el cajón se guarda en la cuenta desde ya). */
-    fun crearConCorreo(usuario: String, nombre: String, clave: String) = lanzar {
+    fun crearConCorreo(usuario: String, nombre: String, clave: String, foto: String? = null) = lanzar {
         val a = _acceso.value
         _acceso.value = a.copy(ocupado = true)
         try {
-            if (entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica, clave))) {
-                intentar { llaveNueva(clave) }
+            if (entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica, clave), nombre.trim())) {
+                val marca = sesion.actual()
+                if (foto != null) intentar {
+                    val imagen = jpeg(foto, 512, 400_000) ?: throw IOException("foto")
+                    if (!sesion.vigente(marca)) return@intentar
+                    cliente().subirFoto(imagen)
+                    val ruta = withContext(Dispatchers.IO) {
+                        val carpeta = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+                        val archivo = java.io.File(carpeta, "perfil-red-${System.currentTimeMillis()}.jpg")
+                        archivo.writeBytes(imagen)
+                        android.net.Uri.fromFile(archivo).toString()
+                    }
+                    if (sesion.vigente(marca)) {
+                        ultimaFoto = ruta
+                        cambiar { e -> e.copy(perfil = e.perfil.copy(foto = ruta, cambio = System.currentTimeMillis())) }
+                    }
+                }
+                if (sesion.vigente(marca)) intentar { llaveNueva(clave) }
             }
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
@@ -351,6 +377,43 @@ class RedSocial(
         if (sesion.vigente(marca)) { decir(R.string.red_clave_lista); revisarServidor(); listo() }
     }
 
+    private val _sesiones = MutableStateFlow<List<io.github.fogonapps.cajon.datos.SesionMostrada>?>(null)
+    val sesiones: StateFlow<List<io.github.fogonapps.cajon.datos.SesionMostrada>?> = _sesiones
+    fun cargarSesiones() = lanzar {
+        val marca = sesion.actual()
+        val lista = cliente().sesiones().map { it.paraPantalla() }
+        if (sesion.vigente(marca)) _sesiones.value = lista
+    }
+    fun cerrarSesion(id: String, actual: Boolean) = lanzar {
+        val marca = sesion.actual()
+        cliente().cerrarSesion(id)
+        if (sesion.vigente(marca)) { if (actual) olvidarCuenta() else cargarSesiones() }
+    }
+    fun cerrarOtrasSesiones() = lanzar {
+        val marca = sesion.actual()
+        cliente().cerrarOtrasSesiones()
+        if (sesion.vigente(marca)) cargarSesiones()
+    }
+
+    /** Guarda el resto del perfil incluso cuando el límite de apodo rechaza el nombre. */
+    fun guardarApodo(nombre: String, guardar: (Boolean) -> Unit) = scope.launch {
+        var aceptado = false
+        val marca = sesion.actual()
+        intentar {
+            try { cliente().cambiarApodo(nombre); aceptado = true }
+            catch (x: ErrorSocial) {
+                if (x.error != "apodo_espera") throw x
+                val cuenta = cliente().miCuenta()
+                if (sesion.vigente(marca)) {
+                    _cuenta.value = cuenta
+                    val fecha = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(cuenta.apodoDesde))
+                    android.widget.Toast.makeText(app, io.github.fogonapps.identidad.Idioma.envolver(app).getString(R.string.red_apodo_desde, fecha), android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        if (sesion.vigente(marca)) guardar(aceptado)
+    }
+
     fun cambiarUsuario(nuevo: String, listo: () -> Unit) = lanzar {
         val u = cliente().cambiarUsuario(nuevo.trim().lowercase())
         caja.usuarioSocial = u; _usuario.value = u
@@ -358,7 +421,7 @@ class RedSocial(
         decir(R.string.red_usuario_cambiado); revisarServidor(); listo()
     }
 
-    private suspend fun entro(a: io.github.fogonapps.cajon.datos.Acceso): Boolean {
+    private suspend fun entro(a: io.github.fogonapps.cajon.datos.Acceso, nombreNuevo: String = ""): Boolean {
         sesion.invalidar()
         sincronizacionesCajon.cancelar()
         caja.tokenSocial = a.token
@@ -376,7 +439,7 @@ class RedSocial(
         recuperacionCajon.reiniciar(cuentaNueva = a.nueva)
         _cajonBloqueado.value = false
         if (a.nueva) {
-            val plan = estado()?.let { planEntrada(it, a.usuario, nueva = true) }
+            val plan = estado()?.let { planEntrada(it, a.usuario, nueva = true, nombre = nombreNuevo) }
             if (plan != null) {
                 cambiar { plan.estado }
                 if (plan.subir) sincronizarYa()
@@ -453,10 +516,11 @@ class RedSocial(
         subida?.cancel(); subidasPerfil.reiniciar(); ultimaFoto = null
         caja.perfilRedPendiente = false; caja.borrarFotoRed = false; recuperacionCajon.reiniciar()
         caja.tokenSocial = null; caja.usuarioSocial = null; caja.publicacionesSubidas = emptySet(); caja.llaveCajon = null; _cajonBloqueado.value = false
+        _sesiones.value = null
         _usuario.value = null
         AvisosRed.programar(app)
         _feed.value = null; _avisos.value = null; _guardados.value = null; _sinLeer.value = 0
-        _perfiles.value = emptyMap(); _gente.value = emptyMap(); _correoCuenta.value = ""
+        _perfiles.value = emptyMap(); _gente.value = emptyMap(); _correoCuenta.value = ""; _cuenta.value = null
     }
 
     fun cambiarPrivada(si: Boolean) = lanzar { cliente().privada(si); _privada.value = si }
@@ -833,8 +897,10 @@ class RedSocial(
         internal data class EntradaPerfil(val estado: Estado, val subir: Boolean)
 
         internal fun planEntrada(e: Estado, usuario: String, nueva: Boolean,
-            remoto: PerfilSocial? = null, foto: String = ""): EntradaPerfil = if (nueva) {
-            EntradaPerfil(e.copy(perfil = e.perfil.copy(usuario = usuario,
+            remoto: PerfilSocial? = null, foto: String = "", nombre: String = ""): EntradaPerfil = if (nueva) {
+            // El apodo elegido al crear la cuenta es el del perfil: si no, se subiría el nombre local (a veces vacío).
+            EntradaPerfil(e.copy(ajustes = if (nombre.isBlank()) e.ajustes else e.ajustes.copy(nombre = nombre.take(40), cambio = System.currentTimeMillis()),
+                perfil = e.perfil.copy(usuario = usuario,
                 visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad,
                 cambio = System.currentTimeMillis())), subir = true)
         } else {

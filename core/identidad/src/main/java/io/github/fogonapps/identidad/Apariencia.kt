@@ -208,6 +208,27 @@ class AlmacenApariencia private constructor(c: Context) {
         )
     }
 
+    /** Aplica una apariencia completa restaurada por la app, sin cambiar el idioma. */
+    fun aplicar(a: Apariencia) {
+        prefs.edit {
+            Estilo.entries.forEach { e ->
+                Ranura.entries.forEach { remove("${e.name}.${it.name}") }
+                remove("${e.name}.transparencia")
+                remove("${e.name}.adorno")
+            }
+            putString("estilo", a.estilo.name)
+            putInt("tamanoTexto", a.tamanoTexto.coerceIn(0, 3))
+            putBoolean("menosMovimiento", a.menosMovimiento)
+            putBoolean("masContraste", a.masContraste)
+            a.ajustes.forEach { (e, ajuste) ->
+                ajuste.colores.forEach { (r, color) -> putInt("${e.name}.${r.name}", color.toArgb()) }
+                ajuste.transparencia?.let { putInt("${e.name}.transparencia", it.coerceIn(0, 100)) }
+                ajuste.adorno?.let { putString("${e.name}.adorno", it.name) }
+            }
+        }
+        recargar()
+    }
+
     private fun recargar() { _estado.value = leer() }
 
     fun elegirEstilo(e: Estilo) { prefs.edit { putString("estilo", e.name) }; recargar() }

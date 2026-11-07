@@ -993,27 +993,20 @@ internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) 
             Text(stringResource(R.string.red_que_es), style = MaterialTheme.typography.bodyMedium, color = f.texto)
             Pista(stringResource(R.string.red_que_sube))
         }
-        if (correo == null) { LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea); return }
-        val conCorreo = correo == true
+        if (correo == false) Pista(stringResource(R.string.red_codigo_no_disponible))
         val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()
         @Composable
         fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
             OutlinedTextField(valor, { onCambio(it.take(200)) }, Modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true, shape = forma(18.dp),
                 visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 supportingText = { Text(stringResource(R.string.red_clave_regla)) })
-        if (conCorreo) when (acceso.paso) {
-            // 1. El correo: la app sabe si registrarse, entrar con la contraseña o crear una.
+        when (acceso.paso) {
+            // El correo siempre lleva al envío de código; la contraseña tiene su propio camino.
             PasoAcceso.CORREO -> {
                 OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonRiso(stringResource(R.string.siguiente), { vm.red.revisarCorreo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && "." in correoTexto)
-                return
-            }
-            // No tiene cuenta: se lo dice y le ofrece registrarse con ese correo.
-            PasoAcceso.NO_EXISTE -> {
-                Text(stringResource(R.string.red_correo_no_existe, acceso.correo), style = MaterialTheme.typography.titleMedium, color = f.texto)
-                BotonRiso(stringResource(R.string.red_registrarme), { vm.red.pedirCodigo(io.github.fogonapps.cajon.MotivoCodigo.NUEVA) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado)
-                BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
+                BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.revisarCorreo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && "." in correoTexto)
+                BotonSecundario(stringResource(R.string.red_entrar_clave), { vm.red.usarClave(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
                 return
             }
             // Tiene contraseña: la pide, con "¿Olvidaste tu contraseña?".
@@ -1043,12 +1036,13 @@ internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) 
                 }
                 BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrar(codigo, nueva) }, Modifier.fillMaxWidth(),
                     habilitado = !acceso.ocupado && codigo.length == 6 && (!conClaveNueva || nueva.length >= 8))
+                ReenviarCodigo(vm)
                 BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
                 return
             }
             else -> Unit
         }
-        // Cuenta nueva: el usuario, el nombre y la aceptación (con correo ya comprobado, o sin correo).
+        // Cuenta nueva: usuario, apodo y aceptación con el correo comprobado.
         Text(stringResource(R.string.red_elige_usuario), style = MaterialTheme.typography.titleMedium, color = f.texto)
         OutlinedTextField(usuario, { usuario = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.red_usuario)) }, prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
@@ -1064,11 +1058,13 @@ internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) 
         // Con correo, la contraseña es obligatoria: con ella el cajón queda guardado (cifrado) en la cuenta.
         var claveCuenta by rememberSaveable { mutableStateOf("") }
         if (acceso.paso == PasoAcceso.USUARIO) CampoClave(claveCuenta, { claveCuenta = it }, stringResource(R.string.red_clave))
+        var fotoCuenta by rememberSaveable { mutableStateOf<String?>(null) }
+        val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { fotoCuenta = it?.toString() }
+        BotonSecundario(stringResource(if (fotoCuenta == null) R.string.red_foto_opcional else R.string.red_foto_elegida), { elegirFoto.launch("image/*") }, Modifier.fillMaxWidth())
         val listo = !acceso.ocupado && acepto && usuario.length >= 3 && (acceso.paso != PasoAcceso.USUARIO || claveCuenta.length >= 8)
         BotonRiso(stringResource(R.string.red_crear_cuenta), {
-            if (acceso.paso == PasoAcceso.USUARIO) vm.red.crearConCorreo(usuario, nombre, claveCuenta) else vm.red.crearSinCorreo(usuario, nombre)
+            vm.red.crearConCorreo(usuario, nombre, claveCuenta, fotoCuenta)
         }, Modifier.fillMaxWidth(), habilitado = listo)
-        if (!conCorreo) Pista(stringResource(R.string.red_sin_correo_aviso))
     }
 }
 
@@ -1094,29 +1090,31 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
         Opcion(stringResource(R.string.red_cuenta_privada), privada) { vm.red.cambiarPrivada(it) }
         Pista(stringResource(R.string.red_cuenta_privada_pista))
         Pista(stringResource(R.string.red_que_se_comparte))
+        if (correoCuenta.isBlank()) Pista(stringResource(R.string.red_vincula_pista))
         if (correo == true) {
             if (correoCuenta.isNotBlank()) Pista(stringResource(R.string.red_correo_de_cuenta, correoCuenta))
             else if (acceso.paso == PasoAcceso.CODIGO) {
                 OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_codigo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-                BotonRiso(stringResource(R.string.red_vincular), { vm.red.vincularCorreo(codigo) }, Modifier.fillMaxWidth(), habilitado = codigo.length == 6)
+                ReenviarCodigo(vm)
+                BotonRiso(stringResource(R.string.red_vincular), { vm.red.vincularCorreo(codigo) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && codigo.length == 6)
             } else {
                 Pista(stringResource(R.string.red_vincula_pista))
                 OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = "@" in correoTexto)
+                BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
             }
         }
-        // Tu usuario (una vez cada 7 días) y tu contraseña.
+        // Tu usuario (una vez cada 30 días) y tu contraseña.
         val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
         Desplegable(Iconos.Persona, stringResource(R.string.red_cambiar_usuario), "@$usuario") {
             var nuevo by rememberSaveable { mutableStateOf(usuario) }
+            Pista(stringResource(R.string.red_usuario_regla))
             val desde = cuenta?.usuarioDesde ?: 0
             if (desde > System.currentTimeMillis()) Pista(stringResource(R.string.red_usuario_desde, java.text.DateFormat.getDateInstance().format(java.util.Date(desde))))
             else {
                 OutlinedTextField(nuevo, { nuevo = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
                     prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
-                Pista(stringResource(R.string.red_usuario_regla))
                 BotonRiso(stringResource(R.string.guardar), { vm.red.cambiarUsuario(nuevo) {} }, Modifier.fillMaxWidth(), habilitado = nuevo.length >= 3 && nuevo != usuario)
             }
         }
@@ -1131,6 +1129,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
             BotonRiso(stringResource(R.string.guardar), { vm.red.ponerClave(nueva, actual) { nueva = ""; actual = "" } }, Modifier.fillMaxWidth(), habilitado = nueva.length >= 8)
         } else Pista(stringResource(R.string.red_clave_pide_correo))
         FilaVidrio({ vm.abrir(Pantalla.GenteRed(usuario, true)) }) { Text(stringResource(R.string.red_tus_seguidores), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
+        FilaVidrio({ vm.abrir(Pantalla.Sesiones) }) { Text(stringResource(R.string.red_sesiones), color = f.texto) }
         FilaVidrio({ vm.abrir(Pantalla.EstadoCuenta) }) { Text(stringResource(R.string.mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.abrir(Pantalla.BloqueadosRed) }) { Text(stringResource(R.string.red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }

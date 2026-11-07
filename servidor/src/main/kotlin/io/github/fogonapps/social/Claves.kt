@@ -11,6 +11,16 @@ import javax.crypto.spec.PBEKeySpec
  * al azar de 16 bytes por cuenta. Se guarda "iteraciones:sal:huella"; la contraseña nunca.
  */
 object Claves {
+    private val comunes by lazy {
+        checkNotNull(Claves::class.java.getResourceAsStream("/claves/10k-most-common.txt"))
+            .bufferedReader().useLines { lineas -> lineas.map { it.lowercase(java.util.Locale.ROOT) }.toSet() }
+    }
+
+    fun validar(clave: String) {
+        if (clave.length < 8 || clave.length > 200) throw Problema(400, "clave_corta")
+        if (clave.lowercase(java.util.Locale.ROOT) in comunes) throw Problema(400, "clave_comun")
+    }
+
     private const val ITERACIONES = 600_000
     private val azar = SecureRandom()
 

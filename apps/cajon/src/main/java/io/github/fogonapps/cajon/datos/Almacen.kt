@@ -125,7 +125,11 @@ class CajaFuerte(context: Context) {
     /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
     var tokenSocial: String?
         get() = leer("social")
-        set(v) = escribir("social", v)
+        set(v) = escribir("social", v, confirmar = true) { putBoolean("apariencia_cuenta_pendiente", v != null) }
+    /** Al entrar, la primera apariencia descifrada tiene prioridad; persiste hasta recuperarla. */
+    var aparienciaCuentaPendiente: Boolean
+        get() = prefs.getBoolean("apariencia_cuenta_pendiente", false)
+        set(v) = prefs.edit { putBoolean("apariencia_cuenta_pendiente", v) }
     var usuarioSocial: String?
         get() = prefs.getString("usuario_social", null)
         set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }

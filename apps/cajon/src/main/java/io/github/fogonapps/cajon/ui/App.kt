@@ -132,6 +132,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             if (!estado.listo) {
                 Tutorial(vm, acciones)
+                // Los avisos también se ven en el tutorial (errores al entrar o crear la cuenta).
+                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) { Aviso(it.visuals.message) }
             } else {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
                 PestanaAnimada(pestana) { p ->
@@ -186,6 +188,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.ElegirDestacado -> ElegirDestacado(vm, estado, p.hueco)
                             Pantalla.PortadaPerfil -> PortadaPerfil(vm, estado)
                             is Pantalla.AjustarImagenPerfil -> AjustarImagenPerfil(vm, estado, p.portada)
+                            Pantalla.Sesiones -> Sesiones(vm)
                             Pantalla.Apariencia -> Column {
                                 Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar)
                                 PantallaApariencia(Paleta.Cajon, AlmacenApariencia.de(LocalContext.current))

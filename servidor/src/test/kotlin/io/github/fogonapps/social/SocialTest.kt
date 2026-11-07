@@ -89,6 +89,7 @@ class SocialTest {
         assertFailsWith<Problema> { s.crearCuenta(NuevaCuenta("ANA")) }         // el usuario ya existe
         assertFailsWith<Problema> { s.crearCuenta(NuevaCuenta("a b")) }         // no es un usuario válido
         assertTrue(!s.usuarioLibre("ana") && s.usuarioLibre("dani") && !s.usuarioLibre("admin"))
+        assertTrue(s.usuarioLibre("fogon") && !s.usuarioLibre("soporte"))
 
         s.subirPublicaciones(ana, listOf(pub("1", Vis.PUBLICA, 10), pub("2", Vis.SEGUIDORES, 20), pub("3", "privada", 30)))
         s.subirPerfil(ana, PerfilSubido(nombre = "Ana", partes = mapOf(
@@ -237,9 +238,8 @@ class SocialTest {
         s.pedirCodigo("ana@correo.co"); val viejo = codigo()
         reloj += 11 * 60_000
         assertEquals("codigo_vencido", assertFailsWith<Problema> { s.entrar(Entrada("ana@correo.co", viejo)) }.mensaje)
-        // Sin correo: la cuenta queda en el teléfono y después se le vincula uno.
-        val sin = s.crearSinCorreo(Entrada("", "", usuario = "beto", acepta = Social.POLITICA, mayorDeEdad = true))
-        assertFailsWith<Problema> { s.crearSinCorreo(Entrada("", "", usuario = "caro", acepta = "vieja", mayorDeEdad = true)) }
+        // Una cuenta sin correo ya existente puede vincular uno.
+        val sin = s.crearCuenta(NuevaCuenta("beto"))
         assertEquals("", s.miCuenta(s.cuentaDe(sin.token)!!).correo)
         s.pedirCodigo("beto@correo.co")
         s.vincularCorreo(s.cuentaDe(sin.token)!!, Entrada("beto@correo.co", codigo()))
@@ -340,18 +340,17 @@ class SocialTest {
         val a = s.entrar(Entrada("ana@correo.co", Regex("[0-9]{6}").find(buzon.last())!!.value, usuario = "ana", acepta = Social.POLITICA, mayorDeEdad = true))
         val ana = s.cuentaDe(a.token)!!
         assertFailsWith<Problema> { s.ponerClave(ana, CambioClave("corta")) }
-        s.ponerClave(ana, CambioClave("una clave larga"))
+        s.ponerClave(ana, CambioClave("una clave larga"), token = a.token)
         assertTrue(s.miCuenta(ana).conClave)
         assertFailsWith<Problema> { s.entrarConClave(EntradaClave("ana@correo.co", "otra cosa")) }
         assertEquals("ana", s.entrarConClave(EntradaClave("ANA@correo.co", "una clave larga")).usuario)
         assertFailsWith<Problema> { s.ponerClave(ana, CambioClave("nueva clave larga", actual = "mala")) }   // pide la actual
-        s.ponerClave(ana, CambioClave("nueva clave larga", actual = "una clave larga"))
-        // Usuario: una vez cada 7 días; el viejo, reservado.
+        s.ponerClave(ana, CambioClave("nueva clave larga", actual = "una clave larga"), token = a.token)
+        // Usuario: primer cambio libre; el viejo queda reservado.
         reloj += 8L * 24 * 3600_000
         assertEquals("anita", s.cambiarUsuario(ana, CambioUsuario("anita")))
         assertFailsWith<Problema> { s.cambiarUsuario(ana, CambioUsuario("ana2")) }
         assertTrue(!s.usuarioLibre("ana"))
-        assertFailsWith<Problema> { s.crearSinCorreo(Entrada(usuario = "ana", acepta = Social.POLITICA, mayorDeEdad = true)) }
     }
 
     @Test fun avisoAlPublicar() {
@@ -446,8 +445,8 @@ class SocialTest {
         val s = nuevo()
         application { fogonSocial(s) }
         val r = client.post("/v1/cuentas") { contentType(ContentType.Application.Json); setBody("""{"correo":"","codigo":"","usuario":"eva","nombre":"Eva","acepta":"${Social.POLITICA}","mayorDeEdad":true}""") }
-        assertEquals(HttpStatusCode.Created, r.status)
-        val token = Regex("\"token\":\"([^\"]+)\"").find(r.bodyAsText())!!.groupValues[1]
+        assertEquals(HttpStatusCode.ServiceUnavailable, r.status)
+        val token = s.crearCuenta(NuevaCuenta("eva")).token
         assertEquals(HttpStatusCode.Unauthorized, client.put("/v1/perfil") { contentType(ContentType.Application.Json); setBody("{}") }.status)
         assertEquals(HttpStatusCode.NoContent, client.put("/v1/perfil") {
             header("Authorization", "Bearer $token"); contentType(ContentType.Application.Json); setBody("""{"nombre":"Eva","bio":"Cine"}""")
@@ -455,7 +454,7 @@ class SocialTest {
         val perfil = client.get("/v1/perfiles/eva").bodyAsText()
         assertTrue("\"bio\":\"Cine\"" in perfil)
         assertEquals(HttpStatusCode.NotFound, client.get("/v1/perfiles/nadie").status)
-        assertEquals(HttpStatusCode.BadRequest, client.post("/v1/cuentas") { contentType(ContentType.Application.Json); setBody("no es json") }.status)
+        assertEquals(HttpStatusCode.ServiceUnavailable, client.post("/v1/cuentas") { contentType(ContentType.Application.Json); setBody("no es json") }.status)
         // Las páginas web del enlace compartido y lo que necesita Android para abrir la app.
         val web = client.get("/@eva")
         assertEquals(HttpStatusCode.OK, web.status)

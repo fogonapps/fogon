@@ -322,6 +322,15 @@ class RedTest {
         assertEquals(false, e.puedeSubir())
     }
 
+    @Test fun cuentaNuevaSubeElApodoElegidoYNoElNombreLocal() {
+        val local = Estado(ajustes = Ajustes(nombre = ""))
+        val plan = RedSocial.planEntrada(local, "dana", nueva = true, nombre = "Dana Prueba")
+        assertTrue(plan.subir)
+        assertEquals("Dana Prueba", plan.estado.ajustes.nombre)
+        assertEquals("dana", plan.estado.perfil.usuario)
+        assertEquals("Caro", RedSocial.planEntrada(Estado(ajustes = Ajustes(nombre = "Caro")), "caro", nueva = true).estado.ajustes.nombre)
+    }
+
     @Test fun entrarRecuperaIdentidadSinCambiarElCajon() {
         val local = Estado(ajustes = Ajustes(nombre = "Teléfono"), perfil = Perfil(bio = "Local", foto = "file:///vieja"))
         val remoto = io.github.fogonapps.cajon.datos.PerfilSocial(

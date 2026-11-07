@@ -491,6 +491,8 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     val p = e.perfil
     var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
     val usuario = p.usuario
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.revisarServidor() }
     var bio by rememberSaveable { mutableStateOf(p.bio) }
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
@@ -527,6 +529,9 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
         // aquí. La app no ofrece letras; el límite cuenta letras de verdad, no unidades de UTF-16 (ver Logica.recortar).
         OutlinedTextField(nombre, { nombre = Logica.recortar(it, 40) }, Modifier.fillMaxWidth(), singleLine = true,
             label = { Text(stringResource(R.string.tu_nombre)) })
+        cuenta?.apodoDesde?.takeIf { it > System.currentTimeMillis() }?.let { desde ->
+            Pista(stringResource(R.string.red_apodo_limite, java.text.DateFormat.getDateTimeInstance().format(java.util.Date(desde))))
+        }
         OutlinedTextField(bio, { bio = it.take(200) }, Modifier.fillMaxWidth(), minLines = 3, label = { Text(stringResource(R.string.bio)) },
             supportingText = { Text("${bio.length}/200") })
         OutlinedTextField(enlaces, { enlaces = it.take(1000) }, Modifier.fillMaxWidth(), minLines = 2, label = { Text(stringResource(R.string.enlaces)) },

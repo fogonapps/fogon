@@ -1,5 +1,0 @@
-• Ya no se cierra al empezar el tutorial ni al buscar sin conexión.
-• Entrar en tu cuenta desde otro teléfono ya no cambia tu perfil ni borra tu foto.
-• El chat ya no pierde mensajes.
-• Moderación más clara y reportar comentarios con motivo.
-• Temas de libros en tu idioma, estrellas accesibles con TalkBack y confirmación al borrar.

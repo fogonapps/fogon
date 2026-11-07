@@ -27,6 +27,8 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -56,15 +58,26 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.20"
+const val VERSION = "0.21"
 
-/** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
+/** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
 
+@kotlinx.serialization.Serializable
+data class ErrorConFecha(val error: String, val desde: Long)
+
 fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY"))) {
+    launch {
+        while (isActive) {
+            try { social.limpiarSeguridad() } catch (_: Exception) {
+                environment.log.error("No se pudo completar la limpieza de seguridad")
+            }
+            kotlinx.coroutines.delay(24 * 3600_000L)
+        }
+    }
     install(ContentNegotiation) { json(JsonSocial) }
     install(StatusPages) {
-        exception<Problema> { call, p -> call.respond(HttpStatusCode.fromValue(p.codigo), Error(p.mensaje)) }
+        exception<Problema> { call, p -> call.respond(HttpStatusCode.fromValue(p.codigo), if (p.desde > 0) ErrorConFecha(p.mensaje, p.desde) else Error(p.mensaje)) }
         exception<kotlinx.serialization.SerializationException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("json")) }
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("json")) }
     }
@@ -84,7 +97,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     fun ApplicationCall.yo(): Long {
         val id = social.cuentaDe(token()) ?: throw Problema(401, "sin_cuenta")
         val soloMirar = request.local.method == io.ktor.http.HttpMethod.Get || request.local.uri.startsWith("/v1/cuenta") || request.local.uri.startsWith("/v1/salir")
-        if (!request.local.uri.startsWith("/v1/cuenta")) social.revisarSancion(id, escribir = !soloMirar)
+        if (!request.local.uri.startsWith("/v1/cuenta") && !request.local.uri.startsWith("/v1/sesiones")) social.revisarSancion(id, escribir = !soloMirar)
         return id
     }
     fun ApplicationCall.lector(): Long? = social.cuentaDe(token())
@@ -98,8 +111,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             // La dirección real llega de Caddy en X-Forwarded-For; sin él, la de la conexión.
             fun ApplicationCall.ip() = request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteAddress
             post("/cuentas") {
-                if (!registros.pasa("registro:${call.ip()}")) throw Problema(429, "despacio")
-                call.respond(HttpStatusCode.Created, social.crearSinCorreo(call.receive()))
+                throw Problema(503, "sin_correo")
             }
             post("/acceso/codigo") {
                 if (!registros.pasa("codigo:${call.ip()}")) throw Problema(429, "despacio")
@@ -107,7 +119,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
-                call.respond(social.entrar(call.receive()))
+                call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()))
             }
             // TMDB por el servidor (la clave solo vive aquí), ver Cine.
             get("/tmdb/{ruta...}") {
@@ -117,15 +129,23 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { cine.pedir(ruta, params) }
                 call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
+            // Obsoleta: se conserva sin cambios para El Cajón 1.47; se retira con C-08b.
             post("/acceso/correo") {
                 if (!registros.pasa("correo:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.estadoCorreo(call.receive<PedirCodigo>().correo))
             }
             post("/acceso/clave") {
                 if (!registros.pasa("clave:${call.ip()}")) throw Problema(429, "despacio")
-                call.respond(social.entrarConClave(call.receive()))
+                call.respond(social.entrarConClave(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()))
             }
-            put("/cuenta/clave") { social.ponerClave(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            put("/cuenta/clave") { social.ponerClave(call.yo(), call.receive(), token = call.token()); call.respond(HttpStatusCode.NoContent) }
+            get("/sesiones") { call.respond(social.sesiones(call.yo(), call.token())) }
+            delete("/sesiones/otras") { social.cerrarOtras(call.yo(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            delete("/sesiones/{id}") {
+                social.cerrarSesion(call.yo(), call.parameters["id"].orEmpty())
+                call.respond(HttpStatusCode.NoContent)
+            }
+            put("/cuenta/apodo") { social.cambiarApodo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/usuario") { call.respond(mapOf("usuario" to social.cambiarUsuario(call.yo(), call.receive()))) }
             get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }

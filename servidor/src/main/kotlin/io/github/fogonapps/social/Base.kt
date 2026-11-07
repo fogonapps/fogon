@@ -106,7 +106,7 @@ class Base(ruta: String) {
                 columna(s, "cuentas", "correo TEXT")
                 // Contraseña (opcional, con correo): PBKDF2-SHA256, sal propia, "iteraciones:sal:huella" en base64.
                 columna(s, "cuentas", "clave TEXT")
-                // Cambio de usuario: una vez cada 7 días; el usuario viejo queda reservado 14 días.
+                // Cambio de usuario: una vez cada 30 días; el usuario viejo queda reservado 14 días.
                 columna(s, "cuentas", "usuario_cambio INTEGER NOT NULL DEFAULT 0")
                 s.execute("CREATE TABLE IF NOT EXISTS usuarios_viejos(usuario TEXT PRIMARY KEY, cuenta INTEGER NOT NULL, hasta INTEGER NOT NULL)")
                 // Moderación: quién administra, lo oculto mientras se revisa, las faltas (vencen a los 90 días),
@@ -135,10 +135,51 @@ class Base(ruta: String) {
                 // Una sesión por teléfono (solo la huella del token).
                 s.execute("""CREATE TABLE IF NOT EXISTS sesiones(
                     huella TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, creada INTEGER NOT NULL)""")
+                migrarSeguridad(this)
                 // Los códigos de acceso que se mandan al correo (solo su huella; duran 10 minutos y aguantan 5 intentos).
                 s.execute("""CREATE TABLE IF NOT EXISTS codigos(
                     correo TEXT PRIMARY KEY, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0, enviado INTEGER NOT NULL)""")
             }
+        }
+    }
+
+    private fun migrarSeguridad(conexion: Connection) {
+        conexion.autoCommit = false
+        try {
+            conexion.createStatement().use { s ->
+                with(conexion) {
+                    columna(s, "sesiones", "dispositivo TEXT NOT NULL DEFAULT ''")
+                    val sinUso = s.executeQuery("PRAGMA table_info(sesiones)").use { r ->
+                        buildList { while (r.next()) add(r.getString("name")) }
+                    }.contains("ultimo_uso").not()
+                    columna(s, "sesiones", "ultimo_uso INTEGER NOT NULL DEFAULT 0")
+                    if (sinUso) s.execute("UPDATE sesiones SET ultimo_uso = creada")
+                    columna(s, "sesiones", "elevada_hasta INTEGER NOT NULL DEFAULT 0")
+                    s.execute("CREATE INDEX IF NOT EXISTS sesiones_uso ON sesiones(ultimo_uso)")
+                    s.execute("""CREATE TABLE IF NOT EXISTS intentos(
+                        cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,
+                        fallos INTEGER NOT NULL, desde INTEGER NOT NULL, bloqueada_hasta INTEGER NOT NULL, nivel INTEGER NOT NULL)""")
+                    columna(s, "intentos", "ultimo_fallo INTEGER NOT NULL DEFAULT 0")
+                    s.execute("""CREATE TABLE IF NOT EXISTS envios_codigo(correo TEXT NOT NULL, cuando INTEGER NOT NULL)""")
+                    s.execute("CREATE INDEX IF NOT EXISTS envios_correo ON envios_codigo(correo, cuando)")
+                    s.execute("""CREATE TABLE IF NOT EXISTS apodo_cambios(
+                        cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL)""")
+                    s.execute("CREATE INDEX IF NOT EXISTS apodos_cuenta ON apodo_cambios(cuenta, cuando)")
+                    // Traslada los tokens anteriores al modelo de sesiones una sola vez.
+                    leer("SELECT id, token, creada FROM cuentas WHERE token NOT LIKE 'retirado:%'") {
+                        Triple(it.getLong(1), it.getString(2), it.getLong(3))
+                    }.forEach { (id, token, creada) ->
+                        cambiar("INSERT OR IGNORE INTO sesiones(huella, cuenta, creada, ultimo_uso) VALUES(?,?,?,?)", token, id, creada, creada)
+                        cambiar("UPDATE cuentas SET token = ? WHERE id = ?", "retirado:" + huella(tokenNuevo()), id)
+                    }
+                }
+            }
+            conexion.commit()
+        } catch (e: Exception) {
+            conexion.rollback()
+            throw e
+        } finally {
+            conexion.autoCommit = true
         }
     }
 

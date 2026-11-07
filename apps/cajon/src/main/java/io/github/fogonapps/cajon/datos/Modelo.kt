@@ -386,6 +386,7 @@ data class Estado(
     /** Ya pasó por el tutorial. */
     val listo: Boolean = false,
     val ajustes: Ajustes = Ajustes(),
+    val apariencia: AparienciaCuenta? = null,
     val obras: List<Obra> = emptyList(),
     val artistas: List<Artista> = emptyList(),
     val listas: List<Lista> = emptyList(),

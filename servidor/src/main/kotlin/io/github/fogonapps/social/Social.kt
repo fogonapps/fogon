@@ -105,11 +105,14 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     /** Desde cuándo puede volver a cambiar el usuario (0 = ya). */
     val usuarioDesde: Long = 0,
     val admin: Boolean = false,
+    val apodoDesde: Long,
 )
 @Serializable data class EntradaClave(val correo: String, val clave: String)
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class CambioClave(val nueva: String, val actual: String = "")
+@Serializable data class Sesion(val id: String, val dispositivo: String, val creada: Long, val ultimo_uso: Long, val actual: Boolean)
+@Serializable data class CambioApodo(val nombre: String)
 @Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
 @Serializable data class Ajustes(val privada: Boolean? = null)
@@ -133,7 +136,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class Sobre(val id: Long, val de: Persona, val cuando: Long, val sobre: String, val firma: String)
 @Serializable data class Error(val error: String)
 
-class Problema(val codigo: Int, val mensaje: String) : Exception(mensaje)
+class Problema(val codigo: Int, val mensaje: String, val desde: Long = 0) : Exception(mensaje)
 
 /** Todo lo que hace el servidor, sin HTTP (así se prueba directo). [ahora] se puede cambiar en las pruebas. */
 class Social(
@@ -163,13 +166,20 @@ class Social(
     }
 
     /** Manda un código de 6 números al correo (uno por minuto como mucho). Sirve para entrar o para crear la cuenta. */
+    @Synchronized
     fun pedirCodigo(correoDado: String) {
         val correo = correoDado.trim().lowercase()
         if (!CORREO.matches(correo) || correo.length > 120) throw Problema(400, "correo")
         val antes = b.usar { leer("SELECT enviado FROM codigos WHERE correo = ?", correo) { it.getLong(1) }.firstOrNull() }
         if (antes != null && ahora() - antes < 60_000) throw Problema(429, "despacio")
-        val codigo = (0 until 6).map { azar.nextInt(10) }.joinToString("")
+        if (b.usar { leer("SELECT COUNT(*) FROM envios_codigo WHERE correo = ? AND cuando > ?", correo, ahora() - HORA) { it.getInt(1) }.first() } >= 5)
+            throw Problema(429, "despacio")
+        val huellaAnterior = b.usar { leer("SELECT huella FROM codigos WHERE correo = ?", correo) { it.getString(1) }.firstOrNull() }
+        var codigo: String
+        do { codigo = (0 until 6).map { azar.nextInt(10) }.joinToString("") }
+        while (Base.huella("$correo:$codigo") == huellaAnterior)
         b.usar {
+            cambiar("INSERT INTO envios_codigo VALUES(?,?)", correo, ahora())
             cambiar("""INSERT INTO codigos(correo, huella, expira, intentos, enviado) VALUES(?,?,?,0,?)
                 ON CONFLICT(correo) DO UPDATE SET huella = excluded.huella, expira = excluded.expira, intentos = 0, enviado = excluded.enviado""",
                 correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000, ahora())
@@ -183,7 +193,9 @@ class Social(
      * aceptar la política y los términos ([POLITICA]) y tener 18 años o más; mientras no lleguen, responde
      * "cuenta_nueva" sin gastar el código (la app pregunta y vuelve a llamar).
      */
-    fun entrar(e: Entrada): Acceso {
+    @Synchronized
+    fun entrar(e: Entrada, dispositivo: String = ""): Acceso {
+        if (e.clave.isNotEmpty()) Claves.validar(e.clave)
         val correo = e.correo.trim().lowercase()
         codigoBueno(correo, e.codigo)
         val existente = b.usar { leer("SELECT id, usuario FROM cuentas WHERE correo = ?", correo) { it.getLong(1) to it.getString(2) }.firstOrNull() }
@@ -196,17 +208,21 @@ class Social(
             if (!usuarioLibre(u)) throw Problema(409, "usuario_tomado")
             val nuevo = b.usar {
                 insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio, correo, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?,?)",
-                    u, Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
+                    u, "retirado:" + Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
             }
             Triple(nuevo, u, true)
         }
         // Con el código comprobado se puede poner la contraseña (nueva cuenta, la olvidó o no tenía).
         if (e.clave.isNotEmpty()) {
-            if (e.clave.length < 8 || e.clave.length > 200) throw Problema(400, "clave_corta")
             b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(e.clave), id) }
         }
         b.usar { cambiar("DELETE FROM codigos WHERE correo = ?", correo) }
-        return Acceso(usuario, sesionNueva(id), nueva)
+        val token = sesionNueva(id, dispositivo, cerrarAnteriores = e.clave.isNotEmpty())
+        if (e.clave.isNotEmpty()) {
+            avisarClave(id)
+        }
+        b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
+        return Acceso(usuario, token, nueva)
     }
 
     /** Revisa el código de [correo] (sin gastarlo); cada intento malo cuenta, y a los 5 se vence. */
@@ -221,23 +237,6 @@ class Social(
         }
     }
 
-    /**
-     * Crea la cuenta sin correo, cuando el servidor no puede mandar códigos: queda en este teléfono (con su token);
-     * después se le puede vincular un correo ([vincularCorreo]) para recuperarla en otro.
-     */
-    fun crearSinCorreo(e: Entrada): Acceso {
-        if (e.acepta != POLITICA) throw Problema(400, "acepta")
-        if (!e.mayorDeEdad) throw Problema(400, "edad")
-        val u = e.usuario.trim().lowercase()
-        if (!USUARIO.matches(u)) throw Problema(400, "usuario")
-        if (!usuarioLibre(u)) throw Problema(409, "usuario_tomado")
-        val id = b.usar {
-            insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?)",
-                u, Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), POLITICA, ahora())
-        }
-        return Acceso(u, sesionNueva(id), true)
-    }
-
     /** Le pone a la cuenta el correo de [e] (con su código), para poder entrar desde otro teléfono. */
     fun vincularCorreo(yo: Long, e: Entrada) {
         val correo = e.correo.trim().lowercase()
@@ -249,12 +248,73 @@ class Social(
         }
     }
 
-    private fun sesionNueva(cuenta: Long): String {
+    private fun sesionNueva(cuenta: Long, dispositivoDado: String = "", cerrarAnteriores: Boolean = false): String {
         if (b.usar { leer("SELECT cerrada FROM cuentas WHERE id = ?", cuenta) { it.getInt(1) == 1 }.first() }) throw Problema(403, "cerrada")
+        val dispositivo = dispositivoDado.filter { !it.isISOControl() }.take(60)
+        val nueva = dispositivo.isNotBlank() && b.usar {
+            leer("SELECT 1 FROM sesiones WHERE cuenta = ? AND dispositivo = ? AND ultimo_uso > ?", cuenta, dispositivo, ahora() - CADUCIDAD) { 1 }.isEmpty()
+        }
         val token = Base.tokenNuevo()
-        b.usar { cambiar("INSERT INTO sesiones(huella, cuenta, creada) VALUES(?,?,?)", Base.huella(token), cuenta, ahora()) }
+        b.usar {
+            cambiar("INSERT INTO sesiones(huella, cuenta, creada, dispositivo, ultimo_uso) VALUES(?,?,?,?,?)", Base.huella(token), cuenta, ahora(), dispositivo, ahora())
+            if (cerrarAnteriores) cerrarOtras(cuenta, token)
+        }
+        if (nueva) avisar(cuenta, "Se entró a tu cuenta desde $dispositivo",
+            "Entrada desde $dispositivo a las ${java.time.Instant.ofEpochMilli(ahora())} (UTC). Si no fuiste tú, abre El Cajón, Tu cuenta de la red → Dónde has entrado y cierra esa sesión.")
         return token
     }
+
+    private fun idSesion(huella: String): String {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256"))
+        return mac.doFinal(("sesion:" + huella).toByteArray()).take(16).joinToString("") { "%02x".format(it) }
+    }
+
+    fun sesiones(yo: Long, token: String?): List<Sesion> = b.usar {
+        leer("SELECT huella, dispositivo, creada, ultimo_uso FROM sesiones WHERE cuenta = ? AND ultimo_uso > ? ORDER BY creada", yo, ahora() - CADUCIDAD) {
+            Sesion(idSesion(it.getString(1)), it.getString(2), it.getLong(3), it.getLong(4), it.getString(1) == Base.huella(token.orEmpty()))
+        }
+    }
+
+    fun cerrarSesion(yo: Long, id: String) {
+        b.usar {
+            leer("SELECT huella FROM sesiones WHERE cuenta = ?", yo) { it.getString(1) }
+                .firstOrNull { idSesion(it) == id }?.let { cambiar("DELETE FROM sesiones WHERE cuenta = ? AND huella = ?", yo, it) }
+        }
+    }
+
+    @Synchronized
+    fun cerrarOtras(yo: Long, token: String?) {
+        b.usar {
+            cambiar("DELETE FROM sesiones WHERE cuenta = ? AND huella <> ?", yo, Base.huella(token.orEmpty()))
+        }
+    }
+
+    private fun avisar(yo: Long, asunto: String, texto: String) {
+        val correo = b.usar { leer("SELECT correo FROM cuentas WHERE id = ?", yo) { it.getString(1) }.firstOrNull() }
+        if (!correo.isNullOrBlank()) {
+            // Un fallo SMTP no revierte un cambio de seguridad ya aplicado.
+            try { cartero.enviar(correo, asunto, texto) } catch (_: Exception) {
+                System.err.println("No se pudo enviar un aviso de seguridad")
+            }
+        }
+    }
+
+    private fun avisarClave(yo: Long) = avisar(yo, "Tu contraseña de El Cajón cambió",
+        "Tu contraseña de El Cajón cambió. Si no fuiste tú, entra con un código de tu correo, cambia la contraseña y cierra las demás sesiones desde Tu cuenta de la red.")
+
+    fun limpiarSeguridad() {
+        b.usar {
+            cambiar("DELETE FROM sesiones WHERE ultimo_uso <= ?", ahora() - CADUCIDAD)
+            cambiar("DELETE FROM intentos WHERE ultimo_fallo <= ? AND bloqueada_hasta <= ?", ahora() - DIA, ahora())
+            cambiar("DELETE FROM envios_codigo WHERE cuando <= ?", ahora() - HORA)
+            cambiar("DELETE FROM apodo_cambios WHERE cuando <= ?", ahora() - 14 * DIA)
+        }
+    }
+
+    private val HORA = 3600_000L
+    private val DIA = 24 * HORA
+    private val CADUCIDAD = 90 * DIA
 
     /** Cierra la sesión de este teléfono. */
     fun salir(token: String?) {
@@ -264,29 +324,50 @@ class Social(
 
     fun miCuenta(yo: Long): MiCuenta = b.usar {
         leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (it.getLong(6) + SEMANA).takeIf { d -> d > ahora() } ?: 0, it.getInt(7) == 1)
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, it.getInt(7) == 1, apodoDesde(yo))
         }.first()
     }
 
     /* ----- Contraseña ----- */
 
-    /** Entrar con correo y contraseña (si la cuenta tiene). Los intentos los limita la ruta por dirección. */
-    fun entrarConClave(e: EntradaClave): Acceso {
+    private data class Intento(val fallos: Int, val desde: Long, val bloqueadaHasta: Long, val nivel: Int, val ultimoFallo: Long)
+
+    /** Entrar con correo y contraseña. Se limitan los fallos por cuenta además del límite HTTP por dirección. */
+    @Synchronized
+    fun entrarConClave(e: EntradaClave, dispositivo: String = ""): Acceso {
         val correo = e.correo.trim().lowercase()
         val (id, usuario, guardada) = b.usar {
             leer("SELECT id, usuario, clave FROM cuentas WHERE correo = ?", correo) { Triple(it.getLong(1), it.getString(2), it.getString(3)) }.firstOrNull()
         } ?: throw Problema(400, "clave_mala")
-        if (guardada == null || !Claves.comprobar(e.clave, guardada)) throw Problema(400, "clave_mala")
-        return Acceso(usuario, sesionNueva(id), false)
+        val intento = b.usar { leer("SELECT fallos, desde, bloqueada_hasta, nivel, ultimo_fallo FROM intentos WHERE cuenta = ?", id) {
+            Intento(it.getInt(1), it.getLong(2), it.getLong(3), it.getInt(4), it.getLong(5))
+        }.firstOrNull() }?.takeIf { ahora() - it.ultimoFallo < DIA }
+        if (intento != null && intento.bloqueadaHasta > ahora()) throw Problema(400, "clave_mala")
+        if (guardada == null || !Claves.comprobar(e.clave, guardada)) {
+            val fallos = if (intento != null && ahora() - intento.desde < 15 * 60_000 && intento.bloqueadaHasta == 0L) intento.fallos + 1 else 1
+            val nivel = intento?.nivel ?: 0
+            val espera = if (fallos >= 5) listOf(1, 5, 15, 60)[nivel.coerceAtMost(3)] * 60_000L else 0L
+            val desde = if (fallos > 1) intento!!.desde else ahora()
+            b.usar { cambiar("INSERT OR REPLACE INTO intentos(cuenta, fallos, desde, bloqueada_hasta, nivel, ultimo_fallo) VALUES(?,?,?,?,?,?)", id, fallos, desde, if (espera == 0L) 0 else ahora() + espera, if (espera == 0L) nivel else (nivel + 1).coerceAtMost(4), ahora()) }
+            throw Problema(400, "clave_mala")
+        }
+        b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
+        return Acceso(usuario, sesionNueva(id, dispositivo), false)
     }
 
     /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
-    fun ponerClave(yo: Long, c: CambioClave, conCodigo: Boolean = false) {
-        if (c.nueva.length < 8 || c.nueva.length > 200) throw Problema(400, "clave_corta")
+    @Synchronized
+    fun ponerClave(yo: Long, c: CambioClave, conCodigo: Boolean = false, token: String? = null) {
+        Claves.validar(c.nueva)
         val (correo, guardada) = b.usar { leer("SELECT correo, clave FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
         if (correo == null) throw Problema(400, "sin_correo")
         if (guardada != null && !conCodigo && !Claves.comprobar(c.actual, guardada)) throw Problema(400, "clave_mala")
-        b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(c.nueva), yo) }
+        b.usar {
+            cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(c.nueva), yo)
+            cambiar("DELETE FROM intentos WHERE cuenta = ?", yo)
+            cerrarOtras(yo, token)
+        }
+        avisarClave(yo)
     }
 
     /* ----- El cajón guardado en la cuenta (cifrado de extremo a extremo) ----- */
@@ -315,13 +396,14 @@ class Social(
 
     /* ----- Cambiar el usuario ----- */
 
-    /** Cambia el @usuario: una vez cada 7 días; el viejo queda reservado 14 días para la misma persona. */
+    /** Cambia el @usuario: una vez cada 30 días; el viejo queda reservado 14 días para la misma persona. */
+    @Synchronized
     fun cambiarUsuario(yo: Long, c: CambioUsuario): String {
         val nuevo = c.usuario.trim().lowercase()
         if (!USUARIO.matches(nuevo) || nuevo in RESERVADOS) throw Problema(400, "usuario")
         val (actual, ultimo) = b.usar { leer("SELECT usuario, usuario_cambio FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getLong(2) }.first() }
         if (nuevo == actual) return actual
-        if (ahora() - ultimo < SEMANA) throw Problema(429, "usuario_espera")
+        if (ultimo != 0L && ahora() - ultimo < 30 * DIA) throw Problema(429, "usuario_espera")
         b.usar { cambiar("DELETE FROM usuarios_viejos WHERE hasta < ?", ahora()) }
         val reservado = b.usar { leer("SELECT cuenta FROM usuarios_viejos WHERE usuario = ?", nuevo) { it.getLong(1) }.firstOrNull() }
         if (reservado != null && reservado != yo || b.usar { leer("SELECT 1 FROM cuentas WHERE usuario = ?", nuevo) { 1 }.isNotEmpty() }) throw Problema(409, "usuario_tomado")
@@ -341,8 +423,9 @@ class Social(
         val token = Base.tokenNuevo()
         b.usar {
             if (leer("SELECT 1 FROM cuentas WHERE usuario = ?", usuario) { 1 }.isNotEmpty()) throw Problema(409, "usuario_tomado")
-            insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio) VALUES(?,?,?,?,?)",
-                usuario, Base.huella(token), n.nombre.trim().take(40), ahora(), ahora())
+            val id = insertar("INSERT INTO cuentas(usuario, token, nombre, creada, cambio) VALUES(?,?,?,?,?)",
+                usuario, "retirado:" + Base.huella(Base.tokenNuevo()), n.nombre.trim().take(40), ahora(), ahora())
+            cambiar("INSERT INTO sesiones(huella, cuenta, creada, ultimo_uso) VALUES(?,?,?,?)", Base.huella(token), id, ahora(), ahora())
         }
         return CuentaCreada(usuario, token)
     }
@@ -360,8 +443,14 @@ class Social(
         if (token.isNullOrBlank()) return null
         val h = Base.huella(token)
         return b.usar {
-            leer("SELECT cuenta FROM sesiones WHERE huella = ?", h) { it.getLong(1) }.firstOrNull()
-                ?: leer("SELECT id FROM cuentas WHERE token = ?", h) { it.getLong(1) }.firstOrNull()
+            val sesion = leer("SELECT cuenta, ultimo_uso FROM sesiones WHERE huella = ?", h) { it.getLong(1) to it.getLong(2) }.firstOrNull()
+            if (sesion != null && ahora() - sesion.second >= CADUCIDAD) {
+                cambiar("DELETE FROM sesiones WHERE huella = ?", h)
+                return@usar null
+            }
+            if (sesion != null && ahora() - sesion.second >= HORA)
+                cambiar("UPDATE sesiones SET ultimo_uso = ? WHERE huella = ?", ahora(), h)
+            sesion?.first
         }
     }
 
@@ -395,15 +484,38 @@ class Social(
 
     /* ----- Perfil y foto ----- */
 
+    private fun apodoDesde(yo: Long): Long = b.usar {
+        val fechas = leer("SELECT cuando FROM apodo_cambios WHERE cuenta = ? AND cuando > ? ORDER BY cuando", yo, ahora() - 14 * DIA) { it.getLong(1) }
+        if (fechas.size < 2) 0 else fechas[fechas.size - 2] + 14 * DIA
+    }
+
+    @Synchronized
+    fun cambiarApodo(yo: Long, c: CambioApodo) {
+        val espera = apodoDesde(yo)
+        val anterior = miCuenta(yo).nombre
+        val nombre = c.nombre.trim().take(40)
+        if (nombre == anterior) return
+        if (espera > ahora()) throw Problema(429, "apodo_espera", espera)
+        val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.first() }
+        subirPerfil(yo, perfil.copy(nombre = nombre))
+    }
+
+    @Synchronized
     fun subirPerfil(yo: Long, p: PerfilSubido) {
+        val anterior = miCuenta(yo).nombre
+        val nombre = p.nombre.trim().take(40)
+        val cambia = nombre != anterior && apodoDesde(yo) <= ahora()
         val limpio = p.copy(
-            nombre = p.nombre.trim().take(40), bio = p.bio.trim().take(200), portada = p.portada.take(500).takeIf { it.startsWith("https://") } ?: "",
+            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.take(500).takeIf { it.startsWith("https://") } ?: "",
             enlaces = p.enlaces.filter { it.startsWith("https://") || it.startsWith("http://") }.map { it.take(200) }.take(5),
             partes = p.partes.filterValues { it.visibilidad in Vis.SUBIBLES }.entries.take(20).associate { it.key.take(30) to it.value },
         )
         val json = JsonSocial.encodeToString(PerfilSubido.serializer(), limpio)
         if (json.length > 200_000) throw Problema(413, "muy_grande")
-        b.usar { cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = ? WHERE id = ?", limpio.nombre, json, ahora(), yo) }
+        b.usar {
+            if (cambia) cambiar("INSERT INTO apodo_cambios VALUES(?,?)", yo, ahora())
+            cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = ? WHERE id = ?", limpio.nombre, json, ahora(), yo)
+        }
     }
 
     /** La foto: un JPEG de hasta 400 KB (la app la achica antes). */
@@ -1085,6 +1197,6 @@ class Social(
         val CORREO = Regex("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}")
         /** Igual que en El Cajón (`Logica.usuarioLimpio`): 3 a 30 de letras, números, punto y guion bajo. */
         val USUARIO = Regex("[a-z0-9._]{3,30}")
-        val RESERVADOS = setOf("admin", "fogon", "elcajon", "cajon", "soporte", "api", "root", "moderacion", "explorar", "p", "privacidad", "terminos")
+        val RESERVADOS = setOf("admin", "elcajon", "cajon", "soporte", "api", "root", "moderacion", "explorar", "p", "privacidad", "terminos")
     }
 }

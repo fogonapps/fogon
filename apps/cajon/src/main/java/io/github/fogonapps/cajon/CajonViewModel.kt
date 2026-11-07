@@ -1,5 +1,8 @@
 package io.github.fogonapps.cajon
 
+import io.github.fogonapps.cajon.datos.paraCuenta
+import io.github.fogonapps.cajon.datos.paraTelefono
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -149,6 +152,7 @@ sealed interface Pantalla {
     data object Moderacion : Pantalla
     /** Lo público que lleva una #etiqueta. */
     data class EtiquetaRed(val etiqueta: String) : Pantalla
+    data object Sesiones : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
 }
@@ -407,9 +411,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private val almacenApariencia = io.github.fogonapps.identidad.AlmacenApariencia.de(app)
+
+    private fun aplicarApariencia(e: Estado) {
+        e.apariencia?.paraTelefono()?.let { if (it != almacenApariencia.estado.value) almacenApariencia.aplicar(it) }
+    }
+
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
+            aplicarApariencia(requireNotNull(_estado.value))
+            launch {
+                almacenApariencia.estado.collect { a ->
+                    val anterior = _estado.value?.apariencia
+                    if (anterior == null || anterior.paraTelefono() != a)
+                        cambiar { it.copy(apariencia = a.paraCuenta(if (anterior == null) 0 else maxOf(ahora(), anterior.cambio + 1))) }
+                }
+            }
             sincronizar()
             // La sincronización con el PC (por un Gist de GitHub) ya no está: la cuenta de la red la reemplaza. Se
             // desconecta una vez (el Gist queda en la cuenta de GitHub de la persona; no se borra nada).
@@ -431,7 +449,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (caja.llaveCajon != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(15_000); sincronizar() } }
             } }
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
-            almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
+            almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) { _estado.value = d; aplicarApariencia(d) } }
         }
     }
 
@@ -1979,11 +1997,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Nombre, usuario, biografía y enlaces (los que no parecen dirección se descartan). */
     fun guardarIdentidad(nombre: String, usuario: String, bio: String, enlaces: List<String>) {
-        cambiar { e -> e.copy(ajustes = e.ajustes.copy(nombre = L.recortar(nombre.trim(), 40), cambio = ahora())) }
-        cambiarPerfil { it.copy(usuario = L.usuarioLimpio(usuario), bio = bio.trim().take(200),
-            enlaces = enlaces.mapNotNull { x -> L.enlaceLimpio(x) }.distinct().take(5)) }
-        avisar(tx(R.string.perfil_guardado))
-        cerrar()
+        fun guardar(aceptado: Boolean) {
+            if (aceptado) cambiar { e -> e.copy(ajustes = e.ajustes.copy(nombre = L.recortar(nombre.trim(), 40), cambio = ahora())) }
+            cambiarPerfil { it.copy(usuario = L.usuarioLimpio(usuario), bio = bio.trim().take(200),
+                enlaces = enlaces.mapNotNull { x -> L.enlaceLimpio(x) }.distinct().take(5)) }
+            avisar(tx(R.string.perfil_guardado))
+            if (aceptado) cerrar()
+        }
+        if (red.usuario.value != null && nombre.trim() != _estado.value?.ajustes?.nombre)
+            red.guardarApodo(L.recortar(nombre.trim(), 40), ::guardar)
+        else guardar(true)
     }
 
     /** La foto o la portada del perfil desde el teléfono (se quedan en este teléfono). */
@@ -2105,12 +2128,21 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 descargar = { c.cajon() },
                 unir = { remoto ->
                     escuchas.unir(remoto.escuchas)
-                    val unido = L.normalizar(L.unir(_estado.value ?: throw java.io.IOException("sin cajón local"), remoto.copy(escuchas = null)))
-                    if (unido != _estado.value) { _estado.value = unido; guardarYa() }
+                    val local = _estado.value ?: throw java.io.IOException("sin cajón local")
+                    val entrada = caja.aparienciaCuentaPendiente
+                    val unido = L.normalizar(L.unir(local, remoto.copy(escuchas = null))).let {
+                        if (entrada && remoto.apariencia != null) it.copy(apariencia = remoto.apariencia) else it
+                    }
+                    val cambiado = unido != _estado.value
+                    _estado.value = unido
+                    aplicarApariencia(unido)
+                    if (cambiado) guardarYa()
+                    if (mismaSesion()) caja.aparienciaCuentaPendiente = false
                 },
                 local = { _estado.value?.let { paraAfuera(it) } },
                 guardar = { sobre, cambio -> c.guardarCajon(sobre, cambio) },
                 confirmar = {
+                    if (mismaSesion()) caja.aparienciaCuentaPendiente = false
                     if (permiteReemplazarCajon(llave, caja.reemplazarCajonRemoto)) caja.reemplazarCajonRemoto = null
                 },
             )

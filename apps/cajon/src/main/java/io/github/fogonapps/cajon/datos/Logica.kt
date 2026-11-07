@@ -54,6 +54,7 @@ object Logica {
     fun unir(a: Estado, b: Estado): Estado = Estado(
         v = maxOf(a.v, b.v),
         listo = a.listo || b.listo,
+        apariencia = unirApariencia(a.apariencia, b.apariencia),
         ajustes = if (b.ajustes.cambio > a.ajustes.cambio) b.ajustes else a.ajustes,
         obras = unirPor(a.obras, b.obras, { it.id }, { it.cambio }),
         artistas = unirPor(a.artistas, b.artistas, { it.id }, { it.cambio }),

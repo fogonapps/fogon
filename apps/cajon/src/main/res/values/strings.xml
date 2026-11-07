@@ -917,7 +917,7 @@
   <string name="red_clave">Password</string>
   <string name="red_cambiar_usuario">Username</string>
   <string name="red_usuario_desde">You can change it again from %1$s.</string>
-  <string name="red_usuario_regla">You can change it once every 7 days. Your link changes, and your old username stays reserved for you for 14 days.</string>
+  <string name="red_usuario_regla">You can change it once every 30 days. Your link changes, and your old username stays reserved for you for 14 days.</string>
   <string name="red_cambiar_clave">Change password</string>
   <string name="red_crear_clave">Create a password</string>
   <string name="red_clave_actual">Current password</string>
@@ -928,7 +928,7 @@
   <string name="red_usuario_cambiado">Username changed</string>
   <string name="red_clave_mala">Wrong email or password</string>
   <string name="red_clave_corta">Password needs at least 8 characters</string>
-  <string name="red_usuario_espera">You can only change it once every 7 days</string>
+  <string name="red_usuario_espera">You can only change it once every 30 days</string>
   <string name="red_suspendida">Your account is suspended for breaking the rules</string>
   <string name="red_aviso_publico">posted something new</string>
   <plurals name="notif_avisos">
@@ -1173,4 +1173,22 @@
   <string name="mod_evadir_sancion">Evading a sanction</string>
   <string name="mod_cierre">Account closure</string>
   <string name="mod_un_punto">1 point</string>
+  <string name="red_clave_comun">That password is too common; use another one or a phrase</string>
+  <string name="red_codigo_no_disponible">We cannot send codes right now; try again later</string>
+  <string name="red_entrar_clave">Sign in with password</string>
+  <string name="red_reenviar">Resend code</string>
+  <string name="red_reenviar_en">Resend in %1$d s</string>
+  <string name="red_foto_opcional">Choose photo (optional; you can skip it)</string>
+  <string name="red_foto_elegida">Photo selected; change</string>
+  <string name="red_apodo_desde">You can change your display name again from %1$s. Other changes have been saved.</string>
+  <string name="red_sesiones">Where you are signed in</string>
+  <string name="red_actualizar_sesiones">Refresh sessions</string>
+  <string name="red_dispositivo_desconocido">Unknown device</string>
+  <string name="red_este_telefono">This phone</string>
+  <string name="red_sesion_fechas">Signed in: %1$s\nLast used: %2$s</string>
+  <string name="red_cerrar_sesion">Close</string>
+  <string name="red_cerrar_sesion_confirmar">Close this session? That device will need to sign in again.</string>
+  <string name="red_cerrar_otras">Close all other sessions</string>
+  <string name="red_cerrar_otras_confirmar">Close every session except this phone?</string>
+  <string name="red_apodo_limite">You can change your display name again from %1$s</string>
 </resources>

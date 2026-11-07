@@ -65,12 +65,10 @@ data class PerfilSubido(
     val acepta: String = "", val mayorDeEdad: Boolean = false, val clave: String = "",
 )
 @Serializable private data class Correo(val correo: String)
-/** Si el correo tiene cuenta y contraseña (para registrarse o entrar). */
-@Serializable data class EstadoCorreo(val existe: Boolean = false, val conClave: Boolean = false)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false)
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
-    val conClave: Boolean = false, val usuarioDesde: Long = 0, val admin: Boolean = false)
+    val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false)
 @Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0)
 @Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
@@ -79,6 +77,22 @@ data class PerfilSubido(
     val cerrada: Boolean = false, val admin: Boolean = false)
 @Serializable private data class EntradaClave(val correo: String, val clave: String)
 @Serializable private data class CambioClave(val nueva: String, val actual: String = "")
+@Serializable private data class CambioApodo(val nombre: String)
+@Serializable data class SesionSocial(val id: String, val dispositivo: String = "", val creada: Long = 0, @kotlinx.serialization.SerialName("ultimo_uso") val ultimoUso: Long = 0, val actual: Boolean = false)
+
+/** Nombre declarado por Android, apto para una cabecera HTTP. */
+fun nombreDispositivo(fabricante: String, modelo: String): String {
+    fun limpiar(valor: String) = valor.filter { it.code in 32..126 }.trim().replace(Regex("\\s+"), " ")
+    val marca = limpiar(fabricante)
+    val telefono = limpiar(modelo)
+    return (if (telefono.startsWith(marca, ignoreCase = true)) telefono else "$marca $telefono").trim().take(60)
+}
+
+data class SesionMostrada(val id: String, val dispositivo: String?, val creada: Long, val ultimoUso: Long, val actual: Boolean)
+fun SesionSocial.paraPantalla() = SesionMostrada(id, dispositivo.trim().takeIf { it.isNotEmpty() }, creada, ultimoUso, actual)
+
+fun esCuentaNueva(error: ErrorSocial) = error.codigo == 409 && error.error == "cuenta_nueva"
+
 @Serializable private data class CambioUsuario(val usuario: String)
 /** Lo que dice el servidor de sí mismo: si puede mandar códigos por correo y la versión de la política. */
 @Serializable data class InfoServidor(val version: String = "", val correo: String = "false", val politica: String = "")
@@ -111,6 +125,7 @@ class ClienteSocial(private val token: String? = null) {
     private suspend fun pedir(ruta: String, metodo: String = "GET", cuerpo: okhttp3.RequestBody? = null, cliente: OkHttpClient = http): String? = withContext(Dispatchers.IO) {
         val req = Request.Builder().url(SERVIDOR + "/v1" + ruta).method(metodo, cuerpo ?: if (metodo in setOf("POST", "PUT")) ByteArray(0).toRequestBody() else null)
             .header("User-Agent", "ElCajon-Fogon")
+            .header("X-Fogon-Dispositivo", nombreDispositivo(android.os.Build.MANUFACTURER, android.os.Build.MODEL))
             .apply { token?.let { header("Authorization", "Bearer $it") } }
             .build()
         cliente.newCall(req).execute().use { r ->
@@ -131,15 +146,11 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun info(): InfoServidor = leer(InfoServidor.serializer(), pedir("/estado"))
     suspend fun usuarioLibre(usuario: String): Boolean =
         JsonCajon.parseToJsonElement(pedir("/usuarios/${cod(usuario)}/libre")!!).jsonObject["libre"]!!.jsonPrimitive.boolean
-    /** Crea la cuenta sin correo (cuando el servidor no manda códigos): queda en este teléfono. */
-    suspend fun crearSinCorreo(usuario: String, nombre: String, politica: String): Acceso =
-        leer(Acceso.serializer(), pedir("/cuentas", "POST", json(Entrada.serializer(), Entrada(usuario = usuario, nombre = nombre, acepta = politica, mayorDeEdad = true))))
     suspend fun pedirCodigo(correo: String) { pedir("/acceso/codigo", "POST", json(Correo.serializer(), Correo(correo))) }
     /** Entra con el código. Para una cuenta nueva el servidor responde "cuenta_nueva" hasta que lleguen [usuario] y la aceptación. */
     suspend fun entrar(correo: String, codigo: String, usuario: String = "", nombre: String = "", politica: String = "", clave: String = ""): Acceso =
         leer(Acceso.serializer(), pedir("/acceso", "POST", json(Entrada.serializer(),
             Entrada(correo, codigo, usuario, nombre, politica, mayorDeEdad = politica.isNotEmpty(), clave = clave))))
-    suspend fun estadoCorreo(correo: String) = leer(EstadoCorreo.serializer(), pedir("/acceso/correo", "POST", json(Correo.serializer(), Correo(correo))))
     suspend fun vincularCorreo(correo: String, codigo: String) { pedir("/cuenta/correo", "POST", json(Entrada.serializer(), Entrada(correo, codigo))) }
     suspend fun salir() { pedir("/salir", "POST") }
     suspend fun cajon() = leer(CajonCifrado.serializer(), pedir("/cajon"))
@@ -154,6 +165,10 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun ponerClave(nueva: String, actual: String = "") { pedir("/cuenta/clave", "PUT", json(CambioClave.serializer(), CambioClave(nueva, actual))) }
     suspend fun cambiarUsuario(u: String): String =
         JsonCajon.parseToJsonElement(pedir("/cuenta/usuario", "PUT", json(CambioUsuario.serializer(), CambioUsuario(u)))!!).jsonObject["usuario"]!!.jsonPrimitive.content
+    suspend fun cambiarApodo(nombre: String) { pedir("/cuenta/apodo", "PUT", json(CambioApodo.serializer(), CambioApodo(nombre))) }
+    suspend fun sesiones() = leer(ListSerializer(SesionSocial.serializer()), pedir("/sesiones"))
+    suspend fun cerrarSesion(id: String) { pedir("/sesiones/${cod(id)}", "DELETE") }
+    suspend fun cerrarOtrasSesiones() { pedir("/sesiones/otras", "DELETE") }
     suspend fun miCuenta(): MiCuenta = leer(MiCuenta.serializer(), pedir("/cuenta"))
     suspend fun borrarCuenta() { pedir("/cuenta", "DELETE") }
     suspend fun privada(si: Boolean) { pedir("/cuenta", "PUT", json(Privada.serializer(), Privada(si))) }
@@ -163,6 +178,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun subirFoto(jpeg: ByteArray) { pedir("/foto", "PUT", jpeg.toRequestBody(JPEG)) }
     suspend fun descargarFoto(usuario: String): ByteArray = withContext(Dispatchers.IO) {
         val solicitud = Request.Builder().url(foto(usuario))
+            .header("X-Fogon-Dispositivo", nombreDispositivo(android.os.Build.MANUFACTURER, android.os.Build.MODEL))
             .apply { token?.let { header("Authorization", "Bearer $it") } }
             .build()
         http.newCall(solicitud).execute().use { r ->

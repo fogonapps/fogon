@@ -917,7 +917,7 @@
   <string name="red_clave">Contraseña</string>
   <string name="red_cambiar_usuario">Nombre de usuario</string>
   <string name="red_usuario_desde">Lo podrás cambiar otra vez desde el %1$s.</string>
-  <string name="red_usuario_regla">Se puede cambiar una vez cada 7 días. Tu enlace cambia, y el usuario de antes queda guardado para ti 14 días.</string>
+  <string name="red_usuario_regla">Se puede cambiar una vez cada 30 días. Tu enlace cambia, y el usuario de antes queda guardado para ti 14 días.</string>
   <string name="red_cambiar_clave">Cambiar la contraseña</string>
   <string name="red_crear_clave">Crear una contraseña</string>
   <string name="red_clave_actual">Contraseña actual</string>
@@ -928,7 +928,7 @@
   <string name="red_usuario_cambiado">Usuario cambiado</string>
   <string name="red_clave_mala">Correo o contraseña incorrectos</string>
   <string name="red_clave_corta">La contraseña necesita al menos 8 caracteres</string>
-  <string name="red_usuario_espera">Solo se puede cambiar una vez cada 7 días</string>
+  <string name="red_usuario_espera">Solo se puede cambiar una vez cada 30 días</string>
   <string name="red_suspendida">Tu cuenta está suspendida por incumplir las normas</string>
   <string name="red_aviso_publico">publicó algo nuevo</string>
   <plurals name="notif_avisos">
@@ -1173,4 +1173,22 @@
   <string name="mod_evadir_sancion">Evasión de una sanción</string>
   <string name="mod_cierre">Cierre de la cuenta</string>
   <string name="mod_un_punto">1 punto</string>
+  <string name="red_clave_comun">Esa contraseña es demasiado común; usa otra o una frase</string>
+  <string name="red_codigo_no_disponible">Ahora no podemos mandar códigos; inténtalo en un rato</string>
+  <string name="red_entrar_clave">Entrar con contraseña</string>
+  <string name="red_reenviar">Reenviar código</string>
+  <string name="red_reenviar_en">Reenviar en %1$d s</string>
+  <string name="red_foto_opcional">Elegir foto (opcional; puedes saltarla)</string>
+  <string name="red_foto_elegida">Foto elegida; cambiar</string>
+  <string name="red_apodo_desde">Podrás volver a cambiar el apodo desde %1$s. Lo demás se ha guardado.</string>
+  <string name="red_sesiones">Dónde has entrado</string>
+  <string name="red_actualizar_sesiones">Actualizar sesiones</string>
+  <string name="red_dispositivo_desconocido">Dispositivo desconocido</string>
+  <string name="red_este_telefono">Este teléfono</string>
+  <string name="red_sesion_fechas">Entró: %1$s\nÚltimo uso: %2$s</string>
+  <string name="red_cerrar_sesion">Cerrar</string>
+  <string name="red_cerrar_sesion_confirmar">¿Cerrar esta sesión? Ese dispositivo tendrá que volver a entrar.</string>
+  <string name="red_cerrar_otras">Cerrar todas las demás</string>
+  <string name="red_cerrar_otras_confirmar">¿Cerrar todas las sesiones salvo la de este teléfono?</string>
+  <string name="red_apodo_limite">Podrás volver a cambiar el apodo desde %1$s</string>
 </resources>
