@@ -1,5 +1,0 @@
-• Entrar es más seguro: siempre te mandamos un código y puedes pedir otro.
-• Nueva pantalla «Dónde has entrado»: mira y cierra tus sesiones.
-• Tu apariencia (tema, colores y letra) viaja con tu cuenta.
-• Se rechazan las contraseñas demasiado comunes y llegan avisos al correo.
-• Los avisos ya se ven durante el tutorial.

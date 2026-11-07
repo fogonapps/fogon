@@ -1080,6 +1080,10 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
     var correoTexto by rememberSaveable { mutableStateOf("") }
     var codigo by rememberSaveable { mutableStateOf("") }
     var borrar by remember { mutableStateOf(false) }
+    if (borrar) {
+        FormularioBorrado(vm) { borrar = false }
+        return
+    }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("@$usuario", style = MaterialTheme.typography.headlineSmall, color = f.texto)
         Text(ClienteSocial.enlacePerfil(usuario), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
@@ -1105,6 +1109,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
                 BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
             }
         }
+        if (correoCuenta.isNotBlank()) FormularioCorreo(vm)
         // Tu usuario (una vez cada 30 días) y tu contraseña.
         val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
         Desplegable(Iconos.Persona, stringResource(R.string.red_cambiar_usuario), "@$usuario") {
@@ -1135,11 +1140,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }) { Text(stringResource(R.string.red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         BotonSecundario(stringResource(R.string.red_salir), { vm.red.salir() }, Modifier.fillMaxWidth())
-        if (!borrar) BotonSecundario(stringResource(R.string.red_borrar_cuenta), { borrar = true }, Modifier.fillMaxWidth(), peligro = true)
-        else {
-            Pista(stringResource(R.string.red_borrar_cuenta_seguro))
-            BotonSecundario(stringResource(R.string.red_si_borrar), { borrar = false; vm.red.borrarCuenta() }, Modifier.fillMaxWidth(), peligro = true)
-        }
+        BotonSecundario(stringResource(R.string.red_borrar_cuenta), { borrar = true }, Modifier.fillMaxWidth(), peligro = true)
     }
 }
 
@@ -1505,5 +1506,77 @@ fun CajonEnCuenta(vm: CajonViewModel) {
             }
         }
         Pista(stringResource(R.string.nube_olvido))
+    }
+}
+
+
+@Composable
+private fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val ocupado by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
+    var clave by remember { mutableStateOf("") }
+    var codigo by remember { mutableStateOf("") }
+    var motivo by rememberSaveable { mutableStateOf("") }
+    var texto by rememberSaveable { mutableStateOf("") }
+    var confirmar by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.red_borrar_cuenta), style = MaterialTheme.typography.headlineSmall)
+        Pista(stringResource(R.string.red_borrado_explicacion))
+        Chips(listOf("" to stringResource(R.string.red_motivo_ninguno), "no_uso" to stringResource(R.string.red_motivo_no_uso),
+            "privacidad" to stringResource(R.string.red_motivo_privacidad), "problemas" to stringResource(R.string.red_motivo_problemas),
+            "otro" to stringResource(R.string.red_motivo_otro)), motivo) { motivo = it }
+        OutlinedTextField(texto, { texto = it.take(300) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_motivo_texto)) })
+        CredencialSeguridad(vm, cuenta?.conClave == true, clave, { clave = it }, codigo, { codigo = it })
+        Opcion(stringResource(R.string.red_borrar_cuenta_seguro), confirmar) { confirmar = it }
+        BotonSecundario(stringResource(R.string.red_si_borrar), { vm.red.borrarCuenta(clave, codigo, motivo, texto) }, Modifier.fillMaxWidth(), peligro = true,
+            habilitado = !ocupado && cuenta != null && confirmar && io.github.fogonapps.cajon.datos.credencialBorradoValida(cuenta?.conClave == true, clave, codigo, texto))
+        BotonSecundario(stringResource(R.string.volver), volver, Modifier.fillMaxWidth(), habilitado = !ocupado)
+    }
+}
+
+@Composable
+private fun CredencialSeguridad(vm: CajonViewModel, conClave: Boolean, clave: String, cambiarClave: (String) -> Unit, codigo: String, cambiarCodigo: (String) -> Unit) {
+    if (conClave) OutlinedTextField(clave, { cambiarClave(it.take(200)) }, Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.red_clave_actual)) }, singleLine = true,
+        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+    else {
+        BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoSeguridad() }, Modifier.fillMaxWidth())
+        OutlinedTextField(codigo, { cambiarCodigo(it.filter { c -> c in '0'..'9' }.take(6)) }, Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.red_codigo)) }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+    }
+}
+
+@Composable
+private fun FormularioCorreo(vm: CajonViewModel) {
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val pendiente by vm.red.correoPendiente.collectAsStateWithLifecycle()
+    val ocupado by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
+    Desplegable(Iconos.Candado, stringResource(R.string.red_cambiar_correo), null) {
+        var nuevo by rememberSaveable { mutableStateOf("") }
+        var clave by remember { mutableStateOf("") }
+        var codigo by remember { mutableStateOf("") }
+        var codigoNuevo by remember { mutableStateOf("") }
+        var usarCodigo by rememberSaveable { mutableStateOf(false) }
+        val pideClave = cuenta?.conClave == true && !usarCodigo
+        if (pendiente.isBlank()) {
+            OutlinedTextField(nuevo, { nuevo = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_correo_nuevo)) },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+            if (cuenta?.conClave == true) Opcion(stringResource(R.string.red_usar_codigo_actual), usarCodigo) {
+                usarCodigo = it; clave = ""; codigo = ""
+            }
+            CredencialSeguridad(vm, pideClave, clave, { clave = it }, codigo, { codigo = it })
+            BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.cambiarCorreo(nuevo, clave, codigo) }, Modifier.fillMaxWidth(),
+                habilitado = !ocupado && cuenta != null && io.github.fogonapps.cajon.datos.correoNuevoValido(nuevo, cuenta?.correo.orEmpty()) &&
+                    io.github.fogonapps.cajon.datos.credencialBorradoValida(pideClave, clave, codigo, ""))
+        } else {
+            androidx.compose.runtime.LaunchedEffect(pendiente) { clave = ""; codigo = ""; codigoNuevo = "" }
+            Pista(stringResource(R.string.red_codigo_correo_nuevo, pendiente))
+            OutlinedTextField(codigoNuevo, { codigoNuevo = it.filter { c -> c in '0'..'9' }.take(6) }, Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.red_codigo)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+            BotonRiso(stringResource(R.string.guardar), { vm.red.confirmarCorreo(codigoNuevo) }, Modifier.fillMaxWidth(), habilitado = !ocupado && codigoNuevo.length == 6)
+            BotonSecundario(stringResource(R.string.volver), { vm.red.cancelarCambioCorreo() }, Modifier.fillMaxWidth(), habilitado = !ocupado)
+        }
     }
 }

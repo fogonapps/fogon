@@ -222,6 +222,14 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                 }
             }
 
+            val borrarEl by vm.red.borrarEl.collectAsStateWithLifecycle()
+            if (borrarEl > 0) AlertDialog(
+                onDismissRequest = {},
+                title = { Text(stringResource(R.string.red_por_borrar)) },
+                text = { Text(stringResource(R.string.red_conservar_pregunta, java.text.DateFormat.getDateInstance().format(java.util.Date(borrarEl)))) },
+                confirmButton = { TextButton({ vm.red.decidirBorrado(true) }) { Text(stringResource(R.string.red_conservar)) } },
+                dismissButton = { TextButton({ vm.red.decidirBorrado(false) }) { Text(stringResource(R.string.red_seguir_borrado)) } },
+            )
             pregunta?.let { q ->
                 AlertDialog(
                     onDismissRequest = { pregunta = null },

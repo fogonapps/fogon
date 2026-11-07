@@ -58,7 +58,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.21"
+const val VERSION = "0.22"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -86,6 +86,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val pedidosCine = Limite(240)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
+            val token = call.request.header("Authorization")?.removePrefix("Bearer ")?.trim()
+            val ruta = call.request.local.uri.substringBefore('?')
+            if (ruta.startsWith("/v1/") && ruta !in setOf("/v1/cuenta", "/v1/cuenta/conservar", "/v1/cuenta/borrar", "/v1/salir") && !ruta.startsWith("/v1/acceso"))
+                social.cuentaDe(token)?.let { social.revisarBorrado(it) }
             val quien = call.request.header("Authorization") ?: call.request.origin.remoteAddress
             if (!general.pasa(quien)) call.respond(HttpStatusCode.TooManyRequests, Error("despacio"))
         }
@@ -151,7 +155,14 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta") { call.respond(social.miCuenta(call.yo())) }
-            delete("/cuenta") { social.borrarCuenta(call.yo()); call.respond(HttpStatusCode.NoContent) }
+            delete("/cuenta") { call.yo(); throw Problema(403, "actualiza_app") }
+            post("/cuenta/borrar") { social.programarBorrado(call.yo(), call.token(), call.receive<Borrado>()); call.respond(HttpStatusCode.NoContent) }
+            post("/cuenta/conservar") { social.conservarCuenta(call.yo()); call.respond(HttpStatusCode.NoContent) }
+            post("/cuenta/correo/cambiar") {
+                if (!registros.pasa("codigo:${call.ip()}")) throw Problema(429, "despacio")
+                social.cambiarCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent)
+            }
+            post("/cuenta/correo/confirmar") { social.confirmarCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta") { social.ajustar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/usuarios/{usuario}/libre") { call.respond(mapOf("libre" to social.usuarioLibre(call.usuario()))) }
 

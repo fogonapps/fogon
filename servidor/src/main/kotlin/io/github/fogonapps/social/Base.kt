@@ -115,6 +115,11 @@ class Base(ruta: String) {
                 columna(s, "cuentas", "restringida_hasta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "cuentas", "suspendida_hasta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "cuentas", "cerrada INTEGER NOT NULL DEFAULT 0")
+                columna(s, "cuentas", "borrar_el INTEGER NOT NULL DEFAULT 0")
+                s.execute("CREATE TABLE IF NOT EXISTS motivos_borrado(cuando INTEGER NOT NULL, motivo TEXT NOT NULL, texto TEXT NOT NULL DEFAULT '')")
+                s.execute("""CREATE TABLE IF NOT EXISTS cambios_correo(
+                    cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,
+                    nuevo TEXT NOT NULL, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0)""")
                 columna(s, "publicaciones", "oculta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "comentarios", "oculto INTEGER NOT NULL DEFAULT 0")
                 columna(s, "reportes", "estado TEXT NOT NULL DEFAULT 'abierto'")

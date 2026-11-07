@@ -1058,7 +1058,7 @@
   <string name="red_correo_vinculado">Correo vinculado: ya puedes entrar desde otro teléfono</string>
   <string name="red_crear_cuenta">Crear mi cuenta</string>
   <string name="red_crear_para_seguir">Crea tu cuenta para seguirla</string>
-  <string name="red_cuenta_borrada">Cuenta borrada</string>
+  <string name="red_cuenta_borrada">Tu cuenta se borrará en 7 días. Puedes entrar antes para conservarla. Tu cajón sigue en este teléfono.</string>
   <string name="red_cuenta_privada">Cuenta privada</string>
   <string name="red_cuenta_privada_pista">Con la cuenta privada, solo tus seguidores aprobados ven lo que publicas; quien quiera seguirte te lo pide.</string>
   <string name="red_cuenta_privada_texto">Esta cuenta es privada. Síguela para ver lo que publica.</string>
@@ -1191,4 +1191,21 @@
   <string name="red_cerrar_otras">Cerrar todas las demás</string>
   <string name="red_cerrar_otras_confirmar">¿Cerrar todas las sesiones salvo la de este teléfono?</string>
   <string name="red_apodo_limite">Podrás volver a cambiar el apodo desde %1$s</string>
+    <string name="red_cuenta_protegida">Esta cuenta está protegida y no se puede borrar.</string>
+    <string name="red_por_borrar">Cuenta pendiente de borrado</string>
+    <string name="red_conservar_pregunta">Tu cuenta se borrará el %1$s. ¿Quieres conservarla?</string>
+    <string name="red_conservar">Conservarla</string>
+    <string name="red_seguir_borrado">Seguir con el borrado</string>
+    <string name="red_borrado_explicacion">Tu cuenta quedará oculta durante 7 días. Después se borrarán de la red tu perfil, publicaciones, comentarios, fotos, mensajes y cajón cifrado. El cajón guardado en este teléfono se queda. Puedes entrar antes de la fecha para conservar la cuenta. No incluyas datos personales en el motivo.</string>
+    <string name="red_motivo_ninguno">Sin motivo</string>
+    <string name="red_motivo_no_uso">No la uso</string>
+    <string name="red_motivo_privacidad">Privacidad</string>
+    <string name="red_motivo_problemas">Problemas</string>
+    <string name="red_motivo_otro">Otro</string>
+    <string name="red_motivo_texto">Motivo opcional (hasta 300 caracteres)</string>
+    <string name="red_cambiar_correo">Cambiar correo</string>
+    <string name="red_correo_nuevo">Nuevo correo</string>
+    <string name="red_codigo_correo_nuevo">Escribe el código que mandamos a %1$s. Vence en 10 minutos.</string>
+    <string name="red_usar_codigo_actual">Usar un código del correo actual</string>
+    <string name="red_actualiza_app">Actualiza la app para hacer esto</string>
 </resources>

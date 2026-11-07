@@ -1058,7 +1058,7 @@
   <string name="red_correo_vinculado">Email linked: you can sign in on another phone</string>
   <string name="red_crear_cuenta">Create my account</string>
   <string name="red_crear_para_seguir">Create your account to follow</string>
-  <string name="red_cuenta_borrada">Account deleted</string>
+  <string name="red_cuenta_borrada">Your account will be deleted in 7 days. Sign in before then to keep it. Your cajón stays on this phone.</string>
   <string name="red_cuenta_privada">Private account</string>
   <string name="red_cuenta_privada_pista">With a private account, only approved followers see what you post; anyone who wants to follow you has to ask.</string>
   <string name="red_cuenta_privada_texto">This account is private. Follow it to see what it posts.</string>
@@ -1191,4 +1191,21 @@
   <string name="red_cerrar_otras">Close all other sessions</string>
   <string name="red_cerrar_otras_confirmar">Close every session except this phone?</string>
   <string name="red_apodo_limite">You can change your display name again from %1$s</string>
+    <string name="red_cuenta_protegida">This account is protected and cannot be deleted.</string>
+    <string name="red_por_borrar">Account scheduled for deletion</string>
+    <string name="red_conservar_pregunta">Your account will be deleted on %1$s. Do you want to keep it?</string>
+    <string name="red_conservar">Keep my account</string>
+    <string name="red_seguir_borrado">Continue with deletion</string>
+    <string name="red_borrado_explicacion">Your account will be hidden for 7 days. Then your profile, posts, comments, photos, messages and encrypted cajón will be deleted from the network. The cajón on this phone stays. Sign in before that date to keep your account. Do not include personal information in your reason.</string>
+    <string name="red_motivo_ninguno">No reason</string>
+    <string name="red_motivo_no_uso">I do not use it</string>
+    <string name="red_motivo_privacidad">Privacy</string>
+    <string name="red_motivo_problemas">Problems</string>
+    <string name="red_motivo_otro">Other</string>
+    <string name="red_motivo_texto">Optional reason (up to 300 characters)</string>
+    <string name="red_cambiar_correo">Change email</string>
+    <string name="red_correo_nuevo">New email</string>
+    <string name="red_codigo_correo_nuevo">Enter the code we sent to %1$s. It expires in 10 minutes.</string>
+    <string name="red_usar_codigo_actual">Use a code from the current email</string>
+    <string name="red_actualiza_app">Update the app to do this</string>
 </resources>

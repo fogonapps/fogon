@@ -129,6 +129,7 @@ class RedSocial(
 
     /** Sincronización pedida por el ViewModel; comparte la exclusión con comprobar y desbloquear. */
     fun recuperarCajon(): Job {
+        if (_borrarEl.value > 0) return scope.launch {}
         val marca = sesion.actual()
         return sincronizacionesCajon.solicitar {
             if (sesion.vigente(marca)) intentar(avisar = false) { revisarCajon() }
@@ -172,6 +173,13 @@ class RedSocial(
     val gente: StateFlow<Map<String, List<PersonaSocial>>> = _gente
     private val _privada = MutableStateFlow(false)
     val privada: StateFlow<Boolean> = _privada
+    private val _borrarEl = MutableStateFlow(0L)
+    val borrarEl: StateFlow<Long> = _borrarEl
+    private var decisionBorrado: kotlinx.coroutines.CompletableDeferred<Boolean>? = null
+    private val _correoPendiente = MutableStateFlow("")
+    val correoPendiente: StateFlow<String> = _correoPendiente
+    private val _seguridadOcupada = MutableStateFlow(false)
+    val seguridadOcupada: StateFlow<Boolean> = _seguridadOcupada
     private val _cuenta = MutableStateFlow<io.github.fogonapps.cajon.datos.MiCuenta?>(null)
     /** Lo de la cuenta en el servidor: correo, si tiene contraseña, desde cuándo puede cambiar el usuario. */
     val cuenta: StateFlow<io.github.fogonapps.cajon.datos.MiCuenta?> = _cuenta
@@ -183,17 +191,38 @@ class RedSocial(
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando
 
+    init {
+        scope.launch {
+            ClienteSocial.cuentasPorBorrar.collect { (token, desde) ->
+                if (token == caja.tokenSocial) {
+                    val fecha = if (desde > 0) desde else runCatching { ClienteSocial(token).miCuenta().borrarEl }.getOrDefault(0L)
+                    if (token == caja.tokenSocial) {
+                        sincronizacionesCajon.cancelar(); subida?.cancel()
+                        _borrarEl.value = fecha
+                    }
+                }
+            }
+        }
+    }
+
     /** Hace [trabajo]; en segundo plano omite avisos salvo el cierre de sesión por 401. */
     private suspend fun intentar(avisar: Boolean = true, marca: SesionCuenta.Marca = sesion.actual(), trabajo: suspend () -> Unit): Boolean =
         sesion.intentar(marca, trabajo) { x ->
             if (x is ErrorSocial) {
                 if (x.codigo == 401) { olvidarCuenta(); decir(R.string.red_sesion_vencida) }
+                else if (x.error == "por_borrar") {
+                    sincronizacionesCajon.cancelar(); subida?.cancel()
+                    if (x.desde > 0) _borrarEl.value = x.desde
+                }
                 else if (avisar) decir(when (x.error) {
                     "usuario_tomado" -> R.string.red_usuario_tomado
                     "usuario" -> R.string.red_usuario_malo
                     "correo" -> R.string.red_correo_malo
                     "codigo" -> R.string.red_codigo_malo
                     "codigo_vencido", "sin_codigo" -> R.string.red_codigo_vencido
+                    "actualiza_app" -> R.string.red_actualiza_app
+                    "cuenta_protegida" -> R.string.red_cuenta_protegida
+                    "por_borrar" -> R.string.red_por_borrar
                     "correo_tomado" -> R.string.red_correo_tomado
                     "despacio" -> R.string.red_despacio
                     "clave_mala" -> R.string.red_clave_mala
@@ -429,8 +458,15 @@ class RedSocial(
         caja.usuarioSocial = a.usuario
         caja.politicaSocial = politica
         caja.partesRedPuestas = true
-        _usuario.value = a.usuario
         _acceso.value = Acceso()
+        if (io.github.fogonapps.cajon.datos.debePreguntarBorrado(a.borrarEl)) {
+            subida?.cancel()
+            val decision = kotlinx.coroutines.CompletableDeferred<Boolean>()
+            decisionBorrado = decision
+            _borrarEl.value = a.borrarEl
+            if (!decision.await() || !sesion.vigente(marca)) return false
+        }
+        _usuario.value = a.usuario
         AvisosRed.programar(app)
         subida?.cancel()
         subidasPerfil.reiniciar(); ultimaFoto = null
@@ -504,13 +540,65 @@ class RedSocial(
         if (sesion.vigente(marca)) olvidarCuenta()
     }
 
-    fun borrarCuenta() = lanzar {
+    fun decidirBorrado(conservar: Boolean) = seguridad {
         val marca = sesion.actual()
-        cliente().borrarCuenta()
+        val cliente = cliente()
+        if (conservar) {
+            cliente.conservarCuenta()
+            if (!sesion.vigente(marca)) return@seguridad
+            _borrarEl.value = 0
+            if (decisionBorrado != null) {
+                decisionBorrado?.complete(true); decisionBorrado = null
+            } else {
+                traerPerfilPropio(); recuperarCajon(); cargarFeed()
+            }
+        } else {
+            runCatching { cliente.salir() }
+            if (sesion.vigente(marca)) olvidarCuenta()
+        }
+    }
+
+    private fun seguridad(trabajo: suspend () -> Unit) = scope.launch {
+        if (_seguridadOcupada.value) return@launch
+        _seguridadOcupada.value = true
+        try { intentar(trabajo = trabajo) } finally { _seguridadOcupada.value = false }
+    }
+
+    fun pedirCodigoSeguridad() = seguridad { cliente().pedirCodigo(_correoCuenta.value) }
+
+    fun cambiarCorreo(nuevo: String, clave: String, codigo: String) = seguridad {
+        val marca = sesion.actual()
+        cliente().cambiarCorreo(nuevo, clave, codigo)
+        if (sesion.vigente(marca)) _correoPendiente.value = nuevo.trim().lowercase()
+    }
+
+    fun cancelarCambioCorreo() { if (!_seguridadOcupada.value) _correoPendiente.value = "" }
+
+    fun confirmarCorreo(codigo: String) = seguridad {
+        val marca = sesion.actual()
+        val cliente = cliente()
+        val nuevo = _correoPendiente.value
+        cliente.confirmarCorreo(nuevo, codigo)
+        if (!sesion.vigente(marca)) return@seguridad
+        _correoCuenta.value = nuevo
+        _correoPendiente.value = ""
+        val cuenta = cliente.miCuenta()
+        if (!sesion.vigente(marca)) return@seguridad
+        _cuenta.value = cuenta
+        decir(R.string.red_correo_vinculado)
+    }
+
+    fun borrarCuenta(clave: String, codigo: String, motivo: String, texto: String) = seguridad {
+        val marca = sesion.actual()
+        val cliente = cliente()
+        cliente.borrarCuenta(clave, codigo, motivo, texto)
+        runCatching { cliente.salir() }
         if (sesion.vigente(marca)) { olvidarCuenta(); decir(R.string.red_cuenta_borrada) }
     }
 
     private fun olvidarCuenta() {
+        decisionBorrado?.complete(false); decisionBorrado = null
+        _borrarEl.value = 0; _correoPendiente.value = ""
         sesion.invalidar()
         sincronizacionesCajon.cancelar()
         subida?.cancel(); subidasPerfil.reiniciar(); ultimaFoto = null
@@ -534,15 +622,15 @@ class RedSocial(
 
     /** Después de un cambio en el cajón: sube lo compartido (perfil y publicaciones) a los pocos segundos. */
     fun sincronizar() {
-        if (_usuario.value == null || aplicandoPerfil) return
+        if (_borrarEl.value > 0 || _usuario.value == null || aplicandoPerfil) return
         subida?.cancel()
         subida = scope.launch { delay(5000); subirAhora() }
     }
 
-    fun sincronizarYa() { subida?.cancel(); subida = scope.launch { subirAhora() } }
+    fun sincronizarYa() { if (_borrarEl.value > 0) return; subida?.cancel(); subida = scope.launch { subirAhora() } }
 
     private suspend fun subirAhora() {
-        if (_usuario.value == null) return
+        if (_borrarEl.value > 0 || _usuario.value == null) return
         val marca = sesion.actual()
         val preparado = prepararSubidaPerfil(
             pendiente = { caja.perfilRedPendiente },
@@ -561,11 +649,11 @@ class RedSocial(
             if (!sesion.vigente(marca)) return@intentar
             val subido = subidasPerfil.subir(ahora) {
                 cliente.subirPerfil(ahora.first)
-                if (!sesion.vigente(marca)) return@subir false
+                if (!sesion.vigente(marca)) { return@subir false }
                 // Solo se quita de la red lo que este teléfono había subido y ya no está; nunca lo que no conoce.
                 val claves = ahora.second.map { it.clave }.toSet()
                 cliente.subirCambios(ahora.second, (caja.publicacionesSubidas - claves).toList())
-                if (!sesion.vigente(marca)) return@subir false
+                if (!sesion.vigente(marca)) { return@subir false }
                 caja.publicacionesSubidas = claves
                 true
             }

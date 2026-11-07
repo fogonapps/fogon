@@ -22,7 +22,7 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 /** Un error del servidor social: el código HTTP y la palabra que manda ("usuario_tomado", "privada", "despacio"…). */
-class ErrorSocial(val codigo: Int, val error: String) : IOException("HTTP $codigo $error")
+class ErrorSocial(val codigo: Int, val error: String, val desde: Long = 0) : IOException("HTTP $codigo $error")
 
 /* Lo que devuelve Fogón Social (los mismos campos que el servidor). */
 
@@ -66,9 +66,9 @@ data class PerfilSubido(
 )
 @Serializable private data class Correo(val correo: String)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
-@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false)
+@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false, val borrarEl: Long = 0)
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
-    val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false)
+    val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0)
 @Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0)
 @Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
@@ -76,6 +76,8 @@ data class PerfilSubido(
 @Serializable data class EstadoCuentaSocial(val faltas: List<FaltaSocial> = emptyList(), val restringidaHasta: Long = 0, val suspendidaHasta: Long = 0,
     val cerrada: Boolean = false, val admin: Boolean = false)
 @Serializable private data class EntradaClave(val correo: String, val clave: String)
+@Serializable private data class Borrado(val clave: String, val codigo: String, val motivo: String, val motivoTexto: String)
+@Serializable private data class CambioCorreo(val nuevo: String, val clave: String = "", val codigo: String = "")
 @Serializable private data class CambioClave(val nueva: String, val actual: String = "")
 @Serializable private data class CambioApodo(val nombre: String)
 @Serializable data class SesionSocial(val id: String, val dispositivo: String = "", val creada: Long = 0, @kotlinx.serialization.SerialName("ultimo_uso") val ultimoUso: Long = 0, val actual: Boolean = false)
@@ -132,7 +134,9 @@ class ClienteSocial(private val token: String? = null) {
             val texto = r.body.string()
             if (!r.isSuccessful) {
                 val error = runCatching { JsonCajon.parseToJsonElement(texto).jsonObject["error"]!!.jsonPrimitive.content }.getOrDefault("")
-                throw ErrorSocial(r.code, error)
+                val desde = runCatching { JsonCajon.parseToJsonElement(texto).jsonObject["desde"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L }.getOrDefault(0L)
+                if (r.code == 403 && error == "por_borrar" && token != null) cuentasPorBorrar.emit(token to desde)
+                throw ErrorSocial(r.code, error, desde)
             }
             texto.ifEmpty { null }
         }
@@ -170,7 +174,16 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun cerrarSesion(id: String) { pedir("/sesiones/${cod(id)}", "DELETE") }
     suspend fun cerrarOtrasSesiones() { pedir("/sesiones/otras", "DELETE") }
     suspend fun miCuenta(): MiCuenta = leer(MiCuenta.serializer(), pedir("/cuenta"))
-    suspend fun borrarCuenta() { pedir("/cuenta", "DELETE") }
+    suspend fun borrarCuenta(clave: String, codigo: String, motivo: String, texto: String) {
+        pedir("/cuenta/borrar", "POST", json(Borrado.serializer(), Borrado(clave, codigo, motivo, texto)))
+    }
+    suspend fun conservarCuenta() { pedir("/cuenta/conservar", "POST") }
+    suspend fun cambiarCorreo(nuevo: String, clave: String, codigo: String) {
+        pedir("/cuenta/correo/cambiar", "POST", json(CambioCorreo.serializer(), CambioCorreo(nuevo, clave, codigo)))
+    }
+    suspend fun confirmarCorreo(nuevo: String, codigo: String) {
+        pedir("/cuenta/correo/confirmar", "POST", json(CambioCorreo.serializer(), CambioCorreo(nuevo, codigo = codigo)))
+    }
     suspend fun privada(si: Boolean) { pedir("/cuenta", "PUT", json(Privada.serializer(), Privada(si))) }
 
     /* Perfil */
@@ -262,6 +275,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun reportar(que: String, objeto: String, motivo: String) { pedir("/reportes", "POST", json(Reporte.serializer(), Reporte(que, objeto, motivo))) }
 
     companion object {
+        val cuentasPorBorrar = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Long>>(extraBufferCapacity = 16)
         /** El servidor de Fogón (uno solo para todas las apps). */
         const val SERVIDOR = "https://fogonapps.duckdns.org"
         fun enlacePerfil(usuario: String) = "$SERVIDOR/@$usuario"

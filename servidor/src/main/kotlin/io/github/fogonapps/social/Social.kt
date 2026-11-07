@@ -98,7 +98,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 )
 /** Si un correo ya tiene cuenta y si tiene contraseña (para decirle a la persona si se registra o entra). */
 @Serializable data class EstadoCorreo(val existe: Boolean, val conClave: Boolean)
-@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean)
+@Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean, val borrarEl: Long)
 @Serializable data class MiCuenta(
     val usuario: String, val nombre: String, val correo: String, val privada: Boolean,
     val conClave: Boolean = false,
@@ -106,10 +106,13 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val usuarioDesde: Long = 0,
     val admin: Boolean = false,
     val apodoDesde: Long,
+    val borrarEl: Long = 0,
 )
 @Serializable data class EntradaClave(val correo: String, val clave: String)
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
+@Serializable data class Borrado(val clave: String = "", val codigo: String = "", val motivo: String = "", val motivoTexto: String = "")
+@Serializable data class CambioCorreo(val nuevo: String, val clave: String = "", val codigo: String = "")
 @Serializable data class CambioClave(val nueva: String, val actual: String = "")
 @Serializable data class Sesion(val id: String, val dispositivo: String, val creada: Long, val ultimo_uso: Long, val actual: Boolean)
 @Serializable data class CambioApodo(val nombre: String)
@@ -167,10 +170,12 @@ class Social(
 
     /** Manda un código de 6 números al correo (uno por minuto como mucho). Sirve para entrar o para crear la cuenta. */
     @Synchronized
-    fun pedirCodigo(correoDado: String) {
+    fun pedirCodigo(correoDado: String) { enviarCodigo(correoDado) }
+
+    private fun enviarCodigo(correoDado: String, cuentaCambio: Long? = null) {
         val correo = correoDado.trim().lowercase()
         if (!CORREO.matches(correo) || correo.length > 120) throw Problema(400, "correo")
-        val antes = b.usar { leer("SELECT enviado FROM codigos WHERE correo = ?", correo) { it.getLong(1) }.firstOrNull() }
+        val antes = b.usar { leer("SELECT MAX(cuando) FROM (SELECT cuando FROM envios_codigo WHERE correo = ? UNION ALL SELECT enviado AS cuando FROM codigos WHERE correo = ?)", correo, correo) { it.getLong(1).takeUnless { _ -> it.wasNull() } }.firstOrNull() }
         if (antes != null && ahora() - antes < 60_000) throw Problema(429, "despacio")
         if (b.usar { leer("SELECT COUNT(*) FROM envios_codigo WHERE correo = ? AND cuando > ?", correo, ahora() - HORA) { it.getInt(1) }.first() } >= 5)
             throw Problema(429, "despacio")
@@ -180,12 +185,15 @@ class Social(
         while (Base.huella("$correo:$codigo") == huellaAnterior)
         b.usar {
             cambiar("INSERT INTO envios_codigo VALUES(?,?)", correo, ahora())
-            cambiar("""INSERT INTO codigos(correo, huella, expira, intentos, enviado) VALUES(?,?,?,0,?)
+            if (cuentaCambio != null) {
+                cambiar("INSERT OR REPLACE INTO cambios_correo VALUES(?,?,?,?,0)", cuentaCambio, correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000)
+            } else cambiar("""INSERT INTO codigos(correo, huella, expira, intentos, enviado) VALUES(?,?,?,0,?)
                 ON CONFLICT(correo) DO UPDATE SET huella = excluded.huella, expira = excluded.expira, intentos = 0, enviado = excluded.enviado""",
                 correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000, ahora())
         }
+        val proposito = if (cuentaCambio == null) "entrar a El Cajón" else "confirmar tu nuevo correo de El Cajón"
         cartero.enviar(correo, "Tu código de El Cajón: $codigo",
-            "Tu código para entrar a El Cajón es:\n\n$codigo\n\nVence en 10 minutos. Si no lo pediste, ignora este correo.\n\nEl Cajón · Fogón")
+            "Tu código para $proposito es:\n\n$codigo\n\nVence en 10 minutos. Si no lo pediste, ignora este correo.\n\nEl Cajón · Fogón")
     }
 
     /**
@@ -222,7 +230,7 @@ class Social(
             avisarClave(id)
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
-        return Acceso(usuario, token, nueva)
+        return Acceso(usuario, token, nueva, borrarEl(id))
     }
 
     /** Revisa el código de [correo] (sin gastarlo); cada intento malo cuenta, y a los 5 se vence. */
@@ -238,7 +246,9 @@ class Social(
     }
 
     /** Le pone a la cuenta el correo de [e] (con su código), para poder entrar desde otro teléfono. */
+    @Synchronized
     fun vincularCorreo(yo: Long, e: Entrada) {
+        if (miCuenta(yo).correo.isNotBlank()) throw Problema(400, "correo")
         val correo = e.correo.trim().lowercase()
         codigoBueno(correo, e.codigo)
         if (b.usar { leer("SELECT 1 FROM cuentas WHERE correo = ? AND id <> ?", correo, yo) { 1 }.isNotEmpty() }) throw Problema(409, "correo_tomado")
@@ -260,7 +270,7 @@ class Social(
             if (cerrarAnteriores) cerrarOtras(cuenta, token)
         }
         if (nueva) avisar(cuenta, "Se entró a tu cuenta desde $dispositivo",
-            "Entrada desde $dispositivo a las ${java.time.Instant.ofEpochMilli(ahora())} (UTC). Si no fuiste tú, abre El Cajón, Tu cuenta de la red → Dónde has entrado y cierra esa sesión.")
+            "Entrada desde $dispositivo el ${fechaLegible(ahora())}. Si no fuiste tú, abre El Cajón, Tu cuenta de la red → Dónde has entrado y cierra esa sesión.")
         return token
     }
 
@@ -292,18 +302,22 @@ class Social(
 
     private fun avisar(yo: Long, asunto: String, texto: String) {
         val correo = b.usar { leer("SELECT correo FROM cuentas WHERE id = ?", yo) { it.getString(1) }.firstOrNull() }
-        if (!correo.isNullOrBlank()) {
-            // Un fallo SMTP no revierte un cambio de seguridad ya aplicado.
-            try { cartero.enviar(correo, asunto, texto) } catch (_: Exception) {
-                System.err.println("No se pudo enviar un aviso de seguridad")
-            }
+        if (!correo.isNullOrBlank()) enviarAviso(correo, asunto, texto)
+    }
+
+    private fun enviarAviso(correo: String, asunto: String, texto: String) {
+        // Un fallo SMTP no revierte un cambio de seguridad ya aplicado.
+        try { cartero.enviar(correo, asunto, texto) } catch (_: Exception) {
+            System.err.println("No se pudo enviar un aviso de seguridad")
         }
     }
 
     private fun avisarClave(yo: Long) = avisar(yo, "Tu contraseña de El Cajón cambió",
         "Tu contraseña de El Cajón cambió. Si no fuiste tú, entra con un código de tu correo, cambia la contraseña y cierra las demás sesiones desde Tu cuenta de la red.")
 
+    @Synchronized
     fun limpiarSeguridad() {
+        b.usar { leer("SELECT id FROM cuentas WHERE borrar_el > 0 AND borrar_el <= ? AND admin = 0", ahora()) { it.getLong(1) } }.forEach(::borrarCuenta)
         b.usar {
             cambiar("DELETE FROM sesiones WHERE ultimo_uso <= ?", ahora() - CADUCIDAD)
             cambiar("DELETE FROM intentos WHERE ultimo_fallo <= ? AND bloqueada_hasta <= ?", ahora() - DIA, ahora())
@@ -324,7 +338,7 @@ class Social(
 
     fun miCuenta(yo: Long): MiCuenta = b.usar {
         leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, it.getInt(7) == 1, apodoDesde(yo))
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, it.getInt(7) == 1, apodoDesde(yo), borrarEl(yo))
         }.first()
     }
 
@@ -352,7 +366,7 @@ class Social(
             throw Problema(400, "clave_mala")
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
-        return Acceso(usuario, sesionNueva(id, dispositivo), false)
+        return Acceso(usuario, sesionNueva(id, dispositivo), false, borrarEl(id))
     }
 
     /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
@@ -462,11 +476,97 @@ class Social(
         }
     }
 
+    fun borrarEl(yo: Long): Long = b.usar {
+        leer("SELECT borrar_el FROM cuentas WHERE id = ?", yo) { it.getLong(1) }.firstOrNull() ?: 0
+    }
+
+    private fun visible(yo: Long): Boolean = b.usar {
+        leer("SELECT 1 FROM cuentas WHERE id = ? AND cerrada = 0 AND borrar_el = 0", yo) { 1 }.isNotEmpty()
+    }
+
+    fun revisarBorrado(yo: Long) {
+        val fecha = borrarEl(yo)
+        if (fecha > 0) throw Problema(403, "por_borrar", fecha)
+    }
+
+    private fun comprobarCredencial(yo: Long, clave: String, codigo: String, permiteCodigo: Boolean) {
+        val (correo, guardada) = b.usar { leer("SELECT correo, clave FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
+        if (guardada != null && clave.isNotEmpty()) {
+            if (!Claves.comprobar(clave, guardada)) throw Problema(400, "clave_mala")
+        } else {
+            if (guardada != null && !permiteCodigo) throw Problema(400, "clave_mala")
+            if (correo.isNullOrBlank()) throw Problema(400, "sin_correo")
+            codigoBueno(correo, codigo)
+            b.usar { cambiar("DELETE FROM codigos WHERE correo = ?", correo) }
+        }
+    }
+
+    @Synchronized
+    fun programarBorrado(yo: Long, token: String?, e: Borrado? = null) {
+        if (esAdmin(yo)) throw Problema(403, "cuenta_protegida")
+        if (e != null) {
+            if (e.motivo !in setOf("", "no_uso", "privacidad", "problemas", "otro") || e.motivoTexto.length > 300) throw Problema(400, "motivo")
+            comprobarCredencial(yo, e.clave, e.codigo, permiteCodigo = false)
+        }
+        if (borrarEl(yo) > 0) return
+        val fecha = ahora() + 7 * DIA
+        b.usar {
+            cambiar("UPDATE cuentas SET borrar_el = ? WHERE id = ?", fecha, yo)
+            if (e != null && (e.motivo.isNotBlank() || e.motivoTexto.isNotBlank()))
+                cambiar("INSERT INTO motivos_borrado VALUES(?,?,?)", ahora(), e.motivo, e.motivoTexto.trim())
+            cerrarOtras(yo, token)
+        }
+        avisar(yo, "Tu cuenta se borrará", "Tu cuenta se borrará el ${fechaLegible(fecha)}; si cambias de idea, entra antes de esa fecha.")
+    }
+
+    @Synchronized
+    fun conservarCuenta(yo: Long) {
+        if (borrarEl(yo) == 0L) return
+        b.usar { cambiar("UPDATE cuentas SET borrar_el = 0 WHERE id = ?", yo) }
+        avisar(yo, "Tu cuenta ya no se borrará", "Tu cuenta ya no se borrará.")
+    }
+
+    @Synchronized
+    fun cambiarCorreo(yo: Long, e: CambioCorreo) {
+        if (miCuenta(yo).correo.isBlank()) throw Problema(400, "sin_correo")
+        val nuevo = e.nuevo.trim().lowercase()
+        // Valida la dirección y aplica los mismos límites antes de consumir la credencial.
+        if (!CORREO.matches(nuevo) || nuevo.length > 120 || nuevo == miCuenta(yo).correo) throw Problema(400, "correo")
+        comprobarCredencial(yo, e.clave, e.codigo, permiteCodigo = true)
+        enviarCodigo(nuevo, cuentaCambio = yo)
+        avisar(yo, "Solicitud de cambio de correo", "Se pidió cambiar el correo de tu cuenta. Si no fuiste tú, entra y cambia tu contraseña.")
+    }
+
+    @Synchronized
+    fun confirmarCorreo(yo: Long, e: CambioCorreo) {
+        val nuevo = e.nuevo.trim().lowercase()
+        val pendiente = b.usar { leer("SELECT nuevo, huella, expira, intentos FROM cambios_correo WHERE cuenta = ?", yo) {
+            listOf(it.getString(1), it.getString(2), it.getLong(3), it.getInt(4))
+        }.firstOrNull() } ?: throw Problema(400, "sin_codigo")
+        if (ahora() >= pendiente[2] as Long || pendiente[3] as Int >= 5) throw Problema(400, "codigo_vencido")
+        if (nuevo != pendiente[0] || Base.huella("$nuevo:${e.codigo.trim()}") != pendiente[1]) {
+            b.usar { cambiar("UPDATE cambios_correo SET intentos = intentos + 1 WHERE cuenta = ?", yo) }
+            throw Problema(400, "codigo")
+        }
+        if (b.usar { leer("SELECT 1 FROM cuentas WHERE correo = ? AND id <> ?", nuevo, yo) { 1 }.isNotEmpty() }) throw Problema(409, "correo_tomado")
+        val anterior = miCuenta(yo).correo
+        b.usar {
+            cambiar("UPDATE cuentas SET correo = ? WHERE id = ?", nuevo, yo)
+            cambiar("DELETE FROM cambios_correo WHERE cuenta = ?", yo)
+        }
+        enviarAviso(anterior, "Tu correo de El Cajón cambió", "El correo de tu cuenta cambió. Si no fuiste tú, contacta con Fogón.")
+        avisar(yo, "Tu correo de El Cajón cambió", "Esta es la nueva dirección de tu cuenta de El Cajón.")
+    }
+
     /** Borra la cuenta y todo lo suyo: perfil, publicaciones, a quién sigue, me gusta, comentarios, avisos, imágenes y foto. */
-    fun borrarCuenta(yo: Long) {
+    internal fun borrarCuenta(yo: Long) {
         val imagenes = b.usar { leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) } }
         b.usar {
             leer("SELECT correo FROM cuentas WHERE id = ?", yo) { it.getString(1) }.firstOrNull()?.let { cambiar("DELETE FROM codigos WHERE correo = ?", it) }
+            cambiar("UPDATE usuarios_viejos SET cuenta = -1 WHERE cuenta = ?", yo)
+            leer("SELECT usuario FROM cuentas WHERE id = ?", yo) { it.getString(1) }.firstOrNull()?.let {
+                cambiar("INSERT OR REPLACE INTO usuarios_viejos VALUES(?,?,?)", it, -1, ahora() + 30 * DIA)
+            }
             cambiar("DELETE FROM cuentas WHERE id = ?", yo)
         }
         java.io.File(dirFotos, "$yo.jpg").delete()
@@ -474,7 +574,7 @@ class Social(
     }
 
     private fun idDe(usuario: String): Long =
-        b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
+        b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
 
     private fun persona(id: Long): Persona = b.usar {
         leer("SELECT usuario, nombre, foto, privada FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1) }.first()
@@ -549,8 +649,8 @@ class Social(
         val pubs = if (cerrada) emptyList() else filas(lector, "p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.cuando DESC LIMIT 60", id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
         val (seguidores, siguiendo, cuantas) = b.usar {
             Triple(
-                leer("SELECT COUNT(*) FROM seguir WHERE a = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
-                leer("SELECT COUNT(*) FROM seguir WHERE de = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
+                leer("SELECT COUNT(*) FROM seguir WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND a = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
+                leer("SELECT COUNT(*) FROM seguir WHERE a IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND de = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
                 leer("SELECT COUNT(*) FROM publicaciones WHERE cuenta = ?", id) { it.getInt(1) }.first(),
             )
         }
@@ -580,6 +680,7 @@ class Social(
     /** Una imagen por su nombre (que no se adivina: solo la tiene quien vio la publicación). */
     fun imagen(nombre: String): ByteArray {
         if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
+        if (b.usar { leer("SELECT cuenta FROM imagenes WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }?.let(::visible) != true) throw Problema(404, "no_existe")
         return java.io.File(dirImagenes, "$nombre.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "no_existe")
     }
 
@@ -643,18 +744,18 @@ class Social(
         b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 1", yo) { it.getLong(1) } }.forEach { avisar(it, yo, "publico", id.toString()) }
     }
 
-    fun mensajesSinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE para = ?", yo) { it.getInt(1) }.first() }
+    fun mensajesSinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ?", yo) { it.getInt(1) }.first() }
 
     /** Las publicaciones que cumplen [donde] (SQL sobre `p`), con su autor y sus cifras, en una sola consulta; con el id del autor. */
     private fun filas(lector: Long?, donde: String, vararg args: Any?): List<Pair<Long, Publicacion>> = b.usar {
         leer("""SELECT p.id, p.cuenta, p.visibilidad, p.cuando, p.datos, c.usuario, c.nombre, c.foto, c.privada,
                     (SELECT COUNT(*) FROM megusta m WHERE m.pub = p.id),
-                    (SELECT COUNT(*) FROM comentarios k WHERE k.pub = p.id),
+                    (SELECT COUNT(*) FROM comentarios k WHERE k.pub = p.id AND k.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
                     p.n_vistas,
                     EXISTS(SELECT 1 FROM megusta m WHERE m.pub = p.id AND m.cuenta = ?),
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
                     (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta)
-                FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE $donde""", lector, lector, *args) { r ->
+                FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, *args) { r ->
             val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
@@ -672,7 +773,7 @@ class Social(
      */
     fun resenas(lector: Long?, fuente: String): List<Publicacion> {
         if (fuente.isBlank() || fuente.length > 120) return emptyList()
-        return filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena' AND p.oculta = 0 AND c.cerrada = 0
+        return filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena' AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0
                 AND (? IS NULL OR (p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
                 ORDER BY p.cuando DESC LIMIT 200""", fuente, lector, lector, lector)
             .filter { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }.map { it.second }.take(50)
@@ -692,7 +793,7 @@ class Social(
     fun explorar(lector: Long?, antes: Long?, n: Int = 200): List<Publicacion> {
         val ahora = ahora()
         // Las 1000 más recientes: la semana y lo nuevo salen de ahí, y en una red chiquita también lo más viejo completa.
-        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.oculta = 0 AND c.cerrada = 0 AND p.cuando < ?
+        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0 AND p.cuando < ?
                 AND (? IS NULL OR (p.cuenta <> ? AND p.cuenta NOT IN (SELECT a FROM seguir WHERE de = ?)
                     AND p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
                 ORDER BY p.cuando DESC LIMIT 1000""", antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector)
@@ -758,7 +859,7 @@ class Social(
     fun comentarios(lector: Long?, pub: Long): List<Comentario> {
         val p = publicacion(lector, pub) ?: throw Problema(404, "no_existe")
         val autorPub = idDe(p.autor.usuario)
-        return b.usar { leer("SELECT id, cuenta, texto, cuando FROM comentarios WHERE pub = ? AND (oculto = 0 OR cuenta = ?) ORDER BY cuando", pub, lector ?: -1) { arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4)) } }
+        return b.usar { leer("SELECT id, cuenta, texto, cuando FROM comentarios WHERE cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND pub = ? AND (oculto = 0 OR cuenta = ?) ORDER BY cuando", pub, lector ?: -1) { arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4)) } }
             .filter { lector == null || !bloqueado(lector, it[1] as Long) }
             .map { Comentario(it[0] as Long, persona(it[1] as Long), it[2] as String, it[3] as Long, lector == it[1] || lector == autorPub) }
     }
@@ -817,7 +918,7 @@ class Social(
     }
 
     fun solicitudes(yo: Long): List<Persona> =
-        b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 0 ORDER BY cuando DESC", yo) { it.getLong(1) } }.map(::persona)
+        b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 0 ORDER BY cuando DESC", yo) { it.getLong(1) } }.filter(::visible).map(::persona)
 
     /** Seguidores o seguidos de alguien; de una cuenta privada solo los ve quien la sigue. */
     fun lista(lector: Long?, usuario: String, seguidores: Boolean): List<Persona> {
@@ -825,7 +926,7 @@ class Social(
         if (esPrivada(id) && lector != id && (lector == null || !sigue(lector, id))) throw Problema(403, "privada")
         val sql = if (seguidores) "SELECT de FROM seguir WHERE a = ? AND aceptada = 1 ORDER BY cuando DESC LIMIT 500"
         else "SELECT a FROM seguir WHERE de = ? AND aceptada = 1 ORDER BY cuando DESC LIMIT 500"
-        return b.usar { leer(sql, id) { it.getLong(1) } }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.map(::persona)
+        return b.usar { leer(sql, id) { it.getLong(1) } }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.filter(::visible).map(::persona)
     }
 
     /** Bloquear: deja de seguir en los dos sentidos, no se ven ni se escriben. */
@@ -840,16 +941,16 @@ class Social(
         }
     }
 
-    fun bloqueados(yo: Long): List<Persona> = b.usar { leer("SELECT a FROM bloqueos WHERE de = ?", yo) { it.getLong(1) } }.map(::persona)
+    fun bloqueados(yo: Long): List<Persona> = b.usar { leer("SELECT a FROM bloqueos WHERE de = ?", yo) { it.getLong(1) } }.filter(::visible).map(::persona)
 
     fun buscar(lector: Long?, q: String): List<Persona> {
         val t = q.trim().removePrefix("@").lowercase().take(40)
         if (t.length < 2) return emptyList()
         val patron = "%" + t.replace("%", "").replace("_", "\\_") + "%"
         return b.usar {
-            leer("""SELECT id FROM cuentas WHERE usuario LIKE ? ESCAPE '\' OR lower(nombre) LIKE ? ESCAPE '\'
+            leer("""SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0 AND (usuario LIKE ? ESCAPE '\' OR lower(nombre) LIKE ? ESCAPE '\')
                     ORDER BY (usuario = ?) DESC, (usuario LIKE ?) DESC, usuario LIMIT 30""", patron, patron, t, "$t%") { it.getLong(1) }
-        }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.map(::persona)
+        }.filter { lector == null || (!bloqueado(it, lector) && !bloqueado(lector, it)) }.filter(::visible).map(::persona)
     }
 
     /**
@@ -886,7 +987,7 @@ class Social(
         leer("""SELECT n.cuenta, n.texto, n.datos, n.cuando FROM notas n WHERE n.cuando > ? AND (n.cuenta = ?
                 OR n.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)) ORDER BY (n.cuenta = ?) DESC, n.cuando DESC LIMIT 60""",
             ahora() - 24 * 3600_000L, yo, yo, yo) { arrayOf(it.getLong(1), it.getString(2), it.getString(3), it.getLong(4)) }
-    }.filter { !bloqueado(yo, it[0] as Long) }
+    }.filter { visible(it[0] as Long) && !bloqueado(yo, it[0] as Long) }
         .map { Nota(persona(it[0] as Long), it[1] as String, JsonSocial.parseToJsonElement(it[2] as String) as JsonObject, it[3] as Long) }
 
     /* ----- Frases del saludo: la comunidad dice cuáles le gustan ----- */
@@ -1017,7 +1118,7 @@ class Social(
         return b.usar { leer("SELECT id, de, cuando, sobre, firma FROM mensajes WHERE para = ? AND id > ? ORDER BY id LIMIT 200", yo, desde) {
             arrayOf(it.getLong(1), it.getLong(2), it.getLong(3), it.getString(4), it.getString(5)) } }
             .filter { !bloqueado(yo, it[1] as Long) }
-            .map { Sobre(it[0] as Long, persona(it[1] as Long), it[2] as Long, it[3] as String, it[4] as String) }
+            .filter { visible(it[1] as Long) }.map { Sobre(it[0] as Long, persona(it[1] as Long), it[2] as Long, it[3] as String, it[4] as String) }
     }
 
     /* ----- Avisos ----- */
@@ -1032,9 +1133,9 @@ class Social(
             arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1)
         }
     }.filter { !bloqueado(yo, it[1] as Long) }
-        .map { Aviso(it[0] as Long, it[2] as String, persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean) }
+        .filter { visible(it[1] as Long) }.map { Aviso(it[0] as Long, it[2] as String, persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean) }
 
-    fun sinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE para = ? AND leido = 0", yo) { it.getInt(1) }.first() }
+    fun sinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND leido = 0", yo) { it.getInt(1) }.first() }
 
     fun leidos(yo: Long) { b.usar { cambiar("UPDATE avisos SET leido = 1 WHERE para = ?", yo) } }
 
@@ -1200,3 +1301,8 @@ class Social(
         val RESERVADOS = setOf("admin", "elcajon", "cajon", "soporte", "api", "root", "moderacion", "explorar", "p", "privacidad", "terminos")
     }
 }
+
+/** Una fecha para los correos, en español y en UTC: «14 de noviembre de 2026, 14:37 (UTC)». */
+internal fun fechaLegible(ms: Long): String =
+    java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy, HH:mm '(UTC)'", java.util.Locale.forLanguageTag("es"))
+        .withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(ms))
