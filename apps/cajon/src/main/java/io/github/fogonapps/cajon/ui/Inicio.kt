@@ -165,8 +165,9 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     // ¿Qué te pareció? Lo último que terminaste sin nota: calificarlo con un toque o escribir la reseña.
     e.vivas.filter { (it.estado == Estados.TERMINADO || it.estado == Estados.EN_CURSO) && it.nota == 0 }.maxByOrNull { it.cambio }?.let { o ->
         Column(Modifier.fillMaxWidth().padding(16.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Portada(o.portada, o.tipo, o.titulo, Modifier.width(52.dp).clickable { vm.abrir(Pantalla.Ficha(o.id)) }, conTitulo = false)
+            Row(Modifier.clickable { vm.abrir(Pantalla.Ficha(o.id)) },
+                horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Portada(o.portada, o.tipo, o.titulo, Modifier.width(52.dp), conTitulo = false)
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.que_te_parecio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
                     Text(o.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 2)

@@ -54,6 +54,14 @@ import io.github.fogonapps.identidad.Dibujo
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.tarjetaDestacada
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
+import java.util.Locale
+import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -255,15 +263,15 @@ fun Portada(url0: String, tipo: String, titulo: String, modifier: Modifier = Mod
     val cuadrada = tipo == "album"
     Box(modifier.aspectRatio(if (cuadrada) 1f else 2f / 3f).clip(forma).background(f.superficie)
         .haloPuntos(f.tinta2.copy(alpha = 0.28f), paso = 8.dp, centro = androidx.compose.ui.geometry.Offset(0.5f, 0.4f))
-        .border(f.borde, f.linea, forma), contentAlignment = Alignment.Center) {
+        .border(f.borde, f.linea, forma).semantics { contentDescription = titulo }, contentAlignment = Alignment.Center) {
         // Sin portada (o mientras carga): el ícono del tipo y el título, en la letra de los títulos.
-        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(8.dp).clearAndSetSemantics {}, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             IconoRiso(Iconos.de(tipo), null, tamano = 28.dp, tinta = f.acentoTexto)
             if (conTitulo && titulo.isNotBlank()) Text(titulo, fontFamily = f.titulos, fontSize = 13.sp, lineHeight = 15.sp, color = f.texto,
                 textAlign = TextAlign.Center, maxLines = 4, overflow = TextOverflow.Ellipsis)
         }
         if (url.isNotBlank()) coil3.compose.AsyncImage(
-            model = url, contentDescription = titulo, contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            model = url, contentDescription = null, contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.matchParentSize(),
         )
     }
@@ -277,6 +285,20 @@ fun Estrellas(nota: Int, tamano: TextUnit = 14.sp, color: Color = FogonTema.actu
         modifier = Modifier.semantics { contentDescription = "" + nota / 2.0 })
 }
 
+/** Texto accesible de la nota, con las cadenas y el separador decimal del idioma activo. */
+internal fun estadoDeNota(nota: Int, idioma: Locale, sinCalificar: String, formato: String): String {
+    val valor = nota.coerceIn(0, 10)
+    if (valor == 0) return sinCalificar
+    val estrellas = java.text.NumberFormat.getNumberInstance(idioma).apply {
+        maximumFractionDigits = 1
+    }.format(valor / 2.0)
+    return String.format(idioma, formato, estrellas)
+}
+
+/** Ajusta el progreso accesible a una media estrella válida. */
+internal fun notaDeProgreso(progreso: Float): Int =
+    if (progreso.isNaN()) 0 else progreso.coerceIn(0f, 10f).roundToInt()
+
 /**
  * Calificar con estrellas: tocar la mitad izquierda de una estrella pone media y la derecha la entera; tocar la
  * nota que ya tiene la quita. [nota] en medias estrellas (0 a 10).
@@ -284,7 +306,17 @@ fun Estrellas(nota: Int, tamano: TextUnit = 14.sp, color: Color = FogonTema.actu
 @Composable
 fun ElegirEstrellas(nota: Int, onNota: (Int) -> Unit, tamano: Dp = 40.dp, descripcion: String) {
     val f = FogonTema.actual
-    Row(Modifier.semantics(mergeDescendants = true) { contentDescription = descripcion }, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    val estado = estadoDeNota(nota, LocalConfiguration.current.locales[0],
+        stringResource(R.string.nota_sin_calificar), stringResource(R.string.nota_estado_estrellas))
+    Row(Modifier.clearAndSetSemantics {
+        contentDescription = descripcion
+        stateDescription = estado
+        progressBarRangeInfo = ProgressBarRangeInfo(nota.coerceIn(0, 10).toFloat(), 0f..10f, 9)
+        setProgress { progreso ->
+            onNota(notaDeProgreso(progreso))
+            true
+        }
+    }, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         for (i in 1..5) {
             val llena = nota >= i * 2
             val media = nota == i * 2 - 1

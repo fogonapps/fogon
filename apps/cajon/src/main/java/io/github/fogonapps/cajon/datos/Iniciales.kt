@@ -11,16 +11,20 @@ import kotlinx.serialization.builtins.ListSerializer
 @Serializable
 data class ObraInicial(
     val id: String, val tipo: String, val titulo: String, val anio: Int? = null, val fuente: String = "",
-    val imagen: String = "", val parecidos: List<String> = emptyList(),
+    val imagen: String = "", val parecidos: List<String> = emptyList(), val tituloEn: String = titulo,
 )
 
 object Iniciales {
+    fun enIdioma(obra: ObraInicial, idioma: String): ObraInicial =
+        if (idioma == "en") obra.copy(titulo = obra.tituloEn) else obra
+
     fun leer(json: String): List<ObraInicial> = JsonCajon.decodeFromString(ListSerializer(ObraInicial.serializer()), json)
 
     /** Las que se muestran al empezar una fila: [n] al azar, las que más veces salen como parecidas primero (las más conocidas). */
     fun semilla(todas: List<ObraInicial>, n: Int, azar: kotlin.random.Random): List<String> {
         val citas = todas.flatMap { it.parecidos }.groupingBy { it }.eachCount()
-        return todas.sortedByDescending { (citas[it.id] ?: 0) + azar.nextDouble() * 2 }.take(n).map { it.id }
+        // El azar se sortea una vez por obra: un orden que cambia en cada comparación rompe el ordenamiento.
+        return todas.map { it to (citas[it.id] ?: 0) + azar.nextDouble() * 2 }.sortedByDescending { it.second }.take(n).map { it.first.id }
     }
 
     /** Al elegir [id]: sus parecidas que todavía no están, justo después de ella (la fila se corre a la derecha). */

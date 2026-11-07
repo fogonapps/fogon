@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.fogonapps.cajon.datos.Artista
+import io.github.fogonapps.cajon.datos.CajonIlegible
+import io.github.fogonapps.cajon.datos.permiteReemplazarCajon
+import io.github.fogonapps.cajon.datos.sincronizarCajonCifrado
 import io.github.fogonapps.cajon.datos.ArtistaEncontrado
 import io.github.fogonapps.cajon.datos.ClaveMala
 import io.github.fogonapps.cajon.datos.ClienteGist
@@ -33,6 +36,9 @@ import io.github.fogonapps.cajon.datos.Senales
 import io.github.fogonapps.cajon.datos.Recomendar as Rec
 import io.github.fogonapps.cajon.datos.Wikimedia
 import io.github.fogonapps.identidad.Idioma
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.channels.Channel
@@ -48,6 +54,20 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import kotlin.random.Random
+
+/** Cada fuente recoge también los errores de sus consultas hijas y siempre termina su carga. */
+internal suspend fun buscarEnFuente(
+    error: (Int) -> Unit,
+    terminar: () -> Unit,
+    trabajo: suspend CoroutineScope.() -> Unit,
+) {
+    try { coroutineScope { trabajo() } }
+    catch (e: ClaveMala) { error(R.string.buscar_tmdb_mala) }
+    catch (e: SinRed) { error(R.string.buscar_sin_red) }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) { error(R.string.buscar_fallo) }
+    finally { terminar() }
+}
 
 /** Las pantallas que se abren encima de las pestañas. */
 sealed interface Pantalla {
@@ -185,7 +205,10 @@ data class Busqueda(
     val personas: List<io.github.fogonapps.cajon.datos.PersonaSocial> = emptyList(),
     val cargando: Set<String> = emptySet(),
     val errores: Map<String, Int> = emptyMap(),
-)
+) {
+    /** Un aviso por mensaje, aunque fallen varias fuentes por la misma causa. */
+    val avisos: List<Int> get() = errores.values.distinct()
+}
 
 enum class EstadoSync { APAGADA, EN_NUBE, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
 data class Sync(val estado: EstadoSync, val usuario: String? = null, val ultima: Long = 0, val mensaje: String? = null)
@@ -242,7 +265,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     @Volatile private var ultimoGuardado: Estado? = null
 
     /** La red de El Cajón (Fogón Social), opcional. */
-    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizar() })
+    val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizarCuenta() })
     /**
      * Pone en el perfil algo encontrado afuera: si no está en el cajón, se agrega (terminado y con corazón, sin anotar
      * nada en el diario) y sus datos completos llegan después. Vuelve al perfil.
@@ -394,7 +417,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             io.github.fogonapps.cajon.AvisosRed.programar(getApplication())
             red.revisarServidor()
             red.revisarSinLeer()
-            red.cargarFeed()
+            red.cargarFeed(avisar = false)
             chat.recibir()
             pasarALatino()
             buscarPortadas()
@@ -474,7 +497,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         e.copy(ajustes = e.ajustes.copy(favoritas = nuevas, cambio = ahora()))
     }
 
-    fun cambiarIdioma(codigo: String) = Idioma.elegir(getApplication(), codigo)
+    fun cambiarIdioma(codigo: String) {
+        Idioma.elegir(getApplication(), codigo)
+        cargaParaElegir?.cancel()
+        _paraElegir.value = ParaElegir()
+    }
 
     /* ----- Buscar afuera ----- */
 
@@ -493,12 +520,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         buscando = viewModelScope.launch {
             delay(350) // espera a que la persona deje de escribir
             _busqueda.value = Busqueda(texto = texto, seccion = seccion)
-            fun fuente(nombre: String, trabajo: suspend () -> Unit) = launch {
+            fun fuente(nombre: String, trabajo: suspend CoroutineScope.() -> Unit) = launch {
                 _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + nombre)
-                try { trabajo() }
-                catch (e: ClaveMala) { _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to R.string.buscar_tmdb_mala)) }
-                catch (e: SinRed) { _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to R.string.buscar_sin_red)) }
-                finally { _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando - nombre) }
+                buscarEnFuente(
+                    error = { aviso -> _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to aviso)) },
+                    terminar = { _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando - nombre) },
+                    trabajo = trabajo,
+                )
             }
             // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
             if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) launch {
@@ -1531,16 +1559,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val artistas: List<ArtistaEncontrado> = emptyList(),
         val libros: List<Encontrado> = emptyList(),
         val listo: Boolean = false,
-    )
+        val idioma: String = "",
+    ) {
+        fun vigente(actual: String) = listo && idioma == actual
+    }
 
+    private var cargaParaElegir: Job? = null
     private val _paraElegir = MutableStateFlow(ParaElegir())
     val paraElegir: StateFlow<ParaElegir> = _paraElegir
 
     fun cargarParaElegir() {
-        if (_paraElegir.value.listo) return
+        val lengua = idioma()
+        if (_paraElegir.value.vigente(lengua)) return
+        cargaParaElegir?.cancel()
+        _paraElegir.value = ParaElegir(idioma = lengua)
         val clave = claveCine
-        viewModelScope.launch {
-            val cine = async { if (clave == null) emptyList() else runCatching { Tmdb(clave).tendencias(idioma()) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
+        cargaParaElegir = viewModelScope.launch {
+            val cine = async { if (clave == null) emptyList() else runCatching { Tmdb(clave).tendencias(lengua) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
             val artistas = async {
                 runCatching {
                     val l = io.github.fogonapps.cajon.datos.ListenBrainz.populares(48)
@@ -1548,18 +1583,22 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     l.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a }
                 }.getOrDefault(emptyList())
             }
-            val libros = async { runCatching { OpenLibrary.populares(idioma()) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
-            _paraElegir.value = ParaElegir(cine.await(), artistas.await(), libros.await(), listo = true)
+            val libros = async { runCatching { OpenLibrary.populares(lengua) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
+            val resultado = ParaElegir(cine.await(), artistas.await(), libros.await(), listo = true, idioma = lengua)
+            if (idioma() == lengua) _paraElegir.value = resultado
         }
     }
 
     /* ----- Gustos para empezar ----- */
 
     /** La lista de obras y artistas conocidos para elegir gustos (ver `ObraInicial`). */
-    val iniciales: List<io.github.fogonapps.cajon.datos.ObraInicial> by lazy {
+    private val catalogoIniciales: List<io.github.fogonapps.cajon.datos.ObraInicial> by lazy {
         runCatching { io.github.fogonapps.cajon.datos.Iniciales.leer(getApplication<android.app.Application>().assets.open("datos/gustos.json").bufferedReader().use { it.readText() }) }
             .getOrDefault(emptyList())
     }
+    val iniciales: List<io.github.fogonapps.cajon.datos.ObraInicial>
+        get() = catalogoIniciales.map { io.github.fogonapps.cajon.datos.Iniciales.enIdioma(it, idioma()) }
+
     private val _imagenesIniciales = MutableStateFlow<Map<String, String>>(emptyMap())
     /** id → imagen que se trajo aparte: el póster de TMDB (con clave) o la foto del artista (Wikimedia). */
     val imagenesIniciales: StateFlow<Map<String, String>> = _imagenesIniciales
@@ -1961,7 +2000,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** La portada elegida del cajón (el fondo de una película o serie): una dirección, viaja con la sincronización. */
     fun ponerPortadaPerfil(url: String) { cambiarPerfil { it.copy(portada = url, encuadrePortada = Encuadre()) }; cerrar() }
 
-    fun quitarImagenPerfil(portada: Boolean) = cambiarPerfil { if (portada) it.copy(portada = "", encuadrePortada = Encuadre()) else it.copy(foto = "", encuadreFoto = Encuadre()) }
+    fun quitarImagenPerfil(portada: Boolean) {
+        if (!portada) red.quitarFotoPropia()
+        cambiarPerfil { if (portada) it.copy(portada = "", encuadrePortada = Encuadre()) else it.copy(foto = "", encuadreFoto = Encuadre()) }
+    }
 
     /** Pone (o quita, con null) lo que va en un hueco de destacados, con unas palabras si es "me marcó" o "descubrimiento". */
     fun ponerDestacado(hueco: String, id: String?, porQue: String? = null) = cambiarPerfil { p ->
@@ -2045,49 +2087,48 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         _sync.value = Sync(EstadoSync.APAGADA)
     }
 
-    private var sincronizando = false
-    private var sincronizarOtraVez = false
+    /** La exclusión y el permiso para publicar los coordina RedSocial. */
+    fun sincronizar() { red.recuperarCajon() }
 
-    /** Baja lo del Gist, lo une con lo de aquí y sube el resultado. */
-    /**
-     * El cajón guardado en la cuenta: trae el que está en el servidor (cifrado), lo abre con la llave de este teléfono,
-     * lo une con lo de aquí y sube el resultado cifrado. Si otro teléfono subió algo mientras tanto, vuelve a empezar.
-     */
-    fun sincronizar() {
-        val token = caja.tokenSocial ?: return
-        val llave = caja.llaveCajon ?: return
-        if (sincronizando) { sincronizarOtraVez = true; return }
-        sincronizando = true
+    /** Devuelve éxito solo después de abrir y unir el remoto, y guardar el resultado en la cuenta. */
+    private suspend fun sincronizarCuenta(): Boolean {
+        val token = caja.tokenSocial ?: return false
+        val llave = caja.llaveCajon ?: return false
+        fun mismaSesion() = caja.tokenSocial == token && caja.llaveCajon == llave
         _sync.value = _sync.value.copy(estado = EstadoSync.SINCRONIZANDO, mensaje = null)
-        viewModelScope.launch {
-            try {
-                val c = io.github.fogonapps.cajon.datos.ClienteSocial(token)
-                val guardado = c.cajon()
-                val remoto = guardado.sobre.takeIf { it.isNotBlank() }?.let { s ->
-                    withContext(kotlinx.coroutines.Dispatchers.Default) { runCatching { JsonCajon.decodeFromString(Estado.serializer(), io.github.fogonapps.cajon.datos.Nube.abrir(s, llave)) }.getOrNull() }
-                }
-                if (remoto != null) {
-                    // Lo escuchado del otro equipo va a su archivo; el resto se une con el cajón.
+        return try {
+            val c = io.github.fogonapps.cajon.datos.ClienteSocial(token)
+            val lista = sincronizarCajonCifrado(
+                llave = llave,
+                autorizacion = { caja.reemplazarCajonRemoto },
+                vigente = ::mismaSesion,
+                descargar = { c.cajon() },
+                unir = { remoto ->
                     escuchas.unir(remoto.escuchas)
-                    val unido = L.normalizar(L.unir(_estado.value ?: return@launch, remoto.copy(escuchas = null)))
+                    val unido = L.normalizar(L.unir(_estado.value ?: throw java.io.IOException("sin cajón local"), remoto.copy(escuchas = null)))
                     if (unido != _estado.value) { _estado.value = unido; guardarYa() }
-                }
-                val sobre = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    io.github.fogonapps.cajon.datos.Nube.cerrar(JsonCajon.encodeToString(Estado.serializer(), paraAfuera(_estado.value!!)), llave)
-                }
-                c.guardarCajon(sobre, guardado.cambio)
-                caja.ultima = ahora()
-                _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuarioSocial, ultima = caja.ultima)
-            } catch (e: io.github.fogonapps.cajon.datos.ErrorSocial) {
-                // Otro teléfono subió algo mientras tanto: se trae y se une otra vez.
-                if (e.error == "cambio") sincronizarOtraVez = true
-                else _sync.value = _sync.value.copy(estado = EstadoSync.ERROR, mensaje = tx(R.string.red_error))
-            } catch (e: java.io.IOException) {
-                _sync.value = _sync.value.copy(estado = EstadoSync.SIN_CONEXION)
-            } finally {
-                sincronizando = false
-                if (sincronizarOtraVez) { sincronizarOtraVez = false; sincronizar() }
-            }
+                },
+                local = { _estado.value?.let { paraAfuera(it) } },
+                guardar = { sobre, cambio -> c.guardarCajon(sobre, cambio) },
+                confirmar = {
+                    if (permiteReemplazarCajon(llave, caja.reemplazarCajonRemoto)) caja.reemplazarCajonRemoto = null
+                },
+            )
+            if (!lista) return false
+            caja.ultima = ahora()
+            _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuarioSocial, ultima = caja.ultima)
+            true
+        } catch (e: CajonIlegible) {
+            if (mismaSesion()) _sync.value = _sync.value.copy(estado = EstadoSync.ERROR, mensaje = tx(R.string.nube_no_se_pudo_abrir))
+            false
+        } catch (e: io.github.fogonapps.cajon.datos.ErrorSocial) {
+            if (!mismaSesion()) return false
+            if (e.codigo == 401) throw e
+            _sync.value = _sync.value.copy(estado = EstadoSync.ERROR, mensaje = tx(R.string.red_error))
+            false
+        } catch (e: java.io.IOException) {
+            if (mismaSesion()) _sync.value = _sync.value.copy(estado = EstadoSync.SIN_CONEXION)
+            false
         }
     }
 

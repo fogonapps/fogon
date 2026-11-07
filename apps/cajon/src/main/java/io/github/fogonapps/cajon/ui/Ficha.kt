@@ -49,6 +49,7 @@ import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Estados
+import io.github.fogonapps.cajon.datos.Generos
 import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.Registro
 import io.github.fogonapps.cajon.datos.Temporada
@@ -59,6 +60,9 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
+
+private fun etiquetaLibroVisible(o: Obra, texto: String, idioma: String): String =
+    if (o.tipo == Tipos.LIBRO) Generos.etiquetaLibro(texto, idioma) else texto
 
 /** Lo de arriba de la ficha: el fondo (cine), la portada y los datos de afuera. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -102,7 +106,7 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
     Enlaces(vm, o.fuente)
     if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (en todos los tipos).
-        o.generos.forEach { g -> Pildora(g) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
+        o.generos.forEach { g -> Pildora(etiquetaLibroVisible(o, g, vm.idioma())) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
     }
 }
 
@@ -230,8 +234,11 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
 
     // Los géneros, como etiquetas (tocar uno busca lo del cajón con ese género).
-    EditorEtiquetas("g" + o.id, stringResource(R.string.generos), o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
-        { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_genero))
+    val tituloEtiquetas = stringResource(if (o.tipo == Tipos.LIBRO) R.string.temas else R.string.generos)
+    val textoAgregar = stringResource(if (o.tipo == Tipos.LIBRO) R.string.agregar_tema else R.string.agregar_genero)
+    EditorEtiquetas("g" + o.id, tituloEtiquetas, o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
+        { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, textoAgregar,
+        textoVisible = { etiquetaLibroVisible(o, it, idioma) })
 
     // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
     var celebrando by remember(id) { mutableStateOf(false) }

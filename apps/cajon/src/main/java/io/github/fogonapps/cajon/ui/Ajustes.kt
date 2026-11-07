@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -123,11 +124,13 @@ private fun OrdenPestanas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     val lista = io.github.fogonapps.cajon.Pestana.enOrden(e.ajustes.ordenPestanas)
     lista.forEachIndexed { i, p ->
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconoRiso(iconoPestana(p), null, tamano = 20.dp, tinta = f.acentoTexto)
             Text(stringResource(textoPestana(p)), color = f.texto, modifier = Modifier.weight(1f))
             if (i > 0) BotonIcono(Iconos.Arriba, stringResource(R.string.mover_antes)) { vm.moverPestana(p, -1) }
+            else Spacer(Modifier.size(40.dp))
             if (i < lista.lastIndex) BotonIcono(Iconos.Abajo, stringResource(R.string.mover_despues)) { vm.moverPestana(p, 1) }
+            else Spacer(Modifier.size(40.dp))
         }
     }
 }

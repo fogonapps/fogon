@@ -56,6 +56,29 @@ data class MensajeChat(
     val personas: Map<String, io.github.fogonapps.cajon.datos.PersonaSocial> = emptyMap(),
 )
 
+internal fun claveSobre(s: io.github.fogonapps.cajon.datos.Sobre): String = "s${s.id}:${s.cuando}:${s.de.usuario}"
+
+/** Reconoce entregas repetidas, incluidos mensajes guardados antes de usar claves compuestas. */
+internal fun decidirSobres(
+    ultimo: Long, sobres: List<io.github.fogonapps.cajon.datos.Sobre>, conversaciones: Map<String, List<MensajeChat>>,
+): Pair<List<io.github.fogonapps.cajon.datos.Sobre>, Long> {
+    fun conocido(s: io.github.fogonapps.cajon.datos.Sobre) = conversaciones[s.de.usuario].orEmpty().any {
+        it.id == claveSobre(s) || (it.id == "s${s.id}" && it.cuando == s.cuando && !it.mio)
+    }
+    val reinicio = sobres.any { it.id < ultimo && !conocido(it) } ||
+        (sobres.isNotEmpty() && sobres.all { it.id <= ultimo } && sobres.any { !conocido(it) })
+    val nuevos = sobres.filter { (reinicio || it.id > ultimo) && !conocido(it) }.distinctBy(::claveSobre).sortedBy { it.id }
+    val cursor = if (reinicio) sobres.maxOf { it.id } else maxOf(ultimo, sobres.maxOfOrNull { it.id } ?: ultimo)
+    return nuevos to cursor
+}
+
+/** La lista pertenece a un solo remitente; solo el contenido abierto permite reconocer una entrega renumerada. */
+internal fun agregarMensajeChat(lista: List<MensajeChat>, mensaje: MensajeChat): List<MensajeChat> {
+    val repetido = !mensaje.mio && !mensaje.noSeLee && mensaje.k.isNotBlank() &&
+        lista.any { !it.mio && it.k == mensaje.k }
+    return (if (repetido) lista else (lista + mensaje).distinctBy { it.id }).takeLast(2000)
+}
+
 /**
  * El chat de la red, cifrado de extremo a extremo (ver [Cifrado]). Las conversaciones viven solo en este teléfono
  * (`files/chats.json`): no van en el respaldo, ni en el Gist, ni quedan en el servidor, que solo pasa los sobres.
@@ -238,7 +261,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
 
     private suspend fun agregar(usuario: String, m: MensajeChat, ultimo: Long? = null) = candado.withLock {
         val c = _chats.value
-        val lista = (c.conversaciones[usuario].orEmpty() + m).distinctBy { it.id }.takeLast(2000)
+        val lista = agregarMensajeChat(c.conversaciones[usuario].orEmpty(), m)
         poner(c.copy(conversaciones = c.conversaciones + (usuario to lista), ultimo = ultimo ?: c.ultimo))
         guardar()
     }
@@ -250,7 +273,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
     private suspend fun procesar(sobres: List<io.github.fogonapps.cajon.datos.Sobre>) = recibiendo.withLock {
         val yo = red.usuario.value ?: return@withLock
         val p = propias() ?: return@withLock
-        val nuevos = sobres.filter { it.id > _chats.value.ultimo }
+        val (nuevos, cursor) = decidirSobres(_chats.value.ultimo, sobres, _chats.value.conversaciones)
         for (s in nuevos) {
             val de = s.de.usuario
             // Si no abre con las llaves que se tenían, se piden otra vez (la persona pudo cambiar de teléfono) y se reintenta.
@@ -259,12 +282,13 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
                 runCatching { abrirCon(llaves(de)) }.getOrNull() ?: runCatching { abrirCon(llaves(de, frescas = true)) }.getOrNull()
             }
             when {
-                c == null -> agregar(de, MensajeChat("s${s.id}", false, s.cuando, noSeLee = true), s.id)
+                c == null -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, noSeLee = true), s.id)
                 // La otra persona borró un mensaje suyo para todos.
                 c.b != null -> { marcarBorrado(de, c.b, mio = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
-                else -> agregar(de, MensajeChat("s${s.id}", false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }), s.id)
+                else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }), s.id)
             }
         }
+        if (sobres.isNotEmpty()) cambiar { it.copy(ultimo = cursor) }
         // Confirmar lo recibido (el servidor borra hasta el último).
         if (nuevos.isNotEmpty()) runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }
     }

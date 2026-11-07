@@ -7,6 +7,12 @@ import io.github.fogonapps.cajon.datos.ClienteSocial
 import io.github.fogonapps.cajon.datos.ComentarioSocial
 import io.github.fogonapps.cajon.datos.ErrorSocial
 import io.github.fogonapps.cajon.datos.Estado
+import io.github.fogonapps.cajon.datos.llaveParaRecuperacion
+import io.github.fogonapps.cajon.datos.SubidasPerfil
+import io.github.fogonapps.cajon.datos.SesionCuenta
+import io.github.fogonapps.cajon.datos.SincronizacionesAgrupadas
+import io.github.fogonapps.cajon.datos.prepararSubidaPerfil
+import io.github.fogonapps.cajon.datos.RecuperacionCajon
 import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.PartesPerfil
 import io.github.fogonapps.cajon.datos.ParteSubida
@@ -25,6 +31,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -61,11 +69,18 @@ class RedSocial(
     private val estado: () -> Estado?,
     private val cambiar: ((Estado) -> Estado) -> Unit,
     private val decir: (Int) -> Unit,
-    /** Sincronizar el cajón guardado en la cuenta (lo hace el ViewModel). */
-    private val sincronizarCajon: () -> Unit = {},
+    /** Espera a descargar, descifrar, unir y guardar el cajón; false mantiene bloqueada la publicación. */
+    private val sincronizarCajon: suspend () -> Boolean = { false },
 ) {
+    init { caja.migrarPerfilRed() }
+
     /** El cajón guardado en la cuenta necesita la contraseña para abrirse en este teléfono (entró con el código). */
     private val _cajonBloqueado = MutableStateFlow(false)
+    private val recuperacionCajon = RecuperacionCajon()
+    private val sesion = SesionCuenta { caja.tokenSocial }
+    private val sincronizacionesCajon = SincronizacionesAgrupadas(scope)
+    private val recuperandoPerfil = Mutex()
+    private var aplicandoPerfil = false
     val cajonBloqueado: StateFlow<Boolean> = _cajonBloqueado
 
     /**
@@ -73,26 +88,51 @@ class RedSocial(
      * crea una (o usa la de este teléfono) y la sube envuelta. Luego sincroniza.
      */
     private suspend fun llaveConClave(clave: String) {
-        val enServidor = cliente().cajon().llave
-        val llave = if (enServidor.isNotBlank()) withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.desenvolver(enServidor, clave) }
-        else (caja.llaveCajon ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()).also {
-            cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(it, clave) })
+        val marca = sesion.actual()
+        val token = caja.tokenSocial ?: return
+        revisarCajon {
+            val cliente = ClienteSocial(token)
+            val enServidor = cliente.cajon().llave
+            if (!sesion.vigente(marca)) return@revisarCajon
+            val llave = if (enServidor.isNotBlank()) withContext(Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.desenvolver(enServidor, clave) }
+            else (caja.llaveCajon ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()).also {
+                val envuelta = withContext(Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(it, clave) }
+                if (!sesion.vigente(marca)) return@revisarCajon
+                cliente.guardarLlaveCajon(envuelta)
+            }
+            if (sesion.vigente(marca)) caja.llaveCajon = llave
         }
-        caja.llaveCajon = llave
-        _cajonBloqueado.value = false
-        sincronizarCajon()
     }
 
     /** Con la contraseña, abre en este teléfono el cajón guardado en la cuenta. */
     fun desbloquearCajon(clave: String) = scope.launch {
-        try { intentar { llaveConClave(clave) } } catch (x: Exception) { decir(R.string.red_clave_mala) }
+        try { intentar { llaveConClave(clave) } }
+        catch (x: kotlinx.coroutines.CancellationException) { throw x }
+        catch (x: Exception) { decir(R.string.red_clave_mala) }
     }
 
     /** Después de entrar: si la cuenta ya tiene el cajón guardado y este teléfono no tiene la llave, pide la contraseña. */
-    private suspend fun revisarCajon() {
-        if (caja.llaveCajon != null) { sincronizarCajon(); return }
-        _cajonBloqueado.value = runCatching { cliente().cajon().llave.isNotBlank() }.getOrDefault(false)
+    private suspend fun revisarCajon(prepararLlave: suspend () -> Unit = {}) {
+        val marca = sesion.actual()
+        val token = caja.tokenSocial ?: return
+        recuperacionCajon.revisar(
+            sesionValida = { sesion.vigente(marca) },
+            prepararLlave = prepararLlave,
+            tieneLlave = { caja.llaveCajon != null },
+            hayCajon = { ClienteSocial(token).cajon().let { it.llave.isNotBlank() || it.sobre.isNotBlank() } },
+            unir = sincronizarCajon,
+            bloquear = { _cajonBloqueado.value = it },
+        )
     }
+
+    /** Sincronización pedida por el ViewModel; comparte la exclusión con comprobar y desbloquear. */
+    fun recuperarCajon(): Job {
+        val marca = sesion.actual()
+        return sincronizacionesCajon.solicitar {
+            if (sesion.vigente(marca)) intentar(avisar = false) { revisarCajon() }
+        }
+    }
+
     private fun cliente() = ClienteSocial(caja.tokenSocial)
 
     private val _usuario = MutableStateFlow(caja.usuarioSocial.takeIf { caja.tokenSocial != null })
@@ -141,35 +181,43 @@ class RedSocial(
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando
 
-    /** Hace [trabajo] y, si falla, lo dice con un aviso corto. Devuelve si salió bien. */
-    private suspend fun intentar(trabajo: suspend () -> Unit): Boolean = try { trabajo(); true } catch (x: ErrorSocial) {
-        if (x.codigo == 401) { olvidarCuenta(); decir(R.string.red_sesion_vencida) }
-        else decir(when (x.error) {
-            "usuario_tomado" -> R.string.red_usuario_tomado
-            "usuario" -> R.string.red_usuario_malo
-            "correo" -> R.string.red_correo_malo
-            "codigo" -> R.string.red_codigo_malo
-            "codigo_vencido", "sin_codigo" -> R.string.red_codigo_vencido
-            "correo_tomado" -> R.string.red_correo_tomado
-            "despacio" -> R.string.red_despacio
-            "clave_mala" -> R.string.red_clave_mala
-            "clave_corta" -> R.string.red_clave_corta
-            "usuario_espera" -> R.string.red_usuario_espera
-            "suspendida", "cerrada" -> R.string.red_suspendida
-            "restringida" -> R.string.red_restringida
-            "privada" -> R.string.red_es_privada
-            "no_existe" -> R.string.red_no_existe
-            else -> R.string.red_error
-        })
-        false
-    } catch (x: IOException) { decir(R.string.red_sin_conexion); false }
+    /** Hace [trabajo]; en segundo plano omite avisos salvo el cierre de sesión por 401. */
+    private suspend fun intentar(avisar: Boolean = true, marca: SesionCuenta.Marca = sesion.actual(), trabajo: suspend () -> Unit): Boolean =
+        sesion.intentar(marca, trabajo) { x ->
+            if (x is ErrorSocial) {
+                if (x.codigo == 401) { olvidarCuenta(); decir(R.string.red_sesion_vencida) }
+                else if (avisar) decir(when (x.error) {
+                    "usuario_tomado" -> R.string.red_usuario_tomado
+                    "usuario" -> R.string.red_usuario_malo
+                    "correo" -> R.string.red_correo_malo
+                    "codigo" -> R.string.red_codigo_malo
+                    "codigo_vencido", "sin_codigo" -> R.string.red_codigo_vencido
+                    "correo_tomado" -> R.string.red_correo_tomado
+                    "despacio" -> R.string.red_despacio
+                    "clave_mala" -> R.string.red_clave_mala
+                    "clave_corta" -> R.string.red_clave_corta
+                    "usuario_espera" -> R.string.red_usuario_espera
+                    "suspendida" -> R.string.red_suspendida
+                    "cerrada" -> R.string.red_cerrada
+                    "restringida" -> R.string.red_restringida
+                    "privada" -> R.string.red_es_privada
+                    "no_existe" -> R.string.red_no_existe
+                    else -> R.string.red_error
+                })
+            } else if (avisar) decir(R.string.red_sin_conexion)
+        }
 
-    private fun lanzar(trabajo: suspend () -> Unit) = scope.launch { intentar(trabajo) }
+    private fun lanzar(trabajo: suspend () -> Unit) = scope.launch { intentar(trabajo = trabajo) }
 
     /* ----- La cuenta ----- */
 
     fun revisarServidor() = scope.launch {
-        runCatching { ClienteSocial().info() }.getOrNull()?.let { i ->
+        val marca = sesion.actual()
+        if (caja.perfilRedPendiente) intentar(avisar = false) { traerPerfilPropio() }
+        if (!sesion.vigente(marca)) return@launch
+        val info = runCatching { ClienteSocial().info() }.getOrNull()
+        if (!sesion.vigente(marca)) return@launch
+        info?.let { i ->
             _correo.value = i.correo == "true"
             if (i.politica.isNotBlank()) politica = i.politica
         }
@@ -179,9 +227,10 @@ class RedSocial(
             cambiar { e -> e.copy(perfil = e.perfil.copy(visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
             caja.partesRedPuestas = true
         }
-        if (_usuario.value != null) scope.launch { revisarCajon() }
-        if (_usuario.value != null) intentar {
+        if (_usuario.value != null) recuperarCajon()
+        if (_usuario.value != null) intentar(avisar = false) {
             val c = cliente().miCuenta()
+            if (!sesion.vigente(marca)) return@intentar
             _privada.value = c.privada; _correoCuenta.value = c.correo; _cuenta.value = c
         }
     }
@@ -229,6 +278,7 @@ class RedSocial(
      * cuenta se reemplaza con lo de este teléfono, porque sin la contraseña vieja no se puede abrir).
      */
     fun entrar(codigo: String, claveNueva: String = "") = scope.launch {
+        var marca = sesion.actual()
         val a = _acceso.value
         _acceso.value = a.copy(ocupado = true)
         try {
@@ -236,21 +286,28 @@ class RedSocial(
                 try { entro(ClienteSocial().entrar(a.correo, codigo.trim())) }
                 catch (x: ErrorSocial) { if (x.error == "cuenta_nueva") _acceso.value = Acceso(PasoAcceso.USUARIO, a.correo, codigo.trim()) else throw x }
             } else {
-                entro(ClienteSocial().entrar(a.correo, codigo.trim(), clave = claveNueva))
-                llaveNueva(claveNueva)
+                if (entro(ClienteSocial().entrar(a.correo, codigo.trim(), clave = claveNueva))) {
+                    marca = sesion.actual()
+                    llaveNueva(claveNueva)
+                }
             }
-        } catch (x: ErrorSocial) { intentar { throw x } }
-        catch (x: IOException) { decir(R.string.red_sin_conexion) }
+        } catch (x: ErrorSocial) { intentar(marca = marca) { throw x } }
+        catch (x: IOException) { if (sesion.vigente(marca)) decir(R.string.red_sin_conexion) }
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
     /** La llave del cajón envuelta con una contraseña recién puesta (la de este teléfono, o una nueva). */
     private suspend fun llaveNueva(clave: String) {
-        val llave = caja.llaveCajon ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()
-        cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, clave) })
-        caja.llaveCajon = llave
-        _cajonBloqueado.value = false
-        sincronizarCajon()
+        val marca = sesion.actual()
+        val token = caja.tokenSocial ?: return
+        revisarCajon {
+            val recuperada = llaveParaRecuperacion(caja.llaveCajon)
+            val llave = recuperada.llave
+            val envuelta = withContext(Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, clave) }
+            if (!sesion.vigente(marca)) return@revisarCajon
+            ClienteSocial(token).guardarLlaveCajon(envuelta)
+            if (sesion.vigente(marca)) caja.guardarLlaveRecuperada(recuperada)
+        }
     }
 
     /** Cuenta nueva con el correo ya comprobado y su contraseña (con ella el cajón se guarda en la cuenta desde ya). */
@@ -258,8 +315,9 @@ class RedSocial(
         val a = _acceso.value
         _acceso.value = a.copy(ocupado = true)
         try {
-            entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica, clave))
-            llaveNueva(clave)
+            if (entro(ClienteSocial().entrar(a.correo, a.codigo, usuario.trim().lowercase(), nombre.trim(), politica, clave))) {
+                intentar { llaveNueva(clave) }
+            }
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
@@ -268,22 +326,29 @@ class RedSocial(
     fun entrarConClave(correo: String, clave: String) = lanzar {
         _acceso.value = _acceso.value.copy(ocupado = true)
         try {
-            entro(ClienteSocial().entrarConClave(correo.trim(), clave))
-            runCatching { llaveConClave(clave) }   // con la contraseña a mano, el cajón de la cuenta se abre solo
+            if (entro(ClienteSocial().entrarConClave(correo.trim(), clave)))
+                runCatching { intentar(avisar = false) { llaveConClave(clave) } }   // con la contraseña a mano, el cajón de la cuenta se abre solo
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
     /** Crea o cambia la contraseña; con ella, la llave del cajón se vuelve a envolver (y si no había, se crea). */
     fun ponerClave(nueva: String, actual: String, listo: () -> Unit) = lanzar {
-        val llaveAntes = caja.llaveCajon ?: actual.takeIf { it.isNotBlank() }?.let { a ->
-            runCatching { cliente().cajon().llave.takeIf { it.isNotBlank() }?.let { io.github.fogonapps.cajon.datos.Nube.desenvolver(it, a) } }.getOrNull()
+        val marca = sesion.actual()
+        val token = caja.tokenSocial ?: return@lanzar
+        revisarCajon {
+            val llaveAntes = caja.llaveCajon ?: actual.takeIf { it.isNotBlank() }?.let { a ->
+                runCatching { ClienteSocial(token).cajon().llave.takeIf { it.isNotBlank() }?.let { io.github.fogonapps.cajon.datos.Nube.desenvolver(it, a) } }.getOrNull()
+            }
+            if (!sesion.vigente(marca)) return@revisarCajon
+            ClienteSocial(token).ponerClave(nueva, actual)
+            if (!sesion.vigente(marca)) return@revisarCajon
+            val llave = llaveAntes ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()
+            val envuelta = withContext(Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, nueva) }
+            if (!sesion.vigente(marca)) return@revisarCajon
+            ClienteSocial(token).guardarLlaveCajon(envuelta)
+            if (sesion.vigente(marca)) caja.llaveCajon = llave
         }
-        cliente().ponerClave(nueva, actual)
-        val llave = llaveAntes ?: io.github.fogonapps.cajon.datos.Nube.llaveNueva()
-        cliente().guardarLlaveCajon(withContext(kotlinx.coroutines.Dispatchers.Default) { io.github.fogonapps.cajon.datos.Nube.envolver(llave, nueva) })
-        caja.llaveCajon = llave
-        _cajonBloqueado.value = false
-        decir(R.string.red_clave_lista); revisarServidor(); sincronizarCajon(); listo()
+        if (sesion.vigente(marca)) { decir(R.string.red_clave_lista); revisarServidor(); listo() }
     }
 
     fun cambiarUsuario(nuevo: String, listo: () -> Unit) = lanzar {
@@ -293,22 +358,74 @@ class RedSocial(
         decir(R.string.red_usuario_cambiado); revisarServidor(); listo()
     }
 
-    private fun entro(a: io.github.fogonapps.cajon.datos.Acceso) {
+    private suspend fun entro(a: io.github.fogonapps.cajon.datos.Acceso): Boolean {
+        sesion.invalidar()
+        sincronizacionesCajon.cancelar()
         caja.tokenSocial = a.token
+        val marca = sesion.actual()
         caja.usuarioSocial = a.usuario
         caja.politicaSocial = politica
         caja.partesRedPuestas = true
         _usuario.value = a.usuario
         _acceso.value = Acceso()
         AvisosRed.programar(app)
-        // El usuario de la red es el del perfil; y lo que hace que el perfil tenga sentido queda a la vista (si no eligió otra cosa).
-        cambiar { e -> e.copy(perfil = e.perfil.copy(usuario = a.usuario, visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad, cambio = System.currentTimeMillis())) }
+        subida?.cancel()
+        subidasPerfil.reiniciar(); ultimaFoto = null
+        caja.borrarFotoRed = false
+        caja.perfilRedPendiente = !a.nueva
+        recuperacionCajon.reiniciar(cuentaNueva = a.nueva)
+        _cajonBloqueado.value = false
+        if (a.nueva) {
+            val plan = estado()?.let { planEntrada(it, a.usuario, nueva = true) }
+            if (plan != null) {
+                cambiar { plan.estado }
+                if (plan.subir) sincronizarYa()
+            }
+        } else {
+            intentar { traerPerfilPropio() }
+        }
+        if (!sesion.vigente(marca)) return false
         decir(if (a.nueva) R.string.red_bienvenida else R.string.red_entraste)
-        sincronizarYa()
-        cargarFeed()
+        cargarFeed(avisar = false)
         revisarServidor()
-        scope.launch { revisarCajon() }
+        return sesion.vigente(marca)
     }
+
+    private suspend fun traerPerfilPropio() {
+        val marca = sesion.actual()
+        recuperandoPerfil.withLock {
+            if (!sesion.vigente(marca) || !caja.perfilRedPendiente) return@withLock
+            val usuario = _usuario.value ?: return@withLock
+            val cliente = ClienteSocial(caja.tokenSocial)
+            val remoto = cliente.perfil(usuario)
+            if (!sesion.vigente(marca)) return@withLock
+            val foto = if (remoto.persona.foto) {
+                try {
+                    val bytes = cliente.descargarFoto(usuario)
+                    if (!sesion.vigente(marca)) return@withLock
+                    withContext(Dispatchers.IO) {
+                        val carpeta = java.io.File(app.filesDir, "portadas").apply { mkdirs() }
+                        val archivo = java.io.File(carpeta, "perfil-red-${System.currentTimeMillis()}.jpg")
+                        archivo.writeBytes(bytes)
+                        android.net.Uri.fromFile(archivo).toString()
+                    }
+                } catch (x: IOException) {
+                    if (x is ErrorSocial && x.codigo == 401) throw x
+                    ClienteSocial.foto(usuario)
+                }
+            } else ""
+            if (!sesion.vigente(marca)) return@withLock
+            aplicandoPerfil = true
+            try { cambiar { planEntrada(it, usuario, nueva = false, remoto = remoto, foto = foto).estado } }
+            finally { aplicandoPerfil = false }
+            if (estado() == null) return@withLock
+            // Bajar identidad y foto no confirma ninguna publicación local en el servidor.
+            ultimaFoto = foto
+            caja.perfilRedPendiente = false
+        }
+    }
+
+    fun quitarFotoPropia() { if (_usuario.value != null) caja.borrarFotoRed = true }
 
     /** Ponerle correo a una cuenta hecha sin él: primero [pedirCodigo] y luego esto con el código. */
     fun vincularCorreo(codigo: String) = lanzar {
@@ -318,11 +435,23 @@ class RedSocial(
         decir(R.string.red_correo_vinculado)
     }
 
-    fun salir() = scope.launch { runCatching { cliente().salir() }; olvidarCuenta() }
+    fun salir() = scope.launch {
+        val marca = sesion.actual()
+        runCatching { cliente().salir() }
+        if (sesion.vigente(marca)) olvidarCuenta()
+    }
 
-    fun borrarCuenta() = lanzar { cliente().borrarCuenta(); olvidarCuenta(); decir(R.string.red_cuenta_borrada) }
+    fun borrarCuenta() = lanzar {
+        val marca = sesion.actual()
+        cliente().borrarCuenta()
+        if (sesion.vigente(marca)) { olvidarCuenta(); decir(R.string.red_cuenta_borrada) }
+    }
 
     private fun olvidarCuenta() {
+        sesion.invalidar()
+        sincronizacionesCajon.cancelar()
+        subida?.cancel(); subidasPerfil.reiniciar(); ultimaFoto = null
+        caja.perfilRedPendiente = false; caja.borrarFotoRed = false; recuperacionCajon.reiniciar()
         caja.tokenSocial = null; caja.usuarioSocial = null; caja.publicacionesSubidas = emptySet(); caja.llaveCajon = null; _cajonBloqueado.value = false
         _usuario.value = null
         AvisosRed.programar(app)
@@ -336,12 +465,12 @@ class RedSocial(
 
     private var subida: Job? = null
     /** Lo último que se subió, para no subir lo mismo cada vez que cambia algo que no se comparte. */
-    private var ultimo: Pair<PerfilSubido, List<PublicacionSubida>>? = null
+    private val subidasPerfil = SubidasPerfil()
     private var ultimaFoto: String? = null
 
     /** Después de un cambio en el cajón: sube lo compartido (perfil y publicaciones) a los pocos segundos. */
     fun sincronizar() {
-        if (_usuario.value == null) return
+        if (_usuario.value == null || aplicandoPerfil) return
         subida?.cancel()
         subida = scope.launch { delay(5000); subirAhora() }
     }
@@ -349,23 +478,45 @@ class RedSocial(
     fun sincronizarYa() { subida?.cancel(); subida = scope.launch { subirAhora() } }
 
     private suspend fun subirAhora() {
-        val e = estado() ?: return
         if (_usuario.value == null) return
-        intentar {
+        val marca = sesion.actual()
+        val preparado = prepararSubidaPerfil(
+            pendiente = { caja.perfilRedPendiente },
+            recuperarPerfil = { intentar(avisar = false) { traerPerfilPropio() } },
+            recuperarCajon = {
+                if (!recuperacionCajon.recuperado) intentar(avisar = false) { revisarCajon() }
+                puedeSubirPerfil(caja.perfilRedPendiente, recuperacionCajon.recuperado, _cajonBloqueado.value)
+            },
+            vigente = { sesion.vigente(marca) },
+        )
+        if (!preparado) return
+        val e = estado() ?: return
+        intentar(avisar = false) {
             val ahora = perfilDe(e).copy(portada = portadaEnLaRed(e.perfil.portada)) to publicacionesDe(e)
-            if (ahora != ultimo) {
-                cliente().subirPerfil(ahora.first)
+            val cliente = ClienteSocial(caja.tokenSocial)
+            if (!sesion.vigente(marca)) return@intentar
+            val subido = subidasPerfil.subir(ahora) {
+                cliente.subirPerfil(ahora.first)
+                if (!sesion.vigente(marca)) return@subir false
                 // Solo se quita de la red lo que este teléfono había subido y ya no está; nunca lo que no conoce.
                 val claves = ahora.second.map { it.clave }.toSet()
-                cliente().subirCambios(ahora.second, (caja.publicacionesSubidas - claves).toList())
+                cliente.subirCambios(ahora.second, (caja.publicacionesSubidas - claves).toList())
+                if (!sesion.vigente(marca)) return@subir false
                 caja.publicacionesSubidas = claves
-                ultimo = ahora
+                true
             }
+            if (!subido || !sesion.vigente(marca)) return@intentar
             val foto = e.perfil.foto
-            if (foto != ultimaFoto) {
-                if (foto.isBlank()) cliente().quitarFoto()
-                else jpeg(foto, 512, 400_000)?.let { cliente().subirFoto(it) }
-                ultimaFoto = foto
+            when (accionFoto(foto, ultimaFoto, caja.borrarFotoRed)) {
+                "borrar" -> {
+                    cliente.quitarFoto()
+                    if (sesion.vigente(marca)) { caja.borrarFotoRed = false; ultimaFoto = foto }
+                }
+                "subir" -> jpeg(foto, 512, 400_000)?.let {
+                    if (!sesion.vigente(marca)) return@intentar
+                    cliente.subirFoto(it)
+                    if (sesion.vigente(marca)) { ultimaFoto = foto; caja.borrarFotoRed = false }
+                }
             }
         }
     }
@@ -375,19 +526,22 @@ class RedSocial(
      * dirección en el servidor; si ya es de internet, esa misma.
      */
     private suspend fun portadaEnLaRed(portada: String): String {
+        val marca = sesion.actual()
+        val cliente = cliente()
         if (portada.isBlank() || portada.startsWith("https://")) return portada.takeIf { it.startsWith("https://") }.orEmpty()
         caja.portadaSubida?.split('|')?.takeIf { it.size == 2 && it[0] == portada }?.let { return it[1] }
         val jpg = jpeg(portada, 1600, 900_000) ?: return ""
-        val url = ClienteSocial.imagen(cliente().subirImagen(jpg))
-        caja.portadaSubida = "$portada|$url"
+        if (!sesion.vigente(marca)) return ""
+        val url = ClienteSocial.imagen(cliente.subirImagen(jpg))
+        if (sesion.vigente(marca)) caja.portadaSubida = "$portada|$url"
         return url
     }
 
     /* ----- Feed, perfiles y publicaciones ----- */
 
-    fun cargarFeed() {
+    fun cargarFeed(avisar: Boolean = true) {
         if (_usuario.value == null) return
-        lanzar { _feed.value = cliente().feed() }
+        scope.launch { intentar(avisar = avisar) { _feed.value = cliente().feed() } }
     }
 
     fun masFeed() = lanzar {
@@ -403,9 +557,14 @@ class RedSocial(
     val noEstan: StateFlow<Set<String>> = _noEstan
 
     fun verPerfil(usuario: String) = scope.launch {
-        try { _perfiles.value = _perfiles.value + (usuario to cliente().perfil(usuario)) }
-        catch (x: ErrorSocial) { if (x.codigo == 404) _noEstan.value = _noEstan.value + usuario else intentar { throw x } }
-        catch (x: IOException) { decir(R.string.red_sin_conexion) }
+        val marca = sesion.actual()
+        try {
+            val perfil = cliente().perfil(usuario)
+            if (sesion.vigente(marca)) _perfiles.value = _perfiles.value + (usuario to perfil)
+        } catch (x: ErrorSocial) {
+            if (sesion.vigente(marca) && x.codigo == 404) _noEstan.value = _noEstan.value + usuario
+            else intentar(marca = marca) { throw x }
+        } catch (x: IOException) { if (sesion.vigente(marca)) decir(R.string.red_sin_conexion) }
     }
 
     fun cargarPublicacion(id: Long) = lanzar {
@@ -491,6 +650,10 @@ class RedSocial(
 
     fun bloquear(usuario: String, si: Boolean) = lanzar {
         cliente().bloquear(usuario, si)
+        if (si) {
+            _gente.value = io.github.fogonapps.cajon.datos.quitarCuentaBloqueada(_gente.value, usuario)
+            _feed.value = io.github.fogonapps.cajon.datos.quitarPublicacionesBloqueadas(_feed.value, usuario)
+        }
         decir(if (si) R.string.red_bloqueado else R.string.red_desbloqueado)
         _perfiles.value = _perfiles.value - usuario
         _gente.value = _gente.value + ("bloqueados" to cliente().bloqueados())
@@ -621,8 +784,12 @@ class RedSocial(
     }
 
     fun borrarPropia(clave: String) {
+        val memoria = MemoriaPublicaciones(_feed.value, _explorar.value, _guardados.value, _vistas.value, _perfiles.value)
+            .sinPropia(_usuario.value.orEmpty(), clave)
+        _feed.value = memoria.feed; _explorar.value = memoria.explorar; _guardados.value = memoria.guardadas
+        _vistas.value = memoria.vistas; _perfiles.value = memoria.perfiles
         cambiar { e -> e.copy(publicaciones = e.publicaciones.map { if (it.clave == clave) it.copy(borrada = true, cambio = System.currentTimeMillis()) else it }) }
-        sincronizarYa(); cargarFeed()
+        sincronizarYa()
     }
 
     /* ----- Lo que se sube ----- */
@@ -649,6 +816,48 @@ class RedSocial(
     }
 
     companion object {
+        internal data class MemoriaPublicaciones(
+            val feed: List<PublicacionSocial>?, val explorar: List<PublicacionSocial>?,
+            val guardadas: List<PublicacionSocial>?, val vistas: Map<Long, PublicacionSocial>,
+            val perfiles: Map<String, PerfilSocial>,
+        ) {
+            fun sinPropia(usuario: String, clave: String): MemoriaPublicaciones {
+                fun esPropia(p: PublicacionSocial) = p.autor.usuario == usuario &&
+                    (texto(p, "clave") == "f:$clave" || texto(p, "propia") == clave)
+                fun quitar(lista: List<PublicacionSocial>?) = lista?.filterNot(::esPropia)
+                return copy(feed = quitar(feed), explorar = quitar(explorar), guardadas = quitar(guardadas),
+                    vistas = vistas.filterValues { !esPropia(it) },
+                    perfiles = perfiles.mapValues { (_, p) -> p.copy(publicaciones = quitar(p.publicaciones)!!) })
+            }
+        }
+        internal data class EntradaPerfil(val estado: Estado, val subir: Boolean)
+
+        internal fun planEntrada(e: Estado, usuario: String, nueva: Boolean,
+            remoto: PerfilSocial? = null, foto: String = ""): EntradaPerfil = if (nueva) {
+            EntradaPerfil(e.copy(perfil = e.perfil.copy(usuario = usuario,
+                visibilidad = PartesPerfil.AL_CREAR_CUENTA + e.perfil.visibilidad,
+                cambio = System.currentTimeMillis())), subir = true)
+        } else {
+            EntradaPerfil(aplicarPerfilPropio(e, requireNotNull(remoto), foto), subir = false)
+        }
+
+        internal fun puedeSubirPerfil(pendiente: Boolean, recuperado: Boolean, bloqueado: Boolean) =
+            !pendiente && recuperado && !bloqueado
+
+        internal fun accionFoto(foto: String, ultima: String?, retirada: Boolean): String = when {
+            foto.isBlank() && retirada -> "borrar"
+            foto.isNotBlank() && foto != ultima -> "subir"
+            else -> "ninguna"
+        }
+
+        private fun aplicarPerfilPropio(e: Estado, p: PerfilSocial, foto: String): Estado {
+            val ahora = System.currentTimeMillis()
+            return e.copy(ajustes = e.ajustes.copy(nombre = p.persona.nombre.ifBlank { e.ajustes.nombre }, cambio = ahora),
+                perfil = e.perfil.copy(usuario = p.persona.usuario, bio = p.bio, portada = p.portada,
+                    enlaces = p.enlaces, foto = foto, encuadreFoto = io.github.fogonapps.cajon.datos.Encuadre(),
+                    encuadrePortada = io.github.fogonapps.cajon.datos.Encuadre(), cambio = ahora))
+        }
+
         /** La versión de la política que conoce esta versión de la app (el servidor dice la vigente). */
         const val POLITICA_CONOCIDA = "2026-11-03"
 

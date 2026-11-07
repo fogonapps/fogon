@@ -203,8 +203,8 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             }
 
             // Lo que no se pudo buscar (sin clave de TMDB, sin internet).
-            b.errores.forEach { (fuente, error) ->
-                item(key = "e-$fuente") {
+            b.avisos.forEach { error ->
+                item(key = "e-$error") {
                     Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(error.let { stringResource(it) }, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }

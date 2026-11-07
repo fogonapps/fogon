@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.datos
 
+import io.github.fogonapps.cajon.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
@@ -160,6 +161,16 @@ class ClienteSocial(private val token: String? = null) {
     /* Perfil */
     suspend fun subirPerfil(p: PerfilSubido) { pedir("/perfil", "PUT", json(PerfilSubido.serializer(), p)) }
     suspend fun subirFoto(jpeg: ByteArray) { pedir("/foto", "PUT", jpeg.toRequestBody(JPEG)) }
+    suspend fun descargarFoto(usuario: String): ByteArray = withContext(Dispatchers.IO) {
+        val solicitud = Request.Builder().url(foto(usuario))
+            .apply { token?.let { header("Authorization", "Bearer $it") } }
+            .build()
+        http.newCall(solicitud).execute().use { r ->
+            if (r.code == 401) throw ErrorSocial(r.code, "")
+            if (!r.isSuccessful) throw java.io.IOException("foto: ${r.code}")
+            r.body.bytes()
+        }
+    }
     suspend fun quitarFoto() { pedir("/foto", "DELETE") }
     suspend fun perfil(usuario: String): PerfilSocial = leer(PerfilSocial.serializer(), pedir("/perfiles/${cod(usuario)}"))
     suspend fun buscar(q: String): List<PersonaSocial> = leer(ListSerializer(PersonaSocial.serializer()), pedir("/buscar?q=${cod(q)}"))
@@ -248,3 +259,65 @@ class ClienteSocial(private val token: String? = null) {
         private val httpLargo = http.newBuilder().readTimeout(40, TimeUnit.SECONDS).build()
     }
 }
+
+/** Campos legibles del contenido reportado, sin acciones ni efectos de la publicación. */
+data class ContenidoReporte(
+    val titulo: String = "", val portada: String = "", val tipoObra: String = "",
+    val anio: String = "", val creador: String = "", val texto: String = "",
+)
+
+fun leerContenidoReporte(contenido: String): ContenidoReporte {
+    val elemento = try {
+        kotlinx.serialization.json.Json.parseToJsonElement(contenido)
+    } catch (_: IllegalArgumentException) {
+        return ContenidoReporte(texto = contenido.take(600))
+    }
+    fun campo(nombre: String): String = ((elemento as? JsonObject)?.get(nombre) as? kotlinx.serialization.json.JsonPrimitive)
+        ?.takeUnless { it is kotlinx.serialization.json.JsonNull }?.content.orEmpty()
+    return ContenidoReporte(
+        titulo = campo("titulo"), portada = campo("portada"), tipoObra = campo("tipoObra"),
+        anio = campo("anio"), creador = campo("creador"),
+        texto = campo("texto").ifBlank {
+            (elemento as? kotlinx.serialization.json.JsonPrimitive)
+                ?.takeUnless { it is kotlinx.serialization.json.JsonNull }?.content.orEmpty()
+        }.take(600),
+    )
+}
+
+val MOTIVOS_REPORTE = listOf(
+    "menor_en_riesgo" to R.string.rep_menor, "desnudos" to R.string.rep_desnudos, "acoso" to R.string.rep_acoso, "odio" to R.string.rep_odio,
+    "autolesion" to R.string.rep_autolesion, "spam" to R.string.rep_spam, "menor_de_edad" to R.string.rep_menor_de_edad,
+    "derechos" to R.string.rep_autor, "falso" to R.string.rep_falso, "otro" to R.string.rep_otro,
+)
+
+/** Presentación traducida de una falta y los puntos que suma. */
+fun textoFalta(falta: FaltaSocial, traducir: (Int) -> String): String {
+    val regla = MOTIVOS_REPORTE.firstOrNull { it.first == falta.regla }?.second ?: when (falta.regla) {
+        "evadir_sancion" -> R.string.mod_evadir_sancion
+        "amenaza_real" -> R.string.rep_violencia
+        else -> R.string.rep_otro
+    }
+    val puntos = if (falta.puntos == 2) traducir(R.string.mod_grave_puntos)
+        else if (falta.puntos == 1) traducir(R.string.mod_un_punto)
+        else if (falta.puntos >= 4) traducir(R.string.mod_cierre)
+        else String.format(traducir(R.string.mod_puntos), falta.puntos)
+    return "${traducir(regla)} · $puntos"
+}
+
+/** El servidor une los reportes de mensajes con un separador; cada uno lleva su motivo. */
+fun limpiarReporteMensaje(contenido: String): String = contenido.split("\n---\n").joinToString("\n---\n") { reporte ->
+    val cabecera = reporte.substringBefore('\n')
+    if ('\n' in reporte && MOTIVOS_REPORTE.any { cabecera.startsWith("${it.first}:") })
+        reporte.substringAfter('\n')
+    else reporte
+}
+
+/** Retira la cuenta de las listas de seguidores y seguidos que estén cargadas. */
+fun quitarCuentaBloqueada(gente: Map<String, List<PersonaSocial>>, usuario: String): Map<String, List<PersonaSocial>> =
+    gente.mapValues { (clave, personas) ->
+        if (clave.startsWith("seguidores:") || clave.startsWith("siguiendo:")) personas.filterNot { it.usuario == usuario }
+        else personas
+    }
+
+fun quitarPublicacionesBloqueadas(feed: List<PublicacionSocial>?, usuario: String): List<PublicacionSocial>? =
+    feed?.filterNot { it.autor.usuario == usuario }

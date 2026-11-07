@@ -75,7 +75,8 @@ fun elegidasIniciales(vm: CajonViewModel, e: Estado): Int {
 @Composable
 private fun FilaDeGustos(vm: CajonViewModel, e: Estado, tipo: String, titulo: String) {
     val f = FogonTema.actual
-    val todas = remember(tipo) { vm.iniciales.filter { it.tipo == tipo } }
+    val idioma = vm.idioma()
+    val todas = remember(tipo, idioma) { vm.iniciales.filter { it.tipo == tipo } }
     if (todas.isEmpty()) return
     val porId = remember(todas) { todas.associateBy { it.id } }
     val dichos = e.gustosVivos.filter { it.senal == Senales.GUSTA }.map { it.clave }.toSet()

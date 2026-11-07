@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.datos
 
+import android.content.SharedPreferences
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -78,14 +79,15 @@ class CajaFuerte(context: Context) {
         }.getOrNull()
     }
 
-    private fun escribir(nombre: String, v: String?) {
-        if (v == null) { prefs.edit { remove(nombre); remove("$nombre.iv") }; return }
+    private fun escribir(nombre: String, v: String?, confirmar: Boolean = false, extras: SharedPreferences.Editor.() -> Unit = {}) {
+        if (v == null) { prefs.edit(commit = confirmar) { remove(nombre); remove("$nombre.iv"); extras() }; return }
         val c = Cipher.getInstance("AES/GCM/NoPadding")
         c.init(Cipher.ENCRYPT_MODE, llave())
         val cifrado = c.doFinal(v.encodeToByteArray())
-        prefs.edit {
+        prefs.edit(commit = confirmar) {
             putString(nombre, Base64.encodeToString(cifrado, Base64.NO_WRAP))
             putString("$nombre.iv", Base64.encodeToString(c.iv, Base64.NO_WRAP))
+            extras()
         }
     }
 
@@ -127,10 +129,47 @@ class CajaFuerte(context: Context) {
     var usuarioSocial: String?
         get() = prefs.getString("usuario_social", null)
         set(v) = prefs.edit { if (v == null) remove("usuario_social") else putString("usuario_social", v) }
+    /** Recuperación pendiente al entrar; persiste si se cierra la app sin red. */
+    var perfilRedPendiente: Boolean
+        get() = prefs.getBoolean("perfil_red_pendiente", false)
+        set(v) = prefs.edit { putBoolean("perfil_red_pendiente", v) }
+    /** Migra también las sesiones abiertas antes de recuperar la identidad al entrar. Escritura atómica. */
+    fun migrarPerfilRed() {
+        val migrada = prefs.getBoolean("perfil_red_migrado", false)
+        if (migrada) return
+        val pendiente = perfilPendienteTrasMigrar(tokenSocial != null, migrada, perfilRedPendiente)
+        prefs.edit(commit = true) {
+            putBoolean("perfil_red_pendiente", pendiente)
+            putBoolean("perfil_red_migrado", true)
+        }
+    }
+
+    /** Solo la acción explícita de quitar la foto permite borrarla de la cuenta. */
+    var borrarFotoRed: Boolean
+        get() = prefs.getBoolean("borrar_foto_red", false)
+        set(v) = prefs.edit { putBoolean("borrar_foto_red", v) }
+
     /** La llave del cajón guardado en la cuenta (abierta, solo en este teléfono y cifrada aquí). Ver `Nube`. */
     var llaveCajon: String?
         get() = leer("llave_cajon")
-        set(v) = escribir("llave_cajon", v)
+        set(v) = escribir("llave_cajon", v, confirmar = true) {
+            if (v == null || !permiteReemplazarCajon(v, reemplazarCajonRemoto)) remove("reemplazar_cajon_remoto")
+        }
+
+    /** Huella de la única llave autorizada para reemplazar un cajón anterior ilegible; null normalmente. */
+    var reemplazarCajonRemoto: String?
+        get() = prefs.getString("reemplazar_cajon_remoto", null)
+        set(v) = prefs.edit(commit = true) {
+            if (v == null) remove("reemplazar_cajon_remoto") else putString("reemplazar_cajon_remoto", v)
+        }
+
+    /** La llave cifrada y su autorización se guardan juntas: nunca queda la llave nueva sin su transición. */
+    internal fun guardarLlaveRecuperada(recuperada: LlaveRecuperada) {
+        if (!recuperada.reemplazar) { llaveCajon = recuperada.llave; return }
+        escribir("llave_cajon", recuperada.llave, confirmar = true) {
+            putString("reemplazar_cajon_remoto", huellaLlaveCajon(recuperada.llave))
+        }
+    }
 
     /** Las llaves del chat de este teléfono (keysets de Tink en JSON, con su parte secreta): solo aquí, cifradas. */
     var chatLlaves: String?

@@ -21,8 +21,10 @@ object Generos {
         val clavePeliculas: String? = null, val claveSeries: String? = null, val anime: Boolean = false,
     )
 
-    /** Un género de libros y su tema en Open Library. */
-    data class Libro(val nombres: List<String>, val tema: String)
+    /** Un género de libros, sus alias de búsqueda, el tema de Open Library y sus etiquetas traducidas. */
+    data class Libro(val nombres: List<String>, val tema: String, val es: String, val en: String) {
+        fun etiqueta(idioma: String) = if (idioma == "en") en else es
+    }
 
     val CINE = listOf(
         Cine(listOf("Acción", "Action"), "28", "10759"),
@@ -59,22 +61,22 @@ object Generos {
     )
 
     val LIBROS = listOf(
-        Libro(listOf("Novela", "Fiction", "Ficción"), "fiction"),
-        Libro(listOf("Ciencia ficción", "Science Fiction"), "science fiction"),
-        Libro(listOf("Fantasía", "Fantasy"), "fantasy"),
-        Libro(listOf("Terror", "Horror"), "horror"),
-        Libro(listOf("Policial", "Mystery", "Misterio"), "mystery"),
-        Libro(listOf("Romance"), "romance"),
-        Libro(listOf("Historia", "History"), "history"),
-        Libro(listOf("Biografía", "Biography"), "biography"),
-        Libro(listOf("Ensayo", "Essay", "Essays"), "essays"),
-        Libro(listOf("Poesía", "Poetry"), "poetry"),
-        Libro(listOf("Filosofía", "Philosophy"), "philosophy"),
-        Libro(listOf("Psicología", "Psychology"), "psychology"),
-        Libro(listOf("Autoayuda", "Self-help"), "self-help"),
-        Libro(listOf("Clásicos", "Classics", "Clásico"), "classic literature"),
-        Libro(listOf("Juvenil", "Young adult"), "young adult fiction"),
-        Libro(listOf("Cómic", "Comics"), "comics & graphic novels"),
+        Libro(listOf("Novela", "Fiction", "Ficción"), "fiction", "Novela", "Fiction"),
+        Libro(listOf("Ciencia ficción", "Science Fiction"), "science fiction", "Ciencia ficción", "Science fiction"),
+        Libro(listOf("Fantasía", "Fantasy"), "fantasy", "Fantasía", "Fantasy"),
+        Libro(listOf("Terror", "Horror"), "horror", "Terror", "Horror"),
+        Libro(listOf("Policial", "Mystery", "Misterio"), "mystery", "Policial", "Mystery"),
+        Libro(listOf("Romance"), "romance", "Romance", "Romance"),
+        Libro(listOf("Historia", "History"), "history", "Historia", "History"),
+        Libro(listOf("Biografía", "Biography"), "biography", "Biografía", "Biography"),
+        Libro(listOf("Ensayo", "Essay", "Essays"), "essays", "Ensayo", "Essay"),
+        Libro(listOf("Poesía", "Poetry"), "poetry", "Poesía", "Poetry"),
+        Libro(listOf("Filosofía", "Philosophy"), "philosophy", "Filosofía", "Philosophy"),
+        Libro(listOf("Psicología", "Psychology"), "psychology", "Psicología", "Psychology"),
+        Libro(listOf("Autoayuda", "Self-help"), "self-help", "Autoayuda", "Self-help"),
+        Libro(listOf("Clásicos", "Classics", "Clásico"), "classic literature", "Clásicos", "Classics"),
+        Libro(listOf("Juvenil", "Young adult"), "young adult fiction", "Juvenil", "Young adult"),
+        Libro(listOf("Cómic", "Comics"), "comics & graphic novels", "Cómic", "Comics"),
     )
 
     private fun igual(a: String, b: String) = Logica.tituloLimpio(a) == Logica.tituloLimpio(b)
@@ -84,4 +86,13 @@ object Generos {
 
     /** El género de libros que es [texto], o null. */
     fun libro(texto: String): Libro? = LIBROS.firstOrNull { g -> g.nombres.any { igual(it, texto) } }
+
+    /** Etiqueta para mostrar un género o tema de Open Library en el idioma activo, sin cambiar el dato guardado. */
+    fun etiquetaLibro(texto: String, idioma: String): String {
+        libro(texto)?.let { return it.etiqueta(idioma) }
+        val clave = Logica.tituloLimpio(texto)
+        val base = clave.replace(Regex(" (?:juvenile )?fiction$"), "")
+        val tema = TEMAS_TRADUCIDOS[clave] ?: TEMAS_TRADUCIDOS[base]
+        return tema?.let { if (idioma == "en") it.second else it.first } ?: texto
+    }
 }

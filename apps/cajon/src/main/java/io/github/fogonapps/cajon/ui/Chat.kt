@@ -206,7 +206,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                 AvatarRed(persona.copy(foto = persona.foto || personas[usuario] == null), 38.dp)
                 Column(Modifier.weight(1f)) {
                     Text(nombre, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("@$usuario", style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
+                    if (persona.nombre.isNotBlank()) Text("@$usuario", style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
                 }
             }
             BotonIcono(Iconos.Opciones, stringResource(R.string.chat_info)) { vm.abrir(Pantalla.InfoChat(usuario)) }
@@ -279,9 +279,8 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
             Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                 if (reportando) {
                     Pista(stringResource(R.string.chat_reportar_explica, usuario), Modifier.padding(horizontal = 16.dp))
-                    FlowRow(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        MOTIVOS_REPORTE.forEach { (codigo, mo) -> val t = stringResource(mo)
-                            Pildora(t) { vm.red.reportar("mensaje", "$usuario:mensajes", "$codigo: $t\n${m.texto}"); menuDe = null } }
+                    MotivosReporte { codigo, texto ->
+                        vm.red.reportar("mensaje", "$usuario:mensajes", "$codigo: $texto\n${m.texto}"); menuDe = null
                     }
                     return@Column
                 }
@@ -386,7 +385,7 @@ private fun Burbuja(
             m.responde?.let { r ->
                 val deMi = r.de == yo
                 Text(stringResource(if (m.mio) R.string.chat_respondiste else R.string.chat_respondio), style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
-                Row(Modifier.clip(forma(10.dp)).background(f.fondo.copy(alpha = 0.35f)).clickable { onIrA(r.k) }) {
+                Row(Modifier.clip(forma(10.dp)).background(f.fondo.copy(alpha = 0.35f)).combinedClickable(onClick = { onIrA(r.k) }, onLongClick = onMenu)) {
                     Box(Modifier.width(3.dp).heightIn(min = 34.dp).background(if (m.mio) letraMia else f.tinta1))
                     Column(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         Text(if (deMi) stringResource(R.string.chat_ti) else nombre, style = MaterialTheme.typography.labelMedium, color = color)
@@ -401,7 +400,7 @@ private fun Burbuja(
                 val fuente = (o["fuente"] as? JsonPrimitive)?.content.orEmpty()
                 // Si ya está en el cajón, abre su ficha; si no, la busca para agregarla.
                 val propia = e.vivas.firstOrNull { it.id == id || fuente.isNotBlank() && it.fuente == fuente }
-                Row(Modifier.clip(forma(12.dp)).clickable { if (propia != null) vm.abrir(Pantalla.Ficha(propia.id)) else { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO)); vm.buscar(titulo) } },
+                Row(Modifier.clip(forma(12.dp)).combinedClickable(onLongClick = onMenu, onClick = { if (propia != null) vm.abrir(Pantalla.Ficha(propia.id)) else { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.TODO)); vm.buscar(titulo) } }),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Portada((o["portada"] as? JsonPrimitive)?.content.orEmpty(), (o["tipoObra"] as? JsonPrimitive)?.content ?: "pelicula", titulo, Modifier.width(48.dp), conTitulo = false)
                     Column {
@@ -589,9 +588,8 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
     if (reportar) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Pista(stringResource(R.string.chat_reportar_explica, usuario))
         val suyos = lista.filter { !it.mio && it.texto.isNotBlank() }.takeLast(5).joinToString("\n") { it.texto }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            MOTIVOS_REPORTE.forEach { (codigo, m) -> val t = stringResource(m)
-                Pildora(t) { vm.red.reportar("mensaje", "$usuario:mensajes", "$codigo: $t\n$suyos"); reportar = false } }
+        MotivosReporte { codigo, texto ->
+            vm.red.reportar("mensaje", "$usuario:mensajes", "$codigo: $texto\n$suyos"); reportar = false
         }
     }
 }

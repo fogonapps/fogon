@@ -56,7 +56,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.19"
+const val VERSION = "0.20"
 
 /** Si el servidor puede mandar los códigos de acceso por correo (si no, la app crea la cuenta sin correo). */
 var correoListo = false

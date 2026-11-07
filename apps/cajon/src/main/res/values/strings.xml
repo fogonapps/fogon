@@ -57,6 +57,7 @@
   <string name="buscar_falta_tmdb">Searching films, series and anime needs your TMDB key (it’s free). You can also add them by hand.</string>
   <string name="buscar_tmdb_mala">TMDB didn’t accept your key. Check it in Settings.</string>
   <string name="buscar_sin_red">Couldn’t search: check your internet connection.</string>
+  <string name="buscar_fallo">Couldn’t search right now. Try again in a moment.</string>
   <string name="agregar_a_mano">Add by hand</string>
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
   <string name="ya_en_cajon">Already in your cajón</string>
@@ -352,6 +353,8 @@
   <string name="bio_credito">Text from Wikipedia, licensed CC BY-SA 4.0.</string>
   <string name="generos">Genres</string>
   <string name="agregar_genero">Add genre</string>
+  <string name="temas">Topics</string>
+  <string name="agregar_tema">Add topic</string>
   <string name="editar">Edit</string>
   <string name="genero_en_tu_cajon">%1$s in your cajón</string>
     <string name="cambiar_portada">Change cover</string>
@@ -830,6 +833,7 @@
   <string name="nube_abrir">Bring my cajón</string>
   <string name="nube_guardando">Saving…</string>
   <string name="nube_sin_conexion">Couldn’t save right now; it will retry on its own.</string>
+  <string name="nube_no_se_pudo_abrir">Could not decrypt the saved cajón with this phone’s key. It has not been overwritten.</string>
   <string name="nube_guardado">Saved %1$s</string>
   <string name="nube_listo">Done: it saves on its own with every change.</string>
   <string name="nube_guardar_ya">Save now</string>
@@ -847,11 +851,14 @@
   <string name="mod_restringida_hasta">You can’t post, comment or message until %1$s.</string>
   <string name="mod_todo_bien">All good: you have no strikes.</string>
   <string name="mod_falta_vence">On %1$s · expires %2$s</string>
-  <string name="mod_como_funciona">Each strike expires after 90 days. With 2, 24 hours without posting; with 3, a 7-day suspension; with 4, the account is closed. If you think we got it wrong, email fogonapps@gmail.com within 30 days.</string>
+  <string name="mod_como_funciona">Each strike expires after 90 days and adds 1 point; a serious strike adds 2. With 2 points, 24 hours without posting; with 3, a 7-day suspension; with 4 or more, the account is closed. Some violations cause immediate closure. If you think we got it wrong, email fogonapps@gmail.com within 30 days.</string>
   <string name="mod_titulo">Moderation</string>
   <string name="mod_vacio">No reports to review.</string>
-  <string name="mod_faltas">%1$d active strikes</string>
-  <string name="mod_personas">Reported by %1$d people</string>
+  <string name="mod_faltas">%1$d active points</string>
+  <plurals name="mod_personas">
+    <item quantity="one">Reported by 1 person</item>
+    <item quantity="other">Reported by %d people</item>
+  </plurals>
   <string name="mod_oculto">hidden while under review</string>
   <string name="mod_sin_falta">No violation</string>
   <string name="mod_falta">Remove + strike</string>
@@ -860,7 +867,7 @@
   <string name="mod_menores">Sexual content involving minors: don’t download or forward it. Close it, report it to the Police CAI Virtual or Te Protejo, and keep the server data for 1 year for the authorities.</string>
   <string name="chat_reportar_explica">When you report, Fogón will see @%1$s’s latest messages in this conversation (you send them: they’re encrypted and nobody else can read them).</string>
   <string name="aj_tu_cuenta">Your account</string>
-  <string name="aj_cuenta_red">For you account</string>
+  <string name="aj_cuenta_red">Your network account</string>
   <string name="aj_cuenta_red_pista">@%1$s · email, password, username, privacy</string>
   <string name="aj_editar_perfil_pista">Photo, bio, favorites and who sees each part</string>
   <string name="aj_como_usas">How you use El Cajón</string>
@@ -1147,4 +1154,23 @@
   <string name="red_vincular">Link</string>
   <string name="terminaste_titulo">Finished!</string>
   <string name="terminaste_texto">One more for your drawer.</string>
+  <string name="mod_tipo_cuenta">Account</string>
+  <string name="mod_tipo_comentario">Comment</string>
+  <string name="mod_tipo_mensaje">Message</string>
+  <string name="mod_sin_contenido">No preview available.</string>
+  <string name="mod_falta_confirmar">The content will be removed and the account will receive a strike. Continue?</string>
+  <string name="mod_grave_confirmar">The content will be removed and the account will receive a serious strike. Continue?</string>
+  <string name="mod_cerrar_confirmar">The author’s account will be closed. Continue?</string>
+  <string name="red_lo_suyo">Theirs</string>
+  <string name="red_cifras">Stats</string>
+  <string name="red_borrar_publicacion_confirmar">Delete this post from the network?</string>
+  <string name="red_borrar_comentario_confirmar">Delete this comment?</string>
+  <string name="nota_sin_calificar">Not rated</string>
+  <string name="nota_estado_estrellas">%1$s of 5 stars</string>
+  <string name="red_cerrada">Your account is closed for breaking the rules</string>
+  <string name="mod_grave_puntos">Serious strike · 2 points</string>
+  <string name="mod_puntos">%1$d points</string>
+  <string name="mod_evadir_sancion">Evading a sanction</string>
+  <string name="mod_cierre">Account closure</string>
+  <string name="mod_un_punto">1 point</string>
 </resources>

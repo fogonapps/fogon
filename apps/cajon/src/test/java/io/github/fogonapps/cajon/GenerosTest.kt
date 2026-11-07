@@ -46,4 +46,41 @@ class GenerosTest {
         assertEquals("mystery", Generos.libro("policial")?.tema)
         assertNull(Generos.cine("El señor de los anillos"))
     }
+
+    @Test
+    fun traduceGenerosYTemasDeLibrosAlIdiomaActivo() {
+        assertEquals("Fantasía", Generos.etiquetaLibro("Fantasy", "es"))
+        assertEquals("Fantasy", Generos.etiquetaLibro("Fantasía", "en"))
+        assertEquals("Invisibilidad", Generos.etiquetaLibro("invisibility", "es"))
+        assertEquals("Batalla de los Cinco Ejércitos", Generos.etiquetaLibro("Battle of Five Armies", "es"))
+        assertEquals("Arkenstone", Generos.etiquetaLibro("Arkenstone", "es"))
+    }
+    @Test
+    fun traduceTemasFrecuentesYVariantesSinModificarElOriginal() {
+        val temas = listOf(
+            Triple("FANTASY   FICTION", "Ficción fantástica", "Fantasy fiction"),
+            Triple("Wizards, fiction", "Magos", "Wizards"),
+            Triple("Wizards -- Fiction", "Magos", "Wizards"),
+            Triple("Good and evil -- Juvenile fiction", "El bien y el mal", "Good and evil"),
+            Triple("Quests (Expeditions)", "Misiones y expediciones", "Quests (expeditions)"),
+            Triple("  FRIENDSHIP  ", "Amistad", "Friendship"),
+            Triple("Climate change", "Cambio climático", "Climate change"),
+            Triple("short stories", "Cuentos", "Short stories"),
+            Triple("graphic novels", "Novelas gráficas", "Graphic novels"),
+        )
+        temas.forEach { (original, es, en) ->
+            assertEquals(original, es, Generos.etiquetaLibro(original, "es"))
+            assertEquals(original, en, Generos.etiquetaLibro(original, "en"))
+        }
+        assertEquals("Ciencia ficción", Generos.etiquetaLibro("CIENCIA FICCION", "es"))
+        listOf("Arkenstone", "Bilbo Baggins", "Bilbo Baggins, fiction", "Unknown magic").forEach { original ->
+            listOf("es", "en").forEach { idioma ->
+                assertEquals(original, Generos.etiquetaLibro(original, idioma))
+            }
+        }
+        assertNull(Generos.libro("Wizards, fiction"))
+        assertEquals("science fiction", Generos.libro("Ciencia ficción")?.tema)
+    }
+
+
 }

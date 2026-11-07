@@ -73,6 +73,7 @@ class Base(ruta: String) {
                     id INTEGER PRIMARY KEY, de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     para INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL, sobre TEXT NOT NULL, firma TEXT NOT NULL)""")
                 s.execute("CREATE INDEX IF NOT EXISTS mensajes_para ON mensajes(para, id)")
+                migrarMensajes(this)
                 // Las vistas: un contador por publicación, y para no contar dos veces la misma cuenta, solo una huella
                 // (HMAC con un secreto del servidor) que se borra a los 14 días. No queda un historial de quién vio qué.
                 columna(s, "publicaciones", "n_vistas INTEGER NOT NULL DEFAULT 0")
@@ -138,6 +139,37 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS codigos(
                     correo TEXT PRIMARY KEY, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0, enviado INTEGER NOT NULL)""")
             }
+        }
+    }
+
+    /** Conserva los sobres pendientes y evita reutilizar los números ya confirmados por los teléfonos. */
+    private fun migrarMensajes(conexion: Connection) {
+        val esquema = conexion.leer("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'mensajes'") { it.getString(1) }.single()
+        if (esquema.contains("AUTOINCREMENT", ignoreCase = true)) return
+        conexion.autoCommit = false
+        try {
+            // Los ids borrados ya no se pueden consultar: la época en ms supera los cursores antiguos de los teléfonos.
+            val piso = maxOf(System.currentTimeMillis(), conexion.leer("SELECT COALESCE(MAX(id), 0) FROM mensajes") { it.getLong(1) }.single() + 1)
+            conexion.createStatement().use { s ->
+                s.execute("""CREATE TABLE mensajes_nuevos(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, de INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    para INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL, sobre TEXT NOT NULL, firma TEXT NOT NULL)""")
+                // También los pendientes pueden tener ids reutilizados por debajo del cursor del receptor.
+                conexion.cambiar("""INSERT INTO mensajes_nuevos
+                    SELECT ? + ROW_NUMBER() OVER (ORDER BY id), de, para, cuando, sobre, firma FROM mensajes ORDER BY id""", piso)
+                s.execute("DROP TABLE mensajes")
+                s.execute("ALTER TABLE mensajes_nuevos RENAME TO mensajes")
+                s.execute("CREATE INDEX mensajes_para ON mensajes(para, id)")
+            }
+            val secuencia = maxOf(piso, conexion.leer("SELECT COALESCE(MAX(id), 0) FROM mensajes") { it.getLong(1) }.single())
+            conexion.cambiar("DELETE FROM sqlite_sequence WHERE name = 'mensajes'")
+            conexion.cambiar("INSERT INTO sqlite_sequence(name, seq) VALUES('mensajes', ?)", secuencia)
+            conexion.commit()
+        } catch (e: Exception) {
+            conexion.rollback()
+            throw e
+        } finally {
+            conexion.autoCommit = true
         }
     }
 

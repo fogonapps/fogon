@@ -1,0 +1,5 @@
+• No more crashes when starting the tutorial or searching offline.
+• Signing in from another phone no longer changes your profile or removes your photo.
+• Chat no longer loses messages.
+• Clearer moderation and reporting comments with a reason.
+• Book topics in your language, TalkBack-friendly stars and confirmation before deleting.

@@ -43,6 +43,7 @@ fun EditorEtiquetas(
     onTocar: ((String) -> Unit)?,
     textoAgregar: String,
     modifier: Modifier = Modifier,
+    textoVisible: (String) -> String = { it },
 ) {
     var editando by rememberSaveable(clave) { mutableStateOf(false) }
     if (etiquetas.isEmpty() && !editando) {
@@ -53,8 +54,8 @@ fun EditorEtiquetas(
         Seccion(titulo) { Pildora(stringResource(if (editando) R.string.listo else R.string.editar)) { editando = !editando } }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             etiquetas.forEach { g ->
-                if (editando) Pildora(g, Iconos.Cerrar) { onCambio(etiquetas - g) }
-                else Pildora(g, onClick = { onTocar?.invoke(g) })
+                if (editando) Pildora(textoVisible(g), Iconos.Cerrar) { onCambio(etiquetas - g) }
+                else Pildora(textoVisible(g), onClick = { onTocar?.invoke(g) })
             }
         }
         if (editando) {

@@ -246,6 +246,25 @@ class SocialTest {
         assertEquals("beto@correo.co", s.miCuenta(s.cuentaDe(sin.token)!!).correo)
     }
 
+    @Test fun chatNoReutilizaIdsAlConfirmar() {
+        val dir = Files.createTempDirectory("chat").toFile()
+        val b = Base(java.io.File(dir, "s.db").path)
+        try {
+            val s = Social(b, java.io.File(dir, "fotos"))
+            val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+            val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+            var ultimo = 0L
+            repeat(3) {
+                val id = s.mandar(beto, "ana", SobreNuevo("sobre$it", "firma"))
+                assertTrue(id > ultimo)
+                assertEquals(listOf(id), s.recibir(ana, ultimo).map { it.id })
+                ultimo = id
+                assertTrue(s.recibir(ana, ultimo).isEmpty())
+                assertEquals(0L, b.usar { leer("SELECT COUNT(*) FROM mensajes") { it.getLong(1) }.single() })
+            }
+        } finally { b.cerrar(); dir.deleteRecursively() }
+    }
+
     @Test fun chatSoloSobres() {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
