@@ -112,7 +112,14 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val borrarEl: Long = 0,
     val rol: String, val permisos: Set<String>,
     val mfa: Boolean, val elevadaHasta: Long, val idCuenta: String = "",
+    /** La versión de la política que aceptó; si no es [Social.POLITICA], la app pide aceptar la nueva. */
+    val politica: String = "",
 )
+@Serializable data class Aceptacion(val politica: String)
+@Serializable data class VotoImagen(val fuente: String, val url: String)
+@Serializable data class BloqueoImagen(val url: String, val motivo: String = "")
+/** La imagen de la comunidad para una obra (si la hay), los votos por URL y lo bloqueado entre ellas. */
+@Serializable data class ImagenObra(val comunidad: String? = null, val votos: Map<String, Int> = emptyMap(), val miVoto: String? = null, val bloqueadas: List<String> = emptyList())
 @Serializable data class EntradaClave(val correo: String, val clave: String)
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
@@ -348,6 +355,16 @@ class Social(
             cambiar("DELETE FROM intentos WHERE ultimo_fallo <= ? AND bloqueada_hasta <= ?", ahora() - DIA, ahora())
             cambiar("DELETE FROM envios_codigo WHERE cuando <= ?", ahora() - HORA)
             cambiar("DELETE FROM apodo_cambios WHERE cuando <= ?", ahora() - 14 * DIA)
+            // La política promete un año para reportes, decisiones y faltas vencidas; lo preservado para las
+            // autoridades y lo que sigue abierto no se toca.
+            val anio = ahora() - 365 * DIA
+            cambiar("""DELETE FROM reportes WHERE estado != 'abierto' AND cuando <= ?
+                AND NOT (que = 'publicacion' AND EXISTS(SELECT 1 FROM publicaciones p WHERE CAST(p.id AS TEXT) = reportes.objeto AND p.estado = 'preservado'))
+                AND NOT (que = 'comentario' AND EXISTS(SELECT 1 FROM comentarios c WHERE CAST(c.id AS TEXT) = reportes.objeto AND c.estado = 'preservado'))""", anio)
+            cambiar("""DELETE FROM decisiones WHERE cuando <= ?
+                AND NOT (que = 'publicacion' AND EXISTS(SELECT 1 FROM publicaciones p WHERE CAST(p.id AS TEXT) = decisiones.objeto AND p.estado = 'preservado'))
+                AND NOT (que = 'comentario' AND EXISTS(SELECT 1 FROM comentarios c WHERE CAST(c.id AS TEXT) = decisiones.objeto AND c.estado = 'preservado'))""", anio)
+            cambiar("DELETE FROM faltas WHERE vence <= ?", anio)
         }
     }
 
@@ -362,9 +379,61 @@ class Social(
     }
 
     fun miCuenta(yo: Long, token: String? = null): MiCuenta = b.usar {
-        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo))
+        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto FROM cuentas WHERE id = ?", yo) {
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8))
         }.first()
+    }
+
+    /** Guarda la prueba de que aceptó la versión vigente (Ley 1581): solo se acepta la que rige hoy. */
+    fun aceptarPolitica(yo: Long, politica: String) {
+        if (politica != POLITICA) throw Problema(400, "politica")
+        b.usar { cambiar("UPDATE cuentas SET acepto = ?, acepto_cuando = ? WHERE id = ?", POLITICA, ahora(), yo) }
+    }
+
+    /* ----- Portadas (C-03) ----- */
+
+    /** Solo imágenes de fuentes autorizadas: nadie sube portadas de terceros al servidor (D-024). */
+    internal fun urlImagenValida(url: String): Boolean {
+        if (url.length > 300 || !url.startsWith("https://")) return false
+        val host = url.removePrefix("https://").substringBefore('/').lowercase()
+        return host in DOMINIOS_IMAGEN
+    }
+
+    private fun fuenteValida(fuente: String) = fuente.length in 3..80 && Regex("[a-z]+(:[A-Za-z0-9._/-]+)+").matches(fuente)
+
+    fun imagenObra(lector: Long?, fuente: String): ImagenObra {
+        if (!fuenteValida(fuente)) throw Problema(400, "fuente")
+        return b.usar {
+            val bloqueadas = leer("SELECT b.url FROM imagenes_bloqueadas b WHERE b.url IN (SELECT url FROM votos_imagen WHERE obra = ?)", fuente) { it.getString(1) }
+            val votos = leer("SELECT url, COUNT(*) FROM votos_imagen WHERE obra = ? AND cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) GROUP BY url", fuente) { it.getString(1) to it.getInt(2) }
+                .filter { it.first !in bloqueadas }.toMap()
+            val total = votos.values.sum()
+            val comunidad = votos.entries.maxByOrNull { it.value }?.takeIf { it.value >= VOTOS_COMUNIDAD && it.value * 2 > total }?.key
+            val mio = lector?.let { yo -> leer("SELECT url FROM votos_imagen WHERE obra = ? AND cuenta = ?", fuente, yo) { it.getString(1) }.firstOrNull() }
+            ImagenObra(comunidad, votos, mio, bloqueadas)
+        }
+    }
+
+    fun votarImagen(yo: Long, v: VotoImagen) {
+        if (!fuenteValida(v.fuente)) throw Problema(400, "fuente")
+        if (!urlImagenValida(v.url)) throw Problema(400, "url")
+        b.usar {
+            if (leer("SELECT 1 FROM imagenes_bloqueadas WHERE url = ?", v.url) { 1 }.isNotEmpty()) throw Problema(400, "bloqueada")
+            cambiar("INSERT OR REPLACE INTO votos_imagen(obra, url, cuenta, cuando) VALUES(?,?,?,?)", v.fuente, v.url, yo, ahora())
+        }
+    }
+
+    fun quitarVotoImagen(yo: Long, fuente: String) {
+        b.usar { cambiar("DELETE FROM votos_imagen WHERE obra = ? AND cuenta = ?", fuente, yo) }
+    }
+
+    /** El equipo bloquea (o vuelve a permitir) una imagen como predeterminada y cierra sus reportes abiertos. */
+    fun bloquearImagen(yo: Long, d: BloqueoImagen, si: Boolean, token: String? = null) = b.transaccion {
+        if (!urlImagenValida(d.url)) throw Problema(400, "url")
+        if (si) cambiar("INSERT OR REPLACE INTO imagenes_bloqueadas(url, motivo, cuando) VALUES(?,?,?)", d.url, d.motivo.take(100).ifBlank { "equipo" }, ahora())
+        else cambiar("DELETE FROM imagenes_bloqueadas WHERE url = ?", d.url)
+        cambiar("UPDATE reportes SET estado = 'resuelto' WHERE que = 'imagen' AND objeto = ? AND estado = 'abierto'", d.url)
+        equipo.registrar(yo.toString(), if (si) "imagen_bloquear" else "imagen_permitir", d.url, d.motivo.take(100), token)
     }
 
     /* ----- Contraseña ----- */
@@ -1273,21 +1342,31 @@ class Social(
      * se oculta mientras se revisa (su autor lo sigue viendo).
      */
     fun reportar(yo: Long?, r: NuevoReporte) {
-        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje")) throw Problema(400, "que")
+        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen")) throw Problema(400, "que")
+        if (r.que == "imagen" && !urlImagenValida(r.objeto)) throw Problema(400, "url")
         if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= 10)
             throw Problema(429, "despacio")
         val motivo = r.motivo.trim().take(2000)
-        b.usar { insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?,?,?,?,?)", yo, r.que, r.objeto.take(80), motivo, ahora()) }
+        val objeto = r.objeto.take(if (r.que == "imagen") 300 else 80)
+        b.usar { insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?,?,?,?,?)", yo, r.que, objeto, motivo, ahora()) }
         val grave = motivo.startsWith(Moderacion.MENOR_EN_RIESGO)
         val cuentan = b.usar {
             leer("""SELECT COUNT(DISTINCT r.de) FROM reportes r JOIN cuentas c ON c.id = r.de
                     WHERE r.que = ? AND r.objeto = ? AND r.estado = 'abierto' AND c.creada < ? AND c.restringida_hasta < ? AND c.suspendida_hasta < ?""",
-                r.que, r.objeto.take(80), ahora() - 7L * 24 * 3600_000, ahora(), ahora()) { it.getInt(1) }.first()
+                r.que, objeto, ahora() - 7L * 24 * 3600_000, ahora(), ahora()) { it.getInt(1) }.first()
         }
-        if (grave || cuentan >= Moderacion.UMBRAL) ocultarReportado(r.que, r.objeto, true)
+        if (grave || cuentan >= Moderacion.UMBRAL) ocultarReportado(r.que, objeto, true)
     }
 
     private fun ocultarReportado(que: String, objeto: String, si: Boolean) {
+        if (que == "imagen") {
+            // Una imagen muy reportada deja de ser la predeterminada mientras el equipo la revisa.
+            b.usar {
+                if (si) cambiar("INSERT OR IGNORE INTO imagenes_bloqueadas(url, motivo, cuando) VALUES(?,?,?)", objeto, "reportada", ahora())
+                else cambiar("DELETE FROM imagenes_bloqueadas WHERE url = ? AND motivo = 'reportada'", objeto)
+            }
+            return
+        }
         val id = objeto.toLongOrNull() ?: return
         b.usar {
             when (que) {
@@ -1328,6 +1407,7 @@ class Social(
             "publicacion" -> leer("SELECT datos, cuenta, oculta FROM publicaciones WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "comentario" -> leer("SELECT texto, cuenta, oculto FROM comentarios WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "cuenta" -> leer("SELECT perfil, id FROM cuentas WHERE usuario = ?", objeto) { Triple(it.getString(1), it.getLong(2), false) }.firstOrNull()
+            "imagen" -> Triple(objeto, null, leer("SELECT 1 FROM imagenes_bloqueadas WHERE url = ?", objeto) { 1 }.isNotEmpty())
             // Un mensaje va cifrado: lo único que se ve es lo que mandó quien lo reportó (con su permiso).
             else -> Triple(motivos.joinToString("\n---\n"), leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.substringBefore(':')) { it.getLong(1) }.firstOrNull(), false)
         } ?: Triple("(ya no está)", null, false)
@@ -1479,7 +1559,10 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-03"
+        const val POLITICA = "2026-11-08"
+        /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
+        const val VOTOS_COMUNIDAD = 5
+        val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")
         /** Lo normal al empezar, sin datos (hipótesis: recalcular con los contadores cuando haya gente). */
         private const val PREVIA_MEGUSTA = 0.08
         private const val PREVIA_GUARDADO = 0.02

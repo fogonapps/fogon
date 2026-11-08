@@ -1,5 +1,12 @@
 package io.github.fogonapps.cajon
 
+import io.github.fogonapps.cajon.datos.Catalogo
+import io.github.fogonapps.cajon.datos.ListasCatalogo
+import io.github.fogonapps.cajon.datos.ObraInicial
+import io.github.fogonapps.cajon.datos.PaginaCatalogo
+import io.github.fogonapps.cajon.datos.SeccionCatalogo
+import io.github.fogonapps.cajon.datos.paraCatalogo
+import io.github.fogonapps.cajon.datos.ListenBrainz
 import io.github.fogonapps.cajon.datos.paraCuenta
 import io.github.fogonapps.cajon.datos.paraTelefono
 
@@ -1796,34 +1803,112 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Gustos para empezar ----- */
 
-    /** La lista de obras y artistas conocidos para elegir gustos (ver `ObraInicial`). */
-    private val catalogoIniciales: List<io.github.fogonapps.cajon.datos.ObraInicial> by lazy {
-        runCatching { io.github.fogonapps.cajon.datos.Iniciales.leer(getApplication<android.app.Application>().assets.open("datos/gustos.json").bufferedReader().use { it.readText() }) }
-            .getOrDefault(emptyList())
+    private val listasCatalogo: ListasCatalogo by lazy {
+        Catalogo.leer(getApplication<Application>().assets.open("datos/catalogos.json").bufferedReader().use { it.readText() })
     }
-    val iniciales: List<io.github.fogonapps.cajon.datos.ObraInicial>
-        get() = catalogoIniciales.map { io.github.fogonapps.cajon.datos.Iniciales.enIdioma(it, idioma()) }
+    private val semillasCatalogo = mutableMapOf<String, List<Gusto>>()
+    private val finalesCatalogo = mutableMapOf<String, io.github.fogonapps.cajon.datos.FinalesCatalogo>()
+    private val conocidasCatalogo = mutableMapOf<String, ObraInicial>()
+    val iniciales: List<ObraInicial>
+        get() = (listasCatalogo.todas() + conocidasCatalogo.values + _estado.value?.gustosVivos.orEmpty()
+            .filter { it.fuente.isNotBlank() }.map { ObraInicial(it.fuente, it.tipo, it.nombre, fuente = it.fuente, imagen = it.imagen, creador = it.creador) })
+            .distinctBy { it.fuente }.map { Catalogo.enIdioma(it, idioma()) }
+
+    private val catalogo by lazy {
+        Catalogo(listasCatalogo, java.io.File(recursos.directorio, "catalogos"), version = { tipo ->
+            val semillas = semillasCatalogo[tipo].orEmpty().map { it.fuente }.joinToString("|")
+            java.security.MessageDigest.getInstance("SHA-256").digest(semillas.toByteArray()).take(8).joinToString("") { "%02x".format(it) }
+        }) { seccion, tipo, lengua, pagina ->
+            when {
+                seccion == SeccionCatalogo.PARA_TI -> {
+                    val semillas = semillasCatalogo[tipo].orEmpty()
+                    if (semillas.isEmpty()) PaginaCatalogo(emptyList(), true)
+                    else {
+                        val semilla = semillas[(pagina - 1) % semillas.size]
+                        val numero = (pagina - 1) / semillas.size + 1
+                        val resultado = parecidasDeFuente(ObraInicial(semilla.fuente, tipo, semilla.nombre, fuente = semilla.fuente), lengua, numero)
+                        resultado.copy(fin = false, semilla = semilla.fuente, finSemilla = resultado.fin)
+                    }
+                }
+                tipo in listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME) ->
+                    Tmdb(claveCine.orEmpty()).catalogo(tipo, seccion == SeccionCatalogo.QUERIDAS, lengua, pagina)
+                tipo == Tipos.LIBRO -> OpenLibrary.catalogo(seccion == SeccionCatalogo.QUERIDAS, lengua, pagina)
+                else -> ListenBrainz.catalogo(tipo, seccion == SeccionCatalogo.QUERIDAS, pagina)
+            }
+        }
+    }
+
+    /** Fuentes ya guardadas o elegidas; vale también para artistas y para listas que comparten obras. */
+    fun excluidasCatalogo(e: Estado): Set<String> = Catalogo.excluidas(e)
+
+    suspend fun paginaCatalogo(seccion: SeccionCatalogo, tipo: String, lengua: String, pagina: Int): Pair<PaginaCatalogo, Boolean> {
+        if (seccion == SeccionCatalogo.PARA_TI && pagina == 1) {
+            // La fila mantiene sus cursores mientras se elige; al volver a abrirla usa los gustos nuevos.
+            semillasCatalogo[tipo] = _estado.value?.gustosVivos.orEmpty()
+                .filter { it.tipo == tipo && it.senal == Senales.GUSTA && it.fuente.isNotBlank() }.sortedBy { it.fuente }
+            finalesCatalogo.remove("$tipo-$lengua")
+        }
+        val (datos, respaldo) = catalogo.conRespaldo(seccion, tipo, lengua, pagina, _estado.value?.let { excluidasCatalogo(it) }.orEmpty())
+        datos.obras.forEach { conocidasCatalogo[it.fuente] = it }
+        val fin = if (seccion == SeccionCatalogo.PARA_TI && !respaldo) {
+            val semillas = semillasCatalogo[tipo].orEmpty().map { it.fuente }
+            finalesCatalogo.getOrPut("$tipo-$lengua") { io.github.fogonapps.cajon.datos.FinalesCatalogo() }.registrar(semillas, datos)
+        } else datos.fin
+        return datos.copy(fin = fin) to respaldo
+    }
+
+    private suspend fun parecidasDeFuente(o: ObraInicial, lengua: String, pagina: Int): PaginaCatalogo = when {
+        o.fuente.startsWith("tmdb:") -> Tmdb(claveCine.orEmpty()).recomendaciones(o.fuente, lengua, pagina)
+            .let { PaginaCatalogo(it.filter { x -> x.tipo == o.tipo }.map { x -> x.paraCatalogo() }, it.size < 20) }
+        o.fuente.startsWith("ol:") -> OpenLibrary.parecidasCatalogo(o.fuente, lengua, pagina)
+        o.fuente.startsWith("mb:artist:") -> if (pagina > 2) PaginaCatalogo(emptyList(), true) else
+            ListenBrainz.parecidos(o.fuente.substringAfterLast(':')).map { it.paraCatalogo() }
+                .let { PaginaCatalogo(it.drop((pagina - 1) * 20).take(20), it.size <= pagina * 20) }
+        o.fuente.startsWith("mb:rg:") -> MusicBrainz.albumesParecidos(o.fuente.substringAfterLast(':'), pagina)
+        else -> PaginaCatalogo(emptyList(), true)
+    }
+
+    suspend fun parecidasCatalogo(o: ObraInicial): List<ObraInicial> {
+        val incluidas = listasCatalogo.todas().associateBy { it.id }
+        val lista = if (o.parecidos.isNotEmpty()) o.parecidos.mapNotNull { incluidas[it] }.map { Catalogo.enIdioma(it, idioma()) }
+            else parecidasDeFuente(o, idioma(), 1).obras
+        val nuevas = Catalogo.sinRepetir(lista, _estado.value?.let { excluidasCatalogo(it) }.orEmpty())
+        nuevas.forEach { conocidasCatalogo[it.fuente] = it }
+        return nuevas
+    }
 
     private val _imagenesIniciales = MutableStateFlow<Map<String, String>>(emptyMap())
-    /** id → imagen que se trajo aparte: el póster de TMDB (con clave) o la foto del artista (Wikimedia). */
+    /** Fuente → imagen que se trajo aparte: el póster de TMDB (por el proxy) o la foto del artista (Wikimedia). */
     val imagenesIniciales: StateFlow<Map<String, String>> = _imagenesIniciales
     private val inicialesPedidas = mutableSetOf<String>()
 
-    fun cargarImagenesIniciales(ids: List<String>) {
-        val porId = iniciales.associateBy { it.id }
-        val faltan = ids.filter { it !in inicialesPedidas }.mapNotNull { porId[it] }.filter { it.imagen.isBlank() }
+    fun cargarImagenesIniciales(fuentes: List<String>) {
+        val porFuente = iniciales.associateBy { it.fuente }
+        val faltan = fuentes.filter { it !in inicialesPedidas && _imagenesIniciales.value[it].isNullOrBlank() }.mapNotNull { porFuente[it] }.filter { it.imagen.isBlank() }
         if (faltan.isEmpty()) return
-        inicialesPedidas += faltan.map { it.id }
+        inicialesPedidas += faltan.map { it.fuente }
         val clave = claveCine
         viewModelScope.launch {
-            val artistas = faltan.filter { it.tipo == TIPO_ARTISTA }
-            if (artistas.isNotEmpty()) runCatching {
-                val fotos = Wikimedia.fotos(artistas.map { it.fuente.removePrefix("mb:artist:") })
-                _imagenesIniciales.value = _imagenesIniciales.value + artistas.mapNotNull { a -> fotos[a.fuente.removePrefix("mb:artist:")]?.let { a.id to it } }
-            }
-            if (clave != null) faltan.filter { it.fuente.startsWith("tmdb:") }.forEach { o ->
-                runCatching { Tmdb(clave).poster(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { _imagenesIniciales.value = _imagenesIniciales.value + (o.id to it) }
-            }
+            try {
+                val artistas = faltan.filter { it.tipo == TIPO_ARTISTA }
+                if (artistas.isNotEmpty()) runCatching {
+                    val fotos = Wikimedia.fotos(artistas.map { it.fuente.removePrefix("mb:artist:") })
+                    _imagenesIniciales.value = _imagenesIniciales.value + artistas.mapNotNull { a -> fotos[a.fuente.removePrefix("mb:artist:")]?.let { a.fuente to it } }
+                }
+                faltan.filter { it.fuente.startsWith("mb:rg:") }.forEach { o ->
+                    runCatching { MusicBrainz.portadaCatalogo(o.fuente.substringAfterLast(':')) }.getOrNull()?.takeIf { it.isNotBlank() }?.let {
+                        _imagenesIniciales.value += o.fuente to it
+                    }
+                }
+                faltan.filter { it.fuente.startsWith("ol:") }.forEach { o ->
+                    runCatching { OpenLibrary.portadaCatalogo(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let {
+                        _imagenesIniciales.value += o.fuente to it.replace("-M.jpg", "-L.jpg")
+                    }
+                }
+                faltan.filter { it.fuente.startsWith("tmdb:") }.forEach { o ->
+                    runCatching { Tmdb(clave.orEmpty()).poster(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { _imagenesIniciales.value = _imagenesIniciales.value + (o.fuente to it) }
+                }
+            } finally { inicialesPedidas -= faltan.map { it.fuente }.toSet() }
         }
     }
 
@@ -1835,13 +1920,14 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun agregarIniciales() {
         val e0 = _estado.value ?: return
         val dichos = e0.gustosVivos.filter { it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave }.toSet()
-        val elegidas = iniciales.filter { claveInicial(it) in dichos }
+        val fuentes = e0.gustosVivos.filter { it.senal == Senales.GUSTA }.map { it.fuente }.toSet()
+        val elegidas = iniciales.filter { claveInicial(it) in dichos || it.fuente in fuentes }
         val obras = elegidas.filter { it.tipo != TIPO_ARTISTA && L.porFuente(e0, it.fuente) == null }.map { o ->
-            Obra(nuevoId("o"), o.tipo, o.titulo, anio = o.anio, portada = o.imagen.ifBlank { _imagenesIniciales.value[o.id].orEmpty() }, fuente = o.fuente,
-                estado = Estados.TERMINADO, meGusta = true, agregada = ahora(), cambio = ahora())
+            Obra(nuevoId("o"), o.tipo, o.titulo, anio = o.anio, portada = o.imagen.ifBlank { _imagenesIniciales.value[o.fuente].orEmpty() }, fuente = o.fuente,
+                estado = Estados.TERMINADO, meGusta = true, creador = o.creador, agregada = ahora(), cambio = ahora())
         }
         val artistas = elegidas.filter { it.tipo == TIPO_ARTISTA && e0.artistasVivos.none { a -> a.fuente == it.fuente || io.github.fogonapps.cajon.datos.normal(a.nombre) == io.github.fogonapps.cajon.datos.normal(it.titulo) } }
-            .map { a -> Artista(nuevoId("a"), a.titulo, a.fuente, favorito = true, foto = _imagenesIniciales.value[a.id].orEmpty(), cambio = ahora()) }
+            .map { a -> Artista(nuevoId("a"), a.titulo, a.fuente, favorito = true, foto = _imagenesIniciales.value[a.fuente].orEmpty(), cambio = ahora()) }
         if (obras.isEmpty() && artistas.isEmpty()) return
         cambiar { e -> e.copy(obras = e.obras + obras, artistas = e.artistas + artistas) }
         obras.forEach { actualizarDatos(it.id, callado = true) }
@@ -1849,12 +1935,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun claveInicial(o: io.github.fogonapps.cajon.datos.ObraInicial) =
-        if (o.tipo == TIPO_ARTISTA) io.github.fogonapps.cajon.datos.Recomendar.clavePersona(o.titulo) else "obra:" + o.fuente
+        "obra:" + o.fuente
 
     /** Le gusta (o ya no) una de la lista para empezar: queda en sus gustos, como lo demás que dice. */
     fun gustaInicial(o: io.github.fogonapps.cajon.datos.ObraInicial, si: Boolean) {
-        val imagen = o.imagen.ifBlank { _imagenesIniciales.value[o.id].orEmpty() }
-        decirGusto(claveInicial(o), o.titulo, if (si) io.github.fogonapps.cajon.datos.Senales.GUSTA else null, o.tipo, imagen, o.fuente)
+        conocidasCatalogo[o.fuente] = o
+        val imagen = o.imagen.ifBlank { _imagenesIniciales.value[o.fuente].orEmpty() }
+        cambiar { Catalogo.elegir(it, o, si, imagen, ahora()) }
     }
 
     /* ----- Lo del momento ----- */

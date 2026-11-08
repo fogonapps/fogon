@@ -179,8 +179,8 @@ class Equipo(private val b: Base, datos: File, private val ahora: () -> Long, pr
     }
     private fun generarRecuperacion(yo: Long): Recuperacion = b.usar {
         cambiar("DELETE FROM codigos_recuperacion WHERE cuenta = ?", yo)
-        val codigos = List(10) { Base.tokenNuevo().take(22) }
-        codigos.forEach { cambiar("INSERT INTO codigos_recuperacion VALUES(?,?,0)", yo, Base.huella(it)) }
+        val codigos = List(10) { codigoRecuperacion() }
+        codigos.forEach { cambiar("INSERT INTO codigos_recuperacion VALUES(?,?,0)", yo, Base.huella(normalizarRecuperacion(it))) }
         Recuperacion(codigos)
     }
     fun regenerar(yo: Long, f: Factor, token: String?): Recuperacion = operacionMfa(yo) {
@@ -191,7 +191,10 @@ class Equipo(private val b: Base, datos: File, private val ahora: () -> Long, pr
     }
     private fun consumirRecuperacion(yo: Long, codigo: String) = b.usar {
         revisarIntentos(yo)
-        if (cambiar("UPDATE codigos_recuperacion SET usado = 1 WHERE cuenta = ? AND huella = ? AND usado = 0", yo, Base.huella(codigo)) != 1) throw Problema(400, "recuperacion")
+        // Los códigos de antes (22 caracteres con mayúsculas y minúsculas) se comparan tal cual; los nuevos, normalizados.
+        val usado = cambiar("UPDATE codigos_recuperacion SET usado = 1 WHERE cuenta = ? AND huella IN (?, ?) AND usado = 0",
+            yo, Base.huella(codigo.trim()), Base.huella(normalizarRecuperacion(codigo)))
+        if (usado != 1) throw Problema(400, "recuperacion")
         cambiar("DELETE FROM intentos_mfa WHERE cuenta = ?", yo)
     }
     fun elevar(yo: Long, f: Factor, token: String?): Elevacion = operacionMfa(yo) {
@@ -315,3 +318,13 @@ internal fun java.sql.Connection.registrarEquipo(actor: String, accion: String, 
     val e = EntradaRegistro(id, actor, accion, objeto, detalle, sesion, cuando, anterior, "")
     cambiar("INSERT INTO registro_equipo VALUES(?,?,?,?,?,?,?,?,?)", e.id, e.actor, e.accion, e.objeto, e.detalle, e.sesion, e.cuando, e.huellaAnterior, huellaRegistro(e))
 }
+
+/** Sin letras que se confunden (I, L, O, U): 16 de 32 símbolos son 80 bits, de sobra para un código de un solo uso con límite de intentos. */
+private const val ALFABETO_RECUPERACION = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+internal fun codigoRecuperacion(azar: java.security.SecureRandom = java.security.SecureRandom()): String =
+    (1..16).map { ALFABETO_RECUPERACION[azar.nextInt(32)] }.chunked(4).joinToString("-") { it.joinToString("") }
+
+/** Acepta minúsculas, espacios y guiones, y lee O como 0 e I o L como 1. */
+internal fun normalizarRecuperacion(codigo: String): String = codigo.uppercase().filter { it.isLetterOrDigit() }
+    .replace('O', '0').replace('I', '1').replace('L', '1')

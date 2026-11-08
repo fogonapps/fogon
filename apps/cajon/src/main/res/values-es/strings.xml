@@ -1320,4 +1320,20 @@
     <string name="publicacion_foto_izquierda">Mover foto %1$d a la izquierda</string>
     <string name="publicacion_foto_derecha">Mover foto %1$d a la derecha</string>
     <string name="publicacion_megusta">%1$d me gusta</string>
+    <string name="catalogo_iconicas">Icónicas</string>
+    <string name="catalogo_tendencias">Tendencias</string>
+    <string name="catalogo_premiadas">Premiadas</string>
+    <string name="catalogo_queridas">Lo más querido</string>
+    <string name="catalogo_para_ti">Para ti</string>
+    <string name="catalogo_necesita_internet">Necesita internet. Volvimos a Icónicas.</string>
+    <string name="catalogo_error">No se pudo cargar el catálogo. Prueba otra sección.</string>
+    <string name="catalogo_elige_primero">Elige algo que te guste para encontrar obras parecidas.</string>
+    <string name="catalogo_vacio">No hay más obras en esta sección.</string>
+    <string name="tut_ejemplo">Ejemplo: %1$s</string>
+    <string name="tut_ejemplo_obra">Un viaje entre páginas</string>
+    <string name="tut_ejemplo_tarjeta">tarjeta de una obra</string>
+    <string name="tut_ejemplo_estrellas">cuatro de cinco estrellas</string>
+    <string name="tut_ejemplo_diario">una entrada del diario con cuatro estrellas</string>
+    <string name="tut_ejemplo_resena">una reseña con cuatro estrellas</string>
+    <string name="tut_ejemplo_resena_texto">Me encantó perderme en esta historia. Quiero volver a leerla.</string>
 </resources>

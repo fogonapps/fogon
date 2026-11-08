@@ -184,6 +184,8 @@ class EquipoTest {
         Ruta(HttpMethod.Post, "comentarios/retirar", "moderar_comentarios", { """{"que":"comentario","objeto":"123"}""" }),
         Ruta(HttpMethod.Post, "restaurar", "gestionar_publicaciones", { """{"que":"publicacion","objeto":"123"}""" }),
         Ruta(HttpMethod.Post, "sanciones/levantar", "gestionar_usuarios", { """{"usuario":"destino","motivo":"Apelación aceptada"}""" }),
+        Ruta(HttpMethod.Post, "imagenes/bloquear", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg","motivo":"prueba"}""" }),
+        Ruta(HttpMethod.Post, "imagenes/permitir", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg"}""" }),
     )
 
     @Test fun matrizHttpDeTodasLasRutasRolesMfaYElevacion() {

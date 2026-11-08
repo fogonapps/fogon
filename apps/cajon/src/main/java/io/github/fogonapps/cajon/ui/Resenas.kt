@@ -143,7 +143,7 @@ fun ResenasPropias(vm: CajonViewModel, e: Estado, o: Obra) {
             var destapada by rememberSaveable(r.id) { mutableStateOf(false) }
             if (r.spoiler && !destapada) BotonSecundario(stringResource(R.string.red_spoiler_tocar), { destapada = true }, Modifier.fillMaxWidth())
             else {
-                Text(r.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                TarjetaResena(r.texto, null)
                 r.fotos.forEach { coil3.compose.AsyncImage(ClienteSocial.imagen(it), null, Modifier.fillMaxWidth().height(160.dp)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -245,5 +245,15 @@ internal fun ResenasDelPerfil(vm: CajonViewModel, e: Estado) {
             if (r.spoiler && !destapada) BotonSecundario(stringResource(R.string.red_spoiler_tocar), { destapada = true }, Modifier.fillMaxWidth())
             else Text(r.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 4, overflow = TextOverflow.Ellipsis)
         }
+    }
+}
+
+/** Contenido de una reseña; compartido con el ejemplo del tutorial. */
+@Composable
+fun TarjetaResena(texto: String, nota: Int?) {
+    val f = FogonTema.actual
+    Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        nota?.let { NotaResena(it) }
+        Text(texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
     }
 }

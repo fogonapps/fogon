@@ -29,6 +29,12 @@ import androidx.compose.ui.unit.dp
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Tipos
+import io.github.fogonapps.cajon.datos.Catalogo
+import io.github.fogonapps.cajon.datos.Obra
+import io.github.fogonapps.cajon.datos.Registro
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -84,9 +90,9 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Text(stringResource(R.string.gustos_elige_minimo), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
                 e?.let { estado ->
                     FilasDeGustos(vm, estado)
-                    val n = elegidasIniciales(vm, estado)
+                    val n = elegidasIniciales(estado)
                     Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-                        BotonRiso(if (n >= 3) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); vm.agregarIniciales(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = n >= 3)
+                        BotonRiso(if (Catalogo.minimoCumplido(n)) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); vm.agregarIniciales(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = Catalogo.minimoCumplido(n))
                     }
                 }
             }
@@ -101,6 +107,15 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                         Ficha(f.tinta1, icono)
                         Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
                     }
+                }
+                val obraEjemplo = Obra("ejemplo", Tipos.LIBRO, stringResource(R.string.tut_ejemplo_obra), nota = 8, meGusta = true)
+                EjemploTutorial(stringResource(R.string.tut_ejemplo_tarjeta)) { TarjetaObra(obraEjemplo) }
+                EjemploTutorial(stringResource(R.string.tut_ejemplo_estrellas)) { Estrellas(8) }
+                EjemploTutorial(stringResource(R.string.tut_ejemplo_diario)) {
+                    EntradaDiario(obraEjemplo, Registro("ejemplo", vm.hoy().toString(), nota = 8))
+                }
+                EjemploTutorial(stringResource(R.string.tut_ejemplo_resena)) {
+                    TarjetaResena(stringResource(R.string.tut_ejemplo_resena_texto), 8)
                 }
                 BotonRiso(stringResource(R.string.siguiente), { paso = 4 }, Modifier.fillMaxWidth())
             }
@@ -122,5 +137,15 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 }
             }
         }
+    }
+}
+
+/** Componentes reales, sin acciones ni nodos interactivos para lectores de pantalla. */
+@Composable
+private fun EjemploTutorial(nombre: String, contenido: @Composable () -> Unit) {
+    val descripcion = stringResource(R.string.tut_ejemplo, nombre)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(descripcion, style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.texto)
+        Box(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }) { contenido() }
     }
 }

@@ -134,6 +134,28 @@ class Tmdb(private val clave: String = "") {
         return pedirJson(u, if (esToken) mapOf("Authorization" to "Bearer $clave") else emptyMap()).jsonObject
     }
 
+    /** Páginas de veinte. El proxy admite discover; top_rated todavía no está permitido. */
+    suspend fun catalogo(tipo: String, queridas: Boolean, idioma: String, pagina: Int): PaginaCatalogo {
+        val anime = tipo == Tipos.ANIME
+        val clase = if (tipo == Tipos.PELICULA) "movie" else "tv"
+        val numero = pagina
+        val params = mutableListOf("language" to lengua(idioma), "page" to "$numero")
+        val ruta = if (queridas) {
+            params += listOf("sort_by" to "vote_average.desc", "vote_count.gte" to if (tipo == Tipos.PELICULA) "1500" else "500")
+            if (anime) params += listOf("with_genres" to "16", "with_origin_country" to "JP")
+            "discover/$clase"
+        } else "trending/$clase/week"
+        val respuesta = pedir(ruta, *params.toTypedArray())
+        val filtrada = JsonObject(respuesta + ("results" to JsonArray(respuesta.arr("results").filter { elemento ->
+            val o = elemento.jsonObject
+            val japones = o.arr("genre_ids").any { it.entero() == 16 } &&
+                (o.arr("origin_country").any { it.texto() == "JP" } || o["original_language"].texto() == "ja")
+            if (anime) japones else !japones
+        })))
+        return PaginaCatalogo(lista(filtrada, clase, idioma).map { it.copy(tipo = tipo).paraCatalogo() },
+            numero >= (respuesta["total_pages"].entero() ?: numero))
+    }
+
     /** Comprueba la clave (para guardarla solo si sirve). */
     suspend fun probar() { pedir("configuration") }
 
@@ -201,9 +223,9 @@ class Tmdb(private val clave: String = "") {
     }
 
     /** Lo que TMDB recomienda a quien le gustó esta película o serie (en el idioma de la app). */
-    suspend fun recomendaciones(fuente: String, idioma: String): List<Encontrado> {
+    suspend fun recomendaciones(fuente: String, idioma: String, pagina: Int = 1): List<Encontrado> {
         val (_, clase, id) = fuente.split(":")
-        return lista(pedir("$clase/$id/recommendations", "language" to lengua(idioma)), clase, idioma)
+        return lista(pedir("$clase/$id/recommendations", "language" to lengua(idioma), "page" to "$pagina"), clase, idioma)
     }
 
     /**
@@ -252,7 +274,7 @@ class Tmdb(private val clave: String = "") {
     /** El póster de una película o serie por su fuente ("tmdb:movie:157336"). */
     suspend fun poster(fuente: String): String {
         val (_, clase, id) = fuente.split(":")
-        return imagen(pedir("$clase/$id")["poster_path"].texto(), "w342")
+        return imagen(pedir("$clase/$id")["poster_path"].texto(), "w500")
     }
 
     /** Lo más visto de la semana de una sola clase ("movie" o "tv"); el anime sale de [descubrir] con anime = true. */
@@ -434,6 +456,42 @@ object OpenLibrary {
 
     /** Las obras de un escritor, las más editadas primero, en el idioma de la app (como en [buscar]). */
     /** Los libros más buscados del año en Open Library (para elegir gustos), con el título en el idioma de la app si lo hay. */
+    /** Conserva el orden y el cursor de la fuente aunque alguna obra no tenga datos suficientes. */
+    suspend fun catalogo(queridas: Boolean, idioma: String, pagina: Int, autor: String = "", tema: String = ""): PaginaCatalogo {
+        val busqueda = queridas || autor.isNotBlank() || tema.isNotBlank()
+        val u = base.newBuilder().addPathSegments(if (busqueda) "search.json" else "trending/weekly.json")
+            .addQueryParameter("limit", "20").addQueryParameter("offset", "${(pagina - 1) * 20}")
+        if (busqueda) {
+            u.addQueryParameter("q", "edition_count:[1 TO *]").addQueryParameter("sort", if (queridas) "rating" else "editions")
+                .addQueryParameter("fields", CAMPOS).addQueryParameter("lang", if (idioma == "en") "en" else "es")
+            if (autor.isNotBlank()) u.addQueryParameter("author_key", autor)
+            if (tema.isNotBlank()) u.addQueryParameter("subject", tema)
+        }
+        val r = pedirJson(u.build()).jsonObject
+        val docs = r.arr(if (busqueda) "docs" else "works")
+        val obras = docs.mapNotNull { it as? JsonObject }.mapNotNull { d ->
+            val fuente = d["key"].texto().removePrefix("/works/")
+            if (!fuente.matches(Regex("OL[0-9]+W"))) return@mapNotNull null
+            ObraInicial("ol:$fuente", Tipos.LIBRO, d["title"].texto(), d["first_publish_year"].entero(), "ol:$fuente",
+                creador = d.arr("author_name").joinToString(", ") { it.texto() }, imagen = portada(d["cover_i"].entero(), "L"))
+        }
+        return PaginaCatalogo(obras, docs.size < 20)
+    }
+
+    /** Una sola cubierta, sin descargar las ediciones ni las alternativas de una ficha. */
+    suspend fun portadaCatalogo(fuente: String): String {
+        val (_, o) = obra(fuente.removePrefix("ol:"))
+        return portada(o.arr("covers").mapNotNull { it.entero() }.firstOrNull { it > 0 }, "L")
+    }
+
+    suspend fun parecidasCatalogo(fuente: String, idioma: String, pagina: Int): PaginaCatalogo {
+        val (_, o) = obra(fuente.removePrefix("ol:"))
+        val autor = o.arr("authors").firstOrNull()?.jsonObject?.get("author")?.jsonObject?.get("key").texto().substringAfterLast('/')
+        val tema = o.arr("subjects").firstOrNull()?.texto().orEmpty()
+        if (autor.isBlank() && tema.isBlank()) return PaginaCatalogo(emptyList(), true)
+        return catalogo(false, idioma, pagina, autor, if (autor.isBlank()) tema else "")
+    }
+
     suspend fun populares(idioma: String): List<Encontrado> {
         val u = base.newBuilder().addPathSegments("trending/yearly.json").addQueryParameter("limit", "60").build()
         return ordenar(pedirJson(u).jsonObject.arr("works").map { it.jsonObject }, idioma, tope = 40)
@@ -639,6 +697,22 @@ object OpenLibrary {
 object ListenBrainz {
     private const val ALGORITMO = "session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30"
 
+    suspend fun catalogo(tipo: String, queridas: Boolean, pagina: Int): PaginaCatalogo {
+        val artistas = tipo == "artista"
+        val u = "https://api.listenbrainz.org/1/stats/sitewide/${if (artistas) "artists" else "release-groups"}".toHttpUrl().newBuilder()
+            .addQueryParameter("count", "20").addQueryParameter("offset", "${(pagina - 1) * 20}")
+            .addQueryParameter("range", if (queridas) "all_time" else "week").build()
+        val datos = pedirJson(u).jsonObject["payload"]?.jsonObject ?: throw SinRed()
+        val lista = datos.arr(if (artistas) "artists" else "release_groups")
+        return PaginaCatalogo(lista.mapNotNull { it as? JsonObject }.mapNotNull { d ->
+            val id = d[if (artistas) "artist_mbid" else "release_group_mbid"].texto()
+            if (!id.matches(Regex("[0-9a-f-]{36}"))) return@mapNotNull null
+            val fuente = "mb:${if (artistas) "artist" else "rg"}:$id"
+            ObraInicial(fuente, tipo, d[if (artistas) "artist_name" else "release_group_name"].texto(), fuente = fuente,
+                creador = if (artistas) "" else d["artist_name"].texto())
+        }, lista.size < 20)
+    }
+
     /** Los artistas más escuchados de siempre en ListenBrainz (datos abiertos), para elegir gustos. */
     suspend fun populares(n: Int = 60): List<ArtistaEncontrado> {
         val u = "https://api.listenbrainz.org/1/stats/sitewide/artists".toHttpUrl().newBuilder()
@@ -708,6 +782,11 @@ object MusicBrainz {
 
     fun caratula(mbid: String, t: Int = 500) = "https://coverartarchive.org/release-group/$mbid/front-$t"
 
+    /** Cover Art Archive informa la miniatura real: solo se consulta al hacerse visible el álbum. */
+    /** La carátula directa del álbum: pedir antes su índice (que redirige a archive.org) tardaba o fallaba. */
+    @Suppress("RedundantSuspendModifier")
+    suspend fun portadaCatalogo(rg: String): String = caratula(rg, 500)
+
     /** Las carátulas de las ediciones de un álbum (las que tienen), para elegir otra. */
     suspend fun caratulasDeAlbum(rg: String): List<String> =
         pedir("release", "release-group" to rg, "limit" to "100").arr("releases").map { it.jsonObject }
@@ -773,6 +852,14 @@ object MusicBrainz {
         }
 
     /** Los álbumes y EP de un artista (su discografía), del más nuevo al más viejo. */
+    suspend fun albumesParecidos(rg: String, pagina: Int): PaginaCatalogo {
+        val artista = pedir("release-group/$rg", "inc" to "artists").arr("artist-credit").firstOrNull()
+            ?.jsonObject?.get("artist")?.jsonObject?.get("id").texto()
+        if (artista.isBlank()) return PaginaCatalogo(emptyList(), true)
+        val grupos = pedir("release-group", "artist" to artista, "type" to "album", "limit" to "20", "offset" to "${(pagina - 1) * 20}").arr("release-groups")
+        return PaginaCatalogo(grupos.map { deGrupo(it.jsonObject).paraCatalogo() }, grupos.size < 20)
+    }
+
     suspend fun discografia(mbid: String): List<Encontrado> =
         pedir("release-group", "artist" to mbid, "type" to "album|ep", "limit" to "100").arr("release-groups")
             .map { deGrupo(it.jsonObject) }.sortedByDescending { it.anio ?: 0 }

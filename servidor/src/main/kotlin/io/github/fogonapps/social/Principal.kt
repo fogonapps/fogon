@@ -69,7 +69,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.27"
+const val VERSION = "0.29"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -172,6 +172,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta") { call.respond(social.miCuenta(call.yo(), call.token())) }
+            post("/cuenta/politica") { social.aceptarPolitica(call.yo(), call.receive<Aceptacion>().politica); call.respond(HttpStatusCode.NoContent) }
             delete("/cuenta") { call.yo(); throw Problema(403, "actualiza_app") }
             post("/cuenta/borrar") { social.programarBorrado(call.yo(), call.token(), call.receive<Borrado>()); call.respond(HttpStatusCode.NoContent) }
             post("/cuenta/conservar") { social.conservarCuenta(call.yo()); call.respond(HttpStatusCode.NoContent) }
@@ -246,6 +247,11 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }
             get("/momento") { call.respond(Momento.de(call.request.queryParameters["idioma"].orEmpty())) }
+            get("/obras/imagen") { call.respond(social.imagenObra(call.lector(), call.request.queryParameters["fuente"].orEmpty())) }
+            put("/obras/imagen") { social.votarImagen(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            delete("/obras/imagen") { social.quitarVotoImagen(call.yo(), call.request.queryParameters["fuente"].orEmpty()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/imagenes/bloquear") { social.bloquearImagen(call.requiere("gestionar_publicaciones"), call.receive(), true, call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/imagenes/permitir") { social.bloquearImagen(call.requiere("gestionar_publicaciones"), call.receive(), false, call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/resenas") {
                 val q = call.request.queryParameters
                 call.respond(social.resenas(call.lector(), q["fuente"].orEmpty(), q["parte"].orEmpty(), q["orden"].orEmpty(), q["antes"]?.toLongOrNull()))

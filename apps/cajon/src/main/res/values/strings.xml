@@ -1318,4 +1318,20 @@
     <string name="publicacion_foto_izquierda">Move photo %1$d left</string>
     <string name="publicacion_foto_derecha">Move photo %1$d right</string>
     <string name="publicacion_megusta">%1$d likes</string>
+    <string name="catalogo_iconicas">Iconic</string>
+    <string name="catalogo_tendencias">Trending</string>
+    <string name="catalogo_premiadas">Award winners</string>
+    <string name="catalogo_queridas">Most loved</string>
+    <string name="catalogo_para_ti">For you</string>
+    <string name="catalogo_necesita_internet">Needs internet. Back to Iconic.</string>
+    <string name="catalogo_error">Could not load the catalog. Try another section.</string>
+    <string name="catalogo_elige_primero">Choose something you like to find similar works.</string>
+    <string name="catalogo_vacio">No more works in this section.</string>
+    <string name="tut_ejemplo">Example: %1$s</string>
+    <string name="tut_ejemplo_obra">A journey through pages</string>
+    <string name="tut_ejemplo_tarjeta">a work card</string>
+    <string name="tut_ejemplo_estrellas">four out of five stars</string>
+    <string name="tut_ejemplo_diario">a diary entry with four stars</string>
+    <string name="tut_ejemplo_resena">a review with four stars</string>
+    <string name="tut_ejemplo_resena_texto">I loved getting lost in this story. I want to read it again.</string>
 </resources>

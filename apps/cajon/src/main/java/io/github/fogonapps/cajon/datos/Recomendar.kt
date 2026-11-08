@@ -126,7 +126,7 @@ object Recomendar {
             excluidos = vivos.filter { it.senal == Senales.EXCLUIR }.map { it.clave }.toSet(),
             noRecomendar = vivos.filter { it.clave.startsWith("obra:") && it.senal in Senales.NEGATIVAS }.map { it.clave }.toSet(),
             semillas = vivos.filter { it.clave.startsWith("obra:") && it.senal == Senales.GUSTA },
-            artistasDichos = vivos.filter { it.clave.startsWith("artista:") && it.senal == Senales.GUSTA },
+            artistasDichos = vivos.filter { (it.clave.startsWith("artista:") || it.fuente.startsWith("mb:artist:")) && it.senal == Senales.GUSTA },
             categorias = e.ajustes.categorias)
     }
 

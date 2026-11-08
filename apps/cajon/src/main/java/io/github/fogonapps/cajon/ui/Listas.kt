@@ -202,20 +202,28 @@ fun Diario(vm: CajonViewModel, e: Estado) {
             java.time.YearMonth.parse(mes).format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale.forLanguageTag(idioma))).replaceFirstChar { it.uppercase() }
         }.getOrDefault(mes))
         lista.forEach { d ->
-            FilaVidrio({ vm.abrir(Pantalla.Ficha(d.obra.id)) }) {
-                Text(d.registro.fecha.takeLast(2), fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(26.dp))
-                Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.width(38.dp), esquina = 6.dp, conTitulo = false)
-                Column(Modifier.weight(1f)) {
-                    Text(d.obra.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(nombreTipo(d.obra.tipo, plural = false), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                        Estrellas(d.registro.nota)
-                        if (d.registro.otraVez) IconoRiso(Iconos.Repetir, stringResource(R.string.otra_vez), tamano = 14.dp, tinta = f.textoSuave)
-                    }
-                }
-                BotonIcono(Iconos.Lapiz, stringResource(R.string.resena_escribir)) { vm.escribirResena(d.obra.id, d.registro.id) }
-                if (d.obra.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 16.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
+            EntradaDiario(d.obra, d.registro,
+                { vm.abrir(Pantalla.Ficha(d.obra.id)) }, { vm.escribirResena(d.obra.id, d.registro.id) })
+        }
+    }
+}
+
+/** El mismo registro se dibuja en el diario y en los ejemplos del tutorial. */
+@Composable
+fun EntradaDiario(o: Obra, registro: io.github.fogonapps.cajon.datos.Registro, abrir: (() -> Unit)? = null, escribir: (() -> Unit)? = null) {
+    val f = FogonTema.actual
+    FilaVidrio(abrir) {
+        Text(registro.fecha.takeLast(2), fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(26.dp))
+        Portada(o.portada, o.tipo, o.titulo, Modifier.width(38.dp), esquina = 6.dp, conTitulo = false)
+        Column(Modifier.weight(1f)) {
+            Text(o.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(nombreTipo(o.tipo, plural = false), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Estrellas(registro.nota)
+                if (registro.otraVez) IconoRiso(Iconos.Repetir, stringResource(R.string.otra_vez), tamano = 14.dp, tinta = f.textoSuave)
             }
         }
+        if (escribir != null) BotonIcono(Iconos.Lapiz, stringResource(R.string.resena_escribir), onClick = escribir)
+        if (o.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 16.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
     }
 }

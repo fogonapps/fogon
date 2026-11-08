@@ -237,10 +237,10 @@ fun BotonIcono(icono: Dibujo, descripcion: String, grande: Boolean = false, acti
 
 /** Una píldora que se toca (filtros y acciones pequeñas). */
 @Composable
-fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, onClick: () -> Unit) {
+fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val f = FogonTema.actual
     Row(
-        Modifier.rebote().clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
+        modifier.rebote().clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
             .border(f.borde, if (acento) f.tinta1 else f.linea, FormaPildora)
             .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),

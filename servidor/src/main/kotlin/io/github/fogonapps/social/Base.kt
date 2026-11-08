@@ -141,6 +141,13 @@ class Base(ruta: String) {
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     cuando INTEGER NOT NULL, PRIMARY KEY(comentario, cuenta))""")
                 columna(s, "reportes", "estado TEXT NOT NULL DEFAULT 'abierto'")
+                // Portadas (C-03): un voto por obra y cuenta entre imágenes de fuentes autorizadas, y las que el equipo bloqueó.
+                s.execute("""CREATE TABLE IF NOT EXISTS votos_imagen(
+                    obra TEXT NOT NULL, url TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    cuando INTEGER NOT NULL, PRIMARY KEY(obra, cuenta))""")
+                s.execute("CREATE INDEX IF NOT EXISTS votos_imagen_obra ON votos_imagen(obra)")
+                s.execute("""CREATE TABLE IF NOT EXISTS imagenes_bloqueadas(
+                    url TEXT PRIMARY KEY, motivo TEXT NOT NULL, cuando INTEGER NOT NULL)""")
                 // El cajón completo de cada cuenta, cifrado en el teléfono (el servidor no lo puede leer), y su llave
                 // envuelta con la contraseña de la persona (tampoco la puede abrir).
                 s.execute("""CREATE TABLE IF NOT EXISTS cajones(
