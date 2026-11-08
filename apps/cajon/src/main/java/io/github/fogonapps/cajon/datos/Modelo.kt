@@ -48,6 +48,7 @@ data class Cancion(
     /** Media estrellas: 0 = sin nota, 1 = ½ … 10 = 5 estrellas. */
     val nota: Int = 0,
     val favorita: Boolean = false,
+    val mbid: String = "",
 )
 
 /**
@@ -61,6 +62,7 @@ data class Registro(
     val nota: Int = 0,
     /** Ya la había visto/leído/escuchado antes. */
     val otraVez: Boolean = false,
+    /** Respaldo anterior a las reseñas universales: solo lo lee la migración. */
     val texto: String = "",
     /** Quién lo podría ver (ver [Visibilidad]); vacío = lo que diga el diario en el perfil. */
     val visibilidad: String = "",
@@ -104,7 +106,7 @@ data class Obra(
     val estado: String = Estados.QUIERO,
     val nota: Int = 0,
     val meGusta: Boolean = false,
-    /** La reseña o el análisis: solo de la persona, nunca lo escribe la app. */
+    /** Respaldo de la reseña antigua: solo lo lee la migración a Estado.resenas. */
     val resena: String = "",
     /** Quién ve la reseña (con su nota) en la red: vacío = privada, ver `Visibilidad`. */
     val resenaVisibilidad: String = "",
@@ -401,6 +403,9 @@ data class Estado(
     val perfil: Perfil = Perfil(),
     /** Lo que la persona publicó a mano en la red (con foto o texto), ver [PublicacionPropia]. */
     val publicaciones: List<PublicacionPropia> = emptyList(),
+    val resenas: List<Resena> = emptyList(),
+    /** Borradores privados: nunca se publican. */
+    val borradoresResena: List<Resena> = emptyList(),
 ) {
     /** Lo que se ve (sin lo borrado). */
     val vivas get() = obras.filter { !it.borrada }

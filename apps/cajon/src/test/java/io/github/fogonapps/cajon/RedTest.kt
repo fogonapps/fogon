@@ -391,7 +391,7 @@ class RedTest {
         // Sin decir nada en el perfil: el diario es privado y solo sube lo marcado una por una.
         val e = Estado(obras = listOf(matrix, libro), listas = listOf(Lista("l1", "Pendientes"), Lista("l2", "Top", obras = listOf("o1"), visibilidad = Visibilidad.PUBLICA)),
             publicaciones = listOf(PublicacionPropia("p1", 5, "¡Qué día!", imagen = "x".repeat(22)), PublicacionPropia("p2", 6, "borrada", borrada = true)))
-        val subidas = RedSocial.publicacionesDe(e)
+        val subidas = RedSocial.publicacionesDe(Logica.normalizar(e))
         assertEquals(setOf("r:o1:r2", "r:o2:r4", "l:l2", "f:p1"), subidas.map { it.clave }.toSet())
         assertEquals(Visibilidad.AMIGOS, subidas.first { it.clave == "r:o2:r4" }.visibilidad)
         // Las portadas locales (de este teléfono) no viajan.
@@ -399,7 +399,7 @@ class RedTest {
         assertEquals(3.0, (subidas.first { it.clave == "r:o1:r2" }.datos["estrellas"] as JsonPrimitive).content.toDouble(), 0.0)
 
         // Con el diario público en el perfil, también lo que no dice nada (r1, una reseña); lo privado nunca.
-        val publico = e.copy(perfil = Perfil(visibilidad = mapOf(PartesPerfil.DIARIO to Visibilidad.PUBLICA)))
+        val publico = Logica.normalizar(e.copy(perfil = Perfil(visibilidad = mapOf(PartesPerfil.DIARIO to Visibilidad.PUBLICA))))
         val claves = RedSocial.publicacionesDe(publico).map { it.clave }
         assertTrue("r:o1:r1" in claves && "r:o1:r3" !in claves)
         assertEquals("resena", RedSocial.publicacionesDe(publico).first { it.clave == "r:o1:r1" }.tipo)

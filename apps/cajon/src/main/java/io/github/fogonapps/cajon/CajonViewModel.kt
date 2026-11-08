@@ -138,6 +138,7 @@ sealed interface Pantalla {
     data object BloqueadosRed : Pantalla
     /** Publicar unas palabras con o sin foto, sobre [obra] si viene de una ficha. */
     data class Publicar(val obra: String? = null) : Pantalla
+    data class Resenar(val id: String, val elegirObra: Boolean = false) : Pantalla
     /** Las conversaciones del chat; con [obra], para mandarla a alguien. */
     data class Chats(val obra: String? = null) : Pantalla
     data class Conversacion(val usuario: String) : Pantalla
@@ -590,10 +591,25 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Navegación ----- */
 
     fun abrir(p: Pantalla) {
+        if (p is Pantalla.Ficha && _pila.value.lastOrNull() is Pantalla.Buscar && _busqueda.value.elegirPara?.startsWith("resena:") == true) {
+            elegirObraResena(_busqueda.value.elegirPara!!.removePrefix("resena:"), p.id); return
+        }
+        if (p is Pantalla.VerArtista && _pila.value.lastOrNull() is Pantalla.Buscar && _busqueda.value.elegirPara?.startsWith("resena:") == true) {
+            elegirObraResena(_busqueda.value.elegirPara!!.removePrefix("resena:"), p.id); return
+        }
         // Cada búsqueda nueva empieza en blanco, en el tipo pedido.
         if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(seccion = Secciones.paraBuscar(p.seccion), elegirPara = p.elegirPara) }
         // Buscando para el perfil: tocar un artista lo elige en vez de abrir su ficha.
-        if (p is Pantalla.PreviaArtista && _pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let { elegirArtistaParaPerfil(p.artista, it); return }
+        if (p is Pantalla.PreviaArtista && _pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let {
+            if (it.startsWith("resena:")) {
+                val a = p.artista
+                val id = _estado.value?.artistasVivos?.firstOrNull { x -> x.fuente == a.fuente }?.id ?: nuevoId("a").also { id ->
+                    cambiar { e -> e.copy(artistas = e.artistas + Artista(id, a.nombre, fuente = a.fuente, tipo = a.tipo, foto = a.foto, cambio = ahora())) }
+                }
+                elegirObraResena(it.removePrefix("resena:"), id)
+            } else elegirArtistaParaPerfil(p.artista, it)
+            return
+        }
         _pila.value = _pila.value + p
     }
     fun cerrar() { _pila.value = _pila.value.dropLast(1) }
@@ -631,7 +647,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Buscar afuera ----- */
 
     fun cambiarSeccion(seccion: String) {
-        _busqueda.value = Busqueda(texto = _busqueda.value.texto, seccion = seccion)
+        _busqueda.value = Busqueda(texto = _busqueda.value.texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara)
         if (_busqueda.value.texto.isNotBlank()) buscar(_busqueda.value.texto)
     }
 
@@ -641,10 +657,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val seccion = _busqueda.value.seccion
         _busqueda.value = _busqueda.value.copy(texto = texto)
         buscando?.cancel()
-        if (t.length < 2) { _busqueda.value = Busqueda(texto = texto, seccion = seccion); return }
+        if (t.length < 2) { _busqueda.value = Busqueda(texto = texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara); return }
         buscando = viewModelScope.launch {
             delay(350) // espera a que la persona deje de escribir
-            _busqueda.value = Busqueda(texto = texto, seccion = seccion)
+            _busqueda.value = Busqueda(texto = texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara)
             fun fuente(nombre: String, trabajo: suspend CoroutineScope.() -> Unit) = launch {
                 _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + nombre)
                 buscarEnFuente(
@@ -737,7 +753,20 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Trae los datos completos de algo encontrado y lo muestra antes de agregarlo (o abre su ficha si ya está). */
     fun abrirEncontrado(r: Encontrado) {
         val e = _estado.value ?: return
-        if (_pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let { elegirParaPerfil(r, it); return }
+        if (_pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let { para ->
+            if (para.startsWith("resena:")) {
+                viewModelScope.launch {
+                    val o = try { detalles(r) } catch (x: kotlinx.coroutines.CancellationException) { throw x } catch (_: Exception) {
+                        Obra("", r.tipo, r.titulo, fuente = r.fuente, creador = r.creador, portada = r.portada, anio = r.anio)
+                    }
+                    if (_busqueda.value.elegirPara == para && _pila.value.lastOrNull() is Pantalla.Buscar) {
+                        val id = agregar(o, Estados.QUIERO, abrirFicha = false)
+                        elegirObraResena(para.removePrefix("resena:"), id)
+                    }
+                }
+            } else elegirParaPerfil(r, para)
+            return
+        }
         L.porFuente(e, r.fuente)?.let { abrir(Pantalla.Ficha(it.id)); return }
         // Se abre ya, con lo que trajo la búsqueda; lo demás (sinopsis, canciones, géneros) llega después y
         // reemplaza la previa si la persona sigue en ella. Así no hay que esperar a MusicBrainz (1 consulta por segundo).
@@ -802,8 +831,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun ponerEstado(id: String, estado: String) = cambiarObra(id) { L.cambiarEstado(it, estado, hoy()) }
     fun ponerNota(id: String, nota: Int) = cambiarObra(id) { it.copy(nota = nota.coerceIn(0, 10)) }
     fun meGusta(id: String) = cambiarObra(id) { it.copy(meGusta = !it.meGusta) }
-    fun ponerResena(id: String, texto: String) = cambiarObra(id) { it.copy(resena = texto.take(10000)) }
-    fun visibilidadResena(id: String, v: String) = cambiarObra(id) { it.copy(resenaVisibilidad = v) }
     fun ponerNotas(id: String, texto: String) = cambiarObra(id) { it.copy(notas = texto.take(5000)) }
 
     fun ponerPagina(id: String, pagina: Int) = cambiarObra(id) { o ->
@@ -1111,12 +1138,65 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /* ----- Reseñas ----- */
+
+    fun escribirResena(obra: String = "", registro: String? = null, editar: String? = null) {
+        val e = _estado.value ?: return
+        val existente = editar?.let { id -> e.resenas.firstOrNull { it.id == id && !it.borrada } }
+            ?: registro?.let { r -> e.resenas.firstOrNull { it.obra == obra && it.registro == r && !it.borrada } }
+        val borrador = e.borradoresResena.firstOrNull { !it.borrada &&
+            (if (existente != null) it.id == existente.id else (obra.isEmpty() || it.obra == obra) && it.registro == registro && e.resenas.none { r -> r.id == it.id }) }
+        val entrada = e.vivas.firstOrNull { it.id == obra }?.registros?.firstOrNull { it.id == registro }
+        val o = io.github.fogonapps.cajon.datos.Resenas.obra(e, obra)
+        val r = borrador ?: existente ?: io.github.fogonapps.cajon.datos.Resena("n:" + java.util.UUID.randomUUID(), obra,
+            parte = if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else "",
+            fecha = entrada?.fecha ?: hoy().toString(), registro = registro, nota = entrada?.nota?.takeIf { it > 0 })
+        borradorResena(r)
+        completarCancionesResena(io.github.fogonapps.cajon.datos.Resenas.obra(e, r.obra))
+        abrir(Pantalla.Resenar(r.id, elegirObra = obra.isEmpty() && editar == null))
+    }
+
+    fun borradorResena(r: io.github.fogonapps.cajon.datos.Resena) = cambiar { e ->
+        e.copy(borradoresResena = e.borradoresResena.filterNot { it.id == r.id } + r.copy(cambio = ahora()))
+    }
+
+    private fun completarCancionesResena(o: Obra?) {
+        if (o?.tipo == Tipos.ALBUM && o.fuente.startsWith("mb:") && (o.canciones.isEmpty() || o.canciones.any { it.mbid.isBlank() })) actualizarDatos(o.id, callado = true)
+    }
+
+    private fun elegirObraResena(id: String, obra: String) {
+        val r = _estado.value?.borradoresResena?.firstOrNull { it.id == id } ?: return
+        val o = _estado.value?.let { io.github.fogonapps.cajon.datos.Resenas.obra(it, obra) }
+        completarCancionesResena(o)
+        borradorResena(r.copy(obra = obra, parte = if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else ""))
+        cerrar()
+    }
+
+    fun fotoResena(id: String, foto: String) {
+        val r = _estado.value?.borradoresResena?.firstOrNull { it.id == id && !it.borrada } ?: return
+        if (r.fotos.size < 4) borradorResena(r.copy(fotos = r.fotos + foto))
+    }
+
+    fun guardarResena(r: io.github.fogonapps.cajon.datos.Resena) {
+        val o = _estado.value?.let { io.github.fogonapps.cajon.datos.Resenas.obra(it, r.obra) } ?: return
+        if (!io.github.fogonapps.cajon.datos.Resenas.valida(r) || !io.github.fogonapps.cajon.datos.Resenas.parteValida(o, r.parte)) return
+        cambiar { e -> e.copy(resenas = e.resenas.filterNot { it.id == r.id } + r.copy(cambio = ahora()),
+            borradoresResena = e.borradoresResena.map { if (it.id == r.id) it.copy(borrada = true, cambio = ahora()) else it }) }
+        cerrar()
+    }
+
+    fun borrarResena(id: String) {
+        cambiar { e -> e.copy(resenas = e.resenas.map { if (it.id == id) it.copy(borrada = true, cambio = ahora()) else it },
+            borradoresResena = e.borradoresResena.map { if (it.id == id) it.copy(borrada = true, cambio = ahora()) else it }) }
+        red.borrarResena(id)
+    }
+
     /* ----- Diario ----- */
 
-    fun registrar(id: String, r: Registro) {
+    fun registrar(id: String, r: Registro): String {
         val nuevo = if (r.id.isEmpty()) r.copy(id = nuevoId("g")) else r
         cambiarObra(id) { o ->
-            val lista = if (o.registros.any { it.id == nuevo.id }) o.registros.map { if (it.id == nuevo.id) nuevo else it } else o.registros + nuevo
+            val lista = if (o.registros.any { it.id == nuevo.id }) o.registros.map { if (it.id == nuevo.id) it.copy(fecha = nuevo.fecha, nota = nuevo.nota, otraVez = nuevo.otraVez, visibilidad = nuevo.visibilidad) else it } else o.registros + nuevo
             // Registrar algo terminado: la obra queda terminada y, si no tenía nota, toma la del registro.
             var x = o.copy(registros = lista, nota = if (o.nota == 0) nuevo.nota else o.nota)
             if (o.estado != Estados.TERMINADO && (o.tipo == Tipos.PELICULA || o.tipo == Tipos.ALBUM || o.tipo == Tipos.LIBRO))
@@ -1125,6 +1205,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         cerrar()
         avisar(tx(R.string.aviso_registrado))
+        return nuevo.id
     }
 
     fun borrarRegistro(id: String, registro: String) = cambiarObra(id) { o -> o.copy(registros = o.registros.filter { it.id != registro }) }

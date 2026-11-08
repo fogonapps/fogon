@@ -25,7 +25,7 @@ import javax.crypto.spec.GCMParameterSpec
 object SerializadorEstado : Serializer<Estado> {
     override val defaultValue = Estado()
     override suspend fun readFrom(input: InputStream): Estado = try {
-        JsonCajon.decodeFromString(Estado.serializer(), input.readBytes().decodeToString())
+        Logica.normalizar(JsonCajon.decodeFromString(Estado.serializer(), input.readBytes().decodeToString()))
     } catch (e: SerializationException) {
         throw CorruptionException("Estado ilegible", e)
     }

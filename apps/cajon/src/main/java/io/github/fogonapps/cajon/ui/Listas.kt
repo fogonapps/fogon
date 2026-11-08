@@ -213,6 +213,7 @@ fun Diario(vm: CajonViewModel, e: Estado) {
                         if (d.registro.otraVez) IconoRiso(Iconos.Repetir, stringResource(R.string.otra_vez), tamano = 14.dp, tinta = f.textoSuave)
                     }
                 }
+                BotonIcono(Iconos.Lapiz, stringResource(R.string.resena_escribir)) { vm.escribirResena(d.obra.id, d.registro.id) }
                 if (d.obra.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 16.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
             }
         }

@@ -228,7 +228,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         BotonIcono(Iconos.Imagen, stringResource(R.string.cambiar_portada), grande = true) { vm.abrir(Pantalla.CambiarPortada(o.id)) }
         if (o.fuente.isEmpty()) BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
     }
-    if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, o.titulo) }) { TarjetaObra(o) }
+    if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, o.titulo) }) { TarjetaObra(o, e.resenas.firstOrNull { it.obra == o.id && !it.borrada && !it.spoiler && it.parte.isBlank() }?.texto.orEmpty()) }
     Encabezado(o, vm, conGeneros = false)
 
     // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
@@ -279,18 +279,6 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
     Seccion(stringResource(R.string.resenas))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        var resena by rememberSaveable(o.id) { mutableStateOf(o.resena) }
-        OutlinedTextField(resena, { resena = it; vm.ponerResena(o.id, it) }, Modifier.fillMaxWidth(), minLines = 3,
-            placeholder = { Text(stringResource(R.string.resena_pista)) })
-        if (resena.isNotBlank()) {
-            ElegirVisibilidad(o.resenaVisibilidad) { vm.visibilidadResena(o.id, it) }
-            val contexto = androidx.compose.ui.platform.LocalContext.current
-            val estrellas = if (o.nota > 0) "★".repeat(o.nota / 2) + (if (o.nota % 2 == 1) "½" else "") + " " else ""
-            Row { Pildora(stringResource(R.string.compartir), Iconos.Compartir) {
-                contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                    .putExtra(android.content.Intent.EXTRA_TEXT, "${o.titulo} $estrellas\n\n${resena.trim()}"), null))
-            } }
-        }
         // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).
         var notas by rememberSaveable(o.id) { mutableStateOf(o.notas) }
         var conNotas by rememberSaveable(o.id) { mutableStateOf(o.notas.isNotBlank()) }
@@ -298,18 +286,8 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
             label = { Text(stringResource(R.string.datos_curiosos)) })
         else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
     }
-    // Las de la gente (las públicas y las de quienes sigues).
-    if (o.fuente.isNotBlank()) {
-        val listasRed by vm.red.listas.collectAsStateWithLifecycle()
-        LaunchedEffect(o.fuente) { vm.red.cargarResenas(o.fuente) }
-        val yo by vm.red.usuario.collectAsStateWithLifecycle()
-        val deLaGente = listasRed["resenas:${o.fuente}"].orEmpty().filter { it.autor.usuario != yo }
-        if (deLaGente.isNotEmpty()) {
-            Text(stringResource(R.string.resenas_de_la_gente), style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.textoSuave,
-                modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp))
-            deLaGente.take(10).forEach { TarjetaPublicacion(vm, it) }
-        }
-    }
+    ResenasPropias(vm, e, o)
+    ResenasDeLaGente(vm, o)
 
     // Las etiquetas propias ("para ver con amigos", "favorita de 2024"…): como los géneros, sin comas.
     EditorEtiquetas("e" + o.id, stringResource(R.string.etiquetas), o.etiquetas, { vm.sugerenciasEtiquetas(null) },
@@ -326,7 +304,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
                 IconoRiso(if (r.otraVez) Iconos.Repetir else Iconos.Diario, null, tamano = 20.dp, tinta = f.textoSuave)
                 Column(Modifier.weight(1f)) {
                     Text(fechaCorta(r.fecha, idioma), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                    if (r.texto.isNotBlank()) Text(r.texto, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    e.resenas.firstOrNull { !it.borrada && it.obra == o.id && it.registro == r.id }?.takeIf { !it.spoiler }?.let { resena -> Text(resena.texto, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                 }
                 Estrellas(r.nota)
             }
@@ -511,7 +489,6 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     var fecha by rememberSaveable { mutableStateOf(viejo?.fecha ?: vm.hoy().toString()) }
     var nota by rememberSaveable { mutableStateOf(viejo?.nota ?: o.nota) }
     var otraVez by rememberSaveable { mutableStateOf(viejo?.otraVez ?: o.registros.isNotEmpty()) }
-    var texto by rememberSaveable { mutableStateOf(viejo?.texto ?: "") }
     var visibilidad by rememberSaveable { mutableStateOf(viejo?.visibilidad ?: "") }
 
     Cabecera(textoAnotar(o.tipo), vm::cerrar)
@@ -528,13 +505,16 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
             Text(stringResource(R.string.otra_vez_pregunta), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
             Switch(otraVez, { otraVez = it })
         }
-        OutlinedTextField(texto, { texto = it.take(2000) }, Modifier.fillMaxWidth(), minLines = 3, label = { Text(stringResource(R.string.unas_palabras)) })
+        BotonSecundario(stringResource(R.string.resena_escribir), {
+            val registro = vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad))
+            vm.escribirResena(o.id, registro)
+        }, Modifier.fillMaxWidth())
         // Quién la vería cuando haya perfiles públicos (sin elegir, como diga el diario en el perfil).
         Text(stringResource(R.string.quien_ve_entrada), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         Selector(listOf("" to stringResource(R.string.como_el_diario), io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA to stringResource(R.string.vis_privada),
             io.github.fogonapps.cajon.datos.Visibilidad.AMIGOS to stringResource(R.string.vis_amigos), io.github.fogonapps.cajon.datos.Visibilidad.PUBLICA to stringResource(R.string.vis_publica)),
             visibilidad, { visibilidad = it })
-        BotonRiso(stringResource(R.string.guardar), { vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, texto.trim(), visibilidad)) }, Modifier.fillMaxWidth())
+        BotonRiso(stringResource(R.string.guardar), { vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad)) }, Modifier.fillMaxWidth())
         if (viejo != null) BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_registro_pregunta), null) { vm.borrarRegistro(o.id, viejo.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)

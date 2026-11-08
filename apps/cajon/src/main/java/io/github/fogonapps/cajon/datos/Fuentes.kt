@@ -799,7 +799,8 @@ object MusicBrainz {
         // La edición más vieja (la original), no una reedición con extras.
         val edicion = ediciones.minByOrNull { it["date"].texto().ifBlank { "9999" } }
         val canciones = edicion?.arr("media")?.flatMap { m -> m.jsonObject.arr("tracks").map { t ->
-            Cancion(t.jsonObject["title"].texto(), ((t.jsonObject["length"].entero() ?: 0) / 1000))
+            Cancion(t.jsonObject["title"].texto(), ((t.jsonObject["length"].entero() ?: 0) / 1000),
+                mbid = (t.jsonObject["recording"] as? JsonObject)?.get("id").texto())
         } } ?: emptyList()
         return Obra(
             id = "", tipo = Tipos.ALBUM, titulo = g["title"].texto().ifBlank { e.titulo }, anio = e.anio,

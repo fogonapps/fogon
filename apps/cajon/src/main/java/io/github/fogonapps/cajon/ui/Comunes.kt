@@ -304,10 +304,10 @@ internal fun notaDeProgreso(progreso: Float): Int =
  * nota que ya tiene la quita. [nota] en medias estrellas (0 a 10).
  */
 @Composable
-fun ElegirEstrellas(nota: Int, onNota: (Int) -> Unit, tamano: Dp = 40.dp, descripcion: String) {
+fun ElegirEstrellas(nota: Int, onNota: (Int) -> Unit, tamano: Dp = 40.dp, descripcion: String, ceroCalificado: Boolean = false) {
     val f = FogonTema.actual
     val estado = estadoDeNota(nota, LocalConfiguration.current.locales[0],
-        stringResource(R.string.nota_sin_calificar), stringResource(R.string.nota_estado_estrellas))
+        stringResource(if (ceroCalificado) R.string.resena_cero else R.string.nota_sin_calificar), stringResource(R.string.nota_estado_estrellas))
     Row(Modifier.clearAndSetSemantics {
         contentDescription = descripcion
         stateDescription = estado

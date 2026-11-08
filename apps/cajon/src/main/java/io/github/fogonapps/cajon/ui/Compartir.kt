@@ -60,7 +60,7 @@ fun DialogoCompartir(onCerrar: () -> Unit, onCompartir: (Bitmap) -> Unit, tarjet
 
 /** La tarjeta de una obra: portada, nota, corazón y un pedazo de la reseña, con la marca de El Cajón. */
 @Composable
-fun TarjetaObra(o: Obra) {
+fun TarjetaObra(o: Obra, resena: String = "") {
     val f = FogonTema.actual
     Column(Modifier.width(320.dp).clip(forma(24.dp)).background(f.fondo).haloPuntos(f.tinta2.copy(alpha = 0.3f)).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -75,7 +75,7 @@ fun TarjetaObra(o: Obra) {
                 }
             }
         }
-        if (o.resena.isNotBlank()) Text("“" + o.resena.trim().take(280) + if (o.resena.length > 280) "…”" else "”",
+        if (resena.isNotBlank()) Text("“" + resena.trim().take(280) + if (resena.length > 280) "…”" else "”",
             style = MaterialTheme.typography.bodyMedium, color = f.texto)
         Marca()
     }

@@ -38,6 +38,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -203,7 +208,32 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
                 listOfNotNull(d.texto("creador").takeIf { it.isNotBlank() }, d.texto("anio").takeIf { it.isNotBlank() },
                     (d["cuantas"] as? JsonPrimitive)?.intOrNull?.let { stringResource(R.string.red_obras_n, it) }).joinToString(" · ").takeIf { it.isNotBlank() }
                     ?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1) }
-                (d["estrellas"] as? JsonPrimitive)?.doubleOrNull?.let { Estrellas((it * 2).toInt(), 16.sp) }
+                val nota = (d["nota"] as? JsonPrimitive)?.intOrNull
+                if (nota != null) NotaResena(nota)
+                else (d["estrellas"] as? JsonPrimitive)?.doubleOrNull?.let { Estrellas((it * 2).toInt(), 16.sp) }
+            }
+        }
+        if (p.tipo == "resena") {
+            val e by vm.estado.collectAsStateWithLifecycle()
+            val o = e?.let { estado -> estado.vivas.firstOrNull { it.fuente == d.texto("fuente") }
+                ?: estado.artistasVivos.firstOrNull { it.fuente == d.texto("fuente") }?.let { io.github.fogonapps.cajon.datos.Resenas.obra(estado, it.id) } }
+            d.texto("parte").takeIf { it.isNotBlank() }?.let {
+                Text(io.github.fogonapps.cajon.datos.Resenas.etiqueta(it, o, vm.idioma() == "en"), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+            }
+            if (d.texto("spoiler") != "true" || destapado) (d["fotos"] as? JsonArray)?.forEachIndexed { i, foto ->
+                (foto as? JsonPrimitive)?.content?.let {
+                    coil3.compose.AsyncImage(ClienteSocial.imagen(it), stringResource(R.string.resena_foto, i + 1), Modifier.fillMaxWidth().aspectRatio(1f), contentScale = ContentScale.Fit)
+                }
+            }
+            val yo by vm.red.usuario.collectAsStateWithLifecycle()
+            if (p.autor.usuario != yo) {
+                val estadoUtil = stringResource(if (p.yoUtil) R.string.resena_util_activo else R.string.resena_util_inactivo)
+                Text(stringResource(R.string.resena_util, p.utiles), style = MaterialTheme.typography.labelLarge,
+                    color = if (p.yoUtil) f.acentoTexto else f.texto,
+                    modifier = Modifier.semantics { stateDescription = estadoUtil }
+                        .toggleable(value = p.yoUtil, role = Role.Checkbox, onValueChange = {
+                            if (yo == null) vm.abrir(Pantalla.CuentaRed) else vm.red.util(p)
+                        }).heightIn(min = 48.dp).padding(12.dp))
             }
         }
         val texto = d.texto("texto")
@@ -915,6 +945,7 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
     var spoiler by rememberSaveable { mutableStateOf(false) }
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
     Cabecera(stringResource(R.string.red_publicar), vm::cerrar)
+    BotonSecundario(stringResource(R.string.red_tipo_resena), { vm.escribirResena(obra.orEmpty()) }, Modifier.fillMaxWidth().padding(16.dp))
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (o != null) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Portada(o.portada, o.tipo, o.titulo, Modifier.width(56.dp), conTitulo = false)

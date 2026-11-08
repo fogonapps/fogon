@@ -753,6 +753,7 @@ class RedSocial(
         _feed.value = l(_feed.value); _explorar.value = l(_explorar.value); _guardados.value = l(_guardados.value)
         _vistas.value = _vistas.value.mapValues { if (it.key == id) f(it.value) else it.value }
         _perfiles.value = _perfiles.value.mapValues { (_, p) -> p.copy(publicaciones = l(p.publicaciones)!!) }
+        _listas.value = _listas.value.mapValues { (_, xs) -> l(xs)!! }
     }
 
     fun buscarPublicacion(id: Long): PublicacionSocial? =
@@ -779,8 +780,71 @@ class RedSocial(
     private val _listas = MutableStateFlow<Map<String, List<PublicacionSocial>>>(emptyMap())
     val listas: StateFlow<Map<String, List<PublicacionSocial>>> = _listas
     fun cargarGuardadasDe(usuario: String) = lanzar { _listas.value = _listas.value + ("guardadas:$usuario" to cliente().guardadasDe(usuario)) }
-    /** Las reseñas de la gente sobre una obra (por su fuente), en [listas] con la clave "resenas:<fuente>". */
-    fun cargarResenas(fuente: String) = lanzar { _listas.value = _listas.value + ("resenas:$fuente" to ClienteSocial(caja.tokenSocial).resenas(fuente)) }
+    /** Reseñas por fuente, parte y orden; las páginas de cada consulta se conservan separadas. */
+    private val _cargandoResenas = MutableStateFlow<Set<String>>(emptySet())
+    val cargandoResenas: StateFlow<Set<String>> = _cargandoResenas
+    private val _finResenas = MutableStateFlow<Set<String>>(emptySet())
+    val finResenas: StateFlow<Set<String>> = _finResenas
+    private val consultasResenas = mutableMapOf<String, Long>()
+    fun claveResenas(fuente: String, parte: String = "", orden: String = "utiles") = "resenas:$fuente|$parte|$orden"
+    fun cargarResenas(fuente: String, parte: String = "", orden: String = "utiles", mas: Boolean = false) {
+        val clave = claveResenas(fuente, parte, orden)
+        if (clave in _cargandoResenas.value) return
+        val turno = System.nanoTime()
+        consultasResenas[clave] = turno
+        _cargandoResenas.value += clave
+        scope.launch {
+            try {
+                intentar {
+                    val anteriores = if (mas) _listas.value[clave].orEmpty() else emptyList()
+                    val pagina = ClienteSocial(caja.tokenSocial).resenas(fuente, parte, orden, anteriores.minOfOrNull { it.cuando })
+                    if (consultasResenas[clave] == turno) {
+                        _listas.value = _listas.value + (clave to (anteriores + pagina).distinctBy { it.id })
+                        _finResenas.value = if (pagina.size < 50) _finResenas.value + clave else _finResenas.value - clave
+                    }
+                }
+            } finally { _cargandoResenas.value -= clave }
+        }
+    }
+
+    private val votandoUtil = mutableSetOf<Long>()
+    fun util(p: PublicacionSocial) {
+        if (_usuario.value == null || p.autor.usuario == _usuario.value || !votandoUtil.add(p.id)) return
+        val si = !p.yoUtil
+        tocar(p.id) { it.copy(yoUtil = si, utiles = (it.utiles + if (si) 1 else -1).coerceAtLeast(0)) }
+        scope.launch {
+            try {
+                if (!intentar { cliente().util(p.id, quitar = !si) }) tocar(p.id) { it.copy(yoUtil = p.yoUtil, utiles = p.utiles) }
+            } finally { votandoUtil.remove(p.id) }
+        }
+    }
+
+    private val _subiendoFotoResena = MutableStateFlow(false)
+    val subiendoFotoResena: StateFlow<Boolean> = _subiendoFotoResena
+    fun subirFotoResena(uri: android.net.Uri, lista: (String) -> Unit) {
+        if (_subiendoFotoResena.value) return
+        _subiendoFotoResena.value = true
+        scope.launch {
+            try { intentar {
+                val jpg = jpeg(uri.toString(), 1600, 900_000) ?: throw IOException("sin imagen")
+                lista(cliente().subirImagen(jpg))
+            } } finally { _subiendoFotoResena.value = false }
+        }
+    }
+
+    fun borrarResena(clave: String, eliminarEnRed: Boolean = true) {
+        val cargadas = _vistas.value.values + _feed.value.orEmpty() + _explorar.value.orEmpty() +
+            _guardados.value.orEmpty() + _perfiles.value.values.flatMap { it.publicaciones } + _listas.value.values.flatten()
+        val p = cargadas.firstOrNull { it.autor.usuario == _usuario.value && (it.datos["clave"] as? JsonPrimitive)?.content == clave }
+        _listas.value = _listas.value.mapValues { (_, xs) -> xs.filterNot { it.autor.usuario == _usuario.value && (it.datos["clave"] as? JsonPrimitive)?.content == clave } }
+        fun quitar(xs: List<PublicacionSocial>?) = xs?.filterNot { it.autor.usuario == _usuario.value && (it.datos["clave"] as? JsonPrimitive)?.content == clave }
+        _feed.value = quitar(_feed.value); _explorar.value = quitar(_explorar.value); _guardados.value = quitar(_guardados.value)
+        _vistas.value = _vistas.value.filterValues { x -> x.autor.usuario != _usuario.value || (x.datos["clave"] as? JsonPrimitive)?.content != clave }
+        _perfiles.value = _perfiles.value.mapValues { (_, perfil) -> perfil.copy(publicaciones = quitar(perfil.publicaciones).orEmpty()) }
+        if (p != null && eliminarEnRed) lanzar { cliente().borrarPublicacion(p.id) }
+        sincronizar()
+    }
+
     fun cargarEtiqueta(etiqueta: String) = lanzar { _listas.value = _listas.value + ("#$etiqueta" to cliente().conEtiqueta(etiqueta)) }
 
     fun comentar(id: Long, texto: String) = lanzar {
@@ -992,7 +1056,10 @@ class RedSocial(
      */
     fun borrarPublicacion(id: Long, clave: String) = lanzar {
         cliente().borrarPublicacion(id)
-        borrarPropia(clave.removePrefix("f:"))
+        if (clave.startsWith("o:") || clave.startsWith("r:") || clave.startsWith("n:")) {
+            cambiar { e -> e.copy(resenas = e.resenas.map { if (it.id == clave) it.copy(borrada = true, cambio = System.currentTimeMillis()) else it }) }
+            borrarResena(clave, eliminarEnRed = false)
+        } else borrarPropia(clave.removePrefix("f:"))
     }
 
     fun borrarPropia(clave: String) {
@@ -1233,22 +1300,25 @@ class RedSocial(
             val delDiario = e.vivas.flatMap { o ->
                 o.registros.mapNotNull { r ->
                     val vis = if (r.visibilidad.isBlank()) diario else Visibilidad.de(r.visibilidad)
-                    if (vis == Visibilidad.PRIVADA) return@mapNotNull null
+                    if (vis == Visibilidad.PRIVADA || e.resenas.any { it.obra == o.id && it.registro == r.id }) return@mapNotNull null
                     val cuando = runCatching { LocalDate.parse(r.fecha).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli() }.getOrDefault(o.cambio)
-                    PublicacionSubida("r:${o.id}:${r.id}", vis, cuando, if (r.texto.isNotBlank()) "resena" else "diario",
+                    PublicacionSubida("r:${o.id}:${r.id}", vis, cuando, "diario",
                         JsonObject(obraBreve(o) + buildJsonObject {
                             if (r.nota > 0) put("estrellas", r.nota / 2.0)
-                            if (r.texto.isNotBlank()) put("texto", r.texto.take(4000))
                             if (r.otraVez) put("otraVez", true)
                             put("fecha", r.fecha)
                         }))
                 }
             }
-            // La reseña de cada obra (con su nota), si la persona no la dejó privada.
-            val resenas = e.vivas.filter { it.resena.isNotBlank() && Visibilidad.de(it.resenaVisibilidad) != Visibilidad.PRIVADA }.map { o ->
-                PublicacionSubida("o:${o.id}", Visibilidad.de(o.resenaVisibilidad), o.cambio, "resena", JsonObject(obraBreve(o) + buildJsonObject {
-                    if (o.nota > 0) put("estrellas", o.nota / 2.0)
-                    put("texto", o.resena.take(4000))
+            val resenas = e.resenas.filter { !it.borrada && Visibilidad.de(it.visibilidad) != Visibilidad.PRIVADA }.mapNotNull { r ->
+                val o = io.github.fogonapps.cajon.datos.Resenas.obra(e, r.obra) ?: return@mapNotNull null
+                val cuando = runCatching { LocalDate.parse(r.fecha).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli() }.getOrDefault(r.cambio)
+                PublicacionSubida(r.id, Visibilidad.de(r.visibilidad), cuando, "resena", JsonObject(obraBreve(o) + buildJsonObject {
+                    put("fuente", o.fuente); put("parte", r.parte); put("texto", r.texto.take(5000))
+                    r.nota?.let { put("nota", it); put("estrellas", it / 2.0) }
+                    put("spoiler", r.spoiler)
+                    put("fotos", JsonArray(r.fotos.take(4).map { JsonPrimitive(it) }))
+                    put("fecha", r.fecha)
                 }))
             }
             val listas = e.listas.filter { !it.borrada }.mapNotNull { l ->

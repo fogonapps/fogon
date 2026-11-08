@@ -255,6 +255,11 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
         Cuadricula(suyos, vm)
     }
 
+    io.github.fogonapps.cajon.datos.Resenas.obra(e, a.id)?.let { o ->
+        ResenasPropias(vm, e, o)
+        ResenasDeLaGente(vm, o)
+    }
+
     // Sus obras afuera (discografía, libros o filmografía), para sumarlas con un toque.
     ObrasDeAfuera(vm, e, a.fuente, a.tipo)
 

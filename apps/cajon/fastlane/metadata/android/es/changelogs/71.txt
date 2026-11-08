@@ -1,0 +1,4 @@
+• Reseñas para todo: una película, un episodio, una temporada, un capítulo o una página, una canción, un artista o un autor, con nota o sin ella, aviso de spoiler y hasta 4 fotos.
+• En cada ficha, las reseñas de la gente con su nota, ordenadas por las más útiles o las más recientes. Marca «Útil» las que te sirvan.
+• Tus reseñas y los textos de tu diario pasan solos al nuevo sistema, sin perder nada.
+• Arreglado: al buscar algo para tu perfil, tocarlo abría su ficha en vez de elegirlo.

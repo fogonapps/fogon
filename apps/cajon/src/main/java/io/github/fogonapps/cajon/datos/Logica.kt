@@ -51,7 +51,12 @@ object Logica {
      * Une lo de este aparato con lo del Gist (u otro aparato): por cada obra, artista y lista gana la versión
      * con el [Obra.cambio] más reciente; lo borrado sigue borrado si su borrado es lo más reciente.
      */
-    fun unir(a: Estado, b: Estado): Estado = Estado(
+    fun unir(a: Estado, b: Estado): Estado = unirMigrados(
+        Resenas.migrar(a, b.resenas.map { it.id }.toSet()),
+        Resenas.migrar(b, a.resenas.map { it.id }.toSet()),
+    )
+
+    private fun unirMigrados(a: Estado, b: Estado): Estado = Estado(
         v = maxOf(a.v, b.v),
         listo = a.listo || b.listo,
         apariencia = unirApariencia(a.apariencia, b.apariencia),
@@ -62,6 +67,8 @@ object Logica {
         gustos = unirPor(a.gustos, b.gustos, { it.clave }, { it.cambio }),
         perfil = if (b.perfil.cambio > a.perfil.cambio) b.perfil else a.perfil,
         publicaciones = unirPor(a.publicaciones, b.publicaciones, { it.clave }, { it.cambio }),
+        resenas = unirPor(a.resenas, b.resenas, { it.id }, { it.cambio }),
+        borradoresResena = unirPor(a.borradoresResena, b.borradoresResena, { it.id }, { it.cambio }),
     )
 
     private fun <T> unirPor(a: List<T>, b: List<T>, id: (T) -> String, cambio: (T) -> Long): List<T> {
@@ -72,14 +79,16 @@ object Logica {
     }
 
     /** Ordena y quita lo repetido (por si un respaldo viejo trae duplicados). */
-    fun normalizar(e: Estado): Estado = e.copy(
+    fun normalizar(e: Estado): Estado = Resenas.migrar(e.copy(
         obras = e.obras.distinctBy { it.id },
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
         gustos = e.gustos.distinctBy { it.clave },
         publicaciones = e.publicaciones.distinctBy { it.clave },
+        resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
+        borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),
-    )
+    ))
 
     /* ----- El cajón ----- */
 

@@ -216,19 +216,32 @@ object Importar {
      */
     fun sumar(e: Estado, nuevas: List<Obra>, ahora: Long): Pair<Estado, Int> {
         val obras = e.obras.toMutableList()
+        val resenas = Resenas.migrar(e).resenas.toMutableList()
+        val importadas = Resenas.migrar(Estado(obras = nuevas)).resenas
         var nuevasN = 0
         nuevas.forEach { n ->
             val i = obras.indexOfFirst { !it.borrada && it.tipo == n.tipo && normal(it.titulo) == normal(n.titulo) && (it.anio == null || n.anio == null || it.anio == n.anio) }
-            if (i < 0) { obras += n; nuevasN++ } else {
+            val destino = if (i < 0) n.id else obras[i].id
+            val registros = if (i < 0) emptyList() else obras[i].registros
+            importadas.filter { it.obra == n.id }.forEach { r ->
+                val registro = r.registro?.let { id ->
+                    val original = n.registros.firstOrNull { it.id == id }
+                    registros.firstOrNull { it.fecha == original?.fecha && it.otraVez == original.otraVez }?.id ?: id
+                }
+                if (resenas.none { it.obra == destino && it.registro == registro && it.texto == r.texto }) {
+                    resenas += r.copy(id = "n:" + java.util.UUID.randomUUID(), obra = destino, registro = registro, cambio = ahora)
+                }
+            }
+            if (i < 0) { obras += n.copy(resena = "", registros = n.registros.map { it.copy(texto = "") }); nuevasN++ } else {
                 val o = obras[i]
                 obras[i] = o.copy(
                     nota = if (o.nota == 0) n.nota else o.nota, meGusta = o.meGusta || n.meGusta,
-                    resena = o.resena.ifBlank { n.resena }, registros = (o.registros + n.registros).distinctBy { it.fecha + it.otraVez },
+                    registros = (o.registros + n.registros.map { it.copy(texto = "") }).distinctBy { it.fecha + it.otraVez },
                     estado = if (o.estado == Estados.QUIERO) n.estado else o.estado, terminada = o.terminada ?: n.terminada,
                     paginas = o.paginas ?: n.paginas, creador = o.creador.ifBlank { n.creador }, cambio = ahora,
                 )
             }
         }
-        return e.copy(obras = obras) to nuevasN
+        return e.copy(obras = obras, resenas = resenas) to nuevasN
     }
 }

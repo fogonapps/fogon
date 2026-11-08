@@ -209,6 +209,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.GenteRed -> GenteRed(vm, p.usuario, p.seguidores)
                             Pantalla.BloqueadosRed -> BloqueadosRed(vm)
                             is Pantalla.Publicar -> Publicar(vm, estado, p.obra)
+                            is Pantalla.Resenar -> EscribirResena(vm, estado, p.id, p.elegirObra)
                             is Pantalla.Chats -> Chats(vm, estado, p.obra)
                             is Pantalla.Conversacion -> Conversacion(vm, estado, p.usuario)
                             is Pantalla.InfoChat -> InfoChat(vm, estado, p.usuario)

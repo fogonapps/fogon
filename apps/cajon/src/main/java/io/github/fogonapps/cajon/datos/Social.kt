@@ -34,6 +34,7 @@ data class PublicacionSocial(
     val megusta: Int = 0, val comentarios: Int = 0, val yoMeGusta: Boolean = false, val yoGuardo: Boolean = false, val vistas: Int = 0,
     /** Qué tan bien le fue comparada con lo normal (1 = normal), la misma para todos: la calcula el servidor. */
     val calidad: Double = 1.0, val guardados: Int = 0,
+    val utiles: Int = 0, val yoUtil: Boolean = false,
 )
 
 @Serializable data class ComentarioSocial(val id: Long, val autor: PersonaSocial, val texto: String, val cuando: Long, val puedoBorrar: Boolean = false)
@@ -238,7 +239,9 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun subirPublicaciones(lista: List<PublicacionSubida>) { pedir("/publicaciones", "PUT", json(ListSerializer(PublicacionSubida.serializer()), lista)) }
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
     /** Las reseñas de una obra que puede ver esta persona (las públicas y las de quienes sigue). */
-    suspend fun resenas(fuente: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/resenas?fuente=${cod(fuente)}"))
+    suspend fun resenas(fuente: String, parte: String = "", orden: String = "utiles", antes: Long? = null) =
+        leer(ListSerializer(PublicacionSocial.serializer()), pedir("/resenas?fuente=${cod(fuente)}&parte=${cod(parte)}&orden=${cod(orden)}" + (antes?.let { "&antes=$it" } ?: "")))
+    suspend fun util(id: Long, quitar: Boolean) { pedir("/publicaciones/$id/util", if (quitar) "DELETE" else "POST") }
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun publicacion(id: Long) = leer(PublicacionSocial.serializer(), pedir("/publicaciones/$id"))
     suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))
