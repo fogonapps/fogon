@@ -246,7 +246,7 @@ object Visibilidad {
 }
 
 /**
- * Una publicación hecha a mano para la red (una foto, unas palabras, sobre una obra o no). Vive en el cajón como todo
+ * Una publicación hecha a mano para la red (hasta diez fotos, unas palabras, sobre una obra o no). Vive en el cajón como todo
  * lo demás (se respalda y se sincroniza) y se sube a Fogón Social con su [visibilidad]; borrarla la deja `borrada`.
  */
 @Serializable
@@ -264,6 +264,8 @@ data class PublicacionPropia(
     val spoiler: Boolean = false,
     val cambio: Long = 0,
     val borrada: Boolean = false,
+    /** Fotos en orden; [imagen] se conserva solo como respaldo de la migración. */
+    val imagenes: List<String> = emptyList(),
 )
 
 /** Los huecos de "destacados" del perfil (los ids que se guardan: no se cambian). */

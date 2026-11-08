@@ -69,7 +69,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.26"
+const val VERSION = "0.27"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -220,8 +220,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/publicaciones/{id}/comentarios") { call.respond(social.comentarios(call.lector(), call.id())) }
             post("/publicaciones/{id}/comentarios") {
                 val c = call.receive<NuevoComentario>()
-                call.respond(HttpStatusCode.Created, mapOf("id" to social.comentar(call.yo(), call.id(), c.texto)))
+                call.respond(HttpStatusCode.Created, mapOf("id" to social.comentar(call.yo(), call.id(), c.texto, c.padre)))
             }
+            post("/comentarios/{id}/megusta") { social.meGustaComentario(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/comentarios/{id}/megusta") { social.meGustaComentario(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             delete("/comentarios/{id}") { social.borrarComentario(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
 
             post("/seguir/{usuario}") { call.respond(mapOf("relacion" to social.seguir(call.yo(), call.usuario()))) }

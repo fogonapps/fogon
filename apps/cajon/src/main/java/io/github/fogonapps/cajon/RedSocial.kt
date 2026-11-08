@@ -847,10 +847,15 @@ class RedSocial(
 
     fun cargarEtiqueta(etiqueta: String) = lanzar { _listas.value = _listas.value + ("#$etiqueta" to cliente().conEtiqueta(etiqueta)) }
 
-    fun comentar(id: Long, texto: String) = lanzar {
-        cliente().comentar(id, texto.trim())
+    fun comentar(id: Long, texto: String, padre: Long? = null) = lanzar {
+        cliente().comentar(id, texto.trim(), padre)
         _comentarios.value = _comentarios.value + (id to cliente().comentarios(id))
         tocar(id) { it.copy(comentarios = it.comentarios + 1) }
+    }
+
+    fun meGustaComentario(pub: Long, comentario: ComentarioSocial) = lanzar {
+        cliente().meGustaComentario(comentario.id, !comentario.yoMeGusta)
+        _comentarios.value = _comentarios.value + (pub to cliente().comentarios(pub))
     }
 
     fun borrarComentario(pub: Long, id: Long) = lanzar {
@@ -1035,14 +1040,14 @@ class RedSocial(
 
     /* ----- Publicar a mano ----- */
 
-    /** Publica unas palabras (y una foto, si hay) sobre una obra o sobre nada. La foto se achica y se sube primero. */
-    fun publicar(texto: String, obra: String?, foto: android.net.Uri?, visibilidad: String, spoiler: Boolean, listo: () -> Unit) = scope.launch {
+    /** Publica unas palabras y hasta diez fotos sobre una obra o sobre nada. Cada foto se achica y se sube primero. */
+    fun publicar(texto: String, obra: String?, fotos: List<android.net.Uri>, visibilidad: String, spoiler: Boolean, listo: () -> Unit) = scope.launch {
         _publicando.value = true
         try {
             val ok = intentar {
-                val imagen = foto?.let { u -> jpeg(u.toString(), 1600, 900_000)?.let { cliente().subirImagen(it) } ?: throw IOException("sin imagen") } ?: ""
+                val imagenes = fotos.take(10).map { u -> jpeg(u.toString(), 1600, 900_000)?.let { cliente().subirImagen(it) } ?: throw IOException("sin imagen") }
                 val ahora = System.currentTimeMillis()
-                val p = PublicacionPropia("p${ahora.toString(36)}", ahora, texto.trim().take(2000), obra.orEmpty(), imagen, visibilidad, spoiler, ahora)
+                val p = PublicacionPropia("p${ahora.toString(36)}", ahora, texto.trim().take(2000), obra.orEmpty(), visibilidad = visibilidad, spoiler = spoiler, cambio = ahora, imagenes = imagenes)
                 cambiar { e -> e.copy(publicaciones = e.publicaciones + p) }
                 subirAhora()
             }
@@ -1334,7 +1339,9 @@ class RedSocial(
                 PublicacionSubida("f:${p.clave}", Visibilidad.de(p.visibilidad), p.cuando, "foto", JsonObject(
                     (porId[p.obra]?.let(::obraBreve) ?: buildJsonObject { }) + buildJsonObject {
                         if (p.texto.isNotBlank()) put("texto", p.texto)
-                        if (p.imagen.isNotBlank()) put("imagen", p.imagen)
+                        val imagenes = p.imagenes.ifEmpty { listOfNotNull(p.imagen.takeIf { it.isNotBlank() }) }
+                        put("imagenes", JsonArray(imagenes.map { JsonPrimitive(it) }))
+                        imagenes.firstOrNull()?.let { put("imagen", it) }
                         if (p.spoiler) put("spoiler", true)
                         put("propia", p.clave)
                     }))

@@ -61,7 +61,7 @@ data class Publicacion(
 )
 
 @Serializable
-data class Comentario(val id: Long, val autor: Persona, val texto: String, val cuando: Long, val puedoBorrar: Boolean)
+data class Comentario(val id: Long, val autor: Persona, val texto: String, val cuando: Long, val puedoBorrar: Boolean, val padre: Long? = null, val respuestas: Int = 0, val megusta: Int = 0, val yoMeGusta: Boolean = false, val borrado: Boolean = false)
 
 @Serializable
 data class PerfilVisto(
@@ -124,7 +124,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
 @Serializable data class Ajustes(val privada: Boolean? = null)
-@Serializable data class NuevoComentario(val texto: String)
+@Serializable data class NuevoComentario(val texto: String, val padre: Long? = null)
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
@@ -767,6 +767,8 @@ class Social(
                     }
                 val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
                 buenas.forEach { p ->
+                    val imagenes = p.datos["imagenes"]
+                    if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
                     if (p.tipo == "resena" && !resenaValida(p.datos, mias)) return@forEach
                     val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
                     if (datos.length > 20_000) return@forEach
@@ -794,7 +796,7 @@ class Social(
     private fun filas(lector: Long?, donde: String, vararg args: Any?): List<Pair<Long, Publicacion>> = b.usar {
         leer("""SELECT p.id, p.cuenta, p.visibilidad, p.cuando, p.datos, c.usuario, c.nombre, c.foto, c.privada,
                     (SELECT COUNT(*) FROM megusta m WHERE m.pub = p.id),
-                    (SELECT COUNT(*) FROM comentarios k WHERE k.estado = 'visible' AND k.pub = p.id AND k.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
+                    (SELECT COUNT(*) FROM comentarios k WHERE k.estado = 'visible' AND k.borrado = 0 AND k.pub = p.id AND k.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
                     p.n_vistas,
                     EXISTS(SELECT 1 FROM megusta m WHERE m.pub = p.id AND m.cuenta = ?),
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
@@ -939,12 +941,33 @@ class Social(
     fun comentarios(lector: Long?, pub: Long): List<Comentario> {
         val p = publicacion(lector, pub) ?: throw Problema(404, "no_existe")
         val autorPub = idDe(p.autor.usuario)
-        return b.usar { leer("SELECT id, cuenta, texto, cuando FROM comentarios WHERE estado = 'visible' AND cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND pub = ? AND (oculto = 0 OR cuenta = ?) ORDER BY cuando", pub, lector ?: -1) { arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4)) } }
-            .filter { lector == null || !bloqueado(lector, it[1] as Long) }
-            .map { Comentario(it[0] as Long, persona(it[1] as Long), it[2] as String, it[3] as Long, lector == it[1] || lector == autorPub) }
+        val lista = b.usar { leer("""SELECT id, cuenta, texto, cuando, padre, borrado,
+            (SELECT COUNT(*) FROM megusta_comentarios m WHERE m.comentario = comentarios.id),
+            (SELECT COUNT(*) FROM megusta_comentarios m WHERE m.comentario = comentarios.id AND m.cuenta = ?)
+            FROM comentarios WHERE estado = 'visible' AND cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)
+            AND pub = ? AND (oculto = 0 OR cuenta = ?) ORDER BY cuando, id""", lector ?: -1, pub, lector ?: -1) {
+                val autor = it.getLong(2)
+                autor to Comentario(it.getLong(1), if (it.getInt(6) == 1) Persona("", "", false) else persona(autor),
+                    if (it.getInt(6) == 1) "" else it.getString(3), it.getLong(4), lector == autor || lector == autorPub,
+                    it.getLong(5).let { valor -> if (it.wasNull()) null else valor }, megusta = it.getInt(7), yoMeGusta = it.getInt(8) > 0, borrado = it.getInt(6) == 1)
+            } }.filter { lector == null || (!bloqueado(lector, it.first) && !bloqueado(it.first, lector)) }.map { it.second }
+        val ids = lista.map { it.id }.toSet()
+        val visibles = lista.filter { it.padre == null || it.padre in ids }
+        return visibles.filter { !it.borrado || visibles.any { r -> r.padre == it.id } }
+            .map { c -> c.copy(respuestas = visibles.count { it.padre == c.id }) }
     }
 
-    fun comentar(yo: Long, pub: Long, texto: String): Long {
+    fun meGustaComentario(yo: Long, id: Long, si: Boolean) {
+        val pub = b.usar { leer("SELECT pub FROM comentarios WHERE id = ?", id) { it.getLong(1) }.firstOrNull() }
+            ?: throw Problema(404, "no_existe")
+        if (comentarios(yo, pub).none { it.id == id && !it.borrado }) throw Problema(404, "no_existe")
+        b.usar {
+            if (si) cambiar("INSERT OR IGNORE INTO megusta_comentarios(comentario, cuenta, cuando) VALUES(?,?,?)", id, yo, ahora())
+            else cambiar("DELETE FROM megusta_comentarios WHERE comentario = ? AND cuenta = ?", id, yo)
+        }
+    }
+
+    fun comentar(yo: Long, pub: Long, texto: String, padre: Long? = null): Long {
         val t = texto.trim().take(1000)
         if (t.isEmpty()) throw Problema(400, "vacio")
         val (creada, hora) = b.usar { leer("SELECT creada FROM cuentas WHERE id = ?", yo) { it.getLong(1) }.first() } to
@@ -953,8 +976,13 @@ class Social(
         val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
         val autor = idDe(p.autor.usuario)
         if (bloqueado(autor, yo)) throw Problema(404, "no_existe")
-        val id = b.usar { insertar("INSERT INTO comentarios(pub, cuenta, texto, cuando) VALUES(?,?,?,?)", pub, yo, t, ahora()) }
-        avisar(autor, yo, "comentario", pub.toString())
+        val respondido = padre?.let { id -> comentarios(yo, pub).firstOrNull { it.id == id && !it.borrado } ?: throw Problema(400, "padre") }
+        val raiz = respondido?.let { it.padre ?: it.id }
+        val id = b.usar { insertar("INSERT INTO comentarios(pub, cuenta, texto, cuando, padre) VALUES(?,?,?,?,?)", pub, yo, t, ahora(), raiz) }
+        val respondidoA = respondido?.let { idDe(it.autor.usuario) }
+        respondidoA?.let { avisar(it, yo, "respuesta", pub.toString()) }
+        // Quien recibe el aviso de respuesta no recibe además el de comentario.
+        if (respondidoA != autor) avisar(autor, yo, "comentario", pub.toString())
         return id
     }
 
@@ -964,7 +992,11 @@ class Social(
             leer("SELECT c.cuenta, p.cuenta FROM comentarios c JOIN publicaciones p ON p.id = c.pub WHERE c.id = ?", id) { it.getLong(1) to it.getLong(2) }.firstOrNull()
         } ?: throw Problema(404, "no_existe")
         if (yo != autor && yo != dueno) throw Problema(403, "no_es_tuyo")
-        b.usar { cambiar("DELETE FROM comentarios WHERE id = ? AND estado = 'visible'", id) }
+        b.usar {
+            val conserva = leer("SELECT 1 FROM comentarios WHERE padre = ? LIMIT 1", id) { 1 }.isNotEmpty()
+            if (conserva) cambiar("UPDATE comentarios SET borrado = 1, texto = '' WHERE id = ? AND estado = 'visible'", id)
+            else cambiar("DELETE FROM comentarios WHERE id = ? AND estado = 'visible'", id)
+        }
     }
 
     /* ----- Seguir ----- */

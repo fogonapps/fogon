@@ -37,7 +37,7 @@ data class PublicacionSocial(
     val utiles: Int = 0, val yoUtil: Boolean = false,
 )
 
-@Serializable data class ComentarioSocial(val id: Long, val autor: PersonaSocial, val texto: String, val cuando: Long, val puedoBorrar: Boolean = false)
+@Serializable data class ComentarioSocial(val id: Long, val autor: PersonaSocial, val texto: String, val cuando: Long, val puedoBorrar: Boolean = false, val padre: Long? = null, val respuestas: Int = 0, val megusta: Int = 0, val yoMeGusta: Boolean = false, val borrado: Boolean = false)
 
 @Serializable
 data class PerfilSocial(
@@ -100,7 +100,7 @@ fun esCuentaNueva(error: ErrorSocial) = error.codigo == 409 && error.error == "c
 @Serializable private data class CambioUsuario(val usuario: String)
 /** Lo que dice el servidor de sí mismo: si puede mandar códigos por correo y la versión de la política. */
 @Serializable data class InfoServidor(val version: String = "", val correo: String = "false", val politica: String = "")
-@Serializable private data class Texto(val texto: String)
+@Serializable private data class Texto(val texto: String, val padre: Long? = null)
 @Serializable private data class Reporte(val que: String, val objeto: String, val motivo: String)
 @Serializable private data class Privada(val privada: Boolean)
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
@@ -252,7 +252,8 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun meGusta(id: Long, si: Boolean) { pedir("/publicaciones/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun guardar(id: Long, si: Boolean) { pedir("/publicaciones/$id/guardar", if (si) "POST" else "DELETE") }
     suspend fun comentarios(id: Long) = leer(ListSerializer(ComentarioSocial.serializer()), pedir("/publicaciones/$id/comentarios"))
-    suspend fun comentar(id: Long, texto: String) { pedir("/publicaciones/$id/comentarios", "POST", json(Texto.serializer(), Texto(texto))) }
+    suspend fun comentar(id: Long, texto: String, padre: Long? = null) { pedir("/publicaciones/$id/comentarios", "POST", json(Texto.serializer(), Texto(texto, padre))) }
+    suspend fun meGustaComentario(id: Long, si: Boolean) { pedir("/comentarios/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun borrarComentario(id: Long) { pedir("/comentarios/$id", "DELETE") }
     /** Sube una imagen (JPEG ya achicado) y devuelve su nombre, para ponerlo en la publicación ("imagen"). */
     suspend fun subirImagen(jpeg: ByteArray): String =

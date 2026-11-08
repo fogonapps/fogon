@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
@@ -63,6 +64,8 @@ import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.PasoAcceso
 import io.github.fogonapps.cajon.R
+import io.github.fogonapps.cajon.datos.arbolComentarios
+import io.github.fogonapps.cajon.datos.imagenesPublicacion
 import io.github.fogonapps.cajon.datos.ClienteSocial
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.PersonaSocial
@@ -194,10 +197,7 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
                 io.github.fogonapps.cajon.RedSocial.Companion.Motivo.Nueva -> stringResource(R.string.red_porque_nueva)
             }, style = MaterialTheme.typography.labelSmall, color = f.acentoTexto, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        d.texto("imagen").takeIf { it.isNotBlank() }?.let { img ->
-            coil3.compose.AsyncImage(ClienteSocial.imagen(img), null, Modifier.fillMaxWidth().aspectRatio(1f).clip(forma(16.dp))
-                .then(if (d.texto("spoiler") == "true" && !destapado) Modifier.blur(24.dp) else Modifier), contentScale = ContentScale.Crop)
-        }
+        if (p.tipo != "resena" && (d.texto("spoiler") != "true" || destapado)) CarruselFotos(imagenesPublicacion(d))
         val titulo = d.texto("titulo")
         if (titulo.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             val portadas = (d["portadas"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
@@ -220,11 +220,7 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
             d.texto("parte").takeIf { it.isNotBlank() }?.let {
                 Text(io.github.fogonapps.cajon.datos.Resenas.etiqueta(it, o, vm.idioma() == "en"), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
             }
-            if (d.texto("spoiler") != "true" || destapado) (d["fotos"] as? JsonArray)?.forEachIndexed { i, foto ->
-                (foto as? JsonPrimitive)?.content?.let {
-                    coil3.compose.AsyncImage(ClienteSocial.imagen(it), stringResource(R.string.resena_foto, i + 1), Modifier.fillMaxWidth().aspectRatio(1f), contentScale = ContentScale.Fit)
-                }
-            }
+            if (d.texto("spoiler") != "true" || destapado) CarruselFotos(imagenesPublicacion(d))
             val yo by vm.red.usuario.collectAsStateWithLifecycle()
             if (p.autor.usuario != yo) {
                 val estadoUtil = stringResource(if (p.yoUtil) R.string.resena_util_activo else R.string.resena_util_inactivo)
@@ -237,7 +233,7 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
             }
         }
         val texto = d.texto("texto")
-        if (texto.isNotBlank()) {
+        if (texto.isNotBlank() || (d.texto("spoiler") == "true" && !destapado)) {
             if (d.texto("spoiler") == "true" && !destapado) {
                 Box(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora).clickable { destapado = true }.padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.red_spoiler_tocar), style = MaterialTheme.typography.labelLarge, color = f.texto)
@@ -245,11 +241,13 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
             } else TextoConEtiquetas(vm, texto, if (abrir) 6 else Int.MAX_VALUE)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            BotonIcono(Iconos.Corazon, stringResource(R.string.red_me_gusta), tinta = if (p.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = p.yoMeGusta) { vm.red.meGusta(p) }
-            if (p.megusta > 0) Text("${p.megusta}", style = MaterialTheme.typography.labelLarge, color = f.texto)
+            BotonIcono(Iconos.Corazon, stringResource(R.string.publicacion_megusta_estado, p.megusta, stringResource(if (p.yoMeGusta) R.string.publicacion_gusta_si else R.string.publicacion_gusta_no)), tinta = if (p.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = p.yoMeGusta) { vm.red.meGusta(p) }
+            val nombreMeGusta = stringResource(R.string.publicacion_megusta, p.megusta)
+            if (p.megusta > 0) Text("${p.megusta}", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = nombreMeGusta })
             Box(Modifier.width(8.dp))
-            BotonIcono(Iconos.Comentario, stringResource(R.string.red_comentar), tinta = f.textoSuave) { vm.abrir(Pantalla.PublicacionRed(p.id)) }
-            if (p.comentarios > 0) Text("${p.comentarios}", style = MaterialTheme.typography.labelLarge, color = f.texto)
+            BotonIcono(Iconos.Comentario, pluralStringResource(R.plurals.publicacion_comentarios, p.comentarios, p.comentarios), tinta = f.textoSuave) { vm.abrir(Pantalla.PublicacionRed(p.id)) }
+            val nombreComentarios = pluralStringResource(R.plurals.publicacion_comentarios, p.comentarios, p.comentarios)
+            if (p.comentarios > 0) Text("${p.comentarios}", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = nombreComentarios })
             Box(Modifier.weight(1f))
             if (p.vistas > 0) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(end = 6.dp)) {
                 IconoRiso(Iconos.Anime, stringResource(R.string.red_vistas), tamano = 18.dp, tinta = f.textoSuave)
@@ -797,6 +795,8 @@ fun PublicacionRed(vm: CajonViewModel, id: Long) {
     val todos by vm.red.comentarios.collectAsStateWithLifecycle()
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var texto by rememberSaveable { mutableStateOf("") }
+    var respondiendo by remember { mutableStateOf<io.github.fogonapps.cajon.datos.ComentarioSocial?>(null) }
+    var abiertos by rememberSaveable(id) { mutableStateOf(listOf<Long>()) }
     var comentarioReportado by rememberSaveable(id) { mutableStateOf<Long?>(null) }
     comentarioReportado?.let { comentario ->
         HojaReporte({ comentarioReportado = null }) { codigo, motivo ->
@@ -816,21 +816,54 @@ fun PublicacionRed(vm: CajonViewModel, id: Long) {
     }
     Seccion(stringResource(R.string.red_comentarios))
     val palabras = (vm.estado.collectAsStateWithLifecycle().value?.ajustes?.palabrasOcultas).orEmpty()
-    todos[id].orEmpty().filter { !lleva(palabras, it.texto) }.forEach { c ->
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.clickable { vm.abrir(Pantalla.PerfilRed(c.autor.usuario)) }) { AvatarRed(c.autor, 32.dp) }
-            Column(Modifier.weight(1f)) {
-                Text("@${c.autor.usuario} · ${haceCuanto(c.cuando)}", style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                Text(c.texto, style = MaterialTheme.typography.bodyMedium, color = f.texto)
+    val arbol = arbolComentarios(todos[id].orEmpty().filter { !lleva(palabras, it.texto) })
+    arbol.forEach { (raiz, respuestas) ->
+        val filas = listOf(raiz) + if (raiz.id in abiertos) respuestas else emptyList()
+        filas.forEach { c ->
+            Column(Modifier.fillMaxWidth().padding(start = if (c.id == raiz.id) 16.dp else 40.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)) {
+                if (c.borrado) Text(stringResource(R.string.publicacion_comentario_borrado), color = f.textoSuave)
+                else {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.clickable { vm.abrir(Pantalla.PerfilRed(c.autor.usuario)) }) { AvatarRed(c.autor, 32.dp) }
+                        Text("@${c.autor.usuario} · ${haceCuanto(c.cuando)}", color = f.textoSuave, style = MaterialTheme.typography.labelMedium)
+                    }
+                    Text(c.texto, color = f.texto, style = MaterialTheme.typography.bodyMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (yo != null) Pildora(stringResource(R.string.publicacion_responder)) { respondiendo = c }
+                        BotonIcono(Iconos.Corazon, stringResource(R.string.publicacion_megusta_estado, c.megusta,
+                            stringResource(if (c.yoMeGusta) R.string.publicacion_gusta_si else R.string.publicacion_gusta_no)),
+                            tinta = if (c.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = c.yoMeGusta) {
+                            if (yo == null) vm.abrir(Pantalla.CuentaRed) else vm.red.meGustaComentario(id, c)
+                        }
+                        val nombreMeGusta = stringResource(R.string.publicacion_megusta, c.megusta)
+                        Text("${c.megusta}", color = f.texto, modifier = Modifier.semantics { contentDescription = nombreMeGusta })
+                        if (c.puedoBorrar) BotonIcono(Iconos.Borrar, stringResource(R.string.red_borrar_comentario), tinta = f.textoSuave) {
+                            confirmar(vm.tx(R.string.red_borrar_comentario), vm.tx(R.string.red_borrar_comentario_confirmar)) { vm.red.borrarComentario(id, c.id) }
+                        }
+                        if (yo != null && c.autor.usuario != yo) BotonIcono(Iconos.Bandera, stringResource(R.string.red_reportar), tinta = f.textoSuave) { comentarioReportado = c.id }
+                    }
+                }
             }
-            if (c.puedoBorrar) BotonIcono(Iconos.Borrar, stringResource(R.string.red_borrar_comentario), tinta = f.textoSuave) { confirmar(vm.tx(R.string.red_borrar_comentario), vm.tx(R.string.red_borrar_comentario_confirmar)) { vm.red.borrarComentario(id, c.id) } }
-            if (yo != null && c.autor.usuario != yo) BotonIcono(Iconos.Bandera, stringResource(R.string.red_reportar), tinta = f.textoSuave) { comentarioReportado = c.id }
+        }
+        if (respuestas.isNotEmpty()) Box(Modifier.padding(start = 56.dp, bottom = 4.dp)) {
+            Pildora(if (raiz.id in abiertos) stringResource(R.string.publicacion_ocultar_respuestas)
+                else pluralStringResource(R.plurals.publicacion_ver_respuestas, respuestas.size, respuestas.size)) {
+                abiertos = if (raiz.id in abiertos) abiertos - raiz.id else abiertos + raiz.id
+            }
+        }
+    }
+    respondiendo?.let { c ->
+        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.publicacion_respondiendo, c.autor.usuario), color = f.texto, modifier = Modifier.weight(1f))
+            BotonIcono(Iconos.Cerrar, stringResource(R.string.publicacion_cancelar_respuesta)) { respondiendo = null }
         }
     }
     if (yo == null) { InvitaCuenta(vm); return }
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(texto, { texto = it.take(1000) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.red_escribe_comentario)) }, shape = forma(22.dp), maxLines = 4)
-        BotonIcono(Iconos.Enviar, stringResource(R.string.red_enviar), activo = texto.isNotBlank(), lleno = true) { vm.red.comentar(id, texto); texto = "" }
+        OutlinedTextField(texto, { texto = it.take(1000) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.red_escribe_comentario), color = f.textoSuave) }, shape = forma(22.dp), maxLines = 4)
+        BotonIcono(Iconos.Enviar, stringResource(R.string.red_enviar), activo = texto.isNotBlank(), lleno = true) { val destino = respondiendo
+            val mensaje = if (destino?.padre != null) "@${destino.autor.usuario} $texto" else texto
+            vm.red.comentar(id, mensaje, destino?.id); texto = ""; respondiendo = null }
     }
 }
 
@@ -873,12 +906,12 @@ fun AvisosRed(vm: CajonViewModel) {
           Seccion(stringResource(grupo))
           avisosDelGrupo.forEach { a ->
             val que = stringResource(when (a.tipo) {
-                "megusta" -> R.string.red_aviso_megusta; "comentario" -> R.string.red_aviso_comentario; "seguir" -> R.string.red_aviso_seguir
+                "respuesta" -> R.string.publicacion_aviso_respuesta; "megusta" -> R.string.red_aviso_megusta; "comentario" -> R.string.red_aviso_comentario; "seguir" -> R.string.red_aviso_seguir
                 "solicitud" -> R.string.red_aviso_solicitud; "aceptada" -> R.string.red_aviso_aceptada; "publico" -> R.string.red_aviso_publico; "sancion" -> R.string.red_aviso_sancion; else -> R.string.red_aviso_otro
             })
             FilaPersona(a.de, {
                 val pub = a.objeto.toLongOrNull()
-                if (pub != null && a.tipo in setOf("megusta", "comentario", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
+                if (pub != null && a.tipo in setOf("megusta", "comentario", "respuesta", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
             }) {
                 Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.acentoTexto, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
@@ -943,7 +976,7 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
     val acciones = LocalAcciones.current
     val publicando by vm.red.publicando.collectAsStateWithLifecycle()
     var texto by rememberSaveable { mutableStateOf("") }
-    var foto by remember { mutableStateOf<android.net.Uri?>(null) }
+    var fotos by rememberSaveable { mutableStateOf(listOf<String>()) }
     var seguidores by rememberSaveable { mutableStateOf(false) }
     var spoiler by rememberSaveable { mutableStateOf(false) }
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
@@ -954,16 +987,29 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
             Portada(o.portada, o.tipo, o.titulo, Modifier.width(56.dp), conTitulo = false)
             Text(o.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto)
         }
-        OutlinedTextField(texto, { texto = it.take(2000) }, Modifier.fillMaxWidth().height(160.dp), placeholder = { Text(stringResource(R.string.red_que_quieres_decir)) }, shape = forma(20.dp),
-            supportingText = { Text(stringResource(R.string.red_etiquetas_pista)) })
-        foto?.let { coil3.compose.AsyncImage(it, null, Modifier.fillMaxWidth().aspectRatio(1f).clip(forma(16.dp)), contentScale = ContentScale.Crop) }
-        if (acciones != null) Pildora(stringResource(if (foto == null) R.string.red_agregar_foto else R.string.red_cambiar_foto), Iconos.Imagen) { acciones.elegirImagen { foto = it } }
+        OutlinedTextField(texto, { texto = it.take(2000) }, Modifier.fillMaxWidth().height(160.dp), placeholder = { Text(stringResource(R.string.red_que_quieres_decir), color = f.textoSuave) }, shape = forma(20.dp),
+            supportingText = { Text(stringResource(R.string.red_etiquetas_pista), color = f.textoSuave) })
+        fotos.forEachIndexed { i, foto ->
+            coil3.compose.AsyncImage(android.net.Uri.parse(foto), stringResource(R.string.publicacion_foto, i + 1, fotos.size), Modifier.fillMaxWidth().height(160.dp), contentScale = ContentScale.Fit)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BotonIcono(Iconos.Borrar, stringResource(R.string.publicacion_quitar_foto, i + 1)) { fotos = fotos.filterIndexed { n, _ -> n != i } }
+                BotonIcono(Iconos.Atras, stringResource(R.string.publicacion_foto_izquierda, i + 1), activo = i > 0) {
+                    fotos = fotos.toMutableList().apply { add(i - 1, removeAt(i)) }
+                }
+                BotonIcono(Iconos.Siguiente, stringResource(R.string.publicacion_foto_derecha, i + 1), activo = i < fotos.lastIndex) {
+                    fotos = fotos.toMutableList().apply { add(i + 1, removeAt(i)) }
+                }
+            }
+        }
+        if (acciones != null && fotos.size < 10) Pildora(stringResource(R.string.red_agregar_foto), Iconos.Imagen) {
+            acciones.elegirImagen { uri -> if (fotos.size < 10) fotos = fotos + uri.toString() }
+        }
         Opcion(stringResource(R.string.red_solo_seguidores), seguidores) { seguidores = it }
         Opcion(stringResource(R.string.red_tiene_spoilers), spoiler) { spoiler = it }
         if (publicando) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
         BotonRiso(stringResource(R.string.red_publicar), {
-            vm.red.publicar(texto, obra, foto, if (seguidores) Visibilidad.AMIGOS else Visibilidad.PUBLICA, spoiler) { vm.cerrar() }
-        }, Modifier.fillMaxWidth(), habilitado = !publicando && (texto.isNotBlank() || foto != null))
+            vm.red.publicar(texto, obra, fotos.map(android.net.Uri::parse), if (seguidores) Visibilidad.AMIGOS else Visibilidad.PUBLICA, spoiler) { vm.cerrar() }
+        }, Modifier.fillMaxWidth(), habilitado = !publicando && (texto.isNotBlank() || fotos.isNotEmpty()))
     }
 }
 

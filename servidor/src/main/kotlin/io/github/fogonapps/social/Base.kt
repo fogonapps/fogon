@@ -133,6 +133,13 @@ class Base(ruta: String) {
                     nuevo TEXT NOT NULL, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0)""")
                 columna(s, "publicaciones", "oculta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "comentarios", "oculto INTEGER NOT NULL DEFAULT 0")
+                columna(s, "comentarios", "padre INTEGER NULL REFERENCES comentarios(id) ON DELETE SET NULL")
+                columna(s, "comentarios", "borrado INTEGER NOT NULL DEFAULT 0")
+                s.execute("CREATE INDEX IF NOT EXISTS comentarios_padre ON comentarios(padre)")
+                s.execute("""CREATE TABLE IF NOT EXISTS megusta_comentarios(
+                    comentario INTEGER NOT NULL REFERENCES comentarios(id) ON DELETE CASCADE,
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    cuando INTEGER NOT NULL, PRIMARY KEY(comentario, cuenta))""")
                 columna(s, "reportes", "estado TEXT NOT NULL DEFAULT 'abierto'")
                 // El cajón completo de cada cuenta, cifrado en el teléfono (el servidor no lo puede leer), y su llave
                 // envuelta con la contraseña de la persona (tampoco la puede abrir).

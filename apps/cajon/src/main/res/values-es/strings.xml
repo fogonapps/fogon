@@ -1294,4 +1294,30 @@
     <string name="resena_cero">0 estrellas</string>
     <string name="resena_parte">Parte de la obra</string>
     <string name="resenas_suyas">Sus reseñas</string>
+    <string name="publicacion_foto">Foto %1$d de %2$d</string>
+    <string name="publicacion_posicion">%1$d de %2$d</string>
+    <string name="publicacion_cerrar">Cerrar</string>
+    <string name="publicacion_responder">Responder</string>
+    <string name="publicacion_comentario_borrado">Comentario borrado</string>
+    <plurals name="publicacion_ver_respuestas">
+        <item quantity="one">Ver %1$d respuesta</item>
+        <item quantity="many">Ver %1$d respuestas</item>
+        <item quantity="other">Ver %1$d respuestas</item>
+    </plurals>
+    <string name="publicacion_ocultar_respuestas">Ocultar respuestas</string>
+    <string name="publicacion_respondiendo">Respondiendo a @%1$s</string>
+    <string name="publicacion_cancelar_respuesta">Quitar respuesta</string>
+    <string name="publicacion_aviso_respuesta">respondió a tu comentario</string>
+    <string name="publicacion_megusta_estado">%1$d me gusta, %2$s</string>
+    <string name="publicacion_gusta_si">quitar tu me gusta</string>
+    <string name="publicacion_gusta_no">dar me gusta</string>
+    <plurals name="publicacion_comentarios">
+        <item quantity="one">%1$d comentario</item>
+        <item quantity="many">%1$d comentarios</item>
+        <item quantity="other">%1$d comentarios</item>
+    </plurals>
+    <string name="publicacion_quitar_foto">Quitar foto %1$d</string>
+    <string name="publicacion_foto_izquierda">Mover foto %1$d a la izquierda</string>
+    <string name="publicacion_foto_derecha">Mover foto %1$d a la derecha</string>
+    <string name="publicacion_megusta">%1$d me gusta</string>
 </resources>

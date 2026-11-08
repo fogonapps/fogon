@@ -84,7 +84,9 @@ object Logica {
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
         gustos = e.gustos.distinctBy { it.clave },
-        publicaciones = e.publicaciones.distinctBy { it.clave },
+        publicaciones = e.publicaciones.distinctBy { it.clave }.map { p ->
+            if (p.imagenes.isEmpty() && p.imagen.isNotBlank()) p.copy(imagenes = listOf(p.imagen)) else p
+        },
         resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),

@@ -1294,4 +1294,28 @@
     <string name="resena_cero">0 stars</string>
     <string name="resena_parte">Part of the work</string>
     <string name="resenas_suyas">Their reviews</string>
+    <string name="publicacion_foto">Photo %1$d of %2$d</string>
+    <string name="publicacion_posicion">%1$d of %2$d</string>
+    <string name="publicacion_cerrar">Close</string>
+    <string name="publicacion_responder">Reply</string>
+    <string name="publicacion_comentario_borrado">Deleted comment</string>
+    <plurals name="publicacion_ver_respuestas">
+        <item quantity="one">View %1$d reply</item>
+        <item quantity="other">View %1$d replies</item>
+    </plurals>
+    <string name="publicacion_ocultar_respuestas">Hide replies</string>
+    <string name="publicacion_respondiendo">Replying to @%1$s</string>
+    <string name="publicacion_cancelar_respuesta">Cancel reply</string>
+    <string name="publicacion_aviso_respuesta">replied to your comment</string>
+    <string name="publicacion_megusta_estado">%1$d likes, %2$s</string>
+    <string name="publicacion_gusta_si">remove your like</string>
+    <string name="publicacion_gusta_no">like it</string>
+    <plurals name="publicacion_comentarios">
+        <item quantity="one">%1$d comment</item>
+        <item quantity="other">%1$d comments</item>
+    </plurals>
+    <string name="publicacion_quitar_foto">Remove photo %1$d</string>
+    <string name="publicacion_foto_izquierda">Move photo %1$d left</string>
+    <string name="publicacion_foto_derecha">Move photo %1$d right</string>
+    <string name="publicacion_megusta">%1$d likes</string>
 </resources>
