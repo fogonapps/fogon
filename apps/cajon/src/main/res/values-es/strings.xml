@@ -1293,4 +1293,5 @@
     <string name="resena_nota_valor">Nota del autor: %1$d de 10</string>
     <string name="resena_cero">0 estrellas</string>
     <string name="resena_parte">Parte de la obra</string>
+    <string name="resenas_suyas">Sus reseñas</string>
 </resources>

@@ -35,9 +35,16 @@ internal fun catalogoSeccionesPerfil(propio: Boolean) = listOf(
     Triple(2, Iconos.Artista, R.string.tipo_artistas),
     Triple(3, Iconos.Lista, R.string.pestana_listas),
     Triple(4, Iconos.Guardar, R.string.parte_guardadas),
+    Triple(6, Iconos.Lapiz, if (propio) R.string.resena_tuyas else R.string.resenas_suyas),
     Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
 )
 
 @Composable
 internal fun seccionesCajon(propio: Boolean, contenido: @Composable (Int) -> Unit): List<SeccionPerfil> =
     catalogoSeccionesPerfil(propio).map { (id, icono, nombre) -> SeccionPerfil(id, icono, stringResource(nombre)) { contenido(id) } }
+
+/** Selección local: la visibilidad nunca oculta reseñas a su dueño. */
+internal fun Estado.resenasDelPerfil() = resenas.filter { !it.borrada }.sortedByDescending { it.fecha }
+
+/** La visibilidad ya viene resuelta por el servidor. */
+internal fun PerfilSocial.resenasDelPerfil() = publicaciones.filter { it.tipo == "resena" }

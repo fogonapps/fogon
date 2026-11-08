@@ -589,6 +589,9 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 if (g == null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
                 else if (g.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, g)
             }
+            6 -> p.resenasDelPerfil().let { lista ->
+                if (lista.isEmpty()) NadaAqui() else lista.forEach { TarjetaPublicacion(vm, it) }
+            }
             else -> CifrasDeLaRed(p)
         }
     }

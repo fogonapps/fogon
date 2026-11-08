@@ -1,5 +1,9 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextOverflow
+import io.github.fogonapps.identidad.tarjetaFogon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -211,4 +215,35 @@ private fun SelectorResena(opciones: List<Pair<String, String>>, elegido: String
                 }
             }
         }, confirmButton = { TextButton({ abierto = false }) { Text(stringResource(R.string.cancelar)) } })
+}
+
+/** Reseñas locales, incluidas las privadas, sin mezclar publicaciones de la red. */
+@Composable
+internal fun ResenasDelPerfil(vm: CajonViewModel, e: Estado) {
+    val resenas = e.resenasDelPerfil()
+    val f = FogonTema.actual
+    if (resenas.isEmpty()) { NadaAqui(); return }
+    resenas.forEach { r ->
+        val o = Resenas.obra(e, r.obra)
+        var destapada by rememberSaveable(r.id, r.spoiler) { mutableStateOf(false) }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon()
+            .clickable {
+                if (e.artistasVivos.any { it.id == r.obra }) vm.abrir(Pantalla.VerArtista(r.obra))
+                else vm.abrir(Pantalla.Ficha(r.obra))
+            }.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Portada(o?.portada.orEmpty(), o?.tipo.orEmpty(), o?.titulo.orEmpty(), Modifier.width(64.dp), conTitulo = false)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(o?.titulo ?: stringResource(R.string.resena_obra_entera), style = MaterialTheme.typography.titleMedium,
+                        color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    val parte = Resenas.etiqueta(r.parte, o, vm.idioma() == "en")
+                    if (parte.isNotBlank()) Text(parte, style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                    r.nota?.let { NotaResena(it) }
+                    Text(nombreVisibilidad(r.visibilidad), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
+            }
+            if (r.spoiler && !destapada) BotonSecundario(stringResource(R.string.red_spoiler_tocar), { destapada = true }, Modifier.fillMaxWidth())
+            else Text(r.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 4, overflow = TextOverflow.Ellipsis)
+        }
+    }
 }

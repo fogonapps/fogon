@@ -1,5 +1,7 @@
 package io.github.fogonapps.perfil
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -53,12 +55,18 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
 @Composable
 fun PestanasPerfil(secciones: List<SeccionPerfil>, elegida: Int, alElegir: (Int) -> Unit) {
     val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-        secciones.forEach { seccion ->
-            val seleccionada = elegida == seccion.id
-            Box(Modifier.clip(FormaPildora).background(if (seleccionada) f.tinta1 else Color.Transparent)
-                .clickable { alElegir(seccion.id) }.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                IconoRiso(seccion.icono, seccion.nombreAccesible, tamano = 22.dp, tinta = if (seleccionada) f.sobreTinta1 else f.textoSuave)
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+        val ancho = maxWidth
+        Row(Modifier.horizontalScroll(rememberScrollState()).widthIn(min = ancho), horizontalArrangement = Arrangement.SpaceEvenly) {
+            secciones.forEach { seccion ->
+                val seleccionada = elegida == seccion.id
+                Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).clip(FormaPildora)
+                    .clickable { alElegir(seccion.id) }, contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Box(Modifier.clip(FormaPildora).background(if (seleccionada) f.tinta1 else Color.Transparent)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        IconoRiso(seccion.icono, seccion.nombreAccesible, tamano = 22.dp, tinta = if (seleccionada) f.sobreTinta1 else f.textoSuave)
+                    }
+                }
             }
         }
     }

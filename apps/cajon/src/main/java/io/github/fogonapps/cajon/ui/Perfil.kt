@@ -324,6 +324,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                     else -> CuadriculaPublicaciones(vm, g)
                 }
             }
+            6 -> ResenasDelPerfil(vm, e)
             else -> CifrasDelPerfil(vm, e, anio)
         }
     }

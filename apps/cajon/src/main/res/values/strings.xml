@@ -1293,4 +1293,5 @@
     <string name="resena_nota_valor">Author rating: %1$d out of 10</string>
     <string name="resena_cero">0 stars</string>
     <string name="resena_parte">Part of the work</string>
+    <string name="resenas_suyas">Their reviews</string>
 </resources>
