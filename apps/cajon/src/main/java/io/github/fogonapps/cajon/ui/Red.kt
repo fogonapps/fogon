@@ -1,6 +1,7 @@
 package io.github.fogonapps.cajon.ui
 
-import io.github.fogonapps.perfil.CifraPerfil
+import io.github.fogonapps.perfil.*
+import io.github.fogonapps.perfil.Perfil as PerfilComun
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -512,126 +513,107 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
     val p = perfiles[usuario]
     val propio = usuario == yo
-    Cabecera("@$usuario", vm::cerrar, chico = true) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BotonIcono(Iconos.Compartir, stringResource(R.string.compartir_perfil), grande = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            if (yo != null) Box {
-                BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = true }
-                // El menú de los tres puntos, desplegado desde ellos (como en las redes).
-                val portapapeles = androidx.compose.ui.platform.LocalClipboardManager.current
-                val copiado = stringResource(R.string.red_enlace_copiado)
-                androidx.compose.material3.DropdownMenu(menu, { menu = false }, shape = forma(24.dp), containerColor = f.fondo,
-                    border = androidx.compose.foundation.BorderStroke(f.borde, f.linea), shadowElevation = 12.dp) {
-                    @Composable
-                    fun Opcion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
-                        val color = if (peligro) MaterialTheme.colorScheme.error else f.texto
-                        androidx.compose.material3.DropdownMenuItem({ Text(texto, style = MaterialTheme.typography.bodyLarge, color = color) }, { menu = false; onClick() },
-                            leadingIcon = { IconoRiso(icono, null, tamano = 22.dp, tinta = color) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 6.dp))
+    val navegacion: @Composable () -> Unit = {
+        Cabecera("@$usuario", vm::cerrar, chico = true) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BotonIcono(Iconos.Compartir, stringResource(R.string.compartir_perfil), grande = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
+                if (yo != null) Box {
+                    BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = true }
+                    // El menú de los tres puntos, desplegado desde ellos (como en las redes).
+                    val portapapeles = androidx.compose.ui.platform.LocalClipboardManager.current
+                    val copiado = stringResource(R.string.red_enlace_copiado)
+                    androidx.compose.material3.DropdownMenu(menu, { menu = false }, shape = forma(24.dp), containerColor = f.fondo,
+                        border = androidx.compose.foundation.BorderStroke(f.borde, f.linea), shadowElevation = 12.dp) {
+                        @Composable
+                        fun Opcion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
+                            val color = if (peligro) MaterialTheme.colorScheme.error else f.texto
+                            androidx.compose.material3.DropdownMenuItem({ Text(texto, style = MaterialTheme.typography.bodyLarge, color = color) }, { menu = false; onClick() },
+                                leadingIcon = { IconoRiso(icono, null, tamano = 22.dp, tinta = color) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 6.dp))
+                        }
+                        Opcion(Iconos.Enlace, stringResource(R.string.red_copiar_enlace)) { portapapeles.setText(androidx.compose.ui.text.AnnotatedString(ClienteSocial.enlacePerfil(usuario))); vm.decir(copiado) }
+                        Opcion(Iconos.Compartir, stringResource(R.string.compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
+                        Opcion(Iconos.Cerrar, stringResource(R.string.red_bloquear)) { hoja = "bloquear" }
+                        Opcion(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { hoja = "reportar" }
                     }
-                    Opcion(Iconos.Enlace, stringResource(R.string.red_copiar_enlace)) { portapapeles.setText(androidx.compose.ui.text.AnnotatedString(ClienteSocial.enlacePerfil(usuario))); vm.decir(copiado) }
-                    Opcion(Iconos.Compartir, stringResource(R.string.compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-                    Opcion(Iconos.Cerrar, stringResource(R.string.red_bloquear)) { hoja = "bloquear" }
-                    Opcion(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { hoja = "reportar" }
                 }
             }
         }
     }
+
     if (p == null) {
+        navegacion()
         if (usuario in noEstan) Pista(stringResource(R.string.red_perfil_no_existe), Modifier.padding(16.dp))
         else LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
         return
     }
-    // Igual que tu perfil: portada, la foto montada sobre su borde y el nombre al lado.
-    Box(Modifier.fillMaxWidth()) {
-        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(110.dp).clip(forma(24.dp)).vidrio(forma(24.dp))
-            .haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
-            if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-        }
-        Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) }
-            Column(Modifier.weight(1f).padding(top = 54.dp)) {
-                Text(p.persona.nombre.ifBlank { usuario }, fontFamily = f.titulos, fontSize = 26.sp, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    @Composable
+    fun contenidoSeccion(idSeccion: Int) {
+        when (idSeccion) {
+            0 -> if (p.publicaciones.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, p.publicaciones)
+            1 -> GustosDelPerfil(vm, p, propio)
+            2 -> MusicaDelPerfil(p, propio)
+            3 -> p.publicaciones.filter { it.tipo == "lista" }.let { l -> if (l.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, l) }
+            4 -> if (!p.guardadasVisibles) NadaAqui() else {
+                LaunchedEffect(usuario) { vm.red.cargarGuardadasDe(usuario) }
+                val g = listas["guardadas:$usuario"]
+                if (g == null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+                else if (g.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, g)
             }
+            else -> CifrasDeLaRed(p)
         }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-        CifraPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) }
-        CifraPerfil("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) }
-        CifraPerfil(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra), null)
-    }
-    Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (p.bio.isNotBlank()) Text(p.bio, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-        if (p.enlaces.isNotEmpty()) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val uri = LocalUriHandler.current
-            p.enlaces.forEach { e -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(e), Iconos.Enlace) { runCatching { uri.openUri(e) } } }
-        }
-    }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        when {
-            yo == null -> BotonRiso(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
-            else -> {
-                when (p.relacion) {
-                    "sigo" -> BotonSecundario(stringResource(R.string.red_dejar_de_seguir), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
-                    "pendiente" -> BotonSecundario(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
-                    else -> BotonRiso(stringResource(if (p.meSigue) R.string.red_seguir_tambien else R.string.red_seguir), { vm.red.seguir(usuario) }, Modifier.weight(1f))
-                }
-                BotonSecundario(stringResource(R.string.chat_mensaje), { vm.abrir(Pantalla.Conversacion(usuario)) }, Modifier.weight(1f))
-            }
-        }
-    }
-    // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.
-    hoja?.let { h ->
-        androidx.compose.material3.ModalBottomSheet({ hoja = null }, containerColor = f.fondo) {
-            Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                if (h == "reportar") {
-                    MotivosReporte { codigo, texto ->
-                        vm.red.reportar("cuenta", usuario, "$codigo: $texto"); hoja = null
+    val secciones = seccionesCajon(propio) { contenidoSeccion(it) }
+    val vistaBase = p.aPerfilVista(secciones = secciones, contadores = listOf(
+        ContadorPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) },
+        ContadorPerfil("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) },
+        ContadorPerfil(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra)),
+    ))
+    val uri = LocalUriHandler.current
+    PerfilComun(vistaBase, pestana, { pestana = it },
+        navegacion = navegacion,
+        portada = { if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop) },
+        foto = { Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } },
+        bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = f.textoSuave) },
+        enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
+        acciones = {
+            when {
+                yo == null -> BotonRiso(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+                else -> {
+                    when (p.relacion) {
+                        "sigo" -> BotonSecundario(stringResource(R.string.red_dejar_de_seguir), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
+                        "pendiente" -> BotonSecundario(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
+                        else -> BotonRiso(stringResource(if (p.meSigue) R.string.red_seguir_tambien else R.string.red_seguir), { vm.red.seguir(usuario) }, Modifier.weight(1f))
                     }
-                } else {
-                    Text(stringResource(R.string.red_bloquear_a, usuario), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                    Text(stringResource(R.string.chat_bloquear_seguro), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
-                    FilaMenu(Iconos.Cerrar, stringResource(R.string.red_bloquear), peligro = true) { vm.red.bloquear(usuario, true); hoja = null; vm.cerrar() }
-                    FilaMenu(Iconos.Atras, stringResource(R.string.cancelar)) { hoja = null }
+                    BotonSecundario(stringResource(R.string.chat_mensaje), { vm.abrir(Pantalla.Conversacion(usuario)) }, Modifier.weight(1f))
                 }
             }
-        }
-    }
-    (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada")) }
-    if (p.cerrada) {
-        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
-            Pista(stringResource(R.string.red_cuenta_privada_texto), centro = true)
-        }
-        return
-    }
-    // Las mismas pestañas que tu perfil; lo que la persona no deja ver (o no tiene) dice que no hay nada.
-    val pestanas = listOf(
-        Triple(0, Iconos.Imagen, R.string.red_publicaciones), Triple(1, Iconos.Estrella, if (propio) R.string.parte_destacados else R.string.red_lo_suyo),
-        Triple(2, Iconos.Artista, R.string.tipo_artistas), Triple(3, Iconos.Lista, R.string.pestana_listas),
-        Triple(4, Iconos.Guardar, R.string.parte_guardadas), Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
-    )
-    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-        pestanas.forEach { (i, icono, tx) ->
-            val elegida = pestana == i
-            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent).clickable { pestana = i }.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                IconoRiso(icono, stringResource(tx), tamano = 22.dp, tinta = if (elegida) f.sobreTinta1 else f.textoSuave)
+        },
+        despuesAcciones = {
+            // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.
+            hoja?.let { h ->
+                androidx.compose.material3.ModalBottomSheet({ hoja = null }, containerColor = f.fondo) {
+                    Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+                        if (h == "reportar") {
+                            MotivosReporte { codigo, texto ->
+                                vm.red.reportar("cuenta", usuario, "$codigo: $texto"); hoja = null
+                            }
+                        } else {
+                            Text(stringResource(R.string.red_bloquear_a, usuario), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                            Text(stringResource(R.string.chat_bloquear_seguro), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
+                            FilaMenu(Iconos.Cerrar, stringResource(R.string.red_bloquear), peligro = true) { vm.red.bloquear(usuario, true); hoja = null; vm.cerrar() }
+                            FilaMenu(Iconos.Atras, stringResource(R.string.cancelar)) { hoja = null }
+                        }
+                    }
+                }
             }
-        }
-    }
-    when (pestana) {
-        0 -> if (p.publicaciones.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, p.publicaciones)
-        1 -> GustosDelPerfil(vm, p, propio)
-        2 -> MusicaDelPerfil(p, propio)
-        3 -> p.publicaciones.filter { it.tipo == "lista" }.let { l -> if (l.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, l) }
-        4 -> if (!p.guardadasVisibles) NadaAqui() else {
-            LaunchedEffect(usuario) { vm.red.cargarGuardadasDe(usuario) }
-            val g = listas["guardadas:$usuario"]
-            if (g == null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-            else if (g.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, g)
-        }
-        else -> CifrasDeLaRed(p)
-    }
+            (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada")) }
+            if (p.cerrada) {
+                Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
+                    Pista(stringResource(R.string.red_cuenta_privada_texto), centro = true)
+                }
+            }
+        })
 }
 
 /** Las cifras que la persona deja ver, como en tu pestaña de cifras (las de antes solo traían lo terminado por tipo). */
