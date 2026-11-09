@@ -93,6 +93,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
     if (acciones != null) FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista)) { acciones.exportar() }
     Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
+        ImportacionLastfm(vm)
         Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
         if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
     }
@@ -343,7 +344,7 @@ fun AcercaDe(vm: CajonViewModel) {
             quien = io.github.fogonapps.identidad.Quien.CAJON,
             nombreApp = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
-            creditos = stringArrayResource(R.array.creditos).toList(),
+            creditos = stringArrayResource(R.array.creditos).toList() + stringResource(R.string.lastfm_credito),
             onVerManifiesto = { vm.abrir(Pantalla.Manifiesto) },
             onVerLicencias = { vm.abrir(Pantalla.Licencias) },
             onAbrirEnlace = { uri.openUri(it) },
@@ -353,6 +354,7 @@ fun AcercaDe(vm: CajonViewModel) {
         androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.logo_tmdb), "TMDB", Modifier.padding(top = 4.dp).height(16.dp))
         }
         Pista(stringResource(R.string.tmdb_aviso))
+        BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") })
     }
 }
 
@@ -367,6 +369,7 @@ fun Licencias(vm: CajonViewModel) {
             Licencia("MusicBrainz · Cover Art Archive", stringResource(R.string.lic_musicbrainz)),
             Licencia("Wikimedia Commons · Wikidata", stringResource(R.string.lic_wikimedia)),
             Licencia("Coil", stringResource(R.string.lic_coil), "apache-2.0.txt"),
+            Licencia("AndroidX Media3", stringResource(R.string.lic_media3), "apache-2.0.txt"),
             Licencia("Tink", stringResource(R.string.lic_tink), "apache-2.0.txt"),
         ))
     }
@@ -443,5 +446,42 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
             }
             Text(stringResource(R.string.spotify_historial_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
+    }
+}
+
+@Composable
+private fun ImportacionLastfm(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val uri = LocalUriHandler.current
+    val resumen by vm.lastfmResumen.collectAsStateWithLifecycle()
+    val avance by vm.lastfmAvance.collectAsStateWithLifecycle()
+    var usuario by rememberSaveable { mutableStateOf("") }
+    var fecha by rememberSaveable { mutableStateOf("") }
+    var todo by rememberSaveable { mutableStateOf(true) }
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.lastfm_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        Pista(stringResource(R.string.lastfm_pista))
+        OutlinedTextField(usuario, { usuario = it; vm.editarLastfm() }, label = { Text(stringResource(R.string.lastfm_usuario)) },
+            enabled = avance == null, singleLine = true, modifier = Modifier.fillMaxWidth())
+        if (avance == null) {
+            if (usuario.isNotBlank()) BotonSecundario(stringResource(R.string.lastfm_revisar), { vm.revisarLastfm(usuario) })
+            resumen?.let { r ->
+                Text(stringResource(R.string.lastfm_resumen, r.escuchas, r.desde), color = f.texto)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(todo, { todo = true }, label = { Text(stringResource(R.string.lastfm_todo)) })
+                    FilterChip(!todo, { todo = false }, label = { Text(stringResource(R.string.lastfm_desde)) })
+                }
+                if (!todo) OutlinedTextField(fecha, { fecha = it }, label = { Text(stringResource(R.string.lastfm_fecha)) }, singleLine = true)
+                if (todo || fecha.isNotBlank()) BotonRiso(stringResource(R.string.lastfm_importar), { vm.importarLastfm(if (todo) "" else fecha) })
+            }
+        } else {
+            val a = avance!!
+            if (a.paginas > 0) {
+                LinearProgressIndicator({ a.pagina.toFloat() / a.paginas }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+                Text(stringResource(R.string.lastfm_avance, a.pagina, a.paginas, a.escuchas), color = f.texto)
+            } else Text(stringResource(R.string.lastfm_espera), color = f.texto)
+            BotonSecundario(stringResource(R.string.lastfm_cancelar), vm::cancelarLastfm)
+        }
+        BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") })
     }
 }

@@ -75,6 +75,9 @@ class Base(ruta: String) {
                 // Las imágenes de las publicaciones: el nombre es al azar (no se adivina) y el archivo va en fotos/i/.
                 s.execute("""CREATE TABLE IF NOT EXISTS imagenes(
                     nombre TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cuando INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS videos(
+                    nombre TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    cuando INTEGER NOT NULL, duracion REAL NOT NULL, ancho INTEGER NOT NULL, alto INTEGER NOT NULL)""")
                 s.execute("DROP TABLE IF EXISTS solicitudes")
                 // El chat, cifrado de extremo a extremo: las llaves públicas de cada cuenta y los mensajes cifrados
                 // (el servidor no los puede leer). Se borran al entregarlos o a los 30 días.

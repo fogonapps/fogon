@@ -48,6 +48,7 @@ data class Cuenta(
     val saldoInicial: Long = 0,
     val credito: Credito? = null,
     val archivada: Boolean = false,
+    val banco: Banco? = null,
 )
 
 @Serializable
@@ -81,6 +82,8 @@ data class Movimiento(
     val fijo: String? = null,
     /** Ahorro: a qué meta va. */
     val meta: String? = null,
+    val hora: String? = null,
+    val importado: Boolean = false,
 )
 
 /** Un pago que se repite cada mes (arriendo, servicios, suscripciones). */
@@ -133,6 +136,7 @@ data class Deuda(
 
 @Serializable
 data class Estado(
+    val notificaciones: NotificacionesBanco = NotificacionesBanco(),
     val v: Int = 1,
     val updatedAt: Long = 0,
     val nombre: String? = null,

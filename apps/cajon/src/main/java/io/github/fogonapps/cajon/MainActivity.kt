@@ -2,6 +2,8 @@ package io.github.fogonapps.cajon
 
 import android.content.Intent
 import android.graphics.Bitmap
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -27,6 +29,8 @@ import androidx.core.content.FileProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.ui.Modifier
+import io.github.fogonapps.cajon.datos.Importar
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.ui.Acciones
 import io.github.fogonapps.cajon.ui.App
@@ -136,11 +140,33 @@ class MainActivity : ComponentActivity() {
                         if (d == null) aviso(getString(R.string.aviso_no_es_respaldo)) else porImportar = d
                     }
                 }
+                var netflixPendiente by remember { mutableStateOf<Pair<ByteArray, String>?>(null) }
+                netflixPendiente?.let { (bytes, nombre) ->
+                    fun elegir(perfil: String?) {
+                        netflixPendiente = null
+                        if (operacionVigente()) vm.importarDeOtraApp(bytes, nombre, perfil)
+                        else aviso(getString(R.string.perfiles_error))
+                    }
+                    AlertDialog(
+                        onDismissRequest = { netflixPendiente = null },
+                        title = { Text(stringResource(R.string.netflix_perfil)) },
+                        text = {
+                            androidx.compose.foundation.layout.Column(Modifier.verticalScroll(rememberScrollState())) {
+                                Importar.perfilesNetflix(bytes.decodeToString()).forEach { perfil ->
+                                    TextButton({ elegir(perfil) }) { Text(perfil) }
+                                }
+                            }
+                        },
+                        confirmButton = { TextButton({ elegir(null) }) { Text(stringResource(R.string.netflix_todos)) } },
+                        dismissButton = { TextButton({ netflixPendiente = null }) { Text(stringResource(R.string.cancelar)) } },
+                    )
+                }
                 val deOtraApp = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                     if (uri != null && !operacionVigente()) aviso(getString(R.string.perfiles_error))
                     else if (uri != null) {
                         val bytes = leer(uri)
                         if (bytes == null) aviso(getString(R.string.aviso_no_es_de_otra_app))
+                        else if (Importar.perfilesNetflix(bytes.decodeToString()).size > 1) netflixPendiente = bytes to (uri.lastPathSegment ?: "")
                         else vm.importarDeOtraApp(bytes, uri.lastPathSegment ?: "")
                     }
                 }

@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador
 
+import io.github.fogonapps.ahorrador.datos.*
 import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
@@ -22,10 +23,8 @@ import io.github.fogonapps.ahorrador.datos.mesDe
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -34,7 +33,7 @@ import kotlin.random.Random
 
 /** Las pantallas que se abren encima de las pestañas. */
 sealed interface Pantalla {
-    data class Anotar(val tipo: TipoMovimiento = TipoMovimiento.GASTO, val editar: String? = null, val aCuenta: String? = null) : Pantalla
+    data class Anotar(val tipo: TipoMovimiento = TipoMovimiento.GASTO, val editar: String? = null, val aCuenta: String? = null, val banco: String? = null) : Pantalla
     data object Cuentas : Pantalla
     /** Todos los movimientos, con búsqueda; [categoria] y [mes] ("AAAA-MM") son filtros con los que se abre. */
     data class Movimientos(val categoria: String? = null, val mes: String? = null) : Pantalla
@@ -48,6 +47,7 @@ sealed interface Pantalla {
     data class EditarSobre(val id: String?) : Pantalla
     data class Cierre(val mes: String) : Pantalla
     data class ImportarExtracto(val filas: List<io.github.fogonapps.ahorrador.datos.FilaExtracto>) : Pantalla
+    data object Bancos : Pantalla
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
     data object Manifiesto : Pantalla
@@ -83,16 +83,10 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val e = almacen.data.first()
-            _estado.value = e
-            anotarFijos()
-            // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
-            almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
+            almacen.data.collect { _estado.value = it }
         }
+        viewModelScope.launch { almacen.data.first(); anotarFijos() }
     }
-
-    /** Lo último que esta pantalla escribió en el disco, para distinguirlo de un cambio de afuera. */
-    @Volatile private var ultimoGuardado: Estado? = null
 
     fun hoy(): LocalDate = LocalDate.now()
     fun mesActual(): String = mesDe(hoy())
@@ -104,20 +98,46 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun nuevoId(prefijo: String) = prefijo + System.currentTimeMillis().toString(36) + Random.nextInt(1296).toString(36)
 
-    /** Todo cambio pasa por aquí: memoria, pantalla y, 300 ms después, el disco. */
-    private fun cambiar(f: (Estado) -> Estado) {
-        val e = _estado.value ?: return
-        _estado.value = f(e).copy(updatedAt = System.currentTimeMillis())
-        guardado?.cancel()
-        guardado = viewModelScope.launch { delay(300); guardarYa() }
+    /** Pantallas y servicio transforman el mismo estado mediante transacciones de DataStore. */
+    private fun cambiar(despues: (Estado) -> Unit = {}, f: (Estado) -> Estado) {
+        guardado = viewModelScope.launch {
+            val e = almacen.updateData { f(it).copy(updatedAt = System.currentTimeMillis()) }
+            _estado.value = e
+            despues(e)
+            BancoAvisos.actualizar(getApplication(), e)
+            WidgetPlata.actualizar(getApplication())
+        }
     }
 
-    suspend fun guardarYa() {
-        val e = _estado.value ?: return
-        ultimoGuardado = e
-        almacen.updateData { e }
-        WidgetPlata.actualizar(getApplication())
+    suspend fun guardarYa() { guardado?.join() }
+
+    fun elegirBanco(banco: Banco, si: Boolean) {
+        cambiar { e -> e.copy(notificaciones = e.notificaciones.copy(
+            elegidos = if (si) e.notificaciones.elegidos + banco else e.notificaciones.elegidos - banco)) }
     }
+    fun bancoSolo(banco: Banco, si: Boolean) {
+        cambiar { e -> e.copy(notificaciones = e.notificaciones.copy(
+            solos = if (si) e.notificaciones.solos + banco else e.notificaciones.solos - banco)) }
+    }
+    fun enlazarAviso(huella: String, cuenta: String?) {
+        cambiar { e ->
+            val a = e.notificaciones.registros.firstOrNull { it.aviso.huella == huella && !it.descartado && it.movimiento == null }?.aviso ?: return@cambiar e
+            if (e.cuentaEnlazada(a) != null) return@cambiar e
+            val nueva = Cuenta(nuevoId("c"), tx(a.banco.nombreBanco), TipoCuenta.BANCO, banco = a.banco)
+            val conCuenta = if (cuenta == null) e.copy(cuentas = e.cuentas + nueva) else e
+            val enlazado = enlazarBanco(conCuenta, a, cuenta ?: nueva.id)
+            if (a.banco in enlazado.notificaciones.solos) confirmarBanco(enlazado, huella, automatico = true) else enlazado
+        }
+    }
+    fun confirmarAviso(huella: String, editado: Movimiento? = null) { cambiar { confirmarBanco(it, huella, editado) } }
+    fun descartarAviso(huella: String) { cambiar { descartarBanco(it, huella) } }
+    fun deshacerBanco(id: String) {
+        cambiar { e -> e.copy(movimientos = e.movimientos.filter { it.id != id },
+            notificaciones = e.notificaciones.copy(registros = e.notificaciones.registros.map {
+                if (it.movimiento == id) it.copy(movimiento = null, descartado = true, automatico = false) else it
+            })) }
+    }
+    fun olvidarEnlace(clave: String) { cambiar { it.copy(notificaciones = it.notificaciones.copy(enlaces = it.notificaciones.enlaces - clave)) } }
 
     /* ----- Navegación ----- */
 
@@ -149,7 +169,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
      * Guarda un gasto, ingreso, traspaso o ahorro. Con el 4×1000 activado, si la plata sale de una
      * cuenta de banco (gasto o traspaso), anota también el impuesto.
      */
-    fun guardarMovimiento(m: Movimiento): Boolean {
+    fun guardarMovimiento(m: Movimiento, alGuardar: (Estado) -> Unit = {}): Boolean {
         val e = _estado.value ?: return false
         if (m.monto <= 0) { avisar(tx(R.string.aviso_monto)); return false }
         if (m.tipo == TipoMovimiento.TRASPASO && (m.aCuenta == null || m.aCuenta == m.cuenta)) { avisar(tx(R.string.aviso_otra_cuenta)); return false }
@@ -160,16 +180,19 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             (mov.tipo == TipoMovimiento.GASTO || mov.tipo == TipoMovimiento.TRASPASO) && gmf(mov.monto) > 0)
             Movimiento(nuevoId("m"), mov.fecha, TipoMovimiento.GASTO, gmf(mov.monto), mov.cuenta, categoria = "impuestos", nota = "4×1000")
         else null
-        cambiar { st ->
+        cambiar(alGuardar) { st ->
             val lista = if (nuevo) st.movimientos + mov else st.movimientos.map { if (it.id == mov.id) mov else it }
-            st.copy(movimientos = lista + listOfNotNull(impuesto))
+            val avisos = st.notificaciones.registros.filter { it.movimiento == mov.id }
+            val aprendidas = if (mov.categoria != null) avisos.associate { claveContraparte(it.aviso) to mov.categoria } else emptyMap()
+            st.copy(movimientos = lista + listOfNotNull(impuesto), notificaciones = st.notificaciones.copy(categorias = st.notificaciones.categorias + aprendidas))
         }
         avisar(tx(if (nuevo) R.string.aviso_guardado else R.string.aviso_actualizado))
         return true
     }
 
     fun borrarMovimiento(id: String) {
-        cambiar { it.copy(movimientos = it.movimientos.filter { m -> m.id != id }) }
+        cambiar { e -> e.copy(movimientos = e.movimientos.filter { m -> m.id != id },
+            notificaciones = e.notificaciones.copy(registros = e.notificaciones.registros.map { if (it.movimiento == id) it.copy(descartado = true) else it })) }
         avisar(tx(R.string.aviso_borrado))
     }
 
@@ -229,11 +252,10 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Fijos ----- */
 
     fun guardarFijo(f: Fijo) {
-        cambiar { e ->
+        cambiar(despues = { anotarFijos() }) { e ->
             if (f.id.isEmpty()) e.copy(fijos = e.fijos + f.copy(id = nuevoId("f")))
             else e.copy(fijos = e.fijos.map { if (it.id == f.id) f else it })
         }
-        anotarFijos()
         avisar(tx(R.string.aviso_guardado))
     }
 
@@ -251,7 +273,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         if (pend.isEmpty()) return
         val mes = mesDe(hoy())
         cambiar { st ->
-            st.copy(movimientos = st.movimientos + pend.map { f ->
+            st.copy(movimientos = st.movimientos + L.aAnotar(st, hoy()).map { f ->
                 Movimiento(nuevoId("m"), L.vence(f, mes).toString(), TipoMovimiento.GASTO, f.monto, f.cuenta, categoria = f.categoria, nota = f.nombre, fijo = f.id)
             })
         }
@@ -286,20 +308,15 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         return PALABRAS.entries.firstOrNull { (_, ps) -> ps.any { nota.contains(it) } }?.key?.takeIf { k -> e.categorias.any { it.id == k } } ?: "otros"
     }
 
-    /** Anota las filas elegidas en la [cuenta]. Salta las que ya están (misma fecha, monto y nota). */
+    /** Cruza las filas elegidas por fecha, sentido, monto y cuenta sin consumir una coincidencia dos veces. */
     fun importarExtracto(filas: List<Pair<io.github.fogonapps.ahorrador.datos.FilaExtracto, String>>, cuenta: String) {
-        var n = 0
         cambiar { st ->
-            val ya = st.movimientos.map { Triple(it.fecha, it.monto, normalizar(it.nota)) }.toSet()
-            val nuevos = filas.filter { (f, _) -> Triple(f.fecha, kotlin.math.abs(f.monto), normalizar(f.descripcion)) !in ya }.map { (f, cat) ->
-                Movimiento(nuevoId("m"), f.fecha, if (f.monto < 0) TipoMovimiento.GASTO else TipoMovimiento.INGRESO, kotlin.math.abs(f.monto), cuenta,
-                    categoria = cat, nota = f.descripcion.take(60))
-            }
-            n = nuevos.size
-            st.copy(movimientos = st.movimientos + nuevos)
+            val resultado = importarFilasExtracto(st, filas, cuenta) { nuevoId("m") }
+            val n = resultado.movimientos.count { nuevo -> st.movimientos.none { it.id == nuevo.id } }
+            avisar(txPlural(R.plurals.extracto_importados, n))
+            resultado
         }
         cerrar()
-        avisar(txPlural(R.plurals.extracto_importados, n))
     }
 
     /* ----- Reto de ahorro ----- */
@@ -341,8 +358,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     fun borrarMeta(id: String) { cambiar { it.copy(metas = it.metas.filter { m -> m.id != id }) }; cerrar() }
 
     fun abonarMeta(meta: Meta, monto: Long, cuenta: String) {
-        if (guardarMovimiento(Movimiento("", hoy().toString(), TipoMovimiento.AHORRO, monto, cuenta, meta = meta.id, nota = meta.nombre))) {
-            val e = _estado.value ?: return
+        guardarMovimiento(Movimiento("", hoy().toString(), TipoMovimiento.AHORRO, monto, cuenta, meta = meta.id, nota = meta.nombre)) { e ->
             if (L.ahorradoEn(e, meta.id) >= meta.objetivo) avisar(MARCA_LOGRO + tx(R.string.aviso_meta_cumplida, meta.nombre))
         }
     }
@@ -361,10 +377,10 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     fun abonarDeuda(d: Deuda, monto: Long) {
         if (monto <= 0) { avisar(tx(R.string.aviso_monto)); return }
-        cambiar { e -> e.copy(deudas = e.deudas.map { if (it.id == d.id) it.copy(abonos = it.abonos + Abono(hoy().toString(), monto)) else it }) }
-        val e = _estado.value ?: return
-        val actual = e.deudas.first { it.id == d.id }
-        avisar(if (L.pendiente(actual) == 0L) MARCA_LOGRO + tx(R.string.aviso_deuda_saldada) else tx(R.string.aviso_abono))
+        cambiar(despues = { e ->
+            val actual = e.deudas.firstOrNull { it.id == d.id }
+            if (actual != null) avisar(if (L.pendiente(actual) == 0L) MARCA_LOGRO + tx(R.string.aviso_deuda_saldada) else tx(R.string.aviso_abono))
+        }) { e -> e.copy(deudas = e.deudas.map { if (it.id == d.id) it.copy(abonos = it.abonos + Abono(hoy().toString(), monto)) else it }) }
     }
 
     /* ----- Ajustes ----- */

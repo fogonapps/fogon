@@ -50,9 +50,16 @@ object Importar {
      * "Date"). Lo que tiene "Temporada", "Capítulo"… es una serie (se junta por su nombre, en curso, con un registro por
      * día); lo demás, una película vista. Null si no parece de Netflix.
      */
-    fun netflix(texto: String, nuevoId: (String) -> String, ahora: Long): Importado? {
+    /** Perfiles con actividad principal; los avances no cuentan como historial. */
+    fun perfilesNetflix(texto: String): List<String> = leerCsv(texto)
+        .filter { it["Title"] != null && it["Start Time"] != null && it["Supplemental Video Type"].isNullOrBlank() }
+        .mapNotNull { it["Profile Name"] }.distinct().sorted()
+
+    fun netflix(texto: String, nuevoId: (String) -> String, ahora: Long, perfil: String? = null): Importado? {
         val filas = leerCsv(texto)
-        if (filas.isEmpty() || filas.first().keys.map { it.lowercase() }.toSet() != setOf("title", "date")) return null
+        if (filas.isEmpty()) return null
+        val completa = filas.first().keys.containsAll(setOf("Profile Name", "Start Time", "Duration", "Title"))
+        if (!completa && filas.first().keys.map { it.lowercase() }.toSet() != setOf("title", "date")) return null
         val partes = Regex("(?i)^(temporada|season|parte|part|volumen|volume|libro|book|capítulo|capitulo|episodio|episode|chapter|serie limitada|limited series|miniserie|miniseries|colección|collection)\\b")
         // La fecha viene según el país: d/m/aa o m/d/aa; si alguna tiene un día mayor que 12, se sabe cuál es.
         val fechas = filas.mapNotNull { it["Date"] ?: it["date"] }.map { it.split('/', '-', '.') }
@@ -68,13 +75,19 @@ object Importar {
         data class Vista(val titulo: String, val serie: Boolean, val fechas: MutableSet<String> = sortedSetOf())
         val vistas = LinkedHashMap<String, Vista>()
         filas.forEach { f ->
+            if (completa && (!f["Supplemental Video Type"].isNullOrBlank() || perfil != null && f["Profile Name"] != perfil)) return@forEach
             val t = (f["Title"] ?: f["title"]).orEmpty().trim().ifBlank { return@forEach }
             val trozos = t.split(": ")
             val corte = trozos.indexOfFirst { it.trim().contains(partes) }
             // Serie solo si después de la temporada viene el capítulo ("Dune: Parte Dos" es una película).
             val (nombre, serie) = if (corte > 0 && corte < trozos.size - 1) trozos.take(corte).joinToString(": ") to true else t to false
             val v = vistas.getOrPut(nombre.lowercase()) { Vista(nombre, serie) }
-            fecha((f["Date"] ?: f["date"]).orEmpty())?.let { v.fechas += it }
+            val dia = if (completa) runCatching {
+                java.time.LocalDateTime.parse(f["Start Time"], java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
+                    .withResolverStyle(java.time.format.ResolverStyle.STRICT))
+                    .toInstant(java.time.ZoneOffset.UTC).atOffset(java.time.ZoneOffset.UTC).toLocalDate().toString()
+            }.getOrNull() else fecha((f["Date"] ?: f["date"]).orEmpty())
+            dia?.let { v.fechas += it }
         }
         if (vistas.isEmpty()) return null
         val obras = vistas.values.map { v ->

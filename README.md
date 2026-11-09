@@ -30,7 +30,7 @@ No copiamos marcas ni hablamos mal de nadie. Hacemos las cosas a nuestra manera 
 | | App | Qué hace | Descargar |
 |---|-----|----------|-----------|
 | <img src="apps/forzudo/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [El Forzudo](apps/forzudo/) | Tu cuaderno de entrenos: rutinas, descanso, récords y rangos de fuerza | [Última versión](https://github.com/fogonapps/el-forzudo/releases/latest) |
-| <img src="apps/ahorrador/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [El Ahorrador](apps/ahorrador/) | Gastos, presupuesto (sobres, 50/30/20, kakeibo), tarjeta de crédito, metas y pagos fijos, sin internet | [Última versión](https://github.com/fogonapps/el-ahorrador/releases/latest) |
+| <img src="apps/ahorrador/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [La Alcancía](apps/ahorrador/) | Gastos, presupuesto (sobres, 50/30/20, kakeibo), tarjeta de crédito, metas y pagos fijos, sin internet | [Última versión](https://github.com/fogonapps/la-alcancia/releases/latest) |
 | <img src="apps/cucha/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [La Cucha](apps/cucha/) | Calorías, recetas colombianas, menú de la semana y lista de mercado | [Última versión](https://github.com/fogonapps/la-cucha/releases/latest) |
 | <img src="apps/cajon/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [El Cajón](apps/cajon/) | Películas, series, animes, libros y música: tu nota, tu diario, tus listas y recomendaciones | [Última versión](https://github.com/fogonapps/el-cajon/releases/latest) |
 

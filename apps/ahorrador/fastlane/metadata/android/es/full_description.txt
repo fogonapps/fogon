@@ -1,4 +1,4 @@
-<p>El Ahorrador te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
+<p>La Alcancía te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Anota en segundos</b> con un teclado grande: gastos, ingresos, plata que pasas entre cuentas y ahorros.</li>
@@ -15,4 +15,7 @@
 
 <p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono, y la app ni siquiera tiene permiso de internet. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
 
-<p>El Ahorrador no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
+<p>La Alcancía no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
+
+<p><b>Anotar desde el banco (opcional):</b> reconoce pagos y transferencias de Bancolombia por SMS y envíos de Nu. Enlaza tus cuentas y confirma antes de anotar, o activa «Anotar solo» por banco para revisar y deshacer después. Detecta movimientos entre tus cuentas.</p>
+<p><b>Acceso a notificaciones:</b> Android permite ver todas las notificaciones. La Alcancía filtra primero por app y banco elegido: solo procesa SMS que empiezan por «Bancolombia:» y envíos reconocidos de la app de Nu. Lo demás no se guarda. No lee el historial de SMS. Puedes apagarlo en Perfil o revocar el acceso en Android. Nada sale del teléfono.</p>

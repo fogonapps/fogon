@@ -124,7 +124,7 @@ class MainActivity : ComponentActivity() {
                 // El permiso de notificaciones se pide con el primer pago fijo o al encender el recordatorio.
                 val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
                 val recordatorio by vm.recordatorio.collectAsStateWithLifecycle()
-                val quiereAvisos = estado?.fijos?.isNotEmpty() == true || recordatorio >= 0
+                val quiereAvisos = estado?.fijos?.isNotEmpty() == true || recordatorio >= 0 || BancoAvisos.desde(this@MainActivity) != 0L
                 LaunchedEffect(quiereAvisos) {
                     if (quiereAvisos && Build.VERSION.SDK_INT >= 33 &&
                         ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -133,8 +133,8 @@ class MainActivity : ComponentActivity() {
 
                 App(
                     vm,
-                    onExportar = { exportar.launch("el-ahorrador-respaldo-${vm.hoy()}.json") },
-                    onExportarCsv = { exportarCsv.launch("el-ahorrador-movimientos-${vm.hoy()}.csv") },
+                    onExportar = { exportar.launch("la-alcancia-respaldo-${vm.hoy()}.json") },
+                    onExportarCsv = { exportarCsv.launch("la-alcancia-movimientos-${vm.hoy()}.csv") },
                     onImportar = { importar.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
                     candadoDisponible = candadoDisponible(),
                     onImportarExtracto = { importarExtracto.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/vnd.ms-excel", "application/octet-stream")) },
@@ -178,6 +178,13 @@ class MainActivity : ComponentActivity() {
 
     /** Si la app se abrió desde el botón Anotar del widget, va directo a anotar un gasto. */
     private fun abrirDesdeWidget(i: Intent?) {
+        if (i?.hasExtra(BancoAvisos.EXTRA_BANCO) == true) {
+            val huella = i.getStringExtra(BancoAvisos.EXTRA_BANCO)
+            val editar = i.getBooleanExtra(BancoAvisos.EXTRA_EDITAR, false)
+            i.removeExtra(BancoAvisos.EXTRA_BANCO)
+            vm.abrir(Pantalla.Bancos)
+            if (editar && huella != null) vm.abrir(Pantalla.Anotar(banco = huella))
+        }
         if (i?.getBooleanExtra(EXTRA_ANOTAR, false) == true) {
             i.removeExtra(EXTRA_ANOTAR)
             vm.abrir(Pantalla.Anotar())

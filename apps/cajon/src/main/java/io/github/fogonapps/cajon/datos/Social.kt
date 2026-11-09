@@ -15,6 +15,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -272,6 +273,36 @@ class ClienteSocial(private val token: String? = null, private val permiteRed: (
     suspend fun subirImagen(jpeg: ByteArray): String =
         JsonCajon.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content
 
+    suspend fun subirVideo(archivo: java.io.File): String =
+        withContext(Dispatchers.IO) {
+            if (!permiteRed()) throw java.io.IOException("politica_pendiente")
+            val peticion = Request.Builder().url(video("").removeSuffix("/")).put(archivo.asRequestBody("video/mp4".toMediaType()))
+                .apply { token?.let { header("Authorization", "Bearer $it") } }.build()
+            val texto = kotlinx.coroutines.suspendCancellableCoroutine<String> { continua ->
+                val llamada = httpVideo.newCall(peticion)
+                continua.invokeOnCancellation { llamada.cancel() }
+                llamada.enqueue(object : okhttp3.Callback {
+                    override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                        if (continua.isActive) continua.resumeWith(Result.failure(e))
+                    }
+                    override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                        val resultado = runCatching {
+                            response.use { r ->
+                                val cuerpo = r.body.string()
+                                if (!r.isSuccessful) {
+                                    val error = runCatching { JsonCajon.parseToJsonElement(cuerpo).jsonObject["error"]!!.jsonPrimitive.content }.getOrDefault("")
+                                    throw ErrorSocial(r.code, error)
+                                }
+                                cuerpo
+                            }
+                        }
+                        if (continua.isActive) continua.resumeWith(resultado)
+                    }
+                })
+            }
+            JsonCajon.parseToJsonElement(texto).jsonObject["nombre"]!!.jsonPrimitive.content
+        }
+
     /* Chat: solo pasan sobres cerrados (ver `Chat`) */
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
@@ -313,10 +344,12 @@ class ClienteSocial(private val token: String? = null, private val permiteRed: (
         fun enlacePerfil(usuario: String) = "$SERVIDOR/@$usuario"
         fun enlacePublicacion(id: Long) = "$SERVIDOR/p/$id"
         fun foto(usuario: String) = "$SERVIDOR/v1/fotos/$usuario"
+        fun video(nombre: String) = "$SERVIDOR/v1/videos/$nombre"
         fun imagen(nombre: String) = "$SERVIDOR/v1/imagenes/$nombre"
         private val JSON = "application/json".toMediaType()
         private val JPEG = "image/jpeg".toMediaType()
         private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
+        private val httpVideo = http.newBuilder().writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS).build()
         /** Para esperar mensajes (el servidor tiene la pregunta abierta hasta 25 s). */
         private val httpLargo = http.newBuilder().readTimeout(40, TimeUnit.SECONDS).build()
     }
@@ -326,6 +359,7 @@ class ClienteSocial(private val token: String? = null, private val permiteRed: (
 data class ContenidoReporte(
     val titulo: String = "", val portada: String = "", val tipoObra: String = "",
     val anio: String = "", val creador: String = "", val texto: String = "",
+    val video: String = "", val poster: String = "", val duracion: Int = 0,
 )
 
 fun leerContenidoReporte(contenido: String): ContenidoReporte {
@@ -339,6 +373,7 @@ fun leerContenidoReporte(contenido: String): ContenidoReporte {
     return ContenidoReporte(
         titulo = campo("titulo"), portada = campo("portada"), tipoObra = campo("tipoObra"),
         anio = campo("anio"), creador = campo("creador"),
+        video = campo("video"), poster = campo("poster"), duracion = campo("duracion").toIntOrNull() ?: 0,
         texto = campo("texto").ifBlank {
             (elemento as? kotlinx.serialization.json.JsonPrimitive)
                 ?.takeUnless { it is kotlinx.serialization.json.JsonNull }?.content.orEmpty()

@@ -87,6 +87,7 @@ fun Perfil(
         BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
         Interruptor(stringResource(R.string.gmf), stringResource(R.string.gmf_pista), e.gmf, vm::cambiarGmf)
         if (candadoDisponible) Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, vm::cambiarCandado)
+        BotonSecundario(stringResource(R.string.banco_titulo), { vm.abrir(Pantalla.Bancos) }, Modifier.fillMaxWidth())
         AjusteRecordatorio(vm)
         val contexto = androidx.compose.ui.platform.LocalContext.current
         val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
@@ -198,7 +199,7 @@ fun Preguntas(vm: AhorradorViewModel) {
 fun Reporte(vm: AhorradorViewModel) {
     Column {
         Cabecera(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_titulo), vm::cerrar)
-        io.github.fogonapps.identidad.ReporteFogon("El Ahorrador", BuildConfig.VERSION_NAME)
+        io.github.fogonapps.identidad.ReporteFogon("La Alcancía", BuildConfig.VERSION_NAME)
         Spacer(Modifier.height(40.dp))
     }
 }

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.R
+import io.github.fogonapps.ahorrador.datos.propuestaBanco
 import io.github.fogonapps.ahorrador.datos.Estado
 import io.github.fogonapps.ahorrador.datos.Formato
 import io.github.fogonapps.ahorrador.datos.Movimiento
@@ -66,7 +67,13 @@ val TipoMovimiento.nombre get() = when (this) {
 fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
-    val viejo = p.editar?.let { id -> e.movimientos.firstOrNull { it.id == id } }
+    val borrador = p.banco?.let { e.propuestaBanco(it) }
+    if ((p.banco != null && borrador == null) || (p.editar != null && e.movimientos.none { it.id == p.editar })) {
+        Cabecera(stringResource(R.string.banco_titulo), vm::cerrar)
+        Pista(stringResource(R.string.banco_pendiente_cambio))
+        return
+    }
+    val viejo = borrador ?: p.editar?.let { id -> e.movimientos.firstOrNull { it.id == id } }
     val activas = e.cuentas.filter { !it.archivada }
     val sinCredito = activas.filter { it.tipo != TipoCuenta.CREDITO }
 
@@ -90,12 +97,12 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
 
     Column(Modifier.fillMaxSize()) {
         Cabecera(stringResource(if (viejo == null) R.string.anotar else R.string.corregir), vm::cerrar, Iconos.Cerrar) {
-            if (viejo != null) IconButton({
+            if (viejo != null && p.banco == null) IconButton({
                 confirmar(vm.tx(R.string.borrar_movimiento), null) { vm.borrarMovimiento(viejo.id); vm.cerrar() }
             }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Borrar, stringResource(R.string.borrar)) }
         }
         // Tipo de movimiento (al corregir no se cambia: sería otro movimiento)
-        if (viejo == null) Selector(TipoMovimiento.entries.map { it to stringResource(it.nombre) }, tipo, {
+        if (viejo == null && p.banco == null) Selector(TipoMovimiento.entries.map { it to stringResource(it.nombre) }, tipo, {
             tipo = it
             categoria = null
             if (it != TipoMovimiento.GASTO && esCredito && it != TipoMovimiento.TRASPASO) cuenta = (sinCredito.firstOrNull() ?: activas.first()).id
@@ -122,6 +129,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
                 }
             }
 
+            if (categoria == null && (tipo == TipoMovimiento.GASTO || tipo == TipoMovimiento.INGRESO)) Pista(stringResource(R.string.banco_por_revisar))
             when (tipo) {
                 TipoMovimiento.GASTO, TipoMovimiento.INGRESO -> {
                     // De a cuatro por fila; la última fila completa con huecos para que no se estire.
@@ -178,13 +186,14 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
             val mov = Movimiento(
                 id = viejo?.id.orEmpty(), fecha = fecha, tipo = tipo, monto = monto.toLongOrNull() ?: 0, cuenta = cuenta,
                 aCuenta = if (tipo == TipoMovimiento.TRASPASO) aCuenta else null,
-                categoria = if (tipo == TipoMovimiento.GASTO || tipo == TipoMovimiento.INGRESO) categoria ?: "otros".takeIf { tipo == TipoMovimiento.GASTO } ?: "extra" else null,
+                categoria = if (tipo == TipoMovimiento.GASTO || tipo == TipoMovimiento.INGRESO) categoria ?: (if (p.banco != null || (viejo != null && viejo.categoria == null)) null else if (tipo == TipoMovimiento.GASTO) "otros" else "extra") else null,
                 nota = nota.trim(),
                 cuotas = if (tipo == TipoMovimiento.GASTO && esCredito) cuotas.toIntOrNull()?.coerceIn(1, 48)?.takeIf { it > 1 } else null,
                 fijo = viejo?.fijo,
                 meta = if (tipo == TipoMovimiento.AHORRO) meta else null,
             )
-            if (vm.guardarMovimiento(mov)) vm.cerrar()
+            if (p.banco != null) { vm.confirmarAviso(p.banco, mov); vm.cerrar() }
+            else if (vm.guardarMovimiento(mov.copy(hora = viejo?.hora, importado = viejo?.importado ?: false))) vm.cerrar()
         }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp))
     }
 }

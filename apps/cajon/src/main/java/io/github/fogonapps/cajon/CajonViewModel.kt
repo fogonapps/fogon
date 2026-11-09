@@ -2587,8 +2587,59 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    data class AvanceLastfm(val pagina: Int = 0, val paginas: Int = 0, val escuchas: Int = 0)
+    private val _lastfmResumen = MutableStateFlow<io.github.fogonapps.cajon.datos.Lastfm.Resumen?>(null)
+    val lastfmResumen: StateFlow<io.github.fogonapps.cajon.datos.Lastfm.Resumen?> = _lastfmResumen
+    private val _lastfmAvance = MutableStateFlow<AvanceLastfm?>(null)
+    val lastfmAvance: StateFlow<AvanceLastfm?> = _lastfmAvance
+    private var lastfmTrabajo: kotlinx.coroutines.Job? = null
+    private var lastfmUsuario = ""
+
+    fun editarLastfm() { cancelarLastfm(); _lastfmResumen.value = null }
+    fun cancelarLastfm() { lastfmTrabajo?.cancel(); _lastfmAvance.value = null }
+    fun revisarLastfm(usuario: String) {
+        cancelarLastfm()
+        _lastfmResumen.value = null
+        lastfmUsuario = usuario.trim()
+        lastfmTrabajo = viewModelScope.launch {
+            _lastfmAvance.value = AvanceLastfm()
+            try {
+                _lastfmResumen.value = io.github.fogonapps.cajon.datos.Lastfm().resumen(lastfmUsuario)
+            } catch (x: kotlinx.coroutines.CancellationException) { throw x
+            } catch (_: Exception) { avisar(tx(R.string.lastfm_error))
+            } finally { if (isActive) _lastfmAvance.value = null }
+        }
+    }
+
+    fun importarLastfm(fecha: String) {
+        if (_lastfmAvance.value != null || _lastfmResumen.value == null) return
+        val desde = if (fecha.isBlank()) 0L else try {
+            java.time.LocalDate.parse(fecha).atStartOfDay(java.time.ZoneOffset.UTC).toEpochSecond().also {
+                require(it >= 0 && it <= System.currentTimeMillis() / 1000)
+            }
+        } catch (_: Exception) { avisar(tx(R.string.lastfm_fecha_error)); return }
+        lastfmTrabajo = viewModelScope.launch {
+            _lastfmAvance.value = AvanceLastfm()
+            var cantidad = 0
+            try {
+                io.github.fogonapps.cajon.datos.Lastfm().importar(lastfmUsuario, desde) { pagina, numero ->
+                    if (!vigenciaPerfil.vigente()) throw kotlinx.coroutines.CancellationException()
+                    escuchas.sumar(pagina.escuchas)
+                    cantidad += pagina.escuchas.size
+                    _lastfmAvance.value = AvanceLastfm(numero, pagina.paginas, cantidad)
+                }
+                avisar(tx(R.string.lastfm_listo))
+            } catch (x: kotlinx.coroutines.CancellationException) { throw x
+            } catch (_: Exception) { avisar(tx(R.string.lastfm_error))
+            } finally {
+                if (isActive) _lastfmAvance.value = null
+                if (vigenciaPerfil.vigente()) procesarOidos()
+            }
+        }
+    }
+
     /** Un archivo de Letterboxd (ZIP o CSV), de Netflix o de Goodreads (CSV). */
-    fun importarDeOtraApp(bytes: ByteArray, nombre: String) {
+    fun importarDeOtraApp(bytes: ByteArray, nombre: String, perfilNetflix: String? = null) {
         // El historial de Spotify: sus escuchas van a "Escuchado hace poco" (y se agregan solas si está activado).
         Importar.spotify(bytes, nombre)?.let { h ->
             if (h.sinAlbum) { avisar(tx(R.string.aviso_spotify_basico)); return }
@@ -2598,7 +2649,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             procesarOidos()
             return
         }
-        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora())
+        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora(), perfilNetflix)
             ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
         if (r == null || r.obras.isEmpty()) { avisar(tx(R.string.aviso_no_es_de_otra_app)); return }
         var nuevas = 0
@@ -2607,7 +2658,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         buscarPortadas()
     }
 
-    fun exportarJson(): String = JsonCajon.encodeToString(Estado.serializer(), paraAfuera(_estado.value ?: Estado()))
+    fun exportarJson(): String = JsonCajon.encodeToString(Estado.serializer(), io.github.fogonapps.cajon.datos.Resenas.paraGuardar(paraAfuera(_estado.value ?: Estado())))
 
     /** El estado para sacarlo del teléfono (Gist, respaldo): con lo escuchado, que en el teléfono vive aparte. */
     private fun paraAfuera(e: Estado) = e.copy(escuchas = escuchas.oidos.value.takeIf { it.albumes.isNotEmpty() || it.spotifyHasta > 0 })

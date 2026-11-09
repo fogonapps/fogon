@@ -18,6 +18,7 @@ import io.ktor.server.request.receiveText
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respond
 import io.ktor.server.response.header
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.delete
@@ -69,7 +70,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.29"
+const val VERSION = "0.30"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -77,7 +78,7 @@ var correoListo = false
 @kotlinx.serialization.Serializable
 data class ErrorConFecha(val error: String, val desde: Long)
 
-fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY"))) {
+fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY"))) {
     launch {
         while (isActive) {
             try { social.limpiarSeguridad() } catch (_: Exception) {
@@ -95,6 +96,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val general = Limite(120)
     val registros = Limite(5)
     val pedidosCine = Limite(240)
+    val pedidosLastfm = Limite(60)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
             val token = call.request.header("Authorization")?.trim()?.removePrefix("Bearer ")?.trim()
@@ -141,6 +143,12 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()))
+            }
+            get("/lastfm") {
+                if (!pedidosLastfm.pasa("lastfm:${call.ip()}")) throw Problema(429, "despacio")
+                val params = call.request.queryParameters.entries().associate { it.key to it.value.firstOrNull().orEmpty() }
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { lastfm.pedir(params) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
             // TMDB por el servidor (la clave solo vive aquí), ver Cine.
             get("/tmdb/{ruta...}") {
@@ -205,6 +213,38 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             put("/imagenes") {
                 val yo = call.yo()
                 call.respond(HttpStatusCode.Created, social.subirImagen(yo, call.receiveChannel().readRemaining(900_001).readByteArray()))
+            }
+            put("/videos") {
+                val yo = call.yo()
+                call.respond(HttpStatusCode.Created, social.subirVideo(yo, call.receiveChannel().readRemaining((MAX_VIDEO + 1).toLong()).readByteArray()))
+            }
+            get("/videos/{nombre}") {
+                val archivo = social.video(call.parameters["nombre"].orEmpty(), call.lector(), call.token())
+                val largo = archivo.length()
+                call.response.header("Cache-Control", "no-store")
+                call.response.header("Accept-Ranges", "bytes")
+                val cabecera = call.request.header("Range")
+                val rango = cabecera?.let { rangoVideo(it, largo) }
+                if (cabecera != null && rango == null) {
+                    call.response.header("Content-Range", "bytes */$largo")
+                    call.respond(HttpStatusCode.RequestedRangeNotSatisfiable)
+                } else {
+                    val inicio = rango?.first ?: 0L
+                    val cantidad = rango?.let { it.last - it.first + 1 } ?: largo
+                    if (rango != null) call.response.header("Content-Range", "bytes ${rango.first}-${rango.last}/$largo")
+                    call.respondOutputStream(ContentType.Video.MP4, if (rango == null) HttpStatusCode.OK else HttpStatusCode.PartialContent, cantidad) {
+                        java.io.RandomAccessFile(archivo, "r").use { entrada ->
+                            entrada.seek(inicio)
+                            val bloque = ByteArray(64 * 1024)
+                            var quedan = cantidad
+                            while (quedan > 0) {
+                                val n = entrada.read(bloque, 0, minOf(bloque.size.toLong(), quedan).toInt())
+                                if (n < 0) break
+                                write(bloque, 0, n); quedan -= n
+                            }
+                        }
+                    }
+                }
             }
             get("/imagenes/{nombre}") {
                 call.response.header("Cache-Control", "no-store")

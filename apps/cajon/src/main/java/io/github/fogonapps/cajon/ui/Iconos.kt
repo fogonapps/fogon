@@ -11,6 +11,8 @@ import io.github.fogonapps.identidad.trazo
 /** Los íconos de El Cajón, de línea redonda como los de todas las apps (los comunes están en [IconosFogon]). */
 object Iconos {
     val Inicio = IconosFogon.Inicio
+    /** Reproducir un vídeo: un triángulo redondeado. */
+    val Reproducir = dibujo("reproducir", relleno("M8.5 5.6v12.8c0 .8.9 1.3 1.6.8l9.4-6.4c.6-.4.6-1.2 0-1.6l-9.4-6.4c-.7-.5-1.6 0-1.6.8z"))
     /** El cajón de madera: la biblioteca. */
     val Cajon = dibujo("cajon", relleno("M3.6 10.4h16.8v9.2H3.6z"), trazo("M4.6 10.4 6.6 5h10.8l2 5.4", 2.4f), huecoTrazo("M9.4 14.4h5.2", 2f))
     /** Una claqueta: películas. */

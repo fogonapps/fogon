@@ -22,6 +22,13 @@ data class Resena(
 )
 
 object Resenas {
+    /** Convierte copias antiguas antes de retirar los campos heredados de la escritura. */
+    fun paraGuardar(e: Estado): Estado = migrar(e).let { migrado ->
+        migrado.copy(obras = migrado.obras.map { o ->
+            o.copy(resena = "", resenaVisibilidad = "", registros = o.registros.map { it.copy(texto = "") })
+        })
+    }
+
     fun obra(e: Estado, id: String): Obra? = e.vivas.firstOrNull { it.id == id } ?: e.artistasVivos.firstOrNull { it.id == id }?.let {
         Obra(it.id, if (it.tipo == Personas.AUTOR) "autor" else "artista", it.nombre, fuente = it.fuente, portada = it.foto)
     }

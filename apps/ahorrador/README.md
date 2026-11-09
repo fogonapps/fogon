@@ -1,11 +1,11 @@
-# El Ahorrador · Fogón
+# La Alcancía · Fogón
 
-<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Ahorrador"></p>
+<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="La Alcancía"></p>
 
 Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Su personaje es una ranita tranquila.
 
-- Descargar: [fogonapps/el-ahorrador](https://github.com/fogonapps/el-ahorrador/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-ahorrador`).
-- Novedades de cada versión: en las [versiones de El Ahorrador](https://github.com/fogonapps/el-ahorrador/releases).
+- Descargar: [fogonapps/la-alcancia](https://github.com/fogonapps/la-alcancia/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-alcancia`).
+- Novedades de cada versión: en las [versiones de La Alcancía](https://github.com/fogonapps/la-alcancia/releases).
 
 ## Qué hace
 
@@ -23,6 +23,7 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
   - **Solo anotar.**
 - **Resumen del mes:** cuánto entró, salió y guardaste, en qué se fue (una dona por categoría; al tocar una, sus movimientos) y cómo van los últimos meses.
 - **Buscar movimientos** por nota, categoría, cuenta o valor, con filtros de categoría y mes.
+- **Anotar desde el banco (opcional):** reconoce transferencias y pagos de Bancolombia recibidos por SMS y envíos desde la app de Nu. Enlaza tus cuentas y confirma con Anotar, Editar o No; también puedes activar «Anotar solo» por banco y revisar o deshacer después. Detecta movimientos entre tus cuentas y evita duplicados con el CSV.
 - **Extracto del banco:** importa el CSV que descargas del banco; adivina las columnas y la categoría de cada movimiento, salta lo que ya estaba y te deja revisar antes de anotar.
 - **Reto de ahorro de 52 semanas** y **recordatorio diario** opcional (solo si ese día no anotaste nada).
 - **Widget** con lo que tienes, lo que salió este mes y un botón para anotar.
@@ -40,7 +41,8 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet y sin pedi
 
 | Permiso | Para qué |
 |---------|----------|
-| Notificaciones | Avisar de los pagos fijos que están por vencer y el recordatorio diario, si lo activas. Se pide al crear el primer pago fijo o al encender el recordatorio. |
+| Notificaciones | Avisar de los pagos fijos que están por vencer y el recordatorio diario, si lo activas, además de confirmar las alertas del banco. Se pide al crear el primer pago fijo o al encender el recordatorio. |
+| Acceso a notificaciones (opcional) | Android permite ver todas las notificaciones. Solo se procesan las apps y los bancos elegidos: SMS que empiezan por «Bancolombia:» y envíos reconocidos de Nu. Lo demás se ignora y no se guarda. Solo alertas nuevas: no se lee el historial de SMS. Se activa en Perfil → Anotar desde el banco y se puede apagar allí o revocar en Android. Nada sale del teléfono. |
 | Huella o bloqueo del teléfono | El candado, si lo activas. |
 | Arrancar con el teléfono | Volver a programar el aviso diario después de reiniciar. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |

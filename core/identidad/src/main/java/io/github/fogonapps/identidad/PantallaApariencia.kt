@@ -202,9 +202,9 @@ fun PasoDaleVida(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier 
 }
 
 @Composable
-private fun Encabezado(texto: String) {
+internal fun Encabezado(texto: String, modifier: Modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)) {
     Text(texto, style = MaterialTheme.typography.titleLarge, color = FogonTema.actual.texto,
-        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp).semantics { heading() })
+        modifier = modifier.semantics { heading() })
 }
 
 /** Una fila de muestras de un color (papel o tinta): círculos y uno más para elegir cualquier otro. */

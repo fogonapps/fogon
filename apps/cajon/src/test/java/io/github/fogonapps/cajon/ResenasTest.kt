@@ -165,4 +165,18 @@ class ResenasTest {
         assertFalse(RedSocial.publicacionesDe(e).any { it.clave == "o:obra" })
     }
 
+
+    @Test fun estado154ConservaResenasPeroNoReescribeCamposViejos() = runTest {
+        val json154 = """{"obras":[{"id":"o154","tipo":"pelicula","titulo":"Antigua","resena":"Opinión 1.54","resenaVisibilidad":"publica","registros":[{"id":"g154","fecha":"2026-01-02","texto":"Diario 1.54"}]}]}"""
+        val viejo = JsonCajon.decodeFromString(Estado.serializer(), json154)
+        val esperado = Resenas.migrar(viejo).resenas
+        val salida = java.io.ByteArrayOutputStream()
+        SerializadorEstado.writeTo(viejo, salida)
+        val guardado = JsonCajon.decodeFromString(Estado.serializer(), salida.toString("UTF-8"))
+        assertEquals(esperado, guardado.resenas)
+        assertEquals("", guardado.obras.single().resena)
+        assertEquals("", guardado.obras.single().resenaVisibilidad)
+        assertEquals("", guardado.obras.single().registros.single().texto)
+        assertEquals(esperado, SerializadorEstado.readFrom(ByteArrayInputStream(salida.toByteArray())).resenas)
+    }
 }

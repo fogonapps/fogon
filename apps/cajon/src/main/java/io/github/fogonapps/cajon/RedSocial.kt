@@ -247,6 +247,14 @@ class RedSocial(
     val notas: StateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>> = _notas
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando
+    private val _progresoVideo = MutableStateFlow<Float?>(null)
+    val progresoVideo: StateFlow<Float?> = _progresoVideo
+    private var publicacionEnCurso: Job? = null
+    fun cancelarPublicacion() { publicacionEnCurso?.cancel() }
+    fun cabecerasVideo(): Map<String, String> {
+        check(caja.redPermitida) { "politica_pendiente" }
+        return caja.tokenSocial?.let { mapOf("Authorization" to "Bearer $it") }.orEmpty()
+    }
 
     init {
         scope.launch {
@@ -276,6 +284,7 @@ class RedSocial(
                     if (x.desde > 0) _borrarEl.value = x.desde
                 }
                 else if (avisar) decir(when (x.error) {
+                    "video_formato", "video_duracion", "video_grande", "video_y_fotos", "poster" -> R.string.video_preparacion_error
                     "codigo_mfa", "recuperacion" -> R.string.equipo_codigo_error
                     "sin_permiso" -> R.string.equipo_sin_permiso
                     "equipo_propio", "solo_principal", "nivel_protegido", "reporte_propio" -> R.string.equipo_protegido
@@ -1103,20 +1112,37 @@ class RedSocial(
 
     /* ----- Publicar a mano ----- */
 
-    /** Publica unas palabras y hasta diez fotos sobre una obra o sobre nada. Cada foto se achica y se sube primero. */
-    fun publicar(texto: String, obra: String?, fotos: List<android.net.Uri>, visibilidad: String, spoiler: Boolean, listo: () -> Unit) = scope.launch {
-        if (!caja.redPermitida) { decir(R.string.politica_pausa); return@launch }
-        _publicando.value = true
-        try {
-            val ok = intentar {
-                val imagenes = fotos.take(10).map { u -> jpeg(u.toString(), 1600, 900_000)?.let { cliente().subirImagen(it) } ?: throw IOException("sin imagen") }
-                val ahora = System.currentTimeMillis()
-                val p = PublicacionPropia("p${ahora.toString(36)}", ahora, texto.trim().take(2000), obra.orEmpty(), visibilidad = visibilidad, spoiler = spoiler, cambio = ahora, imagenes = imagenes)
-                cambiar { e -> e.copy(publicaciones = e.publicaciones + p) }
-                subirAhora()
-            }
-            if (ok) { decir(R.string.red_publicada); cargarFeed(); listo() }
-        } finally { _publicando.value = false }
+    /** Publica texto con fotos o un vídeo preparado en el teléfono, subiendo los archivos primero. */
+    fun publicar(texto: String, obra: String?, fotos: List<android.net.Uri>, visibilidad: String, spoiler: Boolean, video: android.net.Uri? = null, listo: () -> Unit): Job {
+        if (publicacionEnCurso?.isActive == true) return publicacionEnCurso!!
+        return scope.launch {
+            if (!caja.redPermitida) { decir(R.string.politica_pausa); return@launch }
+            _publicando.value = true
+            var preparado: io.github.fogonapps.cajon.datos.VideoPreparado? = null
+            try {
+                require(video == null || fotos.isEmpty())
+                val ok = intentar {
+                    val marca = sesion.actual()
+                    val clientePublicacion = cliente()
+                    if (video != null) {
+                        _progresoVideo.value = 0f
+                        preparado = try {
+                            io.github.fogonapps.cajon.datos.prepararVideo(app, video, { _progresoVideo.value = it }, { decir(R.string.video_recortado) })
+                        } catch (x: kotlinx.coroutines.CancellationException) { throw x }
+                        catch (_: Exception) { throw ErrorSocial(400, "video_formato") }
+                    }
+                    val nombreVideo = preparado?.let { clientePublicacion.subirVideo(it.archivo) }.orEmpty()
+                    val poster = preparado?.let { clientePublicacion.subirImagen(it.poster) }.orEmpty()
+                    if (!sesion.vigente(marca)) return@intentar
+                    val imagenes = fotos.take(10).map { u -> jpeg(u.toString(), 1600, 900_000)?.let { cliente().subirImagen(it) } ?: throw IOException("sin imagen") }
+                    val ahora = System.currentTimeMillis()
+                    val p = PublicacionPropia("p${ahora.toString(36)}", ahora, texto.trim().take(2000), obra.orEmpty(), visibilidad = visibilidad, spoiler = spoiler, cambio = ahora, imagenes = imagenes, video = nombreVideo, poster = poster, duracionVideo = preparado?.segundos ?: 0)
+                    cambiar { e -> e.copy(publicaciones = e.publicaciones + p) }
+                    subirAhora()
+                }
+                if (ok) { decir(R.string.red_publicada); cargarFeed(); listo() }
+            } finally { preparado?.archivo?.delete(); _progresoVideo.value = null; _publicando.value = false }
+        }.also { publicacionEnCurso = it }
     }
 
     /**
@@ -1403,7 +1429,10 @@ class RedSocial(
                 PublicacionSubida("f:${p.clave}", Visibilidad.de(p.visibilidad), p.cuando, "foto", JsonObject(
                     (porId[p.obra]?.let(::obraBreve) ?: buildJsonObject { }) + buildJsonObject {
                         if (p.texto.isNotBlank()) put("texto", p.texto)
-                        val imagenes = p.imagenes.ifEmpty { listOfNotNull(p.imagen.takeIf { it.isNotBlank() }) }
+                        if (p.video.isNotBlank()) {
+                            put("video", p.video); put("poster", p.poster); put("duracion", p.duracionVideo)
+                        }
+                        val imagenes = if (p.video.isNotBlank()) emptyList() else p.imagenes.ifEmpty { listOfNotNull(p.imagen.takeIf { it.isNotBlank() }) }
                         put("imagenes", JsonArray(imagenes.map { JsonPrimitive(it) }))
                         imagenes.firstOrNull()?.let { put("imagen", it) }
                         if (p.spoiler) put("spoiler", true)

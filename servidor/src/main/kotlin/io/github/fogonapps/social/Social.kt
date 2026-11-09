@@ -164,6 +164,7 @@ class Social(
 
     val equipo = Equipo(b, dirFotos.parentFile ?: dirFotos, ahora, cartero, principal)
 
+    private val dirVideos get() = java.io.File(dirFotos.parentFile, "videos")
     private val dirImagenes get() = java.io.File(dirFotos, "i")
 
     /** El secreto de los identificadores opacos y las huellas de las vistas: al azar, una vez, en la carpeta de datos (no sale del servidor). */
@@ -342,6 +343,7 @@ class Social(
     fun limpiarSeguridad() {
         b.usar { leer("SELECT id FROM cuentas WHERE borrar_el > 0 AND borrar_el <= ? AND id NOT IN (SELECT cuenta FROM roles WHERE rol IN ('principal','administrador'))", ahora()) { it.getLong(1) } }.forEach(::borrarCuenta)
         b.usar {
+            val videosVencidos = leer("SELECT DISTINCT v.nombre FROM videos v JOIN publicaciones p ON p.cuenta = v.cuenta AND instr(p.datos, v.nombre) > 0 WHERE p.estado = 'retirado' AND p.retirado_hasta <= ?", ahora()) { it.getString(1) }
             val imagenesVencidas = leer("SELECT DISTINCT i.nombre FROM imagenes i JOIN publicaciones p ON p.cuenta = i.cuenta AND instr(p.datos, i.nombre) > 0 WHERE p.estado = 'retirado' AND p.retirado_hasta <= ?", ahora()) { it.getString(1) }
             cambiar("DELETE FROM comentarios WHERE estado = 'retirado' AND retirado_hasta <= ?", ahora())
             cambiar("DELETE FROM publicaciones WHERE estado = 'retirado' AND retirado_hasta <= ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", ahora())
@@ -351,6 +353,13 @@ class Social(
                     cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
                 }
             }
+            videosVencidos.forEach { nombre ->
+                if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+                    java.io.File(dirVideos, "$nombre.mp4").delete()
+                    cambiar("DELETE FROM videos WHERE nombre = ?", nombre)
+                }
+            }
+            purgarVideosSinPublicacion()
             cambiar("DELETE FROM sesiones WHERE ultimo_uso <= ?", ahora() - CADUCIDAD)
             cambiar("DELETE FROM intentos WHERE ultimo_fallo <= ? AND bloqueada_hasta <= ?", ahora() - DIA, ahora())
             cambiar("DELETE FROM envios_codigo WHERE cuando <= ?", ahora() - HORA)
@@ -658,6 +667,7 @@ class Social(
         if (equipo.rol(yo) == "principal") throw Problema(403, "cuenta_protegida")
         // Las cascadas de SQLite tampoco deben destruir evidencia pendiente o preservada.
         if (b.usar { leer("SELECT 1 FROM publicaciones p WHERE (p.cuenta = ? AND p.estado != 'visible') OR EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = p.id AND c.estado != 'visible' AND (c.cuenta = ? OR p.cuenta = ?)) LIMIT 1", yo, yo, yo) { 1 }.isNotEmpty() }) return
+        val videos = b.usar { leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) } }
         val imagenes = b.usar { leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) } }
         b.usar {
             leer("SELECT correo FROM cuentas WHERE id = ?", yo) { it.getString(1) }.firstOrNull()?.let { cambiar("DELETE FROM codigos WHERE correo = ?", it) }
@@ -669,6 +679,7 @@ class Social(
         }
         java.io.File(dirFotos, "$yo.jpg").delete()
         imagenes.forEach { java.io.File(dirImagenes, "$it.jpg").delete() }
+        videos.forEach { java.io.File(dirVideos, "$it.mp4").delete() }
     }
 
     private fun idDe(usuario: String): Long =
@@ -789,6 +800,41 @@ class Social(
         return java.io.File(dirImagenes, "$nombre.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "no_existe")
     }
 
+    @Synchronized
+    fun subirVideo(yo: Long, bytes: ByteArray): ImagenSubida {
+        val datos = revisarVideo(bytes)
+        val nombre = Base.tokenNuevo().take(22)
+        dirVideos.mkdirs()
+        val archivo = java.io.File(dirVideos, "$nombre.mp4")
+        try {
+            archivo.writeBytes(bytes)
+            b.usar { cambiar("INSERT INTO videos(nombre, cuenta, cuando, duracion, ancho, alto) VALUES(?,?,?,?,?,?)", nombre, yo, ahora(), datos.duracion, datos.ancho, datos.alto) }
+        } catch (e: Exception) { archivo.delete(); throw e }
+        return ImagenSubida(nombre)
+    }
+
+    /** La portada y el vídeo comparten el estado de moderación de su publicación. */
+    @Synchronized
+    fun video(nombre: String, lector: Long?, token: String?): java.io.File {
+        if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
+        val autor = b.usar { leer("SELECT cuenta FROM videos WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }
+            ?: throw Problema(404, "no_existe")
+        if (!visible(autor)) throw Problema(404, "no_existe")
+        val publicaciones = b.usar { leer("SELECT estado, visibilidad, oculta FROM publicaciones WHERE cuenta = ? AND instr(datos, ?) > 0", autor, nombre) { Triple(it.getString(1), it.getString(2), it.getInt(3) != 0) } }
+        if (publicaciones.any { it.first == "preservado" }) throw Problema(404, "no_existe")
+        if (publicaciones.any { it.first == "retirado" || (it.third && lector != autor) }) {
+            if (lector == null || "ver_reportes" !in equipo.permisos(lector)) throw Problema(404, "no_existe")
+            equipo.requiere(lector, "ver_reportes", token)
+        } else if (lector != autor && publicaciones.none { it.first == "visible" && puedeVer(lector, autor, it.second) }) throw Problema(404, "no_existe")
+        return java.io.File(dirVideos, "$nombre.mp4").takeIf { it.isFile } ?: throw Problema(404, "no_existe")
+    }
+
+    private fun purgarVideosSinPublicacion() = b.usar {
+        leer("SELECT nombre FROM videos WHERE NOT EXISTS(SELECT 1 FROM publicaciones p WHERE p.cuenta = videos.cuenta AND instr(p.datos, videos.nombre) > 0) AND cuando <= ?", ahora() - DIA) { it.getString(1) }.forEach {
+            if (java.io.File(dirVideos, "$it.mp4").delete() || !java.io.File(dirVideos, "$it.mp4").exists()) cambiar("DELETE FROM videos WHERE nombre = ?", it)
+        }
+    }
+
     /* ----- Publicaciones ----- */
 
     /**
@@ -816,6 +862,7 @@ class Social(
         subirPublicaciones(yo, lista + viejas)
     }
 
+    @Synchronized
     fun subirPublicaciones(yo: Long, lista: List<PublicacionSubida>) {
         if (lista.size > 2000) throw Problema(413, "muy_grande")
         val buenas = lista.filter { it.visibilidad in Vis.SUBIBLES && it.clave.isNotBlank() }.distinctBy { it.clave }
@@ -835,7 +882,17 @@ class Social(
                         cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", it.first)
                     }
                 val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
+                val videosMios = leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
                 buenas.forEach { p ->
+                    val video = p.datos["video"]
+                    val poster = p.datos["poster"]
+                    if (video != null) {
+                        if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo != "foto") throw Problema(400, "video_formato")
+                        if (poster !is JsonPrimitive || !poster.isString || poster.content !in mias) throw Problema(400, "poster")
+                        val fotos = p.datos["imagenes"] as? kotlinx.serialization.json.JsonArray
+                        val fotosResena = p.datos["fotos"] as? kotlinx.serialization.json.JsonArray
+                        if (!fotos.isNullOrEmpty() || !fotosResena.isNullOrEmpty() || (p.datos["imagen"] as? JsonPrimitive)?.content?.isNotBlank() == true) throw Problema(400, "video_y_fotos")
+                    } else if (poster != null) throw Problema(400, "poster")
                     val imagenes = p.datos["imagenes"]
                     if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
                     if (p.tipo == "resena" && !resenaValida(p.datos, mias)) return@forEach
@@ -907,7 +964,9 @@ class Social(
      * retenidos por moderación, deja de ser pública (como al quitarla por sincronización). Su clave queda en
      * `retiradas` para que una sincronización vieja de otro teléfono no la vuelva a crear.
      */
+    @Synchronized
     fun borrarPublicacion(yo: Long, id: Long) {
+        val videos = b.usar { leer("SELECT v.nombre FROM videos v JOIN publicaciones p ON p.cuenta = v.cuenta AND instr(p.datos, v.nombre) > 0 WHERE p.id = ? AND p.cuenta = ?", id, yo) { it.getString(1) } }
         b.usar {
             autoCommit = false
             try {
@@ -918,6 +977,14 @@ class Social(
                 cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", id)
                 commit()
             } catch (x: Exception) { rollback(); throw x } finally { autoCommit = true }
+        }
+        b.usar {
+            videos.forEach { nombre ->
+                if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+                    val archivo = java.io.File(dirVideos, "$nombre.mp4")
+                    if (archivo.delete() || !archivo.exists()) cambiar("DELETE FROM videos WHERE nombre = ?", nombre)
+                }
+            }
         }
     }
 

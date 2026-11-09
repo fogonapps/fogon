@@ -35,6 +35,8 @@ data class Oidos(
     val albumes: List<AlbumOido> = emptyList(),
     /** Hasta cuándo se trajo lo escuchado de Spotify (milisegundos), para no repetir. */
     val spotifyHasta: Long = 0,
+    /** Huellas de escuchas importadas para que repetir un historial sea idempotente. */
+    val huellas: Set<String> = emptySet(),
     /** Apps de las que no se anota nada (nombres de paquete), elegidas por la persona. */
     val sinAnotar: List<String> = emptyList(),
     /** Apps de las que llegó algo (paquete → nombre), para poder excluirlas. */
@@ -82,6 +84,7 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                 )
             }
             o.copy(albumes = m.values.sortedByDescending { it.ultima }.take(2000), spotifyHasta = maxOf(o.spotifyHasta, otro.spotifyHasta),
+                huellas = o.huellas + otro.huellas,
                 sinAnotar = (o.sinAnotar + otro.sinAnotar).distinct(), apps = otro.apps + o.apps)
         }
     }
@@ -90,6 +93,13 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
     fun sumar(lista: List<Escucha>) {
         if (lista.isEmpty()) return
         cambiar { o ->
+            sumarA(o, lista)
+        }
+    }
+
+    companion object {
+        fun sumarA(o: Oidos, lista: List<Escucha>): Oidos {
+            val huellas = o.huellas.toMutableSet()
             val porClave = o.albumes.associateBy { it.clave }.toMutableMap()
             val apps = o.apps.toMutableMap()
             for (x in lista) {
@@ -98,6 +108,10 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                 val artista = x.artista.trim(); val album = x.album.trim()
                 if (artista.isEmpty() || album.isEmpty()) continue
                 val clave = clave(artista, album)
+                val huella = java.security.MessageDigest.getInstance("SHA-256").digest(
+                    kotlinx.serialization.json.JsonArray(listOf(clave, Logica.tituloLimpio(x.cancion), (x.cuando / 60_000).toString()).map { kotlinx.serialization.json.JsonPrimitive(it) }).toString().toByteArray()
+                ).joinToString("") { "%02x".format(it) }
+                if (!huellas.add(huella)) continue
                 val viejo = porClave[clave] ?: AlbumOido(clave, artista, album, primera = x.cuando)
                 val cancion = Logica.tituloLimpio(x.cancion)
                 porClave[clave] = viejo.copy(
@@ -107,11 +121,9 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                 )
             }
             // Hasta 2000 álbumes: los más recientes.
-            o.copy(albumes = porClave.values.sortedByDescending { it.ultima }.take(2000), apps = apps)
+            return o.copy(albumes = porClave.values.sortedByDescending { it.ultima }.take(2000), apps = apps, huellas = huellas)
         }
-    }
 
-    companion object {
         /** La clave de un álbum: artista principal y título, sin tildes, mayúsculas ni "(Deluxe)" y parecidos. */
         fun clave(artista: String, album: String): String {
             val a = Logica.tituloLimpio(artista.split(",", " & ", " feat", " ft.", " x ").first())

@@ -1,4 +1,4 @@
-<p>El Ahorrador helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
+<p>La Alcancía helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Log in seconds</b> with a big keypad: expenses, income, transfers between accounts and savings.</li>
@@ -15,4 +15,7 @@
 
 <p><b>Your data is yours.</b> Everything stays on your phone, and the app doesn’t even have internet permission. Save a backup any time and export your entries to a spreadsheet.</p>
 
-<p>El Ahorrador isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>
+<p>La Alcancía isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>
+
+<p><b>Record from your bank (optional):</b> recognizes Bancolombia payments and transfers delivered by SMS and outgoing transfers from Nu. Link your accounts and confirm before recording, or enable automatic recording per bank to review and undo later. Detects transfers between your accounts.</p>
+<p><b>Notification access:</b> Android lets this access see all notifications. La Alcancía filters by app and selected bank first: only SMS starting with “Bancolombia:” and recognized outgoing transfers from the Nu app are processed. Everything else is never stored. SMS history is never read. Turn it off in Profile or revoke access in Android. Nothing leaves your phone.</p>

@@ -2,6 +2,7 @@ package io.github.fogonapps.cajon
 
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.JsonCajon
+import io.github.fogonapps.cajon.datos.Resenas
 import io.github.fogonapps.cajon.datos.Logica
 import io.github.fogonapps.identidad.ProveedorDatosFogon
 import kotlinx.coroutines.flow.first
@@ -20,7 +21,7 @@ class DatosCajon : ProveedorDatosFogon() {
 
     override suspend fun leer(): String {
         val perfil = app.recursos()
-        return JsonCajon.encodeToString(Estado.serializer(), perfil.almacen.data.first().copy(escuchas = perfil.escuchas.oidos.value))
+        return JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(perfil.almacen.data.first().copy(escuchas = perfil.escuchas.oidos.value)))
     }
 
     override suspend fun restaurar(texto: String): Boolean {

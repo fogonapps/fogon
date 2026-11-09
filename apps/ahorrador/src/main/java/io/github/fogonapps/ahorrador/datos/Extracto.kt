@@ -109,3 +109,24 @@ fun montoReto(base: Long, semana: Int) = base * semana
 
 /** Lo que se lleva ahorrado si se cumplió hasta la semana [semana]. */
 fun totalReto(base: Long, semana: Int) = base * semana * (semana + 1) / 2
+
+/** Cruza cada fila una sola vez: conserva dos compras iguales y evita reimportarlas. */
+fun importarFilasExtracto(e: Estado, filas: List<Pair<FilaExtracto, String>>, cuenta: String, nuevoId: () -> String): Estado {
+    val usados = mutableSetOf<String>()
+    var resultado = e
+    filas.forEach { (f, categoria) ->
+        val existente = e.movimientos.firstOrNull { it.id !in usados && coincideExtracto(it, f.fecha, f.monto, cuenta) }
+        if (existente != null) { usados += existente.id; return@forEach }
+        val nuevo = Movimiento(nuevoId(), f.fecha, if (f.monto < 0) TipoMovimiento.GASTO else TipoMovimiento.INGRESO,
+            kotlin.math.abs(f.monto), cuenta, categoria = categoria, nota = f.descripcion.take(60), importado = true)
+        val pendiente = resultado.notificaciones.registros.firstOrNull {
+            !it.descartado && it.movimiento == null && resultado.cuentaEnlazada(it.aviso) == cuenta &&
+                it.aviso.momento.substringBefore('T') == f.fecha && it.aviso.monto == nuevo.monto && it.aviso.tipo == nuevo.tipo
+        }
+        resultado = resultado.copy(movimientos = resultado.movimientos + nuevo,
+            notificaciones = resultado.notificaciones.copy(registros = resultado.notificaciones.registros.map {
+                if (pendiente != null && it.aviso.huella == pendiente.aviso.huella) it.copy(movimiento = nuevo.id) else it
+            }))
+    }
+    return agruparAnotadosBanco(resultado)
+}

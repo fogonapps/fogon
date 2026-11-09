@@ -69,9 +69,15 @@ fun Transparencia(vm: CajonViewModel) {
     val opciones = revision.let { vm.opcionesPrivacidad() }
     Cabecera(stringResource(R.string.privacidad_titulo), vm::cerrar)
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        listOf(R.string.privacidad_local, R.string.privacidad_social, R.string.privacidad_servicios).forEach {
-            Text(stringResource(it), color = f.texto)
+        @Composable fun Frases(recurso: Int) {
+            stringResource(recurso).split('\n').filter { it.isNotBlank() }.forEach { Text(it, color = f.texto) }
         }
+        Seccion(stringResource(R.string.privacidad_local_titulo))
+        Frases(R.string.privacidad_local)
+        Seccion(stringResource(R.string.privacidad_social_titulo))
+        Frases(R.string.privacidad_social)
+        Seccion(stringResource(R.string.privacidad_servicios_titulo))
+        Frases(R.string.privacidad_servicios)
         Seccion(stringResource(R.string.privacidad_opciones))
         @Composable fun OpcionPrivada(titulo: Int, activo: Boolean, accion: () -> Unit) {
             FilaAjuste(Iconos.Candado, stringResource(titulo), stringResource(if (activo) R.string.privacidad_activa else R.string.privacidad_inactiva), accion)
@@ -83,7 +89,8 @@ fun Transparencia(vm: CajonViewModel) {
         }
         OpcionPrivada(R.string.aj_notificaciones, opciones.avisos) { vm.abrir(Pantalla.AjustesAvisos) }
         OpcionPrivada(R.string.nube_titulo, opciones.copiaCifrada) { vm.abrir(Pantalla.CajonEnCuenta) }
-        Text(stringResource(R.string.privacidad_opcionales), color = f.texto)
+        Frases(R.string.privacidad_opcionales)
+        Seccion(stringResource(R.string.privacidad_derechos_titulo))
         BotonSecundario(stringResource(R.string.red_politica), { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.privacidad_contacto), { uri.openUri("mailto:fogonapps@gmail.com") }, Modifier.fillMaxWidth())
     }

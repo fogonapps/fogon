@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.R
+import io.github.fogonapps.ahorrador.datos.Banco
+import io.github.fogonapps.ahorrador.nombreBanco
 import io.github.fogonapps.ahorrador.datos.Credito
 import io.github.fogonapps.ahorrador.datos.Cuenta
 import io.github.fogonapps.ahorrador.datos.Estado
@@ -137,6 +139,7 @@ fun EditarCuenta(vm: AhorradorViewModel, e: Estado, id: String?) {
     // Se muestra el saldo de hoy (o la deuda, en tarjetas); al guardar se ajusta el saldo inicial para que cuadre.
     val hoyTiene = c?.let { if (it.tipo == TipoCuenta.CREDITO) L.deuda(e, it.id) else L.saldo(e, it.id) }
     var nombre by rememberSaveable { mutableStateOf(c?.nombre.orEmpty()) }
+    var banco by rememberSaveable { mutableStateOf(c?.banco) }
     var tipo by rememberSaveable { mutableStateOf(c?.tipo ?: TipoCuenta.BANCO) }
     var saldo by rememberSaveable { mutableStateOf(hoyTiene?.toString().orEmpty()) }
     var cupo by rememberSaveable { mutableStateOf(c?.credito?.cupo?.takeIf { it > 0 }?.toString().orEmpty()) }
@@ -151,6 +154,10 @@ fun EditarCuenta(vm: AhorradorViewModel, e: Estado, id: String?) {
         // El tipo de una cuenta con movimientos no se cambia: una tarjeta cuenta la plata al revés.
         if (c == null || e.movimientos.none { it.cuenta == c.id || it.aCuenta == c.id }) {
             Selector(TipoCuenta.entries.map { it to stringResource(it.nombre) }, tipo, { tipo = it })
+        }
+        if (tipo == TipoCuenta.BANCO || tipo == TipoCuenta.BILLETERA) {
+            Text(stringResource(R.string.banco_entidad), color = f.textoSuave)
+            Selector(Banco.entries.map { it to stringResource(it.nombreBanco) }, banco ?: Banco.OTRO, { banco = it })
         }
         val credito = tipo == TipoCuenta.CREDITO
         CampoPesos(saldo, { saldo = it }, stringResource(if (credito) R.string.deuda_hoy else R.string.saldo_hoy))
@@ -174,6 +181,7 @@ fun EditarCuenta(vm: AhorradorViewModel, e: Estado, id: String?) {
             fun num(s: String, d: Double) = s.replace(',', '.').toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: d
             vm.guardarCuenta(Cuenta(
                 id = c?.id.orEmpty(), nombre = nombre.trim(), tipo = tipo, saldoInicial = inicial,
+                banco = banco, archivada = c?.archivada ?: false,
                 credito = if (credito) Credito(cupo.toLongOrNull() ?: 0, dia(corte, 15), dia(pago, 30), num(tasa, 2.0), num(minimo, 5.0)) else null,
             ))
             vm.cerrar()

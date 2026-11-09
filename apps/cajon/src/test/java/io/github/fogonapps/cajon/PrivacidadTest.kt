@@ -61,3 +61,11 @@ class PrivacidadTest {
         assertTrue(estado(sesion = true, llave = true).copiaCifrada)
     }
 }
+
+class RevisarAlAbrirTest {
+    @Test fun revisaLaPrimeraVezYDespuesComoMuchoUnaVezPorMinuto() {
+        org.junit.Assert.assertTrue(io.github.fogonapps.cajon.datos.debeRevisarAlAbrir(0, 5_000))
+        org.junit.Assert.assertFalse(io.github.fogonapps.cajon.datos.debeRevisarAlAbrir(5_000, 30_000))
+        org.junit.Assert.assertTrue(io.github.fogonapps.cajon.datos.debeRevisarAlAbrir(5_000, 65_000))
+    }
+}

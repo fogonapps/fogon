@@ -130,6 +130,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.EditarMeta -> EditarMeta(vm, estado, p.id)
                             is Pantalla.EditarSobre -> EditarSobre(vm, estado, p.id)
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
+                            is Pantalla.Bancos -> Bancos(vm, estado)
                             is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
                             is Pantalla.ImportarExtracto -> ImportarExtracto(vm, estado, p.filas)
                             is Pantalla.AcercaDe -> AcercaDe(vm)

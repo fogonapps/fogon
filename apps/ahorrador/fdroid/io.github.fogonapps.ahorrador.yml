@@ -8,14 +8,14 @@ License: GPL-3.0-or-later
 AuthorName: Fogón
 SourceCode: https://github.com/fogonapps/fogon
 IssueTracker: https://github.com/fogonapps/fogon/issues
-Changelog: https://github.com/fogonapps/el-ahorrador/releases
+Changelog: https://github.com/fogonapps/la-alcancia/releases
 
-AutoName: El Ahorrador
+AutoName: La Alcancía
 
 RepoType: git
 Repo: https://github.com/fogonapps/fogon.git
 # F-Droid compila desde el código y publica nuestro APK firmado solo si sale idéntico.
-Binaries: https://github.com/fogonapps/el-ahorrador/releases/download/v%v/ElAhorrador-%v.apk
+Binaries: https://github.com/fogonapps/la-alcancia/releases/download/v%v/LaAlcancia-%v.apk
 
 Builds:
   - versionName: "1.14"

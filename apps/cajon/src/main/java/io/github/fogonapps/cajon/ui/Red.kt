@@ -3,6 +3,9 @@ package io.github.fogonapps.cajon.ui
 import io.github.fogonapps.perfil.*
 import io.github.fogonapps.perfil.Perfil as PerfilComun
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.contentDescription
@@ -197,7 +201,10 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
                 io.github.fogonapps.cajon.RedSocial.Companion.Motivo.Nueva -> stringResource(R.string.red_porque_nueva)
             }, style = MaterialTheme.typography.labelSmall, color = f.acentoTexto, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (p.tipo != "resena" && (d.texto("spoiler") != "true" || destapado)) CarruselFotos(imagenesPublicacion(d))
+        if (p.tipo != "resena" && (d.texto("spoiler") != "true" || destapado)) {
+            if (d.texto("video").isNotBlank()) VideoPublicacion(vm, d.texto("video"), d.texto("poster"), d.texto("duracion").toIntOrNull() ?: 0)
+            else CarruselFotos(imagenesPublicacion(d))
+        }
         val titulo = d.texto("titulo")
         if (titulo.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             val portadas = (d["portadas"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
@@ -677,13 +684,23 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             fila.forEach { p ->
                 val d = p.datos
-                val imagen = d.texto("imagen").takeIf { it.isNotBlank() }?.let { ClienteSocial.imagen(it) }
+                val video = d.texto("video")
+                var reproducir by remember(p.id) { mutableStateOf(false) }
+                val descripcionVideo = if (video.isNotBlank()) pluralStringResource(R.plurals.video_reproducir, d.texto("duracion").toIntOrNull() ?: 0, d.texto("duracion").toIntOrNull() ?: 0) else ""
+                if (reproducir) ReproductorVideo(vm, video) { reproducir = false }
+                val imagen = (if (video.isNotBlank()) d.texto("poster") else d.texto("imagen")).takeIf { it.isNotBlank() }?.let { ClienteSocial.imagen(it) }
                     ?: d.texto("portada").ifBlank { (d["portadas"] as? JsonArray)?.firstOrNull()?.let { (it as? JsonPrimitive)?.content }.orEmpty() }
-                Box(Modifier.weight(1f).aspectRatio(0.75f).clip(forma(10.dp)).background(f.superficie).clickable { vm.abrir(Pantalla.PublicacionRed(p.id)) }) {
+                Box(Modifier.weight(1f).aspectRatio(0.75f).clip(forma(10.dp)).background(f.superficie)
+                    .clickable {
+                        if (video.isNotBlank() && d.texto("spoiler") != "true") reproducir = true
+                        else vm.abrir(Pantalla.PublicacionRed(p.id))
+                    }.semantics { if (video.isNotBlank()) contentDescription = descripcionVideo }) {
                     if (imagen.isNotBlank()) coil3.compose.AsyncImage(imagen, null, Modifier.matchParentSize()
                         .then(if (d.texto("spoiler") == "true") Modifier.blur(20.dp) else Modifier), contentScale = ContentScale.Crop)
                     else Text(d.texto("titulo").ifBlank { d.texto("texto") }, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 5,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(8.dp))
+                    if (video.isNotBlank()) Box(Modifier.align(Alignment.Center).size(40.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.75f)),
+                        contentAlignment = Alignment.Center) { IconoRiso(Iconos.Reproducir, stringResource(R.string.video_play), tamano = 22.dp, tinta = f.texto) }
                     Row(Modifier.align(Alignment.BottomStart).padding(6.dp).clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(horizontal = 6.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         IconoRiso(Iconos.Anime, null, tamano = 12.dp, tinta = f.texto)
@@ -977,6 +994,11 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
     val publicando by vm.red.publicando.collectAsStateWithLifecycle()
     var texto by rememberSaveable { mutableStateOf("") }
     var fotos by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var video by rememberSaveable { mutableStateOf<String?>(null) }
+    val progresoVideo by vm.red.progresoVideo.collectAsStateWithLifecycle()
+    val elegirVideo = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null && fotos.isEmpty()) video = uri.toString()
+    }
     var seguidores by rememberSaveable { mutableStateOf(false) }
     var spoiler by rememberSaveable { mutableStateOf(false) }
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
@@ -1001,15 +1023,47 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
                 }
             }
         }
-        if (acciones != null && fotos.size < 10) Pildora(stringResource(R.string.red_agregar_foto), Iconos.Imagen) {
+        if (!publicando && video == null && acciones != null && fotos.size < 10) Pildora(stringResource(R.string.red_agregar_foto), Iconos.Imagen) {
             acciones.elegirImagen { uri -> if (fotos.size < 10) fotos = fotos + uri.toString() }
+        }
+        if (!publicando && fotos.isEmpty() && video == null) Pildora(stringResource(R.string.video_agregar), Iconos.Imagen) {
+            elegirVideo.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+        }
+        if (video != null) {
+            Text(stringResource(R.string.video_elegido), color = f.texto)
+            val contexto = androidx.compose.ui.platform.LocalContext.current
+            val vistaPrevia by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(null, video) {
+                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching {
+                        android.media.MediaMetadataRetriever().run {
+                            try { setDataSource(contexto, android.net.Uri.parse(video)); getFrameAtTime(0) } finally { release() }
+                        }
+                    }.getOrNull()
+                }
+            }
+            vistaPrevia?.let { b ->
+                androidx.compose.foundation.Image(b.asImageBitmap(), null, Modifier.fillMaxWidth().height(180.dp).clip(forma(16.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            }
+            Text(stringResource(R.string.video_limites), color = f.textoSuave)
+            if (!publicando) BotonSecundario(stringResource(R.string.video_quitar), { video = null })
         }
         Opcion(stringResource(R.string.red_solo_seguidores), seguidores) { seguidores = it }
         Opcion(stringResource(R.string.red_tiene_spoilers), spoiler) { spoiler = it }
-        if (publicando) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+        if (publicando) {
+            val progreso = progresoVideo
+            if (progreso != null && progreso < 1f) {
+                Text(stringResource(R.string.video_preparando), color = f.texto)
+                LinearProgressIndicator(progress = { progreso }, modifier = Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            } else {
+                Text(stringResource(R.string.video_subiendo), color = f.texto)
+                LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            }
+            BotonSecundario(stringResource(R.string.video_cancelar), vm.red::cancelarPublicacion)
+        }
         BotonRiso(stringResource(R.string.red_publicar), {
-            vm.red.publicar(texto, obra, fotos.map(android.net.Uri::parse), if (seguidores) Visibilidad.AMIGOS else Visibilidad.PUBLICA, spoiler) { vm.cerrar() }
-        }, Modifier.fillMaxWidth(), habilitado = !publicando && (texto.isNotBlank() || fotos.isNotEmpty()))
+            vm.red.publicar(texto, obra, fotos.map(android.net.Uri::parse), if (seguidores) Visibilidad.AMIGOS else Visibilidad.PUBLICA, spoiler, video?.let(android.net.Uri::parse)) { vm.cerrar() }
+        }, Modifier.fillMaxWidth(), habilitado = !publicando && (texto.isNotBlank() || fotos.isNotEmpty() || video != null))
     }
 }
 
@@ -1437,9 +1491,10 @@ fun EstadoCuenta(vm: CajonViewModel) {
 
 /** Vista de solo lectura del contenido reportado. */
 @Composable
-private fun VistaContenidoReporte(contenido: String) {
+private fun VistaContenidoReporte(vm: CajonViewModel, contenido: String) {
     val f = FogonTema.actual
     val previa = remember(contenido) { io.github.fogonapps.cajon.datos.leerContenidoReporte(contenido) }
+    if (previa.video.isNotBlank()) VideoPublicacion(vm, previa.video, previa.poster, previa.duracion)
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         if (previa.portada.isNotBlank()) Portada(previa.portada, previa.tipoObra.ifBlank { "pelicula" }, previa.titulo, Modifier.width(64.dp), conTitulo = false)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -1502,7 +1557,7 @@ fun Moderacion(vm: CajonViewModel) {
                 c.autor?.let { Text("@${it.usuario} · ${stringResource(R.string.mod_faltas, c.faltasAutor)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave) }
                 if (c.que == "mensaje") Text(io.github.fogonapps.cajon.datos.limpiarReporteMensaje(c.contenido).take(600),
                     style = MaterialTheme.typography.bodyMedium, color = f.texto)
-                else VistaContenidoReporte(c.contenido)
+                else VistaContenidoReporte(vm, c.contenido)
                 Text(pluralStringResource(R.plurals.mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 val acciones = io.github.fogonapps.cajon.datos.accionesModeracion(permisos, c.motivos.maxByOrNull { it.value }?.key.orEmpty(), c.faltasAutor)
                 if (io.github.fogonapps.cajon.datos.puedeRestaurar(c, permisos)) Pildora(stringResource(R.string.equipo_restaurar)) {

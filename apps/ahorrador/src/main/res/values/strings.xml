@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name" translatable="false">El Ahorrador</string>
+  <string name="app_name" translatable="false">La Alcancía</string>
   <string name="a_quien_debes">Who do you owe?</string>
   <string name="abonar">Add money</string>
   <string name="abonar_a">Add to %1$s</string>
   <string name="abonar_texto">The money leaves an account and is set aside for this goal.</string>
   <string name="abone">I paid part</string>
   <string name="abonos">Payments</string>
-  <string name="acerca_de">About El Ahorrador</string>
+  <string name="acerca_de">About La Alcancía</string>
   <string name="acerca_de_corto">About</string>
   <string name="activo">Active</string>
   <string name="agregar_fijo">Add a fixed payment</string>
@@ -33,19 +33,19 @@
   <string name="aviso_meta_cumplida">Goal reached: %1$s!</string>
   <string name="aviso_monto">Enter an amount</string>
   <string name="aviso_no_es_extracto">I couldn’t find entries in that file. It has to be a CSV with a date and an amount.</string>
-  <string name="aviso_no_es_respaldo">That file isn’t an El Ahorrador backup</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a La Alcancía backup</string>
   <string name="aviso_no_exportado">Couldn’t save the file</string>
   <string name="aviso_otra_cuenta">Pick the account it goes to</string>
   <string name="aviso_pago_linea">%1$s %2$s (%3$s)</string>
   <string name="aviso_pagos_titulo">Payments coming up</string>
-  <string name="aviso_plata">El Ahorrador helps you keep track of your money; it isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</string>
+  <string name="aviso_plata">La Alcancía helps you keep track of your money; it isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</string>
   <string name="aviso_plata_titulo">Notice</string>
   <string name="aviso_reparto">The three must add up to 100</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
   <string name="aviso_sin_sobres_antes">Last month has no envelopes</string>
   <string name="aviso_sobres_copiados">Envelopes copied</string>
   <string name="aviso_una_cuenta">You need at least one account</string>
-  <string name="bloqueada">El Ahorrador is locked</string>
+  <string name="bloqueada">La Alcancía is locked</string>
   <string name="borrar">Delete</string>
   <string name="borrar_deuda">Delete debt</string>
   <string name="borrar_deuda_pregunta">Delete the debt with %1$s?</string>
@@ -68,7 +68,7 @@
   <string name="cancelar">Cancel</string>
   <string name="candado">Lock</string>
   <string name="candado_pista">Asks for your fingerprint or phone lock when you open the app.</string>
-  <string name="candado_titulo">Open El Ahorrador</string>
+  <string name="candado_titulo">Open La Alcancía</string>
   <string name="cargando">Loading</string>
   <string name="cat_casa">Home</string>
   <string name="cat_cesantias">Severance fund</string>
@@ -321,7 +321,7 @@
   <string name="tut_billetera">Digital wallet</string>
   <string name="tut_deuda_tarjeta">How much do you owe on it today?</string>
   <string name="tut_empezar">Start</string>
-  <string name="tut_hola">Hi, I’m El Ahorrador</string>
+  <string name="tut_hola">Hi, I’m La Alcancía</string>
   <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
   <string name="tut_privado">Everything stays on this phone. The app has no internet access: nobody else sees your money.</string>
   <string name="tut_saldos">What are you starting with?</string>
@@ -415,4 +415,47 @@
   <string name="vas_mas">You’re spending %1$d %% more than at this point in %2$s.</string>
   <string name="vas_menos">You’re spending %1$d %% less than at this point in %2$s.</string>
   <string name="vas_igual">You’re spending the same as at this point in %1$s.</string>
+    <string name="banco_titulo">Record from your bank</string>
+    <string name="banco_explicacion">Android lets this access see all your notifications. La Alcancía filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
+    <string name="banco_activar">Enable</string>
+    <string name="banco_local">Everything stays on this phone.</string>
+    <string name="banco_permiso">Open notification access in Android</string>
+    <string name="banco_permiso_si">Notification access granted.</string>
+    <string name="banco_permiso_no">Notification access has not been granted.</string>
+    <string name="banco_permitir_avisos">Allow confirmation notifications</string>
+    <string name="banco_elegir">Your banks</string>
+    <string name="banco_sms">Only SMS starting with Bancolombia:</string>
+    <string name="banco_app">Only “Enviaste” alerts from the Nu app. The time comes from the alert.</string>
+    <string name="banco_solo">Record automatically</string>
+    <string name="banco_solo_pista">Without asking. Review and undo below.</string>
+    <string name="banco_futuros">Other banks can be selected when creating accounts. Their alerts will be available when tested rules exist.</string>
+    <string name="banco_enlaces">Linked accounts</string>
+    <string name="banco_enlace">%1$s %2$s → %3$s</string>
+    <string name="banco_desvincular">Change link</string>
+    <string name="banco_pendientes">Pending confirmation</string>
+    <string name="banco_sin_pendientes">No pending alerts. If notifications are blocked, you can confirm them here.</string>
+    <string name="banco_aviso">%1$s of %2$s at %3$s</string>
+    <string name="banco_detalle">%1$s · %2$s · %3$s</string>
+    <string name="banco_enlazar">Which of your accounts does this belong to?</string>
+    <string name="banco_usar_cuenta">Link to %1$s</string>
+    <string name="banco_crear">Create %1$s account</string>
+    <string name="banco_traspaso">Transfer between your accounts: %1$s → %2$s</string>
+    <string name="banco_por_revisar">To review</string>
+    <string name="banco_no">No</string>
+    <string name="banco_anotado_solo">Recorded automatically</string>
+    <string name="banco_sin_solos">Transactions recorded without asking will appear here.</string>
+    <string name="banco_resumen">%1$s · %2$s · %3$s · %4$s</string>
+    <string name="banco_deshacer">Undo</string>
+    <string name="banco_no_entendido">Could not understand a message from %1$s</string>
+    <string name="banco_manual">You can record it manually. Its text was not stored.</string>
+    <string name="banco_pendiente_cambio">This alert has changed or needs an account link. Go back to the list to review it.</string>
+    <string name="banco_entidad">Bank</string>
+    <string name="banco_bancolombia">Bancolombia</string>
+    <string name="banco_nu">Nu</string>
+    <string name="banco_nequi">Nequi</string>
+    <string name="banco_davivienda">Davivienda</string>
+    <string name="banco_daviplata">Daviplata</string>
+    <string name="banco_bogota">Banco de Bogotá</string>
+    <string name="banco_bbva">BBVA</string>
+    <string name="banco_otro">Other</string>
 </resources>

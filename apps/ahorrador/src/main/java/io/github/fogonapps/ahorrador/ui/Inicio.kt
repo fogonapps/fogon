@@ -98,7 +98,7 @@ fun FilaMovimiento(e: Estado, m: Movimiento, conFecha: Boolean = true, onClick: 
     val (color, icono: io.github.fogonapps.identidad.Dibujo, titulo) = when (m.tipo) {
         TipoMovimiento.TRASPASO -> Triple(Tintas.GrisClaro, Iconos.Pasar, stringResource(R.string.paso_a, e.cuentas.firstOrNull { it.id == m.aCuenta }?.nombre.orEmpty()))
         TipoMovimiento.AHORRO -> Triple(meta?.let { colorDe(it.color) } ?: Tintas.Verde, Iconos.de(meta?.icono ?: "moneda"), meta?.nombre ?: stringResource(R.string.ahorro))
-        else -> Triple(cat?.let { colorDe(it.color) } ?: Tintas.GrisClaro, Iconos.de(cat?.icono ?: "otros"), cat?.nombre ?: stringResource(R.string.sin_categoria))
+        else -> Triple(cat?.let { colorDe(it.color) } ?: Tintas.GrisClaro, Iconos.de(cat?.icono ?: "otros"), cat?.nombre ?: stringResource(R.string.banco_por_revisar))
     }
     FilaVidrio(onClick) {
         Ficha(color, icono, 42.dp)

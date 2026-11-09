@@ -186,7 +186,7 @@ internal suspend fun sincronizarCajonCifrado(
         if (!vigente()) return false
         val actual = local() ?: return false
         val sobre = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            Nube.cerrar(JsonCajon.encodeToString(Estado.serializer(), actual), llave)
+            Nube.cerrar(JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(actual)), llave)
         }
         if (!vigente()) return false
         try {

@@ -269,6 +269,9 @@ data class PublicacionPropia(
     val borrada: Boolean = false,
     /** Fotos en orden; [imagen] se conserva solo como respaldo de la migración. */
     val imagenes: List<String> = emptyList(),
+    val video: String = "",
+    val poster: String = "",
+    val duracionVideo: Int = 0,
 )
 
 /** Los huecos de "destacados" del perfil (los ids que se guardan: no se cambian). */

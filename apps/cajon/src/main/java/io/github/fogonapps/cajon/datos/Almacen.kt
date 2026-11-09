@@ -31,7 +31,7 @@ object SerializadorEstado : Serializer<Estado> {
     }
 
     override suspend fun writeTo(t: Estado, output: OutputStream) {
-        output.write(JsonCajon.encodeToString(Estado.serializer(), t).encodeToByteArray())
+        output.write(JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(t)).encodeToByteArray())
     }
 }
 
