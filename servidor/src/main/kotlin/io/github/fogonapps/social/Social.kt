@@ -1389,8 +1389,16 @@ class Social(
         leer("SELECT id, de, tipo, objeto, cuando, leido FROM avisos WHERE para = ? AND cuando < ? ORDER BY cuando DESC LIMIT 60", yo, antes ?: Long.MAX_VALUE) {
             arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1)
         }
-    }.filter { !bloqueado(yo, it[1] as Long) }
-        .filter { visible(it[1] as Long) }.map { Aviso(it[0] as Long, it[2] as String, persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean) }
+    }.filter { it[2] == "sancion" || (!bloqueado(yo, it[1] as Long) && visible(it[1] as Long)) }
+        .map { Aviso(it[0] as Long, it[2] as String, if (it[2] == "sancion") personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean) }
+
+    /**
+     * Las sanciones llegan a nombre de Fogón (la cuenta principal), nunca de quien moderó: así nadie del equipo
+     * queda expuesto a represalias. La tabla guarda quién decidió para el registro del equipo.
+     */
+    private fun personaFogon(): Persona =
+        b.usar { leer("SELECT cuenta FROM roles WHERE rol = 'principal' LIMIT 1") { it.getLong(1) }.firstOrNull() }?.let(::persona)
+            ?: Persona("fogon", "Fogón", false)
 
     fun sinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND leido = 0", yo) { it.getInt(1) }.first() }
 
@@ -1626,7 +1634,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-08"
+        const val POLITICA = "2026-11-09"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

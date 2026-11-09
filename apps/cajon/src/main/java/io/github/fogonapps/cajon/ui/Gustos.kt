@@ -84,6 +84,8 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
         BotonSecundario(stringResource(R.string.ahora_no), { vm.gustosListos() }, Modifier.fillMaxWidth())
     }
     val rec = r ?: return
+    rec.avisos.forEach { Pista(stringResource(it)) }
+    if (rec.vacias && rec.avisos.isNotEmpty()) return
     if (rec.vacias) { Pista(stringResource(R.string.para_ti_vacio)); return }
     // Decir que no se aprende en el tutorial y al elegir gustos; aquí queda solo para lectores de pantalla.
     val decirNo = stringResource(R.string.decir_no)

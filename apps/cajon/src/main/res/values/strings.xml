@@ -56,7 +56,7 @@
   <string name="buscar_pista">Title, original title…</string>
   <string name="buscar_falta_tmdb">Searching films, series and anime needs your TMDB key (it’s free). You can also add them by hand.</string>
   <string name="buscar_tmdb_mala">TMDB didn’t accept your key. Check it in Settings.</string>
-  <string name="buscar_sin_red">Couldn’t search: check your internet connection.</string>
+  <string name="buscar_sin_red">No internet. Check your connection and try again.</string>
   <string name="buscar_fallo">Couldn’t search right now. Try again in a moment.</string>
   <string name="agregar_a_mano">Add by hand</string>
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
@@ -1241,6 +1241,7 @@
   <string name="equipo_cambio_confirmar">The selected account assignment will change and an email notification will be sent.</string>
   <string name="equipo_codigo_error">Incorrect, expired or used code. Use a new code.</string>
   <string name="equipo_sin_permiso">You do not have permission for this action or to grant that assignment.</string>
+  <string name="mod_reporte_propio">You reported this, so someone else on the team decides.</string>
   <string name="equipo_protegido">You cannot change your own assignments or act on protected accounts or accounts at your level or above. Only the principal can change administrators.</string>
   <string name="equipo_restaurar">Restore</string>
   <string name="equipo_restaurar_confirmar">The content will become visible again.</string>
@@ -1344,14 +1345,14 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">We explain session and moderation data and how long we keep it.\nWe detail external catalogs and notification access.\nDeleting an account hides it immediately and removes it after 7 days.\nWe currently keep no server backups outside the server.</string>
+  <string name="politica_resumen">Posts can now include a video of up to 30 seconds.\nWe explain importing your Last.fm history, which goes through the server without being stored.\nWe note that we keep your vote for a work’s cover (only totals are shown).</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
   <string name="politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is published and the encrypted copy does not sync. Your local drawer remains available.</string>
   <string name="privacidad_local">On this phone: your private diary and reviews, notes, listening history, tastes and recommendations.\nConversations stay on this phone.\nIf you enable a backup, its included data also leaves as described below.</string>
   <string name="privacidad_social">With an account, Fogón Social receives your email and identity, sessions and acceptance record; what you share according to its visibility, interactions, blocks and reports.\nMessages travel encrypted until delivery (up to 30 days).\nAn optional account copy is encrypted and only your password unlocks it.\nModeration may retain removed content as evidence.</string>
-  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or drawer.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón does not store searches and caches responses for a few hours. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLinks to other services open in your browser.</string>
+  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or drawer.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón does not store searches and caches responses for a few hours. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLast.fm: only if you import your history, through the Fogón server; it does not store your username or what you listen to.\nLinks to other services open in your browser.</string>
   <string name="privacidad_opciones">Current options and permissions</string>
   <string name="privacidad_activa">Enabled</string>
   <string name="privacidad_inactiva">Disabled</string>
@@ -1425,4 +1426,6 @@
   <string name="lastfm_error">Could not query Last.fm. Check that the profile is public and exists. If the service is busy or has not been configured, try later. Retrying does not duplicate listens.</string>
   <string name="lastfm_fecha_error">Enter a valid date between 1970 and today (YYYY-MM-DD).</string>
   <string name="lastfm_listo">Last.fm import complete.</string>
+  <string name="beta_aviso">Beta: El Cajón may still change and have bugs. If something doesn’t work, tell us in “Report a problem or suggest something”.</string>
+  <string name="beta_problemas">Known issues</string>
 </resources>

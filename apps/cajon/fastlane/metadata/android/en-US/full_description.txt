@@ -1,3 +1,4 @@
+<p><b>Beta:</b> El Cajón may still change and have bugs. Known issues are listed at <a href="https://github.com/fogonapps/el-cajon#problemas-conocidos">github.com/fogonapps/el-cajon</a>.</p>
 <p>El Cajón keeps everything you watch, read and listen to: films, series, anime, books, albums and artists, in one place, with your rating and your diary. No ads, no tracking. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 <p><b>The network (optional):</b> create your @username, follow people, see what they share on Home and post your reviews and photos, with likes, comments and saves. Only what you mark as public or for your followers is uploaded.</p>
 

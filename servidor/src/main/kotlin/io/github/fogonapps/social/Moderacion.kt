@@ -13,7 +13,7 @@ object Moderacion {
     const val MENOR_EN_RIESGO = "menor_en_riesgo"
     val MOTIVOS = setOf(MENOR_EN_RIESGO, "desnudos", "acoso", "odio", "autolesion", "spam", "menor_de_edad", "derechos", "falso", "otro")
     /** Con cuántas cuentas distintas (de más de 7 días y sin sanción) se oculta algo mientras se revisa. */
-    const val UMBRAL = 3
+    const val UMBRAL = 10
     const val VENCE = 90L * 24 * 3600_000
     val CIERRE_DIRECTO = setOf(MENOR_EN_RIESGO, "menor_de_edad", "evadir_sancion", "amenaza_real")
 }

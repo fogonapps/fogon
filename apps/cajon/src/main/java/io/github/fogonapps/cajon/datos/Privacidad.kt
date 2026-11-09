@@ -1,6 +1,6 @@
 package io.github.fogonapps.cajon.datos
 
-const val POLITICA_VIGENTE = "2026-11-08"
+const val POLITICA_VIGENTE = "2026-11-09"
 
 fun debeAceptarPolitica(sesion: Boolean, aceptada: String?, vigente: String): Boolean =
     sesion && aceptada != vigente

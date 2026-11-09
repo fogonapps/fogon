@@ -123,7 +123,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             if (b.personas.isNotEmpty()) {
                 item("personas-titulo") { Titulo(stringResource(R.string.red_personas), if (todo) ({ vm.cambiarSeccion(Secciones.PERSONAS) }) else null) }
                 items(b.personas.take(maximo(3)), key = { "persona-" + it.usuario }) { p -> FilaPersona(p, { vm.abrir(Pantalla.PerfilRed(p.usuario)) }) }
-            } else if (b.seccion == Secciones.PERSONAS && "personas" !in b.cargando) item("sin-personas") { Pista(stringResource(R.string.red_nadie_encontrado), Modifier.padding(16.dp)) }
+            } else if (b.seccion == Secciones.PERSONAS && b.mostrarNoEncontrado) item("sin-personas") { Pista(stringResource(R.string.red_nadie_encontrado), Modifier.padding(16.dp)) }
 
             // Si se buscó un género o una etiqueta: primero lo del cajón que la lleva (artistas y obras), después lo de afuera.
             val genero = b.genero
@@ -215,7 +215,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
 
             item(key = "pie") {
-                val vacio = !hayDelCajon && b.cargando.isEmpty() && b.artistas.isEmpty() && b.autores.isEmpty() && b.directores.isEmpty() && b.obras.values.all { it.isEmpty() }
+                val vacio = !hayDelCajon && b.seccion != Secciones.PERSONAS && b.mostrarNoEncontrado
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (vacio) Pista(stringResource(R.string.buscar_nada, b.texto.trim()), adentro = true)
                     BotonSecundario(stringResource(R.string.no_esta_a_mano), { vm.reemplazar(Pantalla.EditarObra(null, tipoAMano(b.seccion))) }, Modifier.fillMaxWidth())
@@ -298,10 +298,12 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
     var plataforma by rememberSaveable(seccion) { mutableStateOf<String?>(null) }
     LaunchedEffect(plataforma, tipoPlataforma) { val p = plataforma; if (p != null && tipoPlataforma != null) vm.cargarPlataforma(p, tipoPlataforma) }
     val dePlataforma = plataforma?.let { p -> tipoPlataforma?.let { enPlataforma["$p|$it"] } }
-    if (obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty()) return
+    if (obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty() && m.avisos.isEmpty()) return
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        // Dentro de la búsqueda, el aviso ya sale arriba; aquí solo cuando Lo del momento va solo.
+        if (!compacto) io.github.fogonapps.cajon.resumirAvisos(m.avisos).forEach { Pista(stringResource(it)) }
         if (!compacto && tipoPlataforma != null) {
             val nombres = if (tipoPlataforma == Tipos.ANIME) vm.plataformasAnime else vm.plataformasCine
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -313,7 +315,7 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
             val l = dePlataforma
             when {
                 l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
-                l.isEmpty() -> Pista(stringResource(R.string.momento_plataforma_vacia, nombrePlataforma(plataforma.orEmpty())))
+                l.isEmpty() && m.avisos.isEmpty() -> Pista(stringResource(R.string.momento_plataforma_vacia, nombrePlataforma(plataforma.orEmpty())))
                 else -> l.take(12).chunked(3).forEach { fila ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         fila.forEach { r ->

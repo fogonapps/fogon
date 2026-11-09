@@ -287,7 +287,8 @@ class RedSocial(
                     "video_formato", "video_duracion", "video_grande", "video_y_fotos", "poster" -> R.string.video_preparacion_error
                     "codigo_mfa", "recuperacion" -> R.string.equipo_codigo_error
                     "sin_permiso" -> R.string.equipo_sin_permiso
-                    "equipo_propio", "solo_principal", "nivel_protegido", "reporte_propio" -> R.string.equipo_protegido
+                    "equipo_propio", "solo_principal", "nivel_protegido" -> R.string.equipo_protegido
+                    "reporte_propio" -> R.string.mod_reporte_propio
                     "usuario_tomado" -> R.string.red_usuario_tomado
                     "usuario" -> R.string.red_usuario_malo
                     "correo" -> R.string.red_correo_malo

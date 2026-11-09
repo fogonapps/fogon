@@ -16,6 +16,7 @@ import io.github.fogonapps.cajon.datos.PublicacionPropia
 import io.github.fogonapps.cajon.datos.Registro
 import io.github.fogonapps.cajon.datos.Visibilidad
 import io.github.fogonapps.cajon.datos.Ocupado
+import io.github.fogonapps.cajon.datos.Tipos
 import io.github.fogonapps.cajon.datos.SinRed
 import io.github.fogonapps.cajon.datos.ClaveMala
 import kotlinx.coroutines.CompletableDeferred
@@ -36,6 +37,11 @@ import org.junit.Test
 /** Lo que El Cajón sube a la red: solo lo que la persona marcó como público o para sus seguidores. */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class RedTest {
+    @Test fun sinInternetResumeLosAvisos() {
+        assertEquals(listOf(R.string.buscar_sin_red), resumirAvisos(listOf(R.string.buscar_fallo, R.string.buscar_sin_red, R.string.buscar_sin_red)))
+        assertEquals(listOf(R.string.buscar_fallo), resumirAvisos(listOf(R.string.buscar_fallo, R.string.buscar_fallo)))
+    }
+
     @Test fun faltasTraducidasConPuntosYGravedad() {
         val textos = mapOf(R.string.rep_acoso to "Acoso", R.string.rep_falso to "False information",
             R.string.rep_otro to "Otra cosa", R.string.mod_grave_puntos to "Falta grave · 2 puntos",
@@ -510,6 +516,62 @@ class BusquedaFuentesTest {
 }
 
 class AvisosBusquedaTest {
+    @Test fun todoFalloMuestraAvisoSinAfirmarQueNoExiste() {
+        val b = Busqueda(texto = "Interstellar", errores = mapOf(
+            "tmdb" to R.string.buscar_sin_red, "libros" to R.string.buscar_sin_red,
+            "musica" to R.string.buscar_sin_red, "personas" to R.string.buscar_sin_red,
+        ))
+        assertEquals(listOf(R.string.buscar_sin_red), b.avisos)
+        assertTrue(!b.mostrarNoEncontrado)
+        assertTrue(b.copy(errores = emptyMap()).mostrarNoEncontrado)
+        assertTrue(!b.copy(errores = emptyMap(), cargando = setOf("tmdb")).mostrarNoEncontrado)
+        assertTrue(!b.copy(errores = mapOf("directores" to R.string.buscar_fallo)).mostrarNoEncontrado)
+    }
+
+    @Test fun clasificaTransporteServicioYRespuestaInvalida() {
+        for (error in listOf(SinRed(), java.net.UnknownHostException(), java.net.ConnectException(),
+            java.net.SocketTimeoutException(), java.io.IOException())) {
+            assertEquals(R.string.buscar_sin_red, avisoErrorBusqueda(error))
+        }
+        for (error in listOf(Ocupado(), io.github.fogonapps.cajon.datos.ErrorSocial(503, ""),
+            IllegalStateException("HTTP 500"), IllegalArgumentException("JSON inválido"))) {
+            assertEquals(R.string.buscar_fallo, avisoErrorBusqueda(error))
+        }
+        assertEquals(R.string.buscar_tmdb_mala, avisoErrorBusqueda(ClaveMala()))
+    }
+
+    @Test fun consultasFallidasTerminanConAvisoYConservanLoRecibido() = runTest {
+        var b = Busqueda(texto = "Interstellar", cargando = setOf("tmdb", "libros", "personas"))
+        for ((nombre, fallo) in listOf("tmdb" to SinRed(), "libros" to java.net.UnknownHostException(),
+            "personas" to java.net.ConnectException())) {
+            buscarEnFuente(
+                error = { b = b.copy(errores = b.errores + (nombre to it)) },
+                terminar = { b = b.copy(cargando = b.cargando - nombre) },
+            ) { throw fallo }
+        }
+        assertTrue(b.cargando.isEmpty())
+        assertEquals(listOf(R.string.buscar_sin_red), b.avisos)
+        assertTrue(!b.mostrarNoEncontrado)
+        val obra = io.github.fogonapps.cajon.datos.Encontrado(Tipos.PELICULA, "Interstellar", 2014, "", "", "tmdb:movie:157336")
+        buscarEnFuente(
+            error = { b = b.copy(errores = b.errores + ("otra" to it)) }, terminar = {},
+        ) {
+            b = b.copy(obras = mapOf(Tipos.PELICULA to listOf(obra)))
+            runCatching<Unit> { throw SinRed() }.avisarFallo { b = b.copy(errores = b.errores + ("fotos" to it)) }
+        }
+        assertEquals(listOf(obra), b.obras[Tipos.PELICULA])
+        assertEquals(listOf(R.string.buscar_sin_red), b.avisos)
+    }
+
+    @Test fun cancelarConsultaOpcionalSePropagaSinAviso() {
+        val avisos = mutableListOf<Int>()
+        var cancelada = false
+        try {
+            runCatching<Unit> { throw CancellationException() }.avisarFallo(avisos::add)
+        } catch (_: CancellationException) { cancelada = true }
+        assertTrue(cancelada)
+        assertTrue(avisos.isEmpty())
+    }
     @Test
     fun avisosDeBusquedaAgrupaMensajesYConservaLosDistintos() {
         val repetidos = Busqueda(errores = linkedMapOf("tmdb" to 1, "libros" to 1, "musica" to 1))

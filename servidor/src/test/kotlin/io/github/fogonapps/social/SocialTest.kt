@@ -378,17 +378,17 @@ class SocialTest {
         val tokenAdmin = s.crearCuenta(NuevaCuenta("moderadora")).token
         val admin = s.cuentaDe(tokenAdmin)!!
         val malo = s.cuentaDe(s.crearCuenta(NuevaCuenta("malo")).token)!!
-        val gente = (1..3).map { s.cuentaDe(s.crearCuenta(NuevaCuenta("persona$it")).token)!! }
+        val gente = (1..Moderacion.UMBRAL).map { s.cuentaDe(s.crearCuenta(NuevaCuenta("persona$it")).token)!! }
         val nueva = s.cuentaDe(s.crearCuenta(NuevaCuenta("recien")).token)
         reloj += 8L * 24 * 3600_000                                              // las de antes ya tienen más de 7 días
         val tardia = s.cuentaDe(s.crearCuenta(NuevaCuenta("tardia")).token)!!
         s.subirPublicaciones(malo, listOf(pub("1", Vis.PUBLICA, reloj)))
         val id = s.explorar(gente[0], null).single().id
-        // Una cuenta recién hecha no tumba nada; tres que cuentan, sí (hasta revisar).
+        // Una cuenta recién hecha no tumba nada; UMBRAL que cuentan, sí (hasta revisar).
         s.reportar(tardia, NuevoReporte("publicacion", "$id", "spam"))
-        s.reportar(gente[0], NuevoReporte("publicacion", "$id", "spam")); s.reportar(gente[1], NuevoReporte("publicacion", "$id", "acoso"))
-        assertEquals(1, s.explorar(gente[2], null).size)
-        s.reportar(gente[2], NuevoReporte("publicacion", "$id", "spam"))
+        gente.dropLast(1).forEachIndexed { i, c -> s.reportar(c, NuevoReporte("publicacion", "$id", if (i == 1) "acoso" else "spam")) }
+        assertEquals(1, s.explorar(gente.last(), null).size)
+        s.reportar(gente.last(), NuevoReporte("publicacion", "$id", "spam"))
         assertEquals(0, s.explorar(nueva, null).size)
         assertTrue(s.publicacion(malo, id) != null)                             // su autor la sigue viendo
         // Solo quien administra ve la cola y decide.
@@ -402,10 +402,14 @@ class SocialTest {
             base.cerrar()
         }
         val caso = s.casos(admin, tokenAdmin).single()
-        assertEquals(4, caso.personas); assertEquals(3, caso.motivos["spam"])
+        assertEquals(Moderacion.UMBRAL + 1, caso.personas); assertEquals(Moderacion.UMBRAL, caso.motivos["spam"])
         s.decidir(admin, Decision("publicacion", "$id", "falta", "spam"), tokenAdmin)
         assertNull(s.publicacion(malo, id))
         assertEquals("sancion", s.avisos(malo, null).first().tipo)
+        assertEquals("fogon", s.avisos(malo, null).first().de.usuario)              // nunca quién moderó
+        s.bloquear(malo, "moderadora", true)
+        assertEquals("sancion", s.avisos(malo, null).first().tipo)                // bloquear a quien moderó no esconde la sanción
+        s.bloquear(malo, "moderadora", false)
         // Escala: 2 puntos = 24 h sin escribir; 3 = 7 días suspendida; 4 = cerrada.
         repeat(1) { s.subirPublicaciones(malo, listOf(pub("2", Vis.PUBLICA, reloj))); val i = s.explorar(gente[0], null).single().id
             s.reportar(gente[0], NuevoReporte("publicacion", "$i", "spam"))

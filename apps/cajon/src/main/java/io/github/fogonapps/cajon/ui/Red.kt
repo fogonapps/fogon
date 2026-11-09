@@ -481,6 +481,7 @@ private fun PasoGustos(vm: CajonViewModel) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.red_paso1_titulo), style = MaterialTheme.typography.titleLarge, color = f.texto)
         Text(stringResource(R.string.red_paso1_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+        opciones.avisos.forEach { Pista(stringResource(it)) }
         // Una probadita de lo que se elige: portadas de lo del momento.
         val portadas = (opciones.cine.map { it.portada } + opciones.libros.map { it.portada }).filter { it.isNotBlank() }.take(4)
         if (portadas.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -928,7 +929,8 @@ fun AvisosRed(vm: CajonViewModel) {
             })
             FilaPersona(a.de, {
                 val pub = a.objeto.toLongOrNull()
-                if (pub != null && a.tipo in setOf("megusta", "comentario", "respuesta", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
+                if (a.tipo == "sancion") vm.abrir(Pantalla.EstadoCuenta)
+                else if (pub != null && a.tipo in setOf("megusta", "comentario", "respuesta", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
             }) {
                 Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.acentoTexto, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }

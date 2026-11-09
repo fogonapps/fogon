@@ -328,6 +328,8 @@ fun AcercaDe(vm: CajonViewModel) {
     // TMDB pide su logo junto al aviso (menos destacado que la marca de la app).
         androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.logo_tmdb), "TMDB", Modifier.padding(top = 4.dp).height(16.dp))
         }
+        Pista(stringResource(R.string.beta_aviso))
+        BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/el-cajon#problemas-conocidos") })
         Pista(stringResource(R.string.tmdb_aviso))
         BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") })
     }

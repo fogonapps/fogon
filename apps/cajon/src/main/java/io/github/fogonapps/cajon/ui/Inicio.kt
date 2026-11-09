@@ -141,12 +141,12 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
             Text(if (enCajon) stringResource(R.string.en_tu_cajon) else stringResource(R.string.este_anio, anio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             NumeroRiso(if (enCajon) "${e.vivas.size}" else "$total", 56.sp)
             if (!enCajon) Text(pluralStringResource(R.plurals.terminadas, total, total), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            // Cuántas de cada tipo, en una línea de íconos.
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Cuántas de cada tipo, con su ícono; si no caben en una línea (cifras grandes o letra grande), pasan a la siguiente.
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Tipos.TODOS.filter { (c.porTipo[it] ?: 0) > 0 }.forEach { t ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         IconoRiso(Iconos.de(t), null, tamano = 16.dp, tinta = f.textoSuave)
-                        Text("${c.porTipo[t]}", fontFamily = f.cifras, fontSize = 14.sp, color = f.texto)
+                        Text("${c.porTipo[t]}", fontFamily = f.cifras, fontSize = 14.sp, color = f.texto, maxLines = 1, softWrap = false)
                     }
                 }
             }

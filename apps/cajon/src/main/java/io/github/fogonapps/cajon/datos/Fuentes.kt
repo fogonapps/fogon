@@ -95,7 +95,7 @@ private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emp
         http.newCall(req).execute().use { r ->
             if (r.code == 401) throw ClaveMala()
             if (r.code == 503 || r.code == 429) throw Ocupado()
-            if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+            if (!r.isSuccessful) throw IllegalStateException("HTTP ${r.code}")
             JsonCajon.parseToJsonElement(r.body.string())
         }
     } catch (e: ClaveMala) { throw e } catch (e: Ocupado) { throw e } catch (e: IOException) { throw SinRed() }
@@ -208,7 +208,7 @@ class Tmdb(private val clave: String = "") {
 
     /** Una lista de TMDB (recomendaciones, tendencias) a [Encontrado], con sus géneros; [clase] null = la dice cada una. */
     private suspend fun lista(r: JsonObject, clase: String?, idioma: String): List<Encontrado> {
-        val nombres = runCatching { generos(idioma) }.getOrDefault(emptyMap())
+        val nombres = generos(idioma)
         fun esAnime(o: JsonObject) = o.arr("genre_ids").any { it.entero() == 16 } && o["original_language"].texto() == "ja"
         return r.arr("results").map { it.jsonObject }.mapNotNull { o ->
             val c = clase ?: when (o["media_type"].texto()) { "movie" -> "movie"; "tv" -> "tv"; else -> return@mapNotNull null }
@@ -722,7 +722,7 @@ object ListenBrainz {
         val u = "https://api.listenbrainz.org/1/stats/sitewide/${if (artistas) "artists" else "release-groups"}".toHttpUrl().newBuilder()
             .addQueryParameter("count", "20").addQueryParameter("offset", "${(pagina - 1) * 20}")
             .addQueryParameter("range", if (queridas) "all_time" else "week").build()
-        val datos = pedirJson(u).jsonObject["payload"]?.jsonObject ?: throw SinRed()
+        val datos = pedirJson(u).jsonObject["payload"]?.jsonObject ?: error("Respuesta sin payload")
         val lista = datos.arr(if (artistas) "artists" else "release_groups")
         return PaginaCatalogo(lista.mapNotNull { it as? JsonObject }.mapNotNull { d ->
             val id = d[if (artistas) "artist_mbid" else "release_group_mbid"].texto()
@@ -794,7 +794,7 @@ object MusicBrainz {
             try { return@withLock pedirJson(u).jsonObject } catch (_: Ocupado) {
             } finally { ultima = System.currentTimeMillis() }
         }
-        throw SinRed()
+        throw Ocupado()
     }
 
     /** "Various Artists": así firma MusicBrainz las recopilaciones; no es un artista. */

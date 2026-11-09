@@ -55,7 +55,7 @@
   <string name="buscar_pista">Nombre, título original…</string>
   <string name="buscar_falta_tmdb">Para buscar películas, series y animes hace falta tu clave de TMDB (es gratis). También puedes agregarlos a mano.</string>
   <string name="buscar_tmdb_mala">TMDB no aceptó tu clave. Revísala en Ajustes.</string>
-  <string name="buscar_sin_red">No se pudo buscar: revisa tu conexión a internet.</string>
+  <string name="buscar_sin_red">Sin internet. Revisa la conexión y vuelve a intentar.</string>
   <string name="buscar_fallo">No se pudo buscar ahora. Prueba de nuevo en un momento.</string>
   <string name="agregar_a_mano">Agregar a mano</string>
   <string name="buscar_nada">No encontré «%1$s».</string>
@@ -1241,6 +1241,7 @@
   <string name="equipo_cambio_confirmar">Se cambiará la asignación de la cuenta indicada y se le avisará por correo.</string>
   <string name="equipo_codigo_error">Código incorrecto, vencido o ya usado. Usa un código nuevo.</string>
   <string name="equipo_sin_permiso">No tienes permiso para esta acción o para conceder esa asignación.</string>
+  <string name="mod_reporte_propio">Tú reportaste esto: lo decide otra persona del equipo.</string>
   <string name="equipo_protegido">No puedes cambiar tus propias asignaciones ni actuar sobre cuentas protegidas o de tu mismo nivel o superior. Solo la principal cambia administradores.</string>
   <string name="equipo_restaurar">Restaurar</string>
   <string name="equipo_restaurar_confirmar">El contenido volverá a ser visible.</string>
@@ -1346,14 +1347,14 @@
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
-  <string name="politica_resumen">Explicamos qué guardan las sesiones y la moderación, y por cuánto tiempo.\nDetallamos los catálogos externos y el permiso de leer notificaciones.\nBorrar la cuenta la oculta al momento y la elimina tras 7 días.\nHoy no hacemos copias del servidor fuera de él.</string>
+  <string name="politica_resumen">Ahora las publicaciones pueden llevar un vídeo de hasta 30 segundos.\nExplicamos la importación de tu historial de Last.fm, que pasa por el servidor sin guardarse.\nContamos que guardamos tu voto por la portada de una obra (solo se muestran los totales).</string>
   <string name="politica_aceptar">Aceptar</string>
   <string name="politica_ahora_no">Ahora no</string>
   <string name="politica_revisar">Revisar la política</string>
   <string name="politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se publica ni se sincroniza la copia cifrada. Tu cajón local sigue disponible.</string>
   <string name="privacidad_local">Solo aquí: tu diario y reseñas privadas, notas, escuchas, gustos y recomendaciones.\nLas conversaciones se guardan en este teléfono.\nSi activas una copia, los datos incluidos en ella también salen como se explica abajo.</string>
   <string name="privacidad_social">Con cuenta, Fogón Social recibe tu correo e identidad, sesiones y prueba de aceptación; lo que compartes según su visibilidad, tus interacciones, bloqueos y reportes.\nLos mensajes viajan cifrados hasta su entrega (máximo 30 días).\nLa copia en la cuenta, si la activas, va cifrada y solo tu contraseña la abre.\nModeración puede conservar contenido retirado como evidencia.</string>
-  <string name="privacidad_servicios">Para buscar y completar obras, los servicios directos ven tu IP y la consulta o imagen solicitada, pero no tu cuenta ni tu cajón.\n\nTMDB: películas, series y anime, por el servidor de Fogón; TMDB no ve tu IP. Fogón no guarda búsquedas y conserva respuestas unas horas. Las imágenes de image.tmdb.org llegan directamente.\nTVmaze: series y estrenos.\nOpen Library: libros y portadas.\nMusicBrainz: música y artistas.\nListenBrainz: música popular.\nCover Art Archive: portadas de discos.\nWikidata: datos y enlaces de personas y obras.\nWikipedia: información.\nWikimedia Commons: fotos.\nLos enlaces a otros servicios se abren en el navegador.</string>
+  <string name="privacidad_servicios">Para buscar y completar obras, los servicios directos ven tu IP y la consulta o imagen solicitada, pero no tu cuenta ni tu cajón.\n\nTMDB: películas, series y anime, por el servidor de Fogón; TMDB no ve tu IP. Fogón no guarda búsquedas y conserva respuestas unas horas. Las imágenes de image.tmdb.org llegan directamente.\nTVmaze: series y estrenos.\nOpen Library: libros y portadas.\nMusicBrainz: música y artistas.\nListenBrainz: música popular.\nCover Art Archive: portadas de discos.\nWikidata: datos y enlaces de personas y obras.\nWikipedia: información.\nWikimedia Commons: fotos.\nLast.fm: solo si importas tu historial, por el servidor de Fogón; no guarda tu usuario ni lo que escuchas.\nLos enlaces a otros servicios se abren en el navegador.</string>
   <string name="privacidad_opciones">Opciones y permisos actuales</string>
   <string name="privacidad_activa">Activado</string>
   <string name="privacidad_inactiva">Desactivado</string>
@@ -1427,4 +1428,6 @@
   <string name="lastfm_error">No se pudo consultar Last.fm. Revisa que el perfil sea público y exista. Si el servicio está ocupado o no está configurado, prueba más tarde. Puedes reintentar sin duplicar.</string>
   <string name="lastfm_fecha_error">Escribe una fecha válida entre 1970 y hoy (AAAA-MM-DD).</string>
   <string name="lastfm_listo">Importación de Last.fm terminada.</string>
+  <string name="beta_aviso">Beta: El Cajón todavía puede cambiar y tener fallos. Si algo no anda, cuéntanos en «Reportar un fallo o sugerir algo».</string>
+  <string name="beta_problemas">Problemas conocidos</string>
 </resources>

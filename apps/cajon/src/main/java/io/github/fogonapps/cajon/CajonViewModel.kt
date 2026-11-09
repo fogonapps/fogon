@@ -70,17 +70,30 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import kotlin.random.Random
 
+/** Traduce fallos de transporte sin confundirlos con respuestas de un servicio. */
+internal fun avisoErrorBusqueda(error: Throwable): Int = when (error) {
+    is CancellationException -> throw error
+    is ClaveMala -> R.string.buscar_tmdb_mala
+    is io.github.fogonapps.cajon.datos.Ocupado, is io.github.fogonapps.cajon.datos.ErrorSocial -> R.string.buscar_fallo
+    is java.io.IOException -> R.string.buscar_sin_red
+    else -> R.string.buscar_fallo
+}
+
+internal fun <T> Result<T>.avisarFallo(avisar: (Int) -> Unit): Result<T> =
+    onFailure { avisar(avisoErrorBusqueda(it)) }
+
 /** Cada fuente recoge también los errores de sus consultas hijas y siempre termina su carga. */
+/** Sin internet lo explica todo: si una fuente falló por la conexión, no se suman los demás fallos. */
+internal fun resumirAvisos(avisos: Collection<Int>): List<Int> =
+    if (R.string.buscar_sin_red in avisos) listOf(R.string.buscar_sin_red) else avisos.distinct()
+
 internal suspend fun buscarEnFuente(
     error: (Int) -> Unit,
     terminar: () -> Unit,
     trabajo: suspend CoroutineScope.() -> Unit,
 ) {
     try { coroutineScope { trabajo() } }
-    catch (e: ClaveMala) { error(R.string.buscar_tmdb_mala) }
-    catch (e: SinRed) { error(R.string.buscar_sin_red) }
-    catch (e: CancellationException) { throw e }
-    catch (e: Exception) { error(R.string.buscar_fallo) }
+    catch (e: Exception) { error(avisoErrorBusqueda(e)) }
     finally { terminar() }
 }
 
@@ -234,7 +247,10 @@ data class Busqueda(
     val errores: Map<String, Int> = emptyMap(),
 ) {
     /** Un aviso por mensaje, aunque fallen varias fuentes por la misma causa. */
-    val avisos: List<Int> get() = errores.values.distinct()
+    val avisos: List<Int> get() = resumirAvisos(errores.values)
+    /** Un fallo impide concluir que la obra no existe, aunque otras consultas terminen vacías. */
+    val mostrarNoEncontrado: Boolean get() = texto.trim().length >= 2 && cargando.isEmpty() && errores.isEmpty() &&
+        personas.isEmpty() && artistas.isEmpty() && autores.isEmpty() && directores.isEmpty() && obras.values.all { it.isEmpty() }
 }
 
 enum class EstadoSync { APAGADA, EN_NUBE, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
@@ -704,12 +720,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
             // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
-            if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) launch {
-                _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + "personas")
-                val gente = runCatching { caja.clienteSocial().buscar(t) }.getOrDefault(emptyList())
-                _busqueda.value = _busqueda.value.copy(personas = gente, cargando = _busqueda.value.cargando - "personas")
+            if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) fuente("personas") {
+                val gente = caja.clienteSocial().buscar(t)
+                _busqueda.value = _busqueda.value.copy(personas = gente)
             }
             if (seccion == Secciones.PERSONAS) return@launch
+            fun aviso(nombre: String): (Int) -> Unit = { mensaje ->
+                _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to mensaje))
+            }
+            suspend fun consulta(nombre: String, traer: suspend () -> List<Encontrado>): List<Encontrado> =
+                runCatching { traer() }.avisarFallo(aviso(nombre)).getOrDefault(emptyList())
             fun poner(r: List<Encontrado>) {
                 val grupos = r.groupBy { it.tipo }
                 _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)
@@ -732,13 +752,15 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     // películas animadas japonesas.
                     val tm = Tmdb(clave)
                     // Un género: el de la tabla o, si no está, uno de los nombres de géneros de TMDB ("Acción y aventura").
-                    val g = generoCine ?: runCatching { tm.generos(idioma()) }.getOrDefault(emptyMap()).entries
+                    val g = generoCine ?: runCatching { tm.generos(idioma()) }.avisarFallo(aviso("generos")).getOrDefault(emptyMap()).entries
                         .firstOrNull { L.tituloLimpio(it.value) == L.tituloLimpio(t) }?.let { (id, nombre) -> Generos.Cine(listOf(nombre), "$id", "$id") }
                     if (g != null) {
                         if (generoCine == null) _busqueda.value = _busqueda.value.copy(genero = _busqueda.value.genero ?: g.nombres.first())
                         val anime = seccion == Secciones.ANIMES
-                        suspend fun de(clase: String) = if (clase == "movie") tm.descubrir(clase, g.peliculas, g.clavePeliculas, anime, idioma())
+                        suspend fun de(clase: String) = consulta("tmdb_$clase") {
+                            if (clase == "movie") tm.descubrir(clase, g.peliculas, g.clavePeliculas, anime, idioma())
                             else tm.descubrir(clase, g.series, g.claveSeries, anime, idioma())
+                        }
                         when (seccion) {
                             Secciones.PELICULAS -> poner(de("movie").filter { it.tipo == Tipos.PELICULA })
                             Secciones.SERIES -> poner(de("tv").filter { it.tipo == Tipos.SERIE })
@@ -747,39 +769,42 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         }
                         return@fuente
                     }
-                    val directores = async { runCatching { tm.buscarDirectores(t, idioma()) }.getOrNull() }
+                    fuente("directores") {
+                        _busqueda.value = _busqueda.value.copy(directores = tm.buscarDirectores(t, idioma()))
+                    }
                     when (seccion) {
-                        Secciones.PELICULAS -> poner(tm.buscar(t, Tipos.PELICULA, idioma()).filter { it.tipo == Tipos.PELICULA })
-                        Secciones.SERIES -> poner(tm.buscar(t, Tipos.SERIE, idioma()).filter { it.tipo == Tipos.SERIE })
-                        Secciones.ANIMES -> poner(tm.buscar(t, Tipos.ANIME, idioma()))
+                        Secciones.PELICULAS -> poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) }.filter { it.tipo == Tipos.PELICULA })
+                        Secciones.SERIES -> poner(consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) }.filter { it.tipo == Tipos.SERIE })
+                        Secciones.ANIMES -> poner(consulta("tmdb_anime") { tm.buscar(t, Tipos.ANIME, idioma()) })
                         else -> {
-                            val series = async { tm.buscar(t, Tipos.SERIE, idioma()) }
-                            poner(tm.buscar(t, Tipos.PELICULA, idioma()))
+                            val series = async { consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) } }
+                            poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) })
                             poner(series.await())
                         }
                     }
-                    // Los directores, aparte: si fallan, quedan las películas.
-                    directores.await()?.let { _busqueda.value = _busqueda.value.copy(directores = it) }
                 }
             }
             if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") {
                 if (generoLibro != null) { poner(OpenLibrary.porTema(generoLibro.tema, idioma())); return@fuente }
-                poner(OpenLibrary.buscar(t, idioma()))
+                fuente("obras_libros") { poner(OpenLibrary.buscar(t, idioma())) }
                 // Los escritores, con su foto de Wikimedia Commons (por su id de Open Library en Wikidata).
-                val autores = runCatching { OpenLibrary.buscarAutores(t) }.getOrDefault(emptyList())
+                val autores = runCatching { OpenLibrary.buscarAutores(t) }.avisarFallo(aviso("autores")).getOrDefault(emptyList())
                 _busqueda.value = _busqueda.value.copy(autores = autores)
-                val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.getOrDefault(emptyMap())
+                val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.avisarFallo(aviso("fotos_autores")).getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
             // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
             if (musical) fuente("musica") {
-                // Primero los artistas (con su foto, si la hay) y después los álbumes.
+                fuente("albumes") {
+                    val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
+                    poner(if (etiqueta != null) MusicBrainz.albumesPorGenero(etiqueta) else MusicBrainz.buscarAlbumes(t))
+                }
+                // Los artistas y los álbumes conservan sus resultados por separado.
                 val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
                 val artistas = if (etiqueta != null) MusicBrainz.artistasPorGenero(etiqueta) else MusicBrainz.buscarArtistas(t)
                 _busqueda.value = _busqueda.value.copy(artistas = artistas)
-                val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.getOrDefault(emptyMap())
+                val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.avisarFallo(aviso("fotos_artistas")).getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
-                poner(if (etiqueta != null) MusicBrainz.albumesPorGenero(etiqueta) else MusicBrainz.buscarAlbumes(t))
             }
         }
     }
@@ -1643,6 +1668,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val artistas: List<Pair<ArtistaEncontrado, Rec.Por>> = emptyList(),
         val libros: List<Pair<Encontrado, Rec.Por>> = emptyList(),
         val pendientes: List<Obra> = emptyList(),
+        val avisos: List<Int> = emptyList(),
     ) { val vacias get() = cine.isEmpty() && artistas.isEmpty() && libros.isEmpty() && pendientes.isEmpty() }
 
     private val _recomendaciones = MutableStateFlow<Recomendaciones?>(null)
@@ -1673,24 +1699,26 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val cineQuiere = listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME).filter { perfil.quiere(it) }
         _recomendaciones.value = Recomendaciones(pendientes = Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) })
         recomendando = viewModelScope.launch {
+            val avisos = mutableListOf<Int>()
+            val registrar: (Int) -> Unit = { avisos.add(it) }
             val cine = async {
                 if (clave == null || cineQuiere.isEmpty()) emptyList() else runCatching {
                     val t = Tmdb(clave)
                     val junta = Rec.Junta<Encontrado> { it.fuente }
                     val semillas = Rec.semillas(e, cineQuiere, 8).filter { it.first.fuente.startsWith("tmdb:") }.map { Triple(it.first.fuente, it.second, it.first.titulo) } +
                         perfil.semillas.filter { it.fuente.startsWith("tmdb:") }.take(6).map { Triple(it.fuente, 0.7, it.nombre) }
-                    semillas.distinctBy { it.first }.forEach { (f, p, titulo) -> runCatching { junta.sumar(t.recomendaciones(f, idioma()), p, titulo) } }
+                    semillas.distinctBy { it.first }.forEach { (f, p, titulo) -> runCatching { junta.sumar(t.recomendaciones(f, idioma()), p, titulo) }.avisarFallo(registrar) }
                     // Las parecidas que Fogón escribió para lo que eligió de la lista para empezar (con su póster).
                     curadas(e, cineQuiere.toSet()).forEach { (titulo, lista) ->
-                        junta.sumar(lista.take(4).map { x -> if (x.portada.isBlank()) x.copy(portada = runCatching { t.poster(x.fuente) }.getOrDefault("")) else x }, 1.0, titulo)
+                        junta.sumar(lista.take(4).map { x -> if (x.portada.isBlank()) x.copy(portada = runCatching { t.poster(x.fuente) }.avisarFallo(registrar).getOrDefault("")) else x }, 1.0, titulo)
                     }
                     // Sin semillas (o con pocas), lo que más se ve esta semana, según sus géneros.
-                    if (semillas.size < 3) runCatching { junta.sumar(t.tendencias(idioma()), 0.0, "") }
+                    if (semillas.size < 3) runCatching { junta.sumar(t.tendencias(idioma()), 0.0, "") }.avisarFallo(registrar)
                     val c = junta.candidatos({ "obra:" + it.fuente }, { it.generos }) {
                         it.tipo !in cineQuiere || it.fuente in fuentes || L.tituloLimpio(it.titulo) in titulos || it.portada.isBlank()
                     }
                     Rec.elegir(c, perfil, vistos, 18)
-                }.getOrDefault(emptyList())
+                }.avisarFallo(registrar).getOrDefault(emptyList())
             }
             val musica = async {
                 if (!perfil.quiere(Tipos.ALBUM)) emptyList() else runCatching {
@@ -1700,16 +1728,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         .filter { it.second > 0 && perfil.pesoPersona(it.third) >= 0 }.sortedByDescending { it.second }.take(6) +
                         perfil.artistasDichos.filter { it.fuente.startsWith("mb:artist:") }.take(6).map { Triple(it.fuente, 0.7, it.nombre) }
                     semillas.distinctBy { it.first }.take(10).forEach { (f, p, nombre) ->
-                        runCatching { junta.sumar(io.github.fogonapps.cajon.datos.ListenBrainz.parecidos(f.removePrefix("mb:artist:")), p, nombre) }
+                        runCatching { junta.sumar(io.github.fogonapps.cajon.datos.ListenBrainz.parecidos(f.removePrefix("mb:artist:")), p, nombre) }.avisarFallo(registrar)
                     }
                     val c = junta.candidatos({ Rec.clavePersona(it.nombre) }, persona = { it.nombre }) {
                         "mb:artist:${it.mbid}" in fuentes || L.tituloLimpio(it.nombre) in nombres || L.tituloLimpio(it.nombre) in perfil.artistasDichos.map { d -> L.tituloLimpio(d.nombre) }
                     }
                     val lista = Rec.elegir(c, perfil, vistos, 15)
                     // Con su foto (Wikidata), como en el buscador.
-                    val fotos = runCatching { Wikimedia.fotos(lista.map { it.first.mbid }) }.getOrDefault(emptyMap())
+                    val fotos = runCatching { Wikimedia.fotos(lista.map { it.first.mbid }) }.avisarFallo(registrar).getOrDefault(emptyMap())
                     lista.map { (a, por) -> (fotos[a.mbid]?.let { a.copy(foto = it) } ?: a) to por }
-                }.getOrDefault(emptyList())
+                }.avisarFallo(registrar).getOrDefault(emptyList())
             }
             val libros = async {
                 if (!perfil.quiere(Tipos.LIBRO)) emptyList() else runCatching {
@@ -1738,7 +1766,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         runCatching {
                             val obras = if (v.second.isNotEmpty()) OpenLibrary.obrasDe(v.second, idioma()) else OpenLibrary.obrasDeNombre(nombre, idioma())
                             junta.sumar(obras.filter { !Rec.yaLoTiene(it.titulo, suyos) }.take(10), v.first, nombre)
-                        }
+                        }.avisarFallo(registrar)
                     }
                     // Las parecidas que Fogón escribió para los libros que le gustan (pesan más que "otro del mismo autor").
                     curadas(e, setOf(Tipos.LIBRO)).forEach { (titulo, lista) -> junta.sumar(lista, 1.5, titulo) }
@@ -1747,9 +1775,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         it.fuente in fuentes || L.tituloLimpio(it.titulo) in titulos || it.portada.isBlank() || L.otroAlfabeto(it.titulo)
                     }
                     Rec.elegir(c, perfil, vistos, 12)
-                }.getOrDefault(emptyList())
+                }.avisarFallo(registrar).getOrDefault(emptyList())
             }
-            val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) })
+            val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, avisos = avisos.distinct())
             _recomendaciones.value = r
             historial.mostrado(r.cine.map { "obra:" + it.first.fuente } + r.libros.map { "obra:" + it.first.fuente } + r.artistas.map { Rec.clavePersona(it.first.nombre) })
         }
@@ -1828,8 +1856,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val libros: List<Encontrado> = emptyList(),
         val listo: Boolean = false,
         val idioma: String = "",
+        val avisos: List<Int> = emptyList(),
     ) {
-        fun vigente(actual: String) = listo && idioma == actual
+        fun vigente(actual: String) = listo && idioma == actual && avisos.isEmpty()
     }
 
     private var cargaParaElegir: Job? = null
@@ -1843,16 +1872,18 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         _paraElegir.value = ParaElegir(idioma = lengua)
         val clave = claveCine
         cargaParaElegir = viewModelScope.launch {
-            val cine = async { if (clave == null) emptyList() else runCatching { Tmdb(clave).tendencias(lengua) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
+            val avisos = mutableListOf<Int>()
+            val registrar: (Int) -> Unit = { avisos.add(it) }
+            val cine = async { if (clave == null) emptyList() else runCatching { Tmdb(clave).tendencias(lengua) }.avisarFallo(registrar).getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
             val artistas = async {
                 runCatching {
                     val l = io.github.fogonapps.cajon.datos.ListenBrainz.populares(48)
-                    val fotos = runCatching { Wikimedia.fotos(l.map { it.mbid }) }.getOrDefault(emptyMap())
+                    val fotos = runCatching { Wikimedia.fotos(l.map { it.mbid }) }.avisarFallo(registrar).getOrDefault(emptyMap())
                     l.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a }
-                }.getOrDefault(emptyList())
+                }.avisarFallo(registrar).getOrDefault(emptyList())
             }
-            val libros = async { runCatching { OpenLibrary.populares(lengua) }.getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
-            val resultado = ParaElegir(cine.await(), artistas.await(), libros.await(), listo = true, idioma = lengua)
+            val libros = async { runCatching { OpenLibrary.populares(lengua) }.avisarFallo(registrar).getOrDefault(emptyList()).filter { it.portada.isNotBlank() } }
+            val resultado = ParaElegir(cine.await(), artistas.await(), libros.await(), listo = true, idioma = lengua, avisos = avisos.distinct())
             if (idioma() == lengua) _paraElegir.value = resultado
         }
     }
@@ -2011,6 +2042,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val buscados: Map<String, List<io.github.fogonapps.cajon.datos.Buscado>> = emptyMap(),
         val artistas: List<ArtistaEncontrado> = emptyList(),
         val conTvMaze: Boolean = false,
+        val avisos: List<Int> = emptyList(),
         val cuando: Long = 0,
     )
 
@@ -2024,9 +2056,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val clave = claveCine
         val l = idioma()
         viewModelScope.launch {
+            val avisos = mutableListOf<Int>()
+            val registrar: (Int) -> Unit = { avisos.add(it) }
             try {
-                fun <T> intento(b: suspend () -> List<T>) = async { runCatching { b() }.getOrDefault(emptyList()) }
-                val servidor = async { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial().momento(l) }.getOrNull() }
+                fun <T> intento(b: suspend () -> List<T>) = async { runCatching { b() }.avisarFallo(registrar).getOrDefault(emptyList()) }
+                val servidor = async { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial().momento(l) }.avisarFallo(registrar).getOrNull() }
                 val peliculas = intento { if (clave == null) emptyList() else Tmdb(clave).tendenciasDe("movie", l) }
                 val series = intento { if (clave == null) io.github.fogonapps.cajon.datos.TvMaze.estrenosDeHoy() else Tmdb(clave).tendenciasDe("tv", l).filter { it.tipo == Tipos.SERIE } }
                 val anime = intento { if (clave == null) emptyList() else Tmdb(clave).animeAlAire(l) }
@@ -2034,7 +2068,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val libros = intento { OpenLibrary.tendencias(l) }
                 val artistas = intento {
                     val a = io.github.fogonapps.cajon.datos.ListenBrainz.artistasDeLaSemana(24)
-                    val fotos = runCatching { Wikimedia.fotos(a.map { it.mbid }) }.getOrDefault(emptyMap())
+                    val fotos = runCatching { Wikimedia.fotos(a.map { it.mbid }) }.avisarFallo(registrar).getOrDefault(emptyMap())
                     a.map { x -> fotos[x.mbid]?.let { x.copy(foto = it) } ?: x }
                 }
                 val s = servidor.await()
@@ -2042,7 +2076,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     obras = mapOf(Tipos.PELICULA to peliculas.await(), Tipos.SERIE to series.await(), Tipos.ANIME to anime.await(),
                         Tipos.ALBUM to discos.await(), Tipos.LIBRO to libros.await()).mapValues { (_, v) -> v.filter { it.portada.isNotBlank() } },
                     buscados = if (s == null) emptyMap() else mapOf(Tipos.PELICULA to s.peliculas, Tipos.SERIE to s.series, Tipos.ANIME to s.anime),
-                    artistas = artistas.await(), conTvMaze = clave == null, cuando = System.currentTimeMillis(),
+                    artistas = artistas.await(), conTvMaze = clave == null, cuando = if (avisos.isEmpty()) System.currentTimeMillis() else 0, avisos = avisos.distinct(),
                 )
             } finally { trayendoMomento = false }
         }
@@ -2076,7 +2110,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     else -> t.popularEn(id, "tv", false, region(), idioma()).filter { it.tipo == Tipos.SERIE }
                 }.filter { it.portada.isNotBlank() }
                 _enPlataforma.value = _enPlataforma.value + (k to lista)
-            }.onFailure { plataformaTraida.remove(k) }
+            }.avisarFallo { aviso ->
+                plataformaTraida.remove(k)
+                _enPlataforma.value = _enPlataforma.value + (k to emptyList())
+                _momento.value = _momento.value.copy(avisos = (_momento.value.avisos + aviso).distinct(), cuando = 0)
+            }
         }
     }
 

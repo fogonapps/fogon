@@ -1,3 +1,4 @@
+<p><b>Beta:</b> El Cajón todavía puede cambiar y tener fallos. Los problemas conocidos están en <a href="https://github.com/fogonapps/el-cajon#problemas-conocidos">github.com/fogonapps/el-cajon</a>.</p>
 <p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios y sin rastreo. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 <p><b>La red (opcional):</b> crea tu @usuario, sigue a otras personas, mira lo que comparten en el Inicio y publica tus reseñas y fotos, con me gusta, comentarios y guardados. Solo sube lo que tú marcas como público o para tus seguidores.</p>
 
