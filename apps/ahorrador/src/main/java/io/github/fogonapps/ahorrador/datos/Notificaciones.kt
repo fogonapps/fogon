@@ -71,12 +71,40 @@ private fun montoBanco(s: String, colombiano: Boolean): Long? = runCatching {
         .setScale(0, RoundingMode.HALF_UP).longValueExact().takeIf { it > 0 }
 }.getOrNull()
 
-/** Reglas cerradas: no se infieren ingresos ni formatos de otros bancos. Nu usa la hora de la alerta. */
-fun reconocerAviso(banco: Banco, titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
+/** Normaliza solo en memoria; los extras originales nunca se persisten. */
+fun normalizarAlerta(texto: String): String = texto
+    .replace(Regex("[\u00a0\u202f\u2007\u2009]"), " ")
+    .replace(Regex("[\u200b-\u200f\ufeff\u2066-\u2069]"), "")
+    .replace("…", "...")
+    .replace(Regex("\\s+"), " ").trim()
+
+/** postTime decide si es nueva; when solo aporta la hora si pertenece a esta activación. */
+fun momentoAlerta(desde: Long, publicada: Long, cuando: Long): Long? =
+    if (desde <= 0 || publicada < desde) null else cuando.takeIf { it in desde..publicada } ?: publicada
+
+/** Prueba todas las variantes de extras, sin unir mensajes distintos de EXTRA_TEXT_LINES. */
+fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<String>, recibido: LocalDateTime): AvisoBanco? {
+    val cuerpos = textos.map(::normalizarAlerta).filter(String::isNotBlank).distinct()
+    val encabezados = titulos.map(::normalizarAlerta).filter(String::isNotBlank).distinct().ifEmpty {
+        cuerpos.mapNotNull { Regex("(?:Enviaste|Recibiste) .+").find(it)?.value }.ifEmpty { listOf("") }
+    }
+    for (texto in cuerpos) for (titulo in encabezados) reconocerAviso(banco, titulo, texto, recibido)?.let { return it }
+    return null
+}
+
+/** Reglas cerradas por banco. Nu usa la hora de la alerta, redondeada al minuto. */
+fun reconocerAviso(banco: Banco, tituloOriginal: String, textoOriginal: String, recibido: LocalDateTime): AvisoBanco? {
+    val titulo = normalizarAlerta(tituloOriginal)
+    val texto = normalizarAlerta(textoOriginal)
     if (banco == Banco.NU) {
-        val m = Regex("^Enviaste \\$([0-9.,]+)$").matchEntire(titulo) ?: return null
-        val contraparte = Regex("^Le enviaste a (.+?) (?:…|\\.\\.\\.|en su cuenta de )").find(texto)?.groupValues?.get(1) ?: return null
-        return AvisoBanco(banco, TipoMovimiento.GASTO, montoBanco(m.groupValues[1], true) ?: return null,
+        val encabezado = titulo.ifBlank { Regex("(?:Enviaste|Recibiste) .+").find(texto)?.value.orEmpty() }
+        val m = Regex("^(Enviaste|Recibiste) \\$?([0-9.,]+)(?= |$)(?: .*)?$").matchEntire(encabezado) ?: return null
+        val ingreso = m.groupValues[1] == "Recibiste"
+        val patron = if (ingreso) "Te llegó dinero de " else "Le enviaste a "
+        val contraparte = Regex(Regex.escape(patron) + "(.+?)(?= en su cuenta| con tu llave| en tu cuenta|\\.\\.\\.|[.]?$)")
+            .find(texto)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return AvisoBanco(banco, if (ingreso) TipoMovimiento.INGRESO else TipoMovimiento.GASTO,
+            montoBanco(m.groupValues[2], true) ?: return null,
             recibido.withSecond(0).withNano(0).toString(), "", contraparte.take(80), contraparte.take(60))
     }
     if (banco != Banco.BANCOLOMBIA || !texto.startsWith("Bancolombia:")) return null

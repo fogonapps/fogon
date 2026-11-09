@@ -14,6 +14,51 @@ class NotificacionesTest {
     private fun estado(): Estado = Estado(cuentas = listOf(Cuenta("bc", "Cuenta de prueba", TipoCuenta.BANCO, banco = Banco.BANCOLOMBIA), Cuenta("nu", "Otra cuenta", TipoCuenta.BANCO, banco = Banco.NU)),
         notificaciones = NotificacionesBanco(elegidos = setOf(Banco.BANCOLOMBIA, Banco.NU), enlaces = mapOf(leer(entrada)!!.enlace to "bc", nu().enlace to "nu")))
 
+    @Test fun normalizaExtrasYReconoceIngresoNu() {
+        val titulo = "\u2066Recibiste\u00a01.200,00\u202fen t…\u2069"
+        val texto = "Te llegó\u2007dinero de\u2009CAMILO\u200b PRUEBA\ncon tu llave."
+        val a = reconocerExtrasBanco(Banco.NU, listOf("", titulo), listOf("", texto), recibido)!!
+        assertEquals(TipoMovimiento.INGRESO, a.tipo)
+        assertEquals(1200L, a.monto)
+        assertEquals("CAMILO PRUEBA", a.contraparte)
+        assertEquals("a b c d e...", normalizarAlerta("\ufeffa\u00a0b\u202fc\u2007d\u2009e…\u200c\u200d\u200e\u200f\u2066\u2067\u2068\u2069"))
+        assertEquals(a, reconocerAviso(Banco.NU, "", "Recibiste 1.200,00 en tu cuenta\n$texto", recibido))
+    }
+    @Test fun extrasAlternativosYSalidaRealConDatosInventados() {
+        val textos = listOf("Texto corto", "Le enviaste a LUC***** PRU****** en su cuenta de Nequi S.A. CF.")
+        val a = reconocerExtrasBanco(Banco.NU, listOf("Enviaste", "Enviaste \$100,00"), textos, recibido)!!
+        assertEquals(100L, a.monto)
+        assertEquals("LUC***** PRU******", a.contraparte)
+        assertEquals(a, reconocerExtrasBanco(Banco.NU, emptyList(), listOf("Enviaste 100,00 " + textos.last()), recibido))
+        assertEquals(a, reconocerExtrasBanco(Banco.NU, listOf(""), listOf("Enviaste 100,00", textos.last()), recibido))
+        assertNotNull(reconocerExtrasBanco(Banco.BANCOLOMBIA, emptyList(), listOf("Resumen", salida.replace(" ", "\u00a0")), recibido))
+    }
+    @Test fun activacionYHoraNoPierdenAlertasNuevas() {
+        assertNull(momentoAlerta(0, 200, 200))
+        assertNull(momentoAlerta(100, 99, 200))
+        assertEquals(100L, momentoAlerta(100, 100, 100))
+        assertEquals(200L, momentoAlerta(100, 200, 0))
+        assertEquals(200L, momentoAlerta(100, 200, 99))
+        assertEquals(200L, momentoAlerta(100, 200, 300))
+        assertEquals(150L, momentoAlerta(100, 200, 150))
+    }
+    @Test fun primeraNuAutomaticaSinCuentaQuedaPendienteHastaEnlazar() {
+        val a = nu()
+        val inicial = Estado(notificaciones = NotificacionesBanco(elegidos = setOf(Banco.NU), solos = setOf(Banco.NU)))
+        val recibido = recibirBanco(inicial, a)
+        val automatico = confirmarBanco(recibido, a.huella, automatico = true)
+        assertEquals(1, automatico.notificaciones.registros.size)
+        assertFalse(automatico.notificaciones.registros.single().descartado)
+        assertNull(automatico.notificaciones.registros.single().movimiento)
+        assertTrue(automatico.movimientos.isEmpty())
+        val conCuenta = automatico.copy(cuentas = listOf(Cuenta("nu", "Nu de prueba", TipoCuenta.BANCO)))
+        val enlazado = enlazarBanco(conCuenta, a, "nu")
+        val anotado = confirmarBanco(enlazado, a.huella, automatico = true)
+        assertEquals("nu", anotado.movimientos.single().cuenta)
+        assertTrue(anotado.notificaciones.registros.single().automatico)
+        assertEquals(anotado, recibirBanco(anotado, a))
+    }
+
     @Test fun cuatroReglasBancolombia() {
         val transferencia = leer(salida)!!
         assertEquals(TipoMovimiento.GASTO, transferencia.tipo)

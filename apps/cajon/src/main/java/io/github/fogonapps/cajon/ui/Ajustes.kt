@@ -45,6 +45,7 @@ import io.github.fogonapps.cajon.WidgetCursoReceptor
 import io.github.fogonapps.cajon.datos.ClienteGist
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Tmdb
+import io.github.fogonapps.identidad.SeccionAjustes
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -70,7 +71,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
 
     // Tu cuenta: lo primero.
-    Seccion(stringResource(R.string.aj_tu_cuenta))
+    SeccionAjustes(stringResource(R.string.aj_tu_cuenta))
     val u = usuario
     val cuentaRed by vm.red.cuenta.collectAsStateWithLifecycle()
     if (!cuentaRed?.permisos.isNullOrEmpty()) FilaAjuste(Iconos.Bandera, stringResource(R.string.mod_titulo), stringResource(R.string.mod_pista)) { vm.abrir(Pantalla.Moderacion) }
@@ -80,7 +81,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
     }
 
-    Seccion(stringResource(R.string.aj_como_usas))
+    SeccionAjustes(stringResource(R.string.aj_como_usas))
     FilaAjuste(Iconos.Campana, stringResource(R.string.aj_notificaciones), stringResource(R.string.aj_notificaciones_pista)) { vm.abrir(Pantalla.AjustesAvisos) }
     if (u != null) {
         FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloqueadas), null) { vm.abrir(Pantalla.BloqueadosRed) }
@@ -88,7 +89,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
     FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
 
-    Seccion(stringResource(R.string.aj_tu_cajon))
+    SeccionAjustes(stringResource(R.string.aj_tu_cajon))
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
     // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
     if (acciones != null) FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista)) { acciones.exportar() }
@@ -106,15 +107,15 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         }
     }
 
-    Seccion(stringResource(R.string.aj_apariencia_idioma))
+    SeccionAjustes(stringResource(R.string.aj_apariencia_idioma))
     FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
     Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
     Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), null) { OrdenPestanas(vm, e) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }
 
-    Seccion(stringResource(R.string.fogon))
+    SeccionAjustes(stringResource(R.string.fogon))
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
-    Seccion(stringResource(R.string.privacidad_grupo))
+    SeccionAjustes(stringResource(R.string.privacidad_grupo))
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/privacidad") }
     FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/terminos") }
@@ -146,39 +147,13 @@ private fun OrdenPestanas(vm: CajonViewModel, e: Estado) {
     }
 }
 
-/** Una fila de los ajustes: ícono, título, una pista y la flecha. */
 @Composable
-fun FilaAjuste(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, onClick: () -> Unit) {
-    val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
-        Column(Modifier.weight(1f)) {
-            Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
-        }
-        IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
-    }
-}
+fun FilaAjuste(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, onClick: () -> Unit) =
+    io.github.fogonapps.identidad.FilaAjuste(icono, titulo, pista, onClick)
 
-/** Un grupo de ajustes que se abre y se cierra en el mismo lugar. */
 @Composable
-fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, contenido: @Composable () -> Unit) {
-    val f = FogonTema.actual
-    var abierto by rememberSaveable(titulo) { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable { abierto = !abierto }.padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
-        Column(Modifier.weight(1f)) {
-            Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
-        }
-        IconoRiso(if (abierto) Iconos.Arriba else Iconos.Abajo, null, tamano = 18.dp, tinta = f.textoSuave)
-    }
-    androidx.compose.animation.AnimatedVisibility(abierto) {
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { contenido() }
-    }
-}
+fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, contenido: @Composable () -> Unit) =
+    io.github.fogonapps.identidad.Desplegable(icono, titulo, pista, contenido)
 
 /** Reportar un fallo, algo que falta o una idea: por GitHub o por correo, con la versión de la app. */
 @Composable

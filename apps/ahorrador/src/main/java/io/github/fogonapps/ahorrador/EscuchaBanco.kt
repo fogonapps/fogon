@@ -21,7 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -29,36 +30,46 @@ import java.time.ZoneId
 /** Solo conserva los campos de una regla reconocida; nunca el SMS ni los extras originales. */
 class EscuchaBanco : NotificationListenerService() {
     private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var bancos = emptySet<Banco>()
-    override fun onCreate() {
-        super.onCreate()
-        alcance.launch { (application as AhorradorApp).almacen.data.collectLatest { bancos = it.notificaciones.elegidos } }
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        BancoAvisos.conexion(this, true)
+    }
+    override fun onListenerDisconnected() {
+        BancoAvisos.conexion(this, false)
+        super.onListenerDisconnected()
     }
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val desde = BancoAvisos.desde(this)
-        if (desde == 0L || sbn.postTime < desde || sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
+        val cuando = momentoAlerta(desde, sbn.postTime, sbn.notification.`when`) ?: return
+        if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
         val sms = Telephony.Sms.getDefaultSmsPackage(this)
+        if (!paqueteAdmitido(sbn.packageName, sms, setOf(Banco.BANCOLOMBIA, Banco.NU))) return
+        // DataStore es la fuente de verdad también en la primera alerta, antes de cualquier collect.
+        val bancos = runBlocking(Dispatchers.IO) { (application as AhorradorApp).almacen.data.first().notificaciones.elegidos }
         if (!paqueteAdmitido(sbn.packageName, sms, bancos)) return
         val extras = sbn.notification.extras
-        val texto = (extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.takeIf { it.isNotBlank() } ?: extras.getCharSequence(Notification.EXTRA_TEXT))?.toString().orEmpty()
-        val banco = bancoDelTexto(sbn.packageName, sms, bancos, texto) ?: return
-        val titulo = if (banco == Banco.NU) extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty() else ""
-        val cuando = sbn.notification.`when`.takeIf { it > 0 } ?: sbn.postTime
-        val a = reconocerAviso(banco, titulo, texto, Instant.ofEpochMilli(cuando).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        val textos = listOf(Notification.EXTRA_BIG_TEXT, Notification.EXTRA_TEXT, Notification.EXTRA_SUB_TEXT)
+            .map { normalizarAlerta(extras.getCharSequence(it)?.toString().orEmpty()) } +
+            extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES).orEmpty().map { normalizarAlerta(it.toString()) }
+        val banco = textos.firstNotNullOfOrNull { bancoDelTexto(sbn.packageName, sms, bancos, it) } ?: return
+        val titulos = listOf(Notification.EXTRA_TITLE_BIG, Notification.EXTRA_TITLE)
+            .map { normalizarAlerta(extras.getCharSequence(it)?.toString().orEmpty()) }
+        val a = reconocerExtrasBanco(banco, titulos, textos, Instant.ofEpochMilli(cuando).atZone(ZoneId.systemDefault()).toLocalDateTime())
+        BancoAvisos.contar(this, banco, a != null)
         // Solo los datos estructurados cruzan al trabajo asíncrono.
         alcance.launch {
             val almacen = (application as AhorradorApp).almacen
             if (a == null) {
                 var avisar = false
                 almacen.updateData { e ->
-                    if (banco !in e.notificaciones.elegidos || BancoAvisos.desde(this@EscuchaBanco) == 0L || banco in e.notificaciones.noEntendidos) e
+                    if (banco !in e.notificaciones.elegidos || BancoAvisos.desde(this@EscuchaBanco) != desde || banco in e.notificaciones.noEntendidos) e
                     else { avisar = true; e.copy(notificaciones = e.notificaciones.copy(noEntendidos = e.notificaciones.noEntendidos + banco)) }
                 }
                 if (avisar) BancoAvisos.noEntendido(this@EscuchaBanco, banco)
             } else {
                 var nuevo = false
                 val e = almacen.updateData { anterior ->
-                    if (BancoAvisos.desde(this@EscuchaBanco) == 0L) anterior else {
+                    if (BancoAvisos.desde(this@EscuchaBanco) != desde) anterior else {
                         val recibido = recibirBanco(anterior, a)
                         nuevo = recibido != anterior
                         val resultado = if (nuevo && a.banco in recibido.notificaciones.solos) confirmarBanco(recibido, a.huella, automatico = true) else recibido
@@ -69,16 +80,34 @@ class EscuchaBanco : NotificationListenerService() {
             }
         }
     }
-    override fun onDestroy() { alcance.cancel(); super.onDestroy() }
+    override fun onDestroy() { BancoAvisos.conexion(this, false); alcance.cancel(); super.onDestroy() }
 }
 
 object BancoAvisos {
+    // La conexión pertenece al proceso: un cierre abrupto no debe dejar un «conectado» persistente.
+    @Volatile var conectado = false
+        private set
     const val EXTRA_BANCO = "banco"
     const val EXTRA_EDITAR = "editar_banco"
     private const val CANAL = "banco"
     fun desde(c: Context) = c.getSharedPreferences("banco", Context.MODE_PRIVATE).getLong("desde", 0)
     fun activar(c: Context, si: Boolean) {
         c.getSharedPreferences("banco", Context.MODE_PRIVATE).edit { putLong("desde", if (si) System.currentTimeMillis() else 0) }
+    }
+    fun conexion(c: Context, conectado: Boolean) {
+        this.conectado = conectado
+        c.getSharedPreferences("banco", Context.MODE_PRIVATE).edit {
+            putBoolean("conectado", conectado); putLong("conexion", System.currentTimeMillis())
+        }
+    }
+    @Synchronized
+    fun contar(c: Context, banco: Banco, entendida: Boolean) {
+        val p = c.getSharedPreferences("banco", Context.MODE_PRIVATE)
+        p.edit {
+            putLong("vistas:$banco", p.getLong("vistas:$banco", 0) + 1)
+            putLong("entendidas:$banco", p.getLong("entendidas:$banco", 0) + if (entendida) 1 else 0)
+            putLong("ultima:$banco", System.currentTimeMillis())
+        }
     }
     fun conPermiso(c: Context) = NotificationManagerCompat.getEnabledListenerPackages(c).contains(c.packageName)
     private fun id(huella: String) = "banco:$huella"

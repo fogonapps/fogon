@@ -426,7 +426,7 @@
     <string name="banco_permitir_avisos">Permitir avisos para confirmar</string>
     <string name="banco_elegir">Tus bancos</string>
     <string name="banco_sms">Solo SMS que empiezan por Bancolombia:</string>
-    <string name="banco_app">Solo «Enviaste» de la app de Nu. La hora se toma de la alerta.</string>
+    <string name="banco_app">Lo que envías y lo que recibes en la app de Nu. La hora se toma de la alerta.</string>
     <string name="banco_solo">Anotar solo</string>
     <string name="banco_solo_pista">Sin preguntar. Puedes revisar y deshacer abajo.</string>
     <string name="banco_futuros">Los demás bancos se pueden elegir al crear cuentas. Sus alertas estarán disponibles cuando haya reglas probadas.</string>
@@ -459,4 +459,21 @@
     <string name="banco_bogota">Banco de Bogotá</string>
     <string name="banco_bbva">BBVA</string>
     <string name="banco_otro">Otro</string>
+    <string name="aj_como_usas">Cómo usas La Alcancía</string>
+    <string name="aj_tu_alcancia">Tu alcancía</string>
+    <string name="aj_apariencia_idioma">Apariencia e idioma</string>
+    <string name="aj_privacidad">Privacidad</string>
+    <string name="aj_que_sale">Qué sale de tu teléfono</string>
+    <string name="aj_privacidad_texto">La Alcancía no tiene acceso a internet ni envía tus datos. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. Solo salen del teléfono si tú compartes esos archivos o eliges un destino externo. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales. El diagnóstico conserva solo contadores y horas.</string>
+    <string name="aj_sistema_pista">Elige cómo organizas tu plata</string>
+    <string name="aj_importar_pista">Trae movimientos de un archivo CSV</string>
+    <string name="aj_apariencia_pista">Tema, colores y comodidad</string>
+    <string name="banco_estado">Estado</string>
+    <string name="banco_conectado">Acceso: conectado</string>
+    <string name="banco_desconectado">Acceso: desconectado</string>
+    <string name="banco_cambio_conexion">Último cambio: %1$s</string>
+    <string name="banco_reconectar">Reconectar acceso</string>
+    <string name="banco_contadores">Alertas vistas: %1$d · entendidas: %2$d · última: %3$s</string>
+    <string name="banco_nunca">nunca</string>
+    <string name="banco_restringidos">Si Android no te deja activarlo: Ajustes → Apps → La Alcancía → ⋮ → Permitir ajustes restringidos, y vuelve aquí</string>
 </resources>

@@ -114,6 +114,12 @@ fun IconoRiso(
 
 /** Los íconos que comparten todas las apps. Cada app suma los suyos en su `Iconos`. */
 object IconosFogon {
+    // Compartidos por todas las apps (D-028: los mismos iconos que El Cajón en ajustes y perfil).
+    val Lista = dibujo("lista", trazo("M9.4 6.4h10.2M9.4 12h10.2M9.4 17.6h10.2", 2.6f), relleno("M5.2 5a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 10.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 16.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"))
+    val Imagen = dibujo("imagen", relleno("M3.6 5h16.8v14H3.6z"), hueco("M5.6 17l4.4-5.4 3 3.4 2.2-2.4 3.2 4.4z"), hueco("M15.6 7.6a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z"))
+    val Estrella = dibujo("estrella", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"))
+    val Comentario = dibujo("comentario", relleno("M4 5.6h16v10.6h-9.2L6.4 20v-3.8H4z"))
+    val Bandera = dibujo("bandera", trazo("M5.6 20.4V4", 2.4f), relleno("M6.6 4.4h11.6l-2.6 4 2.6 4H6.6z"))
     val Inicio = dibujo("inicio", relleno("M4 11.2 12 4.6l8 6.6V19.6H4z"), hueco("M10 19.8v-4.6a2 2 0 0 1 4 0v4.6z"))
     val Perfil = dibujo("perfil", relleno("M12 3.8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"), relleno("M4.6 20.4c.8-4.2 3.6-6.6 7.4-6.6s6.6 2.4 7.4 6.6z"))
     val Racha = dibujo(

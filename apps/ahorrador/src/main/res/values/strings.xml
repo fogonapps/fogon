@@ -425,7 +425,7 @@
     <string name="banco_permitir_avisos">Allow confirmation notifications</string>
     <string name="banco_elegir">Your banks</string>
     <string name="banco_sms">Only SMS starting with Bancolombia:</string>
-    <string name="banco_app">Only “Enviaste” alerts from the Nu app. The time comes from the alert.</string>
+    <string name="banco_app">What you send and receive in the Nu app. The time comes from the alert.</string>
     <string name="banco_solo">Record automatically</string>
     <string name="banco_solo_pista">Without asking. Review and undo below.</string>
     <string name="banco_futuros">Other banks can be selected when creating accounts. Their alerts will be available when tested rules exist.</string>
@@ -458,4 +458,21 @@
     <string name="banco_bogota">Banco de Bogotá</string>
     <string name="banco_bbva">BBVA</string>
     <string name="banco_otro">Other</string>
+    <string name="aj_como_usas">How you use La Alcancía</string>
+    <string name="aj_tu_alcancia">Your piggy bank</string>
+    <string name="aj_apariencia_idioma">Appearance and language</string>
+    <string name="aj_privacidad">Privacy</string>
+    <string name="aj_que_sale">What leaves your phone</string>
+    <string name="aj_privacidad_texto">La Alcancía has no internet access and sends no data. Backups save your data to a file you choose; CSV files contain your transactions. They only leave your phone if you share them or choose an external destination. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages. Diagnostics keep only counters and times.</string>
+    <string name="aj_sistema_pista">Choose how to organize your money</string>
+    <string name="aj_importar_pista">Bring transactions from a CSV file</string>
+    <string name="aj_apariencia_pista">Theme, colors and comfort</string>
+    <string name="banco_estado">Status</string>
+    <string name="banco_conectado">Access: connected</string>
+    <string name="banco_desconectado">Access: disconnected</string>
+    <string name="banco_cambio_conexion">Last change: %1$s</string>
+    <string name="banco_reconectar">Reconnect access</string>
+    <string name="banco_contadores">Alerts seen: %1$d · understood: %2$d · last: %3$s</string>
+    <string name="banco_nunca">never</string>
+    <string name="banco_restringidos">If Android prevents you from enabling access: Settings → Apps → La Alcancía → ⋮ → Allow restricted settings, then return here</string>
 </resources>

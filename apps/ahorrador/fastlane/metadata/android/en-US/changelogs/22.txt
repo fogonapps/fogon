@@ -1,3 +1,0 @@
-• El Ahorrador is now La Alcancía (your data stays the same).
-• New, optional: log from Bancolombia (SMS) and Nu alerts. It asks before logging, or does it on its own if you turn that on, and recognizes money moved between your own accounts. Everything stays on your phone.
-• When creating an account you can pick your bank from a list.

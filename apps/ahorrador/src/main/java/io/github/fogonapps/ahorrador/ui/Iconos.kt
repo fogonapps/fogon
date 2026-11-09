@@ -17,6 +17,11 @@ private fun gordo(nombre: String, ancho: Float, vararg d: String): Dibujo = dibu
  */
 object Iconos {
     val Inicio = IconosFogon.Inicio
+    val Lista = IconosFogon.Lista
+    val Imagen = IconosFogon.Imagen
+    val Estrella = IconosFogon.Estrella
+    val Comentario = IconosFogon.Comentario
+    val Bandera = IconosFogon.Bandera
     val Resumen = gordo("resumen", 3.4f, "M5.5 19V11M12 19V5M18.5 19v-5")
     val Sobres = dibujo("sobres", relleno("M3 6.5h18v12.5H3z"), huecoTrazo("M3.6 7.4 12 13l8.4-5.6", 2f))
     val Moneda = IconosFogon.Moneda

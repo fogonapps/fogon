@@ -28,13 +28,13 @@ object Iconos {
     /** Un micrófono: artistas. */
     val Artista = dibujo("artista", relleno("M9.4 4.6a2.6 2.6 0 0 1 5.2 0v6a2.6 2.6 0 0 1-5.2 0z"), trazo("M6.4 10.6a5.6 5.6 0 0 0 11.2 0M12 16.2v3.8M8.8 20h6.4", 2.2f))
     /** Renglones con viñeta: las listas. */
-    val Lista = dibujo("lista", trazo("M9.4 6.4h10.2M9.4 12h10.2M9.4 17.6h10.2", 2.6f), relleno("M5.2 5a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 10.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 16.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"))
+    val Lista = IconosFogon.Lista
     /** Un cuaderno: el diario. */
     val Diario = dibujo("diario", relleno("M6 3.6h12.4v16.8H6z"), huecoTrazo("M9.4 8h5.6M9.4 11.6h5.6", 1.8f), trazo("M4.4 7.4h2.8M4.4 12h2.8M4.4 16.6h2.8", 1.8f))
     /** Un cuadro con un monte y un sol: una imagen (cambiar la portada). */
-    val Imagen = dibujo("imagen", relleno("M3.6 5h16.8v14H3.6z"), hueco("M5.6 17l4.4-5.4 3 3.4 2.2-2.4 3.2 4.4z"), hueco("M15.6 7.6a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z"))
+    val Imagen = IconosFogon.Imagen
     val Corazon = dibujo("corazon", relleno("M12 20s-7.6-4.6-7.6-10a4.2 4.2 0 0 1 7.6-2.6A4.2 4.2 0 0 1 19.6 10c0 5.4-7.6 10-7.6 10z"))
-    val Estrella = dibujo("estrella", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"))
+    val Estrella = IconosFogon.Estrella
     val Buscar = dibujo("buscar", trazo("M10.6 4.4a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4zM15.2 15.2l4.6 4.6", 2.8f))
     /** Una flecha que sale de una caja: compartir. */
     /** Abrir afuera (un enlace a otro servicio): una flecha que sale de un cuadro. */
@@ -52,7 +52,7 @@ object Iconos {
     val Ajustes = dibujo("ajustes", relleno("M18.85 9.78 L21.18 9.99 L21.18 14.01 L18.85 14.22 L18.42 15.27 L19.92 17.07 L17.07 19.92 L15.27 18.42 L14.22 18.85 L14.01 21.18 L9.99 21.18 L9.78 18.85 L8.73 18.42 L6.93 19.92 L4.08 17.07 L5.58 15.27 L5.15 14.22 L2.82 14.01 L2.82 9.99 L5.15 9.78 L5.58 8.73 L4.08 6.93 L6.93 4.08 L8.73 5.58 L9.78 5.15 L9.99 2.82 L14.01 2.82 L14.22 5.15 L15.27 5.58 L17.07 4.08 L19.92 6.93 L18.42 8.73z"), hueco("M14.8 12a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0z"))
     /* La red */
     /** Un globo de conversación: comentar. */
-    val Comentario = dibujo("comentario", relleno("M4 5.6h16v10.6h-9.2L6.4 20v-3.8H4z"))
+    val Comentario = IconosFogon.Comentario
     /** Una cinta de marcador: guardar. */
     val Guardar = dibujo("guardar", relleno("M6.4 3.8h11.2v16.6L12 16.6l-5.6 3.8z"))
     /** Una campana: los avisos. */
@@ -71,7 +71,7 @@ object Iconos {
     /** Un triángulo: tocar (reproducir). */
     val Tocar = dibujo("tocar", relleno("M7.4 4.6v14.8L19.6 12z"))
     /** Una banderita: reportar. */
-    val Bandera = dibujo("bandera", trazo("M5.6 20.4V4", 2.4f), relleno("M6.6 4.4h11.6l-2.6 4 2.6 4H6.6z"))
+    val Bandera = IconosFogon.Bandera
     val Mas = IconosFogon.Mas
     val Atras = IconosFogon.Atras
     val Cerrar = IconosFogon.Cerrar

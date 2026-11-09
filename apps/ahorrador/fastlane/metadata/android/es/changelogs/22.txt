@@ -1,3 +1,0 @@
-• El Ahorrador ahora se llama La Alcancía (tus datos siguen igual).
-• Nuevo, opcional: anota desde las alertas de Bancolombia (SMS) y Nu. Te pregunta antes de anotar, o lo hace solo si lo activas, y reconoce cuando pasas plata entre tus cuentas. Todo se queda en tu teléfono.
-• Al crear una cuenta puedes elegir tu banco de una lista.

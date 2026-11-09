@@ -35,6 +35,9 @@ import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.R
 import io.github.fogonapps.ahorrador.datos.Estado
 import io.github.fogonapps.ahorrador.datos.Sistema
+import io.github.fogonapps.identidad.FilaAjuste
+import io.github.fogonapps.identidad.Desplegable
+import io.github.fogonapps.identidad.SeccionAjustes
 import io.github.fogonapps.identidad.RespaldoTodoFogon
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
@@ -69,54 +72,52 @@ fun Perfil(
         CampoTexto(nombre, { nombre = it; vm.ponerNombre(it) }, stringResource(R.string.tut_tu_nombre))
     }
 
-    Seccion(stringResource(R.string.como_te_organizas))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    SeccionAjustes(stringResource(R.string.aj_como_usas))
+    Desplegable(Iconos.Moneda, stringResource(R.string.como_te_organizas), stringResource(R.string.aj_sistema_pista)) {
         Sistema.entries.forEach { s -> TarjetaSistema(s, s == e.sistema) { vm.cambiarSistema(s) } }
         if (e.sistema == Sistema.REGLA_50_30_20) BotonSecundario(stringResource(R.string.cambiar_reparto), { reparto = true }, Modifier.fillMaxWidth())
     }
-
-    Seccion(stringResource(R.string.tu_plata))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario(stringResource(R.string.cuentas), { vm.abrir(Pantalla.Cuentas) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.pagos_fijos), { vm.abrir(Pantalla.Fijos) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.deudas_titulo), { vm.abrir(Pantalla.Deudas) }, Modifier.fillMaxWidth())
+    Desplegable(Iconos.Campana, stringResource(R.string.recordatorio), stringResource(R.string.recordatorio_pista)) { AjusteRecordatorio(vm) }
+    Desplegable(Iconos.Gasto, stringResource(R.string.gmf), stringResource(R.string.gmf_pista)) {
+        io.github.fogonapps.identidad.Interruptor(stringResource(R.string.gmf), stringResource(R.string.gmf_pista), e.gmf, onCambio = vm::cambiarGmf)
     }
+    FilaAjuste(Iconos.Moneda, stringResource(R.string.cuentas), null) { vm.abrir(Pantalla.Cuentas) }
+    FilaAjuste(Iconos.Repetir, stringResource(R.string.pagos_fijos), null) { vm.abrir(Pantalla.Fijos) }
+    FilaAjuste(Iconos.Pasar, stringResource(R.string.deudas_titulo), null) { vm.abrir(Pantalla.Deudas) }
 
-    Seccion(stringResource(R.string.opciones))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
-        Interruptor(stringResource(R.string.gmf), stringResource(R.string.gmf_pista), e.gmf, vm::cambiarGmf)
-        if (candadoDisponible) Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, vm::cambiarCandado)
-        BotonSecundario(stringResource(R.string.banco_titulo), { vm.abrir(Pantalla.Bancos) }, Modifier.fillMaxWidth())
-        AjusteRecordatorio(vm)
-        val contexto = androidx.compose.ui.platform.LocalContext.current
-        val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
-        BotonSecundario(stringResource(R.string.widget_poner), {
-            alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.ahorrador.WidgetPlataReceptor::class.java) }
-        }, Modifier.fillMaxWidth())
-        Text(stringResource(R.string.idioma), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.textoSuave)
-        SelectorIdioma(vm)
-    }
-
-    Seccion(stringResource(R.string.respaldo))
-    Pista(stringResource(R.string.respaldo_pista))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    SeccionAjustes(stringResource(R.string.aj_tu_alcancia))
+    Desplegable(Iconos.Repetir, stringResource(R.string.respaldo), stringResource(R.string.respaldo_pista)) {
         BotonSecundario(stringResource(R.string.guardar_respaldo), onExportar, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.recuperar_respaldo), {
             confirmar(vm.tx(R.string.recuperar_pregunta), vm.tx(R.string.recuperar_texto), onImportar)
         }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.exportar_csv), onExportarCsv, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.extracto_importar), onImportarExtracto, Modifier.fillMaxWidth())
+        RespaldoTodoFogon(confirmar)
     }
-    RespaldoTodoFogon(confirmar, Modifier.padding(bottom = 8.dp))
+    FilaAjuste(Iconos.Ingreso, stringResource(R.string.extracto_importar), stringResource(R.string.aj_importar_pista), onImportarExtracto)
+    FilaAjuste(Iconos.Campana, stringResource(R.string.banco_titulo), stringResource(R.string.banco_local)) { vm.abrir(Pantalla.Bancos) }
 
-    Seccion(stringResource(R.string.fogon))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario(stringResource(R.string.manifiesto), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.preguntas_frecuentes), { vm.abrir(Pantalla.Preguntas) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
+    SeccionAjustes(stringResource(R.string.aj_apariencia_idioma))
+    FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
+    Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
+    val contexto = LocalContext.current
+    val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
+    FilaAjuste(Iconos.Inicio, stringResource(R.string.widget_poner), null) {
+        alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.ahorrador.WidgetPlataReceptor::class.java) }
     }
+
+    SeccionAjustes(stringResource(R.string.fogon))
+    FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    FilaAjuste(Iconos.Comentario, stringResource(R.string.preguntas_frecuentes), null) { vm.abrir(Pantalla.Preguntas) }
+    SeccionAjustes(stringResource(R.string.aj_privacidad))
+    Desplegable(Iconos.Candado, stringResource(R.string.aj_que_sale), null) {
+        Text(stringResource(R.string.aj_privacidad_texto), color = FogonTema.actual.textoSuave, style = MaterialTheme.typography.bodyMedium)
+    }
+    if (candadoDisponible) Desplegable(Iconos.Candado, stringResource(R.string.candado), stringResource(R.string.candado_pista)) {
+        io.github.fogonapps.identidad.Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, onCambio = vm::cambiarCandado)
+    }
+    FilaAjuste(Iconos.Bandera, stringResource(RId.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
+    FilaAjuste(Iconos.Sobres, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }
     Espacio(40.dp)
 
     if (reparto) DialogoReparto(e.reparto, vm::cambiarReparto) { reparto = false }

@@ -28,6 +28,7 @@ import io.github.fogonapps.ahorrador.EscuchaBanco
 import io.github.fogonapps.ahorrador.Pantalla
 import io.github.fogonapps.ahorrador.nombreBanco
 import io.github.fogonapps.ahorrador.datos.*
+import io.github.fogonapps.identidad.SeccionAjustes
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
@@ -39,6 +40,15 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
     val ciclo = LocalLifecycleOwner.current
     var activo by remember { mutableStateOf(BancoAvisos.desde(c) != 0L) }
     var permiso by remember { mutableStateOf(BancoAvisos.conPermiso(c)) }
+    val preferencias = remember(c) { c.getSharedPreferences("banco", android.content.Context.MODE_PRIVATE) }
+    var revision by remember { mutableIntStateOf(0) }
+    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    DisposableEffect(preferencias) {
+        val escucha = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> revision++ }
+        preferencias.registerOnSharedPreferenceChangeListener(escucha)
+        onDispose { preferencias.unregisterOnSharedPreferenceChangeListener(escucha) }
+    }
+    LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(30_000); ahora = System.currentTimeMillis() } }
     val avisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     DisposableEffect(ciclo) {
         val observador = LifecycleEventObserver { _, evento -> if (evento == Lifecycle.Event.ON_RESUME) permiso = BancoAvisos.conPermiso(c) }
@@ -48,7 +58,7 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
     Cabecera(stringResource(R.string.banco_titulo), vm::cerrar)
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.banco_explicacion), color = FogonTema.actual.texto, style = MaterialTheme.typography.bodyMedium)
-        Interruptor(stringResource(R.string.banco_activar), stringResource(R.string.banco_local), activo) {
+        io.github.fogonapps.identidad.Interruptor(stringResource(R.string.banco_activar), stringResource(R.string.banco_local), activo) {
             activo = it; BancoAvisos.activar(c, it)
             BancoAvisos.actualizar(c, e)
         }
@@ -59,21 +69,47 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
         if (Build.VERSION.SDK_INT >= 33) BotonSecundario(stringResource(R.string.banco_permitir_avisos), {
             avisos.launch(Manifest.permission.POST_NOTIFICATIONS)
         }, Modifier.fillMaxWidth())
-        Text(stringResource(R.string.banco_elegir), color = FogonTema.actual.texto, style = MaterialTheme.typography.titleMedium)
+        if (!permiso && Build.VERSION.SDK_INT >= 33) Text(stringResource(R.string.banco_restringidos), color = FogonTema.actual.textoSuave)
+    }
+    SeccionAjustes(stringResource(R.string.banco_estado))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val conectado = remember(revision, permiso) { permiso && BancoAvisos.conectado }
+        Text(stringResource(if (conectado) R.string.banco_conectado else R.string.banco_desconectado), color = FogonTema.actual.texto)
+        val conexion = remember(revision) { preferencias.getLong("conexion", 0) }
+        if (conexion > 0) Text(stringResource(R.string.banco_cambio_conexion,
+            android.text.format.DateUtils.getRelativeTimeSpanString(conexion, ahora, android.text.format.DateUtils.MINUTE_IN_MILLIS).toString()), color = FogonTema.actual.textoSuave)
+        if (!conectado && permiso) BotonSecundario(stringResource(R.string.banco_reconectar), {
+            android.service.notification.NotificationListenerService.requestRebind(ComponentName(c, EscuchaBanco::class.java))
+        }, Modifier.fillMaxWidth())
         listOf(Banco.BANCOLOMBIA, Banco.NU).forEach { banco ->
-            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Interruptor(stringResource(banco.nombreBanco), stringResource(if (banco == Banco.BANCOLOMBIA) R.string.banco_sms else R.string.banco_app), banco in e.notificaciones.elegidos) { vm.elegirBanco(banco, it) }
-                if (banco in e.notificaciones.elegidos) Interruptor(stringResource(R.string.banco_solo), stringResource(R.string.banco_solo_pista), banco in e.notificaciones.solos) { vm.bancoSolo(banco, it) }
+            val ultima = remember(revision, banco) { preferencias.getLong("ultima:$banco", 0) }
+            val vistas = remember(revision, banco) { preferencias.getLong("vistas:$banco", 0) }
+            val entendidas = remember(revision, banco) { preferencias.getLong("entendidas:$banco", 0) }
+            Text(stringResource(banco.nombreBanco), color = FogonTema.actual.texto)
+            Text(stringResource(R.string.banco_contadores, vistas, entendidas,
+                if (ultima == 0L) stringResource(R.string.banco_nunca) else android.text.format.DateUtils.getRelativeTimeSpanString(ultima, ahora, android.text.format.DateUtils.MINUTE_IN_MILLIS).toString()), color = FogonTema.actual.textoSuave)
+        }
+    }
+    SeccionAjustes(stringResource(R.string.banco_elegir))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        listOf(Banco.BANCOLOMBIA, Banco.NU).forEach { banco ->
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                io.github.fogonapps.identidad.Interruptor(stringResource(banco.nombreBanco), stringResource(if (banco == Banco.BANCOLOMBIA) R.string.banco_sms else R.string.banco_app), banco in e.notificaciones.elegidos) { vm.elegirBanco(banco, it) }
+                if (banco in e.notificaciones.elegidos) io.github.fogonapps.identidad.Interruptor(stringResource(R.string.banco_solo), stringResource(R.string.banco_solo_pista), banco in e.notificaciones.solos) { vm.bancoSolo(banco, it) }
             }
         }
         Pista(stringResource(R.string.banco_futuros), Modifier)
-        Text(stringResource(R.string.banco_enlaces), color = FogonTema.actual.texto, style = MaterialTheme.typography.titleMedium)
+    }
+    SeccionAjustes(stringResource(R.string.banco_enlaces))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         e.notificaciones.enlaces.forEach { (clave, id) ->
             val cuenta = e.cuentas.firstOrNull { it.id == id }
             Text(stringResource(R.string.banco_enlace, clave.substringBefore('|'), clave.substringAfter('|'), cuenta?.nombre.orEmpty()), color = FogonTema.actual.texto)
             BotonSecundario(stringResource(R.string.banco_desvincular), { vm.olvidarEnlace(clave) }, Modifier.fillMaxWidth())
         }
-        Text(stringResource(R.string.banco_pendientes), color = FogonTema.actual.texto, style = MaterialTheme.typography.titleMedium)
+    }
+    SeccionAjustes(stringResource(R.string.banco_pendientes))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val pendientes = e.notificaciones.registros.filter { !it.descartado && it.movimiento == null }
         if (pendientes.isEmpty()) Pista(stringResource(R.string.banco_sin_pendientes), Modifier)
         pendientes.forEach { r ->
@@ -101,7 +137,9 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
                 BotonSecundario(stringResource(R.string.banco_no), { vm.descartarAviso(a.huella) }, Modifier.fillMaxWidth())
             }
         }
-        Text(stringResource(R.string.banco_anotado_solo), color = FogonTema.actual.texto, style = MaterialTheme.typography.titleMedium)
+    }
+    SeccionAjustes(stringResource(R.string.banco_anotado_solo))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val solos = e.notificaciones.registros.filter { it.automatico && it.movimiento != null }.mapNotNull { it.movimiento }.toSet()
         if (solos.isEmpty()) Pista(stringResource(R.string.banco_sin_solos), Modifier)
         e.movimientos.filter { it.id in solos }.asReversed().forEach { m ->

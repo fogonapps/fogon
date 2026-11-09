@@ -1,0 +1,3 @@
+• Logging from your bank works better: it also reads what you receive in Nu and understands alerts with special spaces.
+• New «Status» section: shows whether notification access is connected and how many alerts from each bank it saw and understood.
+• Settings reorganized like El Cajón.
