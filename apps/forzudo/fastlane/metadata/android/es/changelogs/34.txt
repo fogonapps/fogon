@@ -1,1 +1,0 @@
-Los personajes parpadean de forma natural y ahora todos tienen el mismo tamaño en todas las pantallas.

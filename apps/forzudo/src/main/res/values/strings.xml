@@ -459,4 +459,26 @@
   </plurals>
   <string name="ver_y_corregir">See and fix the sets</string>
   <string name="quitar_serie">Remove set %1$d</string>
+  <string name="ajustes">Settings</string>
+  <string name="ajustes_uso">How you use El Forzudo</string>
+  <string name="ajustes_entrenamiento">Units, rest and routines</string>
+  <string name="ajustes_entrenamiento_pista">Weights are recorded in kg. Change rest for each exercise when editing a routine; the timer and its alerts appear during workouts.</string>
+  <string name="ajustes_cuaderno">Your notebook</string>
+  <string name="ajustes_apariencia_idioma">Appearance and language</string>
+  <string name="ajustes_fogon">Fogón</string>
+  <string name="ajustes_privacidad">Privacy</string>
+  <string name="ajustes_sale">What leaves your phone</string>
+  <string name="ajustes_sale_pista">Your data stays on this phone. Only if you connect sync, your notebook and your profile (with photo and cover) are saved to your Gist. When exporting or reporting, you choose who to share it with.</string>
+  <string name="perfil_editar">Edit profile</string>
+  <string name="perfil_medallas">Medals</string>
+  <string name="perfil_racha">Streak</string>
+  <string name="perfil_bio">Bio</string>
+  <string name="perfil_foto">Choose photo</string>
+  <string name="perfil_portada">Choose cover</string>
+  <string name="perfil_quitar_foto">Remove photo</string>
+  <string name="perfil_quitar_portada">Remove cover</string>
+  <string name="perfil_imagen_error">Could not read the image. Choose another one.</string>
+  <string name="perfil_sin_medallas">Your medals will appear as you train.</string>
+  <string name="ajustes_avisos">Rest notifications</string>
+  <string name="tu_perfil">Your profile</string>
 </resources>

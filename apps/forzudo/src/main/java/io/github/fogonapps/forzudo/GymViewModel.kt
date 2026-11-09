@@ -49,6 +49,9 @@ sealed interface Pantalla {
     data object Vivo : Pantalla
     data class Resumen(val r: ResumenEntreno) : Pantalla
     data class Zoom(val id: String, val i: Int) : Pantalla
+    data object Perfil : Pantalla
+    data object Ajustes : Pantalla
+    data object EditarPerfil : Pantalla
     data object AcercaDe : Pantalla
     data object Manifiesto : Pantalla
     data object Apariencia : Pantalla
@@ -58,7 +61,7 @@ sealed interface Pantalla {
 }
 
 enum class ModoCambio { EDITAR, AGREGAR, VIVO, VIVO_AGREGAR }
-enum class Pestana { INICIO, ENTRENAR, RANGOS, PERFIL }
+enum class Pestana { INICIO, ENTRENAR, RANGOS }
 
 data class SubioRango(val musculo: String, val rango: Rango)
 
@@ -173,6 +176,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /* ----- Perfil ----- */
+
+    fun guardarPerfil(nombre: String, bio: String, foto: String, portada: String) = cambiar {
+        it.copy(nombre = io.github.fogonapps.perfil.recortarNombrePerfil(nombre.trim()).ifEmpty { null }, bio = io.github.fogonapps.perfil.recortarBioPerfil(bio.trim()), foto = foto, portada = portada, perfilActualizado = System.currentTimeMillis())
+    }
 
     fun ponerNombre(n: String) = cambiar { it.copy(nombre = n.trim().take(30).ifEmpty { null }) }
 

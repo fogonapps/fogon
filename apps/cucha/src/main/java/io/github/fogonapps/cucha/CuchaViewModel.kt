@@ -50,6 +50,8 @@ sealed interface Pantalla {
     data class Rapido(val comida: String, val fecha: String, val editar: String? = null) : Pantalla
     data object Mercado : Pantalla
     data object Metas : Pantalla
+    data object Ajustes : Pantalla
+    data object EditarPerfil : Pantalla
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
     /** Reportar un fallo, algo que falta o una idea (igual en todas las apps de Fogón). */
@@ -163,6 +165,12 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     fun guardarPerfil(p: Perfil) = cambiar { e -> e.copy(perfil = p, metas = if (e.metas.manual) e.metas else L.metasDe(p, e.metas)) }
     fun guardarMetas(m: Metas) = cambiar { it.copy(metas = m) }
     fun metasAutomaticas() = cambiar { e -> e.copy(metas = L.metasDe(e.perfil, e.metas)) }
+    fun guardarPresentacion(nombre: String, bio: String) = cambiar { it.copy(nombre = io.github.fogonapps.perfil.recortarNombrePerfil(nombre.trim()), bio = io.github.fogonapps.perfil.recortarBioPerfil(bio.trim())) }
+
+    fun imagenPerfil(portada: Boolean, imagen: String) = cambiar {
+        if (portada) it.copy(portadaPerfil = imagen) else it.copy(fotoPerfil = imagen)
+    }
+
     fun cambiarNombre(n: String) = cambiar { it.copy(nombre = n.trim()) }
     fun cambiarIdioma(codigo: String) = Idioma.elegir(getApplication(), codigo)
 

@@ -16,6 +16,9 @@ private fun gordo(nombre: String, ancho: Float, vararg d: String): Dibujo = dibu
  * `IconoRiso`. Los de todas las apps están en [IconosFogon].
  */
 object Iconos {
+    val Ajustes = gordo("ajustes", 2.4f,
+        "M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7",
+        "M18.8 12a6.8 6.8 0 1 1-13.6 0 6.8 6.8 0 0 1 13.6 0zM14.2 12a2.2 2.2 0 1 1-4.4 0 2.2 2.2 0 0 1 4.4 0z")
     val Inicio = IconosFogon.Inicio
     val Lista = IconosFogon.Lista
     val Imagen = IconosFogon.Imagen

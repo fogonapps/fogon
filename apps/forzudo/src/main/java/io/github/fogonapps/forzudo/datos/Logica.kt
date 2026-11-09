@@ -358,6 +358,7 @@ class Logica(val b: Biblioteca) {
 
     /** Une el estado del teléfono (a) con el de la nube (b), igual que mergeState() en la web. */
     fun unir(a: Estado, bb: Estado): Estado {
+        val perfil = if (a.perfilActualizado >= bb.perfilActualizado) a else bb
         val borrados = (a.deleted + bb.deleted).toCollection(LinkedHashSet())
         val nuevo = if (a.updatedAt >= bb.updatedAt) a else bb
         val viejo = if (nuevo === a) bb else a
@@ -373,7 +374,11 @@ class Logica(val b: Biblioteca) {
             deleted = borrados.toList(),
             active = a.active,
             updatedAt = max(a.updatedAt, bb.updatedAt),
-            nombre = a.nombre ?: bb.nombre,
+            nombre = if (perfil.perfilActualizado > 0) perfil.nombre else a.nombre ?: bb.nombre,
+            bio = perfil.bio,
+            foto = perfil.foto,
+            portada = perfil.portada,
+            perfilActualizado = perfil.perfilActualizado,
         )
     }
 

@@ -110,7 +110,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     val confirmar = LocalConfirmar.current
 
     Column(Modifier.fillMaxWidth()) {
-        // Cabecera: el saludo y el botón para entrenar (el objeto ya va grande en la tarjeta de la racha).
+        // El perfil cierra la fila de acciones del inicio.
         val semana = hoy.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -120,8 +120,8 @@ fun Inicio(vm: GymViewModel, e: Estado) {
                     style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
-                .clickable(onClickLabel = stringResource(R.string.pestana_entrenar)) { vm.irA(Pestana.ENTRENAR) }, contentAlignment = Alignment.Center) {
-                io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, stringResource(R.string.pestana_entrenar), tamano = 22.dp)
+                .clickable(onClickLabel = stringResource(R.string.pestana_perfil)) { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
+                io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.pestana_perfil), tamano = 22.dp)
             }
         }
 
@@ -251,7 +251,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
 }
 
 @Composable
-private fun TarjetaEntreno(vm: GymViewModel, s: Sesion, dias: List<io.github.fogonapps.forzudo.datos.Dia>, onAbrir: () -> Unit) {
+internal fun TarjetaEntreno(vm: GymViewModel, s: Sesion, dias: List<io.github.fogonapps.forzudo.datos.Dia>, onAbrir: () -> Unit) {
     val f = FogonTema.actual
     val L = vm.L
     val v = L.volumen(s.entries); val n = L.series(s.entries)
@@ -335,6 +335,7 @@ fun Entrenar(vm: GymViewModel, e: Estado) {
             }
             Box(Modifier.padding(16.dp)) { BotonSecundario(stringResource(R.string.mas_nueva_rutina), { vm.nuevaRutina() }, Modifier.fillMaxWidth()) }
         }
+        EjerciciosRegistrados(vm, e)
     }
 }
 
@@ -360,7 +361,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.pestana_rangos), style = MaterialTheme.typography.headlineLarge, color = f.texto)
                 Text(stringResource(R.string.rangos_falta_peso), color = f.texto)
-                BotonRiso(stringResource(R.string.registrar_peso), { vm.irA(Pestana.PERFIL) })
+                BotonRiso(stringResource(R.string.registrar_peso), { vm.abrir(Pantalla.Perfil) })
             }
         } else {
             // Cabecera con el ADN: el nombre del rango gigante, en su color, y la figura-calcomanía.
@@ -463,107 +464,70 @@ private fun coloresSegmento() = FogonTema.actual.let { f ->
 /* =================== Perfil =================== */
 
 @Composable
-fun Perfil(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onImportar: () -> Unit) {
+fun PesoCorporal(vm: GymViewModel, e: Estado) {
     val f = FogonTema.actual
-    val L = vm.L
-    val total = e.sessions.sumOf { L.volumen(it.entries) }
     val pesos = e.body.sortedBy { it.date }
-    val confirmar = LocalConfirmar.current
-    var editandoNombre by remember { mutableStateOf(false) }
-    Column {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.size(56.dp).clip(CircleShape).background(f.paleta.tinta), contentAlignment = Alignment.Center) {
-                Text((e.nombre ?: "?").take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = f.paleta.sobreTinta)
-            }
-            Column(Modifier.weight(1f)) {
-                Text(e.nombre ?: stringResource(R.string.sin_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
-                Text(pluralStringResource(R.plurals.entrenos_guardados, e.sessions.size, e.sessions.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            TextButton({ editandoNombre = true }) { Text(stringResource(R.string.cambiar_nombre)) }
+    Seccion(stringResource(R.string.peso_corporal_titulo)) {
+        var texto by remember { mutableStateOf("") }
+        // Cambia cada vez que se guarda, para que el campo quede vacío.
+        var guardados by remember { mutableIntStateOf(0) }
+        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            key(guardados) { CampoNumero("", stringResource(R.string.tu_peso_kg), stringResource(R.string.peso_corporal_kg), true, { texto = it }, Modifier.weight(1f)) }
+            BotonRiso(stringResource(R.string.guardar), { if (vm.registrarPeso(texto)) { texto = ""; guardados++ } })
         }
-        if (editandoNombre) DialogoNombre(e.nombre ?: "", { vm.ponerNombre(it); editandoNombre = false }) { editandoNombre = false }
-        Trio(stringResource(R.string.titulo_entrenos) to "${e.sessions.size}", stringResource(R.string.volumen_total) to (if (total > 0) fmtVol(total) else "–"), stringResource(R.string.peso) to (pesos.lastOrNull()?.let { fk(it.kg) + " kg" } ?: "–"))
-
-        Seccion(stringResource(R.string.peso_corporal_titulo)) {
-            var texto by remember { mutableStateOf("") }
-            // Cambia cada vez que se guarda, para que el campo quede vacío.
-            var guardados by remember { mutableIntStateOf(0) }
-            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                key(guardados) { CampoNumero("", stringResource(R.string.tu_peso_kg), stringResource(R.string.peso_corporal_kg), true, { texto = it }, Modifier.weight(1f)) }
-                BotonRiso(stringResource(R.string.guardar), { if (vm.registrarPeso(texto)) { texto = ""; guardados++ } })
-            }
-            if (pesos.isEmpty()) Pista(stringResource(R.string.meta_peso))
-            else {
-                Grafica(pesos.map { it.date to it.kg })
-                pesos.reversed().take(5).forEach { p ->
-                    Fila { Text(fechaCorta(p.date), Modifier.weight(1f), color = f.texto); Text("${fk(p.kg)} kg", fontWeight = FontWeight.Bold, color = f.texto) }
-                }
+        if (pesos.isEmpty()) Pista(stringResource(R.string.meta_peso))
+        else {
+            Grafica(pesos.map { it.date to it.kg })
+            pesos.reversed().take(5).forEach { p ->
+                Fila { Text(fechaCorta(p.date), Modifier.weight(1f), color = f.texto); Text("${fk(p.kg)} kg", fontWeight = FontWeight.Bold, color = f.texto) }
             }
         }
-
-        SeccionMedallas(vm, vm.L.medallas(e, vm.hoy()))
-        val contexto = androidx.compose.ui.platform.LocalContext.current
-        val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
-        BotonSecundario(stringResource(R.string.widget_poner), {
-            alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.forzudo.WidgetRachaReceptor::class.java) }
-        }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
-
-        Seccion(stringResource(R.string.constancia)) {
-            val anioHoy = vm.hoy().year
-            val desde = minOf(anioHoy, e.sessions.minOfOrNull { it.date.take(4).toInt() } ?: anioHoy)
-            val dias = e.sessions.map { it.date }.toSet()
-            for (a in anioHoy downTo desde) MapaAnual(a, dias, vm.hoy())
-            Pista(stringResource(R.string.pista_mapa_anual))
-        }
-
-        Seccion(stringResource(R.string.idioma)) { SelectorIdioma(vm) }
-
-        Seccion(stringResource(R.string.sync_titulo)) { CajaSync(vm, sync, confirmar) }
-
-        Seccion(stringResource(R.string.respaldo_titulo)) {
-            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                BotonSecundario(stringResource(R.string.exportar), onExportar, Modifier.weight(1f))
-                BotonSecundario(stringResource(R.string.importar), onImportar, Modifier.weight(1f))
-            }
-            Pista(stringResource(R.string.pista_respaldo))
-            RespaldoTodoFogon(confirmar, Modifier.padding(top = 8.dp))
-        }
-
-        val usados = (L.dias(e).flatMap { d -> d.rutina.items.map { it.id } } + e.sessions.flatMap { it.entries.keys }).toSet()
-        Seccion(stringResource(R.string.ejercicios)) {
-            vm.bib.ejercicios.filter { it.id in usados }.forEachIndexed { i, ej ->
-                val mk = L.maxKg(e, ej.id); val mxr = L.maxReps(e, ej.id); val r = L.rangoEjercicio(e, ej.id)
-                Fila({ vm.abrir(Pantalla.Detalle(ej.id)) }, Modifier.aparecer(i.coerceAtMost(8))) {
-                    Miniatura(ej, vm.bib)
-                    Column(Modifier.weight(1f)) {
-                        Text(ej.n, fontWeight = FontWeight.Bold, color = f.texto)
-                        Row {
-                            r?.let { Text(it.rango.nombre + " · ", color = colorHex(it.rango.color), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall) }
-                            Text(
-                                if (ej.kind == "w") mk?.let { stringResource(R.string.record_kg, fk(it)) } ?: stringResource(R.string.sin_registros)
-                                else mxr?.let { stringResource(R.string.record, fk(it), L.unidad(ej)) } ?: stringResource(R.string.sin_registros),
-                                style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
-                            )
-                        }
-                    }
-                    io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, null, tamano = 20.dp, tinta = f.textoSuave, corrida = null)
-                }
-            }
-        }
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            BotonSecundario(stringResource(R.string.ver_tutorial), { vm.verTutorial() }, Modifier.fillMaxWidth())
-            BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(R.string.manifiesto_fogon), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(R.string.preguntas_frecuentes), { vm.abrir(Pantalla.Preguntas) }, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
-        }
-        Spacer(Modifier.height(24.dp))
     }
+
 }
 
 @Composable
-private fun SelectorIdioma(vm: GymViewModel) {
+fun Constancia(vm: GymViewModel, e: Estado) {
+    Seccion(stringResource(R.string.constancia)) {
+        val anioHoy = vm.hoy().year
+        val desde = minOf(anioHoy, e.sessions.minOfOrNull { it.date.take(4).toInt() } ?: anioHoy)
+        val dias = e.sessions.map { it.date }.toSet()
+        for (a in anioHoy downTo desde) MapaAnual(a, dias, vm.hoy())
+        Pista(stringResource(R.string.pista_mapa_anual))
+    }
+
+}
+
+@Composable
+fun EjerciciosRegistrados(vm: GymViewModel, e: Estado) {
+    val f = FogonTema.actual
+    val L = vm.L
+    val usados = (L.dias(e).flatMap { d -> d.rutina.items.map { it.id } } + e.sessions.flatMap { it.entries.keys }).toSet()
+    Seccion(stringResource(R.string.ejercicios)) {
+        vm.bib.ejercicios.filter { it.id in usados }.forEachIndexed { i, ej ->
+            val mk = L.maxKg(e, ej.id); val mxr = L.maxReps(e, ej.id); val r = L.rangoEjercicio(e, ej.id)
+            Fila({ vm.abrir(Pantalla.Detalle(ej.id)) }, Modifier.aparecer(i.coerceAtMost(8))) {
+                Miniatura(ej, vm.bib)
+                Column(Modifier.weight(1f)) {
+                    Text(ej.n, fontWeight = FontWeight.Bold, color = f.texto)
+                    Row {
+                        r?.let { Text(it.rango.nombre + " · ", color = colorHex(it.rango.color), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall) }
+                        Text(
+                            if (ej.kind == "w") mk?.let { stringResource(R.string.record_kg, fk(it)) } ?: stringResource(R.string.sin_registros)
+                            else mxr?.let { stringResource(R.string.record, fk(it), L.unidad(ej)) } ?: stringResource(R.string.sin_registros),
+                            style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
+                        )
+                    }
+                }
+                io.github.fogonapps.identidad.IconoRiso(Iconos.Siguiente, null, tamano = 20.dp, tinta = f.textoSuave, corrida = null)
+            }
+        }
+    }
+
+}
+
+@Composable
+internal fun SelectorIdioma(vm: GymViewModel) {
     val ctx = LocalContext.current
     val elegido = remember { Idioma.elegido(ctx) }
     val opciones = listOf("" to stringResource(R.string.idioma_telefono)) + Idioma.DISPONIBLES
@@ -580,7 +544,7 @@ private fun SelectorIdioma(vm: GymViewModel) {
 }
 
 @Composable
-private fun CajaSync(vm: GymViewModel, s: Sync, confirmar: Confirmar) {
+internal fun CajaSync(vm: GymViewModel, s: Sync, confirmar: Confirmar) {
     val f = FogonTema.actual
     val uri = LocalUriHandler.current
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -48,6 +48,8 @@ sealed interface Pantalla {
     data class Cierre(val mes: String) : Pantalla
     data class ImportarExtracto(val filas: List<io.github.fogonapps.ahorrador.datos.FilaExtracto>) : Pantalla
     data object Bancos : Pantalla
+    data object Ajustes : Pantalla
+    data object EditarPerfil : Pantalla
     data object Perfil : Pantalla
     data object AcercaDe : Pantalla
     data object Manifiesto : Pantalla
@@ -384,6 +386,15 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /* ----- Ajustes ----- */
+
+    fun guardarPerfil(nombre: String, bio: String) {
+        cambiar { it.copy(nombre = io.github.fogonapps.perfil.recortarNombrePerfil(nombre.trim()).ifEmpty { null }, bio = io.github.fogonapps.perfil.recortarBioPerfil(bio.trim())) }
+        cerrar()
+    }
+
+    fun imagenPerfil(portada: Boolean, imagen: String) {
+        cambiar { if (portada) it.copy(portadaPerfil = imagen) else it.copy(fotoPerfil = imagen) }
+    }
 
     fun ponerNombre(n: String) { cambiar { it.copy(nombre = n.trim().ifEmpty { null }) } }
     fun cambiarGmf(v: Boolean) { cambiar { it.copy(gmf = v) } }

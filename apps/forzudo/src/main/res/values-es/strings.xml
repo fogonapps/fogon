@@ -471,4 +471,26 @@
   </plurals>
   <string name="ver_y_corregir">Ver y corregir las series</string>
   <string name="quitar_serie">Quitar la serie %1$d</string>
+  <string name="ajustes">Ajustes</string>
+  <string name="ajustes_uso">Cómo usas El Forzudo</string>
+  <string name="ajustes_entrenamiento">Unidades, descansos y rutinas</string>
+  <string name="ajustes_entrenamiento_pista">Los pesos se registran en kg. Cambia el descanso de cada ejercicio al editar la rutina; el temporizador y sus avisos aparecen durante el entreno.</string>
+  <string name="ajustes_cuaderno">Tu cuaderno</string>
+  <string name="ajustes_apariencia_idioma">Apariencia e idioma</string>
+  <string name="ajustes_fogon">Fogón</string>
+  <string name="ajustes_privacidad">Privacidad</string>
+  <string name="ajustes_sale">Qué sale de tu teléfono</string>
+  <string name="ajustes_sale_pista">Tus datos se guardan en este teléfono. Solo si conectas la sincronización, el cuaderno y tu perfil (con la foto y la portada) se guardan en tu Gist. Al exportar o reportar, tú eliges con quién compartirlo.</string>
+  <string name="perfil_editar">Editar perfil</string>
+  <string name="perfil_medallas">Medallas</string>
+  <string name="perfil_racha">Racha</string>
+  <string name="perfil_bio">Biografía</string>
+  <string name="perfil_foto">Elegir foto</string>
+  <string name="perfil_portada">Elegir portada</string>
+  <string name="perfil_quitar_foto">Quitar foto</string>
+  <string name="perfil_quitar_portada">Quitar portada</string>
+  <string name="perfil_imagen_error">No se pudo leer la imagen. Elige otra.</string>
+  <string name="perfil_sin_medallas">Tus medallas aparecerán al entrenar.</string>
+  <string name="ajustes_avisos">Avisos de descanso</string>
+  <string name="tu_perfil">Tu perfil</string>
 </resources>

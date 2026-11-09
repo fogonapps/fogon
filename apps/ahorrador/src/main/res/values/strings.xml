@@ -327,7 +327,7 @@
   <string name="tut_saldos">What are you starting with?</string>
   <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
   <string name="tut_sistema">How do you want to budget?</string>
-  <string name="tut_sistema_texto">You can change it any time in Profile.</string>
+  <string name="tut_sistema_texto">You can change it any time in Settings.</string>
   <string name="tut_tengo_respaldo">I have a backup</string>
   <string name="tut_tengo_tarjeta">I have a credit card</string>
   <string name="tut_tu_nombre">What should I call you? (optional)</string>
@@ -475,4 +475,25 @@
     <string name="banco_contadores">Alerts seen: %1$d · understood: %2$d · last: %3$s</string>
     <string name="banco_nunca">never</string>
     <string name="banco_restringidos">If Android prevents you from enabling access: Settings → Apps → La Alcancía → ⋮ → Allow restricted settings, then return here</string>
+  <string name="ajustes">Settings</string>
+  <string name="editar_perfil">Edit profile</string>
+  <string name="todo_fogon">All Fogón in one file</string>
+  <string name="perfil_dias">days with entries</string>
+  <string name="perfil_cumplidas">goals reached</string>
+  <string name="perfil_logros">Milestones</string>
+  <string name="perfil_metas_vacias">Your goals will appear here.</string>
+  <string name="perfil_logros_vacios">Your first entry starts the journey.</string>
+  <string name="perfil_primera_anotacion">First entry</string>
+  <string name="perfil_primera_meta">First goal reached</string>
+  <string name="perfil_cierres">%1$d months closed</string>
+  <string name="perfil_porcentaje">%1$d%%</string>
+  <string name="perfil_local">Your profile stays on this phone. It is not shared.</string>
+  <string name="perfil_bio">About you</string>
+  <string name="perfil_elegir_foto">Choose photo</string>
+  <string name="perfil_elegir_portada">Choose cover</string>
+  <string name="perfil_quitar_foto">Remove photo</string>
+  <string name="perfil_quitar_portada">Remove cover</string>
+  <string name="perfil_imagen_error">Could not open that image. Try another one.</string>
+  <string name="tu_perfil">Your profile</string>
+  <string name="perfil_sin_nombre">Your name</string>
 </resources>

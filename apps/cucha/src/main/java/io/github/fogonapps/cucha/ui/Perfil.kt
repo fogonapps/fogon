@@ -11,13 +11,12 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,12 +24,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cucha.BuildConfig
 import io.github.fogonapps.cucha.CuchaViewModel
 import io.github.fogonapps.cucha.Pantalla
 import io.github.fogonapps.cucha.R
-import io.github.fogonapps.cucha.WidgetCaloriasReceptor
 import io.github.fogonapps.cucha.datos.Estado
 import io.github.fogonapps.cucha.datos.Metas
 import io.github.fogonapps.cucha.datos.Perfil
@@ -41,69 +38,7 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
-import io.github.fogonapps.identidad.RespaldoTodoFogon
-import io.github.fogonapps.identidad.pedirWidget
-import kotlinx.coroutines.launch
 import io.github.fogonapps.identidad.R as RId
-
-@Composable
-fun Perfil(vm: CuchaViewModel, e: Estado, acciones: Acciones) {
-    val f = FogonTema.actual
-    val confirmar = LocalConfirmar.current
-    val forzudo by vm.forzudo.collectAsStateWithLifecycle()
-    val c = LocalContext.current
-    val alcance = rememberCoroutineScope()
-
-    Cabecera(stringResource(R.string.perfil), vm::cerrar)
-
-    Seccion(stringResource(R.string.tus_datos))
-    DatosPersona(vm, e.nombre, e.perfil, pesoDeForzudo = forzudo?.peso != null) { nombre, p -> vm.cambiarNombre(nombre); vm.guardarPerfil(p) }
-
-    Seccion(stringResource(R.string.tus_metas))
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Dato(stringResource(R.string.calorias), "${e.metas.kcal}", Modifier.weight(1f))
-            Dato(stringResource(R.string.proteina), "${e.metas.proteina} g", Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Dato(stringResource(R.string.carbos), "${e.metas.carbos} g", Modifier.weight(1f))
-            Dato(stringResource(R.string.grasa), "${e.metas.grasa} g", Modifier.weight(1f))
-        }
-        Text(stringResource(if (e.metas.manual) R.string.metas_a_mano else R.string.metas_calculadas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        BotonSecundario(stringResource(R.string.cambiar_metas), { vm.abrir(Pantalla.Metas) }, Modifier.fillMaxWidth())
-    }
-
-    Seccion(stringResource(R.string.forzudo))
-    Pista(stringResource(if (forzudo != null) R.string.forzudo_conectado else R.string.forzudo_no_esta))
-
-    Seccion(stringResource(R.string.opciones))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonRiso(stringResource(RId.string.fogon_ap_titulo), { vm.abrir(Pantalla.Apariencia) }, Modifier.fillMaxWidth())
-        Interruptor(stringResource(R.string.codigo_barras), stringResource(R.string.codigo_barras_pista), e.codigoBarras, vm::activarCodigoBarras)
-        BotonSecundario(stringResource(R.string.widget_poner), { alcance.launch { pedirWidget(c, WidgetCaloriasReceptor::class.java) } }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.importar_recetas), acciones.importarRecetas, Modifier.fillMaxWidth())
-        Pista(stringResource(R.string.importar_recetas_pista), adentro = true)
-        Text(stringResource(R.string.idioma), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-        SelectorIdioma(vm)
-    }
-
-    Seccion(stringResource(R.string.respaldo))
-    Pista(stringResource(R.string.respaldo_pista))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario(stringResource(R.string.guardar_respaldo), acciones.exportar, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.recuperar_respaldo), {
-            confirmar(vm.tx(R.string.recuperar_pregunta), vm.tx(R.string.recuperar_texto), acciones.importar)
-        }, Modifier.fillMaxWidth())
-    }
-    RespaldoTodoFogon(confirmar, Modifier.padding(bottom = 8.dp))
-
-    Seccion(stringResource(R.string.fogon))
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario(stringResource(R.string.manifiesto), { vm.abrir(Pantalla.Manifiesto) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.acerca_de), { vm.abrir(Pantalla.AcercaDe) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), { vm.abrir(Pantalla.Reporte) }, Modifier.fillMaxWidth())
-    }
-}
 
 /** Reportar un fallo, algo que falta o una idea: por GitHub o por correo, con la versión de la app. */
 @Composable
@@ -115,7 +50,7 @@ fun Reporte(vm: CuchaViewModel) {
     }
 }
 
-/** Nombre, sexo, edad, altura, peso, actividad y objetivo. Se usa en el tutorial y en Perfil. */
+/** Nombre, sexo, edad, altura, peso, actividad y objetivo. Se usa en el tutorial y en Ajustes. */
 @Composable
 fun DatosPersona(vm: CuchaViewModel, nombreInicial: String, p: Perfil, pesoDeForzudo: Boolean, textoBoton: String? = null, onGuardar: (String, Perfil) -> Unit) {
     val idioma = vm.idioma()
@@ -187,7 +122,7 @@ fun EditarMetas(vm: CuchaViewModel, e: Estado) {
 }
 
 @Composable
-private fun Interruptor(titulo: String, pista: String, valor: Boolean, onCambio: (Boolean) -> Unit) {
+internal fun Interruptor(titulo: String, pista: String, valor: Boolean, onCambio: (Boolean) -> Unit) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f).padding(end = 10.dp)) {
@@ -200,7 +135,7 @@ private fun Interruptor(titulo: String, pista: String, valor: Boolean, onCambio:
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SelectorIdioma(vm: CuchaViewModel) {
+internal fun SelectorIdioma(vm: CuchaViewModel) {
     val ctx = LocalContext.current
     val elegido = remember { Idioma.elegido(ctx) }
     val opciones = listOf("" to stringResource(R.string.idioma_telefono)) + Idioma.DISPONIBLES

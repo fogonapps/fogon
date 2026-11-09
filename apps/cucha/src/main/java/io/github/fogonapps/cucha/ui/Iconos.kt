@@ -13,6 +13,8 @@ import io.github.fogonapps.identidad.trazo
  * Los de todas las apps están en [IconosFogon].
  */
 object Iconos {
+    val Ajustes = dibujo("ajustes", relleno("M18.85 9.78 L21.18 9.99 L21.18 14.01 L18.85 14.22 L18.42 15.27 L19.92 17.07 L17.07 19.92 L15.27 18.42 L14.22 18.85 L14.01 21.18 L9.99 21.18 L9.78 18.85 L8.73 18.42 L6.93 19.92 L4.08 17.07 L5.58 15.27 L5.15 14.22 L2.82 14.01 L2.82 9.99 L5.15 9.78 L5.58 8.73 L4.08 6.93 L6.93 4.08 L8.73 5.58 L9.78 5.15 L9.99 2.82 L14.01 2.82 L14.22 5.15 L15.27 5.58 L17.07 4.08 L19.92 6.93 L18.42 8.73z"), hueco("M14.8 12a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0z"))
+    val Sobres = dibujo("sobres", relleno("M3 6.5h18v12.5H3z"), huecoTrazo("M3.6 7.4 12 13l8.4-5.6", 2f))
     val Hoy = IconosFogon.Inicio
     /** Una olla con su tapa: las recetas. */
     val Recetas = dibujo("olla", relleno("M4 10.4h16v6.2a3.4 3.4 0 0 1-3.4 3.4H7.4A3.4 3.4 0 0 1 4 16.6z"), trazo("M2.4 11.2H4M20 11.2h1.6", 2.6f), trazo("M5.4 7.6h13.2M12 7.6V5.4", 2.6f))

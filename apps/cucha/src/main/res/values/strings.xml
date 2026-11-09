@@ -257,4 +257,26 @@
   <string name="foto_cambiar">Change photo</string>
   <string name="foto_quitar">Remove photo</string>
   <string name="foto_receta_pista">The photo is kept on this phone only.</string>
+    <string name="ajustes">Settings</string>
+    <string name="aj_como_usas">How you use La Cucha</string>
+    <string name="aj_tu_cocina">Your kitchen</string>
+    <string name="aj_todo_fogon">All of Fogón in one file</string>
+    <string name="aj_apariencia_idioma">Appearance and language</string>
+    <string name="aj_privacidad">Privacy</string>
+    <string name="aj_que_sale">What leaves your phone</string>
+    <string name="aj_privacidad_texto">Your meals, personal data and profile stay on this phone. If you enable barcode lookup, only the barcode is sent to Open Food Facts. Backups are saved where you choose. The full Fogón backup exchanges data only between Fogón apps with the same signature. Reporting an issue opens email or your browser: review what you send.</string>
+    <string name="perfil_comidas">Meals</string>
+    <string name="perfil_sin_recetas">Your own recipes will appear here.</string>
+    <string name="perfil_sin_comidas">The meals you log will appear here.</string>
+    <string name="perfil_crear_receta">Create recipe</string>
+    <string name="perfil_dias">days logged</string>
+    <string name="perfil_platos">dishes logged</string>
+    <string name="perfil_editar">Edit profile</string>
+    <string name="perfil_bio">About you</string>
+    <string name="perfil_portada">Cover</string>
+    <string name="perfil_foto">Profile photo</string>
+    <string name="perfil_elegir_imagen">Choose image</string>
+    <string name="perfil_quitar_imagen">Remove image</string>
+    <string name="tu_perfil">Your profile</string>
+    <string name="perfil_sin_nombre">Your name</string>
 </resources>

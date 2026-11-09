@@ -1,0 +1,1 @@
+Your profile is no longer a tab: it is at the top right, like in El Cajón, with a photo, a cover, a few words about you and tabs for workouts, ranks, medals and records. Body weight is logged in the profile's Ranks tab. Settings is its own screen (⚙ in the profile) and the bottom bar only has icons.

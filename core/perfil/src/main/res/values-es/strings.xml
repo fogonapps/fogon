@@ -1,0 +1,13 @@
+<resources>
+    <string name="perfil_local_foto_portada">Foto y portada</string>
+    <string name="perfil_local_elegir_foto">Elegir foto</string>
+    <string name="perfil_local_quitar_foto">Quitar foto</string>
+    <string name="perfil_local_subir_imagen">Subir imagen</string>
+    <string name="perfil_local_quitar_portada">Quitar portada</string>
+    <string name="perfil_local_quien_eres">Quién eres</string>
+    <string name="perfil_local_nombre">Tu nombre</string>
+    <string name="perfil_local_bio">Unas palabras sobre ti</string>
+    <string name="perfil_local_guardar">Guardar</string>
+    <string name="perfil_local_contador">%1$d/%2$d</string>
+    <string name="perfil_local_error">No se pudo abrir la imagen</string>
+</resources>

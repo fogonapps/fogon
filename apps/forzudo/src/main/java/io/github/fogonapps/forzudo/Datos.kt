@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 /** Lee un respaldo de El Forzudo. Devuelve el estado si es válido (tiene entrenos, rutina o medidas). */
 fun leerRespaldoGym(texto: String): Estado? = runCatching {
     JsonGym.decodeFromString(Estado.serializer(), texto)
-}.getOrNull()?.takeIf { it.sessions.isNotEmpty() || it.routines != null || it.body.isNotEmpty() }
+}.getOrNull()?.takeIf { it.sessions.isNotEmpty() || it.routines != null || it.body.isNotEmpty() || it.nombre != null || it.perfilActualizado > 0 }
 
 /**
  * Los datos de El Forzudo para las otras apps de Fogón (respaldo de todo Fogón, La Cucha).

@@ -150,6 +150,10 @@ data class Estado(
     val updatedAt: Long = 0,
     val listo: Boolean = false,
     val nombre: String = "",
+    val bio: String = "",
+    /** JPEG en base64: el respaldo incluye las imágenes del perfil local. */
+    val fotoPerfil: String = "",
+    val portadaPerfil: String = "",
     val perfil: Perfil = Perfil(),
     val metas: Metas = Metas(),
     /** Lo anotado, por fecha (AAAA-MM-DD). */

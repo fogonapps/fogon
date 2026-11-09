@@ -256,4 +256,26 @@
   <string name="foto_cambiar">Cambiar foto</string>
   <string name="foto_quitar">Quitar foto</string>
   <string name="foto_receta_pista">La foto se guarda solo en este teléfono.</string>
+    <string name="ajustes">Ajustes</string>
+    <string name="aj_como_usas">Cómo usas La Cucha</string>
+    <string name="aj_tu_cocina">Tu cocina</string>
+    <string name="aj_todo_fogon">Todo Fogón en un archivo</string>
+    <string name="aj_apariencia_idioma">Apariencia e idioma</string>
+    <string name="aj_privacidad">Privacidad</string>
+    <string name="aj_que_sale">Qué sale de tu teléfono</string>
+    <string name="aj_privacidad_texto">Tus comidas, datos personales y perfil se guardan en este teléfono. Si activas la búsqueda por código de barras, se envía solo el código a Open Food Facts. Los respaldos se guardan donde elijas. El respaldo de todo Fogón intercambia datos únicamente entre apps de Fogón con la misma firma. Reportar un fallo abre el correo o el navegador: revisa lo que envías.</string>
+    <string name="perfil_comidas">Comidas</string>
+    <string name="perfil_sin_recetas">Aquí aparecerán tus recetas propias.</string>
+    <string name="perfil_sin_comidas">Aquí aparecerán las comidas que anotes.</string>
+    <string name="perfil_crear_receta">Crear receta</string>
+    <string name="perfil_dias">días registrados</string>
+    <string name="perfil_platos">platos anotados</string>
+    <string name="perfil_editar">Editar perfil</string>
+    <string name="perfil_bio">Sobre ti</string>
+    <string name="perfil_portada">Portada</string>
+    <string name="perfil_foto">Foto de perfil</string>
+    <string name="perfil_elegir_imagen">Elegir imagen</string>
+    <string name="perfil_quitar_imagen">Quitar imagen</string>
+    <string name="tu_perfil">Tu perfil</string>
+    <string name="perfil_sin_nombre">Tu nombre</string>
 </resources>

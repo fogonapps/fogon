@@ -326,7 +326,7 @@
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
   <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
   <string name="tut_sistema">¿Cómo te quieres organizar?</string>
-  <string name="tut_sistema_texto">Lo puedes cambiar cuando quieras en Perfil.</string>
+  <string name="tut_sistema_texto">Lo puedes cambiar cuando quieras en Ajustes.</string>
   <string name="tut_tengo_respaldo">Ya tengo un respaldo</string>
   <string name="tut_tengo_tarjeta">Tengo tarjeta de crédito</string>
   <string name="tut_tu_nombre">¿Cómo te llamo? (opcional)</string>
@@ -476,4 +476,25 @@
     <string name="banco_contadores">Alertas vistas: %1$d · entendidas: %2$d · última: %3$s</string>
     <string name="banco_nunca">nunca</string>
     <string name="banco_restringidos">Si Android no te deja activarlo: Ajustes → Apps → La Alcancía → ⋮ → Permitir ajustes restringidos, y vuelve aquí</string>
+  <string name="ajustes">Ajustes</string>
+  <string name="editar_perfil">Editar perfil</string>
+  <string name="todo_fogon">Todo Fogón en un archivo</string>
+  <string name="perfil_dias">días anotando</string>
+  <string name="perfil_cumplidas">metas cumplidas</string>
+  <string name="perfil_logros">Logros</string>
+  <string name="perfil_metas_vacias">Tus metas aparecerán aquí.</string>
+  <string name="perfil_logros_vacios">Tu primera anotación empieza el camino.</string>
+  <string name="perfil_primera_anotacion">Primera anotación</string>
+  <string name="perfil_primera_meta">Primera meta cumplida</string>
+  <string name="perfil_cierres">%1$d meses cerrados</string>
+  <string name="perfil_porcentaje">%1$d %%</string>
+  <string name="perfil_local">Tu perfil se queda en este teléfono. No se comparte.</string>
+  <string name="perfil_bio">Sobre ti</string>
+  <string name="perfil_elegir_foto">Elegir foto</string>
+  <string name="perfil_elegir_portada">Elegir portada</string>
+  <string name="perfil_quitar_foto">Quitar foto</string>
+  <string name="perfil_quitar_portada">Quitar portada</string>
+  <string name="perfil_imagen_error">No se pudo abrir esa imagen. Prueba con otra.</string>
+  <string name="tu_perfil">Tu perfil</string>
+  <string name="perfil_sin_nombre">Tu nombre</string>
 </resources>

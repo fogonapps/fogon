@@ -140,7 +140,9 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                             is Pantalla.EditarReceta -> EditarReceta(vm, estado, p)
                             Pantalla.Mercado -> Mercado(vm, estado)
                             Pantalla.Metas -> EditarMetas(vm, estado)
-                            Pantalla.Perfil -> Perfil(vm, estado, acciones)
+                            Pantalla.Perfil -> Perfil(vm, estado)
+                            Pantalla.Ajustes -> Ajustes(vm, estado, acciones)
+                            Pantalla.EditarPerfil -> EditarPerfil(vm, estado)
                             Pantalla.AcercaDe -> AcercaDe(vm)
                             Pantalla.Reporte -> Reporte(vm)
                             Pantalla.Apariencia -> Column {
@@ -169,7 +171,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
     }
 }
 
-/** La barra de pestañas: una píldora que flota, con el botón de anotar en el centro. */
+/** La barra de pestañas: una píldora que flota, con el botón de anotar al final. */
 @Composable
 private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: () -> Unit, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
@@ -180,18 +182,17 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
         Triple(Pestana.PROGRESO, Iconos.Progreso, R.string.pestana_progreso),
     )
     Row(
-        modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth()
+        modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth()
             .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
+        pestanas.forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.rebote(0.9f).size(52.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
-        pestanas.drop(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
     }
 }
 
@@ -201,7 +202,7 @@ private fun BotonPestana(icono: Dibujo, texto: String, elegida: Boolean, onClick
     val f = FogonTema.actual
     val fondo by animateColorAsState(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent, label = "pestana")
     Box(
-        Modifier.rebote(0.9f).size(48.dp).clip(CircleShape).background(fondo)
+        Modifier.rebote(0.9f).size(44.dp).clip(CircleShape).background(fondo)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
     ) { IconoRiso(icono, null, tamano = 22.dp, tinta = if (elegida) f.acentoTexto else f.textoSuave) }

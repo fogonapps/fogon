@@ -15,7 +15,7 @@ val JsonAhorrador = Json {
     explicitNulls = false
 }
 
-/** Cómo arma la persona su presupuesto. Se elige en el tutorial y se cambia en Perfil. */
+/** Cómo arma la persona su presupuesto. Se elige en el tutorial y se cambia en Ajustes. */
 @Serializable
 enum class Sistema { SOBRES, REGLA_50_30_20, KAKEIBO, SOLO_ANOTAR }
 
@@ -140,6 +140,9 @@ data class Estado(
     val v: Int = 1,
     val updatedAt: Long = 0,
     val nombre: String? = null,
+    val bio: String = "",
+    val fotoPerfil: String = "",
+    val portadaPerfil: String = "",
     val sistema: Sistema = Sistema.SOBRES,
     val cuentas: List<Cuenta> = emptyList(),
     val categorias: List<Categoria> = emptyList(),

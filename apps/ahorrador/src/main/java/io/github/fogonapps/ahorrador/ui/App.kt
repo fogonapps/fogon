@@ -131,7 +131,9 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.EditarSobre -> EditarSobre(vm, estado, p.id)
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
                             is Pantalla.Bancos -> Bancos(vm, estado)
-                            is Pantalla.Perfil -> Perfil(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
+                            is Pantalla.Perfil -> Perfil(vm, estado)
+                            is Pantalla.EditarPerfil -> EditarPerfil(vm, estado)
+                            is Pantalla.Ajustes -> Ajustes(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
                             is Pantalla.ImportarExtracto -> ImportarExtracto(vm, estado, p.filas)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
                             is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Ahorrador, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
@@ -158,7 +160,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
     }
 }
 
-/** La barra de pestañas: una píldora de vidrio que flota, con el botón de anotar en el centro. */
+/** La barra de pestañas: una píldora de vidrio que flota, con el botón de anotar al final. */
 @Composable
 private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: () -> Unit, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
@@ -169,18 +171,17 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
         Triple(Pestana.METAS, Iconos.Moneda, R.string.pestana_metas),
     )
     Row(
-        modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth()
+        modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth()
             .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        pestanas.take(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
+        pestanas.forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.rebote(0.9f).size(52.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
-        pestanas.drop(2).forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
     }
 }
 

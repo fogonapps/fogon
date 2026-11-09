@@ -1,3 +1,0 @@
-• Anotar desde el banco funciona mejor: lee también lo que recibes en Nu y entiende las alertas aunque traigan espacios especiales.
-• Nueva sección «Estado»: te dice si el acceso a notificaciones está conectado y cuántas alertas de cada banco vio y entendió.
-• Ajustes reorganizados como en El Cajón.

@@ -1054,7 +1054,7 @@
   <string name="red_borrar_publicacion">Borrar esta publicación</string>
   <string name="red_buscar_gente">Buscar gente</string>
   <string name="red_codigo">Código de 6 números</string>
-  <string name="red_codigo_malo">Ese código no es</string>
+  <string name="red_codigo_malo">Ese código no es el correcto. Revisa el último correo o pide otro.</string>
   <string name="red_codigo_vencido">El código venció: pide otro</string>
   <string name="red_comentar">Comentar</string>
   <string name="red_comentarios">Comentarios</string>

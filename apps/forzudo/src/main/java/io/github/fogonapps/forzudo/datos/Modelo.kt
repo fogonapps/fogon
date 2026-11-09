@@ -64,6 +64,10 @@ data class Estado(
     val weeks: Map<String, List<Boolean?>>? = null,
     /** Nombre de la persona. Nuevo en la versión Fogón; la web no lo tenía. */
     val nombre: String? = null,
+    val bio: String = "",
+    val foto: String = "",
+    val portada: String = "",
+    val perfilActualizado: Long = 0,
 )
 
 val JsonGym = Json {

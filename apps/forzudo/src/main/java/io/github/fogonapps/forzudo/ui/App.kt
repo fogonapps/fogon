@@ -114,9 +114,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                                 Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), Iconos.Inicio),
                                 Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), Iconos.Pesa),
                                 Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), Iconos.Rango),
-                                Triple(Pestana.PERFIL, stringResource(R.string.pestana_perfil), Iconos.Persona),
                             ),
-                            pestana, vm::irA,
+                            pestana, vm::irA, { if (estado.active != null) vm.abrir(Pantalla.Vivo) else vm.irA(Pestana.ENTRENAR) },
                         )
                     }
                 },
@@ -124,8 +123,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba)
                 io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana -> Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
                     // Inicio y Rangos llevan su propia cabecera gigante.
-                    if (pestana == Pestana.ENTRENAR || pestana == Pestana.PERFIL) Text(
-                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos; Pestana.PERFIL -> R.string.pestana_perfil }),
+                    if (pestana == Pestana.ENTRENAR) Text(
+                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos }),
                         style = MaterialTheme.typography.headlineLarge, color = f.texto,
                         modifier = Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp),
                     )
@@ -133,7 +132,6 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                         Pestana.INICIO -> Inicio(vm, estado)
                         Pestana.ENTRENAR -> Entrenar(vm, estado)
                         Pestana.RANGOS -> Rangos(vm, estado)
-                        Pestana.PERFIL -> Perfil(vm, estado, sync, onExportar, onImportar)
                     }
                 } }
             }
@@ -152,6 +150,9 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Editor -> Editor(vm, estado, p.rid)
                             is Pantalla.Cambiar -> Cambiar(vm, p)
                             is Pantalla.Zoom -> Zoom(vm, p.id, p.i)
+                            is Pantalla.Perfil -> PerfilLocal(vm, estado)
+                            is Pantalla.EditarPerfil -> EditarPerfilLocal(vm, estado)
+                            is Pantalla.Ajustes -> Ajustes(vm, estado, sync, onExportar, onImportar)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
                             is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }
@@ -185,10 +186,10 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 
 /**
  * La barra de pestañas: una píldora de vidrio que flota. La activa es una píldora de la primera tinta con su
- * ícono y su nombre; las demás, solo el ícono (el nombre lo dicen los lectores de pantalla).
+ * ícono; el nombre lo dicen los lectores de pantalla.
  */
 @Composable
-private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonapps.identidad.Dibujo>>, actual: T, onElegir: (T) -> Unit) {
+private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonapps.identidad.Dibujo>>, actual: T, onElegir: (T) -> Unit, onCrear: () -> Unit) {
     val f = FogonTema.actual
     val forma = io.github.fogonapps.identidad.FormaPildora
     Row(
@@ -207,8 +208,10 @@ private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonap
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (activa) f.sobreTinta1 else f.textoSuave)
-                if (activa) Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.sobreTinta1, maxLines = 1)
             }
+        }
+        IconButton(onCrear, Modifier.size(50.dp).clip(forma).background(f.tinta1)) {
+            io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, stringResource(R.string.empezar), tinta = f.sobreTinta1)
         }
     }
 }

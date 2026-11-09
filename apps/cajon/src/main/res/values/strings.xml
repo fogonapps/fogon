@@ -1054,7 +1054,7 @@
   <string name="red_borrar_publicacion">Delete this post</string>
   <string name="red_buscar_gente">Find people</string>
   <string name="red_codigo">6-digit code</string>
-  <string name="red_codigo_malo">That code is wrong</string>
+  <string name="red_codigo_malo">That code isn’t right. Check the latest email or ask for a new one.</string>
   <string name="red_codigo_vencido">The code expired: ask for a new one</string>
   <string name="red_comentar">Comment</string>
   <string name="red_comentarios">Comments</string>
