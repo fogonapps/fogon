@@ -78,6 +78,7 @@ data class Fogon(
     val decoracion: Decoracion = Decoracion.LUZ,
     /** La luz suave de arriba de cada pantalla. */
     val brillo: Color = Color.Transparent,
+    val luz: LuzPropia? = null,
     /** El vidrio opaco de las barras flotantes (pestañas), para que lo de abajo no se cruce. */
     val barra: Color = superficie,
     val menosMovimiento: Boolean = false,
@@ -127,7 +128,8 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
         pildora = c.texto, sobrePildora = legibleSobre(c.texto, listOf(c.fondo, Color.White, Tintas.Tinta)),
         destacada = listOf(c.tinta1, c.tinta1), sobreDestacada = c.sobreTinta1,
         borde = if (a.masContraste) 2.dp else 1.dp,
-        decoracion = a.adorno(), brillo = if (a.adorno() == Decoracion.LUZ) c.brillo else Color.Transparent,
+        decoracion = a.adorno(), brillo = if (a.adorno() == Decoracion.LUZ && e != Estilo.CONTRASTE) c.brillo else Color.Transparent,
+        luz = if (a.adorno() == Decoracion.LUZ && e != Estilo.CONTRASTE) a.de().luz?.legible(c) else null,
         barra = lerp(c.fondo, if (oscuro) Color.White else Color.Black, 0.07f),
         menosMovimiento = a.menosMovimiento,
     )

@@ -416,7 +416,8 @@ class Tmdb(private val clave: String = "") {
         const val LATINO = "es-MX"
         const val ESPANA = "es-ES"
         const val INGLES = "en-US"
-        fun imagen(ruta: String, tamano: String) = if (ruta.isBlank()) "" else "https://image.tmdb.org/t/p/$tamano$ruta"
+        fun imagen(ruta: String, tamano: String) = if (ruta.isBlank()) "" else Imagenes.url("https://image.tmdb.org/t/p/$tamano$ruta",
+            when (tamano) { "original" -> Imagenes.Lugar.VISOR; "w500", "w780" -> Imagenes.Lugar.FICHA; else -> Imagenes.Lugar.LISTA })
     }
 }
 
@@ -612,16 +613,13 @@ object OpenLibrary {
         // La nota de los lectores de Open Library (de 1 a 5); si no se puede traer, la de la búsqueda.
         val notas = runCatching { pedirJson(base.newBuilder().addPathSegments("works/$id/ratings.json").build()).jsonObject["summary"] as? JsonObject }.getOrNull()
         val votos = notas?.get("count").entero() ?: e.votos
-        // La portada más linda: de las ediciones en el idioma de la app y de la obra, sin escaneos de la página del título.
-        val ediciones = runCatching {
-            enIdioma(pedirJson(base.newBuilder().addPathSegments("works/$id/editions.json").addQueryParameter("limit", "200").build())
-                .jsonObject.arr("entries").map { it.jsonObject }, idioma, w["title"].texto())
-        }.getOrDefault(emptyList())
-        val tapa = runCatching { mejorPortada(ediciones.mapNotNull { it.arr("covers").firstOrNull()?.entero() }, w.arr("covers").mapNotNull { it.entero()?.takeIf { n -> n > 0 } }) }.getOrNull()
+        val ediciones = runCatching { ediciones(e.fuente) }.getOrDefault(emptyList())
+        val edicion = Imagenes.edicion(ediciones, idioma)
+        val tapa = edicion?.portada ?: portada(w.arr("covers").mapNotNull { it.entero() }.firstOrNull { it > 0 }, "L")
         return Obra(
             id = "", tipo = Tipos.LIBRO, titulo = e.titulo.ifBlank { w["title"].texto() }, anio = e.anio, creador = e.creador,
-            portada = tapa?.let { portada(it, "L") } ?: e.portada.replace("-M.jpg", "-L.jpg"),
-            generos = temas, sinopsis = desc, fuente = e.fuente, paginas = e.detalle.removeSuffix(" p.").toIntOrNull() ?: ediciones.firstNotNullOfOrNull { it["number_of_pages"].entero() },
+            portada = tapa, imagen = ImagenElegida("ol", tapa, edicion = edicion?.id, cuando = System.currentTimeMillis()),
+            generos = temas, sinopsis = desc, fuente = e.fuente, paginas = e.detalle.removeSuffix(" p.").toIntOrNull() ?: edicion?.paginas ?: ediciones.firstNotNullOfOrNull { it.paginas },
             traida = System.currentTimeMillis(),
             publica = (notas?.get("average").decimal() ?: e.publica)?.takeIf { votos > 0 }, votos = votos,
         )
@@ -668,15 +666,37 @@ object OpenLibrary {
     }
 
     /** Portadas para elegir (las de todas las ediciones y las de la obra), para "Cambiar portada". */
-    private fun portada(id: Int?, t: String) = if (id == null || id <= 0) "" else "https://covers.openlibrary.org/b/id/$id-$t.jpg"
+    private fun portada(id: Int?, t: String) = if (id == null || id <= 0) "" else
+        Imagenes.url("https://covers.openlibrary.org/b/id/$id-L.jpg", if (t == "M") Imagenes.Lugar.LISTA else Imagenes.Lugar.FICHA)
+
+    suspend fun portadaDeObra(fuente: String): String {
+        val (_, datos) = obra(fuente.removePrefix("ol:"))
+        return portada(datos.arr("covers").mapNotNull { it.entero() }.firstOrNull { it > 0 }, "L")
+    }
+
+    private val cacheEdiciones = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, List<EdicionLibro>>>()
+
+    private val mutexEdiciones = Mutex()
+    suspend fun ediciones(fuente: String): List<EdicionLibro> = mutexEdiciones.withLock {
+        cacheEdiciones[fuente]?.takeIf { System.currentTimeMillis() - it.first < 24L * 3600 * 1000 }?.let { return@withLock it.second }
+        val (id, _) = obra(fuente.removePrefix("ol:"))
+        val resultado = mutableListOf<EdicionLibro>()
+        var offset = 0
+        do {
+            val datos = pedirJson(base.newBuilder().addPathSegments("works/$id/editions.json")
+                .addQueryParameter("limit", "100").addQueryParameter("offset", "$offset").build()).jsonObject
+            val entradas = datos.arr("entries")
+            resultado += entradas.map { it.jsonObject }.map { e -> EdicionLibro(
+                e["key"].texto().substringAfterLast('/'), portada(e.arr("covers").mapNotNull { it.entero() }.firstOrNull { it > 0 }, "L"),
+                e.arr("publishers").joinToString { it.texto() }, Regex("\\d{4}").find(e["publish_date"].texto())?.value?.toIntOrNull(),
+                e.arr("languages").map { it.jsonObject["key"].texto().substringAfterLast('/') }, e["number_of_pages"].entero()) }
+            offset += entradas.size
+        } while (entradas.size == 100 && offset < (datos["size"].entero() ?: offset))
+        resultado.distinctBy { it.id }.also { cacheEdiciones[fuente] = System.currentTimeMillis() to it }
+    }
 
     suspend fun portadasParaElegir(fuente: String): List<String> {
-        val (id, w) = obra(fuente.removePrefix("ol:"))
-        val obra = w.arr("covers")
-        val eds = runCatching { pedirJson(base.newBuilder().addPathSegments("works/$id/editions.json").addQueryParameter("limit", "200").build()).jsonObject.arr("entries") }.getOrNull()
-        val ids = (obra.orEmpty().mapNotNull { it.entero() } + eds.orEmpty().mapNotNull { (it as? JsonObject)?.arr("covers")?.firstOrNull()?.entero() })
-            .filter { it > 0 }.distinct().take(40)
-        return ids.map { portada(it, "L") }
+        return (listOf(portadaDeObra(fuente)) + ediciones(fuente).map { it.portada }).filter { it.isNotBlank() }.distinct()
     }
 
     /** Temas de Open Library que no son géneros (de bibliotecas, idiomas, formatos). */
@@ -729,7 +749,7 @@ object ListenBrainz {
         val lista = ((pedirJson(u) as? JsonObject)?.get("payload") as? JsonObject)?.arr("release_groups") ?: return emptyList()
         return lista.mapNotNull { it as? JsonObject }.filter { it["release_group_mbid"].texto().matches(Regex("[0-9a-f-]{36}")) }
             .distinctBy { it["release_group_mbid"].texto() }.map { d ->
-                val caratula = d["caa_release_mbid"].texto().takeIf { it.isNotBlank() }?.let { "https://coverartarchive.org/release/$it/front-250" }
+                val caratula = d["caa_release_mbid"].texto().takeIf { it.isNotBlank() }?.let { Imagenes.url("https://coverartarchive.org/release/$it/front-1200", Imagenes.Lugar.LISTA) }
                     ?: MusicBrainz.caratula(d["release_group_mbid"].texto(), 250)
                 Encontrado(Tipos.ALBUM, d["release_group_name"].texto(), null, d["artist_name"].texto(), caratula, "mb:rg:${d["release_group_mbid"].texto()}")
             }
@@ -780,7 +800,8 @@ object MusicBrainz {
     /** "Various Artists": así firma MusicBrainz las recopilaciones; no es un artista. */
     private const val VARIOS = "89ad4ac3-39f7-470e-963a-56509c546377"
 
-    fun caratula(mbid: String, t: Int = 500) = "https://coverartarchive.org/release-group/$mbid/front-$t"
+    fun caratula(mbid: String, t: Int = 500) = Imagenes.url("https://coverartarchive.org/release-group/$mbid/front-1200",
+        if (t <= 500) Imagenes.Lugar.LISTA else Imagenes.Lugar.FICHA)
 
     /** Cover Art Archive informa la miniatura real: solo se consulta al hacerse visible el álbum. */
     /** La carátula directa del álbum: pedir antes su índice (que redirige a archive.org) tardaba o fallaba. */
@@ -791,7 +812,7 @@ object MusicBrainz {
     suspend fun caratulasDeAlbum(rg: String): List<String> =
         pedir("release", "release-group" to rg, "limit" to "100").arr("releases").map { it.jsonObject }
             .filter { (it["cover-art-archive"] as? JsonObject)?.get("front")?.texto() == "true" }
-            .map { "https://coverartarchive.org/release/${it["id"].texto()}/front-500" }.distinct().take(40)
+            .map { Imagenes.url("https://coverartarchive.org/release/${it["id"].texto()}/front-1200", Imagenes.Lugar.LISTA) }.distinct().take(40)
 
     private fun deGrupo(g: JsonObject): Encontrado {
         val artistas = g.arr("artist-credit").joinToString("") { (it.jsonObject["name"].texto()) + it.jsonObject["joinphrase"].texto() }
@@ -1120,17 +1141,24 @@ object Wikimedia {
 
     /** El crédito de una foto de Commons: "Autor · Licencia · Wikimedia Commons" (sin HTML). */
     suspend fun credito(foto: String): String {
-        val archivo = java.net.URLDecoder.decode(foto.substringAfter("Special:FilePath/").substringBefore("?"), "UTF-8")
+        val i = procedencia(foto)
+        return listOfNotNull(i.autor?.takeIf { it.isNotBlank() }, i.licencia?.takeIf { it.isNotBlank() }, "Wikimedia Commons").joinToString(" · ")
+    }
+
+    suspend fun procedencia(foto: String): ImagenElegida {
+        val nombre = if ("Special:FilePath/" in foto) foto.substringAfter("Special:FilePath/").substringBefore("?")
+            else foto.substringBefore('?').substringAfterLast('/').replace(Regex("^\\d+px-"), "")
+        val archivo = java.net.URLDecoder.decode(nombre, "UTF-8")
         val u = commons.newBuilder().addQueryParameter("action", "query").addQueryParameter("format", "json")
             .addQueryParameter("prop", "imageinfo").addQueryParameter("iiprop", "extmetadata").addQueryParameter("titles", "File:$archivo").build()
-        val paginas = pedirJson(u).jsonObject["query"]?.jsonObject?.get("pages") as? JsonObject ?: return ""
-        val meta = paginas.values.firstOrNull()?.jsonObject?.arr("imageinfo")?.firstOrNull()?.jsonObject?.get("extmetadata") as? JsonObject ?: return ""
+        val paginas = pedirJson(u).jsonObject["query"]?.jsonObject?.get("pages") as? JsonObject ?: return ImagenElegida("wikimedia", foto)
+        val meta = paginas.values.firstOrNull()?.jsonObject?.arr("imageinfo")?.firstOrNull()?.jsonObject?.get("extmetadata") as? JsonObject ?: return ImagenElegida("wikimedia", foto)
         // Commons repite a veces el texto en una etiqueta escondida (`<span style="display: none;">Unknown author</span>`):
         // lo escondido se quita antes que las etiquetas, para que no salga "Unknown authorUnknown author".
         fun v(k: String) = (meta[k] as? JsonObject)?.get("value").texto()
             .replace(Regex("<(\\w+)[^>]*display:\\s*none[^>]*>.*?</\\1>", RegexOption.DOT_MATCHES_ALL), "")
             .replace(Regex("<[^>]+>"), "").replace("&amp;", "&").replace(Regex("\\s+"), " ").trim()
-        return listOf(v("Artist"), v("LicenseShortName"), "Wikimedia Commons").filter { it.isNotBlank() }.joinToString(" · ")
+        return ImagenElegida("wikimedia", foto, v("Artist"), v("LicenseShortName"), cuando = System.currentTimeMillis())
     }
 }
 

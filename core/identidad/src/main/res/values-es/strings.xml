@@ -110,4 +110,15 @@
     <string name="fogon_enviar_github_pista">Se abre GitHub con el mensaje listo. Necesitas una cuenta de GitHub, y lo que envíes queda público: no pongas datos personales.</string>
     <string name="fogon_enviar_correo">Enviar por correo</string>
     <string name="fogon_enviar_correo_pista">Se abre tu app de correo con el mensaje listo, para %1$s.</string>
+  <string name="fogon_luz_tema">De acuerdo al tema</string>
+  <string name="fogon_luz_color">Color de la luz</string>
+  <string name="fogon_luz_segundo">Segundo color</string>
+  <string name="fogon_luz_intensidad">Intensidad</string>
+  <string name="fogon_luz_tamano">Tamaño</string>
+  <string name="fogon_luz_legible">La bajamos un poco para que se lea</string>
+  <string name="fogon_tintas_guardadas">Tintas guardadas (máximo 12)</string>
+  <string name="fogon_tintas_nombre">Nombre</string>
+  <string name="fogon_tintas_guardar">Guardar estos colores</string>
+  <string name="fogon_tintas_aplicar">Aplicar %1$s</string>
+  <string name="fogon_tintas_borrar">Borrar %1$s</string>
 </resources>

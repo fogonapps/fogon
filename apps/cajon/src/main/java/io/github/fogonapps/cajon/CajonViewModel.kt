@@ -34,6 +34,10 @@ import io.github.fogonapps.cajon.datos.Generos
 import io.github.fogonapps.cajon.datos.MusicBrainz
 import io.github.fogonapps.cajon.datos.Personas
 import io.github.fogonapps.cajon.datos.PersonaDeAfuera
+import io.github.fogonapps.cajon.datos.Imagenes
+import io.github.fogonapps.cajon.datos.ImagenElegida
+import io.github.fogonapps.cajon.datos.EdicionLibro
+import io.github.fogonapps.cajon.datos.PortadasComunidad
 import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.RegistroEscuchas
 import io.github.fogonapps.cajon.datos.OpenLibrary
@@ -54,6 +58,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -133,6 +138,9 @@ sealed interface Pantalla {
     data object Manifiesto : Pantalla
     /* La red (Fogón Social) */
     /** Entrar o crear la cuenta, y su configuración. */
+    data object MusicaEscuchada : Pantalla
+    data object Privacidad : Pantalla
+    data object BorrarCuenta : Pantalla
     data object CuentaRed : Pantalla
     /** El feed completo: de quienes sigue y explorar. */
     data object Red : Pantalla
@@ -168,6 +176,13 @@ sealed interface Pantalla {
 enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS;
     companion object {
         /** Las pestañas en el orden que eligió la persona (las que falten van al final, en su orden de siempre). */
+        fun visibles(barra: List<String>, orden: List<String> = emptyList()): List<Pestana> {
+            if (barra.isEmpty()) return enOrden(orden)
+            val elegidas = barra.mapNotNull { n -> entries.firstOrNull { it.name == n } }.distinct().toMutableList()
+            if (INICIO !in elegidas) elegidas.add(0, INICIO)
+            entries.forEach { if (elegidas.size < 3 && it !in elegidas) elegidas.add(it) }
+            return elegidas
+        }
         fun enOrden(orden: List<String>): List<Pestana> =
             (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries).distinct()
     }
@@ -250,7 +265,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun quitarPerfil() = viewModelScope.launch {
         val token = caja.tokenSocial
         try {
-            if (token != null) io.github.fogonapps.cajon.datos.ClienteSocial(token).salir()
+            if (token != null) caja.clienteSocial(token).salir()
             val otro = cajonApp.perfiles.lista.perfiles.firstOrNull { it.id != recursos.id }
                 ?: cajonApp.perfiles.agregar(provisional = false) ?: return@launch
             alCambiarPerfil?.invoke(otro.id, true)
@@ -424,6 +439,18 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             palabrasOcultas = if (si) (e.ajustes.palabrasOcultas + limpia).distinct().take(200) else e.ajustes.palabrasOcultas - limpia))
     }
 
+    fun opcionesPrivacidad(): io.github.fogonapps.cajon.datos.OpcionesPrivacidad {
+        val app = getApplication<Application>()
+        val prefs = app.getSharedPreferences(AvisosRed.PREFS, android.content.Context.MODE_PRIVATE)
+        val canal = app.getSystemService(android.app.NotificationManager::class.java).getNotificationChannel("red")
+        val permisoAvisos = androidx.core.app.NotificationManagerCompat.from(app).areNotificationsEnabled() &&
+            canal?.importance != android.app.NotificationManager.IMPORTANCE_NONE
+        return io.github.fogonapps.cajon.datos.opcionesPrivacidad(
+            caja.spotifyRenovar != null, caja.tokenGithub != null, EscuchaMusica.conPermiso(app),
+            permisoAvisos,
+            AvisosRed.activo(prefs, recursos.id, AvisosRed.AVISOS), AvisosRed.activo(prefs, recursos.id, AvisosRed.MENSAJES),
+            caja.tokenSocial != null, caja.llaveCajon != null)
+    }
     fun hayLlaveCajon() = caja.llaveCajon != null
 
     /** Tu perfil, uno solo: con cuenta, como lo ve la red (con lo demás abajo); sin cuenta, el del teléfono. */
@@ -445,11 +472,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** El equipo agrega o quita una frase (en Moderación); después se vuelven a traer. */
     fun agregarFrase(texto: String, idioma: String, franja: String) = viewModelScope.launch {
-        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).agregarFrase(texto.trim(), idioma, franja) }
+        runCatching { caja.clienteSocial().agregarFrase(texto.trim(), idioma, franja) }
             .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
     }
     fun quitarFrase(clave: String) = viewModelScope.launch {
-        runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).quitarFrase(clave) }
+        runCatching { caja.clienteSocial().quitarFrase(clave) }
             .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
     }
 
@@ -457,7 +484,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (!forzar && System.currentTimeMillis() - frasesTraidas < 6 * 3600_000L) return
         frasesTraidas = System.currentTimeMillis()
         viewModelScope.launch {
-            val c = io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial)
+            val c = caja.clienteSocial()
             runCatching { c.frases() }.getOrNull()?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
             runCatching { c.frasesComunidad(idioma()) }.getOrNull()?.let { _frasesDeLaGente.value = it }
             runCatching { c.frasesOcultas() }.getOrNull()?.let { _frasesOcultas.value = it.toSet() }
@@ -474,7 +501,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun proponerFrase(texto: String) {
         viewModelScope.launch {
             try {
-                io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).proponerFrase(texto.trim(), idioma())
+                caja.clienteSocial().proponerFrase(texto.trim(), idioma())
                 avisar(tx(R.string.frase_propuesta_gracias))
             } catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
                 avisar(tx(if (x.codigo == 429) R.string.frase_propuesta_muchas else R.string.frase_propuesta_mal))
@@ -491,7 +518,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             frasesGusta = if (valor == 1) (e.ajustes.frasesGusta + clave).distinct() else e.ajustes.frasesGusta - clave,
             frasesNo = if (valor == -1) (e.ajustes.frasesNo + clave).distinct() else e.ajustes.frasesNo - clave,
             cambio = ahora())) }
-        if (caja.tokenSocial != null) viewModelScope.launch { runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).votarFrase(clave, valor) } }
+        if (caja.tokenSocial != null) viewModelScope.launch { runCatching { caja.clienteSocial().votarFrase(clave, valor) } }
     }
 
     fun calificarRapido(id: String, nota: Int) = cambiarObra(id) { o ->
@@ -510,7 +537,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (q.trim().length < 2) { _busqueda.value = _busqueda.value.copy(personas = emptyList()); return }
         buscandoGente = viewModelScope.launch {
             delay(300)
-            val gente = runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).buscar(q.trim()) }.getOrDefault(emptyList())
+            val gente = runCatching { caja.clienteSocial().buscar(q.trim()) }.getOrDefault(emptyList())
             _busqueda.value = _busqueda.value.copy(personas = gente)
         }
     }
@@ -679,7 +706,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
             if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) launch {
                 _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + "personas")
-                val gente = runCatching { io.github.fogonapps.cajon.datos.ClienteSocial(caja.tokenSocial).buscar(t) }.getOrDefault(emptyList())
+                val gente = runCatching { caja.clienteSocial().buscar(t) }.getOrDefault(emptyList())
                 _busqueda.value = _busqueda.value.copy(personas = gente, cargando = _busqueda.value.cargando - "personas")
             }
             if (seccion == Secciones.PERSONAS) return@launch
@@ -935,7 +962,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     val titulo = if (v.tipo == Tipos.LIBRO && v.titulo.isNotBlank() && L.tituloLimpio(v.titulo) != L.tituloLimpio(d.titulo)) v.titulo else d.titulo
                     v.copy(titulo = titulo, original = if (titulo != d.titulo && d.original.isBlank()) d.titulo else d.original, anio = d.anio ?: v.anio, creador = creador,
                         generos = v.generos.ifEmpty { d.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
-                        portada = if (v.portadaPropia) v.portada else d.portada.ifBlank { v.portada },
+                        portada = if (v.portadaPropia) v.portada else Imagenes.elegir(v,
+                            _portadasComunidad.value[id] ?: PortadasComunidad(), d.portada.ifBlank { v.portadaRecomendada ?: v.portada }),
+                        portadaRecomendada = d.portada.ifBlank { v.portadaRecomendada ?: v.portada },
+                        imagen = if (v.portadaPropia) v.imagen else d.imagen,
                         fondo = if (v.fondoPropio) v.fondo else d.fondo.ifBlank { v.fondo }, minutos = d.minutos ?: v.minutos, paginas = d.paginas ?: v.paginas,
                         temporadas = d.temporadas.ifEmpty { v.temporadas },
                         canciones = if (d.canciones.isEmpty()) v.canciones else d.canciones.mapIndexed { i, c -> v.canciones.getOrNull(i)?.takeIf { it.titulo == c.titulo }?.let { c.copy(nota = it.nota, favorita = it.favorita) } ?: c },
@@ -987,6 +1017,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Las obras con datos de TMDB de hace más de 6 meses se renuevan al abrirlas (si hay clave e internet). */
     fun renovarSiHaceFalta(o: Obra) {
+        cargarImagenesObra(o.id)
         val tmdb = o.fuente.startsWith("tmdb:")
         if (tmdb && claveCine == null || o.fuente.isEmpty() || o.traida <= 0) return
         // Lo de TMDB, cada 6 meses; lo que se trajo sin la nota del público, una vez.
@@ -1524,7 +1555,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val inicio = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { s.iniciar() }
                 abrir(inicio.url)
                 spotifySocket = inicio.socket
-                val codigo = s.esperarCodigo(inicio) ?: run { _spotifyPaso.value = SPOTIFY_CANCELADO; return@launch }
+                val textos = io.github.fogonapps.cajon.datos.Spotify.TextosVuelta(tx(R.string.spotify_vuelta_listo), tx(R.string.spotify_vuelta_no), tx(R.string.spotify_vuelta_ajena))
+                val codigo = when (val v = s.esperar(inicio, textos)) {
+                    is io.github.fogonapps.cajon.datos.Spotify.Vuelta.Codigo -> v.codigo
+                    is io.github.fogonapps.cajon.datos.Spotify.Vuelta.Error -> { spotifyErrorVuelta = v.codigo; _spotifyPaso.value = SPOTIFY_ERROR; return@launch }
+                    else -> { _spotifyPaso.value = SPOTIFY_CANCELADO; return@launch }
+                }
                 val (acceso, renovar) = s.canjear(inicio, codigo)
                 s.probar(acceso)
                 caja.spotifyRenovar = renovar; _spotify.value = true
@@ -1545,7 +1581,14 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun desconectarSpotify() { caja.spotifyRenovar = null; _spotify.value = false }
+    fun desconectarSpotify() { caja.spotifyRenovar = null; _spotify.value = false; _spotifyRevisar.value = false }
+
+    /** El código de error que Spotify devolvió en la vuelta (por ejemplo `invalid_scope`), para mostrarlo tal cual. */
+    var spotifyErrorVuelta: String = ""; private set
+
+    private val _spotifyRevisar = MutableStateFlow(false)
+    /** Spotify respondió 403 al traer: el dueño de la app sin Premium o la cuenta fuera de sus 5 usuarios. */
+    val spotifyRevisar: StateFlow<Boolean> = _spotifyRevisar
 
     /**
      * Trae de Spotify lo escuchado hace poco (a "Escuchado hace poco") y, con [todo], también los álbumes guardados
@@ -1581,7 +1624,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     buscarPortadas()
                 }
                 procesarOidos()
+                _spotifyRevisar.value = false
             } catch (_: ClaveMala) { desconectarSpotify(); avisar(tx(R.string.aviso_spotify_no))
+            } catch (_: io.github.fogonapps.cajon.datos.Spotify.SinPermiso) {
+                // No se desconecta: suele arreglarse en el panel de Spotify (Premium del dueño o la lista de usuarios).
+                if (!_spotifyRevisar.value || todo) avisar(tx(R.string.aviso_spotify_permiso))
+                _spotifyRevisar.value = true
+            } catch (_: io.github.fogonapps.cajon.datos.Ocupado) { if (todo) avisar(tx(R.string.aviso_spotify_ocupado))
             } catch (x: kotlinx.coroutines.CancellationException) { throw x } catch (_: Exception) { if (todo) avisar(tx(R.string.buscar_sin_red)) }
         }
     }
@@ -1749,10 +1798,17 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Las categorías que quiere en "Para ti" (vacío = todas). */
     /** Mueve una pestaña de abajo un lugar ([paso] -1 a la izquierda, 1 a la derecha). */
     fun moverPestana(p: Pestana, paso: Int) = cambiar { e ->
-        val l = Pestana.enOrden(e.ajustes.ordenPestanas).toMutableList()
+        val l = Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas).toMutableList()
         val i = l.indexOf(p); val j = i + paso
-        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(ordenPestanas = l.map { it.name }, cambio = ahora())) }
+        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(barra = l.map { it.name }, cambio = ahora())) }
     }
+
+    fun mostrarPestana(p: Pestana, mostrar: Boolean) = cambiar { e ->
+        val lista = Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas)
+        val nueva = if (mostrar) (lista + p).distinct() else if (p != Pestana.INICIO && lista.size > 3) lista - p else lista
+        e.copy(ajustes = e.ajustes.copy(barra = nueva.map { it.name }, cambio = ahora()))
+    }
+    fun restablecerBarra() = cambiar { e -> e.copy(ajustes = e.ajustes.copy(barra = emptyList(), ordenPestanas = emptyList(), cambio = ahora())) }
 
     fun elegirCategorias(tipos: List<String>) = cambiar { e -> e.copy(ajustes = e.ajustes.copy(categorias = tipos.distinct(), cambio = ahora())) }
 
@@ -1902,7 +1958,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 faltan.filter { it.fuente.startsWith("ol:") }.forEach { o ->
                     runCatching { OpenLibrary.portadaCatalogo(o.fuente) }.getOrNull()?.takeIf { it.isNotBlank() }?.let {
-                        _imagenesIniciales.value += o.fuente to it.replace("-M.jpg", "-L.jpg")
+                        _imagenesIniciales.value += o.fuente to Imagenes.url(it, Imagenes.Lugar.LISTA)
                     }
                 }
                 faltan.filter { it.fuente.startsWith("tmdb:") }.forEach { o ->
@@ -2052,12 +2108,58 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Portada propia ----- */
 
     private val _candidatas = MutableStateFlow<Pair<String, List<String>?>?>(null)
+    private val _portadasComunidad = MutableStateFlow<Map<String, PortadasComunidad>>(emptyMap())
+    val portadasComunidad = _portadasComunidad.asStateFlow()
+    private val _ediciones = MutableStateFlow<Map<String, List<EdicionLibro>>>(emptyMap())
+    val ediciones = _ediciones.asStateFlow()
+
+    fun procedencia(id: String, url: String): ImagenElegida {
+        val guardada = _estado.value?.vivas?.firstOrNull { it.id == id }?.imagen?.takeIf { it.url == url }
+        val ed = _ediciones.value[id]?.firstOrNull { Imagenes.clave(it.portada) == Imagenes.clave(url) }
+        return guardada?.copy(edicion = ed?.id ?: guardada.edicion) ?: ImagenElegida(Imagenes.fuente(url), url, edicion = ed?.id, cuando = ahora())
+    }
+    fun cargarImagenesObra(id: String) = viewModelScope.launch {
+        val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return@launch
+        if (o.fuente.isBlank()) return@launch
+        val eds = if (o.fuente.startsWith("ol:")) runCatching { OpenLibrary.ediciones(o.fuente) }.getOrDefault(emptyList()) else emptyList()
+        _ediciones.value = _ediciones.value + (id to eds)
+        val comunidad = runCatching { red.portadas(o.fuente) }.getOrElse { _portadasComunidad.value[id] ?: PortadasComunidad(comunidad = o.portada.takeIf { o.portadaRecomendada != null && it != o.portadaRecomendada && !o.portadaPropia }) }
+        _portadasComunidad.value = _portadasComunidad.value + (id to comunidad)
+        val creditoComunidad = comunidad.comunidad?.takeIf { Imagenes.fuente(it) == "wikimedia" }?.let { url ->
+            runCatching { Wikimedia.procedencia(url) }.getOrNull()
+        }
+        val recomendada = Imagenes.edicion(eds.filterNot { Imagenes.bloqueada(it.portada, comunidad.bloqueadas) }, idioma())
+        val cubiertaObra = if (o.fuente.startsWith("ol:") && recomendada == null)
+            runCatching { OpenLibrary.portadaDeObra(o.fuente) }.getOrNull() else null
+        cambiar { e -> e.copy(obras = e.obras.map { actual ->
+            if (actual.id != id || actual.borrada || actual.fuente != o.fuente) actual else {
+                val respaldo = recomendada?.portada ?: cubiertaObra ?: actual.portadaRecomendada ?: actual.portada
+                val url = Imagenes.elegir(actual, comunidad, respaldo)
+                val imagen = if (actual.portadaPropia) actual.imagen ?: ImagenElegida(Imagenes.fuente(actual.portada), actual.portada)
+                    else creditoComunidad?.takeIf { it.url == url } ?: procedencia(id, url)
+                if (actual.portada == url && actual.portadaRecomendada == respaldo && actual.imagen == imagen) actual
+                else actual.copy(portada = url, portadaRecomendada = respaldo, imagen = imagen, cambio = ahora())
+            }
+        }) }
+        _candidatas.value?.takeIf { it.first == "$id|$IMAGEN_PORTADA" }?.let { candidatas ->
+            _candidatas.value = candidatas.first to candidatas.second?.let { Imagenes.filtrar(it, comunidad.bloqueadas) }
+        }
+    }
+    fun elegirEdicion(id: String, ed: EdicionLibro) {
+        if (Imagenes.bloqueada(ed.portada, _portadasComunidad.value[id]?.bloqueadas.orEmpty())) return
+        cambiarObra(id) { it.copy(edicion = ed.id, portada = ed.portada, portadaPropia = true,
+            imagen = procedencia(id, ed.portada).copy(edicion = ed.id)) }
+    }
+    fun votarImagen(id: String, url: String?) {
+        val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
+        red.votarPortada(o.fuente, url?.let(Imagenes::clave)) { cargarImagenesObra(id).join() }
+    }
+
     /** Portadas para elegir de una obra ("Cambiar portada"): null mientras llegan. */
     val candidatas: StateFlow<Pair<String, List<String>?>?> = _candidatas
 
     fun cargarCandidatas(id: String, que: String = IMAGEN_PORTADA) {
         val clave = id + "|" + que
-        if (_candidatas.value?.first == clave) return
         val e = _estado.value ?: return
         val tmdb = claveCine?.let { Tmdb(it) }
         val actual: String
@@ -2090,8 +2192,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         _candidatas.value = clave to null
         viewModelScope.launch {
+            if (que == IMAGEN_PORTADA) cargarImagenesObra(id).join()
             val lista = runCatching { traer() }.getOrDefault(emptyList())
-            _candidatas.value = clave to (listOfNotNull(actual.takeIf { it.isNotBlank() }) + lista).distinct()
+            if (_candidatas.value?.first == clave) _candidatas.value = clave to Imagenes.filtrar(listOfNotNull(actual.takeIf { it.isNotBlank() }, _portadasComunidad.value[id]?.comunidad) + lista, _portadasComunidad.value[id]?.bloqueadas.orEmpty())
         }
     }
 
@@ -2099,10 +2202,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** La imagen elegida queda como propia: al renovar los datos o buscar fotos no se cambia. */
     fun elegirImagen(id: String, que: String, url: String) {
+        if (Imagenes.bloqueada(url, _portadasComunidad.value[id]?.bloqueadas.orEmpty())) return
         when (que) {
-            IMAGEN_FOTO -> cambiarArtista(id) { it.copy(foto = url, fotoCredito = "", fotoPropia = true, fotoRevisada = true) }
+            IMAGEN_FOTO -> {
+                cambiarArtista(id) { it.copy(foto = url, fotoCredito = "", fotoPropia = true, fotoRevisada = true) }
+                if (Imagenes.fuente(url) == "wikimedia") viewModelScope.launch {
+                    val credito = runCatching { Wikimedia.credito(url) }.getOrDefault("")
+                    cambiarArtista(id) { if (it.foto == url) it.copy(fotoCredito = credito) else it }
+                }
+            }
             IMAGEN_FONDO -> cambiarObra(id) { it.copy(fondo = url, fondoPropio = true) }
-            else -> cambiarObra(id) { it.copy(portada = url, portadaPropia = true) }
+            else -> {
+                cambiarObra(id) { it.copy(portada = url, portadaPropia = true, imagen = procedencia(id, url)) }
+                if (Imagenes.fuente(url) == "wikimedia") viewModelScope.launch {
+                    val imagen = runCatching { Wikimedia.procedencia(url) }.getOrNull() ?: return@launch
+                    cambiarObra(id) { if (it.imagen?.url == url) it.copy(imagen = imagen) else it }
+                }
+            }
         }
         cerrar()
     }
@@ -2389,12 +2505,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Devuelve éxito solo después de abrir y unir el remoto, y guardar el resultado en la cuenta. */
     private suspend fun sincronizarCuenta(): Boolean {
+        if (!caja.redPermitida) return false
         val token = caja.tokenSocial ?: return false
         val llave = caja.llaveCajon ?: return false
-        fun mismaSesion() = vigenciaPerfil.vigente() && caja.tokenSocial == token && caja.llaveCajon == llave
+        fun mismaSesion() = caja.redPermitida && vigenciaPerfil.vigente() && caja.tokenSocial == token && caja.llaveCajon == llave
         _sync.value = _sync.value.copy(estado = EstadoSync.SINCRONIZANDO, mensaje = null)
         return try {
-            val c = io.github.fogonapps.cajon.datos.ClienteSocial(token)
+            val c = caja.clienteSocial(token)
             val lista = sincronizarCajonCifrado(
                 llave = llave,
                 autorizacion = { caja.reemplazarCajonRemoto },
@@ -2514,6 +2631,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         const val SPOTIFY_CLIENTE = "cliente"
         const val SPOTIFY_PERMISO = "permiso"
         const val SPOTIFY_RED = "red"
+        const val SPOTIFY_ERROR = "error"
         /** Con 5 canciones distintas de un álbum, cuenta como escuchado. */
         const val CANCIONES_ESCUCHADO = 5
         const val IMAGEN_PORTADA = "portada"

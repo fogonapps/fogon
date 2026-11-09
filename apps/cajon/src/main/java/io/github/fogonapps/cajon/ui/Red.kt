@@ -1184,7 +1184,7 @@ private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
             var actual by rememberSaveable { mutableStateOf("") }
             var nueva by rememberSaveable { mutableStateOf("") }
             val oculto = androidx.compose.ui.text.input.PasswordVisualTransformation()
-            if (cuenta?.conClave == true) OutlinedTextField(actual, { actual = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_actual)) },
+            if (cuenta?.conClave == true) OutlinedTextField(actual, { actual = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_actual), color = FogonTema.actual.texto) },
                 singleLine = true, shape = forma(18.dp), visualTransformation = oculto)
             OutlinedTextField(nueva, { nueva = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_nueva)) },
                 singleLine = true, shape = forma(18.dp), visualTransformation = oculto, supportingText = { Text(stringResource(R.string.red_clave_regla)) })
@@ -1587,7 +1587,7 @@ fun CajonEnCuenta(vm: CajonViewModel) {
 
 
 @Composable
-private fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
+fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
     val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
     val ocupado by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
     var clave by remember { mutableStateOf("") }
@@ -1596,12 +1596,12 @@ private fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
     var texto by rememberSaveable { mutableStateOf("") }
     var confirmar by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.red_borrar_cuenta), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.red_borrar_cuenta), style = MaterialTheme.typography.headlineSmall, color = FogonTema.actual.texto)
         Pista(stringResource(R.string.red_borrado_explicacion))
         Chips(listOf("" to stringResource(R.string.red_motivo_ninguno), "no_uso" to stringResource(R.string.red_motivo_no_uso),
             "privacidad" to stringResource(R.string.red_motivo_privacidad), "problemas" to stringResource(R.string.red_motivo_problemas),
             "otro" to stringResource(R.string.red_motivo_otro)), motivo) { motivo = it }
-        OutlinedTextField(texto, { texto = it.take(300) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_motivo_texto)) })
+        OutlinedTextField(texto, { texto = it.take(300) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_motivo_texto), color = FogonTema.actual.texto) })
         CredencialSeguridad(vm, cuenta?.conClave == true, clave, { clave = it }, codigo, { codigo = it })
         Opcion(stringResource(R.string.red_borrar_cuenta_seguro), confirmar) { confirmar = it }
         BotonSecundario(stringResource(R.string.red_si_borrar), { vm.red.borrarCuenta(clave, codigo, motivo, texto) }, Modifier.fillMaxWidth(), peligro = true,
@@ -1613,13 +1613,13 @@ private fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
 @Composable
 private fun CredencialSeguridad(vm: CajonViewModel, conClave: Boolean, clave: String, cambiarClave: (String) -> Unit, codigo: String, cambiarCodigo: (String) -> Unit) {
     if (conClave) OutlinedTextField(clave, { cambiarClave(it.take(200)) }, Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.red_clave_actual)) }, singleLine = true,
+        label = { Text(stringResource(R.string.red_clave_actual), color = FogonTema.actual.texto) }, singleLine = true,
         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
     else {
         BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoSeguridad() }, Modifier.fillMaxWidth())
         OutlinedTextField(codigo, { cambiarCodigo(it.filter { c -> c in '0'..'9' }.take(6)) }, Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.red_codigo)) }, singleLine = true,
+            label = { Text(stringResource(R.string.red_codigo), color = FogonTema.actual.texto) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
     }
 }

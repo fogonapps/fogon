@@ -85,6 +85,9 @@ data class Obra(
     val generos: List<String> = emptyList(),
     val sinopsis: String = "",
     /** URL de la portada (póster, carátula) y del fondo horizontal (solo cine). */
+    val imagen: ImagenElegida? = null,
+    val portadaRecomendada: String? = null,
+    val edicion: String? = null,
     val portada: String = "",
     val fondo: String = "",
     /** De dónde salió: "tmdb:movie:603", "tmdb:tv:1396", "ol:OL274505W", "mb:rg:<mbid>"; vacío si es a mano. */
@@ -378,6 +381,7 @@ data class Ajustes(
     val palabrasOcultas: List<String> = emptyList(),
     /** El orden de las pestañas de abajo (nombres de `Pestana`; vacío = el de siempre). */
     val ordenPestanas: List<String> = emptyList(),
+    val barra: List<String> = emptyList(),
     /** Las frases del saludo que le gustan (o compartió) y las que no quiere ver (claves, ver `Frases`). */
     val frasesGusta: List<String> = emptyList(),
     val frasesNo: List<String> = emptyList(),

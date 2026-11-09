@@ -58,6 +58,12 @@ internal fun crearAlmacenPerfil(directorio: File, scope: kotlinx.coroutines.Coro
  * cifrado. No van en el respaldo ni en el Gist.
  */
 class CajaFuerte(context: Context, val perfilId: String) {
+    private val _permisoRed = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val permisoRed: kotlinx.coroutines.flow.StateFlow<Boolean> = _permisoRed
+    var redPermitida: Boolean
+        get() = _permisoRed.value
+        set(valor) { _permisoRed.value = valor }
+    fun clienteSocial(token: String? = tokenSocial) = ClienteSocial(token) { redPermitida && token == tokenSocial }
     private val prefijo = "p$perfilId."
     private val prefs = context.getSharedPreferences("claves", Context.MODE_PRIVATE)
     private val alias = "cajon-claves"

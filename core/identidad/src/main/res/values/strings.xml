@@ -110,4 +110,15 @@
     <string name="fogon_enviar_github_pista">GitHub opens with the message ready. You need a GitHub account, and what you send is public: don’t include personal data.</string>
     <string name="fogon_enviar_correo">Send by email</string>
     <string name="fogon_enviar_correo_pista">Your email app opens with the message ready, to %1$s.</string>
+  <string name="fogon_luz_tema">Follow theme</string>
+  <string name="fogon_luz_color">Light color</string>
+  <string name="fogon_luz_segundo">Second color</string>
+  <string name="fogon_luz_intensidad">Intensity</string>
+  <string name="fogon_luz_tamano">Size</string>
+  <string name="fogon_luz_legible">We lowered it a little to keep text readable</string>
+  <string name="fogon_tintas_guardadas">Saved inks (up to 12)</string>
+  <string name="fogon_tintas_nombre">Name</string>
+  <string name="fogon_tintas_guardar">Save these colors</string>
+  <string name="fogon_tintas_aplicar">Apply %1$s</string>
+  <string name="fogon_tintas_borrar">Delete %1$s</string>
 </resources>

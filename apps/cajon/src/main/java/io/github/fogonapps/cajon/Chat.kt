@@ -104,13 +104,17 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         scope.launch {
             withContext(Dispatchers.IO) { runCatching { JsonCajon.decodeFromString(Chats.serializer(), archivo.readText()) }.getOrNull() }?.let { poner(it) }
             // Al cerrar o borrar la cuenta, el chat de este teléfono se va con ella.
-            red.usuario.collect { u -> if (u == null && caja.chatLlaves != null) borrarTodo() else if (u != null) asegurarLlaves() }
+            kotlinx.coroutines.flow.combine(red.usuario, caja.permisoRed) { usuario, permiso -> usuario to permiso }
+                .collect { (u, permiso) ->
+                    if (u == null && caja.chatLlaves != null) borrarTodo()
+                    else if (u != null && permiso) asegurarLlaves()
+                }
         }
         // Mientras la app está abierta, la pregunta queda hecha en el servidor y los mensajes llegan al instante.
         scope.launch {
             while (true) {
                 if (red.usuario.value == null || propias() == null) { kotlinx.coroutines.delay(5_000); continue }
-                val sobres = runCatching { ClienteSocial(caja.tokenSocial).esperarMensajes(_chats.value.ultimo) }.getOrNull()
+                val sobres = runCatching { caja.clienteSocial().esperarMensajes(_chats.value.ultimo) }.getOrNull()
                 if (sobres == null) kotlinx.coroutines.delay(5_000) else procesar(sobres)
             }
         }
@@ -130,12 +134,12 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
     /** Que este teléfono tenga sus llaves y que el servidor tenga las públicas. */
     private suspend fun asegurarLlaves() {
         val p = propias() ?: withContext(Dispatchers.Default) { Cifrado.nuevas() }.also { caja.chatLlaves = JsonCajon.encodeToString(Cifrado.Propias.serializer(), it) }
-        runCatching { ClienteSocial(caja.tokenSocial).ponerLlaves(withContext(Dispatchers.Default) { Cifrado.publicas(p) }) }
+        runCatching { caja.clienteSocial().ponerLlaves(withContext(Dispatchers.Default) { Cifrado.publicas(p) }) }
     }
 
     /** Las llaves públicas de [usuario]; [frescas] las pide de nuevo (cambian si la persona entró en otro teléfono). */
     private suspend fun llaves(usuario: String, frescas: Boolean = false): LlavesPublicas =
-        (if (frescas) null else llavesDe[usuario]) ?: ClienteSocial(caja.tokenSocial).llaves(usuario).also { llavesDe[usuario] = it }
+        (if (frescas) null else llavesDe[usuario]) ?: caja.clienteSocial().llaves(usuario).also { llavesDe[usuario] = it }
 
     /** El número de seguridad con [usuario] (null si todavía no se puede saber). */
     suspend fun numeroSeguridad(usuario: String): String? = runCatching {
@@ -175,7 +179,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
             }
             val contenido = JsonCajon.encodeToString(Contenido.serializer(), c).toByteArray()
             val (sobre, firma) = withContext(Dispatchers.Default) { Cifrado.cerrar(contenido, yo, usuario, suyas, p) }
-            ClienteSocial(caja.tokenSocial).mandar(usuario, sobre, firma)
+            caja.clienteSocial().mandar(usuario, sobre, firma)
             return true
         } catch (x: io.github.fogonapps.cajon.datos.ErrorSocial) {
             decir(when (x.error) { "no_existe" -> R.string.chat_no_se_puede; "muy_grande" -> R.string.chat_muy_grande; else -> R.string.red_error }); return false
@@ -255,7 +259,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
 
     /** El nombre de [usuario] (lo trae del servidor una vez y lo recuerda). */
     fun conocer(usuario: String) = scope.launch {
-        val p = runCatching { ClienteSocial(caja.tokenSocial).perfil(usuario).persona }.getOrNull() ?: return@launch
+        val p = runCatching { caja.clienteSocial().perfil(usuario).persona }.getOrNull() ?: return@launch
         if (_personas.value[usuario] != p) cambiar { c -> c.copy(personas = c.personas + (usuario to p)) }
     }
 
@@ -267,7 +271,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
     }
 
     /** Trae los sobres nuevos, los abre y los guarda; al pedir los siguientes, el servidor borra los ya recibidos. */
-    fun recibir() = scope.launch { procesar(runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }.getOrNull() ?: return@launch) }
+    fun recibir() = scope.launch { procesar(runCatching { caja.clienteSocial().recibir(_chats.value.ultimo) }.getOrNull() ?: return@launch) }
 
     /** Abre y guarda los sobres que llegaron, y confirma (el servidor borra hasta el último). */
     private suspend fun procesar(sobres: List<io.github.fogonapps.cajon.datos.Sobre>) = recibiendo.withLock {
@@ -290,7 +294,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         }
         if (sobres.isNotEmpty()) cambiar { it.copy(ultimo = cursor) }
         // Confirmar lo recibido (el servidor borra hasta el último).
-        if (nuevos.isNotEmpty()) runCatching { ClienteSocial(caja.tokenSocial).recibir(_chats.value.ultimo) }
+        if (nuevos.isNotEmpty()) runCatching { caja.clienteSocial().recibir(_chats.value.ultimo) }
     }
     private val recibiendo = Mutex()
 

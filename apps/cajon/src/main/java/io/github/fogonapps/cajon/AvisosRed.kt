@@ -30,7 +30,15 @@ class AvisosRed(contexto: Context, params: WorkerParameters) : Worker(contexto, 
             val caja = runCatching { app.recursos(perfil.id).caja }.getOrNull() ?: continue
             val token = caja.tokenSocial ?: continue
             val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val resultado = runCatching { runBlocking { ClienteSocial(token).let { it.sinLeer() to it.mensajesSinLeer() } } }.getOrNull()
+            val resultado = runCatching { runBlocking {
+                var permitido = false
+                ClienteSocial(token) { permitido && caja.tokenSocial == token }.let {
+                val vigente = it.info().politica
+                val aceptada = it.miCuenta().politica
+                permitido = vigente.isNotBlank() && !io.github.fogonapps.cajon.datos.debeAceptarPolitica(true, aceptada, vigente)
+                if (!permitido || caja.tokenSocial != token) return@runBlocking null
+                it.sinLeer() to it.mensajesSinLeer()
+            } } }.getOrNull()
             if (resultado == null) { reintentar = true; continue }
             if (caja.tokenSocial != token || app.perfiles.lista.perfiles.none { it.id == perfil.id }) continue
             val (avisos, mensajes) = resultado

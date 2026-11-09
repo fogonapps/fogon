@@ -96,6 +96,7 @@ private data class Pregunta(val titulo: String, val texto: String?, val si: () -
 
 @Composable
 fun App(vm: CajonViewModel, acciones: Acciones) {
+    PoliticaPrivacidad(vm)
     val e by vm.estado.collectAsStateWithLifecycle()
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
@@ -109,8 +110,9 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     val pedirPermiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
         io.github.fogonapps.cajon.AvisosRed.programar(ctxPermiso)
     }
-    LaunchedEffect(yoEnLaRed) {
-        if (yoEnLaRed == null || android.os.Build.VERSION.SDK_INT < 33) return@LaunchedEffect
+    val redActiva by vm.red.permitida.collectAsStateWithLifecycle()
+    LaunchedEffect(yoEnLaRed, redActiva) {
+        if (!redActiva || yoEnLaRed == null || android.os.Build.VERSION.SDK_INT < 33) return@LaunchedEffect
         val ya = androidx.core.content.ContextCompat.checkSelfPermission(ctxPermiso, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
         val prefs = ctxPermiso.getSharedPreferences("permisos", android.content.Context.MODE_PRIVATE)
         if (!ya && !prefs.getBoolean("notificaciones_pedido", false)) {
@@ -142,6 +144,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
                 PestanaAnimada(pestana) { p ->
                     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
+                        AvisoPolitica(vm)
                         when (p) {
                             Pestana.INICIO -> Inicio(vm, estado)
                             Pestana.PARA_TI -> PantallaRed(vm, estado, enPestana = true)
@@ -152,7 +155,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                         Espacio(120.dp)
                     }
                 }
-                BarraFlotante(pestana, Pestana.enOrden(estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
+                BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
                 SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
             }
 
@@ -162,6 +165,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                     // Las que tienen lista propia (buscar, el cajón de una lista larga) manejan su scroll.
                     val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
+                        AvisoPolitica(vm)
                         when (p) {
                             is Pantalla.Buscar -> Buscar(vm, estado, p)
                             is Pantalla.Previa -> Previa(vm, p.obra, p.personas)
@@ -180,6 +184,9 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.CifrasDe -> Tu(vm, estado, p.seccion)
                             Pantalla.Artistas -> Artistas(vm, estado)
                             Pantalla.Retos -> Retos(vm, estado)
+                            Pantalla.MusicaEscuchada -> { Cabecera(stringResource(R.string.musica_que_escuchas), vm::cerrar); MusicaQueEscuchas(vm) }
+                            Pantalla.Privacidad -> Transparencia(vm)
+                            Pantalla.BorrarCuenta -> FormularioBorrado(vm, vm::cerrar)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
                             Pantalla.Sincronizar -> Sincronizar(vm)
                             Pantalla.ConectarSpotify -> ConectarSpotify(vm)

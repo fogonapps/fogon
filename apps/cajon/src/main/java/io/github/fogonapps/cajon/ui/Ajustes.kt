@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -112,6 +113,8 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
 
     Seccion(stringResource(R.string.fogon))
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    Seccion(stringResource(R.string.privacidad_grupo))
+    FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/privacidad") }
     FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/terminos") }
     FilaAjuste(Iconos.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
@@ -122,14 +125,21 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
 @Composable
 private fun OrdenPestanas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
-    val lista = io.github.fogonapps.cajon.Pestana.enOrden(e.ajustes.ordenPestanas)
+    val lista = io.github.fogonapps.cajon.Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas)
+    Text(stringResource(R.string.barra_minimo), color = f.textoSuave)
+    io.github.fogonapps.cajon.Pestana.entries.forEach { p ->
+        val visible = p in lista
+        io.github.fogonapps.identidad.Interruptor(stringResource(textoPestana(p)), "", visible,
+            habilitado = p != io.github.fogonapps.cajon.Pestana.INICIO && (!visible || lista.size > 3)) { vm.mostrarPestana(p, it) }
+    }
+    BotonSecundario(stringResource(R.string.barra_restablecer), onClick = { vm.restablecerBarra() })
     lista.forEachIndexed { i, p ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconoRiso(iconoPestana(p), null, tamano = 20.dp, tinta = f.acentoTexto)
             Text(stringResource(textoPestana(p)), color = f.texto, modifier = Modifier.weight(1f))
-            if (i > 0) BotonIcono(Iconos.Arriba, stringResource(R.string.mover_antes)) { vm.moverPestana(p, -1) }
+            if (i > 0) BotonIcono(Iconos.Arriba, "${stringResource(R.string.mover_antes)} ${stringResource(textoPestana(p))}") { vm.moverPestana(p, -1) }
             else Spacer(Modifier.size(40.dp))
-            if (i < lista.lastIndex) BotonIcono(Iconos.Abajo, stringResource(R.string.mover_despues)) { vm.moverPestana(p, 1) }
+            if (i < lista.lastIndex) BotonIcono(Iconos.Abajo, "${stringResource(R.string.mover_despues)} ${stringResource(textoPestana(p))}") { vm.moverPestana(p, 1) }
             else Spacer(Modifier.size(40.dp))
         }
     }
@@ -199,6 +209,7 @@ fun ConectarSpotify(vm: CajonViewModel) {
     Cabecera(stringResource(R.string.spotify_conectar), { vm.cancelarSpotify(); vm.cerrar() })
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.spotify_explica), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        Pista(stringResource(R.string.spotify_limites), adentro = true)
 
         PasoSpotify(1, stringResource(R.string.spotify_paso1), stringResource(R.string.spotify_paso1_pista)) {
             BotonSecundario(stringResource(R.string.spotify_crear_app), { runCatching { uri.openUri(io.github.fogonapps.cajon.datos.Spotify.CREAR) } }, Modifier.fillMaxWidth())
@@ -226,7 +237,13 @@ fun ConectarSpotify(vm: CajonViewModel) {
                     androidx.compose.material3.CircularProgressIndicator(Modifier.size(20.dp), color = f.tinta1, strokeWidth = 2.dp)
                     Text(stringResource(R.string.spotify_esperando), style = MaterialTheme.typography.bodyMedium, color = f.texto)
                 }
-                Pista(stringResource(R.string.spotify_esperando_pista), adentro = true)
+                var tarda by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { kotlinx.coroutines.delay(30_000); tarda = true }
+                if (tarda) {
+                    Pista(stringResource(R.string.spotify_esperando_pista), adentro = true)
+                    Text(io.github.fogonapps.cajon.datos.Spotify.VUELTA, style = MaterialTheme.typography.bodyLarge, color = f.texto,
+                        modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
+                }
                 BotonSecundario(stringResource(R.string.cancelar), { vm.cancelarSpotify() }, Modifier.fillMaxWidth())
             } else {
                 BotonRiso(stringResource(R.string.spotify_conectar), { vm.conectarSpotify(cliente) { u -> runCatching { uri.openUri(u) } } },
@@ -238,9 +255,10 @@ fun ConectarSpotify(vm: CajonViewModel) {
                 CajonViewModel.SPOTIFY_CLIENTE -> R.string.spotify_err_cliente
                 CajonViewModel.SPOTIFY_PERMISO -> R.string.spotify_err_permiso
                 CajonViewModel.SPOTIFY_RED -> R.string.spotify_err_red
+                CajonViewModel.SPOTIFY_ERROR -> R.string.spotify_err_vuelta
                 else -> null
             }
-            if (error != null) Text(stringResource(error), style = MaterialTheme.typography.bodyMedium, color = f.tinta1,
+            if (error != null) Text(stringResource(error, vm.spotifyErrorVuelta), style = MaterialTheme.typography.bodyMedium, color = f.tinta1,
                 modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
         }
         Pista(stringResource(R.string.spotify_privacidad), adentro = true)
@@ -360,7 +378,7 @@ fun Licencias(vm: CajonViewModel) {
  * álbumes, de qué apps, y Spotify (opcional, con la app de Spotify de la persona).
  */
 @Composable
-private fun MusicaQueEscuchas(vm: CajonViewModel) {
+fun MusicaQueEscuchas(vm: CajonViewModel) {
     val f = FogonTema.actual
     val c = LocalContext.current
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
@@ -414,6 +432,9 @@ private fun MusicaQueEscuchas(vm: CajonViewModel) {
             Text(stringResource(R.string.spotify_titulo), style = MaterialTheme.typography.titleSmall, color = f.texto)
             if (conectado) {
                 Text(stringResource(R.string.spotify_conectado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                val revisar by vm.spotifyRevisar.collectAsStateWithLifecycle()
+                if (revisar) Text(stringResource(R.string.aviso_spotify_permiso), style = MaterialTheme.typography.bodyMedium, color = f.tinta1,
+                    modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
                 BotonRiso(stringResource(R.string.spotify_traer), { vm.traerSpotify(todo = true) }, Modifier.fillMaxWidth())
                 BotonSecundario(stringResource(R.string.spotify_desconectar), { vm.desconectarSpotify() }, Modifier.fillMaxWidth())
             } else {

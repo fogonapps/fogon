@@ -127,5 +127,5 @@ class Catalogo(
 }
 
 fun Encontrado.paraCatalogo() = ObraInicial(fuente, tipo, titulo, anio, fuente, creador = creador,
-    imagen = if (fuente.startsWith("mb:rg:")) "" else portada.replace("/w342/", "/w500/").replace("-M.jpg", "-L.jpg"))
+    imagen = if (fuente.startsWith("mb:rg:")) "" else Imagenes.url(portada, Imagenes.Lugar.LISTA))
 fun ArtistaEncontrado.paraCatalogo() = ObraInicial(fuente, "artista", nombre, fuente = fuente, imagen = foto)

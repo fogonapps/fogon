@@ -46,6 +46,7 @@ data class AjustesEstilo(
     /** Qué tan transparente es el vidrio de las tarjetas, de 0 (el del tema) a 100 (casi invisible). */
     val transparencia: Int? = null,
     val adorno: Decoracion? = null,
+    val luz: LuzPropia? = null,
 )
 
 data class Apariencia(
@@ -55,6 +56,7 @@ data class Apariencia(
     val tamanoTexto: Int = 1,
     val menosMovimiento: Boolean = false,
     val masContraste: Boolean = false,
+    val guardadas: List<TintasGuardadas> = emptyList(),
 ) {
     fun de(e: Estilo = estilo) = ajustes[e] ?: AjustesEstilo()
 
@@ -196,12 +198,14 @@ class AlmacenApariencia private constructor(c: Context) {
                     if (prefs.contains(k)) r to Color(prefs.getInt(k, 0)) else null
                 }.toMap(),
                 transparencia = prefs.getInt("${e.name}.transparencia", -1).takeIf { it >= 0 },
+                luz = prefs.getString("${e.name}.luz", null)?.let { leerLuz(it) },
                 adorno = prefs.getString("${e.name}.adorno", null)?.let { g -> Decoracion.entries.firstOrNull { it.name == g } },
             )
         }.filterValues { it != AjustesEstilo() }
         return Apariencia(
             estilo = prefs.getString("estilo", null)?.let { s -> Estilo.entries.firstOrNull { it.name == s } } ?: Estilo.GRAFITO,
             ajustes = ajustes,
+            guardadas = leerGuardadas(prefs.getString("guardadas", null)),
             tamanoTexto = prefs.getInt("tamanoTexto", 1),
             menosMovimiento = prefs.getBoolean("menosMovimiento", false),
             masContraste = prefs.getBoolean("masContraste", false),
@@ -215,7 +219,9 @@ class AlmacenApariencia private constructor(c: Context) {
                 Ranura.entries.forEach { remove("${e.name}.${it.name}") }
                 remove("${e.name}.transparencia")
                 remove("${e.name}.adorno")
+                remove("${e.name}.luz")
             }
+            putString("guardadas", escribirGuardadas(a.guardadas))
             putString("estilo", a.estilo.name)
             putInt("tamanoTexto", a.tamanoTexto.coerceIn(0, 3))
             putBoolean("menosMovimiento", a.menosMovimiento)
@@ -223,6 +229,7 @@ class AlmacenApariencia private constructor(c: Context) {
             a.ajustes.forEach { (e, ajuste) ->
                 ajuste.colores.forEach { (r, color) -> putInt("${e.name}.${r.name}", color.toArgb()) }
                 ajuste.transparencia?.let { putInt("${e.name}.transparencia", it.coerceIn(0, 100)) }
+                ajuste.luz?.let { putString("${e.name}.luz", escribirLuz(it)) }
                 ajuste.adorno?.let { putString("${e.name}.adorno", it.name) }
             }
         }
@@ -245,10 +252,17 @@ class AlmacenApariencia private constructor(c: Context) {
     fun restablecer(e: Estilo) {
         prefs.edit {
             Ranura.entries.forEach { remove("${e.name}.${it.name}") }
-            listOf("transparencia", "adorno").forEach { remove("${e.name}.$it") }
+            listOf("transparencia", "adorno", "luz").forEach { remove("${e.name}.$it") }
         }
         recargar()
     }
+
+    fun ponerLuz(e: Estilo, luz: LuzPropia?) {
+        aplicar(estado.value.copy(ajustes = estado.value.ajustes + (e to estado.value.de(e).copy(luz = luz))))
+    }
+    fun guardarTintas(nombre: String, paleta: Paleta) { aplicar(estado.value.guardarTintas(nombre, paleta)) }
+    fun borrarTintas(indice: Int) { aplicar(estado.value.borrarTintas(indice)) }
+    fun aplicarTintas(t: TintasGuardadas) { aplicar(estado.value.aplicarTintas(t)) }
 
     fun ponerTamanoTexto(v: Int) { prefs.edit { putInt("tamanoTexto", v.coerceIn(0, 3)) }; recargar() }
     fun ponerMenosMovimiento(v: Boolean) { prefs.edit { putBoolean("menosMovimiento", v) }; recargar() }

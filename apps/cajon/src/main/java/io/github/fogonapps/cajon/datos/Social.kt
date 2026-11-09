@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
@@ -65,12 +66,13 @@ data class PerfilSubido(
     val correo: String = "", val codigo: String = "", val usuario: String = "", val nombre: String = "",
     val acepta: String = "", val mayorDeEdad: Boolean = false, val clave: String = "",
 )
+@Serializable private data class PoliticaAceptada(val politica: String)
 @Serializable private data class Correo(val correo: String)
 /** La sesión que abre el servidor: [nueva] si se acaba de crear la cuenta. */
 @Serializable data class Acceso(val usuario: String, val token: String, val nueva: Boolean = false, val borrarEl: Long = 0, val idCuenta: String = "")
 @Serializable data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
     val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
-    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "")
+    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "", val politica: String = "")
 @Serializable data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null)
 @Serializable private data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
@@ -124,9 +126,10 @@ fun esCuentaNueva(error: ErrorSocial) = error.codigo == 409 && error.error == "c
  * El cliente de Fogón Social, el servidor de Fogón (perfiles, seguir, feed, me gusta, comentarios, avisos). Todo es
  * opcional: sin cuenta, la app funciona igual y nada sale del teléfono. [token] es el de la cuenta (en la caja fuerte).
  */
-class ClienteSocial(private val token: String? = null) {
+class ClienteSocial(private val token: String? = null, private val permiteRed: () -> Boolean = { true }) {
 
     private suspend fun pedir(ruta: String, metodo: String = "GET", cuerpo: okhttp3.RequestBody? = null, cliente: OkHttpClient = http): String? = withContext(Dispatchers.IO) {
+        if (token != null && !permiteRed() && !rutaPermitidaSinPolitica(ruta)) throw java.io.IOException("politica_pendiente")
         val req = Request.Builder().url(SERVIDOR + "/v1" + ruta).method(metodo, cuerpo ?: if (metodo in setOf("POST", "PUT")) ByteArray(0).toRequestBody() else null)
             .header("User-Agent", "ElCajon-Fogon")
             .header("X-Fogon-Dispositivo", nombreDispositivo(android.os.Build.MANUFACTURER, android.os.Build.MODEL))
@@ -147,6 +150,14 @@ class ClienteSocial(private val token: String? = null) {
     private fun <T> json(s: KSerializer<T>, v: T) = JsonCajon.encodeToString(s, v).toRequestBody(JSON)
     private fun <T> leer(s: KSerializer<T>, texto: String?) = JsonCajon.decodeFromString(s, texto ?: "null")
     private fun cod(s: String) = URLEncoder.encode(s, "UTF-8")
+
+    suspend fun portadas(fuente: String): PortadasComunidad = leer(PortadasComunidad.serializer(), pedir("/obras/imagen?fuente=${cod(fuente)}"))
+    suspend fun votarPortada(fuente: String, url: String?) {
+        if (url == null) pedir("/obras/imagen?fuente=${cod(fuente)}", "DELETE")
+        else pedir("/obras/imagen", "PUT", kotlinx.serialization.json.buildJsonObject {
+            put("fuente", JsonPrimitive(fuente)); put("url", JsonPrimitive(url))
+        }.toString().toRequestBody(JSON))
+    }
 
     /* Cuenta */
     suspend fun info(): InfoServidor = leer(InfoServidor.serializer(), pedir("/estado"))
@@ -187,6 +198,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun sesiones() = leer(ListSerializer(SesionSocial.serializer()), pedir("/sesiones"))
     suspend fun cerrarSesion(id: String) { pedir("/sesiones/${cod(id)}", "DELETE") }
     suspend fun cerrarOtrasSesiones() { pedir("/sesiones/otras", "DELETE") }
+    suspend fun aceptarPolitica(politica: String) { pedir("/cuenta/politica", "POST", json(PoliticaAceptada.serializer(), PoliticaAceptada(politica))) }
     suspend fun miCuenta(): MiCuenta = leer(MiCuenta.serializer(), pedir("/cuenta"))
     suspend fun borrarCuenta(clave: String, codigo: String, motivo: String, texto: String) {
         pedir("/cuenta/borrar", "POST", json(Borrado.serializer(), Borrado(clave, codigo, motivo, texto)))
@@ -204,6 +216,7 @@ class ClienteSocial(private val token: String? = null) {
     suspend fun subirPerfil(p: PerfilSubido) { pedir("/perfil", "PUT", json(PerfilSubido.serializer(), p)) }
     suspend fun subirFoto(jpeg: ByteArray) { pedir("/foto", "PUT", jpeg.toRequestBody(JPEG)) }
     suspend fun descargarFoto(usuario: String): ByteArray = withContext(Dispatchers.IO) {
+        if (token != null && !permiteRed()) throw java.io.IOException("politica_pendiente")
         val solicitud = Request.Builder().url(foto(usuario))
             .header("X-Fogon-Dispositivo", nombreDispositivo(android.os.Build.MANUFACTURER, android.os.Build.MODEL))
             .apply { token?.let { header("Authorization", "Bearer $it") } }

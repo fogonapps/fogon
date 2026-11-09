@@ -1,5 +1,8 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.cajon.datos.Imagenes
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.border
@@ -41,6 +44,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,7 +85,21 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
         )
         Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 16.dp, top = if (conFondo) 104.dp else 4.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
-            Portada(o.portada, o.tipo, o.titulo, Modifier.width(112.dp).aparecer(0))
+            var visor by remember { mutableStateOf(false) }
+            Portada(o.portada, o.tipo, o.titulo, Modifier.width(112.dp).aparecer(0).clickable { visor = true }, lugar = Imagenes.Lugar.FICHA)
+            if (visor) androidx.compose.ui.window.Dialog(onDismissRequest = { visor = false }) {
+                Column(Modifier.background(f.fondo).verticalScroll(rememberScrollState()).padding(16.dp)) {
+                    Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), lugar = Imagenes.Lugar.VISOR)
+                    SobreImagen(vm, o.id, o.portada, o.fuente)
+                    if (Imagenes.autorizada(o.portada)) {
+                        Seccion(stringResource(R.string.imagen_reportar))
+                        listOf("no_corresponde" to R.string.imagen_no_corresponde, "ofensiva" to R.string.imagen_ofensiva, "derechos" to R.string.imagen_derechos).forEach { (motivo, texto) ->
+                            BotonSecundario(stringResource(texto), { vm.red.reportar("imagen", Imagenes.clave(o.portada), motivo); visor = false })
+                        }
+                    }
+                    BotonSecundario(stringResource(R.string.volver), { visor = false })
+                }
+            }
             Column(Modifier.weight(1f).padding(top = if (conFondo) 74.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val largo = o.titulo.length
                 Text(o.titulo, fontFamily = f.titulos, fontSize = if (largo <= 22) 22.sp else if (largo <= 40) 19.sp else 17.sp,
@@ -230,6 +250,16 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     }
     if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, o.titulo) }) { TarjetaObra(o, e.resenas.firstOrNull { it.obra == o.id && !it.borrada && !it.spoiler && it.parte.isBlank() }?.texto.orEmpty()) }
     Encabezado(o, vm, conGeneros = false)
+    if (o.fuente.startsWith("ol:")) {
+        var elegir by rememberSaveable(id) { mutableStateOf(false) }
+        BotonSecundario(stringResource(R.string.imagen_edicion), { elegir = !elegir }, Modifier.padding(horizontal = 16.dp))
+        val ediciones by vm.ediciones.collectAsStateWithLifecycle()
+        val comunidades by vm.portadasComunidad.collectAsStateWithLifecycle()
+        if (elegir) ediciones[id].orEmpty().filter { it.portada.isNotBlank() && !Imagenes.bloqueada(it.portada, comunidades[id]?.bloqueadas.orEmpty()) }.forEach { ed ->
+            BotonSecundario(Imagenes.descripcion(ed, vm.idioma()) + if (o.edicion == ed.id) " · " + stringResource(R.string.imagen_elegida) else "",
+                { vm.elegirEdicion(id, ed); elegir = false }, Modifier.padding(horizontal = 16.dp))
+        }
+    }
 
     // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
 
@@ -391,6 +421,9 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
     if (o == null && a == null) { Cabecera("", vm::cerrar); Pista(stringResource(R.string.ya_no_esta)); return }
     val actual = when { a != null -> a.foto; fondo -> o!!.fondo; else -> o!!.portada }
     val c by vm.candidatas.collectAsStateWithLifecycle()
+    val comunidades by vm.portadasComunidad.collectAsStateWithLifecycle()
+    val comunidad = comunidades[id]
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
     LaunchedEffect(id, que) { vm.cargarCandidatas(id, que) }
     Cabecera(stringResource(when { foto -> R.string.cambiar_foto; fondo -> R.string.cambiar_fondo; else -> R.string.cambiar_portada }), vm::cerrar)
     // En cine se elige entre cambiar la portada o el fondo.
@@ -405,7 +438,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
     val fuente = o?.fuente ?: a?.fuente.orEmpty()
     when {
         lista == null -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = f.tinta1) }
-        lista.size <= 1 -> Pista(stringResource(R.string.sin_otras_portadas))
+        lista.isEmpty() -> Pista(stringResource(R.string.sin_otras_portadas))
         else -> {
             Seccion(stringResource(R.string.elegir_otra))
             // Fondos en dos columnas (son anchos); portadas y fotos en tres.
@@ -414,12 +447,29 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
                 lista.chunked(columnas).forEach { fila ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         fila.forEach { url ->
-                            Box(Modifier.weight(1f).clip(forma(12.dp)).clickable { vm.elegirImagen(id, que, url) }
-                                .then(if (url == actual) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
-                                when {
-                                    o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
-                                    else -> coil3.compose.AsyncImage(url, null, contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxWidth().aspectRatio(if (fondo) 16f / 9f else 1f).background(f.superficie))
+                            val opcion = lista.indexOf(url) + 1
+                            val nombreOpcion = stringResource(R.string.imagen_opcion, opcion)
+                            val elegirLocal = stringResource(R.string.imagen_para_mi, opcion)
+                            Column(Modifier.weight(1f)) {
+                                Box(Modifier.fillMaxWidth().clip(forma(12.dp)).semantics { contentDescription = elegirLocal; selected = url == actual }.clickable { vm.elegirImagen(id, que, url) }
+                                    .then(if (url == actual) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
+                                    when {
+                                        o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                                        else -> coil3.compose.AsyncImage(url, null, contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxWidth().semantics { contentDescription = nombreOpcion }.aspectRatio(if (fondo) 16f / 9f else 1f).background(f.superficie))
+                                    }
+                                }
+                                SobreImagen(vm, id, url, fuente)
+                                if (o != null && !fondo && Imagenes.autorizada(url)) {
+                                    val votada = comunidad?.miVoto?.let { Imagenes.clave(it) == Imagenes.clave(url) } == true
+                                    val votos = comunidad?.votos.orEmpty().filterKeys { Imagenes.clave(it) == Imagenes.clave(url) }.values.sum()
+                                    Text(stringResource(R.string.imagen_votos, votos), color = f.texto)
+                                    val accionVoto = stringResource(if (votada) R.string.imagen_quitar_voto else R.string.imagen_votar)
+                                    val estadoVoto = stringResource(if (votada) R.string.imagen_votada else R.string.imagen_sin_voto)
+                                    if (cuenta != null) BotonSecundario(accionVoto,
+                                        { vm.votarImagen(id, if (votada) null else url) }, Modifier.semantics {
+                                            contentDescription = "$nombreOpcion · $accionVoto"; stateDescription = estadoVoto; selected = votada
+                                        })
                                 }
                             }
                         }
@@ -570,5 +620,30 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
         }, Modifier.fillMaxWidth(), habilitado = titulo.isNotBlank())
         // Los géneros y la portada se ponen después, en la ficha (como etiquetas y con "Cambiar la portada").
         Pista(stringResource(R.string.a_mano_pista), adentro = true)
+    }
+}
+
+@Composable
+private fun SobreImagen(vm: CajonViewModel, id: String, url: String, fuenteObra: String) {
+    val f = FogonTema.actual
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    var abierta by remember(url) { mutableStateOf(false) }
+    val ediciones by vm.ediciones.collectAsStateWithLifecycle()
+    var i by remember(url, ediciones[id]) { mutableStateOf(vm.procedencia(id, url)) }
+    LaunchedEffect(url, abierta) {
+        if (abierta && i.fuente == "wikimedia") runCatching { io.github.fogonapps.cajon.datos.Wikimedia.procedencia(url) }.getOrNull()?.let { i = it }
+    }
+    BotonSecundario(stringResource(R.string.imagen_sobre), { abierta = !abierta })
+    if (abierta) {
+        val texto = when (i.fuente) {
+            "tmdb" -> stringResource(R.string.imagen_tmdb)
+            "ol" -> if (i.edicion == null) stringResource(R.string.imagen_ol_obra) else stringResource(R.string.imagen_ol,
+                ediciones[id]?.firstOrNull { it.id == i.edicion }?.let { Imagenes.descripcion(it, vm.idioma()) } ?: i.edicion.orEmpty())
+            "caa" -> stringResource(R.string.imagen_caa)
+            "wikimedia" -> listOfNotNull("Wikimedia Commons", i.autor, i.licencia).joinToString(" · ")
+            else -> stringResource(R.string.imagen_local)
+        }
+        Text(texto, color = f.texto)
+        if (i.fuente != "local") BotonSecundario(stringResource(R.string.imagen_fuente), { uri.openUri(Imagenes.enlace(i, fuenteObra)) })
     }
 }

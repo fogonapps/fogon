@@ -80,7 +80,7 @@ object Logica {
 
     /** Ordena y quita lo repetido (por si un respaldo viejo trae duplicados). */
     fun normalizar(e: Estado): Estado = Resenas.migrar(e.copy(
-        obras = e.obras.distinctBy { it.id },
+        obras = e.obras.distinctBy { it.id }.map(Imagenes::migrar),
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
         gustos = e.gustos.distinctBy { it.clave },

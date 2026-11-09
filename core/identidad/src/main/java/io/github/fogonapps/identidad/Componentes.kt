@@ -106,9 +106,10 @@ fun Modifier.tarjetaDestacada(forma: Shape = FormaRiso): Modifier {
  * la única luz de cada pantalla; con "Menos adornos" o en Contraste no hay.
  */
 fun Modifier.decoracion(f: Fogon): Modifier = if (f.brillo.alpha <= 0f) this else drawWithCache {
-    val centro = Offset(size.width * 0.5f, -size.width * 0.15f)
-    val radio = size.width * 1.05f
-    val pincel = Brush.radialGradient(listOf(f.brillo, f.brillo.copy(alpha = 0f)), centro, radio)
+    val parametros = parametrosLuz(f)
+    val centro = Offset(size.width * parametros.centroX, size.width * parametros.centroY)
+    val radio = size.width * parametros.radio
+    val pincel = Brush.radialGradient(parametros.colores, centro, radio)
     onDrawBehind { drawRect(pincel) }
 }
 

@@ -3,6 +3,7 @@ package io.github.fogonapps.identidad
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -126,11 +127,7 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
             var t by remember(e, a.transparencia()) { mutableFloatStateOf(a.transparencia().toFloat()) }
             Slider(t, { t = it }, onValueChangeFinished = { almacen.ponerTransparencia(e, t.toInt()) }, valueRange = 0f..100f, steps = 19)
         }
-        Column(Modifier.padding(horizontal = 16.dp)) {
-            Interruptor(stringResource(R.string.fogon_ap_luz), stringResource(R.string.fogon_ap_luz_texto), a.adorno() == Decoracion.LUZ) {
-                almacen.ponerAdorno(e, if (it) Decoracion.LUZ else Decoracion.NADA)
-            }
-        }
+        PersonalizacionLuz(paleta, almacen, a)
 
         BotonSecundario(stringResource(R.string.fogon_ap_restablecer, e.nombre(paleta)), { almacen.restablecer(e) },
             Modifier.fillMaxWidth().padding(16.dp))
@@ -152,8 +149,8 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
                     }
                 }
             }
-            Interruptor(stringResource(R.string.fogon_ap_menos_movimiento), stringResource(R.string.fogon_ap_menos_movimiento_texto), a.menosMovimiento, almacen::ponerMenosMovimiento)
-            Interruptor(stringResource(R.string.fogon_ap_mas_contraste), stringResource(R.string.fogon_ap_mas_contraste_texto), a.masContraste, almacen::ponerMasContraste)
+            Interruptor(stringResource(R.string.fogon_ap_menos_movimiento), stringResource(R.string.fogon_ap_menos_movimiento_texto), a.menosMovimiento, onCambio = almacen::ponerMenosMovimiento)
+            Interruptor(stringResource(R.string.fogon_ap_mas_contraste), stringResource(R.string.fogon_ap_mas_contraste_texto), a.masContraste, onCambio = almacen::ponerMasContraste)
         }
         Text(stringResource(R.string.fogon_ap_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
@@ -292,17 +289,17 @@ private fun MuestraEstilo(m: Fogon, nombre: String, elegido: Boolean, modifier: 
 }
 
 @Composable
-private fun Interruptor(titulo: String, pista: String, valor: Boolean, onCambio: (Boolean) -> Unit) {
+fun Interruptor(titulo: String, pista: String, valor: Boolean, habilitado: Boolean = true, onCambio: (Boolean) -> Unit) {
     val f = FogonTema.actual
     Row(
-        Modifier.fillMaxWidth().tarjetaFogon(forma(20.dp)).clickable { onCambio(!valor) }.padding(horizontal = 14.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().tarjetaFogon(forma(20.dp)).toggleable(value = valor, enabled = habilitado, role = Role.Switch, onValueChange = onCambio).padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f).padding(end = 10.dp)) {
             Text(titulo, color = f.texto, fontWeight = FontWeight.Medium)
-            Text(pista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            if (pista.isNotEmpty()) Text(pista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        Switch(valor, onCambio)
+        Switch(valor, null, enabled = habilitado)
     }
 }
 

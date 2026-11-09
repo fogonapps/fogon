@@ -4,6 +4,8 @@
     <!-- Internet para buscar películas, series, libros y discos (TMDB, Open Library, MusicBrainz), traer sus
          portadas y, si la persona lo activa, sincronizar con su Gist de GitHub. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Saber si hay datos móviles con ahorro de datos, para pedir portadas más pequeñas. No envía nada. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Los avisos de la red con la app cerrada (si la persona los activa). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

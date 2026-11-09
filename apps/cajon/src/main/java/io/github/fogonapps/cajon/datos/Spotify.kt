@@ -23,45 +23,59 @@ import java.util.concurrent.TimeUnit
  * Spotify (opcional): cada persona crea gratis su propia "app" en developer.spotify.com (Spotify pide que el dueño
  * tenga Premium) y pega aquí su Client ID; nunca va una clave en el código. El inicio de sesión es OAuth con PKCE
  * (sin secreto): se abre el navegador y Spotify vuelve a `http://127.0.0.1:<puerto>/callback`, que recibe un mini
- * servidor local solo mientras dura ([esperarCodigo]). Solo se lee: lo escuchado hace poco, los álbumes guardados y
+ * servidor local solo mientras dura ([esperar]). Solo se lee: lo escuchado hace poco, los álbumes guardados y
  * los artistas que sigue. Nada de Spotify se guarda fuera de lo que la persona agrega a su cajón.
  */
 class Spotify(private val cliente: String) {
     private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
 
-    /** Lo que hace falta para iniciar sesión: la dirección a abrir, el verificador y el puerto local. */
-    data class Inicio(val url: String, val verificador: String, val socket: ServerSocket) {
+    /** Lo que hace falta para iniciar sesión: la dirección a abrir, el verificador, el `state` y el puerto local. */
+    data class Inicio(val url: String, val verificador: String, val estado: String, val socket: ServerSocket) {
         val redireccion get() = "http://127.0.0.1:${socket.localPort}/callback"
     }
 
-    fun iniciar(): Inicio {
-        val bytes = ByteArray(48).also { SecureRandom().nextBytes(it) }
-        val verificador = Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-        val reto = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(verificador.toByteArray()), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-        val socket = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).apply { soTimeout = 5 * 60 * 1000 }
-        val redireccion = "http://127.0.0.1:${socket.localPort}/callback"
-        fun c(s: String) = URLEncoder.encode(s, "UTF-8")
-        val url = "https://accounts.spotify.com/authorize?client_id=${c(cliente)}&response_type=code&redirect_uri=${c(redireccion)}" +
-            "&code_challenge_method=S256&code_challenge=$reto&scope=${c(ALCANCE)}"
-        return Inicio(url, verificador, socket)
+    /** Lo que trajo la vuelta de Spotify: el código, que la persona no aceptó, o un error con su código. */
+    sealed interface Vuelta {
+        data class Codigo(val codigo: String) : Vuelta
+        data object Cancelada : Vuelta
+        data class Error(val codigo: String) : Vuelta
+        /** Una llamada al puerto que no es la de Spotify (otro `state`): se ignora y se sigue esperando. */
+        data object Ajena : Vuelta
     }
 
-    /** Espera a que Spotify vuelva (hasta 5 minutos) y devuelve el código, o null si la persona no aceptó. */
-    suspend fun esperarCodigo(i: Inicio): String? = withContext(Dispatchers.IO) {
+    fun iniciar(): Inicio {
+        fun azar(n: Int) = Base64.encodeToString(ByteArray(n).also { SecureRandom().nextBytes(it) }, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        val verificador = azar(48)
+        val estado = azar(24)
+        val reto = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(verificador.toByteArray()), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        val socket = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).apply { soTimeout = 5 * 60 * 1000 }
+        return Inicio(urlAutorizar(cliente, "http://127.0.0.1:${socket.localPort}/callback", reto, estado), verificador, estado, socket)
+    }
+
+    /**
+     * Espera a que Spotify vuelva (hasta 5 minutos en total). Una llamada ajena al puerto (sin el `state` de esta
+     * conexión) se contesta y se ignora: solo cuenta la de Spotify. [textos]: lo que ve la persona en el navegador.
+     */
+    suspend fun esperar(i: Inicio, textos: TextosVuelta): Vuelta = withContext(Dispatchers.IO) {
         i.socket.use { s ->
-            s.accept().use { con ->
-                val linea = con.getInputStream().bufferedReader().readLine().orEmpty()
-                val ruta = linea.split(" ").getOrNull(1).orEmpty()
-                val params = ruta.substringAfter("?", "").split("&").filter { "=" in it }
-                    .associate { it.substringBefore("=") to URLDecoder.decode(it.substringAfter("="), "UTF-8") }
-                val ok = params["code"] != null
-                val html = "<html><body style='font-family:sans-serif;text-align:center;padding:40px'><h2>" +
-                    (if (ok) "Listo. Vuelve a El Cajón." else "No se conectó.") + "</h2></body></html>"
-                con.getOutputStream().write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n$html").toByteArray())
-                params["code"]
+            while (true) {
+                val v = s.accept().use { con ->
+                    val v = leerVuelta(con.getInputStream().bufferedReader().readLine().orEmpty(), i.estado)
+                    val titulo = when (v) { is Vuelta.Codigo -> textos.listo; is Vuelta.Ajena -> textos.ajena; else -> textos.noSeConecto }
+                    val html = "<html><head><meta charset='utf-8'></head><body style='font-family:sans-serif;text-align:center;padding:40px'><h2>" +
+                        titulo.replace("<", "&lt;") + "</h2></body></html>"
+                    con.getOutputStream().write(("HTTP/1.1 ${if (v is Vuelta.Ajena) "400 Bad Request" else "200 OK"}\r\n" +
+                        "Content-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n$html").toByteArray())
+                    v
+                }
+                if (v !is Vuelta.Ajena) return@use v
             }
+            @Suppress("UNREACHABLE_CODE") Vuelta.Cancelada
         }
     }
+
+    /** Las frases de la página de vuelta, en el idioma de la app. */
+    data class TextosVuelta(val listo: String, val noSeConecto: String, val ajena: String)
 
     /** Cambia el código por el acceso; devuelve (acceso, para renovar). */
     suspend fun canjear(i: Inicio, codigo: String): Pair<String, String> = token(FormBody.Builder().add("grant_type", "authorization_code")
@@ -138,6 +152,24 @@ class Spotify(private val cliente: String) {
     }
 
     companion object {
+        /** La dirección de autorización con PKCE y `state`. */
+        fun urlAutorizar(cliente: String, redireccion: String, reto: String, estado: String): String {
+            fun c(s: String) = URLEncoder.encode(s, "UTF-8")
+            return "https://accounts.spotify.com/authorize?client_id=${c(cliente)}&response_type=code&redirect_uri=${c(redireccion)}" +
+                "&code_challenge_method=S256&code_challenge=$reto&scope=${c(ALCANCE)}&state=${c(estado)}"
+        }
+
+        /** Lee la primera línea de la petición HTTP que llegó al puerto local. */
+        fun leerVuelta(lineaHttp: String, estado: String): Vuelta {
+            val ruta = lineaHttp.split(" ").getOrNull(1).orEmpty()
+            val params = ruta.substringAfter("?", "").split("&").filter { "=" in it }
+                .associate { it.substringBefore("=") to runCatching { URLDecoder.decode(it.substringAfter("="), "UTF-8") }.getOrDefault("") }
+            if (params["state"] != estado) return Vuelta.Ajena
+            params["code"]?.takeIf { it.isNotBlank() }?.let { return Vuelta.Codigo(it) }
+            val error = params["error"].orEmpty()
+            return if (error.isBlank() || error == "access_denied") Vuelta.Cancelada else Vuelta.Error(error.take(60))
+        }
+
         const val ALCANCE = "user-read-recently-played user-library-read user-follow-read"
         /** Crear una app directamente. */
         const val CREAR = "https://developer.spotify.com/dashboard/create"

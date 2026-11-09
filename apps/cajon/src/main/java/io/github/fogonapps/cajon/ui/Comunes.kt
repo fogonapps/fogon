@@ -255,10 +255,17 @@ fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modif
  * vidrio con el ícono del tipo y el título, para que nunca quede un hueco.
  */
 @Composable
-fun Portada(url0: String, tipo: String, titulo: String, modifier: Modifier = Modifier, esquina: Dp = 12.dp, conTitulo: Boolean = true) {
+fun Portada(url0: String, tipo: String, titulo: String, modifier: Modifier = Modifier, esquina: Dp = 12.dp, conTitulo: Boolean = true, lugar: io.github.fogonapps.cajon.datos.Imagenes.Lugar = io.github.fogonapps.cajon.datos.Imagenes.Lugar.LISTA) {
     val f = FogonTema.actual
     // Las portadas se guardan grandes (para la ficha); en pantalla basta la de TMDB de 342 px, que pesa la mitad.
-    val url = url0.replace("image.tmdb.org/t/p/w500/", "image.tmdb.org/t/p/w342/")
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val ahorro = runCatching {
+        val red = contexto.getSystemService(android.net.ConnectivityManager::class.java)
+        val capacidades = red.getNetworkCapabilities(red.activeNetwork)
+        capacidades?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) == true &&
+            red.restrictBackgroundStatus == android.net.ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
+    }.getOrDefault(false)
+    val url = io.github.fogonapps.cajon.datos.Imagenes.url(url0, lugar, ahorro)
     val forma = RoundedCornerShape(esquina)
     val cuadrada = tipo == "album"
     Box(modifier.aspectRatio(if (cuadrada) 1f else 2f / 3f).clip(forma).background(f.superficie)
