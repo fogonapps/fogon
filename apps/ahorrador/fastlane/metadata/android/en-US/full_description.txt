@@ -15,7 +15,7 @@
 <li><b>In Spanish and English.</b></li>
 </ul>
 
-<p><b>Your data is yours.</b> Everything stays on your phone. Without a Fogón Social account the app connects to nothing; with one, only the achievements you share go out. Save a backup any time and export your entries to a spreadsheet.</p>
+<p><b>Your data is yours.</b> Everything stays on your phone. Without a Fogón Social account the app connects to nothing. With one, your notebook is saved to it automatically, encrypted with your password (nobody else can read it and it comes back if you reinstall), and only the achievements you share appear on the network. Save a backup any time and export your entries to a spreadsheet.</p>
 
 <p>La Alcancía isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>
 

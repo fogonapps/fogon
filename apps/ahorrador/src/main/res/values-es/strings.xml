@@ -322,7 +322,7 @@
   <string name="tut_empezar">Empezar</string>
   <string name="tut_hola">Hola, soy La Alcancía</string>
   <string name="tut_hola_texto">Te ayudo a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco.</string>
-  <string name="tut_privado">Todo queda en este teléfono: nadie más ve tu plata. La app solo usa internet si entras con tu cuenta de Fogón Social, y aun así tu plata no sale.</string>
+  <string name="tut_privado">Todo queda en este teléfono: nadie más ve tu plata. La app solo usa internet si entras con tu cuenta de Fogón Social: entonces tu cuaderno se guarda en ella cifrado con tu contraseña, y nadie más lo puede leer.</string>
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
   <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
   <string name="tut_sistema">¿Cómo te quieres organizar?</string>
@@ -392,7 +392,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.</item>
-    <item>Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social, y de ahí solo salen los logros que compartas y tus metas en porcentaje, nunca montos. Guarda respaldos desde Perfil → Respaldo.</item>
+    <item>Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social: tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas, nunca montos. Guarda respaldos desde Perfil → Respaldo.</item>
     <item>Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.</item>
     <item>Las compras con la tarjeta son gastos desde la cuenta de la tarjeta (con sus cuotas). Pagar la tarjeta es pasar plata del banco a la tarjeta: no es otro gasto, ya lo contaste al comprar.</item>
     <item>Porque cada banco lo calcula a su manera. La app lo aproxima con el porcentaje que pongas en la cuenta; el valor real está en tu extracto.</item>
@@ -464,7 +464,7 @@
     <string name="aj_apariencia_idioma">Apariencia e idioma</string>
     <string name="aj_privacidad">Privacidad</string>
     <string name="aj_que_sale">Qué sale de tu teléfono</string>
-    <string name="aj_privacidad_texto">La Alcancía no envía tus datos: solo usa internet si entras con tu cuenta de Fogón Social, y de ahí solo salen los logros que compartas y tus metas en porcentaje. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. Solo salen del teléfono si tú compartes esos archivos o eliges un destino externo. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales. El diagnóstico conserva solo contadores y horas.</string>
+    <string name="aj_privacidad_texto">La Alcancía solo usa internet si entras con tu cuenta de Fogón Social: entonces tu cuaderno se guarda en ella cifrado con tu contraseña (nadie más lo puede leer) y en la red solo salen los logros que compartas. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales.</string>
     <string name="aj_sistema_pista">Elige cómo organizas tu plata</string>
     <string name="aj_importar_pista">Trae movimientos de un archivo CSV</string>
     <string name="aj_apariencia_pista">Tema, colores y comodidad</string>
@@ -573,11 +573,11 @@
     <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
     <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
     <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
-    <string name="cuenta_local">Tus cuentas, movimientos, sobres, metas y saldos se quedan en este perfil del teléfono. Entrar no mezcla ni recupera cuadernos. Guarda un respaldo antes de retirar un perfil.</string>
+    <string name="cuenta_local">Tus cuentas, movimientos, sobres, metas y saldos se quedan en este perfil del teléfono y, con tu cuenta, se guardan solos en ella, cifrados con tu contraseña: si reinstalas o cambias de teléfono, vuelven. Guarda un respaldo antes de retirar un perfil.</string>
     <string name="cuenta_intro">La red de La Alcancía: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y celebren sus logros de ahorro.</string>
-    <string name="cuenta_que_sale">Tu plata no sale de este teléfono. En la red solo aparece lo que elijas compartir: un logro (por ejemplo, que cumpliste una meta) y, si quieres, el avance de tus metas en porcentaje. Nunca saldos, montos, cuentas, bancos ni movimientos.</string>
+    <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir: un logro y, si quieres, el avance de tus metas en porcentaje. Nunca saldos, montos, cuentas, bancos ni movimientos. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
-    <string name="cuenta_politica_resumen">La política ahora incluye a La Alcancía: solo salen los logros que compartas y tus metas en porcentaje, nunca montos ni movimientos.</string>
+    <string name="cuenta_politica_resumen">Ahora lo de cada app se guarda solo en tu cuenta, cifrado con tu contraseña: si reinstalas, vuelve. Nadie más lo puede leer, ni Fogón. De La Alcancía, en la red solo salen los logros que compartas y tus metas en porcentaje.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los logros que elijas y, si quieres, tus metas en porcentaje. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
     <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. Tu cuaderno local se conserva hasta que retires el perfil.</string>
     <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y los logros que compartes.</string>
@@ -630,4 +630,5 @@
     <string name="guia_gente_texto">Si quieres, comparte tus logros con tu cuenta de Fogón Social. Nunca salen montos.</string>
     <string name="guia_perfil">Tu perfil y tus ajustes</string>
     <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes, los respaldos y este recorrido otra vez.</string>
+    <string name="tut_tengo_cuenta">Ya tengo cuenta</string>
 </resources>

@@ -3,6 +3,8 @@ package io.github.fogonapps.social
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 
 /**
@@ -63,7 +65,8 @@ open class RedApp(
         }
     override fun avisar(evento: EventoSocial) { mensaje(textos.operacionLista) }
     override fun olvidarCuenta() {
-        sesion.invalidar(); almacen.token = null; almacen.usuario = null
+        sesion.invalidar(); almacen.token = null; almacen.usuario = null; almacen.llaveCopia = null
+        copiaLista.value = false; copiaBloqueada.value = false
         _usuario.value = null; _cuenta.value = null; identidad.value = null; foto.value = ""; portadaImagen.value = ""; revision = null
         listOf(cache, cacheFoto, cachePortada).forEach { it.delete() }
         _feed.value = null; _explorar.value = null; _perfiles.value = emptyMap(); _vistas.value = emptyMap()
@@ -113,8 +116,66 @@ open class RedApp(
             else { temporal.salir(); if (almacen.token == a.token) olvidarCuenta() }
         }
     }
-    override suspend fun llaveConClave(clave: String) {}
-    override suspend fun llaveNueva(clave: String) {}
+    /* ----- D-033: lo de la app guardado en la cuenta, cifrado con la contraseña ----- */
+
+    /** La llave común está en este teléfono: la copia se guarda y se trae sola. */
+    val copiaLista = MutableStateFlow(almacen.llaveCopia != null)
+    /** La cuenta ya tiene llave en el servidor pero este teléfono no la abrió (se entró con el código del correo). */
+    val copiaBloqueada = MutableStateFlow(false)
+    /** Cuándo se guardó la última copia en la cuenta (ms), o 0. */
+    val ultimaCopia = MutableStateFlow(0L)
+    /** Lo llama la app para guardar o traer su copia cuando la llave queda lista. */
+    var alAbrirCopia: () -> Unit = {}
+
+    fun llaveCopia(): String? = almacen.llaveCopia
+    suspend fun descargarCopia(): CopiaCifrada = cliente().respaldo()
+    suspend fun subirCopia(sobre: String, antes: Long): Long = cliente().guardarRespaldo(sobre, antes)
+
+    private fun ponerLlave(llave: String) {
+        almacen.llaveCopia = llave
+        copiaLista.value = true; copiaBloqueada.value = false
+        alAbrirCopia()
+    }
+
+    /** Con la contraseña: abre la llave que ya tiene la cuenta o, si no tiene, la crea y la sube envuelta. */
+    override suspend fun llaveConClave(clave: String) {
+        val marca = sesion.actual()
+        val cliente = cliente()
+        val enServidor = cliente.respaldo().llave
+        if (!sesion.vigente(marca)) return
+        val llave = if (enServidor.isNotBlank()) withContext(Dispatchers.Default) { NubeCifrada.desenvolver(enServidor, clave) }
+        else (almacen.llaveCopia ?: NubeCifrada.llaveNueva()).also {
+            val envuelta = withContext(Dispatchers.Default) { NubeCifrada.envolver(it, clave) }
+            if (!sesion.vigente(marca)) return
+            cliente.guardarLlaveRespaldo(envuelta)
+        }
+        if (sesion.vigente(marca)) ponerLlave(llave)
+    }
+
+    /**
+     * Contraseña nueva (cambiada o recuperada con el correo): la llave de este teléfono se vuelve a envolver con ella.
+     * Si este teléfono no la tenía, se crea otra: lo guardado con la contraseña olvidada ya no se puede abrir.
+     */
+    override suspend fun llaveNueva(clave: String) {
+        val marca = sesion.actual()
+        val llave = almacen.llaveCopia ?: NubeCifrada.llaveNueva()
+        val envuelta = withContext(Dispatchers.Default) { NubeCifrada.envolver(llave, clave) }
+        if (!sesion.vigente(marca)) return
+        cliente().guardarLlaveRespaldo(envuelta)
+        if (sesion.vigente(marca)) ponerLlave(llave)
+    }
+
+    /** «Escribe tu contraseña para traer y guardar tus datos»: abre la llave en este teléfono. */
+    fun desbloquearCopia(clave: String, malaClave: () -> Unit) = scope.launch {
+        try { intentar(avisar = false) { llaveConClave(clave) } } catch (x: kotlinx.coroutines.CancellationException) { throw x }
+        if (!copiaLista.value) malaClave()
+    }
+
+    /** Revisa si la cuenta tiene llave y este teléfono no (entonces hay que pedir la contraseña). */
+    fun revisarCopia() = lanzar {
+        if (almacen.token == null || almacen.llaveCopia != null) return@lanzar
+        copiaBloqueada.value = cliente().respaldo().llave.isNotBlank()
+    }
     override fun permitirRed(permitir: Boolean) { redPermitida = permitir }
     override fun guardarPolitica(version: String) { almacen.politicaAceptada = version }
     override fun pausarPublicaciones() {}
@@ -134,7 +195,7 @@ open class RedApp(
             _politicaPendiente.value = debeAceptarPolitica(true, cuenta.politica, politica)
             redPermitida = !_politicaPendiente.value
             _hojaPolitica.value = _politicaPendiente.value
-            if (redPermitida) { almacen.politicaAceptada = politica; cargarIdentidad() }
+            if (redPermitida) { almacen.politicaAceptada = politica; cargarIdentidad(); revisarCopia(); alAbrirCopia() }
         }
     }
     fun cargarIdentidad() = scope.launch {
@@ -245,10 +306,19 @@ open class RedApp(
     }
     fun crear(usuario: String, nombre: String, clave: String, foto: ByteArray?) = lanzar {
         val acceso = acceso.value
-        if (entro(clienteAcceso().entrar(acceso.correo, acceso.codigo, usuario, nombre, politica, clave)) && foto != null)
-            cliente().subirFoto(foto)
+        if (entro(clienteAcceso().entrar(acceso.correo, acceso.codigo, usuario, nombre, politica, clave))) {
+            // Con la contraseña de la cuenta nueva, lo de la app se guarda en la cuenta desde ya (D-033).
+            if (clave.isNotBlank()) runCatching { llaveConClave(clave) }
+            if (foto != null) cliente().subirFoto(foto)
+        }
     }
-    fun ponerClave(nueva: String, actual: String, listo: () -> Unit) = lanzar { cliente().ponerClave(nueva, actual); revisarServidor(); listo() }
+    fun ponerClave(nueva: String, actual: String, listo: () -> Unit) = lanzar {
+        cliente().ponerClave(nueva, actual)
+        // Si la cuenta ya tenía llave y este teléfono no, primero se abre con la contraseña actual.
+        if (almacen.llaveCopia == null && actual.isNotBlank()) runCatching { llaveConClave(actual) }
+        llaveNueva(nueva)
+        revisarServidor(); listo()
+    }
     fun cambiarUsuario(nuevo: String, listo: () -> Unit) = lanzar { cliente().cambiarUsuario(nuevo); revisarServidor(); listo() }
     fun vincular(codigo: String) = lanzar { cliente().vincularCorreo(acceso.value.correo, codigo); revisarServidor() }
     fun salir() = lanzar { cliente().salir(); olvidarCuenta() }

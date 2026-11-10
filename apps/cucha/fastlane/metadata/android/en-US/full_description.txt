@@ -16,6 +16,6 @@
 <li><b>In Spanish and English.</b></li>
 </ul>
 
-<p><b>Your data is yours.</b> Everything stays on your phone. Only a barcode number leaves it, if you turn that option on, and what you share with your people. Your diary, goals and weight never leave it. Save a backup any time.</p>
+<p><b>Your data is yours.</b> Everything stays on your phone. Only a barcode number leaves it, if you turn that option on, and what you share with your people. With your account, your diary is saved to it automatically, encrypted with your password: nobody else can read it and it comes back if you reinstall. Save a backup any time.</p>
 
 <p>La Cucha isn’t medical or nutrition advice. Food values are estimates; if you have a health condition, follow your doctor’s or dietitian’s advice.</p>

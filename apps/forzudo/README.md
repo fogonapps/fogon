@@ -41,7 +41,7 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. S
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Solo si activas la sincronización con tu Gist. Sin ella, la app no se conecta a nada. |
+| Internet | Para Fogón Social, si entras con tu cuenta (Tu gente, lo que compartes y la copia de tu cuaderno, cifrada con tu contraseña), y para la sincronización con tu Gist, si la activas. Sin las dos, la app no se conecta a nada. |
 | Notificaciones | El aviso de "descanso terminado". Se pide al empezar el primer entreno. |
 | Alarmas exactas | Que ese aviso llegue a tiempo. Si lo niegas, se usa una alarma aproximada. |
 | Vibración | Al marcar una serie y al terminar el descanso. |

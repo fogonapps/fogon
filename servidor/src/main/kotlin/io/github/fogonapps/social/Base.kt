@@ -166,6 +166,11 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS cajones(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, sobre TEXT NOT NULL DEFAULT '',
                     llave TEXT NOT NULL DEFAULT '', cambio INTEGER NOT NULL DEFAULT 0)""")
+                // D-033: la copia cifrada de las otras apps (cuaderno de entrenos, diario de comidas, cuaderno de plata),
+                // con la misma llave de `cajones`. El servidor no la puede leer.
+                s.execute("""CREATE TABLE IF NOT EXISTS respaldos(
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL,
+                    sobre TEXT NOT NULL DEFAULT '', cambio INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cuenta, app))""")
                 s.execute("""CREATE TABLE IF NOT EXISTS faltas(
                     id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     puntos INTEGER NOT NULL, regla TEXT NOT NULL, cuando INTEGER NOT NULL, vence INTEGER NOT NULL)""")

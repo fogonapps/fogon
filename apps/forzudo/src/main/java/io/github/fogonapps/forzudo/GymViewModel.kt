@@ -110,6 +110,17 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
     val red = RedForzudo(gymApp, sesionForzudo(app, perfiles, idPerfil), viewModelScope,
         { avisar(tx(it)) }, ::cambiarPerfil)
+    /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
+    private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-forzudo-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
+        leer = { _estado.value?.let { JsonGym.encodeToString(Estado.serializer(), L.paraNube(L.normalizar(it))) } },
+        aplicar = { texto ->
+            val remoto = L.normalizar(JsonGym.decodeFromString(Estado.serializer(), texto)).copy(active = _estado.value?.active)
+            _estado.value = remoto; ultimoGuardado = remoto
+            escribiendo.withLock { almacen.updateData { remoto } }
+            WidgetRacha.actualizar(getApplication())
+        },
+        vacio = { _estado.value?.let { it.sessions.isEmpty() && it.routines == null && it.body.isEmpty() && it.nombre == null } ?: true },
+        marca = { runCatching { JsonGym.decodeFromString(Estado.serializer(), it).updatedAt }.getOrDefault(0L) })
     private var cambiandoPerfil = false
     fun agregarPerfil() {
         val nuevo = perfiles.agregar() ?: return
@@ -136,7 +147,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                     gymApp.cerrarAlmacen(idPerfil)
                     gymApp.perfiles.cambiar(id)
                     gymApp.perfiles.quitar(idPerfil) { perfil ->
-                        listOf("sincronizacion-p$perfil", "sincronizacion-psocial-$perfil", "social-p$perfil").forEach {
+                        listOf("sincronizacion-p$perfil", "sincronizacion-psocial-$perfil", "social-p$perfil", "llave-forzudo-p$perfil", "copia-forzudo-p$perfil").forEach {
                             check(getApplication<Application>().getSharedPreferences(it, android.content.Context.MODE_PRIVATE).edit().clear().commit())
                         }
                     }
@@ -176,6 +187,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
+            copia.sincronizar()
             gymApp.confirmarCuaderno()
             WidgetRacha.actualizar(getApplication())
             sincronizar()
@@ -213,6 +225,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         ultimoGuardado = e
         escribiendo.withLock { almacen.updateData { e } }
         WidgetRacha.actualizar(getApplication())
+        copia.cambio()
     }
 
     /** Al salir de la app: el ViewModel sigue vivo, así que basta con lanzar la escritura. */

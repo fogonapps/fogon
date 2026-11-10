@@ -15,7 +15,7 @@
 <li><b>En español e inglés.</b></li>
 </ul>
 
-<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Sin cuenta de Fogón Social la app no se conecta a nada; con cuenta, solo salen los logros que compartas. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Sin cuenta de Fogón Social la app no se conecta a nada. Con cuenta, tu cuaderno se guarda solo en ella cifrado con tu contraseña (nadie más lo puede leer y vuelve si reinstalas) y en la red solo salen los logros que compartas. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
 
 <p>La Alcancía no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
 

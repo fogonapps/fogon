@@ -323,7 +323,7 @@
   <string name="tut_empezar">Start</string>
   <string name="tut_hola">Hi, I’m La Alcancía</string>
   <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
-  <string name="tut_privado">Everything stays on this phone: nobody else sees your money. The app only uses the internet if you sign in with your Fogón Social account, and even then your money doesn’t leave.</string>
+  <string name="tut_privado">Everything stays on this phone: nobody else sees your money. The app only uses the internet if you sign in with your Fogón Social account: then your notebook is saved there encrypted with your password, and nobody else can read it.</string>
   <string name="tut_saldos">What are you starting with?</string>
   <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
   <string name="tut_sistema">How do you want to budget?</string>
@@ -391,7 +391,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. In Colombia, open finance only covers regulated companies, and a free app with no server can’t connect. This way nobody has your passwords, either. Logging entries is quick with the app’s keypad.</item>
-    <item>Only on your phone. The app only uses the internet if you sign in with your Fogón Social account, and only the achievements you share and your goals as a percentage go out, never amounts. Save backups from Profile → Backup.</item>
+    <item>Only on your phone. The app only uses the internet if you sign in with your Fogón Social account: your notebook is saved there encrypted with your password and only the achievements you share appear on the network, never amounts. Save backups from Profile → Backup.</item>
     <item>For control, Envelopes. For something simple, the 50/30/20 rule. If you like writing and thinking about the month, kakeibo. If you only want to see where it goes, Just track. You can change it any time.</item>
     <item>Card purchases are expenses from the card account (with their instalments). Paying the card is a transfer from your bank to the card: it isn’t another expense, you already counted it when you bought.</item>
     <item>Because every bank calculates it its own way. The app estimates it with the percent you set on the account; the real figure is on your statement.</item>
@@ -463,7 +463,7 @@
     <string name="aj_apariencia_idioma">Appearance and language</string>
     <string name="aj_privacidad">Privacy</string>
     <string name="aj_que_sale">What leaves your phone</string>
-    <string name="aj_privacidad_texto">La Alcancía doesn’t send your data: it only uses the internet if you sign in with your Fogón Social account, and only the achievements you share and your goals as a percentage go out. Backups save your data to a file you choose; CSV files contain your transactions. They only leave your phone if you share them or choose an external destination. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages. Diagnostics keep only counters and times.</string>
+    <string name="aj_privacidad_texto">La Alcancía only uses the internet if you sign in with your Fogón Social account: then your notebook is saved there encrypted with your password (nobody else can read it) and only the achievements you share appear on the network. Backups save your data to a file you choose; CSV files contain your transactions. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages.</string>
     <string name="aj_sistema_pista">Choose how to organize your money</string>
     <string name="aj_importar_pista">Bring transactions from a CSV file</string>
     <string name="aj_apariencia_pista">Theme, colors and comfort</string>
@@ -572,11 +572,11 @@
     <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
-    <string name="cuenta_local">Your accounts, transactions, envelopes, goals and balances stay in this profile on the phone. Signing in doesn’t merge or recover notebooks. Save a backup before removing a profile.</string>
+    <string name="cuenta_local">Your accounts, transactions, envelopes, goals and balances stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
     <string name="cuenta_intro">La Alcancía’s network: your Fogón Social account, the same in every app. Follow other people and celebrate your saving achievements.</string>
-    <string name="cuenta_que_sale">Your money never leaves this phone. Only what you choose to share appears on the network: an achievement (for example, that you reached a goal) and, if you want, your goals’ progress as a percentage. Never balances, amounts, accounts, banks or transactions.</string>
+    <string name="cuenta_que_sale">Only what you choose to share appears on the network: an achievement and, if you want, your goals’ progress as a percentage. Never balances, amounts, accounts, banks or transactions. Your notebook is saved to your account encrypted with your password: nobody else can read it, not even Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
-    <string name="cuenta_politica_resumen">The policy now includes La Alcancía: only the achievements you share and your goals as a percentage go out, never amounts or transactions.</string>
+    <string name="cuenta_politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password: if you reinstall, it comes back. Nobody else can read it, not even Fogón. From La Alcancía, only the achievements you share and your goals as a percentage appear on the network.</string>
     <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the achievements you choose and, if you want, your goals as a percentage are shared. Signing out other sessions and deleting the account affect every app.</string>
     <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local notebook is kept until you remove the profile.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and the achievements you share.</string>
@@ -629,4 +629,5 @@
     <string name="guia_gente_texto">If you want, share your achievements with your Fogón Social account. Amounts never go out.</string>
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, backups and this tour again.</string>
+    <string name="tut_tengo_cuenta">I already have an account</string>
 </resources>

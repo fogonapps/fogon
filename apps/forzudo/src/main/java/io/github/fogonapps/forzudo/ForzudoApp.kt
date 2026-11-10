@@ -50,7 +50,7 @@ class ForzudoApp : Application() {
         io.github.fogonapps.forzudo.datos.migracionPerfiles(this).ejecutar()
         perfiles = io.github.fogonapps.social.Perfiles(filesDir)
         perfiles.limpiarPendientes { id ->
-            listOf("sincronizacion-p$id", "sincronizacion-psocial-$id", "social-p$id").forEach {
+            listOf("sincronizacion-p$id", "sincronizacion-psocial-$id", "social-p$id", "llave-forzudo-p$id", "copia-forzudo-p$id").forEach {
                 check(getSharedPreferences(it, MODE_PRIVATE).edit().clear().commit())
             }
         }

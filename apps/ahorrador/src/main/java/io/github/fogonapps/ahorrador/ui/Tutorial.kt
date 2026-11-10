@@ -107,6 +107,8 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 CampoTexto(nombre, { nombre = it }, stringResource(R.string.tut_tu_nombre))
                 BotonRiso(stringResource(R.string.siguiente), { paso = 1 }, Modifier.fillMaxWidth())
+                // D-033: con la cuenta, el cuaderno guardado vuelve solo.
+                BotonSecundario(stringResource(R.string.tut_tengo_cuenta), { vm.abrir(io.github.fogonapps.ahorrador.Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
                 BotonSecundario(stringResource(R.string.tut_tengo_respaldo), onImportar, Modifier.fillMaxWidth())
             }
             1 -> {

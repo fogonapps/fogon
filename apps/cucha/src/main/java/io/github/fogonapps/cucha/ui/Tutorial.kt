@@ -76,6 +76,8 @@ fun Tutorial(vm: CuchaViewModel, onImportar: () -> Unit) {
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 BotonRiso(stringResource(R.string.siguiente), { paso = 1 }, Modifier.fillMaxWidth())
+                // D-033: con la cuenta, el diario guardado vuelve solo.
+                BotonSecundario(stringResource(R.string.tut_tengo_cuenta), { vm.abrir(io.github.fogonapps.cucha.Pantalla.Cuenta) }, Modifier.fillMaxWidth())
                 BotonSecundario(stringResource(R.string.tut_tengo_respaldo), onImportar, Modifier.fillMaxWidth())
                 // El aviso de salud, también en el tutorial.
                 Text(stringResource(R.string.aviso_salud), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)

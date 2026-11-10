@@ -484,11 +484,11 @@
     <string name="cuenta_error">The operation could not be completed. Check your connection and try again.</string>
     <string name="cuenta_operacion_lista">Operation completed.</string>
     <string name="cuenta_otro_perfil">This account needs another phone profile. Use Switch account.</string>
-    <string name="cuenta_local">Your notebook, active workout, body weight and measurements stay in this phone profile. Signing in does not merge or restore notebooks. Export a backup before removing a profile.</string>
+    <string name="cuenta_local">Your notebook stays in this profile on the phone and, with your account, is saved there automatically, encrypted with your password: if you reinstall or change phones, sign in with your email and password and it comes back. Export a copy before removing a profile.</string>
     <string name="cuenta_intro">El Forzudo’s network: your Fogón Social account, the same in every app. Follow other people and share your ranks and medals.</string>
-    <string name="cuenta_que_sale">Your notebook never leaves this phone. Only what you choose to share appears on the network; never your body weight or measurements. Workouts you share, their photos and videos are also sent to Fogón Social.</string>
+    <string name="cuenta_que_sale">Only what you choose to share appears on the network; never your body weight or measurements. Your notebook is saved to your account encrypted with your password: nobody else can read it, not even Fogón. The workouts you share, their photos and videos are also sent to Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
-    <string name="cuenta_politica_resumen">La Cucha and La Alcancía now use the Fogón Social account: the policy covers the places you review in La Cucha and saving achievements, without amounts. Only what you share leaves El Forzudo; your notebook, weight and measurements never leave the phone.</string>
+    <string name="cuenta_politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password: if you reinstall, it comes back. Nobody else can read it, not even Fogón. Also, La Cucha and La Alcancía now use the Fogón Social account.</string>
     <string name="cuenta_quien_lo_ve">Who sees it</string>
     <string name="cuenta_que_se_comparte">Only the level of each rank and your medals; never your weight or measurements.</string>
     <string name="cuenta_compartido">One Fogón Social account across apps, with independent sessions. Name, photo, cover and bio are global. Only the workouts, ranks and badges you choose are shared, with their visibility. Your notebook and body weight are not published. Closing other sessions and deleting the account affect every app.</string>

@@ -300,11 +300,11 @@
     <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
-    <string name="cuenta_local">Your diary, goals, weight, recipes and products stay in this profile on the phone. Signing in doesn’t merge or recover notebooks. Save a backup before removing a profile.</string>
+    <string name="cuenta_local">Your diary, goals, weight, recipes and products stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
     <string name="cuenta_intro">La Cucha’s network: your Fogón Social account, the same in every app. Follow other people and share dishes, recipes and restaurants.</string>
-    <string name="cuenta_que_sale">Your diary never leaves this phone. Only what you choose to share appears on the network: never your goals, your weight or what you eat each day. A dish’s or recipe’s calories and macros only go out if you include them. A restaurant’s location only goes out if you add it.</string>
+    <string name="cuenta_que_sale">Only what you choose to share appears on the network: never your goals, your weight or what you eat each day. Your diary is saved to your account encrypted with your password: nobody else can read it, not even Fogón. A dish’s or recipe’s calories and macros only go out if you include them. A restaurant’s location only goes out if you add it.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your diary is still available.</string>
-    <string name="cuenta_politica_resumen">The policy now includes La Cucha and La Alcancía: what you share from here leaves La Cucha; your diary, goals and weight never leave the phone.</string>
+    <string name="cuenta_politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password: if you reinstall, it comes back. Nobody else can read it, not even Fogón. Also, La Alcancía now uses the Fogón Social account.</string>
     <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the dishes, recipes and reviews you choose are shared, with their visibility. Signing out other sessions and deleting the account affect every app.</string>
     <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local diary is kept until you remove the profile.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and what you share.</string>
@@ -409,4 +409,5 @@
     <string name="guia_progreso_texto">Your streak, the weekly average and your weight curve.</string>
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile is here, and in its gear: your details, goals, backups and this tour again.</string>
+    <string name="tut_tengo_cuenta">I already have an account</string>
 </resources>

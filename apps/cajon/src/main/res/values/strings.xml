@@ -1345,10 +1345,8 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">La Cucha and La Alcancía now use the Fogón Social account.
-If you review a restaurant in La Cucha, we keep the place (name, city and, if you add them, the address and the rounded location).
-Only the achievements you share and your goals as a percentage leave La Alcancía; never amounts, accounts or transactions.
-The policy and terms now have an English version.</string>
+  <string name="politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password, as already happened with your drawer: if you reinstall, it comes back. Nobody else can read it, not even Fogón.
+La Alcancía now uses the Fogón Social account: only the achievements you share and your goals as a percentage come from it.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
@@ -1445,4 +1443,12 @@ The policy and terms now have an English version.</string>
     <string name="guia_secciones_texto">Film, music and books, each with your things. Press and hold the bar and slide to switch quickly.</string>
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile, your people and, in the gear, settings, account and this tour again.</string>
+    <string name="copia_titulo">Your data in your account</string>
+    <string name="copia_lista">They’re saved automatically, encrypted with your password: nobody else can read them, not even Fogón. If you reinstall or change phones, sign in with your email and password and everything comes back.</string>
+    <string name="copia_ultima">Last copy: %1$s</string>
+    <string name="copia_bloqueada">Your account already has saved data. Enter your password to bring it to this phone and keep saving.</string>
+    <string name="copia_clave">Your password</string>
+    <string name="copia_abrir">Bring and save my data</string>
+    <string name="copia_mala">That’s not the password.</string>
+    <string name="copia_sin_clave">Create a password in “Change password” and your data will be saved automatically, encrypted.</string>
 </resources>

@@ -212,6 +212,7 @@ fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), con
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.entreno_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }
     if (usuario == null) BotonRiso(stringResource(R.string.entreno_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
+    CopiaCuenta(vm.red, soloSiFalta = true)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.entreno_compartir)) { eligiendo = true }
     if (eligiendo) AlertDialog(onDismissRequest = { eligiendo = false }, title = { Text(stringResource(R.string.entreno_elegir)) },
         text = {

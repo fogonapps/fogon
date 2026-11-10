@@ -293,4 +293,12 @@
     <string name="social_frase_propuesta_gracias">¡Gracias! Si va, sale para todos</string>
     <string name="social_ruta_politica" translatable="false">/privacidad</string>
     <string name="social_ruta_terminos" translatable="false">/terminos</string>
+    <string name="social_copia_titulo">Tus datos en tu cuenta</string>
+    <string name="social_copia_lista">Se guardan solos, cifrados con tu contraseña: nadie más los puede leer, ni Fogón. Si reinstalas o cambias de teléfono, entras con tu correo y tu contraseña y vuelve todo.</string>
+    <string name="social_copia_ultima">Última copia: %1$s</string>
+    <string name="social_copia_bloqueada">Tu cuenta ya tiene datos guardados. Escribe tu contraseña para traerlos a este teléfono y seguir guardando.</string>
+    <string name="social_copia_clave">Tu contraseña</string>
+    <string name="social_copia_abrir">Traer y guardar mis datos</string>
+    <string name="social_copia_mala">Esa no es la contraseña.</string>
+    <string name="social_copia_sin_clave">Crea una contraseña en «Cambiar la contraseña» y tus datos se guardarán solos, cifrados.</string>
 </resources>

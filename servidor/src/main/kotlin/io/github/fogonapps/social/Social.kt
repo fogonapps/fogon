@@ -513,6 +513,25 @@ class Social(
         return nuevo
     }
 
+    /** D-033: la copia cifrada de una app que no es El Cajón, con la llave común de la cuenta (envuelta con la contraseña). */
+    fun respaldo(yo: Long, app: String): CajonCifrado {
+        require(app != "cajon")
+        val llave = cajon(yo).llave
+        return b.usar { leer("SELECT sobre, cambio FROM respaldos WHERE cuenta = ? AND app = ?", yo, app) { CajonCifrado(it.getString(1), it.getLong(2), llave) }.firstOrNull() }
+            ?: CajonCifrado(llave = llave)
+    }
+
+    /** Guarda la copia cifrada de una app; como con el cajón, [antes] es la versión que tenía el teléfono (si no coincide, 409). */
+    fun guardarRespaldo(yo: Long, app: String, c: CajonCifrado, antes: Long): Long {
+        require(app != "cajon")
+        if (c.sobre.length > 12_000_000) throw Problema(413, "muy_grande")
+        val actual = respaldo(yo, app).cambio
+        if (actual != antes) throw Problema(409, "cambio")
+        val nuevo = maxOf(ahora(), actual + 1)
+        b.usar { cambiar("INSERT INTO respaldos(cuenta, app, sobre, cambio) VALUES(?,?,?,?) ON CONFLICT(cuenta, app) DO UPDATE SET sobre = excluded.sobre, cambio = excluded.cambio", yo, app, c.sobre, nuevo) }
+        return nuevo
+    }
+
     /** La llave del cajón, envuelta con la contraseña (al crearla o cambiarla, el teléfono la vuelve a envolver). */
     fun guardarLlave(yo: Long, llave: String) {
         if (llave.length > 4000) throw Problema(413, "muy_grande")
@@ -1721,7 +1740,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-12"
+        const val POLITICA = "2026-11-13"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

@@ -127,6 +127,7 @@ fun CuentaRedPantalla(vm: AhorradorViewModel, exportar: () -> Unit) {
     val interfaz = interfazCuenta(vm)
     val estado by vm.estado.collectAsStateWithLifecycle()
     CuentaRed(interfaz, "", estado?.nombre.orEmpty())
+    CopiaCuenta(vm.red)
     Spacer(Modifier.height(12.dp))
     CambiarDeCuenta(vm, exportar)
 }
@@ -250,6 +251,7 @@ fun TuGente(vm: AhorradorViewModel, interfaz: InterfazSocial = interfazCuenta(vm
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.red_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }
     if (usuario == null) BotonRiso(stringResource(R.string.red_entrar), { vm.abrir(Pantalla.CuentaRed) }, Modifier.padding(16.dp))
+    CopiaCuenta(vm.red, soloSiFalta = true)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.red_compartir_corto)) { vm.abrir(Pantalla.CompartirLogro()) }
     ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas }?.map { it to Unit }, pestana,
         vm.red::masFeed, stringResource(R.string.red_feed_pie)) { p, _ -> TarjetaPublicacion(interfaz, p) }

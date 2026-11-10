@@ -193,3 +193,7 @@ data class Lugar(val id: Long, val nombre: String, val ciudad: String, val direc
 /** Lo que se manda para crear un lugar: [lat] y [lon] van juntas o no van. */
 @Serializable
 data class LugarNuevo(val nombre: String, val ciudad: String, val direccion: String? = null, val lat: Double? = null, val lon: Double? = null)
+
+/** D-033: un sobre cifrado (el servidor no lo puede abrir), su versión y la llave común envuelta con la contraseña. */
+@Serializable
+data class CopiaCifrada(val sobre: String = "", val cambio: Long = 0, val llave: String = "")

@@ -16,6 +16,6 @@
 <li><b>En español e inglés.</b></li>
 </ul>
 
-<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Solo sale el número de un código de barras, si activas esa opción, y lo que tú compartas con tu gente. Tu diario, tus metas y tu peso nunca salen. Puedes guardar un respaldo cuando quieras.</p>
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Solo sale el número de un código de barras, si activas esa opción, y lo que tú compartas con tu gente. Con tu cuenta, tu diario se guarda solo en ella cifrado con tu contraseña: nadie más lo puede leer y vuelve si reinstalas. Puedes guardar un respaldo cuando quieras.</p>
 
 <p>La Cucha no es consejo médico ni nutricional. Los valores de los alimentos son aproximados; si tienes una condición de salud, sigue lo que te diga tu médico o nutricionista.</p>

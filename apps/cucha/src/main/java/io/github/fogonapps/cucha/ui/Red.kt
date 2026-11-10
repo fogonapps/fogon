@@ -128,6 +128,7 @@ fun Cuenta(vm: CuchaViewModel, exportar: () -> Unit) {
     val interfaz = interfazCuenta(vm)
     val estado by vm.estado.collectAsStateWithLifecycle()
     CuentaRed(interfaz, "", estado?.nombre.orEmpty())
+    CopiaCuenta(vm.red)
     Spacer(Modifier.height(12.dp))
     CambiarDeCuenta(vm, exportar)
 }
@@ -251,6 +252,7 @@ fun TuGente(vm: CuchaViewModel, interfaz: InterfazSocial = interfazCuenta(vm), c
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.red_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }
     if (usuario == null) BotonRiso(stringResource(R.string.red_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
+    CopiaCuenta(vm.red, soloSiFalta = true)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.red_compartir)) { eligiendo = true }
     if (eligiendo) ElegirQueCompartir(vm) { eligiendo = false }
     ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas }?.map { it to Unit }, pestana,

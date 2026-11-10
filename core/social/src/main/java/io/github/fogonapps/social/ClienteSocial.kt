@@ -36,7 +36,7 @@ open class ClienteSocial(
         val porApp = camino in setOf("/actividad", "/explorar", "/guardados", "/perfil", "/perfil/revision", "/publicaciones/cambios") ||
             camino.startsWith("/perfiles/") || camino.startsWith("/etiquetas/") || camino == "/avisos" || camino.startsWith("/avisos/") ||
             camino == "/frases/comunidad" || camino == "/frases/propuestas" ||
-            camino == "/lugares" || camino.startsWith("/lugares/")
+            camino == "/lugares" || camino.startsWith("/lugares/") || camino == "/respaldo" || camino == "/respaldo/llave"
         return if (appProtocolo != null && porApp) "/v2/apps/${configuracion.idApp}" + ruta else "/v1$ruta"
     }
 
@@ -202,6 +202,12 @@ open class ClienteSocial(
         pedir("/publicaciones", "PUT", json(ListSerializer(PublicacionSubida.serializer()), lista)) }
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun util(id: Long, quitar: Boolean) { pedir("/publicaciones/$id/util", if (quitar) "DELETE" else "POST") }
+    /** D-033: la copia cifrada de esta app y la llave común de la cuenta (envuelta con la contraseña). */
+    suspend fun respaldo() = leer(CopiaCifrada.serializer(), pedir("/respaldo"))
+    suspend fun guardarRespaldo(sobre: String, antes: Long): Long =
+        JsonSocial.parseToJsonElement(pedir("/respaldo?antes=$antes", "PUT", json(CopiaCifrada.serializer(), CopiaCifrada(sobre))) ?: "{}")
+            .jsonObject["cambio"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0
+    suspend fun guardarLlaveRespaldo(llave: String) { pedir("/respaldo/llave", "PUT", json(CopiaCifrada.serializer(), CopiaCifrada(llave = llave))) }
     /** Lugares de La Cucha: hasta 30 sugerencias por nombre y ciudad (subcadenas, sin tildes ni mayúsculas). */
     suspend fun lugares(nombre: String, ciudad: String) = leer(ListSerializer(Lugar.serializer()),
         pedir("/lugares?nombre=${cod(nombre)}&ciudad=${cod(ciudad)}"))

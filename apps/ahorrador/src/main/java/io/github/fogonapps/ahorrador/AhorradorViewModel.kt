@@ -96,6 +96,17 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.ahorrador.datos.cabeLogro(it) }, "logros-publicados.json",
         listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS))
+    /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
+    private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-alcancia-p$idPerfil", Context.MODE_PRIVATE), viewModelScope,
+        leer = { _estado.value?.let { JsonAhorrador.encodeToString(Estado.serializer(), it) } },
+        aplicar = { texto ->
+            val remoto = L.normalizar(JsonAhorrador.decodeFromString(Estado.serializer(), texto))
+            _estado.value = almacen.updateData { remoto }
+            WidgetPlata.actualizar(getApplication())
+        },
+        // Vacío por el contenido, no por la bienvenida: al reinstalar, el cuaderno de la cuenta gana al recién empezado.
+        vacio = { _estado.value?.let { e -> e.movimientos.isEmpty() && e.metas.isEmpty() && e.fijos.isEmpty() && e.deudas.isEmpty() } ?: true },
+        marca = { runCatching { JsonAhorrador.decodeFromString(Estado.serializer(), it).updatedAt }.getOrDefault(0L) })
     val L get() = ahorradorApp.logica
     private val prefsUi = app.getSharedPreferences("ui", Context.MODE_PRIVATE)
 
@@ -120,7 +131,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             almacen.data.collect { _estado.value = it }
         }
-        viewModelScope.launch { almacen.data.first(); ahorradorApp.confirmarCuaderno(); anotarFijos() }
+        viewModelScope.launch { almacen.data.first(); ahorradorApp.confirmarCuaderno(); anotarFijos(); copia.sincronizar() }
     }
 
     fun hoy(): LocalDate = LocalDate.now()
@@ -141,6 +152,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             despues(e)
             BancoAvisos.actualizar(getApplication(), e)
             WidgetPlata.actualizar(getApplication())
+            copia.cambio()
         }
     }
 

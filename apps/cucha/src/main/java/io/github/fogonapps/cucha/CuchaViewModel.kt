@@ -92,6 +92,18 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.cucha.datos.cabePublicacionCucha(it) }, "publicaciones-cucha.json",
         listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES))
+    /** D-033: el diario se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
+    private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-cucha-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
+        leer = { _estado.value?.let { JsonCucha.encodeToString(Estado.serializer(), it) } },
+        aplicar = { texto ->
+            val remoto = L.normalizar(JsonCucha.decodeFromString(Estado.serializer(), texto))
+            _estado.value = remoto; ultimoGuardado = remoto
+            almacen.updateData { remoto }
+            WidgetCalorias.actualizar(getApplication())
+        },
+        // Vacío por el contenido, no por la bienvenida: al reinstalar, el diario de la cuenta gana al recién empezado.
+        vacio = { _estado.value?.let { e -> e.dias.values.none { it.anotados.isNotEmpty() } && e.recetas.none { it.propia } && e.productos.isEmpty() && e.pesos.isEmpty() } ?: true },
+        marca = { runCatching { JsonCucha.decodeFromString(Estado.serializer(), it).updatedAt }.getOrDefault(0L) })
     val L get() = cuchaApp.logica
 
     private val _estado = MutableStateFlow<Estado?>(null)
@@ -120,6 +132,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             cuchaApp.confirmarCuaderno()
+            copia.sincronizar()
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
         }
@@ -150,6 +163,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         ultimoGuardado = e
         almacen.updateData { e }
         WidgetCalorias.actualizar(getApplication())
+        copia.cambio()
     }
 
     /* ----- Navegación ----- */

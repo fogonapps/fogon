@@ -1,6 +1,6 @@
 package io.github.fogonapps.social
 
-const val POLITICA_VIGENTE = "2026-11-12"
+const val POLITICA_VIGENTE = "2026-11-13"
 
 fun debeAceptarPolitica(sesion: Boolean, aceptada: String?, vigente: String): Boolean =
     sesion && aceptada != vigente

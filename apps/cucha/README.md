@@ -31,7 +31,7 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Para buscar un código de barras en Open Food Facts, si activas esa opción, y para Fogón Social, si entras con tu cuenta (Tu gente). Sin las dos, la app no se conecta a nada. |
+| Internet | Para buscar un código de barras en Open Food Facts, si activas esa opción, y para Fogón Social, si entras con tu cuenta (Tu gente y la copia de tu diario, cifrada con tu contraseña). Sin las dos, la app no se conecta a nada. |
 | Ubicación (aproximada o precisa) | Solo al tocar «Usar mi ubicación» al reseñar un restaurante: propone la dirección del lugar, que puedes corregir o quitar antes de publicar. Nunca se toma sola ni va en un plato sin restaurante. |
 | Cámara | La pide el lector de códigos de barras la primera vez que escaneas. Sin ella la app funciona igual. |
 | Datos de las apps de Fogón | Leer el peso y los entrenos de El Forzudo, y que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de La Cucha en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |

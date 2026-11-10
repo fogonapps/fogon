@@ -62,6 +62,11 @@ class SesionApp(
     preferenciasToken: String = "sesion-$app-p$perfil", aliasToken: String = "$app-sesion",
 ) : AlmacenSesionSocial {
     private val caja = CajaToken(contexto, preferenciasToken, aliasToken)
+    /** D-033: la llave común de la cuenta, abierta con la contraseña y guardada cifrada en este teléfono. */
+    private val cajaLlave = CajaToken(contexto, "llave-$app-p$perfil", "$app-llave")
+    var llaveCopia: String?
+        get() = cajaLlave.token
+        set(v) { cajaLlave.token = v }
     private val preferencias = contexto.getSharedPreferences("social-p$perfil", Context.MODE_PRIVATE)
     override var token: String?
         get() = caja.token
@@ -83,6 +88,6 @@ class SesionApp(
 
     companion object {
         /** Las preferencias de un perfil que se borran al quitarlo del teléfono. */
-        fun preferenciasDe(app: String, perfil: String) = listOf("sesion-$app-p$perfil", "social-p$perfil")
+        fun preferenciasDe(app: String, perfil: String) = listOf("sesion-$app-p$perfil", "social-p$perfil", "llave-$app-p$perfil", "copia-$app-p$perfil")
     }
 }

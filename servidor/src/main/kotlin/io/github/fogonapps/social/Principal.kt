@@ -71,7 +71,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.34"
+const val VERSION = "0.35"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -343,6 +343,14 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         route("/v2/apps/{app}") {
             fun ApplicationCall.app() = AppsSocial.validar(parameters["app"].orEmpty())
             fun ApplicationCall.cucha() { if (app() != "cucha") throw Problema(400, "tipo_app") }
+            // D-033: la copia cifrada de cada app y la llave común de la cuenta (El Cajón sigue con /v1/cajon).
+            get("/respaldo") { if (call.app() == "cajon") throw Problema(400, "tipo_app"); call.respond(social.respaldo(call.yo(), call.app())) }
+            put("/respaldo") {
+                if (call.app() == "cajon") throw Problema(400, "tipo_app")
+                val antes = call.request.queryParameters["antes"]?.toLongOrNull() ?: 0
+                call.respond(mapOf("cambio" to social.guardarRespaldo(call.yo(), call.app(), call.receive(), antes)))
+            }
+            put("/respaldo/llave") { if (call.app() == "cajon") throw Problema(400, "tipo_app"); social.guardarLlave(call.yo(), call.receive<CajonCifrado>().llave); call.respond(HttpStatusCode.NoContent) }
             post("/lugares") { call.cucha(); call.respond(HttpStatusCode.Created, social.crearLugar(call.yo(), call.receive())) }
             get("/lugares") { call.cucha(); call.respond(social.buscarLugares(call.request.queryParameters["nombre"].orEmpty(), call.request.queryParameters["ciudad"].orEmpty())) }
             patch("/lugares/{id}") { call.cucha(); call.respond(social.corregirLugar(call.yo(), call.id(), call.receive(), call.token())) }

@@ -496,11 +496,11 @@
     <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
     <string name="cuenta_operacion_lista">Operación completada.</string>
     <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
-    <string name="cuenta_local">El cuaderno, el entreno activo, el peso corporal y las medidas se quedan en este perfil del teléfono. Entrar no mezcla ni recupera cuadernos. Exporta una copia antes de retirar un perfil.</string>
+    <string name="cuenta_local">Tu cuaderno se queda en este perfil del teléfono y, con tu cuenta, se guarda solo en ella, cifrado con tu contraseña: si reinstalas o cambias de teléfono, entras con tu correo y tu contraseña y vuelve. Exporta una copia antes de retirar un perfil.</string>
     <string name="cuenta_intro">La red de El Forzudo: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
-    <string name="cuenta_que_sale">Tu cuaderno no sale de este teléfono. En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
+    <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
-    <string name="cuenta_politica_resumen">La Cucha y La Alcancía ya usan la cuenta de Fogón Social: la política cubre los lugares que reseñas en La Cucha y los logros de ahorro, sin montos. De El Forzudo solo sale lo que compartes; tu cuaderno, tu peso y tus medidas nunca salen del teléfono.</string>
+    <string name="cuenta_politica_resumen">Ahora lo de cada app se guarda solo en tu cuenta, cifrado con tu contraseña: si reinstalas, vuelve. Nadie más lo puede leer, ni Fogón. Además, La Cucha y La Alcancía ya usan la cuenta de Fogón Social.</string>
     <string name="cuenta_quien_lo_ve">Quién lo ve</string>
     <string name="cuenta_que_se_comparte">Solo el nivel de cada rango y tus medallas; nunca tu peso ni tus medidas.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los entrenos, rangos y medallas que elijas, con su visibilidad. No se publica el cuaderno ni el peso corporal. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>

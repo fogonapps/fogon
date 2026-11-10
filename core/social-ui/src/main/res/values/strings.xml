@@ -291,4 +291,12 @@
     <string name="social_frase_propuesta_gracias">Thanks! If it fits, everyone will see it</string>
     <string name="social_ruta_politica" translatable="false">/privacy</string>
     <string name="social_ruta_terminos" translatable="false">/terms</string>
+    <string name="social_copia_titulo">Your data in your account</string>
+    <string name="social_copia_lista">They’re saved automatically, encrypted with your password: nobody else can read them, not even Fogón. If you reinstall or change phones, sign in with your email and password and everything comes back.</string>
+    <string name="social_copia_ultima">Last copy: %1$s</string>
+    <string name="social_copia_bloqueada">Your account already has saved data. Enter your password to bring it to this phone and keep saving.</string>
+    <string name="social_copia_clave">Your password</string>
+    <string name="social_copia_abrir">Bring and save my data</string>
+    <string name="social_copia_mala">That’s not the password.</string>
+    <string name="social_copia_sin_clave">Create a password in “Change password” and your data will be saved automatically, encrypted.</string>
 </resources>

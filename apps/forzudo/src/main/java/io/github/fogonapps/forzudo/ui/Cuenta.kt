@@ -80,6 +80,7 @@ fun Cuenta(vm: GymViewModel, exportar: () -> Unit) {
     val interfaz = interfazCuenta(vm)
     val estado by vm.estado.collectAsState()
     CuentaRed(interfaz, "", estado?.nombre.orEmpty())
+    CopiaCuenta(vm.red)
     // El mismo aire que entre los demás botones de la cuenta (antes quedaba pegado a «Usar otro correo»).
     androidx.compose.foundation.layout.Spacer(androidx.compose.ui.Modifier.height(12.dp))
     CambiarDeCuenta(vm, exportar)

@@ -43,12 +43,12 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet salvo tu c
 |---------|----------|
 | Notificaciones | Avisar de los pagos fijos que están por vencer y el recordatorio diario, si lo activas, además de confirmar las alertas del banco. Se pide al crear el primer pago fijo o al encender el recordatorio. |
 | Acceso a notificaciones (opcional) | Android permite ver todas las notificaciones. Solo se procesan las apps y los bancos elegidos: SMS que empiezan por «Bancolombia:» y envíos reconocidos de Nu. Lo demás se ignora y no se guarda. Solo alertas nuevas: no se lee el historial de SMS. Se activa en Perfil → Anotar desde el banco y se puede apagar allí o revocar en Android. Nada sale del teléfono. |
-| Internet | Solo si entras con tu cuenta de Fogón Social: «Tu gente», los logros que compartes, tus metas en porcentaje y las frases de la comunidad. Sin cuenta, la app no se conecta a nada. Nunca salen montos, saldos, cuentas, bancos ni movimientos. |
+| Internet | Solo si entras con tu cuenta de Fogón Social: «Tu gente», los logros que compartes, tus metas en porcentaje, las frases de la comunidad y la copia de tu cuaderno, cifrada con tu contraseña (nadie más la puede leer). Sin cuenta, la app no se conecta a nada. Nunca salen montos, saldos, cuentas, bancos ni movimientos. |
 | Huella o bloqueo del teléfono | El candado, si lo activas. |
 | Arrancar con el teléfono | Volver a programar el aviso diario después de reiniciar. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
-- **Sin internet salvo tu cuenta:** sin cuenta de Fogón Social la app no se conecta a nada; con cuenta, solo salen los logros que compartas y tus metas en porcentaje.
+- **Sin internet salvo tu cuenta:** sin cuenta de Fogón Social la app no se conecta a nada; con cuenta, tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas y tus metas en porcentaje.
 - **Sin copias automáticas a la nube de Google:** solo se copian los datos al pasar a un teléfono nuevo.
 
 ## Por qué no se conecta al banco
@@ -63,7 +63,7 @@ También están dentro de la app (Perfil → Preguntas frecuentes, arreglos `pre
 No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.
 
 **¿Dónde quedan mis datos?**
-Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social, y de ahí solo salen los logros que compartas y tus metas en porcentaje, nunca montos. Guarda respaldos desde Perfil → Respaldo.
+Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social: tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas, nunca montos. Guarda respaldos desde Perfil → Respaldo.
 
 **¿Qué sistema elijo?**
 Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.
