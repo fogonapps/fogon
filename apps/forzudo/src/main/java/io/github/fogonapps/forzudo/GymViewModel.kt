@@ -69,7 +69,7 @@ sealed interface Pantalla {
 }
 
 enum class ModoCambio { EDITAR, AGREGAR, VIVO, VIVO_AGREGAR }
-enum class Pestana { INICIO, ENTRENAR, RANGOS }
+enum class Pestana { INICIO, GENTE, ENTRENAR, RANGOS }
 
 data class SubioRango(val musculo: String, val rango: Rango)
 
@@ -106,7 +106,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val sync: StateFlow<Sync> = _sync.asStateFlow()
 
     val perfiles get() = gymApp.perfiles
-    val red = RedForzudo(gymApp, io.github.fogonapps.forzudo.datos.SesionForzudo(app, perfiles, idPerfil), viewModelScope,
+    /** Las frases del saludo, como en El Cajón: las propias (fz_), las de la gente de El Forzudo y los votos. */
+    val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
+    val red = RedForzudo(gymApp, sesionForzudo(app, perfiles, idPerfil), viewModelScope,
         { avisar(tx(it)) }, ::cambiarPerfil)
     private var cambiandoPerfil = false
     fun agregarPerfil() {
@@ -189,7 +191,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     fun hoy(): LocalDate = LocalDate.now()
     fun dias(): List<Dia> = _estado.value?.let { L.dias(it) } ?: emptyList()
-    private fun avisar(m: String) { _mensajes.trySend(m) }
+    fun avisar(m: String) { _mensajes.trySend(m) }
     /** Un texto de strings.xml en el idioma de la app. */
     fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
     fun txPlural(id: Int, n: Int): String = Idioma.envolver(getApplication()).resources.getQuantityString(id, n, n)

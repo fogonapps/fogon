@@ -500,7 +500,7 @@
     <string name="cuenta_intro">La red de El Forzudo: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
     <string name="cuenta_que_sale">Tu cuaderno no sale de este teléfono. En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
-    <string name="cuenta_politica_resumen">La política ahora cubre a Fogón Social y sus apps: la app desde la que entras y lo que compartes desde El Forzudo. Tu cuaderno, tu peso y tus medidas nunca salen del teléfono.</string>
+    <string name="cuenta_politica_resumen">La Cucha ya usa la cuenta de Fogón Social: la política cubre los lugares que reseñas allí (con la ubicación solo si la pones). De El Forzudo solo sale lo que compartes; tu cuaderno, tu peso y tus medidas nunca salen del teléfono.</string>
     <string name="cuenta_quien_lo_ve">Quién lo ve</string>
     <string name="cuenta_que_se_comparte">Solo el nivel de cada rango y tus medallas; nunca tu peso ni tus medidas.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los entrenos, rangos y medallas que elijas, con su visibilidad. No se publica el cuaderno ni el peso corporal. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
@@ -548,4 +548,16 @@
     <string name="entreno_agregar_foto">Agregar una foto</string>
     <string name="entreno_agregar_video">Agregar un vídeo</string>
     <string name="entreno_elegir">Elige un entreno reciente</string>
+  <string-array name="frases_inicio">
+    <item>¿Qué toca hoy?</item>
+    <item>Una serie más y ya.</item>
+    <item>Hoy se suda.</item>
+    <item>Poco a poco se llega lejos.</item>
+    <item>El mejor entreno es el que haces.</item>
+    <item>Calienta, que hoy se puede.</item>
+    <item>Constancia gana a la prisa.</item>
+    <item>¿Pecho, pierna o espalda?</item>
+    <item>Respira, aprieta y suelta.</item>
+    <item>Descansar también es entrenar.</item>
+  </string-array>
 </resources>

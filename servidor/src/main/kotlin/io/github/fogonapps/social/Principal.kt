@@ -23,6 +23,7 @@ import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
@@ -70,7 +71,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.32"
+const val VERSION = "0.33"
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -341,9 +342,19 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         }
         route("/v2/apps/{app}") {
             fun ApplicationCall.app() = AppsSocial.validar(parameters["app"].orEmpty())
+            fun ApplicationCall.cucha() { if (app() != "cucha") throw Problema(400, "tipo_app") }
+            post("/lugares") { call.cucha(); call.respond(HttpStatusCode.Created, social.crearLugar(call.yo(), call.receive())) }
+            get("/lugares") { call.cucha(); call.respond(social.buscarLugares(call.request.queryParameters["nombre"].orEmpty(), call.request.queryParameters["ciudad"].orEmpty())) }
+            patch("/lugares/{id}") { call.cucha(); call.respond(social.corregirLugar(call.yo(), call.id(), call.receive(), call.token())) }
+            post("/publicaciones/{id}/util") { call.cucha(); social.util(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/publicaciones/{id}/util") { call.cucha(); social.util(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             put("/publicaciones/cambios") { social.subirCambios(call.yo(), call.receive(), call.app(), estricto = true); call.respond(HttpStatusCode.NoContent) }
             put("/perfil") { social.subirPerfilApp(call.yo(), call.app(), call.receive()); call.respond(mapOf("revision" to social.revisionPerfil(call.yo()))) }
             get("/perfil/revision") { call.app(); call.respond(mapOf("revision" to social.revisionPerfil(call.yo()))) }
+            // Las frases del saludo de cada app: las de la gente aprobadas, proponer una y los votos (las claves propias
+            // de cada app llevan su prefijo, así que votos y ocultas siguen siendo las rutas comunes de v1).
+            get("/frases/comunidad") { call.respond(social.frasesComunidad(call.request.queryParameters["idioma"] ?: "es", call.app())) }
+            post("/frases/propuestas") { social.proponerFrase(call.yo(), call.receive(), call.app()); call.respond(HttpStatusCode.Created) }
             get("/perfiles/{usuario}") { call.respond(social.verPerfil(call.lector(), call.usuario(), call.app())) }
             get("/actividad") { call.respond(social.actividad(call.yo(), call.request.queryParameters["antes"]?.toLongOrNull(), app = call.app())) }
             get("/explorar") { call.respond(social.explorar(call.lector(), call.request.queryParameters["antes"]?.toLongOrNull(), app = call.app())) }

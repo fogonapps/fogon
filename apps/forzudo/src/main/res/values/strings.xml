@@ -488,7 +488,7 @@
     <string name="cuenta_intro">El Forzudo’s network: your Fogón Social account, the same in every app. Follow other people and share your ranks and medals.</string>
     <string name="cuenta_que_sale">Your notebook never leaves this phone. Only what you choose to share appears on the network; never your body weight or measurements. Workouts you share, their photos and videos are also sent to Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
-    <string name="cuenta_politica_resumen">The policy now covers Fogón Social and its apps: the app you sign in from and what you share from El Forzudo. Your notebook, weight and measurements never leave the phone.</string>
+    <string name="cuenta_politica_resumen">La Cucha now uses the Fogón Social account: the policy covers the places you review there (with the location only if you add it). Only what you share leaves El Forzudo; your notebook, weight and measurements never leave the phone.</string>
     <string name="cuenta_quien_lo_ve">Who sees it</string>
     <string name="cuenta_que_se_comparte">Only the level of each rank and your medals; never your weight or measurements.</string>
     <string name="cuenta_compartido">One Fogón Social account across apps, with independent sessions. Name, photo, cover and bio are global. Only the workouts, ranks and badges you choose are shared, with their visibility. Your notebook and body weight are not published. Closing other sessions and deleting the account affect every app.</string>
@@ -536,4 +536,16 @@
     <string name="entreno_agregar_foto">Add a photo</string>
     <string name="entreno_agregar_video">Add a video</string>
     <string name="entreno_elegir">Choose a recent workout</string>
+  <string-array name="frases_inicio">
+    <item>What’s on today?</item>
+    <item>One more set and done.</item>
+    <item>Time to sweat.</item>
+    <item>Little by little you go far.</item>
+    <item>The best workout is the one you do.</item>
+    <item>Warm up, today’s the day.</item>
+    <item>Consistency beats rushing.</item>
+    <item>Chest, legs or back?</item>
+    <item>Breathe, push, release.</item>
+    <item>Resting is training too.</item>
+  </string-array>
 </resources>

@@ -25,6 +25,13 @@ class Base(ruta: String) {
                     id INTEGER PRIMARY KEY, usuario TEXT UNIQUE NOT NULL, token TEXT UNIQUE NOT NULL,
                     nombre TEXT NOT NULL DEFAULT '', perfil TEXT NOT NULL DEFAULT '{}', foto INTEGER NOT NULL DEFAULT 0,
                     creada INTEGER NOT NULL, cambio INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS lugares(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, ciudad TEXT NOT NULL,
+                    nombre_busqueda TEXT NOT NULL, ciudad_busqueda TEXT NOT NULL, direccion TEXT,
+                    lat REAL, lon REAL, cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL,
+                    cuando INTEGER NOT NULL, retirado INTEGER NOT NULL DEFAULT 0,
+                    UNIQUE(nombre_busqueda, ciudad_busqueda))""")
+                s.execute("CREATE INDEX IF NOT EXISTS lugares_creador ON lugares(cuenta, cuando)")
                 // La identidad HMAC depende de este número: no puede volver a asignarse tras un borrado.
                 // Un asignador separado evita reconstruir cuentas y todas sus referencias existentes.
                 s.execute("CREATE TABLE IF NOT EXISTS secuencia_cuentas(id INTEGER PRIMARY KEY AUTOINCREMENT)")
@@ -115,6 +122,9 @@ class Base(ruta: String) {
                 s.execute("CREATE TABLE IF NOT EXISTS frases_ocultas(clave TEXT PRIMARY KEY)")
                 // En qué momento del día sale cada frase de la gente: todo, manana, tarde, noche o madrugada.
                 columna(s, "frases_propuestas", "franja TEXT NOT NULL DEFAULT 'todo'")
+                // De qué app es cada frase de la gente (las de antes, de El Cajón). Las claves de las frases propias de
+                // cada app ya llevan su prefijo (fz_, al_, cu_), así los votos y las ocultas no se mezclan.
+                columna(s, "frases_propuestas", "app TEXT NOT NULL DEFAULT 'cajon'")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")
                 // Entrar con el correo: el correo de la cuenta y la prueba de la autorización (Decreto 1377, art. 8).
                 columna(s, "cuentas", "correo TEXT")

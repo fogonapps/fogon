@@ -60,6 +60,8 @@ import io.github.fogonapps.identidad.R as RId
 
 @Composable
 fun Ajustes(vm: CajonViewModel, e: Estado) {
+    val rutaPolitica = stringResource(R.string.ruta_politica)
+    val rutaTerminos = stringResource(R.string.ruta_terminos)
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
     val acciones = LocalAcciones.current
@@ -117,8 +119,8 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
     SeccionAjustes(stringResource(R.string.privacidad_grupo))
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
-    FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/privacidad") }
-    FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + "/terminos") }
+    FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }
+    FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaTerminos) }
     FilaAjuste(Iconos.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }
 }

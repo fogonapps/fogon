@@ -360,6 +360,8 @@ fun CuentaRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String)
 
 @Composable
 fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String, conIntro: Boolean = true) {
+    val rutaPolitica = stringResource(R.string.social_ruta_politica)
+    val rutaTerminos = stringResource(R.string.social_ruta_terminos)
     val f = FogonTema.actual
     val correo by vm.correoDisponible.collectAsStateWithLifecycle()
     val acceso by vm.red.acceso.collectAsStateWithLifecycle()
@@ -433,8 +435,8 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
             Text(stringResource(R.string.social_red_acepto), style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f).clickable { acepto = !acepto })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pildora(stringResource(R.string.social_red_politica)) { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }
-            Pildora(stringResource(R.string.social_red_terminos)) { uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }
+            Pildora(stringResource(R.string.social_red_politica)) { uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }
+            Pildora(stringResource(R.string.social_red_terminos)) { uri.openUri(ClienteSocial.SERVIDOR + rutaTerminos) }
         }
         // Con correo, la contraseña es obligatoria: con ella el cajón queda guardado (cifrado) en la cuenta.
         var claveCuenta by rememberSaveable { mutableStateOf("") }
@@ -451,6 +453,8 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
 
 @Composable
 internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
+    val rutaPolitica = stringResource(R.string.social_ruta_politica)
+    val rutaTerminos = stringResource(R.string.social_ruta_terminos)
     val f = FogonTema.actual
     val ctx = LocalContext.current
     val uri = LocalUriHandler.current
@@ -519,8 +523,8 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.SESIONES) }) { Text(stringResource(R.string.social_red_sesiones), color = f.texto) }
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.ESTADO_CUENTA) }) { Text(stringResource(R.string.social_mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.BLOQUEADOS) }) { Text(stringResource(R.string.social_red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.social_red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }) { Text(stringResource(R.string.social_red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
+        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }) { Text(stringResource(R.string.social_red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
+        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaTerminos) }) { Text(stringResource(R.string.social_red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         BotonSecundario(stringResource(R.string.social_red_salir), { vm.salir() }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.social_red_borrar_cuenta), { borrar = true }, Modifier.fillMaxWidth(), peligro = true)
     }
@@ -610,7 +614,7 @@ fun MotivosReporte(onElegir: (String, String) -> Unit) {
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-internal fun HojaReporte(onCerrar: () -> Unit, onElegir: (String, String) -> Unit) {
+fun HojaReporte(onCerrar: () -> Unit, onElegir: (String, String) -> Unit) {
     androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = FogonTema.actual.fondo) {
         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) { MotivosReporte(onElegir) }
     }

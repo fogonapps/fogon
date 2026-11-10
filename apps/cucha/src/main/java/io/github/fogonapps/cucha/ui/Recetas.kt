@@ -147,6 +147,7 @@ fun VerReceta(vm: CuchaViewModel, e: Estado, id: String) {
         BotonRiso(stringResource(R.string.anotar_porcion), {
             vm.abrir(Pantalla.Cantidad("r:${r.id}", r.comidas.firstOrNull() ?: vm.comidaAhora(), vm.dia.value.toString()))
         }, Modifier.fillMaxWidth())
+        if (r.propia) BotonSecundario(stringResource(R.string.red_compartir_receta), { vm.abrir(Pantalla.CompartirReceta(r.id)) }, Modifier.fillMaxWidth())
 
         if (r.ingredientes.isNotEmpty()) {
             Text(stringResource(R.string.ingredientes), style = MaterialTheme.typography.titleLarge, color = f.texto)

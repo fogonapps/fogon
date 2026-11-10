@@ -184,7 +184,7 @@
   <string name="guardar">Guardar</string>
   <string name="guardar_respaldo">Guardar respaldo</string>
   <string name="guardaste">Guardaste</string>
-  <string name="hola">Hola</string>
+  <string name="hola">¡Hola!</string>
   <string name="hola_nombre">Hola, %1$s</string>
   <string name="icono">Ícono</string>
   <string name="idioma">Idioma</string>
@@ -497,4 +497,16 @@
   <string name="perfil_imagen_error">No se pudo abrir esa imagen. Prueba con otra.</string>
   <string name="tu_perfil">Tu perfil</string>
   <string name="perfil_sin_nombre">Tu nombre</string>
+  <string-array name="frases_inicio">
+    <item>¿En qué se fue la plata?</item>
+    <item>Lo que se anota, se cuida.</item>
+    <item>Un peso guardado es un peso ganado.</item>
+    <item>Hoy, sin antojos.</item>
+    <item>Anotar es el primer ahorro.</item>
+    <item>Que la plata rinda.</item>
+    <item>¿Cuánto falta para la meta?</item>
+    <item>Primero lo fijo, después el gusto.</item>
+    <item>Despacio también se llena la alcancía.</item>
+    <item>Cuentas claras, cabeza tranquila.</item>
+  </string-array>
 </resources>

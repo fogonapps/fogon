@@ -1,5 +1,6 @@
 package io.github.fogonapps.cucha.ui
 
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,31 +93,8 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
     val total = vm.L.totalDia(d)
     val menu = vm.L.menuDe(e, dia)
 
-    // Arriba: saludo, el día (con flechas para ir a días anteriores) y el perfil.
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(if (e.nombre.isBlank()) stringResource(R.string.hola) else stringResource(R.string.hola_nombre, e.nombre),
-                style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-            // El nombre del día va corto ("Viernes 23") y las flechas quedan quietas a la derecha (la de adelante
-            // guarda su lugar en Hoy), para poder tocarlas varias veces seguidas sin que se muevan.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    nombreDiaCorto(dia, hoy, idioma), fontFamily = f.titulos, fontSize = 22.sp, color = f.texto, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-                )
-                Row(Modifier.padding(start = 8.dp, end = 10.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)) {
-                    BotonIcono(Iconos.Atras, stringResource(R.string.dia_anterior)) { vm.verDia(dia.minusDays(1)) }
-                    Box(Modifier.alpha(if (dia < hoy) 1f else 0.3f)) {
-                        BotonIcono(Iconos.Siguiente, stringResource(R.string.dia_siguiente), activo = dia < hoy) { vm.verDia(dia.plusDays(1)) }
-                    }
-                }
-            }
-        }
-        BotonIcono(Iconos.Persona, stringResource(R.string.perfil), grande = true) { vm.abrir(Pantalla.Perfil) }
-    }
-
-    // Las calorías que quedan, en el anillo, y La Cucha a la derecha con la cara del día (dormida sin nada anotado,
-    // sorprendida si te pasaste, feliz cerca de la meta); debajo, lo comido, la meta y los macros.
+    // La cara del día de La Cucha (dormida sin nada anotado, sorprendida si te pasaste, feliz cerca de la meta), que
+    // va en el círculo del perfil (X-07).
     val quedan = e.metas.kcal - total.kcal.roundToInt()
     val cara = when {
         total.kcal <= 0.0 -> io.github.fogonapps.identidad.Cara.DORMIDO
@@ -124,6 +102,39 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
         total.kcal >= e.metas.kcal * 0.6 -> io.github.fogonapps.identidad.Cara.FELIZ
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
+    // La cabecera común (X-07): tu nombre y la frase; La Cucha, en el círculo del perfil.
+    // La frase del saludo, como en El Cajón: las propias (cu_), los votos y el menú al mantenerla pulsada.
+    val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
+    val base = androidx.compose.runtime.remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("cu_${i + 1}", t) } }
+    val frase = io.github.fogonapps.social.ui.rememberFraseDelSaludo(vm.frases, base, idioma)
+    var menuFrase by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    io.github.fogonapps.perfil.CabeceraInicio(e.nombre.ifBlank { stringResource(R.string.hola) },
+        frase?.frase?.texto.orEmpty(),
+        onMantener = { if (frase != null) menuFrase = true },
+        adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
+        perfil = {
+            io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.CUCHA, stringResource(R.string.perfil), cara,
+                foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+        })
+    if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
+        onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida)
+
+    // El día que ves, con flechas para ir a días anteriores. El nombre va corto ("Viernes 23") y las flechas quedan
+    // quietas a la derecha (la de adelante guarda su lugar en Hoy), para tocarlas varias veces sin que se muevan.
+    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            nombreDiaCorto(dia, hoy, idioma), fontFamily = f.titulos, fontSize = 22.sp, color = f.texto, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+        )
+        Row(Modifier.padding(start = 8.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)) {
+            BotonIcono(Iconos.Atras, stringResource(R.string.dia_anterior)) { vm.verDia(dia.minusDays(1)) }
+            Box(Modifier.alpha(if (dia < hoy) 1f else 0.3f)) {
+                BotonIcono(Iconos.Siguiente, stringResource(R.string.dia_siguiente), activo = dia < hoy) { vm.verDia(dia.plusDays(1)) }
+            }
+        }
+    }
+
+    // Las calorías que quedan, en el anillo, con lo comido y la meta al lado; debajo, los macros.
     Column(
         Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio().haloPuntos(f.tinta2.copy(alpha = 0.35f)).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -135,16 +146,10 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
                     Text(stringResource(if (quedan >= 0) R.string.kcal_quedan else R.string.kcal_de_mas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
                 }
             }
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                // Llegaste a tu meta del día (sin pasarte): La Cucha celebra.
-                val llego = dia == hoy && quedan >= 0 && total.kcal >= e.metas.kcal * 0.9
-                if (llego) io.github.fogonapps.identidad.Celebracion(io.github.fogonapps.identidad.Quien.CUCHA, null, tamano = 96.dp)
-                else Personaje(io.github.fogonapps.identidad.Quien.CUCHA, null, cara = cara, tamano = 96.dp)
+            Column(Modifier.weight(1f).padding(start = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Dato(stringResource(R.string.comido), "${total.kcal.roundToInt()} kcal")
+                Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal")
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            Dato(stringResource(R.string.comido), "${total.kcal.roundToInt()} kcal", Modifier.weight(1f))
-            Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal", Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             BarraMacro(stringResource(R.string.proteina), total.proteina, e.metas.proteina, f.tinta1, Modifier.weight(1f), pasarseEsMalo = false)

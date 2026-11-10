@@ -2,10 +2,7 @@ package io.github.fogonapps.social
 
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.*
 
 /**
  * Quién puede ver algo (los mismos valores que `Visibilidad` en El Cajón; lo privado nunca llega). [SEGUIDORES] se
@@ -139,9 +136,9 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 /** Una nota de 24 horas: unas palabras y, si quiere, una obra (como en la publicación: titulo, portada…). */
 @Serializable data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList(), val quitar: List<String> = emptyList())
 @Serializable data class VotoFrase(val valor: Int)
-@Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
+@Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo", val app: String = "cajon")
 /** Una frase de la comunidad: su clave para votar ("c" + id), el texto y quién la propuso (solo para moderar). */
-@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String, val de: String = "", val franja: String = "todo")
+@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String, val de: String = "", val franja: String = "todo", val app: String = "cajon")
 @Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
 @Serializable data class ConteoFrase(val si: Int, val no: Int)
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
@@ -889,6 +886,38 @@ class Social(
      * Sube todas las publicaciones de la persona: lo que ya estaba (por [PublicacionSubida.clave]) se actualiza sin
      * perder sus me gusta ni comentarios, lo nuevo se agrega y lo que ya no viene (lo volvió privado o lo borró) se quita.
      */
+    fun verLugar(id: Long): Lugar? = b.usar { lugar(id) }
+
+    fun buscarLugares(nombre: String, ciudad: String): List<Lugar> = b.usar {
+        val n = normalizarLugar(nombre); val c = normalizarLugar(ciudad)
+        if (n.length > 120 || c.length > 80) throw Problema(400, "lugar_esquema")
+        leer("SELECT id FROM lugares WHERE retirado = 0 AND instr(nombre_busqueda, ?) > 0 AND instr(ciudad_busqueda, ?) > 0 ORDER BY nombre_busqueda, id LIMIT 30", n, c) { it.getLong(1) }.mapNotNull { lugar(it) }
+    }
+
+    fun crearLugar(yo: Long, datos: JsonObject): Lugar = b.transaccion {
+        val d = validarLugar(datos)
+        val nombre = d.getValue("nombre").jsonPrimitive.content
+        val ciudad = d.getValue("ciudad").jsonPrimitive.content
+        val existente = leer("SELECT id, retirado FROM lugares WHERE nombre_busqueda = ? AND ciudad_busqueda = ?", normalizarLugar(nombre), normalizarLugar(ciudad)) { it.getLong(1) to it.getInt(2) }.singleOrNull()
+        if (existente != null) return@transaccion lugar(existente.first) ?: throw Problema(409, "lugar_retirado")
+        if (leer("SELECT COUNT(*) FROM lugares WHERE cuenta = ? AND cuando >= ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.single() >= 10) throw Problema(429, "despacio")
+        val id = insertar("INSERT INTO lugares(nombre,ciudad,nombre_busqueda,ciudad_busqueda,direccion,lat,lon,cuenta,cuando) VALUES(?,?,?,?,?,?,?,?,?)", nombre, ciudad, normalizarLugar(nombre), normalizarLugar(ciudad), d["direccion"]?.jsonPrimitive?.content, d["lat"]?.jsonPrimitive?.doubleOrNull, d["lon"]?.jsonPrimitive?.doubleOrNull, yo, ahora())
+        lugar(id)!!
+    }
+
+    fun corregirLugar(yo: Long, id: Long, datos: JsonObject, token: String?): Lugar = b.transaccion {
+        val d = validarLugar(datos, true)
+        val actual = lugar(id) ?: throw Problema(404, "no_existe")
+        if (actual.cuenta != yo) {
+            equipo.requiere(yo, "gestionar_publicaciones", token)
+            actual.cuenta?.let { equipo.inferior(yo, it) }
+            equipo.registrar(yo.toString(), "lugar_corregir", id.toString(), "", token)
+        }
+        cambiar("UPDATE lugares SET direccion = ?, lat = ?, lon = ? WHERE id = ?", d["direccion"]?.jsonPrimitive?.content ?: actual.direccion,
+            d["lat"]?.jsonPrimitive?.doubleOrNull ?: actual.lat, d["lon"]?.jsonPrimitive?.doubleOrNull ?: actual.lon, id)
+        lugar(id)!!
+    }
+
     /**
      * Sube publicaciones y quita solo las que el teléfono dice ([quitar], por clave). A diferencia de
      * [subirPublicaciones], lo que falta en la lista no se borra: un teléfono nuevo o vacío no se lleva lo publicado.
@@ -924,10 +953,11 @@ class Social(
             val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
             val videosMios = leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
             buenas.forEach { p ->
+                if (app == "cucha" && "lugar" in p.datos && lugar(p.datos.getValue("lugar").jsonPrimitive.long) == null) throw Problema(400, "lugar_no_disponible")
                 val video = p.datos["video"]
                 val poster = p.datos["poster"]
                 if (video != null) {
-                    if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo !in setOf("foto", "entreno")) throw Problema(400, "video_formato")
+                    if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo !in setOf("foto", "entreno", "plato", "receta", "resena_restaurante")) throw Problema(400, "video_formato")
                     if (poster !is JsonPrimitive || !poster.isString || poster.content !in mias) throw Problema(400, "poster")
                     val fotos = p.datos["imagenes"] as? kotlinx.serialization.json.JsonArray
                     val fotosResena = p.datos["fotos"] as? kotlinx.serialization.json.JsonArray
@@ -937,7 +967,7 @@ class Social(
                 if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
                 if (p.tipo == "resena" && !resenaValida(p.datos, mias)) { if (estricto) throw Problema(400, "resena") else return@forEach }
                 val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
-                if (datos.length > 20_000) { if (estricto) throw Problema(400, "publicacion_grande") else return@forEach }
+                if (datos.length > (if (app == "cucha") 100_000 else 20_000)) { if (estricto) throw Problema(400, "publicacion_grande") else return@forEach }
                 cambiar("""INSERT INTO publicaciones(cuenta, app, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?,?)
                     ON CONFLICT(cuenta, app, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible'""",
                     yo, app, p.clave.take(80), p.visibilidad, p.cuando, datos)
@@ -968,7 +998,11 @@ class Social(
                     (SELECT COUNT(*) FROM utiles u WHERE u.pub = p.id AND u.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
                     EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?), p.app
                 FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE p.estado = 'visible' AND c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, lector, *args) { r ->
-            val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
+            var datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
+            if (r.getString(18) == "cucha" && "lugar" in datos) {
+                val ficha = lugar(datos.getValue("lugar").jsonPrimitive.long)
+                datos = JsonObject(datos + ("lugarDetalle" to (ficha?.let { JsonSocial.encodeToJsonElement(Lugar.serializer(), it) } ?: JsonNull)))
+            }
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
                 r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15),
@@ -1028,7 +1062,7 @@ class Social(
     /** Marca o quita «útil» en una reseña ajena que [yo] puede ver. */
     fun util(yo: Long, pub: Long, si: Boolean) {
         val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
-        if (p.tipo != "resena") throw Problema(400, "no_es_resena")
+        if (p.tipo !in setOf("resena", "resena_restaurante")) throw Problema(400, "no_es_resena")
         if (idDe(p.autor.usuario) == yo) throw Problema(400, "propia")
         b.usar { if (si) cambiar("INSERT OR IGNORE INTO utiles(pub, cuenta, cuando) VALUES(?,?,?)", pub, yo, ahora()) else cambiar("DELETE FROM utiles WHERE pub = ? AND cuenta = ?", pub, yo) }
     }
@@ -1288,20 +1322,20 @@ class Social(
     }
 
     /** Propone una frase (hasta 3 al día por cuenta, de 6 a 90 letras, sin enlaces). */
-    fun proponerFrase(yo: Long, f: FraseNueva) {
+    fun proponerFrase(yo: Long, f: FraseNueva, app: String = "cajon") {
         val t = f.texto.trim().replace(Regex("\\s+"), " ")
         if (t.codePointCount(0, t.length) !in 6..90 || Regex("(?i)https?://|www\\.|@\\w").containsMatchIn(t) || f.idioma !in setOf("es", "en")) throw Problema(400, "frase")
         b.usar {
             val hoy = leer("SELECT COUNT(*) FROM frases_propuestas WHERE cuenta = ? AND cuando > ?", yo, ahora() - 86_400_000L) { it.getInt(1) }.first()
             if (hoy >= 3) throw Problema(429, "despacio")
-            cambiar("INSERT INTO frases_propuestas(cuenta, texto, idioma, cuando) VALUES(?,?,?,?)", yo, t, f.idioma, ahora())
+            cambiar("INSERT INTO frases_propuestas(cuenta, texto, idioma, cuando, app) VALUES(?,?,?,?,?)", yo, t, f.idioma, ahora(), AppsSocial.validar(app))
         }
     }
 
     /** Las frases aprobadas de un idioma. */
-    fun frasesComunidad(idioma: String): List<FraseComunidad> = b.usar {
-        leer("SELECT id, texto, idioma, franja FROM frases_propuestas WHERE estado = 'aprobada' AND idioma = ? ORDER BY id DESC LIMIT 300", idioma) {
-            FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), franja = it.getString(4))
+    fun frasesComunidad(idioma: String, app: String = "cajon"): List<FraseComunidad> = b.usar {
+        leer("SELECT id, texto, idioma, franja, app FROM frases_propuestas WHERE estado = 'aprobada' AND idioma = ? AND app = ? ORDER BY id DESC LIMIT 300", idioma, AppsSocial.validar(app)) {
+            FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), franja = it.getString(4), app = it.getString(5))
         }
     }
 
@@ -1309,8 +1343,8 @@ class Social(
     fun frasesPendientes(yo: Long, token: String? = null): List<FraseComunidad> {
         equipo.requiere(yo, "gestionar_frases", token)
         return b.usar {
-            leer("SELECT f.id, f.texto, f.idioma, COALESCE(c.usuario, '') FROM frases_propuestas f LEFT JOIN cuentas c ON c.id = f.cuenta WHERE f.estado = 'pendiente' ORDER BY f.id LIMIT 100") {
-                FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), it.getString(4))
+            leer("SELECT f.id, f.texto, f.idioma, COALESCE(c.usuario, ''), f.app FROM frases_propuestas f LEFT JOIN cuentas c ON c.id = f.cuenta WHERE f.estado = 'pendiente' ORDER BY f.id LIMIT 100") {
+                FraseComunidad("c${it.getLong(1)}", it.getString(2), it.getString(3), it.getString(4), app = it.getString(5))
             }
         }
     }
@@ -1328,9 +1362,10 @@ class Social(
         val t = f.texto.trim().replace(Regex("\\s+"), " ")
         if (t.codePointCount(0, t.length) !in 4..90 || f.idioma !in setOf("es", "en")) throw Problema(400, "frase")
         val franja = f.franja.takeIf { it in FRANJAS } ?: "todo"
-        val id = b.usar { insertar("INSERT INTO frases_propuestas(cuenta, texto, idioma, estado, cuando, franja) VALUES(?,?,?,'aprobada',?,?)", yo, t, f.idioma, ahora(), franja) }
+        val app = AppsSocial.validar(f.app)
+        val id = b.usar { insertar("INSERT INTO frases_propuestas(cuenta, texto, idioma, estado, cuando, franja, app) VALUES(?,?,?,'aprobada',?,?,?)", yo, t, f.idioma, ahora(), franja, app) }
         equipo.registrar(yo.toString(), "frase_agregar", "c$id", t, token)
-        return FraseComunidad("c$id", t, f.idioma, franja = franja)
+        return FraseComunidad("c$id", t, f.idioma, franja = franja, app = app)
     }
 
     /** El equipo quita una frase: de la gente (queda rechazada) o de la app (por su clave, la app deja de mostrarla). */
@@ -1457,7 +1492,8 @@ class Social(
      * se oculta mientras se revisa (su autor lo sigue viendo).
      */
     fun reportar(yo: Long?, r: NuevoReporte) {
-        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen")) throw Problema(400, "que")
+        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen", "lugar")) throw Problema(400, "que")
+        if (r.que == "lugar" && verLugar(r.objeto.toLongOrNull() ?: throw Problema(400, "objeto")) == null) throw Problema(404, "no_existe")
         if (r.que == "imagen" && !urlImagenValida(r.objeto)) throw Problema(400, "url")
         if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= 10)
             throw Problema(429, "despacio")
@@ -1485,6 +1521,7 @@ class Social(
         val id = objeto.toLongOrNull() ?: return
         b.usar {
             when (que) {
+                "lugar" -> cambiar("UPDATE lugares SET retirado = ? WHERE id = ?", if (si) 1 else 0, id)
                 "publicacion" -> cambiar("UPDATE publicaciones SET oculta = ? WHERE id = ?", if (si) 1 else 0, id)
                 "comentario" -> cambiar("UPDATE comentarios SET oculto = ? WHERE id = ?", if (si) 1 else 0, id)
             }
@@ -1522,6 +1559,7 @@ class Social(
             "publicacion" -> leer("SELECT datos, cuenta, oculta FROM publicaciones WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "comentario" -> leer("SELECT texto, cuenta, oculto FROM comentarios WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "cuenta" -> leer("SELECT perfil, id FROM cuentas WHERE usuario = ?", objeto) { Triple(it.getString(1), it.getLong(2), false) }.firstOrNull()
+            "lugar" -> leer("SELECT nombre || ' · ' || ciudad, cuenta, retirado FROM lugares WHERE id = ?", id) { Triple(it.getString(1), (it.getObject(2) as? Number)?.toLong(), it.getInt(3) == 1) }.firstOrNull()
             "imagen" -> Triple(objeto, null, leer("SELECT 1 FROM imagenes_bloqueadas WHERE url = ?", objeto) { 1 }.isNotEmpty())
             // Un mensaje va cifrado: lo único que se ve es lo que mandó quien lo reportó (con su permiso).
             else -> Triple(motivos.joinToString("\n---\n"), leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.substringBefore(':')) { it.getLong(1) }.firstOrNull(), false)
@@ -1536,7 +1574,7 @@ class Social(
 
     private fun decidirInterno(yo: Long, d: Decision, token: String? = null) {
         equipo.requiere(yo, "sancionar", token)
-        if (d.que !in setOf("cuenta", "publicacion", "comentario", "mensaje")) throw Problema(400, "que")
+        if (d.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "lugar")) throw Problema(400, "que")
         if (d.decision !in setOf("sin_falta", "falta", "falta_grave", "cerrar")) throw Problema(400, "decision")
         val (_, autor, _) = verReportado(d.que, d.objeto, emptyList())
         if (autor != null) equipo.inferior(yo, autor)
@@ -1558,6 +1596,7 @@ class Social(
         val id = d.objeto.toLongOrNull()
         b.usar {
             val retirados = when (d.que) {
+                "lugar" -> cambiar("UPDATE lugares SET retirado = 1 WHERE id = ?", id)
                 "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, id)
                 "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, id)
                 else -> 1
@@ -1577,6 +1616,14 @@ class Social(
     }
 
     fun retirar(yo: Long, d: ContenidoEquipo, token: String?) = b.transaccion {
+        if (d.que == "lugar") {
+            equipo.requiere(yo, "gestionar_publicaciones", token)
+            val autor = leer("SELECT cuenta FROM lugares WHERE id = ?", d.objeto.toLongOrNull()) { (it.getObject(1) as? Number)?.toLong() }.singleOrNull()
+            autor?.let { equipo.inferior(yo, it) }
+            if (cambiar("UPDATE lugares SET retirado = 1 WHERE id = ?", d.objeto.toLongOrNull()) == 0) throw Problema(404, "no_existe")
+            equipo.registrar(yo.toString(), "lugar_retirar", d.objeto, d.motivo, token)
+            return@transaccion
+        }
         val tabla = when (d.que) { "publicacion" -> "publicaciones"; "comentario" -> "comentarios"; else -> throw Problema(400, "objeto") }
         equipo.requiere(yo, if (d.que == "comentario") "moderar_comentarios" else "gestionar_publicaciones", token)
         val autor = leer("SELECT cuenta FROM $tabla WHERE id = ?", d.objeto.toLongOrNull()) { it.getLong(1) }.singleOrNull() ?: throw Problema(404, "no_existe")
@@ -1674,7 +1721,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-10"
+        const val POLITICA = "2026-11-11"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

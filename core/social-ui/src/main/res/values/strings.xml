@@ -283,4 +283,12 @@
     <string name="social_privacidad_social_titulo">With an account: Fogón Social</string>
     <string name="social_privacidad_titulo">What leaves your phone</string>
     <string name="social_red_tipo_publico">posted</string>
+    <string name="social_frase_me_gusta">I like this phrase</string>
+    <string name="social_frase_ya_no_gusta">I don\'t like it anymore</string>
+    <string name="social_frase_no_mostrar">Don\'t show it again</string>
+    <string name="social_frase_proponer">Suggest a phrase</string>
+    <string name="social_frase_te_gusta">You like this phrase</string>
+    <string name="social_frase_propuesta_gracias">Thanks! If it fits, everyone will see it</string>
+    <string name="social_ruta_politica" translatable="false">/privacy</string>
+    <string name="social_ruta_terminos" translatable="false">/terms</string>
 </resources>

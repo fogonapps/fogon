@@ -23,6 +23,7 @@ import io.github.fogonapps.identidad.APPS_FOGON
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.RespaldoFogon
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,13 +60,38 @@ sealed interface Pantalla {
     data object Manifiesto : Pantalla
     data object Apariencia : Pantalla
     data object Licencias : Pantalla
+    /* ----- Cuenta y red (CU-01), como en El Forzudo ----- */
+    data object Cuenta : Pantalla
+    data class Seguridad(val ajuste: io.github.fogonapps.social.ui.AjusteSocial) : Pantalla
+    data class Gente(val usuario: String, val seguidores: Boolean) : Pantalla
+    data object Transparencia : Pantalla
+    /** Avisos, moderación, una publicación, un perfil ajeno o una etiqueta de «Tu gente». */
+    data class Social(val destino: String = "red", val id: Long = 0, val usuario: String = "") : Pantalla
+    /** Compartir un plato: desde algo anotado ([anotado] en [fecha]) o en blanco. */
+    data class CompartirPlato(val fecha: String? = null, val anotado: String? = null) : Pantalla
+    data class CompartirReceta(val id: String) : Pantalla
+    /** Reseñar un restaurante; con [clave], actualizar una reseña ya publicada. */
+    data class ResenarRestaurante(val clave: String? = null) : Pantalla
 }
 
-enum class Pestana { HOY, RECETAS, PLAN, PROGRESO }
+enum class Pestana { HOY, GENTE, RECETAS, PLAN, PROGRESO }
+
+/** La red de La Cucha: rutas /v2/apps/cucha y correos con su nombre. */
+val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("cucha", "La Cucha", "LaCucha-Fogon")
 
 class CuchaViewModel(app: Application) : AndroidViewModel(app) {
+    /** Las frases del saludo, como en El Cajón: las propias (cu_) y, con red, las de la gente de La Cucha. */
+    val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
     private val cuchaApp = app as CuchaApp
-    private val almacen = cuchaApp.almacen
+    val idPerfil = cuchaApp.perfiles.lista.activo
+    private val almacen = cuchaApp.almacenPerfil(idPerfil)
+    val perfiles get() = cuchaApp.perfiles
+    private val sesion = io.github.fogonapps.social.SesionApp(app, cuchaApp.perfiles, idPerfil, "cucha")
+    /** La cuenta y «Tu gente» (sin chat, D-030). */
+    val red = io.github.fogonapps.social.RedApp(cuchaApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
+        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
+        { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.cucha.datos.cabePublicacionCucha(it) }, "publicaciones-cucha.json",
+        listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES))
     val L get() = cuchaApp.logica
 
     private val _estado = MutableStateFlow<Estado?>(null)
@@ -93,6 +119,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
+            cuchaApp.confirmarCuaderno()
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d -> if (d != ultimoGuardado && d != _estado.value) _estado.value = d }
         }
@@ -114,6 +141,9 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         guardado?.cancel()
         guardado = viewModelScope.launch { delay(300); guardarYa() }
     }
+
+    /** Al salir de la app; durante un cambio de perfil lo guarda el propio cambio. */
+    fun guardarAlSalir() { if (cambiandoPerfil) return; guardado?.cancel(); viewModelScope.launch { guardarYa() } }
 
     suspend fun guardarYa() {
         val e = _estado.value ?: return
@@ -138,13 +168,77 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
 
     fun anotarAhora() = abrir(Pantalla.Anotar(comidaAhora(), _dia.value.toString()))
 
+    /* ----- Perfiles del teléfono ----- */
+
+    private var cambiandoPerfil = false
+    fun agregarPerfil() {
+        val nuevo = perfiles.agregar() ?: return
+        cambiarPerfil(nuevo.id)
+    }
+    private var retirarAlCambiar = false
+    fun retirarPerfil() {
+        val otro = perfiles.lista.perfiles.firstOrNull { it.id != idPerfil } ?: perfiles.agregar() ?: return
+        retirarAlCambiar = true
+        cambiarPerfil(otro.id)
+    }
+    /** Guarda, detiene lo de este perfil y activa otro; la actividad arma un ViewModel nuevo para él. */
+    fun cambiarPerfil(id: String) {
+        if (id == idPerfil || cambiandoPerfil) return
+        cambiandoPerfil = true
+        viewModelScope.launch {
+            try {
+                red.invalidar()
+                val actual = kotlinx.coroutines.currentCoroutineContext()[Job]
+                viewModelScope.coroutineContext[Job]?.children?.filter { it != actual }?.toList()?.forEach { it.cancelAndJoin() }
+                guardarYa()
+                if (retirarAlCambiar) {
+                    if (idPerfil == "1") io.github.fogonapps.cucha.datos.migracionPerfiles(getApplication()).confirmarArranque()
+                    cuchaApp.cerrarAlmacen(idPerfil)
+                    perfiles.cambiar(id)
+                    perfiles.quitar(idPerfil) { perfil ->
+                        io.github.fogonapps.social.SesionApp.preferenciasDe("cucha", perfil).forEach {
+                            check(getApplication<Application>().getSharedPreferences(it, android.content.Context.MODE_PRIVATE).edit().clear().commit())
+                        }
+                    }
+                }
+                cuchaApp.activarPerfil(id)
+                WidgetCalorias.actualizar(getApplication())
+            } catch (x: java.io.IOException) {
+                cambiandoPerfil = false
+                avisar(tx(R.string.cuenta_error))
+            }
+        }
+    }
+
     /* ----- El Forzudo ----- */
 
-    /** Lee el peso y los entrenos de El Forzudo (si está). Si hay un peso nuevo y las metas son automáticas, las recalcula. */
+    /** Los perfiles de El Forzudo, para elegir a mano cuál es el de esta persona (null: no tiene o no está). */
+    private val _perfilesForzudo = MutableStateFlow<List<io.github.fogonapps.identidad.PerfilDeApp>?>(null)
+    val perfilesForzudo: StateFlow<List<io.github.fogonapps.identidad.PerfilDeApp>?> = _perfilesForzudo
+    private val _enlaceForzudo = MutableStateFlow<io.github.fogonapps.cucha.datos.EnlaceForzudo>(io.github.fogonapps.cucha.datos.EnlaceForzudo.Ninguno)
+    val enlaceForzudo: StateFlow<io.github.fogonapps.cucha.datos.EnlaceForzudo> = _enlaceForzudo
+
+    /** Datos de la red que se recuerdan en este perfil (por ejemplo, el lugar de una publicación propia). */
+    fun datoRed(clave: String): String? = sesion.dato(clave)
+    fun guardarDatoRed(clave: String, valor: String?) = sesion.guardarDato(clave, valor)
+
+    /** La persona elige qué perfil de El Forzudo es el suyo (o [io.github.fogonapps.cucha.datos.FORZUDO_NINGUNO]). */
+    fun elegirPerfilForzudo(id: String) { sesion.guardarDato("forzudo", id); leerForzudo() }
+
+    /** Lee el peso y los entrenos de El Forzudo (si está), del perfil enlazado. Si hay un peso nuevo y las metas son automáticas, las recalcula. */
     fun leerForzudo() {
         viewModelScope.launch {
             val c = getApplication<Application>()
-            val texto = RespaldoFogon.leerDe(c, APPS_FOGON.first { it.clave == "forzudo" })
+            val app = APPS_FOGON.first { it.clave == "forzudo" }
+            val lista = RespaldoFogon.perfilesDe(c, app)
+            _perfilesForzudo.value = lista
+            val enlace = io.github.fogonapps.cucha.datos.enlaceForzudo(lista, sesion.idCuenta, sesion.dato("forzudo"), perfiles.lista.perfiles.size)
+            _enlaceForzudo.value = enlace
+            val texto = when (enlace) {
+                io.github.fogonapps.cucha.datos.EnlaceForzudo.Unico -> RespaldoFogon.leerDe(c, app)
+                is io.github.fogonapps.cucha.datos.EnlaceForzudo.Perfil -> RespaldoFogon.leerPerfilDe(c, app, enlace.id)
+                else -> null
+            }
             val d = texto?.let { leerForzudo(it, hoy()) }
             _forzudo.value = d
             val e = _estado.value ?: return@launch
@@ -301,7 +395,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         var muestra = 1
         while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= 1000) muestra *= 2
         val b = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: error("no se lee")
-        val carpeta = java.io.File(app.filesDir, "recetas").apply { mkdirs() }
+        val carpeta = java.io.File(perfiles.directorio(idPerfil), "recetas").apply { mkdirs() }
         val archivo = java.io.File(carpeta, "$id-${System.currentTimeMillis()}.jpg")
         archivo.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it) }
         return archivo.toURI().toString()

@@ -4,6 +4,9 @@
 
     <!-- Internet solo para buscar productos por código de barras en Open Food Facts, si la persona lo activa en Perfil. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Solo al tocar «Usar mi ubicación» al crear un restaurante (CU-01, D-031). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- La cámara (la pide el lector de códigos de barras, solo al escanear) es opcional: la app sirve sin ella. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 

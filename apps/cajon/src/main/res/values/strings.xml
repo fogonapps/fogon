@@ -1345,10 +1345,10 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">Fogón Social is now the account for every Fogón app: El Cajón and El Forzudo.
-We keep which app you sign in and post from, to show each thing in its app.
-From El Forzudo only what you share from a workout is sent; never your weight or measurements.
-We corrected how often you can change your username: once every 30 days.</string>
+  <string name="politica_resumen">La Cucha now uses the Fogón Social account too.
+If you review a restaurant, we keep the place (name, city and, if you add them, the address and the rounded location).
+Only what you share leaves La Cucha: calories and macros only if you include them; never your diary, goals or weight.
+The policy and terms now have an English version.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
@@ -1431,4 +1431,9 @@ We corrected how often you can change your username: once every 30 days.</string
   <string name="lastfm_listo">Last.fm import complete.</string>
   <string name="beta_aviso">Beta: El Cajón may still change and have bugs. If something doesn’t work, tell us in “Report a problem or suggest something”.</string>
   <string name="beta_problemas">Known issues</string>
+  <string name="app_cajon">El Cajón</string>
+  <string name="app_forzudo">El Forzudo</string>
+  <string name="app_cucha">La Cucha</string>
+    <string name="ruta_politica" translatable="false">/privacy</string>
+    <string name="ruta_terminos" translatable="false">/terms</string>
 </resources>

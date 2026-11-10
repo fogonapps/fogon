@@ -15,7 +15,7 @@
   <string name="comida_cena">Dinner</string>
   <string name="hoy">Today</string>
   <string name="ayer">Yesterday</string>
-  <string name="hola">Hi</string>
+  <string name="hola">Hi!</string>
   <string name="hola_nombre">Hi, %1$s</string>
   <string name="dia_anterior">Previous day</string>
   <string name="dia_siguiente">Next day</string>
@@ -279,4 +279,126 @@
     <string name="perfil_quitar_imagen">Remove image</string>
     <string name="tu_perfil">Your profile</string>
     <string name="perfil_sin_nombre">Your name</string>
+  <string-array name="frases_inicio">
+    <item>What’s for dinner?</item>
+    <item>Something tasty today.</item>
+    <item>One more glass of water.</item>
+    <item>Eating well is a treat too.</item>
+    <item>Had breakfast?</item>
+    <item>Homemade tastes better.</item>
+    <item>Little by little, plate by plate.</item>
+    <item>What are you craving today?</item>
+    <item>No rush: log when you can.</item>
+    <item>Something green today.</item>
+  </string-array>
+    <!-- Cuenta y red (CU-01) -->
+    <string name="pestana_gente">Your people</string>
+    <string name="cuenta_tu_cuenta">Your account</string>
+    <string name="cuenta_tu_cuenta_pista">Fogón Social: profile, people and what you share</string>
+    <string name="cuenta_error">The operation couldn’t be completed. Check your connection and try again.</string>
+    <string name="cuenta_operacion_lista">Done.</string>
+    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
+    <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
+    <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
+    <string name="cuenta_local">Your diary, goals, weight, recipes and products stay in this profile on the phone. Signing in doesn’t merge or recover notebooks. Save a backup before removing a profile.</string>
+    <string name="cuenta_intro">La Cucha’s network: your Fogón Social account, the same in every app. Follow other people and share dishes, recipes and restaurants.</string>
+    <string name="cuenta_que_sale">Your diary never leaves this phone. Only what you choose to share appears on the network: never your goals, your weight or what you eat each day. A dish’s or recipe’s calories and macros only go out if you include them. A restaurant’s location only goes out if you add it.</string>
+    <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your diary is still available.</string>
+    <string name="cuenta_politica_resumen">The policy now covers Fogón Social and its apps: the app you sign in from and what you share from La Cucha. Your diary, goals and weight never leave the phone.</string>
+    <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the dishes, recipes and reviews you choose are shared, with their visibility. Signing out other sessions and deleting the account affect every app.</string>
+    <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local diary is kept until you remove the profile.</string>
+    <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and what you share.</string>
+    <string name="cuenta_servicio_forzudo">El Forzudo (on this phone): weight and this week’s workouts from the linked profile.</string>
+    <string name="forzudo_perfil_titulo">Your El Forzudo profile</string>
+    <string name="forzudo_perfil_pista">El Forzudo has several profiles. Choose yours to read your weight and workouts; it is never guessed from the number.</string>
+    <string name="forzudo_ninguno">None</string>
+    <string name="forzudo_perfil_sin_nombre">Profile %1$s</string>
+    <string name="red_tu_gente">Your people</string>
+    <string name="red_entrar">Sign in to Fogón Social</string>
+    <string name="red_compartir">Share</string>
+    <string name="red_que_compartir">What do you want to share?</string>
+    <string name="red_plato">A dish</string>
+    <string name="red_receta">One of your recipes</string>
+    <string name="red_restaurante">A restaurant</string>
+    <string name="red_avisos">Notifications</string>
+    <string name="red_moderacion">Moderation</string>
+    <string name="red_guardados">Saved</string>
+    <string name="red_feed_pie">Dishes, recipes and restaurants shared on La Cucha</string>
+    <string name="red_seguir">Follow</string>
+    <string name="red_dejar_seguir">Unfollow</string>
+    <string name="red_borrar">Delete post?</string>
+    <string name="red_privado">Make it private? It will be removed from the network; what’s on your phone is kept.</string>
+    <string name="red_publicado">Your post</string>
+    <string name="red_actualizar">Update post</string>
+    <string name="red_editar">Edit: %1$s</string>
+    <string name="red_publicar">Post</string>
+    <string name="red_seguidores">Only for my followers</string>
+    <string name="red_texto">Optional text</string>
+    <string name="red_etiquetas_pista">Use #tags so people can find it (for example #lunch).</string>
+    <string name="red_agregar_foto">Add a photo</string>
+    <string name="red_agregar_video">Add a video</string>
+    <string name="red_quitar_foto">Remove photo %1$d</string>
+    <string name="red_quitar_video">Remove video</string>
+    <string name="red_error">The post or file couldn’t be prepared. Check the limits and try again.</string>
+    <string name="red_reproducir">Play video</string>
+    <string name="red_nota">Your rating</string>
+    <string name="red_nota_n">%1$d out of 5</string>
+    <string name="red_quitar_nota">No rating</string>
+    <string name="red_nutricion">Include nutrition information</string>
+    <string name="red_nutricion_pista">Off: calories and macros are not shared.</string>
+    <string name="red_aviso_plato">Only this dish is shared. Your diary, goals and weight don’t leave the phone.</string>
+    <string name="red_aviso_receta">A copy of the recipe is shared: later changes aren’t posted automatically.</string>
+    <string name="red_nombre_plato">Dish name</string>
+    <string name="red_donde_comiste">Where did you eat it? (optional)</string>
+    <string name="red_lugar_nombre">Restaurant name</string>
+    <string name="red_lugar_ciudad">City</string>
+    <string name="red_lugar_direccion">Address or neighbourhood (optional)</string>
+    <string name="red_usar_ubicacion">Use my location</string>
+    <string name="red_ubicacion_pista">Permission is only requested when you tap. The location goes on the place’s card, never on a dish without a restaurant.</string>
+    <string name="red_ubicacion_sale">Shared with the place’s location (rounded, about 11 m).</string>
+    <string name="red_ubicacion_no_sale">No location: only the name, city and written address.</string>
+    <string name="red_quitar_ubicacion">Remove location</string>
+    <string name="red_ubicacion_no">Couldn’t get your location. Type the address yourself.</string>
+    <string name="red_buscando_ubicacion">Finding your location…</string>
+    <string name="red_sugerencias">Places that already exist</string>
+    <string name="red_lugar_nuevo">Create “%1$s” in %2$s</string>
+    <string name="red_cambiar_lugar">Change place</string>
+    <string name="red_plato_pedido">What did you order? (optional)</string>
+    <string name="red_lugar_no_disponible">Place not available</string>
+    <string name="red_reportar_lugar">Report place</string>
+    <string name="red_porciones">%1$d servings</string>
+    <string name="red_minutos">%1$d min</string>
+    <string name="red_ingredientes">Ingredients</string>
+    <string name="red_pasos">Steps</string>
+    <string name="red_macros">%1$d kcal · protein %2$s g · carbs %3$s g · fat %4$s g</string>
+    <string name="red_por_porcion">Per serving</string>
+    <string name="red_elegir_plato">Choose a logged dish</string>
+    <string name="red_plato_en_blanco">A new dish</string>
+    <string name="red_elegir_receta">Choose one of your recipes</string>
+    <string name="red_sin_recetas_propias">You don’t have your own recipes yet. Create one in Recipes.</string>
+    <string name="red_vista_previa">How it will look</string>
+    <string name="red_compartir_plato">Share dish</string>
+    <string name="red_compartir_receta">Share recipe</string>
+    <string name="red_resenar">Review a restaurant</string>
+    <string name="red_publicados">What you’ve shared</string>
+    <string name="red_restaurantes">Restaurants</string>
+    <string name="red_resenas">Reviews</string>
+    <string name="red_sin_publicaciones">Nothing here yet.</string>
+    <string name="red_sin_comidas_hoy">No dishes logged in the last few days.</string>
+    <plurals name="red_utiles">
+        <item quantity="one">%d person found it helpful</item>
+        <item quantity="other">%d people found it helpful</item>
+    </plurals>
+    <string name="red_tipo_plato">Dish</string>
+    <string name="red_tipo_receta">Recipe</string>
+    <string name="red_tipo_resena">Review</string>
+    <string name="red_platos">Dishes</string>
+    <string name="red_quien_lo_ve">Who sees it</string>
+    <string name="red_partes_pista">Your favourite dishes (the ones you star) and the restaurants you rated 4 or 5. Never calories or weight.</string>
+    <string name="red_platos_favoritos">Favourite dishes</string>
+    <string name="red_restaurantes_favoritos">Favourite restaurants</string>
+    <string name="red_vis_privado">Only on this phone</string>
+    <string name="red_vis_publica">Public</string>
+    <string name="red_vis_seguidores">Followers</string>
+    <string name="red_sin_favoritos">None yet.</string>
 </resources>

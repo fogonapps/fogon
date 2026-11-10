@@ -1,1 +1,0 @@
-Your profile and settings are now organized like in El Cajón. The profile has a photo, a cover and a few words about you, with your goals as percentages and your achievements; it never shows amounts. Settings is now its own screen (⚙ in the profile).

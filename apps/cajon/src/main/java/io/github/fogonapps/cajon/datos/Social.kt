@@ -38,11 +38,11 @@ fun esCuentaNueva(error: ErrorSocial) = io.github.fogonapps.social.esCuentaNueva
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class Buscado(val titulo: String, val vistas: Long = 0, val wikidata: String = "", val tmdb: String = "")
 @Serializable data class DelMomentoServidor(val dia: String = "", val peliculas: List<Buscado> = emptyList(), val series: List<Buscado> = emptyList(), val anime: List<Buscado> = emptyList())
-@Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
-@Serializable data class VotoFrase(val valor: Int)
-@Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo")
-@Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String = "", val de: String = "", val franja: String = "todo")
-@Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
+typealias ConteoFrase = io.github.fogonapps.social.ConteoFrase
+typealias VotoFrase = io.github.fogonapps.social.VotoFrase
+typealias FraseNueva = io.github.fogonapps.social.FraseNueva
+typealias FraseComunidad = io.github.fogonapps.social.FraseComunidad
+typealias DecisionFrase = io.github.fogonapps.social.DecisionFrase
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 @Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
 
@@ -66,16 +66,6 @@ class ClienteSocial(token: String? = null, permiteRed: () -> Boolean = { true })
         leer(ListSerializer(PublicacionSocial.serializer()), pedir("/resenas?fuente=${cod(fuente)}&parte=${cod(parte)}&orden=${cod(orden)}" + (antes?.let { "&antes=$it" } ?: "")))
     suspend fun momento(idioma: String): DelMomentoServidor = leer(DelMomentoServidor.serializer(), pedir("/momento?idioma=${cod(idioma)}"))
 
-    /** Los votos de la comunidad a las frases del saludo (clave → sí y no). */
-    suspend fun frases(): Map<String, ConteoFrase> = leer(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ConteoFrase.serializer()), pedir("/frases"))
-    suspend fun frasesComunidad(idioma: String) = leer(ListSerializer(FraseComunidad.serializer()), pedir("/frases/comunidad?idioma=${cod(idioma)}"))
-    suspend fun proponerFrase(texto: String, idioma: String) { pedir("/frases/propuestas", "POST", json(FraseNueva.serializer(), FraseNueva(texto, idioma))) }
-    suspend fun frasesOcultas() = leer(ListSerializer(kotlinx.serialization.serializer<String>()), pedir("/frases/ocultas"))
-    suspend fun agregarFrase(texto: String, idioma: String, franja: String) = leer(FraseComunidad.serializer(), pedir("/admin/frases", "PUT", json(FraseNueva.serializer(), FraseNueva(texto, idioma, franja))))
-    suspend fun quitarFrase(clave: String) { pedir("/admin/frases/${cod(clave)}", "DELETE") }
-    suspend fun frasesPendientes() = leer(ListSerializer(FraseComunidad.serializer()), pedir("/admin/frases"))
-    suspend fun decidirFrase(clave: String, aprobar: Boolean) { pedir("/admin/frases", "POST", json(DecisionFrase.serializer(), DecisionFrase(clave, aprobar))) }
-    suspend fun votarFrase(clave: String, valor: Int) { pedir("/frases/${cod(clave)}", "PUT", json(VotoFrase.serializer(), VotoFrase(valor))) }
 
     suspend fun ponerNota(n: NotaNueva) { pedir("/nota", "PUT", json(NotaNueva.serializer(), n)) }
     suspend fun notas() = leer(ListSerializer(NotaSocial.serializer()), pedir("/notas"))

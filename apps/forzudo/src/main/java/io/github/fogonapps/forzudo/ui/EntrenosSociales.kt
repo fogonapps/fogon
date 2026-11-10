@@ -30,11 +30,6 @@ fun BotonCompartirEntreno(vm: GymViewModel, id: String) {
 }
 
 @Composable
-fun BotonRedForzudo(vm: GymViewModel) {
-    BotonSecundario(stringResource(R.string.entreno_tu_gente), { vm.abrir(Pantalla.Social()) }, Modifier.padding(16.dp))
-}
-
-@Composable
 fun CuerpoEntreno(datos: JsonObject) {
     val f = FogonTema.actual
     Text(datos["titulo"]?.jsonPrimitive?.content.orEmpty(), color = f.texto, style = MaterialTheme.typography.titleMedium)
@@ -190,42 +185,46 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                     })
             }
         }
-        else -> {
-            val usuario by vm.red.usuario.collectAsState()
-            var pestana by rememberSaveable { mutableIntStateOf(1) }
-            val feed by vm.red.feed.collectAsState()
-            val explorar by vm.red.explorar.collectAsState()
-            val ocultas by vm.red.ocultas.collectAsState()
-            val sinLeer by vm.red.sinLeer.collectAsState()
-            val cuenta by vm.red.cuenta.collectAsState()
-            var eligiendo by rememberSaveable { mutableStateOf(false) }
-            val estado by vm.estado.collectAsState()
-            LaunchedEffect(Unit) { vm.red.cargarFeed(); vm.red.cargarExplorar(); vm.red.revisarSinLeer() }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BotonIconoSocial(IconosSociales.Atras, stringResource(R.string.volver)) { vm.cerrar() }
-                Text(stringResource(R.string.entreno_tu_gente), style = MaterialTheme.typography.headlineSmall, color = FogonTema.actual.texto, modifier = Modifier.weight(1f))
-                if (usuario != null) ConCuentaSocial(sinLeer) {
-                    BotonIconoSocial(IconosFogon.Campana, stringResource(R.string.entreno_avisos), grande = true) { vm.abrir(Pantalla.Social("avisos")) }
-                }
-                if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.entreno_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
-            }
-            if (usuario == null) BotonRiso(stringResource(R.string.entreno_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
-            PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.entreno_compartir)) { eligiendo = true }
-            if (eligiendo) AlertDialog(onDismissRequest = { eligiendo = false }, title = { Text(stringResource(R.string.entreno_elegir)) },
-                text = {
-                    Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
-                        val recientes = estado?.sessions.orEmpty().asReversed().sortedByDescending { it.date }.take(20)
-                        if (recientes.isEmpty()) Text(stringResource(R.string.sin_entrenos), color = FogonTema.actual.textoSuave)
-                        recientes.forEach { sesion -> TextButton({ eligiendo = false; vm.abrir(Pantalla.Compartir(sesion.id)) }, Modifier.fillMaxWidth()) {
-                            Text("${sesion.title ?: fechaLegible(sesion.date)} · ${fechaLegible(sesion.date)}")
-                        } }
-                    }
-                }, confirmButton = { TextButton({ eligiendo = false }) { Text(stringResource(R.string.volver)) } })
-            ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas }?.map { it to Unit }, pestana,
-                vm.red::masFeed, stringResource(R.string.entreno_feed_pie)) { p, _ -> TarjetaPublicacion(interfaz, p) }
-        }
+        else -> TuGente(vm, interfaz, conAtras = true)
     }
+}
+
+/** «Tu gente»: Siguiendo y Explorar de El Forzudo; es una sección de la barra (X-07) y también se abre encima. */
+@Composable
+fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), conAtras: Boolean = false) {
+    val usuario by vm.red.usuario.collectAsState()
+    var pestana by rememberSaveable { mutableIntStateOf(1) }
+    val feed by vm.red.feed.collectAsState()
+    val explorar by vm.red.explorar.collectAsState()
+    val ocultas by vm.red.ocultas.collectAsState()
+    val sinLeer by vm.red.sinLeer.collectAsState()
+    val cuenta by vm.red.cuenta.collectAsState()
+    var eligiendo by rememberSaveable { mutableStateOf(false) }
+    val estado by vm.estado.collectAsState()
+    LaunchedEffect(Unit) { vm.red.cargarFeed(); vm.red.cargarExplorar(); vm.red.revisarSinLeer() }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (conAtras) BotonIconoSocial(IconosSociales.Atras, stringResource(R.string.volver)) { vm.cerrar() }
+        Text(stringResource(R.string.entreno_tu_gente), style = MaterialTheme.typography.headlineSmall, color = FogonTema.actual.texto, modifier = Modifier.weight(1f))
+        if (usuario != null) ConCuentaSocial(sinLeer) {
+            BotonIconoSocial(IconosFogon.Campana, stringResource(R.string.entreno_avisos), grande = true) { vm.abrir(Pantalla.Social("avisos")) }
+        }
+        if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.entreno_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
+    }
+    if (usuario == null) BotonRiso(stringResource(R.string.entreno_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
+    PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.entreno_compartir)) { eligiendo = true }
+    if (eligiendo) AlertDialog(onDismissRequest = { eligiendo = false }, title = { Text(stringResource(R.string.entreno_elegir)) },
+        text = {
+            Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                val recientes = estado?.sessions.orEmpty().asReversed().sortedByDescending { it.date }.take(20)
+                if (recientes.isEmpty()) Text(stringResource(R.string.sin_entrenos), color = FogonTema.actual.textoSuave)
+                recientes.forEach { sesion -> TextButton({ eligiendo = false; vm.abrir(Pantalla.Compartir(sesion.id)) }, Modifier.fillMaxWidth()) {
+                    Text("${sesion.title ?: fechaLegible(sesion.date)} · ${fechaLegible(sesion.date)}")
+                } }
+            }
+        }, confirmButton = { TextButton({ eligiendo = false }) { Text(stringResource(R.string.volver)) } })
+    ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas }?.map { it to Unit }, pestana,
+        vm.red::masFeed, stringResource(R.string.entreno_feed_pie)) { p, _ -> TarjetaPublicacion(interfaz, p) }
 }
 
 @Composable

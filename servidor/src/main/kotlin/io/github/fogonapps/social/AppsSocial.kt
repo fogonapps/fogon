@@ -30,6 +30,7 @@ fun validarLoteApp(app: String, c: CambiosPublicaciones) {
         when (app) {
             "cajon" -> if (p.tipo !in setOf("diario", "resena", "lista", "foto")) throw Problema(400, "tipo_app")
             "forzudo" -> { if (p.tipo != "entreno") throw Problema(400, "tipo_app"); validarEntreno(p.datos) }
+            "cucha" -> validarComida(p.tipo, p.datos)
             else -> throw Problema(400, "tipo_app")
         }
     }
@@ -78,5 +79,56 @@ private fun validarEntreno(d: JsonObject) {
                 if (texto(serie, "unidadDuracion", 1) != "s") mal()
             } else if ("unidadDuracion" in serie) mal()
         }
+    }
+}
+
+internal fun validarComida(tipo: String, d: JsonObject) {
+    fun mal(): Nothing = throw Problema(400, "cucha_esquema")
+    fun campos(o: JsonObject, claves: Set<String>) { if (o.keys.any { it !in claves }) mal() }
+    fun texto(o: JsonObject, k: String, max: Int, vacio: Boolean = false): String {
+        val v = o[k] as? JsonPrimitive ?: mal()
+        if (!v.isString || (!vacio && v.content.isBlank()) || v.content.length > max) mal()
+        return v.content
+    }
+    fun numero(o: JsonObject, k: String, min: Double, max: Double, entero: Boolean = false): Double {
+        val v = o[k] as? JsonPrimitive ?: mal()
+        val n = v.doubleOrNull ?: mal()
+        if (v.isString || !n.isFinite() || n < min || n > max || (entero && n % 1 != 0.0)) mal()
+        return n
+    }
+    val comunes = setOf("version", "texto", "imagenes", "video", "poster")
+    val propias = when (tipo) {
+        "plato" -> setOf("nombre", "nota", "lugar", "nutricion")
+        "receta" -> setOf("nombre", "porciones", "tiempo", "ingredientes", "pasos", "nutricion")
+        "resena_restaurante" -> setOf("lugar", "nota", "plato")
+        else -> throw Problema(400, "tipo_app")
+    }
+    campos(d, comunes + propias)
+    numero(d, "version", 1.0, 1.0, true)
+    if (tipo != "resena_restaurante") texto(d, "nombre", 120)
+    if ("texto" in d) texto(d, "texto", 2000, true)
+    if ("nota" in d || tipo == "resena_restaurante") numero(d, "nota", 1.0, 5.0, true)
+    if ("lugar" in d || tipo == "resena_restaurante") numero(d, "lugar", 1.0, 9007199254740991.0, true)
+    if ("plato" in d) texto(d, "plato", 120)
+    if ("nutricion" in d) {
+        val n = d["nutricion"] as? JsonObject ?: mal()
+        campos(n, setOf("kcal", "proteina", "carbohidratos", "grasa"))
+        numero(n, "kcal", 0.0, 10000.0)
+        for (k in listOf("proteina", "carbohidratos", "grasa")) numero(n, k, 0.0, 1000.0)
+    }
+    if (tipo == "receta") {
+        numero(d, "porciones", 1.0, 100.0, true)
+        if ("tiempo" in d) numero(d, "tiempo", 1.0, 10080.0, true)
+        val ingredientes = d["ingredientes"] as? JsonArray ?: mal()
+        if (ingredientes.size !in 1..100) mal()
+        ingredientes.forEach {
+            val i = it as? JsonObject ?: mal()
+            campos(i, setOf("nombre", "cantidad", "unidad"))
+            texto(i, "nombre", 120); numero(i, "cantidad", 0.000001, 100000.0)
+            if (texto(i, "unidad", 20) !in setOf("g", "kg", "ml", "l", "unidad", "cucharadita", "cucharada", "taza", "pizca")) mal()
+        }
+        val pasos = d["pasos"] as? JsonArray ?: mal()
+        if (pasos.size !in 1..50) mal()
+        pasos.forEach { texto(buildJsonObject { put("paso", it) }, "paso", 1000) }
     }
 }

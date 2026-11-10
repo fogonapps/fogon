@@ -1,4 +1,4 @@
-<p>La Cucha helps you keep track of what you eat: calories, protein, your recipes and the weekly menu. No ads, no tracking, and no internet except to look up a barcode if you turn that on. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
+<p>La Cucha helps you keep track of what you eat: calories, protein, your recipes and the weekly menu. No ads, no tracking, and no internet except to look up a barcode or for your people, if you turn them on. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Today:</b> the calories you have left, protein, carbs and fat, water and the day’s five meals.</li>
@@ -10,11 +10,12 @@
 <li><b>Weekly menu</b>, with alternating weeks A and B if you like, and a <b>shopping list</b> built from it.</li>
 <li><b>Goals</b> calculated from your details, or set by hand if you follow a dietitian’s plan.</li>
 <li><b>Progress:</b> streak, weekly average, the last 14 days and your weight curve.</li>
-<li><b>Linked with El Forzudo:</b> it reads your weight and workouts from there, inside your phone.</li>
+<li><b>Linked with El Forzudo:</b> it reads your weight and workouts from there, inside your phone, from your own profile.</li>
+<li><b>Your people, optional:</b> with a Fogón Social account you share dishes, recipes and restaurant reviews and follow other people. Calories only go out if you include them; a restaurant’s location only if you tap “Use my location” (permission is requested at that moment).</li>
 <li><b>Widget</b> with what’s left for today and a button to log food.</li>
 <li><b>In Spanish and English.</b></li>
 </ul>
 
-<p><b>Your data is yours.</b> Everything stays on your phone. The only thing that leaves it is a barcode number, and only if you turn that option on. Save a backup any time.</p>
+<p><b>Your data is yours.</b> Everything stays on your phone. Only a barcode number leaves it, if you turn that option on, and what you share with your people. Your diary, goals and weight never leave it. Save a backup any time.</p>
 
 <p>La Cucha isn’t medical or nutrition advice. Food values are estimates; if you have a health condition, follow your doctor’s or dietitian’s advice.</p>

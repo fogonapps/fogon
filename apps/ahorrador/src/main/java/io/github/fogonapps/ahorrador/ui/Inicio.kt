@@ -130,31 +130,32 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     val hoy = vm.hoy()
     val mes = mesDe(hoy)
 
-    // Cabecera: el saludo y el perfil.
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(Modifier.weight(1f)) {
-            Text(Formato.fechaCorta(hoy) + " " + hoy.year, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
-                style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1)
-        }
-        Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
-            .clickable { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
-            io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.perfil), tamano = 22.dp)
-        }
-    }
-
-    // Lo que tienes, en la tarjeta de El Ahorrador: la cifra en puntos y el mes a la izquierda, él a la derecha con
-    // la cara del mes (miedo si salió más de lo que entró, feliz si guardaste más de una quinta parte).
+    // Lo que tienes, en la tarjeta: la cifra en puntos y el mes. La cara del mes (miedo si salió más de lo que entró,
+    // feliz si guardaste más de una quinta parte) la pone La Alcancía en el círculo del perfil.
     val entro = L.ingresos(e, mes); val salio = L.gastos(e, mes)
     val cara = when {
         entro > 0 && salio > entro -> io.github.fogonapps.identidad.Cara.MIEDO
         entro > 0 && entro - salio > entro / 5 -> io.github.fogonapps.identidad.Cara.FELIZ
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
-    // Si ya cumpliste una meta, El Ahorrador celebra.
-    val cumplida = e.metas.any { L.progreso(e, it) >= 1.0 }
-    io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1), celebrar = cumplida) {
+    // La cabecera común (X-07): tu nombre y la frase; La Alcancía, en el círculo del perfil, con la cara del mes.
+    // La frase del saludo, como en El Cajón: las propias (al_), los votos y el menú al mantenerla pulsada.
+    val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
+    val base = androidx.compose.runtime.remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("al_${i + 1}", t) } }
+    val idioma = java.util.Locale.getDefault().language.takeIf { it == "en" } ?: "es"
+    val frase = io.github.fogonapps.social.ui.rememberFraseDelSaludo(vm.frases, base, idioma)
+    var menuFrase by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    io.github.fogonapps.perfil.CabeceraInicio(e.nombre?.takeIf { it.isNotBlank() } ?: stringResource(R.string.hola),
+        frase?.frase?.texto.orEmpty(),
+        onMantener = { if (frase != null) menuFrase = true },
+        adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
+        perfil = {
+            io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.perfil), cara,
+                foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+        })
+    if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
+        onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida)
+    io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1), personaje = false) {
         Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         val total = Formato.pesos(L.patrimonio(e))
         NumeroRiso(total, (if (total.length <= 9) 40 else if (total.length <= 12) 32 else 26).sp, color = f.texto)

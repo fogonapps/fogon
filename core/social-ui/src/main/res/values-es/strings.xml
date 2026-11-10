@@ -285,4 +285,12 @@
     <string name="social_privacidad_social_titulo">Si tienes cuenta: Fogón Social</string>
     <string name="social_privacidad_titulo">Qué sale de tu teléfono</string>
     <string name="social_red_tipo_publico">publicó</string>
+    <string name="social_frase_me_gusta">Me gusta esta frase</string>
+    <string name="social_frase_ya_no_gusta">Ya no me gusta</string>
+    <string name="social_frase_no_mostrar">No mostrarla más</string>
+    <string name="social_frase_proponer">Propón una frase</string>
+    <string name="social_frase_te_gusta">Te gusta esta frase</string>
+    <string name="social_frase_propuesta_gracias">¡Gracias! Si va, sale para todos</string>
+    <string name="social_ruta_politica" translatable="false">/privacidad</string>
+    <string name="social_ruta_terminos" translatable="false">/terminos</string>
 </resources>

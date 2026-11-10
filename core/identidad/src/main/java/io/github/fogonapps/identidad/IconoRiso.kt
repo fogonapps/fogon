@@ -120,6 +120,9 @@ object IconosFogon {
     val Estrella = dibujo("estrella", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"))
     val Comentario = dibujo("comentario", relleno("M4 5.6h16v10.6h-9.2L6.4 20v-3.8H4z"))
     val Bandera = dibujo("bandera", trazo("M5.6 20.4V4", 2.4f), relleno("M6.6 4.4h11.6l-2.6 4 2.6 4H6.6z"))
+    /** Dos personas: la red (la sección «Tu gente» de cada app). */
+    val Gente = dibujo("gente", relleno("M9 4.6a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3.4 19.4c0-3.6 2.4-6 5.6-6s5.6 2.4 5.6 6z"),
+        relleno("M16.4 6.2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.6 13.6c3 0 5 2.2 5 5.8h-4.2c0-2.4-.6-4.2-2-5.4z"))
     val Inicio = dibujo("inicio", relleno("M4 11.2 12 4.6l8 6.6V19.6H4z"), hueco("M10 19.8v-4.6a2 2 0 0 1 4 0v4.6z"))
     val Perfil = dibujo("perfil", relleno("M12 3.8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"), relleno("M4.6 20.4c.8-4.2 3.6-6.6 7.4-6.6s6.6 2.4 7.4 6.6z"))
     val Racha = dibujo(

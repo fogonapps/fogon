@@ -20,6 +20,8 @@ fun Routing.paginasWeb(social: Social) {
     get("/") { call.respondText(pagina("Fogón", "<h1>Fogón</h1><p class=\"suave\">Tuya desde el primer día.</p>$BOTONES"), ContentType.Text.Html) }
     get("/privacidad") { call.respondText(pagina("Privacidad", recurso("privacidad.html")), ContentType.Text.Html) }
     get("/terminos") { call.respondText(pagina("Términos", recurso("terminos.html")), ContentType.Text.Html) }
+    get("/privacy") { call.respondText(pagina("Privacy", recurso("privacy.html")), ContentType.Text.Html) }
+    get("/terms") { call.respondText(pagina("Terms", recurso("terms.html")), ContentType.Text.Html) }
 
     get("/{arroba}") {
         val arroba = call.parameters["arroba"] ?: ""
@@ -45,7 +47,7 @@ fun Routing.paginasWeb(social: Social) {
     get("/p/{id}") {
         val pub = call.parameters["id"]?.toLongOrNull()?.let { social.publicacion(null, it) }
             ?: return@get call.respondText(pagina("No está", "<p>Esta publicación no existe o no es pública.</p>$BOTONES"), ContentType.Text.Html, HttpStatusCode.NotFound)
-        val titulo = texto(pub.datos, "titulo").ifBlank { "Una publicación" }
+        val titulo = texto(pub.datos, "titulo").ifBlank { texto(pub.datos, "nombre").ifBlank { "Reseña de restaurante" } }
         call.respondText(pagina("$titulo · @${pub.autor.usuario}", tarjeta(pub) + BOTONES, descripcion = texto(pub.datos, "texto").take(160)), ContentType.Text.Html)
     }
 }
@@ -58,13 +60,47 @@ private fun tarjeta(p: Publicacion): String = buildString {
     texto(d, "portada").takeIf { it.startsWith("https://") }?.let { append("<img class=\"portada\" src=\"${e(it)}\" alt=\"\">") }
     texto(d, "titulo").takeIf { it.isNotBlank() }?.let { append("<h2>${e(it)}</h2>") }
     (d["estrellas"] as? JsonPrimitive)?.doubleOrNull?.takeIf { it > 0 }?.let { append("<p class=\"estrellas\">${"★".repeat(it.toInt())}${if (it % 1 >= 0.5) "½" else ""}</p>") }
-    if (p.app != "cajon") {
+    if (p.app == "forzudo") {
         append("<p class=\"suave\">${e(AppsSocial.nombre(p.app))} · ${e(texto(d, "fecha"))}</p>")
         append("<p>Duración: ${e(texto(d, "duracion"))} s</p>")
         (d["ejercicios"] as? kotlinx.serialization.json.JsonArray)?.forEach { elemento ->
             val ejercicio = elemento as? JsonObject ?: return@forEach
             val series = ejercicio["series"] as? kotlinx.serialization.json.JsonArray
             append("<p>${e(texto(ejercicio, "nombre"))}: ${series?.size ?: 0} series</p>")
+        }
+    }
+    if (p.app == "cucha") {
+        append("<h2>${e(texto(d, "nombre").ifBlank { "Reseña de restaurante" })}</h2>")
+        texto(d, "nota").takeIf { it.isNotBlank() }?.let { append("<p>Nota: ${e(it)}/5</p>") }
+        texto(d, "plato").takeIf { it.isNotBlank() }?.let { append("<p>Plato: ${e(it)}</p>") }
+        if ("lugar" in d) {
+            val lugar = d["lugarDetalle"] as? JsonObject
+            append(if (lugar == null) "<p>Lugar no disponible</p>" else "<p>${e(texto(lugar, "nombre"))} · ${e(texto(lugar, "ciudad"))}</p>")
+            lugar?.let { texto(it, "direccion").takeIf { v -> v.isNotBlank() && v != "null" }?.let { v -> append("<p>${e(v)}</p>") } }
+        }
+        if (p.tipo == "receta") {
+            append("<p>Porciones: ${e(texto(d, "porciones"))}</p>")
+            texto(d, "tiempo").takeIf { it.isNotBlank() }?.let { append("<p>Tiempo: ${e(it)} min</p>") }
+            append("<ul>")
+            (d["ingredientes"] as? kotlinx.serialization.json.JsonArray)?.forEach { elemento ->
+                val i = elemento as? JsonObject ?: return@forEach
+                append("<li>${e(texto(i, "nombre"))}: ${e(texto(i, "cantidad"))} ${e(texto(i, "unidad"))}</li>")
+            }
+            append("</ul><ol>")
+            (d["pasos"] as? kotlinx.serialization.json.JsonArray)?.forEach { append("<li>${e((it as? JsonPrimitive)?.content.orEmpty())}</li>") }
+            append("</ol>")
+        }
+        (d["nutricion"] as? JsonObject)?.let { n ->
+            append("<p>Nutrición${if (p.tipo == "receta") " por porción" else ""}: ${e(texto(n, "kcal"))} kcal · Proteína ${e(texto(n, "proteina"))} g · Carbohidratos ${e(texto(n, "carbohidratos"))} g · Grasa ${e(texto(n, "grasa"))} g</p>")
+        }
+        val video = texto(d, "video")
+        val poster = texto(d, "poster")
+        if (Regex("[A-Za-z0-9_-]{22}").matches(video) && Regex("[A-Za-z0-9_-]{22}").matches(poster)) {
+            append("<video class=\"foto\" controls preload=\"none\" poster=\"/v1/imagenes/$poster\" src=\"/v1/videos/$video\"></video>")
+        }
+        (d["imagenes"] as? kotlinx.serialization.json.JsonArray)?.forEach {
+            val nombre = (it as? JsonPrimitive)?.content.orEmpty()
+            if (Regex("[A-Za-z0-9_-]{22}").matches(nombre)) append("<img class=\"foto\" src=\"/v1/imagenes/$nombre\" alt=\"\">")
         }
     }
     val spoiler = (d["spoiler"] as? JsonPrimitive)?.content == "true"

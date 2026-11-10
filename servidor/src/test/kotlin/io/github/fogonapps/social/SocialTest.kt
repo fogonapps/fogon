@@ -72,6 +72,18 @@ class SocialTest {
         assertEquals(0, s.frasesComunidad("en").size)
         repeat(2) { s.proponerFrase(ana, FraseNueva("Otra frase más $it", "es")) }
         assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("La cuarta del día", "es")) }    // 3 al día
+        // Cada app tiene sus frases de la gente: la de El Forzudo no sale en El Cajón, y el equipo ve de qué app es.
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.proponerFrase(beto, FraseNueva("Hoy toca pierna, sin excusas", "es"), "forzudo")
+        val deForzudo = s.frasesPendientes(jefa, tokenJefa).first { it.texto.startsWith("Hoy toca pierna") }
+        assertEquals("forzudo", deForzudo.app)
+        s.decidirFrase(jefa, DecisionFrase(deForzudo.clave, true), tokenJefa)
+        assertEquals(listOf("Hoy toca pierna, sin excusas"), s.frasesComunidad("es", "forzudo").map { it.texto })
+        assertTrue(s.frasesComunidad("es").none { it.texto.startsWith("Hoy toca pierna") })
+        val agregada = s.agregarFrase(jefa, FraseNueva("A cocinar sin afán", "es", app = "cucha"), tokenJefa)
+        assertEquals("cucha", agregada.app)
+        assertEquals(listOf("A cocinar sin afán"), s.frasesComunidad("es", "cucha").map { it.texto })
+        assertFailsWith<Problema> { s.proponerFrase(beto, FraseNueva("Una app que no existe", "es"), "otra") }
     }
 
     @Test fun frasesDelSaludo() {
@@ -483,6 +495,10 @@ class SocialTest {
         assertEquals(HttpStatusCode.NotFound, client.get("/@nadie").status)
         assertTrue("io.github.fogonapps.cajon" in client.get("/.well-known/assetlinks.json").bodyAsText())
         assertEquals(HttpStatusCode.OK, client.get("/privacidad").status)
+        // La política y los términos también en inglés, con el enlace al otro idioma.
+        assertTrue("Privacy policy" in client.get("/privacy").bodyAsText() && "/privacidad" in client.get("/privacy").bodyAsText())
+        assertTrue("Terms of use" in client.get("/terms").bodyAsText())
+        assertTrue("/privacy" in client.get("/privacidad").bodyAsText())
     }
 
     @Test fun limiteDePeticiones() = testApplication {

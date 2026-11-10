@@ -88,7 +88,7 @@ class AppsTest {
         val medioAjeno = entreno("ajeno").let { it.copy(datos = JsonObject(it.datos + ("imagenes" to JsonArray(listOf(JsonPrimitive("ajena")))))) }
         assertEquals("imagenes", assertFailsWith<Problema> { e.s.subirCambios(e.yo, CambiosPublicaciones(listOf(entreno("nuevo"), medioAjeno), listOf("queda")), "forzudo") }.mensaje)
         assertEquals(1, e.s.actividad(e.yo, null, app = "forzudo").size)
-        for (tipo in listOf("plato", "receta", "resena_restaurante", "entreno")) {
+        for (tipo in listOf("entreno")) {
             assertEquals("tipo_app", assertFailsWith<Problema> { e.s.subirCambios(e.yo, CambiosPublicaciones(listOf(entreno().copy(tipo = tipo))), "cucha") }.mensaje)
         }
         assertEquals("tipo_app", assertFailsWith<Problema> { e.s.subirPublicaciones(e.yo, listOf(entreno())) }.mensaje)

@@ -294,7 +294,7 @@ internal fun FrasesPropuestas(vm: CajonViewModel) {
         frases.forEach { fr ->
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(fr.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text("@${fr.de} · ${fr.idioma}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Text("@${fr.de} · ${nombresApps()[fr.app] ?: fr.app} · ${fr.idioma}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pildora(stringResource(R.string.mod_aprobar), acento = true) { vm.red.decidirFrase(fr.clave, true) }
                     Pildora(stringResource(R.string.mod_rechazar)) { vm.red.decidirFrase(fr.clave, false) }
@@ -319,12 +319,17 @@ internal fun FrasesDelEquipo(vm: CajonViewModel) {
     var nueva by rememberSaveable { mutableStateOf("") }
     var idioma by rememberSaveable { mutableStateOf("es") }
     var franja by rememberSaveable { mutableStateOf("todo") }
+    // Para qué app es la frase nueva: cada app tiene sus frases del saludo (las de El Cajón se listan abajo).
+    var app by rememberSaveable { mutableStateOf("cajon") }
     val franjas = listOf("todo" to R.string.franja_todo, "manana" to R.string.franja_manana, "tarde" to R.string.franja_tarde,
         "noche" to R.string.franja_noche, "madrugada" to R.string.franja_madrugada)
     val nombreFranja = franjas.associate { (k, r) -> k to stringResource(r) }
     Seccion(stringResource(R.string.mod_frases_saludo))
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(nueva, { nueva = it.take(90) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.mod_frase_nueva)) })
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            nombresApps().forEach { (k, nombre) -> Pildora(nombre, acento = app == k) { app = k } }
+        }
         // Cuándo sale: todo el día o una franja.
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             franjas.forEach { (k, _) -> Pildora(nombreFranja.getValue(k), acento = franja == k) { franja = k } }
@@ -333,7 +338,7 @@ internal fun FrasesDelEquipo(vm: CajonViewModel) {
             Pildora("ES", acento = idioma == "es") { idioma = "es" }
             Pildora("EN", acento = idioma == "en") { idioma = "en" }
             Box(Modifier.weight(1f))
-            BotonRiso(stringResource(R.string.mod_agregar), { vm.agregarFrase(nueva, idioma, franja); nueva = "" }, habilitado = nueva.trim().length >= 4)
+            BotonRiso(stringResource(R.string.mod_agregar), { vm.agregarFrase(nueva, idioma, franja, app); nueva = "" }, habilitado = nueva.trim().length >= 4)
         }
     }
     // Todas, la más votada primero (sí menos no).
@@ -1016,3 +1021,9 @@ fun CajonEnCuenta(vm: CajonViewModel) {
 
 @Composable
 fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) { io.github.fogonapps.social.ui.FormularioBorrado(interfazSocial(vm), volver) }
+
+/** Las apps de Fogón Social, para las frases del saludo que modera el equipo. */
+@Composable
+private fun nombresApps(): Map<String, String> = linkedMapOf(
+    "cajon" to stringResource(R.string.app_cajon), "forzudo" to stringResource(R.string.app_forzudo), "cucha" to stringResource(R.string.app_cucha),
+)

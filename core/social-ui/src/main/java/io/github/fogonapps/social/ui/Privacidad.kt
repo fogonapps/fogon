@@ -21,6 +21,7 @@ import io.github.fogonapps.social.ClienteSocial
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PoliticaPrivacidad(vm: InterfazSocial) {
+    val rutaPolitica = stringResource(R.string.social_ruta_politica)
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(ciclo) {
         val o = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_START) vm.red.alAbrir() }
@@ -36,7 +37,7 @@ fun PoliticaPrivacidad(vm: InterfazSocial) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.social_politica_actualizada), style = MaterialTheme.typography.headlineSmall, color = f.texto, modifier = Modifier.semantics { heading() })
             Text(vm.textosApp.resumenPolitica, color = f.texto)
-            BotonSecundario(stringResource(R.string.social_red_politica), { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }, Modifier.fillMaxWidth())
+            BotonSecundario(stringResource(R.string.social_red_politica), { uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }, Modifier.fillMaxWidth())
             BotonRiso(stringResource(R.string.social_politica_aceptar), { vm.red.aceptarPolitica() }, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.social_politica_ahora_no), vm.red::posponerPolitica, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.social_red_borrar_cuenta), { vm.red.posponerPolitica(); vm.navegacion.ajustes(AjusteSocial.BORRAR_CUENTA) }, Modifier.fillMaxWidth(), peligro = true)
@@ -65,6 +66,7 @@ fun Transparencia(
     detallesOpcionales: String,
     opciones: List<OpcionPrivacidad>,
 ) {
+    val rutaPolitica = stringResource(R.string.social_ruta_politica)
     val uri = LocalUriHandler.current
     val f = FogonTema.actual
     @Composable fun Frases(texto: String) {
@@ -84,7 +86,7 @@ fun Transparencia(
         }
         Frases(detallesOpcionales)
         Seccion(stringResource(R.string.social_privacidad_derechos_titulo))
-        BotonSecundario(stringResource(R.string.social_red_politica), { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }, Modifier.fillMaxWidth())
+        BotonSecundario(stringResource(R.string.social_red_politica), { uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.social_privacidad_contacto), { uri.openUri("mailto:fogonapps@gmail.com") }, Modifier.fillMaxWidth())
     }
     androidx.compose.foundation.layout.Spacer(Modifier.height(100.dp).width(1.dp))

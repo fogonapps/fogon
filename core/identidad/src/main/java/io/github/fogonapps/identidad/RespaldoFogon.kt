@@ -96,6 +96,10 @@ private fun java.io.InputStream.readNBytesCompat(max: Long): ByteArray {
 abstract class ProveedorDatosFogon : ContentProvider() {
     abstract suspend fun leer(): String
     abstract suspend fun restaurar(texto: String): Boolean
+    /** Los datos de un perfil concreto del teléfono (apps con perfiles), o null si no existe. */
+    open suspend fun leerPerfil(perfil: String): String? = null
+    /** Los perfiles de este teléfono como JSON ([PerfilDeApp]), o null si la app no tiene perfiles. */
+    open fun perfiles(): String? = null
 
     private val resultados = LinkedBlockingQueue<Boolean>()
 
@@ -108,9 +112,10 @@ abstract class ProveedorDatosFogon : ContentProvider() {
         revisar()
         val (lectura, escritura) = ParcelFileDescriptor.createPipe()
         if (mode == "r") {
+            val perfil = uri.getQueryParameter("perfil")
             thread(name = "fogon-leer") {
                 ParcelFileDescriptor.AutoCloseOutputStream(escritura).use { out ->
-                    runCatching { out.write(runBlocking { leer() }.encodeToByteArray()) }
+                    runCatching { out.write(runBlocking { if (perfil == null) leer() else leerPerfil(perfil).orEmpty() }.encodeToByteArray()) }
                 }
             }
             return lectura
@@ -129,6 +134,7 @@ abstract class ProveedorDatosFogon : ContentProvider() {
     /** "resultado": espera a que termine la última restauración y dice si salió bien. */
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
         revisar()
+        if (method == "perfiles") return Bundle().apply { putString("perfiles", perfiles()) }
         if (method != "resultado") return null
         return Bundle().apply { putBoolean("ok", resultados.poll(20, TimeUnit.SECONDS) ?: false) }
     }
@@ -138,6 +144,21 @@ abstract class ProveedorDatosFogon : ContentProvider() {
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
     override fun delete(uri: Uri, s: String?, a: Array<out String>?) = 0
     override fun update(uri: Uri, v: ContentValues?, s: String?, a: Array<out String>?) = 0
+}
+
+/** Un perfil del teléfono de otra app, para enlazarlo: por la misma cuenta ([idCuenta]) o elegido a mano. */
+data class PerfilDeApp(val id: String, val apodo: String = "", val usuario: String = "", val idCuenta: String = "") {
+    companion object {
+        /** El JSON que da [ProveedorDatosFogon.perfiles] (sin plugin de serialización en este módulo). */
+        fun aJson(lista: List<PerfilDeApp>): String = kotlinx.serialization.json.JsonArray(lista.map {
+            buildJsonObject { put("id", it.id); put("apodo", it.apodo); put("usuario", it.usuario); put("idCuenta", it.idCuenta) }
+        }).toString()
+        fun deJson(texto: String): List<PerfilDeApp> = Json.parseToJsonElement(texto).let { it as kotlinx.serialization.json.JsonArray }.map { e ->
+            val o = e.jsonObject
+            fun t(k: String) = o[k]?.jsonPrimitive?.content.orEmpty()
+            PerfilDeApp(t("id").also { require(it.matches(Regex("[1-9][0-9]*"))) }, t("apodo"), t("usuario"), t("idCuenta"))
+        }
+    }
 }
 
 object RespaldoFogon {
@@ -152,6 +173,19 @@ object RespaldoFogon {
     suspend fun leerDe(c: Context, app: AppFogon): String? = withContext(Dispatchers.IO) {
         runCatching { c.contentResolver.openInputStream(uriDatos(app.paquete))?.use { leerConTope(it) } }.getOrNull()
             ?.takeIf { it.isNotBlank() }
+    }
+
+    /** Los perfiles del teléfono de otra app de Fogón, o null si no tiene perfiles (o es una versión anterior). */
+    suspend fun perfilesDe(c: Context, app: AppFogon): List<PerfilDeApp>? = withContext(Dispatchers.IO) {
+        runCatching { c.contentResolver.call(uriDatos(app.paquete), "perfiles", null, null)?.getString("perfiles") }.getOrNull()
+            ?.let { t -> runCatching { PerfilDeApp.deJson(t) }.getOrNull() }
+    }
+
+    /** Los datos de un perfil concreto de otra app de Fogón. */
+    suspend fun leerPerfilDe(c: Context, app: AppFogon, perfil: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            c.contentResolver.openInputStream(uriDatos(app.paquete).buildUpon().appendQueryParameter("perfil", perfil).build())?.use { leerConTope(it) }
+        }.getOrNull()?.takeIf { it.isNotBlank() }
     }
 
     /** Arma el archivo con los datos de todas las apps instaladas. */

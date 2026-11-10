@@ -21,6 +21,16 @@ class DatosForzudo : ProveedorDatosFogon() {
     override suspend fun leer(): String =
         JsonGym.encodeToString(Estado.serializer(), app.logica.paraNube(app.logica.normalizar(app.almacen.data.first())))
 
+    /** La Cucha lee el perfil enlazado (misma cuenta o elegido), nunca el que esté activo por casualidad. */
+    override suspend fun leerPerfil(perfil: String): String? {
+        if (app.perfiles.lista.perfiles.none { it.id == perfil }) return null
+        return JsonGym.encodeToString(Estado.serializer(), app.logica.paraNube(app.logica.normalizar(app.almacenPerfil(perfil).data.first())))
+    }
+
+    override fun perfiles(): String = io.github.fogonapps.identidad.PerfilDeApp.aJson(app.perfiles.lista.perfiles.map {
+        io.github.fogonapps.identidad.PerfilDeApp(it.id, it.apodo, it.usuario, it.idCuenta)
+    })
+
     override suspend fun restaurar(texto: String): Boolean {
         val d = leerRespaldoGym(texto) ?: return false
         app.almacen.updateData { viejo ->

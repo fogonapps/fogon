@@ -10,7 +10,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import io.github.fogonapps.cucha.datos.Estado
@@ -33,10 +31,16 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.fogonDe
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val vm: CuchaViewModel by viewModels()
+    private var perfilVm: String? = null
+    /** Un ViewModel por perfil del teléfono: al cambiar de perfil se arma uno nuevo. */
+    private val vm: CuchaViewModel get() {
+        val perfil = (application as CuchaApp).perfilActivo.value
+        if (perfilVm != null && perfilVm != perfil) viewModelStore.clear()
+        perfilVm = perfil
+        return androidx.lifecycle.ViewModelProvider(this)[CuchaViewModel::class.java]
+    }
 
     override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(Idioma.envolver(base))
 
@@ -46,6 +50,10 @@ class MainActivity : ComponentActivity() {
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         if (savedInstanceState == null) abrirDesdeWidget(intent)
         setContent {
+            val perfil by (application as CuchaApp).perfilActivo.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(perfil) {
+            val vm = vm
+            LaunchedEffect(perfil) { vm.leerForzudo() }
             val apariencia by AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
             val oscuro = fogonDe(Paleta.Cucha, apariencia).oscuro
@@ -104,6 +112,7 @@ class MainActivity : ComponentActivity() {
                     elegirImagen = { cb -> alElegir = cb; imagen.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 ))
             }
+            }
         }
     }
 
@@ -144,7 +153,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        lifecycleScope.launch { vm.guardarYa() }
+        vm.guardarAlSalir()
     }
 }
 

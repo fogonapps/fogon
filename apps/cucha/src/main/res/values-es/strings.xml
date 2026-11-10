@@ -14,7 +14,7 @@
   <string name="comida_cena">Cena</string>
   <string name="hoy">Hoy</string>
   <string name="ayer">Ayer</string>
-  <string name="hola">Hola</string>
+  <string name="hola">¡Hola!</string>
   <string name="hola_nombre">Hola, %1$s</string>
   <string name="dia_anterior">Día anterior</string>
   <string name="dia_siguiente">Día siguiente</string>
@@ -278,4 +278,126 @@
     <string name="perfil_quitar_imagen">Quitar imagen</string>
     <string name="tu_perfil">Tu perfil</string>
     <string name="perfil_sin_nombre">Tu nombre</string>
+  <string-array name="frases_inicio">
+    <item>¿Qué hay de comer?</item>
+    <item>Hoy se cocina rico.</item>
+    <item>Un vaso de agua más.</item>
+    <item>Comer bien también es un gusto.</item>
+    <item>¿Desayunaste?</item>
+    <item>Lo casero sabe mejor.</item>
+    <item>Poco a poco, plato a plato.</item>
+    <item>¿Qué se te antoja hoy?</item>
+    <item>Sin afán: anota cuando puedas.</item>
+    <item>Hoy, algo con verdura.</item>
+  </string-array>
+    <!-- Cuenta y red (CU-01) -->
+    <string name="pestana_gente">Tu gente</string>
+    <string name="cuenta_tu_cuenta">Tu cuenta</string>
+    <string name="cuenta_tu_cuenta_pista">Fogón Social: perfil, gente y lo que compartes</string>
+    <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
+    <string name="cuenta_operacion_lista">Operación completada.</string>
+    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
+    <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
+    <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
+    <string name="cuenta_local">Tu diario, tus metas, tu peso, tus recetas y tus productos se quedan en este perfil del teléfono. Entrar no mezcla ni recupera cuadernos. Guarda un respaldo antes de retirar un perfil.</string>
+    <string name="cuenta_intro">La red de La Cucha: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte platos, recetas y restaurantes.</string>
+    <string name="cuenta_que_sale">Tu diario no sale de este teléfono. En la red solo aparece lo que elijas compartir: nunca tus metas, tu peso ni lo que comes cada día. Las calorías y los macros de un plato o una receta solo salen si los incluyes tú. La ubicación de un restaurante solo sale si la pones.</string>
+    <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu diario sigue disponible.</string>
+    <string name="cuenta_politica_resumen">La política ahora cubre a Fogón Social y sus apps: la app desde la que entras y lo que compartes desde La Cucha. Tu diario, tus metas y tu peso nunca salen del teléfono.</string>
+    <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los platos, recetas y reseñas que elijas, con su visibilidad. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
+    <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. Tu diario local se conserva hasta que retires el perfil.</string>
+    <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y lo que compartes.</string>
+    <string name="cuenta_servicio_forzudo">El Forzudo (en este teléfono): el peso y los entrenos de la semana del perfil enlazado.</string>
+    <string name="forzudo_perfil_titulo">Tu perfil de El Forzudo</string>
+    <string name="forzudo_perfil_pista">El Forzudo tiene varios perfiles. Elige el tuyo para leer tu peso y tus entrenos; nunca se adivina por el número.</string>
+    <string name="forzudo_ninguno">Ninguno</string>
+    <string name="forzudo_perfil_sin_nombre">Perfil %1$s</string>
+    <string name="red_tu_gente">Tu gente</string>
+    <string name="red_entrar">Entrar en Fogón Social</string>
+    <string name="red_compartir">Compartir</string>
+    <string name="red_que_compartir">¿Qué quieres compartir?</string>
+    <string name="red_plato">Un plato</string>
+    <string name="red_receta">Una receta tuya</string>
+    <string name="red_restaurante">Un restaurante</string>
+    <string name="red_avisos">Avisos</string>
+    <string name="red_moderacion">Moderación</string>
+    <string name="red_guardados">Guardados</string>
+    <string name="red_feed_pie">Platos, recetas y restaurantes compartidos en La Cucha</string>
+    <string name="red_seguir">Seguir</string>
+    <string name="red_dejar_seguir">Dejar de seguir</string>
+    <string name="red_borrar">¿Borrar publicación?</string>
+    <string name="red_privado">¿Volver privada? Se retirará de la red; lo de tu teléfono se conserva.</string>
+    <string name="red_publicado">Tu publicación</string>
+    <string name="red_actualizar">Actualizar publicación</string>
+    <string name="red_editar">Editar: %1$s</string>
+    <string name="red_publicar">Publicar</string>
+    <string name="red_seguidores">Solo para mis seguidores</string>
+    <string name="red_texto">Texto opcional</string>
+    <string name="red_etiquetas_pista">Usa #etiquetas para que lo encuentren (por ejemplo #almuerzo).</string>
+    <string name="red_agregar_foto">Agregar una foto</string>
+    <string name="red_agregar_video">Agregar un vídeo</string>
+    <string name="red_quitar_foto">Quitar foto %1$d</string>
+    <string name="red_quitar_video">Quitar vídeo</string>
+    <string name="red_error">No se pudo preparar la publicación o el archivo. Revisa los límites e inténtalo otra vez.</string>
+    <string name="red_reproducir">Reproducir vídeo</string>
+    <string name="red_nota">Tu nota</string>
+    <string name="red_nota_n">%1$d de 5</string>
+    <string name="red_quitar_nota">Sin nota</string>
+    <string name="red_nutricion">Incluir la información nutricional</string>
+    <string name="red_nutricion_pista">Apagado: no salen las calorías ni los macros.</string>
+    <string name="red_aviso_plato">Solo se comparte este plato. Tu diario, tus metas y tu peso no salen del teléfono.</string>
+    <string name="red_aviso_receta">Se comparte una copia de la receta: lo que cambies después no se publica solo.</string>
+    <string name="red_nombre_plato">Nombre del plato</string>
+    <string name="red_donde_comiste">¿Dónde lo comiste? (opcional)</string>
+    <string name="red_lugar_nombre">Nombre del restaurante</string>
+    <string name="red_lugar_ciudad">Ciudad</string>
+    <string name="red_lugar_direccion">Dirección o barrio (opcional)</string>
+    <string name="red_usar_ubicacion">Usar mi ubicación</string>
+    <string name="red_ubicacion_pista">El permiso se pide solo al tocar. La ubicación va en la ficha del lugar, nunca en un plato sin restaurante.</string>
+    <string name="red_ubicacion_sale">Sale con la ubicación del lugar (redondeada, unos 11 m).</string>
+    <string name="red_ubicacion_no_sale">Sin ubicación: solo el nombre, la ciudad y la dirección escrita.</string>
+    <string name="red_quitar_ubicacion">Quitar la ubicación</string>
+    <string name="red_ubicacion_no">No se pudo obtener la ubicación. Escribe la dirección a mano.</string>
+    <string name="red_buscando_ubicacion">Buscando tu ubicación…</string>
+    <string name="red_sugerencias">Lugares que ya existen</string>
+    <string name="red_lugar_nuevo">Crear «%1$s» en %2$s</string>
+    <string name="red_cambiar_lugar">Cambiar de lugar</string>
+    <string name="red_plato_pedido">¿Qué pediste? (opcional)</string>
+    <string name="red_lugar_no_disponible">Lugar no disponible</string>
+    <string name="red_reportar_lugar">Reportar el lugar</string>
+    <string name="red_porciones">%1$d porciones</string>
+    <string name="red_minutos">%1$d min</string>
+    <string name="red_ingredientes">Ingredientes</string>
+    <string name="red_pasos">Pasos</string>
+    <string name="red_macros">%1$d kcal · proteína %2$s g · carbohidratos %3$s g · grasa %4$s g</string>
+    <string name="red_por_porcion">Por porción</string>
+    <string name="red_elegir_plato">Elige un plato anotado</string>
+    <string name="red_plato_en_blanco">Un plato nuevo</string>
+    <string name="red_elegir_receta">Elige una receta tuya</string>
+    <string name="red_sin_recetas_propias">Todavía no tienes recetas propias. Crea una en Recetas.</string>
+    <string name="red_vista_previa">Así se verá</string>
+    <string name="red_compartir_plato">Compartir plato</string>
+    <string name="red_compartir_receta">Compartir receta</string>
+    <string name="red_resenar">Reseñar un restaurante</string>
+    <string name="red_publicados">Lo que has compartido</string>
+    <string name="red_restaurantes">Restaurantes</string>
+    <string name="red_resenas">Reseñas</string>
+    <string name="red_sin_publicaciones">Todavía no hay nada aquí.</string>
+    <string name="red_sin_comidas_hoy">No hay platos anotados en los últimos días.</string>
+    <plurals name="red_utiles">
+        <item quantity="one">%d persona la encontró útil</item>
+        <item quantity="other">%d personas la encontraron útil</item>
+    </plurals>
+    <string name="red_tipo_plato">Plato</string>
+    <string name="red_tipo_receta">Receta</string>
+    <string name="red_tipo_resena">Reseña</string>
+    <string name="red_platos">Platos</string>
+    <string name="red_quien_lo_ve">Quién lo ve</string>
+    <string name="red_partes_pista">Tus platos favoritos (los que marcas con la estrella) y los restaurantes que reseñaste con 4 o 5. Nunca calorías ni peso.</string>
+    <string name="red_platos_favoritos">Platos favoritos</string>
+    <string name="red_restaurantes_favoritos">Restaurantes favoritos</string>
+    <string name="red_vis_privado">Solo en el teléfono</string>
+    <string name="red_vis_publica">Público</string>
+    <string name="red_vis_seguidores">Seguidores</string>
+    <string name="red_sin_favoritos">Todavía no hay ninguno.</string>
 </resources>

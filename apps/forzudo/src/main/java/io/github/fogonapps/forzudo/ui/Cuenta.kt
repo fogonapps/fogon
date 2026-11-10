@@ -1,6 +1,8 @@
 package io.github.fogonapps.forzudo.ui
 
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import io.github.fogonapps.forzudo.*
 import io.github.fogonapps.forzudo.R
@@ -78,6 +80,8 @@ fun Cuenta(vm: GymViewModel, exportar: () -> Unit) {
     val interfaz = interfazCuenta(vm)
     val estado by vm.estado.collectAsState()
     CuentaRed(interfaz, "", estado?.nombre.orEmpty())
+    // El mismo aire que entre los demás botones de la cuenta (antes quedaba pegado a «Usar otro correo»).
+    androidx.compose.foundation.layout.Spacer(androidx.compose.ui.Modifier.height(12.dp))
     CambiarDeCuenta(vm, exportar)
 }
 

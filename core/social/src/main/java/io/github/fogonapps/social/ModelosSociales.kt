@@ -173,3 +173,23 @@ data class CambioPerfilApp(
     val revision: Long? = null, val identidad: IdentidadPerfil? = null,
     val partes: Map<String, ParteSubida>? = null,
 )
+
+/* ----- Frases del saludo (comunes a todas las apps) ----- */
+
+/** Cuántas personas dijeron que sí y que no a una frase (solo los totales). */
+@kotlinx.serialization.Serializable data class ConteoFrase(val si: Int = 0, val no: Int = 0)
+@kotlinx.serialization.Serializable data class VotoFrase(val valor: Int)
+/** Una frase nueva: propuesta por la gente o agregada por el equipo, para la app [app]. */
+@kotlinx.serialization.Serializable data class FraseNueva(val texto: String, val idioma: String, val franja: String = "todo", val app: String = "cajon")
+/** Una frase de la gente o del equipo, con su app de origen. */
+@kotlinx.serialization.Serializable data class FraseComunidad(val clave: String, val texto: String, val idioma: String = "", val de: String = "", val franja: String = "todo", val app: String = "cajon")
+@kotlinx.serialization.Serializable data class DecisionFrase(val clave: String, val aprobar: Boolean)
+
+/** Un lugar (restaurante) de La Cucha. Las coordenadas, si las hay, nunca se muestran en las tarjetas. */
+@Serializable
+data class Lugar(val id: Long, val nombre: String, val ciudad: String, val direccion: String? = null,
+                 val lat: Double? = null, val lon: Double? = null, val cuenta: Long? = null, val cuando: Long = 0)
+
+/** Lo que se manda para crear un lugar: [lat] y [lon] van juntas o no van. */
+@Serializable
+data class LugarNuevo(val nombre: String, val ciudad: String, val direccion: String? = null, val lat: Double? = null, val lon: Double? = null)

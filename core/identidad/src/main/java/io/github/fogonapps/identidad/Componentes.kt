@@ -1,6 +1,7 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.res.imageResource
@@ -53,6 +54,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -344,7 +347,8 @@ fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier,
 @Composable
 fun TarjetaPersonaje(
     quien: Quien, cara: Cara, modifier: Modifier = Modifier, tamano: Dp = 96.dp, celebrar: Boolean = false,
-    onClick: (() -> Unit)? = null, contenido: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+    onClick: (() -> Unit)? = null, personaje: Boolean = true,
+    contenido: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     val f = FogonTema.actual
     val toque = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
@@ -355,8 +359,23 @@ fun TarjetaPersonaje(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), content = contenido)
-        if (celebrar) Celebracion(quien, null, tamano = tamano) else Personaje(quien, null, cara = cara, tamano = tamano)
+        // En el inicio el personaje vive en el círculo del perfil (X-07); aquí sale solo para celebrar.
+        if (celebrar) Celebracion(quien, null, tamano = tamano) else if (personaje) Personaje(quien, null, cara = cara, tamano = tamano)
     }
+}
+
+/**
+ * El círculo del perfil, arriba a la derecha del inicio (siempre el último): la foto de la persona si tiene, o la carita
+ * de la mascota de la app con su ánimo (X-07).
+ */
+@Composable
+fun BotonPerfilMascota(quien: Quien, descripcion: String, cara: Cara = Cara.NORMAL, foto: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    Box(
+        Modifier.rebote(0.9f).size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
+            .clickable(onClick = onClick).semantics { contentDescription = descripcion; role = Role.Button },
+        contentAlignment = Alignment.Center,
+    ) { if (foto != null) foto() else Personaje(quien, null, cara = cara, tamano = 40.dp) }
 }
 
 /** La celebración de cada personaje: 24 cuadros en una tira (salen de Blender). */

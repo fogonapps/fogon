@@ -39,6 +39,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -99,7 +100,6 @@ import io.github.fogonapps.forzudo.datos.semanasDelMes
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Inicio(vm: GymViewModel, e: Estado) {
-    BotonRedForzudo(vm)
     val f = FogonTema.actual
     val L = vm.L
     val dias = L.dias(e)
@@ -110,27 +110,48 @@ fun Inicio(vm: GymViewModel, e: Estado) {
     val racha = L.racha(e, dias, hoy)
     val confirmar = LocalConfirmar.current
 
+    // La cara de El Forzudo según tu racha: decidido para empezar, feliz si va andando, sorprendido en tu mejor racha.
+    val cara = when {
+        racha.actual > 0 && racha.actual >= racha.mejor -> io.github.fogonapps.identidad.Cara.SORPRESA
+        racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
+        else -> io.github.fogonapps.identidad.Cara.DECIDIDO
+    }
     Column(Modifier.fillMaxWidth()) {
-        // El perfil cierra la fila de acciones del inicio.
+        // La cabecera común (X-07): tu nombre y la frase; El Forzudo, en el círculo del perfil.
+        val usuario by vm.red.usuario.collectAsState()
+        val fotoRemota by vm.red.foto.collectAsState()
+        val foto = if (usuario != null) fotoRemota else e.foto
+        // La frase del saludo, como en El Cajón: las propias (fz_), las de la gente de El Forzudo, los votos y el menú.
+        val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
+        val base = remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("fz_${i + 1}", t) } }
+        val idioma = java.util.Locale.getDefault().language.takeIf { it == "en" } ?: "es"
+        val frase = io.github.fogonapps.social.ui.rememberFraseDelSaludo(vm.frases, base, idioma)
+        var menuFrase by remember { mutableStateOf(false) }
+        io.github.fogonapps.perfil.CabeceraInicio(e.nombre?.takeIf { it.isNotBlank() } ?: stringResource(R.string.hola),
+            frase?.frase?.texto.orEmpty(),
+            onMantener = { if (frase != null) menuFrase = true },
+            adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
+            perfil = {
+                io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.pestana_perfil), cara,
+                    foto = foto.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+            })
+        if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
+            onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida,
+            onProponer = { propia ->
+                if (usuario == null) vm.abrir(Pantalla.Cuenta)
+                else vm.frases.proponer(propia, idioma) { listo -> if (listo) vm.avisar(vm.tx(io.github.fogonapps.social.ui.R.string.social_frase_propuesta_gracias)) }
+            })
+
+        // La semana: su número y la fecha, encima de sus días.
         val semana = hoy.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.inicio_fecha, semana, fechaCorta(td)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                Text(e.nombre?.let { stringResource(R.string.hola_nombre, it) } ?: stringResource(R.string.hola),
-                    style = MaterialTheme.typography.headlineSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Box(Modifier.size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
-                .clickable(onClickLabel = stringResource(R.string.pestana_perfil)) { vm.abrir(Pantalla.Perfil) }, contentAlignment = Alignment.Center) {
-                io.github.fogonapps.identidad.IconoRiso(Iconos.Persona, stringResource(R.string.pestana_perfil), tamano = 22.dp)
-            }
-        }
+        Text(stringResource(R.string.inicio_fecha, semana, fechaCorta(td)), style = MaterialTheme.typography.labelLarge, color = f.textoSuave,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
 
         // La semana del calendario: los días con entreno van llenos de la primera tinta; hoy, con borde.
         val lunes = java.time.LocalDate.parse(ws)
         val fechasHechas = e.sessions.map { it.date }.toSet()
         val estHecho = stringResource(R.string.dia_hecho); val estPendiente = stringResource(R.string.dia_pendiente)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp).aparecer(1), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 14.dp).aparecer(1), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             (0 until 7).forEach { i ->
                 val d = lunes.plusDays(i.toLong())
                 val hecho = iso(d) in fechasHechas
@@ -154,14 +175,8 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             }
         }
 
-        // La racha, en la tarjeta de El Forzudo: el número en puntos y la mejor racha a la izquierda; él a la derecha
-        // con la cara de tu racha (decidido para empezar, feliz si va andando, sorprendido en tu mejor racha).
-        val cara = when {
-            racha.actual > 0 && racha.actual >= racha.mejor -> io.github.fogonapps.identidad.Cara.SORPRESA
-            racha.actual > 0 -> io.github.fogonapps.identidad.Cara.FELIZ
-            else -> io.github.fogonapps.identidad.Cara.DECIDIDO
-        }
-        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, cara, Modifier.aparecer(2)) {
+        // La racha, en la tarjeta: el número en puntos y la mejor racha (El Forzudo vive en el círculo del perfil, X-07).
+        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, cara, Modifier.aparecer(2), personaje = false) {
             Text(pluralStringResource(R.plurals.semanas_seguidas, racha.actual).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
             NumeroRiso("${racha.actual}", 96.sp, Modifier.semantics { contentDescription = "${racha.actual}" })
             MejorRacha(stringResource(R.string.racha_mejor, racha.mejor))

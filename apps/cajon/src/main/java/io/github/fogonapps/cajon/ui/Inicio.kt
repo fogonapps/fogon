@@ -8,7 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import io.github.fogonapps.cajon.datos.Frases
+import io.github.fogonapps.social.Frases
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextAlign
@@ -79,50 +79,23 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
     }
     val textoDeFrase = textoFrase(frase)
     val gusta = frase.clave in e.ajustes.frasesGusta
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        io.github.fogonapps.perfil.FraseFogon(e.ajustes.nombre.ifBlank { stringResource(R.string.hola) }, textoDeFrase, Modifier.weight(1f),
-            onMantener = { menuFrase = true }) {
-            if (gusta) IconoRiso(Iconos.Corazon, stringResource(R.string.frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto)
-        }
-        BotonIcono(Iconos.Lapiz, stringResource(R.string.red_publicar), grande = true, lleno = true) { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar()) }
-        FotoPerfil(e.perfil.foto, 48.dp, descripcion = stringResource(R.string.tu_perfil)) { vm.abrirMiPerfil() }
-    }
+    // El Cajón pone la cara de lo que estás viendo o escuchando: la obra de la frase o lo último que tocaste.
+    val cara = remember(frase.obra, e.obras) { caraDe(io.github.fogonapps.cajon.datos.Caras.de(io.github.fogonapps.cajon.datos.Caras.obra(e, frase.obra))) }
+    io.github.fogonapps.perfil.CabeceraInicio(e.ajustes.nombre.ifBlank { stringResource(R.string.hola) }, textoDeFrase,
+        onMantener = { menuFrase = true },
+        adorno = { if (gusta) IconoRiso(Iconos.Corazon, stringResource(R.string.frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
+        acciones = { BotonIcono(Iconos.Lapiz, stringResource(R.string.red_publicar), grande = true, lleno = true) { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar()) } },
+        perfil = {
+            io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.tu_perfil), cara,
+                foto = e.perfil.foto.takeIf { it.isNotBlank() }?.let { { FotoPerfil(it, 48.dp) } }) { vm.abrirMiPerfil() }
+        })
 
-    if (menuFrase) {
-        val contexto = androidx.compose.ui.platform.LocalContext.current
-        androidx.compose.material3.ModalBottomSheet({ menuFrase = false }, containerColor = f.fondo) {
-            Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                Text(textoDeFrase, style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                FilaVidrio({ vm.votarFrase(frase.clave, if (gusta) 0 else 1); menuFrase = false }) {
-                    IconoRiso(Iconos.Corazon, null, tamano = 20.dp, tinta = f.acentoTexto)
-                    Text(stringResource(if (gusta) R.string.frase_ya_no_gusta else R.string.frase_me_gusta), color = f.texto, modifier = Modifier.weight(1f))
-                }
-                FilaVidrio({
-                    vm.votarFrase(frase.clave, 1)
-                    contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
-                        .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, textoDeFrase), null))
-                    menuFrase = false
-                }) {
-                    IconoRiso(Iconos.Compartir, null, tamano = 20.dp, tinta = f.texto)
-                    Text(stringResource(R.string.compartir), color = f.texto, modifier = Modifier.weight(1f))
-                }
-                FilaVidrio({ vm.votarFrase(frase.clave, -1); vuelta++; menuFrase = false }) {
-                    IconoRiso(Iconos.Cerrar, null, tamano = 20.dp, tinta = f.texto)
-                    Text(stringResource(R.string.frase_no_mostrar), color = f.texto, modifier = Modifier.weight(1f))
-                }
-                // Proponer una frase propia: el equipo la revisa y, si va, sale para todos.
-                var propia by rememberSaveable { mutableStateOf("") }
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.OutlinedTextField(propia, { propia = it.take(90) }, Modifier.weight(1f), singleLine = true, shape = forma(22.dp),
-                        placeholder = { Text(stringResource(R.string.frase_proponer)) })
-                    BotonIcono(Iconos.Enviar, stringResource(R.string.frase_proponer), activo = propia.trim().length >= 6, lleno = true) {
-                        if (vm.red.usuario.value == null) vm.abrir(Pantalla.CuentaRed) else vm.proponerFrase(propia)
-                        propia = ""; menuFrase = false
-                    }
-                }
-            }
-        }
-    }
+    if (menuFrase) io.github.fogonapps.social.ui.MenuFrase(textoDeFrase, gusta, cerrar = { menuFrase = false },
+        onGusta = { vm.votarFrase(frase.clave, if (gusta) 0 else 1) },
+        onNoMostrar = { vm.votarFrase(frase.clave, -1); vuelta++ },
+        onCompartido = { vm.votarFrase(frase.clave, 1) },
+        // Proponer una frase propia: el equipo la revisa y, si va, sale para todos.
+        onProponer = { propia -> if (vm.red.usuario.value == null) vm.abrir(Pantalla.CuentaRed) else vm.proponerFrase(propia) })
 
     if (e.vivas.isEmpty()) {
         EstadoVacio(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.vacio_titulo), stringResource(R.string.vacio_texto))
@@ -132,11 +105,11 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         return
     }
 
-    // La tarjeta grande: lo terminado este año, en puntos sobre su halo, con El Cajón.
+    // La tarjeta grande: lo terminado este año, en puntos sobre su halo (El Cajón vive en el círculo del perfil, X-07).
     val total = c.porTipo.values.sum()
     Box(Modifier.aparecer(0).fillMaxWidth().padding(16.dp).vidrio(forma(28.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f), centro = androidx.compose.ui.geometry.Offset(0.25f, 0.45f))
         .clickable { vm.abrir(Pantalla.Cifras) }) {
-        Column(Modifier.padding(20.dp).fillMaxWidth(0.62f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(20.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             val enCajon = total == 0
             Text(if (enCajon) stringResource(R.string.en_tu_cajon) else stringResource(R.string.este_anio, anio), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             NumeroRiso(if (enCajon) "${e.vivas.size}" else "$total", 56.sp)
@@ -151,9 +124,6 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
                 }
             }
         }
-        // El Cajón pone la cara de lo que estás viendo o escuchando: la obra de la frase o lo último que tocaste.
-        val cara = remember(frase.obra, e.obras) { caraDe(io.github.fogonapps.cajon.datos.Caras.de(io.github.fogonapps.cajon.datos.Caras.obra(e, frase.obra))) }
-        Personaje(io.github.fogonapps.identidad.Quien.CAJON, null, Modifier.align(Alignment.CenterEnd).padding(end = 14.dp), cara = cara, tamano = 96.dp)
     }
 
     // ¿Qué te pareció? Lo último que terminaste sin nota: calificarlo con un toque o escribir la reseña.

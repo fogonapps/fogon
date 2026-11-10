@@ -62,6 +62,8 @@ sealed interface Pantalla {
 enum class Pestana { INICIO, RESUMEN, SOBRES, METAS }
 
 class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
+    /** Las frases del saludo, como en El Cajón (las propias, al_); La Alcancía aún no tiene red, así que quedan en el teléfono. */
+    val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { null }
     private val ahorradorApp = app as AhorradorApp
     private val almacen = ahorradorApp.almacen
     val L get() = ahorradorApp.logica

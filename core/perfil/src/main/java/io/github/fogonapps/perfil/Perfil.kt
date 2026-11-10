@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,5 +52,23 @@ fun FraseFogon(nombre: String, frase: String, modifier: Modifier = Modifier, onM
                 modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp)).combinedClickable(onClick = {}, onLongClick = onMantener))
             adorno()
         }
+    }
+}
+
+/**
+ * La cabecera del inicio, igual en todas las apps (X-07): el nombre (o «¡Hola!») en grande con la frase debajo; a la
+ * derecha las acciones de la app y, siempre la última, el perfil ([perfil], normalmente `BotonPerfilMascota`).
+ * Lo propio de cada app (fecha, semana, día) no va aquí: va en su contenido.
+ */
+@Composable
+fun CabeceraInicio(
+    nombre: String, frase: String, perfil: @Composable () -> Unit, modifier: Modifier = Modifier,
+    onMantener: () -> Unit = {}, adorno: @Composable () -> Unit = {}, acciones: @Composable RowScope.() -> Unit = {},
+) {
+    Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        FraseFogon(nombre, frase, Modifier.weight(1f), onMantener, adorno)
+        acciones()
+        perfil()
     }
 }

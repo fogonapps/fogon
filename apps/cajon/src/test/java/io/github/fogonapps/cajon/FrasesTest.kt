@@ -1,6 +1,6 @@
 package io.github.fogonapps.cajon
 
-import io.github.fogonapps.cajon.datos.Frases
+import io.github.fogonapps.social.Frases
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

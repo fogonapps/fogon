@@ -34,7 +34,9 @@ open class ClienteSocial(
     private fun rutaApi(ruta: String): String {
         val camino = ruta.substringBefore('?')
         val porApp = camino in setOf("/actividad", "/explorar", "/guardados", "/perfil", "/perfil/revision", "/publicaciones/cambios") ||
-            camino.startsWith("/perfiles/") || camino.startsWith("/etiquetas/") || camino == "/avisos" || camino.startsWith("/avisos/")
+            camino.startsWith("/perfiles/") || camino.startsWith("/etiquetas/") || camino == "/avisos" || camino.startsWith("/avisos/") ||
+            camino == "/frases/comunidad" || camino == "/frases/propuestas" ||
+            camino == "/lugares" || camino.startsWith("/lugares/")
         return if (appProtocolo != null && porApp) "/v2/apps/${configuracion.idApp}" + ruta else "/v1$ruta"
     }
 
@@ -61,6 +63,21 @@ open class ClienteSocial(
     protected fun <T> json(s: KSerializer<T>, v: T) = JsonSocial.encodeToString(s, v).toRequestBody(JSON)
     protected fun <T> leer(s: KSerializer<T>, texto: String?) = JsonSocial.decodeFromString(s, texto ?: "null")
     protected fun cod(s: String) = URLEncoder.encode(s, "UTF-8")
+
+    /* ----- Frases del saludo: las de la gente son de cada app; los votos y las ocultas, por clave ----- */
+
+    /** Los votos de la comunidad a las frases del saludo (clave → sí y no). */
+    suspend fun frases(): Map<String, ConteoFrase> = leer(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ConteoFrase.serializer()), pedir("/frases"))
+    suspend fun frasesComunidad(idioma: String) = leer(kotlinx.serialization.builtins.ListSerializer(FraseComunidad.serializer()), pedir("/frases/comunidad?idioma=${cod(idioma)}"))
+    suspend fun proponerFrase(texto: String, idioma: String) { pedir("/frases/propuestas", "POST", json(FraseNueva.serializer(), FraseNueva(texto, idioma, app = configuracion.idApp))) }
+    suspend fun frasesOcultas() = leer(kotlinx.serialization.builtins.ListSerializer(kotlinx.serialization.serializer<String>()), pedir("/frases/ocultas"))
+    suspend fun votarFrase(clave: String, valor: Int) { pedir("/frases/${cod(clave)}", "PUT", json(VotoFrase.serializer(), VotoFrase(valor))) }
+    /** El equipo: agregar una frase a una app ([app]; por omisión, la de este cliente), quitarla y decidir las propuestas. */
+    suspend fun agregarFrase(texto: String, idioma: String, franja: String, app: String = configuracion.idApp) =
+        leer(FraseComunidad.serializer(), pedir("/admin/frases", "PUT", json(FraseNueva.serializer(), FraseNueva(texto, idioma, franja, app))))
+    suspend fun quitarFrase(clave: String) { pedir("/admin/frases/${cod(clave)}", "DELETE") }
+    suspend fun frasesPendientes() = leer(kotlinx.serialization.builtins.ListSerializer(FraseComunidad.serializer()), pedir("/admin/frases"))
+    suspend fun decidirFrase(clave: String, aprobar: Boolean) { pedir("/admin/frases", "POST", json(DecisionFrase.serializer(), DecisionFrase(clave, aprobar))) }
 
     /* Cuenta */
     suspend fun info(): InfoServidor = leer(InfoServidor.serializer(), pedir("/estado"))
@@ -185,6 +202,11 @@ open class ClienteSocial(
         pedir("/publicaciones", "PUT", json(ListSerializer(PublicacionSubida.serializer()), lista)) }
     suspend fun feed(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/actividad" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun util(id: Long, quitar: Boolean) { pedir("/publicaciones/$id/util", if (quitar) "DELETE" else "POST") }
+    /** Lugares de La Cucha: hasta 30 sugerencias por nombre y ciudad (subcadenas, sin tildes ni mayúsculas). */
+    suspend fun lugares(nombre: String, ciudad: String) = leer(ListSerializer(Lugar.serializer()),
+        pedir("/lugares?nombre=${cod(nombre)}&ciudad=${cod(ciudad)}"))
+    /** Crea un lugar o devuelve el que ya existe con ese nombre y ciudad. */
+    suspend fun crearLugar(nuevo: LugarNuevo) = leer(Lugar.serializer(), pedir("/lugares", "POST", json(LugarNuevo.serializer(), nuevo)))
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun publicacion(id: Long) = leer(PublicacionSocial.serializer(), pedir("/publicaciones/$id"))
     suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))

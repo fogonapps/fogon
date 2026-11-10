@@ -185,7 +185,7 @@
   <string name="guardar">Save</string>
   <string name="guardar_respaldo">Save backup</string>
   <string name="guardaste">Saved</string>
-  <string name="hola">Hi</string>
+  <string name="hola">Hi!</string>
   <string name="hola_nombre">Hi, %1$s</string>
   <string name="icono">Icon</string>
   <string name="idioma">Language</string>
@@ -496,4 +496,16 @@
   <string name="perfil_imagen_error">Could not open that image. Try another one.</string>
   <string name="tu_perfil">Your profile</string>
   <string name="perfil_sin_nombre">Your name</string>
+  <string-array name="frases_inicio">
+    <item>Where did the money go?</item>
+    <item>What you write down, you look after.</item>
+    <item>A peso saved is a peso earned.</item>
+    <item>No impulse buys today.</item>
+    <item>Writing it down is the first saving.</item>
+    <item>Make the money last.</item>
+    <item>How far to the goal?</item>
+    <item>Bills first, treats later.</item>
+    <item>Slowly, the piggy bank still fills.</item>
+    <item>Clear accounts, calm mind.</item>
+  </string-array>
 </resources>

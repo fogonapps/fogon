@@ -105,6 +105,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
     }
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
+        if (estado.listo) PoliticaCuenta(vm)
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             if (!estado.listo) {
                 Tutorial(vm, acciones.importar)
@@ -114,6 +115,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
                         when (p) {
                             Pestana.HOY -> Hoy(vm, estado)
+                            Pestana.GENTE -> TuGente(vm)
                             Pestana.RECETAS -> Recetas(vm, estado)
                             Pestana.PLAN -> Plan(vm, estado)
                             Pestana.PROGRESO -> Progreso(vm, estado)
@@ -151,6 +153,14 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                             }
                             Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             Pantalla.Licencias -> Licencias(vm)
+                            Pantalla.Cuenta -> Cuenta(vm, acciones.exportar)
+                            is Pantalla.Seguridad -> SeguridadCuenta(vm, p.ajuste)
+                            is Pantalla.Gente -> io.github.fogonapps.social.ui.GenteRed(interfazCuenta(vm), p.usuario, p.seguidores)
+                            Pantalla.Transparencia -> TransparenciaCucha(vm)
+                            is Pantalla.Social -> RedCucha(vm, p)
+                            is Pantalla.CompartirPlato -> CompartirPlato(vm, estado, p.fecha, p.anotado)
+                            is Pantalla.CompartirReceta -> CompartirReceta(vm, estado, p.id)
+                            is Pantalla.ResenarRestaurante -> ResenarRestaurante(vm, p.clave)
                         }
                         if (conScroll) Espacio(40.dp)
                     }
@@ -177,6 +187,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
     val f = FogonTema.actual
     val pestanas = listOf(
         Triple(Pestana.HOY, Iconos.Hoy, R.string.pestana_hoy),
+        Triple(Pestana.GENTE, io.github.fogonapps.identidad.IconosFogon.Gente, R.string.pestana_gente),
         Triple(Pestana.RECETAS, Iconos.Recetas, R.string.pestana_recetas),
         Triple(Pestana.PLAN, Iconos.Plan, R.string.pestana_plan),
         Triple(Pestana.PROGRESO, Iconos.Progreso, R.string.pestana_progreso),

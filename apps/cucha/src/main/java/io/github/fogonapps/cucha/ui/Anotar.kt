@@ -180,6 +180,9 @@ fun Cantidad(vm: CuchaViewModel, e: Estado, p: Pantalla.Cantidad) {
         BotonRiso(stringResource(if (anterior != null) R.string.guardar else R.string.anotar), {
             vm.anotar(c, cantidad, detalle, comida, p.fecha, editar = anterior?.id)
         }, Modifier.fillMaxWidth(), habilitado = cantidad > 0)
+        if (anterior != null) BotonSecundario(stringResource(R.string.red_compartir_plato), {
+            vm.abrir(Pantalla.CompartirPlato(p.fecha, anterior.id))
+        }, Modifier.fillMaxWidth())
         if (anterior != null) BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_pregunta, anterior.nombre), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)
@@ -245,6 +248,9 @@ fun Rapido(vm: CuchaViewModel, e: Estado, p: Pantalla.Rapido) {
             vm.anotarRapido(nombre, Nutrientes(numero(kcal) ?: 0.0, numero(prot) ?: 0.0, numero(carb) ?: 0.0, numero(gras) ?: 0.0), comida, p.fecha, anterior?.id)
             if (anterior != null) vm.cerrar()
         }, Modifier.fillMaxWidth(), habilitado = (numero(kcal) ?: 0.0) > 0)
+        if (anterior != null) BotonSecundario(stringResource(R.string.red_compartir_plato), {
+            vm.abrir(Pantalla.CompartirPlato(p.fecha, anterior.id))
+        }, Modifier.fillMaxWidth())
         if (anterior != null) BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_pregunta, anterior.nombre), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)

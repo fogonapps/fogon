@@ -113,6 +113,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                         BarraPestanas(
                             listOf(
                                 Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), Iconos.Inicio),
+                                Triple(Pestana.GENTE, stringResource(R.string.entreno_tu_gente), io.github.fogonapps.identidad.IconosFogon.Gente),
                                 Triple(Pestana.ENTRENAR, stringResource(R.string.pestana_entrenar), Iconos.Pesa),
                                 Triple(Pestana.RANGOS, stringResource(R.string.pestana_rangos), Iconos.Rango),
                             ),
@@ -125,12 +126,13 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana -> Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
                     // Inicio y Rangos llevan su propia cabecera gigante.
                     if (pestana == Pestana.ENTRENAR) Text(
-                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos }),
+                        stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.GENTE -> R.string.entreno_tu_gente; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos }),
                         style = MaterialTheme.typography.headlineLarge, color = f.texto,
                         modifier = Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp),
                     )
                     when (pestana) {
                         Pestana.INICIO -> Inicio(vm, estado)
+                        Pestana.GENTE -> TuGente(vm)
                         Pestana.ENTRENAR -> Entrenar(vm, estado)
                         Pestana.RANGOS -> Rangos(vm, estado)
                     }

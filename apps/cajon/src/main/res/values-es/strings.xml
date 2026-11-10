@@ -1347,10 +1347,10 @@
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
-  <string name="politica_resumen">Ahora Fogón Social es la cuenta de todas las apps de Fogón: El Cajón y El Forzudo.
-Guardamos desde qué app entras y publicas, para mostrar cada cosa en su app.
-Desde El Forzudo solo sale lo que compartes de un entreno; nunca tu peso ni tus medidas.
-Corregimos el plazo para cambiar el usuario: una vez cada 30 días.</string>
+  <string name="politica_resumen">Ahora La Cucha también usa la cuenta de Fogón Social.
+Si reseñas un restaurante, guardamos el lugar (nombre, ciudad y, si los pones, la dirección y la ubicación redondeada).
+De La Cucha solo sale lo que compartes: las calorías y los macros, solo si los incluyes; nunca tu diario, tus metas ni tu peso.
+La política y los términos ya tienen versión en inglés.</string>
   <string name="politica_aceptar">Aceptar</string>
   <string name="politica_ahora_no">Ahora no</string>
   <string name="politica_revisar">Revisar la política</string>
@@ -1433,4 +1433,9 @@ Corregimos el plazo para cambiar el usuario: una vez cada 30 días.</string>
   <string name="lastfm_listo">Importación de Last.fm terminada.</string>
   <string name="beta_aviso">Beta: El Cajón todavía puede cambiar y tener fallos. Si algo no anda, cuéntanos en «Reportar un fallo o sugerir algo».</string>
   <string name="beta_problemas">Problemas conocidos</string>
+  <string name="app_cajon">El Cajón</string>
+  <string name="app_forzudo">El Forzudo</string>
+  <string name="app_cucha">La Cucha</string>
+    <string name="ruta_politica" translatable="false">/privacidad</string>
+    <string name="ruta_terminos" translatable="false">/terminos</string>
 </resources>

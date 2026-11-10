@@ -474,8 +474,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** "¿Qué te pareció?": la nota, y si no estaba terminada, queda terminada hoy. */
     /** Los votos de la comunidad a las frases del saludo (se traen al abrir Inicio, como mucho cada 6 horas). */
-    private val _frasesComunidad = MutableStateFlow<Map<String, io.github.fogonapps.cajon.datos.Frases.Votos>>(emptyMap())
-    val frasesComunidad: StateFlow<Map<String, io.github.fogonapps.cajon.datos.Frases.Votos>> = _frasesComunidad
+    private val _frasesComunidad = MutableStateFlow<Map<String, io.github.fogonapps.social.Frases.Votos>>(emptyMap())
+    val frasesComunidad: StateFlow<Map<String, io.github.fogonapps.social.Frases.Votos>> = _frasesComunidad
     private var frasesTraidas = 0L
 
     private val _frasesDeLaGente = MutableStateFlow<List<io.github.fogonapps.cajon.datos.FraseComunidad>>(emptyList())
@@ -487,8 +487,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val frasesOcultas: StateFlow<Set<String>> = _frasesOcultas
 
     /** El equipo agrega o quita una frase (en Moderación); después se vuelven a traer. */
-    fun agregarFrase(texto: String, idioma: String, franja: String) = viewModelScope.launch {
-        runCatching { caja.clienteSocial().agregarFrase(texto.trim(), idioma, franja) }
+    fun agregarFrase(texto: String, idioma: String, franja: String, app: String = "cajon") = viewModelScope.launch {
+        runCatching { caja.clienteSocial().agregarFrase(texto.trim(), idioma, franja, app) }
             .onSuccess { frasesTraidas = 0; cargarFrases() }.onFailure { avisar(tx(R.string.red_error)) }
     }
     fun quitarFrase(clave: String) = viewModelScope.launch {
@@ -501,7 +501,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         frasesTraidas = System.currentTimeMillis()
         viewModelScope.launch {
             val c = caja.clienteSocial()
-            runCatching { c.frases() }.getOrNull()?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.cajon.datos.Frases.Votos(it.value.si, it.value.no) } }
+            runCatching { c.frases() }.getOrNull()?.let { m -> _frasesComunidad.value = m.mapValues { io.github.fogonapps.social.Frases.Votos(it.value.si, it.value.no) } }
             runCatching { c.frasesComunidad(idioma()) }.getOrNull()?.let { _frasesDeLaGente.value = it }
             runCatching { c.frasesOcultas() }.getOrNull()?.let { _frasesOcultas.value = it.toSet() }
         }
