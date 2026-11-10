@@ -18,6 +18,8 @@ rootProject.name = "fogon"
 
 include(":core:identidad")
 include(":core:perfil")
+include(":core:social")
+include(":core:social-ui")
 include(":apps:forzudo")
 include(":apps:ahorrador")
 include(":apps:cucha")

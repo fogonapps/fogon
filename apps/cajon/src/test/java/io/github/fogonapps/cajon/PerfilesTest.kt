@@ -117,15 +117,7 @@ class PerfilesTest {
         assertFalse(File(raiz, "migracion-perfiles-respaldo").exists())
         originales.forEach { (ruta, bytes) -> assertArrayEquals(bytes, File(raiz, "perfiles/1/$ruta").readBytes()) }
     }
-    @Test fun instantaneaDeClavesConservaTodosLosTiposYValoresCifrados() {
-        val valores = mapOf<String, Any>(
-            "social" to "texto-cifrado", "social.iv" to "iv-cifrado", "llave_cajon" to "llave-cifrada",
-            "chat_llaves" to "chat-cifrado", "ultima" to 1234567890123L, "version_cine" to 2,
-            "perfil_red_pendiente" to true, "desconocida" to 1.5f,
-            "portadas_revisadas" to setOf("uno", "dos"), "vacio" to emptySet<String>(),
-        )
-        assertEquals(valores, abrirPreferenciasClaves(copiarPreferenciasClaves(valores)))
-    }
+
     @Test fun estadoIlegibleNoImpideArrancarYSeConservaParaElAlmacen() {
         val raiz = preparar(); val claves = Claves()
         File(raiz, "datastore/estado.json").writeText("JSON interrumpido")

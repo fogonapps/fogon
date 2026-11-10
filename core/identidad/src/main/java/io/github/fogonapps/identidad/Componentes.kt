@@ -498,3 +498,16 @@ val URL_CODIGO: String? = "https://github.com/fogonapps/fogon"
 
 /** Correo de Fogón para reportes y sugerencias (null = las apps solo ofrecen GitHub). */
 val CORREO_FOGON: String? = "fogonapps@gmail.com"
+
+/** Elegir una opción entre varias, como píldoras (la elegida, en la tinta del tema). */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun <T> SelectorPildoras(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> Unit, modifier: Modifier = Modifier) {
+    val f = FogonTema.actual
+    androidx.compose.foundation.layout.FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        opciones.forEach { (v, t) ->
+            androidx.compose.material3.FilterChip(v == elegido, { onElegir(v) }, { androidx.compose.material3.Text(t) }, shape = FormaPildora,
+                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
+        }
+    }
+}

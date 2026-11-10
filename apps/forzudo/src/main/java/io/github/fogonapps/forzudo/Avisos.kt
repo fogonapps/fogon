@@ -32,7 +32,7 @@ object Avisos {
     }
 
     private fun pendiente(c: Context) = PendingIntent.getBroadcast(
-        c, ID, Intent(c, AvisoDescanso::class.java),
+        c, ID, Intent(c, AvisoDescanso::class.java).putExtra("perfil", (c.applicationContext as ForzudoApp).perfiles.lista.activo),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
@@ -79,6 +79,7 @@ object Avisos {
 
 class AvisoDescanso : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.getStringExtra("perfil") != (context.applicationContext as ForzudoApp).perfiles.lista.activo) return
         Avisos.mostrar(context)
         Avisos.vibrar(context, 400)
     }

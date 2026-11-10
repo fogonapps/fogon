@@ -33,23 +33,27 @@ object SerializadorEstado : Serializer<Estado> {
     }
 }
 
-fun crearAlmacen(context: Context): DataStore<Estado> = DataStoreFactory.create(
+fun crearAlmacen(context: Context, directorio: File = context.filesDir, scope: kotlinx.coroutines.CoroutineScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())): DataStore<Estado> = DataStoreFactory.create(
     serializer = SerializadorEstado,
+    scope = scope,
     // Si el archivo se daña, se conserva una copia antes de empezar de cero.
     corruptionHandler = ReplaceFileCorruptionHandler { e ->
-        val f = File(context.filesDir, "datastore/estado.json")
-        runCatching { f.copyTo(File(context.filesDir, "estado-dañado-${System.currentTimeMillis()}.json")) }
+        val f = File(directorio, "datastore/estado.json")
+        if (f.exists()) {
+            val copia = f.copyTo(File(directorio, "estado-dañado-${System.currentTimeMillis()}.json"))
+            check(f.readBytes().contentEquals(copia.readBytes()))
+        }
         Estado()
     },
-    produceFile = { File(context.filesDir, "datastore/estado.json") },
+    produceFile = { File(directorio, "datastore/estado.json") },
 )
 
 /**
  * Guarda el token de GitHub cifrado con una llave del Keystore de Android (AES-GCM).
  * La llave nunca sale del hardware seguro del teléfono; en el disco solo queda el texto cifrado.
  */
-class CajaFuerte(context: Context) {
-    private val prefs = context.getSharedPreferences("sincronizacion", Context.MODE_PRIVATE)
+class CajaFuerte(context: Context, perfil: String = "1") {
+    private val prefs = context.getSharedPreferences("sincronizacion-p$perfil", Context.MODE_PRIVATE)
     private val alias = "forzudo-token"
 
     private fun llave(): SecretKey {

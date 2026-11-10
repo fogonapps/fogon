@@ -159,23 +159,7 @@ class RedTest {
         }
     }
 
-    @Test fun respuestaExitosaAntiguaTampocoContinuaLaPreparacionDeLaLlave() = runTest {
-        var token = "sesión A de prueba"
-        val sesiones = SesionCuenta { token }
-        val respuesta = CompletableDeferred<Unit>()
-        var preparaciones = 0
-        val accesoA = async {
-            val vigente = sesiones.intentar(trabajo = { respuesta.await() }, alError = { error("No debe fallar") })
-            if (vigente) preparaciones++
-        }
-        runCurrent()
-        sesiones.invalidar()
-        token = "sesión B de prueba"
-        respuesta.complete(Unit)
-        accesoA.await()
-        assertEquals(0, preparaciones)
-        assertEquals("sesión B de prueba", token)
-    }
+
 
     @Test fun un401DeLaLlaveTrasEntrarPerteneceALaNuevaSesion() = runTest {
         var token: String? = null

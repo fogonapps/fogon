@@ -24,7 +24,7 @@ fun Routing.paginasWeb(social: Social) {
     get("/{arroba}") {
         val arroba = call.parameters["arroba"] ?: ""
         if (!arroba.startsWith("@")) return@get call.respondText(pagina("No está", "<p>Esta página no existe.</p>"), ContentType.Text.Html, HttpStatusCode.NotFound)
-        val p = runCatching { social.verPerfil(null, arroba.removePrefix("@")) }.getOrNull()
+        val p = runCatching { social.verPerfilGlobal(null, arroba.removePrefix("@")) }.getOrNull()
             ?: return@get call.respondText(pagina("No está", "<p>Este perfil no existe.</p>$BOTONES"), ContentType.Text.Html, HttpStatusCode.NotFound)
         val u = p.persona.usuario
         val nombre = p.persona.nombre.ifBlank { u }
@@ -39,7 +39,7 @@ fun Routing.paginasWeb(social: Social) {
             p.publicaciones.take(30).forEach { append(tarjeta(it)) }
             append(BOTONES)
         }
-        call.respondText(pagina("$nombre (@$u)", cuerpo, descripcion = p.bio.ifBlank { "Mira el perfil de @$u en El Cajón." }), ContentType.Text.Html)
+        call.respondText(pagina("$nombre (@$u)", cuerpo, descripcion = p.bio.ifBlank { "Mira el perfil de @$u en Fogón Social." }), ContentType.Text.Html)
     }
 
     get("/p/{id}") {
@@ -58,6 +58,15 @@ private fun tarjeta(p: Publicacion): String = buildString {
     texto(d, "portada").takeIf { it.startsWith("https://") }?.let { append("<img class=\"portada\" src=\"${e(it)}\" alt=\"\">") }
     texto(d, "titulo").takeIf { it.isNotBlank() }?.let { append("<h2>${e(it)}</h2>") }
     (d["estrellas"] as? JsonPrimitive)?.doubleOrNull?.takeIf { it > 0 }?.let { append("<p class=\"estrellas\">${"★".repeat(it.toInt())}${if (it % 1 >= 0.5) "½" else ""}</p>") }
+    if (p.app != "cajon") {
+        append("<p class=\"suave\">${e(AppsSocial.nombre(p.app))} · ${e(texto(d, "fecha"))}</p>")
+        append("<p>Duración: ${e(texto(d, "duracion"))} s</p>")
+        (d["ejercicios"] as? kotlinx.serialization.json.JsonArray)?.forEach { elemento ->
+            val ejercicio = elemento as? JsonObject ?: return@forEach
+            val series = ejercicio["series"] as? kotlinx.serialization.json.JsonArray
+            append("<p>${e(texto(ejercicio, "nombre"))}: ${series?.size ?: 0} series</p>")
+        }
+    }
     val spoiler = (d["spoiler"] as? JsonPrimitive)?.content == "true"
     texto(d, "texto").takeIf { it.isNotBlank() }?.let { append(if (spoiler) "<details><summary>Tiene spoilers</summary><p>${e(it)}</p></details>" else "<p>${e(it)}</p>") }
     append("<p class=\"suave\">♥ ${p.megusta} · ${p.comentarios} comentarios</p>")
@@ -79,7 +88,7 @@ private val BOTONES = "<p class=\"botones\"><a class=\"boton\" href=\"$DESCARGA\
 private fun pagina(titulo: String, cuerpo: String, descripcion: String = "Tuya desde el primer día."): String = """<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${e(titulo)}</title><meta name="description" content="${e(descripcion)}">
-<meta property="og:title" content="${e(titulo)}"><meta property="og:description" content="${e(descripcion)}"><meta property="og:site_name" content="El Cajón">
+<meta property="og:title" content="${e(titulo)}"><meta property="og:description" content="${e(descripcion)}"><meta property="og:site_name" content="Fogón Social">
 <style>
 :root{--papel:#151316;--tarjeta:#201d22;--texto:#f2ede6;--suave:#a79fa8;--acento:#9b7bff}
 *{box-sizing:border-box}body{margin:0;background:var(--papel);color:var(--texto);font:16px/1.5 system-ui,sans-serif}

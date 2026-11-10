@@ -95,29 +95,11 @@ private fun JsonObject.texto(clave: String) = (this[clave] as? JsonPrimitive)?.c
 
 /** La foto de una persona de la red (o su inicial, en un círculo de vidrio). */
 @Composable
-fun AvatarRed(p: PersonaSocial, tamano: Dp = 44.dp) {
-    val f = FogonTema.actual
-    Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-        Text((p.nombre.ifBlank { p.usuario }).take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto,
-            fontSize = androidx.compose.ui.unit.TextUnit(maxOf(16f, tamano.value * 0.4f), androidx.compose.ui.unit.TextUnitType.Sp))
-        if (p.foto) coil3.compose.AsyncImage(ClienteSocial.foto(p.usuario), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-    }
-}
+fun AvatarRed(p: PersonaSocial, tamano: Dp = 44.dp) { io.github.fogonapps.social.ui.AvatarRed(p, tamano) }
 
 /** Una persona en una lista: su foto, su nombre y su @usuario; [derecha] para un botón. */
 @Composable
-fun FilaPersona(p: PersonaSocial, onClick: () -> Unit, modifier: Modifier = Modifier, derecha: @Composable () -> Unit = {}) {
-    val f = FogonTema.actual
-    Row(modifier.fillMaxWidth().clip(forma(18.dp)).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        AvatarRed(p)
-        Column(Modifier.weight(1f)) {
-            Text(p.nombre.ifBlank { p.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("@" + p.usuario + if (p.privada) " · " + stringResource(R.string.red_privada_corto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
-        }
-        derecha()
-    }
-}
+fun FilaPersona(p: PersonaSocial, onClick: () -> Unit, modifier: Modifier = Modifier, derecha: @Composable () -> Unit = {}) { io.github.fogonapps.social.ui.FilaPersona(p, onClick, modifier, derecha) }
 
 @Composable
 private fun haceCuanto(cuando: Long): String {
@@ -135,24 +117,7 @@ private fun haceCuanto(cuando: Long): String {
 fun etiquetasDe(texto: String): List<String> = Regex("#([\\p{L}\\p{N}_]{2,40})").findAll(texto).map { it.groupValues[1].lowercase() }.distinct().toList()
 
 /** El texto de una publicación con sus #etiquetas tocables (llevan a lo público que las usa). */
-@Composable
-private fun TextoConEtiquetas(vm: CajonViewModel, texto: String, maxLineas: Int) {
-    val f = FogonTema.actual
-    val anotado = androidx.compose.ui.text.buildAnnotatedString {
-        var desde = 0
-        Regex("#([\\p{L}\\p{N}_]{2,40})").findAll(texto).forEach { m ->
-            append(texto.substring(desde, m.range.first))
-            val etiqueta = m.groupValues[1].lowercase()
-            withLink(androidx.compose.ui.text.LinkAnnotation.Clickable(etiqueta,
-                androidx.compose.ui.text.TextLinkStyles(androidx.compose.ui.text.SpanStyle(color = f.acentoTexto, fontWeight = FontWeight.SemiBold))) {
-                vm.abrir(Pantalla.EtiquetaRed(etiqueta))
-            }) { append(m.value) }
-            desde = m.range.last + 1
-        }
-        append(texto.substring(desde))
-    }
-    Text(anotado, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = maxLineas, overflow = TextOverflow.Ellipsis)
-}
+
 
 /** 1.234 → "1,2 mil"; 2.300.000 → "2,3 mill." */
 @Composable
@@ -170,41 +135,15 @@ private fun compartirTexto(ctx: android.content.Context, texto: String) {
 /** Una publicación de la red: quién, qué (la obra, la foto, las estrellas, las palabras) y ♥, comentar, guardar y compartir. */
 @Composable
 fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modifier = Modifier, abrir: Boolean = true, motivo: io.github.fogonapps.cajon.RedSocial.Companion.Motivo? = null) {
+    val razon = motivo?.let { motivoTexto(it) }
+    val interfaz = interfazSocial(vm, motivo)
+    io.github.fogonapps.social.ui.TarjetaPublicacion(interfaz, p, modifier, abrir, razon)
+}
+
+@Composable
+internal fun CuerpoPublicacionCajon(vm: CajonViewModel, p: PublicacionSocial, destapado: Boolean) {
     val f = FogonTema.actual
-    val ctx = LocalContext.current
     val d = p.datos
-    var destapado by remember(p.id) { mutableStateOf(false) }
-    var menu by remember(p.id) { mutableStateOf(false) }
-    LaunchedEffect(p.id) { vm.red.vista(p.id) }
-    if (menu) MenuPublicacion(vm, p, motivo) { menu = false }
-    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon()
-        .then(if (abrir) Modifier.combinedClickable(onLongClick = { menu = true }) { vm.abrir(Pantalla.PublicacionRed(p.id)) } else Modifier).padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().clip(FormaPildora).clickable { vm.abrir(Pantalla.PerfilRed(p.autor.usuario)) },
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            AvatarRed(p.autor, 36.dp)
-            Column(Modifier.weight(1f)) {
-                Text(p.autor.nombre.ifBlank { p.autor.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(stringResource(when (p.tipo) {
-                    "resena" -> R.string.red_tipo_resena; "diario" -> R.string.red_tipo_diario; "lista" -> R.string.red_tipo_lista; else -> R.string.red_tipo_publico
-                }) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
-            }
-            if (p.visibilidad == Visibilidad.AMIGOS) IconoRiso(Iconos.Candado, stringResource(R.string.red_para_seguidores), tamano = 16.dp, tinta = f.textoSuave)
-            BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), tinta = f.textoSuave) { menu = true }
-        }
-        // Por qué ves esto (en Explorar).
-        motivo?.let { m ->
-            Text(when (m) {
-                is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TienesLaObra -> stringResource(R.string.red_porque_obra, m.titulo)
-                is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TeGustaElCreador -> stringResource(R.string.red_porque_creador, m.creador)
-                is io.github.fogonapps.cajon.RedSocial.Companion.Motivo.TusEtiquetas -> stringResource(R.string.red_porque_etiqueta, m.etiqueta)
-                io.github.fogonapps.cajon.RedSocial.Companion.Motivo.Nueva -> stringResource(R.string.red_porque_nueva)
-            }, style = MaterialTheme.typography.labelSmall, color = f.acentoTexto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        if (p.tipo != "resena" && (d.texto("spoiler") != "true" || destapado)) {
-            if (d.texto("video").isNotBlank()) VideoPublicacion(vm, d.texto("video"), d.texto("poster"), d.texto("duracion").toIntOrNull() ?: 0)
-            else CarruselFotos(imagenesPublicacion(d))
-        }
         val titulo = d.texto("titulo")
         if (titulo.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             val portadas = (d["portadas"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
@@ -239,32 +178,8 @@ fun TarjetaPublicacion(vm: CajonViewModel, p: PublicacionSocial, modifier: Modif
                         }).heightIn(min = 48.dp).padding(12.dp))
             }
         }
-        val texto = d.texto("texto")
-        if (texto.isNotBlank() || (d.texto("spoiler") == "true" && !destapado)) {
-            if (d.texto("spoiler") == "true" && !destapado) {
-                Box(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora).clickable { destapado = true }.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    Text(stringResource(R.string.red_spoiler_tocar), style = MaterialTheme.typography.labelLarge, color = f.texto)
-                }
-            } else TextoConEtiquetas(vm, texto, if (abrir) 6 else Int.MAX_VALUE)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            BotonIcono(Iconos.Corazon, stringResource(R.string.publicacion_megusta_estado, p.megusta, stringResource(if (p.yoMeGusta) R.string.publicacion_gusta_si else R.string.publicacion_gusta_no)), tinta = if (p.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = p.yoMeGusta) { vm.red.meGusta(p) }
-            val nombreMeGusta = stringResource(R.string.publicacion_megusta, p.megusta)
-            if (p.megusta > 0) Text("${p.megusta}", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = nombreMeGusta })
-            Box(Modifier.width(8.dp))
-            BotonIcono(Iconos.Comentario, pluralStringResource(R.plurals.publicacion_comentarios, p.comentarios, p.comentarios), tinta = f.textoSuave) { vm.abrir(Pantalla.PublicacionRed(p.id)) }
-            val nombreComentarios = pluralStringResource(R.plurals.publicacion_comentarios, p.comentarios, p.comentarios)
-            if (p.comentarios > 0) Text("${p.comentarios}", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = nombreComentarios })
-            Box(Modifier.weight(1f))
-            if (p.vistas > 0) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(end = 6.dp)) {
-                IconoRiso(Iconos.Anime, stringResource(R.string.red_vistas), tamano = 18.dp, tinta = f.textoSuave)
-                Text(cifraCorta(p.vistas), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-            }
-            BotonIcono(Iconos.Guardar, stringResource(if (p.yoGuardo) R.string.red_quitar_guardada else R.string.red_guardar), tinta = if (p.yoGuardo) f.acentoTexto else f.textoSuave, lleno = p.yoGuardo) { vm.red.guardar(p) }
-            BotonIcono(Iconos.Compartir, stringResource(R.string.compartir), tinta = f.textoSuave) { compartirTexto(ctx, ClienteSocial.enlacePublicacion(p.id)) }
-        }
-    }
 }
+
 
 /* ----- El feed en el Inicio ----- */
 
@@ -341,35 +256,12 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
             BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
         }
     }
-    Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(R.string.red_pestana_siguiendo, R.string.red_explorar).forEachIndexed { i, t ->
-            val elegida = pestana == i
-            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie).border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora)
-                .clickable { pestana = i }.padding(horizontal = 16.dp, vertical = 9.dp)) {
-                Text(stringResource(t), style = MaterialTheme.typography.labelLarge, color = if (elegida) f.sobreTinta1 else f.texto)
-            }
-        }
-        Box(Modifier.weight(1f))
-        if (usuario != null) Pildora(stringResource(R.string.red_publicar), Iconos.Mas, acento = true) { vm.abrir(Pantalla.Publicar()) }
-    }
+    io.github.fogonapps.social.ui.PestanasFeedSocial(pestana, usuario, { pestana = it }) { vm.abrir(Pantalla.Publicar()) }
     if (pestana == 0 && usuario == null) { Pista(stringResource(R.string.red_feed_sin_cuenta), Modifier.padding(16.dp)); return }
     val ocultas by vm.red.ocultas.collectAsStateWithLifecycle()
     val lista = (if (pestana == 0) feed?.map { it to null } else explorar?.let { remember(it, e) { io.github.fogonapps.cajon.RedSocial.ordenarPorGustos(it, e) } })
         ?.filter { (p, _) -> io.github.fogonapps.cajon.RedSocial.seMuestra(p, e, ocultas) }
-    when {
-        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        lista.isEmpty() -> Pista(stringResource(if (pestana == 0) R.string.red_feed_vacio else R.string.red_explorar_vacio), Modifier.padding(16.dp))
-        else -> {
-            lista.forEach { (p, motivo) -> TarjetaPublicacion(vm, p, motivo = motivo) }
-            if (pestana == 0 && lista.size >= 40) BotonSecundario(stringResource(R.string.red_mas), { vm.red.masFeed() }, Modifier.fillMaxWidth().padding(16.dp))
-            // Sin scroll infinito: al final, estás al día.
-            Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
-                Text(stringResource(R.string.red_al_dia), style = MaterialTheme.typography.titleMedium, color = f.texto)
-                Text(stringResource(R.string.red_al_dia_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
-            }
-        }
-    }
+    io.github.fogonapps.social.ui.ListaFeedSocial(lista, pestana, { vm.red.masFeed() }, stringResource(R.string.red_al_dia_texto)) { p, motivo -> TarjetaPublicacion(vm, p, motivo = motivo) }
 }
 
 /**
@@ -394,7 +286,7 @@ fun CrearClaveAviso(vm: CajonViewModel) {
 
 /** Las frases que propuso la gente y esperan aprobación. */
 @Composable
-private fun FrasesPropuestas(vm: CajonViewModel) {
+internal fun FrasesPropuestas(vm: CajonViewModel) {
     val f = FogonTema.actual
     val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
     if (frases.isNotEmpty()) {
@@ -418,7 +310,7 @@ private fun FrasesPropuestas(vm: CajonViewModel) {
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun FrasesDelEquipo(vm: CajonViewModel) {
+internal fun FrasesDelEquipo(vm: CajonViewModel) {
     val f = FogonTema.actual
     val votos by vm.frasesComunidad.collectAsStateWithLifecycle()
     val deLaGente by vm.frasesDeLaGente.collectAsStateWithLifecycle()
@@ -462,15 +354,7 @@ private fun FrasesDelEquipo(vm: CajonViewModel) {
 
 /** Un botón con su número arriba (lo que hay sin leer). */
 @Composable
-fun ConCuenta(n: Int, boton: @Composable () -> Unit) {
-    val f = FogonTema.actual
-    Box {
-        boton()
-        if (n > 0) Box(Modifier.align(Alignment.TopEnd).clip(CircleShape).background(f.tinta1).padding(horizontal = 5.dp, vertical = 1.dp)) {
-            Text(if (n > 9) "9+" else "$n", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
-        }
-    }
-}
+fun ConCuenta(n: Int, boton: @Composable () -> Unit) = io.github.fogonapps.identidad.ConCuentaSocial(n, boton)
 
 /** El paso 1 de Para ti: elegir lo que te gusta (lo más visto, escuchado y leído), en "Cuéntame tus gustos". */
 @Composable
@@ -524,13 +408,6 @@ private fun Nota(p: PersonaSocial, texto: String, vacia: Boolean, onClick: () ->
     }
 }
 
-@Composable
-private fun InvitaCuenta(vm: CajonViewModel) {
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Pista(stringResource(R.string.red_invita_texto))
-        BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
-    }
-}
 
 /* ----- El perfil de otra persona (o el propio, como lo ve la red) ----- */
 
@@ -598,10 +475,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             6 -> p.resenasDelPerfil().let { lista ->
                 if (lista.isEmpty()) NadaAqui() else lista.forEach { TarjetaPublicacion(vm, it) }
             }
-            else -> CifrasDeLaRed(p)
+            else -> interfazSocial(vm).contenido.CifrasPerfil(p)
         }
     }
-    val secciones = seccionesCajon(propio) { contenidoSeccion(it) }
+    val contenidoApp = interfazSocial(vm).contenido
+    val secciones = contenidoApp.SeccionesPerfil(p, propio) { contenidoSeccion(it) }
     val vistaBase = p.aPerfilVista(secciones = secciones, contadores = listOf(
         ContadorPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) },
         ContadorPerfil("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) },
@@ -657,7 +535,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
 
 /** Las cifras que la persona deja ver, como en tu pestaña de cifras (las de antes solo traían lo terminado por tipo). */
 @Composable
-private fun CifrasDeLaRed(p: io.github.fogonapps.cajon.datos.PerfilSocial) {
+internal fun CifrasDeLaRed(p: io.github.fogonapps.cajon.datos.PerfilSocial) {
     val f = FogonTema.actual
     val c = p.partes["cifras"] as? JsonObject ?: run { NadaAqui(); return }
     val anio = (c["anio"] as? JsonPrimitive)?.content?.toIntOrNull() ?: java.time.LocalDate.now().year
@@ -716,7 +594,7 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
 
 /** Lo que más le gusta: sus destacados, sus cuatro favoritas, los géneros que dijo y lo que ha terminado. */
 @Composable
-private fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
+internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
     val f = FogonTema.actual
     val destacados = (p.partes["destacados"] as? JsonObject)?.entries?.mapNotNull { (h, v) -> (v as? JsonObject)?.let { h to it } }.orEmpty()
     val favoritas = (p.partes["favoritas"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
@@ -761,7 +639,7 @@ private fun nombreHuecoRed(h: String): String = stringResource(when (h) {
 
 /** Los artistas que más le gustan. */
 @Composable
-private fun MusicaDelPerfil(p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
+internal fun MusicaDelPerfil(p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
     val f = FogonTema.actual
     val artistas = (p.partes["musica"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
     if (artistas.isEmpty()) { NadaAqui(); return }
@@ -780,18 +658,7 @@ private fun MusicaDelPerfil(p: io.github.fogonapps.cajon.datos.PerfilSocial, pro
 
 /** Lo público que lleva una #etiqueta. */
 @Composable
-fun EtiquetaRed(vm: CajonViewModel, etiqueta: String) {
-    val f = FogonTema.actual
-    val listas by vm.red.listas.collectAsStateWithLifecycle()
-    LaunchedEffect(etiqueta) { vm.red.cargarEtiqueta(etiqueta) }
-    Cabecera("#$etiqueta", vm::cerrar)
-    val l = listas["#$etiqueta"]
-    when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.red_etiqueta_vacia), Modifier.padding(16.dp))
-        else -> l.forEach { TarjetaPublicacion(vm, it) }
-    }
-}
+fun EtiquetaRed(vm: CajonViewModel, etiqueta: String) { io.github.fogonapps.social.ui.EtiquetaRed(interfazSocial(vm), etiqueta) }
 
 @Composable
 private fun Cifra(valor: String, etiqueta: String, onClick: (() -> Unit)?) {
@@ -806,186 +673,21 @@ private fun Cifra(valor: String, etiqueta: String, onClick: (() -> Unit)?) {
 /* ----- Una publicación con sus comentarios ----- */
 
 @Composable
-fun PublicacionRed(vm: CajonViewModel, id: Long) {
-    val confirmar = LocalConfirmar.current
-    val f = FogonTema.actual
-    val vistas by vm.red.vistas.collectAsStateWithLifecycle()
-    val todos by vm.red.comentarios.collectAsStateWithLifecycle()
-    val yo by vm.red.usuario.collectAsStateWithLifecycle()
-    var texto by rememberSaveable { mutableStateOf("") }
-    var respondiendo by remember { mutableStateOf<io.github.fogonapps.cajon.datos.ComentarioSocial?>(null) }
-    var abiertos by rememberSaveable(id) { mutableStateOf(listOf<Long>()) }
-    var comentarioReportado by rememberSaveable(id) { mutableStateOf<Long?>(null) }
-    comentarioReportado?.let { comentario ->
-        HojaReporte({ comentarioReportado = null }) { codigo, motivo ->
-            vm.red.reportar("comentario", "$comentario", "$codigo: $motivo")
-            comentarioReportado = null
-        }
-    }
-    LaunchedEffect(id) { vm.red.cargarPublicacion(id) }
-    Cabecera(stringResource(R.string.red_publicacion), vm::cerrar)
-    val p = vistas[id] ?: vm.red.buscarPublicacion(id)
-    if (p == null) { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
-    TarjetaPublicacion(vm, p, abrir = false)
-    if (p.autor.usuario == yo) {
-        val clave = p.datos.texto("clave").ifBlank { p.datos.texto("propia").takeIf { it.isNotBlank() }?.let { "f:$it" }.orEmpty() }
-        if (clave.isNotBlank()) BotonSecundario(stringResource(if (clave.startsWith("f:")) R.string.red_borrar_publicacion else R.string.red_quitar_de_la_red),
-            { confirmar(vm.tx(if (clave.startsWith("f:")) R.string.red_borrar_publicacion else R.string.red_quitar_de_la_red), vm.tx(R.string.red_borrar_publicacion_confirmar)) { if (clave.startsWith("f:")) vm.red.borrarPublicacion(p.id, clave) else vm.red.quitarDeLaRed(clave); vm.cerrar() } }, Modifier.fillMaxWidth().padding(horizontal = 16.dp), peligro = true)
-    }
-    Seccion(stringResource(R.string.red_comentarios))
-    val palabras = (vm.estado.collectAsStateWithLifecycle().value?.ajustes?.palabrasOcultas).orEmpty()
-    val arbol = arbolComentarios(todos[id].orEmpty().filter { !lleva(palabras, it.texto) })
-    arbol.forEach { (raiz, respuestas) ->
-        val filas = listOf(raiz) + if (raiz.id in abiertos) respuestas else emptyList()
-        filas.forEach { c ->
-            Column(Modifier.fillMaxWidth().padding(start = if (c.id == raiz.id) 16.dp else 40.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)) {
-                if (c.borrado) Text(stringResource(R.string.publicacion_comentario_borrado), color = f.textoSuave)
-                else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.clickable { vm.abrir(Pantalla.PerfilRed(c.autor.usuario)) }) { AvatarRed(c.autor, 32.dp) }
-                        Text("@${c.autor.usuario} · ${haceCuanto(c.cuando)}", color = f.textoSuave, style = MaterialTheme.typography.labelMedium)
-                    }
-                    Text(c.texto, color = f.texto, style = MaterialTheme.typography.bodyMedium)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (yo != null) Pildora(stringResource(R.string.publicacion_responder)) { respondiendo = c }
-                        BotonIcono(Iconos.Corazon, stringResource(R.string.publicacion_megusta_estado, c.megusta,
-                            stringResource(if (c.yoMeGusta) R.string.publicacion_gusta_si else R.string.publicacion_gusta_no)),
-                            tinta = if (c.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = c.yoMeGusta) {
-                            if (yo == null) vm.abrir(Pantalla.CuentaRed) else vm.red.meGustaComentario(id, c)
-                        }
-                        val nombreMeGusta = stringResource(R.string.publicacion_megusta, c.megusta)
-                        Text("${c.megusta}", color = f.texto, modifier = Modifier.semantics { contentDescription = nombreMeGusta })
-                        if (c.puedoBorrar) BotonIcono(Iconos.Borrar, stringResource(R.string.red_borrar_comentario), tinta = f.textoSuave) {
-                            confirmar(vm.tx(R.string.red_borrar_comentario), vm.tx(R.string.red_borrar_comentario_confirmar)) { vm.red.borrarComentario(id, c.id) }
-                        }
-                        if (yo != null && c.autor.usuario != yo) BotonIcono(Iconos.Bandera, stringResource(R.string.red_reportar), tinta = f.textoSuave) { comentarioReportado = c.id }
-                    }
-                }
-            }
-        }
-        if (respuestas.isNotEmpty()) Box(Modifier.padding(start = 56.dp, bottom = 4.dp)) {
-            Pildora(if (raiz.id in abiertos) stringResource(R.string.publicacion_ocultar_respuestas)
-                else pluralStringResource(R.plurals.publicacion_ver_respuestas, respuestas.size, respuestas.size)) {
-                abiertos = if (raiz.id in abiertos) abiertos - raiz.id else abiertos + raiz.id
-            }
-        }
-    }
-    respondiendo?.let { c ->
-        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.publicacion_respondiendo, c.autor.usuario), color = f.texto, modifier = Modifier.weight(1f))
-            BotonIcono(Iconos.Cerrar, stringResource(R.string.publicacion_cancelar_respuesta)) { respondiendo = null }
-        }
-    }
-    if (yo == null) { InvitaCuenta(vm); return }
-    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(texto, { texto = it.take(1000) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.red_escribe_comentario), color = f.textoSuave) }, shape = forma(22.dp), maxLines = 4)
-        BotonIcono(Iconos.Enviar, stringResource(R.string.red_enviar), activo = texto.isNotBlank(), lleno = true) { val destino = respondiendo
-            val mensaje = if (destino?.padre != null) "@${destino.autor.usuario} $texto" else texto
-            vm.red.comentar(id, mensaje, destino?.id); texto = ""; respondiendo = null }
-    }
-}
+fun PublicacionRed(vm: CajonViewModel, id: Long) { io.github.fogonapps.social.ui.PublicacionRed(interfazSocial(vm), id) }
 
 /* ----- Avisos, guardadas, gente ----- */
 
 @Composable
-fun AvisosRed(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val avisos by vm.red.avisos.collectAsStateWithLifecycle()
-    val solicitudes by vm.red.solicitudes.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.cargarAvisos() }
-    var borrarTodos by remember { mutableStateOf(false) }
-    Cabecera(stringResource(R.string.red_avisos), vm::cerrar) {
-        if (!avisos.isNullOrEmpty()) BotonIcono(Iconos.Borrar, stringResource(R.string.red_borrar_avisos)) { borrarTodos = !borrarTodos }
-    }
-    if (borrarTodos) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Pista(stringResource(R.string.red_borrar_avisos_seguro), Modifier.weight(1f))
-        Pildora(stringResource(R.string.red_si_borrar_avisos), acento = true) { vm.red.borrarAviso(null); borrarTodos = false }
-    }
-    if (solicitudes.isNotEmpty()) {
-        Seccion(stringResource(R.string.red_solicitudes))
-        solicitudes.forEach { s ->
-            FilaPersona(s, { vm.abrir(Pantalla.PerfilRed(s.usuario)) }) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Pildora(stringResource(R.string.red_aceptar), acento = true) { vm.red.aceptar(s.usuario) }
-                    Pildora(stringResource(R.string.red_rechazar)) { vm.red.rechazar(s.usuario) }
-                }
-            }
-        }
-        Seccion(stringResource(R.string.red_lo_ultimo))
-    }
-    val lista = avisos
-    when {
-        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        lista.isEmpty() -> Pista(stringResource(R.string.red_sin_avisos), Modifier.padding(16.dp))
-        else -> lista.groupBy { a ->
-            val h = (System.currentTimeMillis() - a.cuando) / 3600_000
-            when { h < 24 -> R.string.red_hoy; h < 24 * 7 -> R.string.red_ultimos_7; else -> R.string.red_antes }
-        }.forEach { (grupo, avisosDelGrupo) ->
-          Seccion(stringResource(grupo))
-          avisosDelGrupo.forEach { a ->
-            val que = stringResource(when (a.tipo) {
-                "respuesta" -> R.string.publicacion_aviso_respuesta; "megusta" -> R.string.red_aviso_megusta; "comentario" -> R.string.red_aviso_comentario; "seguir" -> R.string.red_aviso_seguir
-                "solicitud" -> R.string.red_aviso_solicitud; "aceptada" -> R.string.red_aviso_aceptada; "publico" -> R.string.red_aviso_publico; "sancion" -> R.string.red_aviso_sancion; else -> R.string.red_aviso_otro
-            })
-            FilaPersona(a.de, {
-                val pub = a.objeto.toLongOrNull()
-                if (a.tipo == "sancion") vm.abrir(Pantalla.EstadoCuenta)
-                else if (pub != null && a.tipo in setOf("megusta", "comentario", "respuesta", "publico")) vm.abrir(Pantalla.PublicacionRed(pub)) else vm.abrir(Pantalla.PerfilRed(a.de.usuario))
-            }) {
-                Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.acentoTexto, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
-                BotonIcono(Iconos.Cerrar, stringResource(R.string.red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
-            }
-          }
-        }
-    }
-}
+fun AvisosRed(vm: CajonViewModel) { io.github.fogonapps.social.ui.AvisosRed(interfazSocial(vm)) }
 
 @Composable
-fun GuardadosRed(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val lista by vm.red.guardados.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.cargarGuardados() }
-    Cabecera(stringResource(R.string.red_guardadas), vm::cerrar)
-    val l = lista
-    when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.red_sin_guardadas), Modifier.padding(16.dp))
-        else -> l.forEach { TarjetaPublicacion(vm, it) }
-    }
-}
+fun GuardadosRed(vm: CajonViewModel) { io.github.fogonapps.social.ui.GuardadosRed(interfazSocial(vm)) }
 
 @Composable
-fun GenteRed(vm: CajonViewModel, usuario: String, seguidores: Boolean) {
-    val f = FogonTema.actual
-    val gente by vm.red.gente.collectAsStateWithLifecycle()
-    val yo by vm.red.usuario.collectAsStateWithLifecycle()
-    LaunchedEffect(usuario, seguidores) { vm.red.cargarGente(usuario, seguidores) }
-    Cabecera(stringResource(if (seguidores) R.string.red_tus_seguidores_titulo else R.string.red_pestana_siguiendo), vm::cerrar)
-    val l = gente[(if (seguidores) "seguidores:" else "siguiendo:") + usuario]
-    when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.red_nadie), Modifier.padding(16.dp))
-        else -> l.forEach { p ->
-            FilaPersona(p, { vm.abrir(Pantalla.PerfilRed(p.usuario)) }) {
-                if (seguidores && usuario == yo) Pildora(stringResource(R.string.red_quitar)) { vm.red.quitarSeguidor(p.usuario) }
-            }
-        }
-    }
-}
+fun GenteRed(vm: CajonViewModel, usuario: String, seguidores: Boolean) { io.github.fogonapps.social.ui.GenteRed(interfazSocial(vm), usuario, seguidores) }
 
 @Composable
-fun BloqueadosRed(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val gente by vm.red.gente.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.cargarBloqueados() }
-    Cabecera(stringResource(R.string.red_bloqueadas), vm::cerrar)
-    val l = gente["bloqueados"]
-    when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.red_nadie_bloqueado), Modifier.padding(16.dp))
-        else -> l.forEach { p -> FilaPersona(p, {}) { Pildora(stringResource(R.string.red_desbloquear)) { vm.red.bloquear(p.usuario, false) } } }
-    }
-}
+fun BloqueadosRed(vm: CajonViewModel) { io.github.fogonapps.social.ui.BloqueadosRed(interfazSocial(vm)) }
 
 /* ----- Publicar ----- */
 
@@ -1070,192 +772,16 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
 }
 
 @Composable
-private fun Opcion(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) {
-    val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { onCambio(!si) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-        Switch(si, onCambio, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
-    }
-}
+private fun Opcion(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) = io.github.fogonapps.identidad.OpcionSocial(texto, si, onCambio)
 
 /* ----- La cuenta ----- */
 
 @Composable
-fun CuentaRed(vm: CajonViewModel, e: Estado) {
-    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.revisarServidor() }
-    Cabecera(stringResource(R.string.red_tu_cuenta), vm::cerrar)
-    val u = usuario
-    if (u == null) EntrarRed(vm, e) else ConfigCuenta(vm, u)
-}
+fun CuentaRed(vm: CajonViewModel, e: Estado) { io.github.fogonapps.social.ui.CuentaRed(interfazSocial(vm), e.perfil.usuario, e.ajustes.nombre) }
 
 @Composable
-internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) {
-    val f = FogonTema.actual
-    val correo by vm.red.correoDisponible.collectAsStateWithLifecycle()
-    val acceso by vm.red.acceso.collectAsStateWithLifecycle()
-    var usuario by rememberSaveable { mutableStateOf(e.perfil.usuario.ifBlank { "" }) }
-    var nombre by rememberSaveable { mutableStateOf(e.ajustes.nombre) }
-    var correoTexto by rememberSaveable { mutableStateOf("") }
-    var codigo by rememberSaveable { mutableStateOf("") }
-    var acepto by rememberSaveable { mutableStateOf(false) }
-    val uri = LocalUriHandler.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (conIntro) {
-            Text(stringResource(R.string.red_que_es), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            Pista(stringResource(R.string.red_que_sube))
-        }
-        if (correo == false) Pista(stringResource(R.string.red_codigo_no_disponible))
-        val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()
-        @Composable
-        fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
-            OutlinedTextField(valor, { onCambio(it.take(200)) }, Modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true, shape = forma(18.dp),
-                visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                supportingText = { Text(stringResource(R.string.red_clave_regla)) })
-        when (acceso.paso) {
-            // El correo siempre lleva al envío de código; la contraseña tiene su propio camino.
-            PasoAcceso.CORREO -> {
-                OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
-                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.revisarCorreo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && "." in correoTexto)
-                BotonSecundario(stringResource(R.string.red_entrar_clave), { vm.red.usarClave(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
-                return
-            }
-            // Tiene contraseña: la pide, con "¿Olvidaste tu contraseña?".
-            PasoAcceso.CLAVE -> {
-                var clave by rememberSaveable { mutableStateOf("") }
-                Text(acceso.correo, style = MaterialTheme.typography.titleMedium, color = f.texto)
-                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave)) }, singleLine = true, shape = forma(18.dp),
-                    visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
-                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrarConClave(acceso.correo, clave) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && clave.length >= 8)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Pildora(stringResource(R.string.red_olvide)) { vm.red.pedirCodigo(io.github.fogonapps.cajon.MotivoCodigo.OLVIDO) }
-                    Pildora(stringResource(R.string.red_otro_correo)) { vm.red.volverAlCorreo() }
-                }
-                return
-            }
-            // El código: para registrarse, o con una contraseña nueva (si la olvidó o la cuenta no tenía).
-            PasoAcceso.CODIGO -> {
-                var nueva by rememberSaveable { mutableStateOf("") }
-                val conClaveNueva = acceso.motivo != io.github.fogonapps.cajon.MotivoCodigo.NUEVA
-                if (acceso.motivo == io.github.fogonapps.cajon.MotivoCodigo.SIN_CLAVE) Text(stringResource(R.string.red_sin_clave_crea), style = MaterialTheme.typography.titleMedium, color = f.texto)
-                Pista(stringResource(R.string.red_revisa_correo, acceso.correo))
-                OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_codigo)) },
-                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-                if (conClaveNueva) {
-                    CampoClave(nueva, { nueva = it }, stringResource(R.string.red_clave_nueva))
-                    if (acceso.motivo == io.github.fogonapps.cajon.MotivoCodigo.OLVIDO) Pista(stringResource(R.string.red_olvido_aviso))
-                }
-                BotonRiso(stringResource(R.string.red_entrar), { vm.red.entrar(codigo, nueva) }, Modifier.fillMaxWidth(),
-                    habilitado = !acceso.ocupado && codigo.length == 6 && (!conClaveNueva || nueva.length >= 8))
-                ReenviarCodigo(vm)
-                BotonSecundario(stringResource(R.string.red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
-                return
-            }
-            else -> Unit
-        }
-        // Cuenta nueva: usuario, apodo y aceptación con el correo comprobado.
-        Text(stringResource(R.string.red_elige_usuario), style = MaterialTheme.typography.titleMedium, color = f.texto)
-        OutlinedTextField(usuario, { usuario = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.red_usuario)) }, prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
-        CampoTexto(nombre, { nombre = it }, stringResource(R.string.red_nombre_visible))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(acepto, { acepto = it }, colors = CheckboxDefaults.colors(checkedColor = f.tinta1, checkmarkColor = f.sobreTinta1))
-            Text(stringResource(R.string.red_acepto), style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f).clickable { acepto = !acepto })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pildora(stringResource(R.string.red_politica)) { uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }
-            Pildora(stringResource(R.string.red_terminos)) { uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }
-        }
-        // Con correo, la contraseña es obligatoria: con ella el cajón queda guardado (cifrado) en la cuenta.
-        var claveCuenta by rememberSaveable { mutableStateOf("") }
-        if (acceso.paso == PasoAcceso.USUARIO) CampoClave(claveCuenta, { claveCuenta = it }, stringResource(R.string.red_clave))
-        var fotoCuenta by rememberSaveable { mutableStateOf<String?>(null) }
-        val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { fotoCuenta = it?.toString() }
-        BotonSecundario(stringResource(if (fotoCuenta == null) R.string.red_foto_opcional else R.string.red_foto_elegida), { elegirFoto.launch("image/*") }, Modifier.fillMaxWidth())
-        val listo = !acceso.ocupado && acepto && usuario.length >= 3 && (acceso.paso != PasoAcceso.USUARIO || claveCuenta.length >= 8)
-        BotonRiso(stringResource(R.string.red_crear_cuenta), {
-            vm.red.crearConCorreo(usuario, nombre, claveCuenta, fotoCuenta)
-        }, Modifier.fillMaxWidth(), habilitado = listo)
-    }
-}
+internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) { io.github.fogonapps.social.ui.EntrarRed(interfazSocial(vm), e.perfil.usuario, e.ajustes.nombre, conIntro) }
 
-@Composable
-private fun ConfigCuenta(vm: CajonViewModel, usuario: String) {
-    val f = FogonTema.actual
-    val ctx = LocalContext.current
-    val uri = LocalUriHandler.current
-    val privada by vm.red.privada.collectAsStateWithLifecycle()
-    val correo by vm.red.correoDisponible.collectAsStateWithLifecycle()
-    val correoCuenta by vm.red.correoCuenta.collectAsStateWithLifecycle()
-    val acceso by vm.red.acceso.collectAsStateWithLifecycle()
-    var correoTexto by rememberSaveable { mutableStateOf("") }
-    var codigo by rememberSaveable { mutableStateOf("") }
-    var borrar by remember { mutableStateOf(false) }
-    if (borrar) {
-        FormularioBorrado(vm) { borrar = false }
-        return
-    }
-    SeguridadEquipo(vm)
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("@$usuario", style = MaterialTheme.typography.headlineSmall, color = f.texto)
-        Text(ClienteSocial.enlacePerfil(usuario), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Pildora(stringResource(R.string.red_compartir_perfil), Iconos.Compartir, acento = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-            Pildora(stringResource(R.string.red_ver_mi_perfil), Iconos.Persona) { vm.abrir(Pantalla.PerfilRed(usuario)) }
-        }
-        Opcion(stringResource(R.string.red_cuenta_privada), privada) { vm.red.cambiarPrivada(it) }
-        Pista(stringResource(R.string.red_cuenta_privada_pista))
-        Pista(stringResource(R.string.red_que_se_comparte))
-        if (correoCuenta.isBlank()) Pista(stringResource(R.string.red_vincula_pista))
-        if (correo == true) {
-            if (correoCuenta.isNotBlank()) Pista(stringResource(R.string.red_correo_de_cuenta, correoCuenta))
-            else if (acceso.paso == PasoAcceso.CODIGO) {
-                OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_codigo)) },
-                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-                ReenviarCodigo(vm)
-                BotonRiso(stringResource(R.string.red_vincular), { vm.red.vincularCorreo(codigo) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && codigo.length == 6)
-            } else {
-                Pista(stringResource(R.string.red_vincula_pista))
-                OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_tu_correo)) },
-                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
-            }
-        }
-        if (correoCuenta.isNotBlank()) FormularioCorreo(vm)
-        // Tu usuario (una vez cada 30 días) y tu contraseña.
-        val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
-        Desplegable(Iconos.Persona, stringResource(R.string.red_cambiar_usuario), "@$usuario") {
-            var nuevo by rememberSaveable { mutableStateOf(usuario) }
-            Pista(stringResource(R.string.red_usuario_regla))
-            val desde = cuenta?.usuarioDesde ?: 0
-            if (desde > System.currentTimeMillis()) Pista(stringResource(R.string.red_usuario_desde, java.text.DateFormat.getDateInstance().format(java.util.Date(desde))))
-            else {
-                OutlinedTextField(nuevo, { nuevo = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
-                    prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
-                BotonRiso(stringResource(R.string.guardar), { vm.red.cambiarUsuario(nuevo) {} }, Modifier.fillMaxWidth(), habilitado = nuevo.length >= 3 && nuevo != usuario)
-            }
-        }
-        if (correoCuenta.isNotBlank()) Desplegable(Iconos.Candado, stringResource(if (cuenta?.conClave == true) R.string.red_cambiar_clave else R.string.red_crear_clave), null) {
-            var actual by rememberSaveable { mutableStateOf("") }
-            var nueva by rememberSaveable { mutableStateOf("") }
-            val oculto = androidx.compose.ui.text.input.PasswordVisualTransformation()
-            if (cuenta?.conClave == true) OutlinedTextField(actual, { actual = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_actual), color = FogonTema.actual.texto) },
-                singleLine = true, shape = forma(18.dp), visualTransformation = oculto)
-            OutlinedTextField(nueva, { nueva = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_clave_nueva)) },
-                singleLine = true, shape = forma(18.dp), visualTransformation = oculto, supportingText = { Text(stringResource(R.string.red_clave_regla)) })
-            BotonRiso(stringResource(R.string.guardar), { vm.red.ponerClave(nueva, actual) { nueva = ""; actual = "" } }, Modifier.fillMaxWidth(), habilitado = nueva.length >= 8)
-        } else Pista(stringResource(R.string.red_clave_pide_correo))
-        FilaVidrio({ vm.abrir(Pantalla.GenteRed(usuario, true)) }) { Text(stringResource(R.string.red_tus_seguidores), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ vm.abrir(Pantalla.Sesiones) }) { Text(stringResource(R.string.red_sesiones), color = f.texto) }
-        FilaVidrio({ vm.abrir(Pantalla.EstadoCuenta) }) { Text(stringResource(R.string.mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ vm.abrir(Pantalla.BloqueadosRed) }) { Text(stringResource(R.string.red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/privacidad") }) { Text(stringResource(R.string.red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
-        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos") }) { Text(stringResource(R.string.red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
-        BotonSecundario(stringResource(R.string.red_salir), { vm.red.salir() }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.red_borrar_cuenta), { borrar = true }, Modifier.fillMaxWidth(), peligro = true)
-    }
-}
 
 /* ----- La canción del perfil ----- */
 
@@ -1391,74 +917,13 @@ fun lleva(palabras: List<String>, texto: String): Boolean {
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun MenuPublicacion(vm: CajonViewModel, p: PublicacionSocial, motivo: io.github.fogonapps.cajon.RedSocial.Companion.Motivo?, onCerrar: () -> Unit) {
-    val f = FogonTema.actual
-    val ctx = LocalContext.current
-    val yo by vm.red.usuario.collectAsStateWithLifecycle()
-    var reportando by remember { mutableStateOf(false) }
-    var porque by remember { mutableStateOf(false) }
-    androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
-        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-            @Composable fun Fila(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
-                Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    IconoRiso(icono, null, tamano = 22.dp, tinta = if (peligro) MaterialTheme.colorScheme.error else f.texto)
-                    Text(texto, style = MaterialTheme.typography.bodyLarge, color = if (peligro) MaterialTheme.colorScheme.error else f.texto)
-                }
-            }
-            when {
-                reportando -> {
-                    val ayuda = stringResource(R.string.rep_ayuda)
-                    MotivosReporte { codigo, texto ->
-                        vm.red.reportar("publicacion", "${p.id}", "$codigo: $texto"); vm.red.ocultar(p.id)
-                        if (codigo == "autolesion") android.widget.Toast.makeText(ctx, ayuda, android.widget.Toast.LENGTH_LONG).show()
-                        onCerrar()
-                    }
-                }
-                porque -> {
-                    Text(stringResource(R.string.menu_por_que), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                    Text(motivoTexto(motivo), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
-                    Text(stringResource(R.string.menu_por_que_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                }
-                else -> {
-                    Fila(Iconos.Estrella, stringResource(R.string.menu_por_que)) { porque = true }
-                    if (p.autor.usuario != yo) {
-                        Fila(Iconos.Chulo, stringResource(R.string.menu_me_interesa)) { vm.red.interesa(p, true); onCerrar() }
-                        Fila(Iconos.Cerrar, stringResource(R.string.menu_no_me_interesa)) { vm.red.interesa(p, false); onCerrar() }
-                        Fila(Iconos.Persona, stringResource(R.string.menu_silenciar, p.autor.usuario)) { vm.red.silenciar(p.autor.usuario); onCerrar() }
-                    }
-                    Fila(Iconos.Enlace, stringResource(R.string.menu_copiar_enlace)) {
-                        (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
-                            .setPrimaryClip(android.content.ClipData.newPlainText("", ClienteSocial.enlacePublicacion(p.id))); onCerrar()
-                    }
-                    if (p.autor.usuario != yo && yo != null) {
-                        Fila(Iconos.Candado, stringResource(R.string.menu_bloquear, p.autor.usuario), peligro = true) { vm.red.bloquear(p.autor.usuario, true); onCerrar() }
-                        Fila(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { reportando = true }
-                    }
-                }
-            }
-        }
-    }
+    io.github.fogonapps.social.ui.MenuPublicacion(interfazSocial(vm), p, motivoTexto(motivo), onCerrar)
 }
 
 /** Selector común dentro de las hojas de reporte. */
 @Composable
-fun MotivosReporte(onElegir: (String, String) -> Unit) {
-    val f = FogonTema.actual
-    Text(stringResource(R.string.rep_por_que), style = MaterialTheme.typography.titleMedium, color = f.texto,
-        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-    MOTIVOS_REPORTE.forEach { (codigo, recurso) ->
-        val texto = stringResource(recurso)
-        FilaMenu(Iconos.Bandera, texto) { onElegir(codigo, texto) }
-    }
-}
+fun MotivosReporte(onElegir: (String, String) -> Unit) { io.github.fogonapps.social.ui.MotivosReporte(onElegir) }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun HojaReporte(onCerrar: () -> Unit, onElegir: (String, String) -> Unit) {
-    androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = FogonTema.actual.fondo) {
-        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) { MotivosReporte(onElegir) }
-    }
-}
 
 /** Los motivos de reporte: el código que entiende el servidor y su texto (lo de menores, primero). */
 val MOTIVOS_REPORTE = io.github.fogonapps.cajon.datos.MOTIVOS_REPORTE
@@ -1466,34 +931,11 @@ val MOTIVOS_REPORTE = io.github.fogonapps.cajon.datos.MOTIVOS_REPORTE
 /* ----- Estado de tu cuenta y moderación ----- */
 
 @Composable
-fun EstadoCuenta(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val estado by vm.red.estadoCuenta.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.red.cargarEstadoCuenta() }
-    Cabecera(stringResource(R.string.mod_estado), vm::cerrar)
-    val e = estado ?: run { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
-    val fecha = { t: Long -> java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(t)) }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        val ahora = System.currentTimeMillis()
-        when {
-            e.cerrada -> Text(stringResource(R.string.mod_cerrada), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-            e.suspendidaHasta > ahora -> Text(stringResource(R.string.mod_suspendida_hasta, fecha(e.suspendidaHasta)), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-            e.restringidaHasta > ahora -> Text(stringResource(R.string.mod_restringida_hasta, fecha(e.restringidaHasta)), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
-            e.faltas.isEmpty() -> Text(stringResource(R.string.mod_todo_bien), style = MaterialTheme.typography.titleMedium, color = f.texto)
-        }
-        e.faltas.forEach { x ->
-            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp)) {
-                Text(io.github.fogonapps.cajon.datos.textoFalta(x) { vm.tx(it) }, style = MaterialTheme.typography.titleSmall, color = f.texto)
-                Text(stringResource(R.string.mod_falta_vence, fecha(x.cuando), fecha(x.vence)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-        }
-        Pista(stringResource(R.string.mod_como_funciona))
-    }
-}
+fun EstadoCuenta(vm: CajonViewModel) { io.github.fogonapps.social.ui.EstadoCuenta(interfazSocial(vm)) }
 
 /** Vista de solo lectura del contenido reportado. */
 @Composable
-private fun VistaContenidoReporte(vm: CajonViewModel, contenido: String) {
+internal fun VistaContenidoReporte(vm: CajonViewModel, contenido: String) {
     val f = FogonTema.actual
     val previa = remember(contenido) { io.github.fogonapps.cajon.datos.leerContenidoReporte(contenido) }
     if (previa.video.isNotBlank()) VideoPublicacion(vm, previa.video, previa.poster, previa.duracion)
@@ -1510,78 +952,7 @@ private fun VistaContenidoReporte(vm: CajonViewModel, contenido: String) {
 
 /** La cola de revisión: solo para la cuenta que modera (lo decide el servidor). */
 @Composable
-fun Moderacion(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val confirmar = LocalConfirmar.current
-    val casos by vm.red.casos.collectAsStateWithLifecycle()
-    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
-    val bloqueado by vm.red.equipoBloqueado.collectAsStateWithLifecycle()
-    val permisos = cuenta?.permisos.orEmpty()
-    var ahora by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(cuenta?.elevadaHasta) {
-        ahora = System.currentTimeMillis()
-        val hasta = cuenta?.elevadaHasta ?: 0
-        if (hasta > ahora) { kotlinx.coroutines.delay(hasta - ahora); ahora = System.currentTimeMillis() }
-    }
-    val requiere = cuenta?.let { io.github.fogonapps.cajon.datos.necesitaElevar(it, ahora) } ?: true
-    LaunchedEffect(requiere, bloqueado) { if (!requiere && !bloqueado) vm.red.cargarCasos() }
-    val frases by vm.red.frasesPendientes.collectAsStateWithLifecycle()
-    Cabecera(stringResource(R.string.mod_titulo), vm::cerrar)
-    if (requiere || bloqueado) { SeguridadEquipo(vm, elevar = true); return }
-    var seccion by rememberSaveable { mutableStateOf(if ("ver_reportes" in permisos) 0 else if ("gestionar_frases" in permisos) 1 else if ("asignar_equipo" in permisos) 2 else 3) }
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if ("ver_reportes" in permisos) Pildora(stringResource(R.string.mod_reportes) + casos?.size?.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Bandera, acento = seccion == 0) { seccion = 0 }
-        if ("gestionar_frases" in permisos) Pildora(stringResource(R.string.mod_frases_saludo) + frases.size.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
-        if ("asignar_equipo" in permisos) Pildora(stringResource(R.string.equipo_titulo), acento = seccion == 2) { seccion = 2 }
-        if ("ver_registro" in permisos) Pildora(stringResource(R.string.registro_titulo), acento = seccion == 3) { seccion = 3 }
-    }
-    if (seccion == 2 && "asignar_equipo" in permisos) { Equipo(vm); return }
-    if (seccion == 3 && "ver_registro" in permisos) { RegistroEquipoPantalla(vm); return }
-    if (seccion == 1 && "gestionar_frases" in permisos) { FrasesPropuestas(vm); FrasesDelEquipo(vm); return }
-    if ("ver_reportes" !in permisos) return
-    val l = casos
-    when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.mod_vacio), Modifier.padding(16.dp))
-        else -> l.forEach { c ->
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val tipo = stringResource(when (c.que) {
-                    "cuenta" -> R.string.mod_tipo_cuenta
-                    "comentario" -> R.string.mod_tipo_comentario
-                    "mensaje" -> R.string.mod_tipo_mensaje
-                    else -> R.string.red_publicacion
-                })
-                val motivos = c.motivos.entries.map { (codigo, cantidad) ->
-                    stringResource(MOTIVOS_REPORTE.firstOrNull { it.first == codigo }?.second ?: R.string.rep_otro) + " ×$cantidad"
-                }.joinToString()
-                Text("$tipo · $motivos", style = MaterialTheme.typography.labelMedium,
-                    color = if ("menor_en_riesgo" in c.motivos) MaterialTheme.colorScheme.error else f.acentoTexto)
-                c.autor?.let { Text("@${it.usuario} · ${stringResource(R.string.mod_faltas, c.faltasAutor)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave) }
-                if (c.que == "mensaje") Text(io.github.fogonapps.cajon.datos.limpiarReporteMensaje(c.contenido).take(600),
-                    style = MaterialTheme.typography.bodyMedium, color = f.texto)
-                else VistaContenidoReporte(vm, c.contenido)
-                Text(pluralStringResource(R.plurals.mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                val acciones = io.github.fogonapps.cajon.datos.accionesModeracion(permisos, c.motivos.maxByOrNull { it.value }?.key.orEmpty(), c.faltasAutor)
-                if (io.github.fogonapps.cajon.datos.puedeRestaurar(c, permisos)) Pildora(stringResource(R.string.equipo_restaurar)) {
-                    confirmar(vm.tx(R.string.equipo_restaurar), vm.tx(R.string.equipo_restaurar_confirmar)) { vm.red.restaurar(c) }
-                }
-                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
-                    if ("falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_falta)) {
-                        confirmar(vm.tx(R.string.mod_falta), vm.tx(R.string.mod_falta_confirmar)) { vm.red.decidir(c, "falta") }
-                    }
-                    if ("falta_grave" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_grave)) {
-                        confirmar(vm.tx(R.string.mod_grave), vm.tx(R.string.mod_grave_confirmar)) { vm.red.decidir(c, "falta_grave") }
-                    }
-                    if ("cerrar" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.mod_cerrar)) {
-                        confirmar(vm.tx(R.string.mod_cerrar), vm.tx(R.string.mod_cerrar_confirmar)) { vm.red.decidir(c, "cerrar") }
-                    }
-                }
-            }
-        }
-    }
-    Pista(stringResource(R.string.mod_menores), Modifier.padding(16.dp))
-}
+fun Moderacion(vm: CajonViewModel) { io.github.fogonapps.social.ui.Moderacion(interfazSocial(vm)) }
 
 @Composable
 private fun motivoTexto(m: io.github.fogonapps.cajon.RedSocial.Companion.Motivo?): String = when (m) {
@@ -1644,72 +1015,4 @@ fun CajonEnCuenta(vm: CajonViewModel) {
 
 
 @Composable
-fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) {
-    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
-    val ocupado by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
-    var clave by remember { mutableStateOf("") }
-    var codigo by remember { mutableStateOf("") }
-    var motivo by rememberSaveable { mutableStateOf("") }
-    var texto by rememberSaveable { mutableStateOf("") }
-    var confirmar by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.red_borrar_cuenta), style = MaterialTheme.typography.headlineSmall, color = FogonTema.actual.texto)
-        Pista(stringResource(R.string.red_borrado_explicacion))
-        Chips(listOf("" to stringResource(R.string.red_motivo_ninguno), "no_uso" to stringResource(R.string.red_motivo_no_uso),
-            "privacidad" to stringResource(R.string.red_motivo_privacidad), "problemas" to stringResource(R.string.red_motivo_problemas),
-            "otro" to stringResource(R.string.red_motivo_otro)), motivo) { motivo = it }
-        OutlinedTextField(texto, { texto = it.take(300) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_motivo_texto), color = FogonTema.actual.texto) })
-        CredencialSeguridad(vm, cuenta?.conClave == true, clave, { clave = it }, codigo, { codigo = it })
-        Opcion(stringResource(R.string.red_borrar_cuenta_seguro), confirmar) { confirmar = it }
-        BotonSecundario(stringResource(R.string.red_si_borrar), { vm.red.borrarCuenta(clave, codigo, motivo, texto) }, Modifier.fillMaxWidth(), peligro = true,
-            habilitado = !ocupado && cuenta != null && confirmar && io.github.fogonapps.cajon.datos.credencialBorradoValida(cuenta?.conClave == true, clave, codigo, texto))
-        BotonSecundario(stringResource(R.string.volver), volver, Modifier.fillMaxWidth(), habilitado = !ocupado)
-    }
-}
-
-@Composable
-private fun CredencialSeguridad(vm: CajonViewModel, conClave: Boolean, clave: String, cambiarClave: (String) -> Unit, codigo: String, cambiarCodigo: (String) -> Unit) {
-    if (conClave) OutlinedTextField(clave, { cambiarClave(it.take(200)) }, Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.red_clave_actual), color = FogonTema.actual.texto) }, singleLine = true,
-        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
-    else {
-        BotonSecundario(stringResource(R.string.red_mandar_codigo), { vm.red.pedirCodigoSeguridad() }, Modifier.fillMaxWidth())
-        OutlinedTextField(codigo, { cambiarCodigo(it.filter { c -> c in '0'..'9' }.take(6)) }, Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.red_codigo), color = FogonTema.actual.texto) }, singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-    }
-}
-
-@Composable
-private fun FormularioCorreo(vm: CajonViewModel) {
-    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
-    val pendiente by vm.red.correoPendiente.collectAsStateWithLifecycle()
-    val ocupado by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
-    Desplegable(Iconos.Candado, stringResource(R.string.red_cambiar_correo), null) {
-        var nuevo by rememberSaveable { mutableStateOf("") }
-        var clave by remember { mutableStateOf("") }
-        var codigo by remember { mutableStateOf("") }
-        var codigoNuevo by remember { mutableStateOf("") }
-        var usarCodigo by rememberSaveable { mutableStateOf(false) }
-        val pideClave = cuenta?.conClave == true && !usarCodigo
-        if (pendiente.isBlank()) {
-            OutlinedTextField(nuevo, { nuevo = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.red_correo_nuevo)) },
-                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-            if (cuenta?.conClave == true) Opcion(stringResource(R.string.red_usar_codigo_actual), usarCodigo) {
-                usarCodigo = it; clave = ""; codigo = ""
-            }
-            CredencialSeguridad(vm, pideClave, clave, { clave = it }, codigo, { codigo = it })
-            BotonRiso(stringResource(R.string.red_mandar_codigo), { vm.red.cambiarCorreo(nuevo, clave, codigo) }, Modifier.fillMaxWidth(),
-                habilitado = !ocupado && cuenta != null && io.github.fogonapps.cajon.datos.correoNuevoValido(nuevo, cuenta?.correo.orEmpty()) &&
-                    io.github.fogonapps.cajon.datos.credencialBorradoValida(pideClave, clave, codigo, ""))
-        } else {
-            androidx.compose.runtime.LaunchedEffect(pendiente) { clave = ""; codigo = ""; codigoNuevo = "" }
-            Pista(stringResource(R.string.red_codigo_correo_nuevo, pendiente))
-            OutlinedTextField(codigoNuevo, { codigoNuevo = it.filter { c -> c in '0'..'9' }.take(6) }, Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.red_codigo)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
-            BotonRiso(stringResource(R.string.guardar), { vm.red.confirmarCorreo(codigoNuevo) }, Modifier.fillMaxWidth(), habilitado = !ocupado && codigoNuevo.length == 6)
-            BotonSecundario(stringResource(R.string.volver), { vm.red.cancelarCambioCorreo() }, Modifier.fillMaxWidth(), habilitado = !ocupado)
-        }
-    }
-}
+fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) { io.github.fogonapps.social.ui.FormularioBorrado(interfazSocial(vm), volver) }

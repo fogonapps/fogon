@@ -1,4 +1,4 @@
-package io.github.fogonapps.cajon.datos
+package io.github.fogonapps.social
 
 import org.junit.Assert.*
 import org.junit.Test

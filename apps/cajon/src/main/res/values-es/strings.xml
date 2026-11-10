@@ -1347,7 +1347,10 @@
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
-  <string name="politica_resumen">Ahora las publicaciones pueden llevar un vídeo de hasta 30 segundos.\nExplicamos la importación de tu historial de Last.fm, que pasa por el servidor sin guardarse.\nContamos que guardamos tu voto por la portada de una obra (solo se muestran los totales).</string>
+  <string name="politica_resumen">Ahora Fogón Social es la cuenta de todas las apps de Fogón: El Cajón y El Forzudo.
+Guardamos desde qué app entras y publicas, para mostrar cada cosa en su app.
+Desde El Forzudo solo sale lo que compartes de un entreno; nunca tu peso ni tus medidas.
+Corregimos el plazo para cambiar el usuario: una vez cada 30 días.</string>
   <string name="politica_aceptar">Aceptar</string>
   <string name="politica_ahora_no">Ahora no</string>
   <string name="politica_revisar">Revisar la política</string>

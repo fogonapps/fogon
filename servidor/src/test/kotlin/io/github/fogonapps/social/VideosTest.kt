@@ -85,6 +85,25 @@ class VideosTest {
         assertFalse(archivo.exists())
         assertTrue(b.usar { leer("SELECT 1 FROM videos") { 1 } }.isEmpty())
     }
+    @Test fun entrenoConVideoPropioExclusionYPrivacidad() = escenario { s, _, ana, beto, _ ->
+        val nombre = s.subirVideo(ana, mp4()).nombre
+        val datos = JsonSocial.parseToJsonElement("""{
+            "version":1,"titulo":"Fuerza","fecha":1,"duracion":3600,"unidadDuracion":"s",
+            "ejercicios":[{"id":"a","nombre":"Ejercicio","series":[{"repeticiones":10}]}]
+        }""").jsonObject
+        val entreno = PublicacionSubida("entreno", Vis.SEGUIDORES, 1, "entreno", JsonObject(datos + mapOf("video" to JsonPrimitive(nombre), "poster" to JsonPrimitive("poster"))))
+        s.subirCambios(ana, CambiosPublicaciones(listOf(entreno)), "forzudo")
+        assertFailsWith<Problema> { s.video(nombre, beto, null) }
+        s.seguir(beto, "ana")
+        assertTrue(s.video(nombre, beto, null).isFile)
+        assertTrue(s.actividad(beto, null).isEmpty())
+        val conFotos = entreno.copy(datos = JsonObject(entreno.datos + ("imagenes" to JsonArray(listOf(JsonPrimitive("poster"))))))
+        assertEquals("video_y_fotos", assertFailsWith<Problema> { s.subirCambios(ana, CambiosPublicaciones(listOf(conFotos)), "forzudo") }.mensaje)
+        val ajeno = entreno.copy(datos = JsonObject(entreno.datos + ("video" to JsonPrimitive("ajeno"))))
+        assertEquals("video_formato", assertFailsWith<Problema> { s.subirCambios(ana, CambiosPublicaciones(listOf(ajeno)), "forzudo") }.mensaje)
+        assertEquals("entreno", s.actividad(beto, null, app = "forzudo").single().tipo)
+    }
+
     @Test fun moderacionPreservaYLaPurgaRespetaReferencias() = escenario { s, b, ana, _, _ ->
         val nombre = s.subirVideo(ana, mp4()).nombre
         s.subirPublicaciones(ana, listOf(pub(nombre)))

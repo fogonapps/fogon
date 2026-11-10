@@ -404,7 +404,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** La red de El Cajón (Fogón Social), opcional. */
     val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizarCuenta() }, recursos.directorio, { acceso -> cuentaDuplicada(acceso) }, { idCuenta ->
         if (vigenciaPerfil.vigente()) cajonApp.perfiles.completarIdCuenta(recursos.id, idCuenta)
-    })
+    }, { cajonApp.perfiles.lista.perfiles.firstOrNull { it.id == recursos.id }?.idCuenta.orEmpty() })
     /**
      * Pone en el perfil algo encontrado afuera: si no está en el cajón, se agrega (terminado y con corazón, sin anotar
      * nada en el diario) y sus datos completos llegan después. Vuelve al perfil.

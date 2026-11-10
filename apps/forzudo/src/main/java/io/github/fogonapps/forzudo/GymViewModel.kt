@@ -20,6 +20,8 @@ import io.github.fogonapps.forzudo.datos.Sesion
 import io.github.fogonapps.forzudo.datos.fk
 import io.github.fogonapps.forzudo.datos.iso
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,8 @@ import kotlin.math.floor
 const val MARCA_RECORD = "\u200B"
 
 sealed interface Pantalla {
+    data class Compartir(val id: String) : Pantalla
+    data class Social(val destino: String = "red", val id: Long = 0, val usuario: String = "") : Pantalla
     data class Detalle(val id: String) : Pantalla
     /** Un entreno guardado: ver todas sus series y corregirlas. */
     data class Entreno(val id: String) : Pantalla
@@ -50,6 +54,10 @@ sealed interface Pantalla {
     data class Resumen(val r: ResumenEntreno) : Pantalla
     data class Zoom(val id: String, val i: Int) : Pantalla
     data object Perfil : Pantalla
+    data object Cuenta : Pantalla
+    data class Seguridad(val ajuste: io.github.fogonapps.social.ui.AjusteSocial) : Pantalla
+    data class Gente(val usuario: String, val seguidores: Boolean) : Pantalla
+    data object Transparencia : Pantalla
     data object Ajustes : Pantalla
     data object EditarPerfil : Pantalla
     data object AcercaDe : Pantalla
@@ -67,7 +75,7 @@ data class SubioRango(val musculo: String, val rango: Rango)
 
 data class ResumenEntreno(
     val titulo: String, val fecha: String, val ms: Long, val volumen: Double, val series: Int,
-    val subidas: List<SubioRango>, val records: List<String>,
+    val subidas: List<SubioRango>, val records: List<String>, val id: String = "",
 )
 
 data class Descanso(val fin: Long, val total: Int)
@@ -79,7 +87,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     private val gymApp = app as ForzudoApp
     val bib get() = gymApp.biblioteca
     val L get() = gymApp.logica
-    private val caja = gymApp.caja
+    val idPerfil = gymApp.perfiles.lista.activo
+    private val almacen = gymApp.almacenPerfil(idPerfil)
+    private val caja = io.github.fogonapps.forzudo.datos.CajaFuerte(app, idPerfil)
 
     private val _estado = MutableStateFlow<Estado?>(null)
     val estado: StateFlow<Estado?> = _estado.asStateFlow()
@@ -94,6 +104,49 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _sync = MutableStateFlow(Sync(if (caja.token != null) EstadoSync.EN_NUBE else EstadoSync.APAGADA, usuario = caja.usuario, ultima = caja.ultima))
     val sync: StateFlow<Sync> = _sync.asStateFlow()
+
+    val perfiles get() = gymApp.perfiles
+    val red = RedForzudo(gymApp, io.github.fogonapps.forzudo.datos.SesionForzudo(app, perfiles, idPerfil), viewModelScope,
+        { avisar(tx(it)) }, ::cambiarPerfil)
+    private var cambiandoPerfil = false
+    fun agregarPerfil() {
+        val nuevo = perfiles.agregar() ?: return
+        cambiarPerfil(nuevo.id)
+    }
+    private var retirarAlCambiar = false
+    fun retirarPerfil() {
+        val otro = perfiles.lista.perfiles.firstOrNull { it.id != idPerfil } ?: perfiles.agregar() ?: return
+        retirarAlCambiar = true
+        cambiarPerfil(otro.id)
+    }
+    fun cambiarPerfil(id: String) {
+        if (id == idPerfil || cambiandoPerfil) return
+        cambiandoPerfil = true
+        viewModelScope.launch {
+            try {
+                red.invalidar()
+                val actual = kotlinx.coroutines.currentCoroutineContext()[Job]
+                viewModelScope.coroutineContext[Job]?.children?.filter { it != actual }?.toList()?.forEach { it.cancelAndJoin() }
+                guardarYa()
+                Avisos.cancelar(getApplication())
+                if (retirarAlCambiar) {
+                    if (idPerfil == "1") io.github.fogonapps.forzudo.datos.migracionPerfiles(getApplication()).confirmarArranque()
+                    gymApp.cerrarAlmacen(idPerfil)
+                    gymApp.perfiles.cambiar(id)
+                    gymApp.perfiles.quitar(idPerfil) { perfil ->
+                        listOf("sincronizacion-p$perfil", "sincronizacion-psocial-$perfil", "social-p$perfil").forEach {
+                            check(getApplication<Application>().getSharedPreferences(it, android.content.Context.MODE_PRIVATE).edit().clear().commit())
+                        }
+                    }
+                }
+                gymApp.activarPerfil(id)
+                WidgetRacha.actualizar(getApplication())
+            } catch (x: java.io.IOException) {
+                cambiandoPerfil = false
+                avisar(tx(R.string.cuenta_error))
+            }
+        }
+    }
 
     /* ----- Tutorial (se guarda solo en este teléfono) ----- */
     private val prefsUi = app.getSharedPreferences("ui", android.content.Context.MODE_PRIVATE)
@@ -120,10 +173,12 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            _estado.value = L.normalizar(gymApp.almacen.data.first())
+            _estado.value = L.normalizar(almacen.data.first())
+            gymApp.confirmarCuaderno()
+            WidgetRacha.actualizar(getApplication())
             sincronizar()
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
-            gymApp.almacen.data.drop(1).collect { d ->
+            almacen.data.drop(1).collect { d ->
                 if (d != ultimoGuardado && d != _estado.value) _estado.value = L.normalizar(d).copy(active = _estado.value?.active)
             }
         }
@@ -154,12 +209,12 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun guardarYa() {
         val e = _estado.value ?: return
         ultimoGuardado = e
-        escribiendo.withLock { gymApp.almacen.updateData { e } }
+        escribiendo.withLock { almacen.updateData { e } }
         WidgetRacha.actualizar(getApplication())
     }
 
     /** Al salir de la app: el ViewModel sigue vivo, así que basta con lanzar la escritura. */
-    fun guardarAlSalir() { guardarJob?.cancel(); viewModelScope.launch { guardarYa() } }
+    fun guardarAlSalir() { if (cambiandoPerfil) return; guardarJob?.cancel(); viewModelScope.launch { guardarYa() } }
 
     /* ----- Navegación ----- */
 
@@ -177,8 +232,18 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Perfil ----- */
 
-    fun guardarPerfil(nombre: String, bio: String, foto: String, portada: String) = cambiar {
+    fun guardarPerfil(nombre: String, bio: String, foto: String, portada: String, listo: () -> Unit = {}) {
+        if (red.usuario.value != null) {
+            val bytes = foto.takeIf { it.isNotBlank() && it != red.foto.value }?.substringAfter(",")?.let {
+                android.util.Base64.decode(it, android.util.Base64.DEFAULT)
+            }
+            red.editarIdentidad(nombre, bio, portada, bytes, foto.isBlank(), listo)
+            return
+        }
+        cambiar {
         it.copy(nombre = io.github.fogonapps.perfil.recortarNombrePerfil(nombre.trim()).ifEmpty { null }, bio = io.github.fogonapps.perfil.recortarBioPerfil(bio.trim()), foto = foto, portada = portada, perfilActualizado = System.currentTimeMillis())
+        }
+        listo()
     }
 
     fun ponerNombre(n: String) = cambiar { it.copy(nombre = n.trim().take(30).ifEmpty { null }) }
@@ -445,7 +510,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         }
         cambiar { nuevo }
         pararDescanso()
-        _pila.value = listOf(Pantalla.Resumen(ResumenEntreno(titulo, a.date, ms, L.volumen(entries), L.series(entries), subidas, records)))
+        _pila.value = listOf(Pantalla.Resumen(ResumenEntreno(titulo, a.date, ms, L.volumen(entries), L.series(entries), subidas, records, a.id)))
         _pestana.value = Pestana.INICIO
     }
 
@@ -525,6 +590,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun sincronizar() {
+        if (cambiandoPerfil) return
         val token = caja.token ?: return
         if (sincronizando) { sincronizarOtraVez = true; return }
         sincronizando = true

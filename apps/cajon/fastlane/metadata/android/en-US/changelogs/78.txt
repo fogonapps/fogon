@@ -1,0 +1,3 @@
+• Under the hood, the account and social features are now shared with the other Fogón apps (it looks the same).
+• Updated policy: Fogón Social is the account for every app.
+• “Where you’re signed in” shows which app each session came from.

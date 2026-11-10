@@ -215,7 +215,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.GuardadosRed -> GuardadosRed(vm)
                             is Pantalla.GenteRed -> GenteRed(vm, p.usuario, p.seguidores)
                             Pantalla.BloqueadosRed -> BloqueadosRed(vm)
-                            is Pantalla.Publicar -> Publicar(vm, estado, p.obra)
+                            is Pantalla.Publicar -> interfazSocial(vm).contenido.Compositor("foto", p.obra?.let { io.github.fogonapps.social.ui.AdjuntoSocial("obra", it) })
                             is Pantalla.Resenar -> EscribirResena(vm, estado, p.id, p.elegirObra)
                             is Pantalla.Chats -> Chats(vm, estado, p.obra)
                             is Pantalla.Conversacion -> Conversacion(vm, estado, p.usuario)
@@ -235,13 +235,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             }
 
             val borrarEl by vm.red.borrarEl.collectAsStateWithLifecycle()
-            if (borrarEl > 0) AlertDialog(
-                onDismissRequest = {},
-                title = { Text(stringResource(R.string.red_por_borrar)) },
-                text = { Text(stringResource(R.string.red_conservar_pregunta, java.text.DateFormat.getDateInstance().format(java.util.Date(borrarEl)))) },
-                confirmButton = { TextButton({ vm.red.decidirBorrado(true) }) { Text(stringResource(R.string.red_conservar)) } },
-                dismissButton = { TextButton({ vm.red.decidirBorrado(false) }) { Text(stringResource(R.string.red_seguir_borrado)) } },
-            )
+            io.github.fogonapps.social.ui.GraciaBorrado(borrarEl) { vm.red.decidirBorrado(it) }
             pregunta?.let { q ->
                 AlertDialog(
                     onDismissRequest = { pregunta = null },

@@ -34,7 +34,7 @@ class CarteroSmtp(
 
     override fun enviar(para: String, asunto: String, texto: String) {
         val m = MimeMessage(sesion).apply {
-            setFrom(InternetAddress(remitente, "El Cajón", "UTF-8"))
+            setFrom(InternetAddress(remitente, "Fogón Social", "UTF-8"))
             setRecipient(Message.RecipientType.TO, InternetAddress(para))
             setSubject(asunto, "UTF-8")
             setText(texto, "UTF-8")

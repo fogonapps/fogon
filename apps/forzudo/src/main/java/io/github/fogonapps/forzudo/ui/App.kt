@@ -101,6 +101,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
     }
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
+        PoliticaCuenta(vm)
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -141,6 +142,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
+                            is Pantalla.Compartir -> CompartirEntreno(vm, estado, p.id)
+                            is Pantalla.Social -> RedEntrenos(vm, p)
                             is Pantalla.Vivo -> Vivo(vm, estado)
                             is Pantalla.Resumen -> Resumen(vm, estado, p.r)
                             is Pantalla.Detalle -> Detalle(vm, estado, p.id)
@@ -150,8 +153,12 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Editor -> Editor(vm, estado, p.rid)
                             is Pantalla.Cambiar -> Cambiar(vm, p)
                             is Pantalla.Zoom -> Zoom(vm, p.id, p.i)
-                            is Pantalla.Perfil -> PerfilLocal(vm, estado)
+                            is Pantalla.Perfil -> PerfilLocal(vm, estado, onExportar)
                             is Pantalla.EditarPerfil -> EditarPerfilLocal(vm, estado)
+                            is Pantalla.Cuenta -> Cuenta(vm, onExportar)
+                            is Pantalla.Seguridad -> SeguridadCuenta(vm, p.ajuste)
+                            is Pantalla.Gente -> io.github.fogonapps.social.ui.GenteRed(interfazCuenta(vm), p.usuario, p.seguidores)
+                            is Pantalla.Transparencia -> TransparenciaForzudo(vm)
                             is Pantalla.Ajustes -> Ajustes(vm, estado, sync, onExportar, onImportar)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
                             is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }

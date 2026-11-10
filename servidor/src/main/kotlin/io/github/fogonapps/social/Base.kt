@@ -169,6 +169,7 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS sesiones(
                     huella TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, creada INTEGER NOT NULL)""")
                 migrarSeguridad(this)
+                migrarApps(this)
                 transaccion { migrarEquipo(this) }
                 s.execute("""CREATE TABLE IF NOT EXISTS intentos_mfa(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,
@@ -177,8 +178,58 @@ class Base(ruta: String) {
                 // Los códigos de acceso que se mandan al correo (solo su huella; duran 10 minutos y aguantan 5 intentos).
                 s.execute("""CREATE TABLE IF NOT EXISTS codigos(
                     correo TEXT PRIMARY KEY, huella TEXT NOT NULL, expira INTEGER NOT NULL, intentos INTEGER NOT NULL DEFAULT 0, enviado INTEGER NOT NULL)""")
+                transaccion {
+                    columna(s, "codigos", "app TEXT NOT NULL DEFAULT 'cajon'")
+                    columna(s, "cambios_correo", "app TEXT NOT NULL DEFAULT 'cajon'")
+                }
             }
         }
+    }
+
+    private fun migrarApps(c: Connection) {
+        // SQLite requiere desactivar las referencias fuera de la transacción al reconstruir la unicidad.
+        c.createStatement().use { it.execute("PRAGMA foreign_keys=OFF") }
+        try {
+            transaccion {
+                createStatement().use { s ->
+                    for (tabla in listOf("publicaciones", "retiradas")) {
+                        val columnas = leer("PRAGMA table_info($tabla)") { it.getString("name") }
+                        if ("app" !in columnas) {
+                            val esquema = leer("SELECT sql FROM sqlite_master WHERE name = ?", tabla) { it.getString(1) }.single()
+                                .replace("CREATE TABLE $tabla", "CREATE TABLE ${tabla}_apps", ignoreCase = true)
+                                .replace(Regex("UNIQUE\\s*\\(cuenta,\\s*clave\\)"), "UNIQUE(cuenta, app, clave)")
+                                .replace(Regex("PRIMARY KEY\\s*\\(cuenta,\\s*clave\\)"), "PRIMARY KEY(cuenta, app, clave)")
+                            val apertura = esquema.indexOf('(') + 1
+                            s.execute(esquema.substring(0, apertura) + "app TEXT NOT NULL DEFAULT 'cajon', " + esquema.substring(apertura))
+                            val nombres = columnas.joinToString(",")
+                            s.execute("INSERT INTO ${tabla}_apps($nombres) SELECT $nombres FROM $tabla")
+                            s.execute("DROP TABLE $tabla")
+                            s.execute("ALTER TABLE ${tabla}_apps RENAME TO $tabla")
+                        }
+                    }
+                    s.execute("CREATE INDEX IF NOT EXISTS pub_cuando ON publicaciones(cuenta, cuando)")
+                    s.execute("CREATE INDEX IF NOT EXISTS pub_app_fecha ON publicaciones(app, cuando)")
+                    s.execute("CREATE INDEX IF NOT EXISTS pub_cuenta_app_fecha ON publicaciones(cuenta, app, cuando)")
+                    s.execute("CREATE INDEX IF NOT EXISTS retiradas_app_fecha ON retiradas(app, cuando)")
+                    columna(s, "sesiones", "app TEXT NOT NULL DEFAULT 'cajon'")
+                    columna(s, "avisos", "app TEXT")
+                    s.execute("UPDATE avisos SET app = COALESCE((SELECT app FROM publicaciones WHERE CAST(id AS TEXT) = avisos.objeto), 'cajon') WHERE app IS NULL AND tipo IN ('publico','megusta','comentario','respuesta')")
+                    s.execute("CREATE TABLE IF NOT EXISTS partes_perfil(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL, clave TEXT NOT NULL, visibilidad TEXT NOT NULL, datos TEXT NOT NULL, PRIMARY KEY(cuenta, app, clave))")
+                    s.execute("CREATE TABLE IF NOT EXISTS migraciones(nombre TEXT PRIMARY KEY)")
+                    if (leer("SELECT 1 FROM migraciones WHERE nombre = 'partes_apps'") { 1 }.isEmpty()) {
+                        leer("SELECT id, perfil FROM cuentas") { it.getLong(1) to it.getString(2) }.forEach { (id, json) ->
+                            val perfil = JsonSocial.decodeFromString<PerfilSubido>(json)
+                            perfil.partes.forEach { (clave, parte) ->
+                                cambiar("INSERT INTO partes_perfil VALUES(?, 'cajon', ?, ?, ?)", id, clave, parte.visibilidad, parte.datos.toString())
+                            }
+                            cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(partes = emptyMap())), id)
+                        }
+                        s.execute("INSERT INTO migraciones VALUES('partes_apps')")
+                    }
+                    check(leer("PRAGMA foreign_key_check") { it.getString(1) }.isEmpty()) { "Referencias inválidas tras migrar apps" }
+                }
+            }
+        } finally { c.createStatement().use { it.execute("PRAGMA foreign_keys=ON") } }
     }
 
     private fun migrarEquipo(c: Connection) {
@@ -199,7 +250,7 @@ class Base(ruta: String) {
                 columna(s, tabla, "estado TEXT NOT NULL DEFAULT 'visible'")
                 columna(s, tabla, "retirado_hasta INTEGER NOT NULL DEFAULT 0")
             }
-            s.execute("INSERT OR IGNORE INTO retiradas SELECT cuenta, clave, MAX(0, retirado_hasta - 7776000000) FROM publicaciones WHERE estado = 'retirado'")
+            s.execute("INSERT OR IGNORE INTO retiradas(cuenta, app, clave, cuando) SELECT cuenta, app, clave, MAX(0, retirado_hasta - 7776000000) FROM publicaciones WHERE estado = 'retirado'")
         }
     }
 

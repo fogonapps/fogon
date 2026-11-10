@@ -1,4 +1,0 @@
-• Beta: El Cajón todavía puede cambiar; en «Acerca de» están los problemas conocidos.
-• Sin internet, la búsqueda lo dice claro en vez de «No encontré».
-• Moderación más justa: algo se oculta con 10 reportes, y las sanciones llegan a nombre de Fogón.
-• Política de privacidad actualizada (vídeo, Last.fm y votos por la portada).

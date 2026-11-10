@@ -99,6 +99,7 @@ import io.github.fogonapps.forzudo.datos.semanasDelMes
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Inicio(vm: GymViewModel, e: Estado) {
+    BotonRedForzudo(vm)
     val f = FogonTema.actual
     val L = vm.L
     val dias = L.dias(e)

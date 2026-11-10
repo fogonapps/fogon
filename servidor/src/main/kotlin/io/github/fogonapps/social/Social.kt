@@ -58,6 +58,7 @@ data class Publicacion(
     /** Votos de «útil» (solo en reseñas) y si quien mira la votó. */
     val utiles: Int = 0,
     val yoUtil: Boolean = false,
+    val app: String = "cajon",
 )
 
 @Serializable
@@ -85,10 +86,10 @@ data class PerfilVisto(
 )
 
 @Serializable
-data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: String, val cuando: Long, val leido: Boolean)
+data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: String, val cuando: Long, val leido: Boolean, val app: String? = null)
 
 @Serializable data class NuevaCuenta(val usuario: String, val nombre: String = "")
-@Serializable data class PedirCodigo(val correo: String)
+@Serializable data class PedirCodigo(val correo: String, val app: String = "cajon")
 /** Entrar con el código del correo. Para una cuenta nueva van también el usuario, el nombre y la aceptación. */
 @Serializable data class Entrada(
     val correo: String = "", val codigo: String = "", val usuario: String = "", val nombre: String = "",
@@ -98,6 +99,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val mayorDeEdad: Boolean = false,
     /** Con el código, la contraseña nueva: al crear la cuenta, si la olvidó o si la cuenta todavía no tenía. */
     val clave: String = "",
+    val app: String? = null,
 )
 /** Si un correo ya tiene cuenta y si tiene contraseña (para decirle a la persona si se registra o entra). */
 @Serializable data class EstadoCorreo(val existe: Boolean, val conClave: Boolean)
@@ -120,13 +122,13 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class BloqueoImagen(val url: String, val motivo: String = "")
 /** La imagen de la comunidad para una obra (si la hay), los votos por URL y lo bloqueado entre ellas. */
 @Serializable data class ImagenObra(val comunidad: String? = null, val votos: Map<String, Int> = emptyMap(), val miVoto: String? = null, val bloqueadas: List<String> = emptyList())
-@Serializable data class EntradaClave(val correo: String, val clave: String)
+@Serializable data class EntradaClave(val correo: String, val clave: String, val app: String = "cajon")
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class Borrado(val clave: String = "", val codigo: String = "", val motivo: String = "", val motivoTexto: String = "")
 @Serializable data class CambioCorreo(val nuevo: String, val clave: String = "", val codigo: String = "")
 @Serializable data class CambioClave(val nueva: String, val actual: String = "")
-@Serializable data class Sesion(val id: String, val dispositivo: String, val creada: Long, val ultimo_uso: Long, val actual: Boolean)
+@Serializable data class Sesion(val id: String, val dispositivo: String, val creada: Long, val ultimo_uso: Long, val actual: Boolean, val app: String = "cajon")
 @Serializable data class CambioApodo(val nombre: String)
 @Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
@@ -194,9 +196,10 @@ class Social(
 
     /** Manda un código de 6 números al correo (uno por minuto como mucho). Sirve para entrar o para crear la cuenta. */
     @Synchronized
-    fun pedirCodigo(correoDado: String) { enviarCodigo(correoDado) }
+    fun pedirCodigo(correoDado: String, app: String = "cajon") { enviarCodigo(correoDado, app = app) }
 
-    private fun enviarCodigo(correoDado: String, cuentaCambio: Long? = null) {
+    private fun enviarCodigo(correoDado: String, cuentaCambio: Long? = null, app: String = "cajon") {
+        val nombreApp = AppsSocial.nombre(app)
         val correo = correoDado.trim().lowercase()
         if (!CORREO.matches(correo) || correo.length > 120) throw Problema(400, "correo")
         val antes = b.usar { leer("SELECT MAX(cuando) FROM (SELECT cuando FROM envios_codigo WHERE correo = ? UNION ALL SELECT enviado AS cuando FROM codigos WHERE correo = ?)", correo, correo) { it.getLong(1).takeUnless { _ -> it.wasNull() } }.firstOrNull() }
@@ -210,14 +213,14 @@ class Social(
         b.usar {
             cambiar("INSERT INTO envios_codigo VALUES(?,?)", correo, ahora())
             if (cuentaCambio != null) {
-                cambiar("INSERT OR REPLACE INTO cambios_correo VALUES(?,?,?,?,0)", cuentaCambio, correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000)
-            } else cambiar("""INSERT INTO codigos(correo, huella, expira, intentos, enviado) VALUES(?,?,?,0,?)
-                ON CONFLICT(correo) DO UPDATE SET huella = excluded.huella, expira = excluded.expira, intentos = 0, enviado = excluded.enviado""",
-                correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000, ahora())
+                cambiar("INSERT OR REPLACE INTO cambios_correo(cuenta,nuevo,huella,expira,intentos,app) VALUES(?,?,?,?,0,?)", cuentaCambio, correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000, app)
+            } else cambiar("""INSERT INTO codigos(correo, huella, expira, intentos, enviado, app) VALUES(?,?,?,0,?,?)
+                ON CONFLICT(correo) DO UPDATE SET huella = excluded.huella, expira = excluded.expira, intentos = 0, enviado = excluded.enviado, app = excluded.app""",
+                correo, Base.huella("$correo:$codigo"), ahora() + 10 * 60_000, ahora(), app)
         }
-        val proposito = if (cuentaCambio == null) "entrar a El Cajón" else "confirmar tu nuevo correo de El Cajón"
-        cartero.enviar(correo, "Tu código de El Cajón: $codigo",
-            "Tu código para $proposito es:\n\n$codigo\n\nVence en 10 minutos. Si no lo pediste, ignora este correo.\n\nEl Cajón · Fogón")
+        val proposito = if (cuentaCambio == null) "entrar a $nombreApp" else "confirmar tu nuevo correo de $nombreApp"
+        cartero.enviar(correo, "Tu código de $nombreApp: $codigo",
+            "Tu código para $proposito es:\n\n$codigo\n\nVence en 10 minutos. Si no lo pediste, ignora este correo.\n\n$nombreApp · Fogón Social")
     }
 
     /**
@@ -227,9 +230,11 @@ class Social(
      */
     @Synchronized
     fun entrar(e: Entrada, dispositivo: String = ""): Acceso {
+        e.app?.let(AppsSocial::validar)
         if (e.clave.isNotEmpty()) Claves.validar(e.clave)
         val correo = e.correo.trim().lowercase()
         codigoBueno(correo, e.codigo)
+        val app = e.app ?: b.usar { leer("SELECT app FROM codigos WHERE correo = ?", correo) { it.getString(1) }.single() }
         val existente = b.usar { leer("SELECT id, usuario FROM cuentas WHERE correo = ?", correo) { it.getLong(1) to it.getString(2) }.firstOrNull() }
         val (id, usuario, nueva) = if (existente != null) Triple(existente.first, existente.second, false) else {
             if (e.usuario.isBlank()) throw Problema(409, "cuenta_nueva")
@@ -249,9 +254,9 @@ class Social(
             b.usar { cambiar("UPDATE cuentas SET clave = ? WHERE id = ?", Claves.huella(e.clave), id) }
         }
         b.usar { cambiar("DELETE FROM codigos WHERE correo = ?", correo) }
-        val token = sesionNueva(id, dispositivo, cerrarAnteriores = e.clave.isNotEmpty())
+        val token = sesionNueva(id, dispositivo, cerrarAnteriores = e.clave.isNotEmpty(), app = app)
         if (e.clave.isNotEmpty()) {
-            avisarClave(id)
+            avisarClave(id, app)
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
         return Acceso(usuario, token, nueva, borrarEl(id), idCuenta(id))
@@ -282,20 +287,25 @@ class Social(
         }
     }
 
-    private fun sesionNueva(cuenta: Long, dispositivoDado: String = "", cerrarAnteriores: Boolean = false): String {
+    private fun sesionNueva(cuenta: Long, dispositivoDado: String = "", cerrarAnteriores: Boolean = false, app: String = "cajon"): String {
+        val nombreApp = AppsSocial.nombre(app)
         if (b.usar { leer("SELECT cerrada FROM cuentas WHERE id = ?", cuenta) { it.getInt(1) == 1 }.first() }) throw Problema(403, "cerrada")
         val dispositivo = dispositivoDado.filter { !it.isISOControl() }.take(60)
         val nueva = dispositivo.isNotBlank() && b.usar {
-            leer("SELECT 1 FROM sesiones WHERE cuenta = ? AND dispositivo = ? AND ultimo_uso > ?", cuenta, dispositivo, ahora() - CADUCIDAD) { 1 }.isEmpty()
+            leer("SELECT 1 FROM sesiones WHERE cuenta = ? AND dispositivo = ? AND app = ? AND ultimo_uso > ?", cuenta, dispositivo, app, ahora() - CADUCIDAD) { 1 }.isEmpty()
         }
         val token = Base.tokenNuevo()
         b.usar {
-            cambiar("INSERT INTO sesiones(huella, cuenta, creada, dispositivo, ultimo_uso) VALUES(?,?,?,?,?)", Base.huella(token), cuenta, ahora(), dispositivo, ahora())
+            cambiar("INSERT INTO sesiones(huella, cuenta, creada, dispositivo, ultimo_uso, app) VALUES(?,?,?,?,?,?)", Base.huella(token), cuenta, ahora(), dispositivo, ahora(), app)
             if (cerrarAnteriores) cerrarOtras(cuenta, token)
         }
-        if (nueva) avisar(cuenta, "Se entró a tu cuenta desde $dispositivo",
-            "Entrada desde $dispositivo el ${fechaLegible(ahora())}. Si no fuiste tú, abre El Cajón, Tu cuenta de la red → Dónde has entrado y cierra esa sesión.")
+        if (nueva) avisar(cuenta, if (app == "cajon") "Se entró a tu cuenta desde $dispositivo" else "Se entró a tu cuenta de Fogón Social desde $nombreApp: $dispositivo",
+            "Entrada desde $dispositivo el ${fechaLegible(ahora())}. Si no fuiste tú, abre $nombreApp, Tu cuenta de la red → Dónde has entrado y cierra esa sesión.")
         return token
+    }
+
+    fun appSesion(token: String?): String = b.usar {
+        leer("SELECT app FROM sesiones WHERE huella = ?", Base.huella(token.orEmpty())) { it.getString(1) }.firstOrNull() ?: "cajon"
     }
 
     private fun idSesion(huella: String): String {
@@ -305,8 +315,8 @@ class Social(
     }
 
     fun sesiones(yo: Long, token: String?): List<Sesion> = b.usar {
-        leer("SELECT huella, dispositivo, creada, ultimo_uso FROM sesiones WHERE cuenta = ? AND ultimo_uso > ? ORDER BY creada", yo, ahora() - CADUCIDAD) {
-            Sesion(idSesion(it.getString(1)), it.getString(2), it.getLong(3), it.getLong(4), it.getString(1) == Base.huella(token.orEmpty()))
+        leer("SELECT huella, dispositivo, creada, ultimo_uso, app FROM sesiones WHERE cuenta = ? AND ultimo_uso > ? ORDER BY creada", yo, ahora() - CADUCIDAD) {
+            Sesion(idSesion(it.getString(1)), it.getString(2), it.getLong(3), it.getLong(4), it.getString(1) == Base.huella(token.orEmpty()), it.getString(5))
         }
     }
 
@@ -336,8 +346,8 @@ class Social(
         }
     }
 
-    private fun avisarClave(yo: Long) = avisar(yo, "Tu contraseña de El Cajón cambió",
-        "Tu contraseña de El Cajón cambió. Si no fuiste tú, entra con un código de tu correo, cambia la contraseña y cierra las demás sesiones desde Tu cuenta de la red.")
+    private fun avisarClave(yo: Long, app: String? = null) = avisar(yo, "Tu contraseña de ${app?.let(AppsSocial::nombre) ?: "Fogón Social"} cambió",
+        "Tu contraseña de Fogón Social cambió${app?.let { " desde " + AppsSocial.nombre(it) }.orEmpty()}. Si no fuiste tú, entra con un código de tu correo, cambia la contraseña y cierra las demás sesiones desde Tu cuenta de la red.")
 
     @Synchronized
     fun limpiarSeguridad() {
@@ -452,6 +462,7 @@ class Social(
     /** Entrar con correo y contraseña. Se limitan los fallos por cuenta además del límite HTTP por dirección. */
     @Synchronized
     fun entrarConClave(e: EntradaClave, dispositivo: String = ""): Acceso {
+        AppsSocial.validar(e.app)
         val correo = e.correo.trim().lowercase()
         val (id, usuario, guardada) = b.usar {
             leer("SELECT id, usuario, clave FROM cuentas WHERE correo = ?", correo) { Triple(it.getLong(1), it.getString(2), it.getString(3)) }.firstOrNull()
@@ -469,7 +480,7 @@ class Social(
             throw Problema(400, "clave_mala")
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
-        return Acceso(usuario, sesionNueva(id, dispositivo), false, borrarEl(id), idCuenta(id))
+        return Acceso(usuario, sesionNueva(id, dispositivo, app = e.app), false, borrarEl(id), idCuenta(id))
     }
 
     /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
@@ -484,7 +495,7 @@ class Social(
             cambiar("DELETE FROM intentos WHERE cuenta = ?", yo)
             cerrarOtras(yo, token)
         }
-        avisarClave(yo)
+        avisarClave(yo, appSesion(token))
     }
 
     /* ----- El cajón guardado en la cuenta (cifrado de extremo a extremo) ----- */
@@ -528,7 +539,7 @@ class Social(
         b.usar {
             cambiar("INSERT OR REPLACE INTO usuarios_viejos(usuario, cuenta, hasta) VALUES(?,?,?)", actual, yo, ahora() + 2 * SEMANA)
             cambiar("DELETE FROM usuarios_viejos WHERE usuario = ?", nuevo)
-            cambiar("UPDATE cuentas SET usuario = ?, usuario_cambio = ?, cambio = ? WHERE id = ?", nuevo, ahora(), ahora(), yo)
+            cambiar("UPDATE cuentas SET usuario = ?, usuario_cambio = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", nuevo, ahora(), ahora(), yo)
         }
         return nuevo
     }
@@ -574,7 +585,7 @@ class Social(
 
     fun ajustar(yo: Long, a: Ajustes) {
         a.privada?.let { privada ->
-            b.usar { cambiar("UPDATE cuentas SET privada = ?, cambio = ? WHERE id = ?", if (privada) 1 else 0, ahora(), yo) }
+            b.usar { cambiar("UPDATE cuentas SET privada = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", if (privada) 1 else 0, ahora(), yo) }
             // Al volverse pública, las solicitudes que esperaban quedan aceptadas.
             if (!privada) b.usar { cambiar("UPDATE seguir SET aceptada = 1 WHERE a = ?", yo) }
         }
@@ -631,21 +642,22 @@ class Social(
     }
 
     @Synchronized
-    fun cambiarCorreo(yo: Long, e: CambioCorreo) {
+    fun cambiarCorreo(yo: Long, e: CambioCorreo, app: String = "cajon") {
+        AppsSocial.validar(app)
         if (miCuenta(yo).correo.isBlank()) throw Problema(400, "sin_correo")
         val nuevo = e.nuevo.trim().lowercase()
         // Valida la dirección y aplica los mismos límites antes de consumir la credencial.
         if (!CORREO.matches(nuevo) || nuevo.length > 120 || nuevo == miCuenta(yo).correo) throw Problema(400, "correo")
         comprobarCredencial(yo, e.clave, e.codigo, permiteCodigo = true)
-        enviarCodigo(nuevo, cuentaCambio = yo)
+        enviarCodigo(nuevo, cuentaCambio = yo, app = app)
         avisar(yo, "Solicitud de cambio de correo", "Se pidió cambiar el correo de tu cuenta. Si no fuiste tú, entra y cambia tu contraseña.")
     }
 
     @Synchronized
     fun confirmarCorreo(yo: Long, e: CambioCorreo) {
         val nuevo = e.nuevo.trim().lowercase()
-        val pendiente = b.usar { leer("SELECT nuevo, huella, expira, intentos FROM cambios_correo WHERE cuenta = ?", yo) {
-            listOf(it.getString(1), it.getString(2), it.getLong(3), it.getInt(4))
+        val pendiente = b.usar { leer("SELECT nuevo, huella, expira, intentos, app FROM cambios_correo WHERE cuenta = ?", yo) {
+            listOf(it.getString(1), it.getString(2), it.getLong(3), it.getInt(4), it.getString(5))
         }.firstOrNull() } ?: throw Problema(400, "sin_codigo")
         if (ahora() >= pendiente[2] as Long || pendiente[3] as Int >= 5) throw Problema(400, "codigo_vencido")
         if (nuevo != pendiente[0] || Base.huella("$nuevo:${e.codigo.trim()}") != pendiente[1]) {
@@ -654,12 +666,13 @@ class Social(
         }
         if (b.usar { leer("SELECT 1 FROM cuentas WHERE correo = ? AND id <> ?", nuevo, yo) { 1 }.isNotEmpty() }) throw Problema(409, "correo_tomado")
         val anterior = miCuenta(yo).correo
+        val nombreApp = AppsSocial.nombre(pendiente[4] as String)
         b.usar {
             cambiar("UPDATE cuentas SET correo = ? WHERE id = ?", nuevo, yo)
             cambiar("DELETE FROM cambios_correo WHERE cuenta = ?", yo)
         }
-        enviarAviso(anterior, "Tu correo de El Cajón cambió", "El correo de tu cuenta cambió. Si no fuiste tú, contacta con Fogón.")
-        avisar(yo, "Tu correo de El Cajón cambió", "Esta es la nueva dirección de tu cuenta de El Cajón.")
+        enviarAviso(anterior, "Tu correo de $nombreApp cambió", "El correo de tu cuenta cambió. Si no fuiste tú, contacta con Fogón.")
+        avisar(yo, "Tu correo de $nombreApp cambió", "Esta es la nueva dirección de tu cuenta de Fogón Social.")
     }
 
     /** Borra la cuenta y todo lo suyo: perfil, publicaciones, a quién sigue, me gusta, comentarios, avisos, imágenes y foto. */
@@ -705,12 +718,17 @@ class Social(
         val nombre = c.nombre.trim().take(40)
         if (nombre == anterior) return
         if (espera > ahora()) throw Problema(429, "apodo_espera", espera)
-        val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.first() }
-        subirPerfil(yo, perfil.copy(nombre = nombre))
+        b.transaccion {
+            val perfil = leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single()
+            cambiar("INSERT INTO apodo_cambios VALUES(?,?)", yo, ahora())
+            cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?",
+                nombre, JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(nombre = nombre)), ahora(), yo)
+        }
     }
 
     @Synchronized
-    fun subirPerfil(yo: Long, p: PerfilSubido) {
+    fun subirPerfil(yo: Long, p: PerfilSubido, app: String = "cajon") {
+        AppsSocial.validar(app)
         val anterior = miCuenta(yo).nombre
         val nombre = p.nombre.trim().take(40)
         val cambia = nombre != anterior && apodoDesde(yo) <= ahora()
@@ -719,12 +737,32 @@ class Social(
             enlaces = p.enlaces.filter { it.startsWith("https://") || it.startsWith("http://") }.map { it.take(200) }.take(5),
             partes = p.partes.filterValues { it.visibilidad in Vis.SUBIBLES }.entries.take(20).associate { it.key.take(30) to it.value },
         )
-        val json = JsonSocial.encodeToString(PerfilSubido.serializer(), limpio)
-        if (json.length > 200_000) throw Problema(413, "muy_grande")
-        b.usar {
+        val json = JsonSocial.encodeToString(PerfilSubido.serializer(), limpio.copy(partes = emptyMap()))
+        if (JsonSocial.encodeToString(PerfilSubido.serializer(), limpio).length > 200_000) throw Problema(413, "muy_grande")
+        b.transaccion {
+            cambiar("DELETE FROM partes_perfil WHERE cuenta = ? AND app = ?", yo, app)
+            limpio.partes.forEach { (clave, parte) -> cambiar("INSERT INTO partes_perfil VALUES(?,?,?,?,?)", yo, app, clave, parte.visibilidad, parte.datos.toString()) }
             if (cambia) cambiar("INSERT INTO apodo_cambios VALUES(?,?)", yo, ahora())
-            cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = ? WHERE id = ?", limpio.nombre, json, ahora(), yo)
+            cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", limpio.nombre, json, ahora(), yo)
         }
+    }
+
+    fun revisionPerfil(yo: Long): Long = b.usar { leer("SELECT cambio FROM cuentas WHERE id = ?", yo) { it.getLong(1) }.single() }
+
+    @Synchronized
+    fun subirPerfilApp(yo: Long, app: String, cambio: PerfilApp) = b.transaccion {
+        AppsSocial.validar(app)
+        val anterior = leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single()
+        val identidad = cambio.identidad
+        if (identidad != null && cambio.revision != revisionPerfil(yo)) throw Problema(409, "perfil_revision")
+        val partes = cambio.partes ?: leer("SELECT clave, visibilidad, datos FROM partes_perfil WHERE cuenta = ? AND app = ?", yo, app) {
+            it.getString(1) to Parte(it.getString(2), JsonSocial.parseToJsonElement(it.getString(3)))
+        }.toMap()
+        if (partes.size > 20 || partes.any { it.key.isBlank() || it.key.length > 30 || it.value.visibilidad !in Vis.SUBIBLES }) throw Problema(400, "partes")
+        subirPerfil(yo, anterior.copy(nombre = identidad?.nombre ?: miCuenta(yo).nombre,
+            bio = identidad?.bio ?: anterior.bio, portada = identidad?.portada ?: anterior.portada,
+            enlaces = identidad?.enlaces ?: anterior.enlaces, partes = partes), app)
+        identidad?.privada?.let { ajustar(yo, Ajustes(it)) }
     }
 
     /** La foto: un JPEG de hasta 400 KB (la app la achica antes). */
@@ -732,12 +770,12 @@ class Social(
         esJpeg(bytes, 400_000)
         dirFotos.mkdirs()
         java.io.File(dirFotos, "$yo.jpg").writeBytes(bytes)
-        b.usar { cambiar("UPDATE cuentas SET foto = 1 WHERE id = ?", yo) }
+        b.usar { cambiar("UPDATE cuentas SET foto = 1, cambio = cambio + 1 WHERE id = ?", yo) }
     }
 
     fun quitarFoto(yo: Long) {
         java.io.File(dirFotos, "$yo.jpg").delete()
-        b.usar { cambiar("UPDATE cuentas SET foto = 0 WHERE id = ?", yo) }
+        b.usar { cambiar("UPDATE cuentas SET foto = 0, cambio = cambio + 1 WHERE id = ?", yo) }
     }
 
     /** La foto de alguien (si quien mira no está bloqueado). */
@@ -747,29 +785,39 @@ class Social(
         return java.io.File(dirFotos, "$id.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "sin_foto")
     }
 
-    fun verPerfil(lector: Long?, usuario: String): PerfilVisto {
+    fun verPerfil(lector: Long?, usuario: String, app: String = "cajon"): PerfilVisto {
+        AppsSocial.validar(app)
         val id = idDe(usuario)
         if (lector != null && (bloqueado(id, lector) || bloqueado(lector, id))) throw Problema(404, "no_existe")
         val p = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", id) { it.getString(1) }.first() }
             .let { runCatching { JsonSocial.decodeFromString(PerfilSubido.serializer(), it) }.getOrDefault(PerfilSubido()) }
+            .copy(partes = b.usar { leer("SELECT clave, visibilidad, datos FROM partes_perfil WHERE cuenta = ? AND app = ?", id, app) {
+                it.getString(1) to Parte(it.getString(2), JsonSocial.parseToJsonElement(it.getString(3)))
+            }.toMap() })
         val relacion = relacion(lector, id)
         val cerrada = esPrivada(id) && relacion != "yo" && relacion != "sigo"
         val ve = { v: String -> !cerrada && (v == Vis.PUBLICA || relacion == "yo" || relacion == "sigo") }
-        val pubs = if (cerrada) emptyList() else filas(lector, "p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.cuando DESC LIMIT 60", id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
+        val pubs = if (cerrada) emptyList() else filas(lector, "p.app = ? AND p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.cuando DESC LIMIT 60", app, id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
         val (seguidores, siguiendo, cuantas) = b.usar {
             Triple(
                 leer("SELECT COUNT(*) FROM seguir WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND a = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
                 leer("SELECT COUNT(*) FROM seguir WHERE a IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND de = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
-                leer("SELECT COUNT(*) FROM publicaciones WHERE cuenta = ?", id) { it.getInt(1) }.first(),
+                leer("SELECT COUNT(*) FROM publicaciones WHERE cuenta = ? AND app = ?", id, app) { it.getInt(1) }.first(),
             )
         }
         val meSigue = lector != null && sigue(id, lector)
-        val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ?", id) { it.getInt(1) }.first() }
+        val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ? AND p.app = ?", id, app) { it.getInt(1) }.first() }
         val guardadas = relacion == "yo" || p.partes["guardadas"]?.let { ve(it.visibilidad) } == true
         return PerfilVisto(
             persona(id), p.bio, p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
             pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
         )
+    }
+
+    fun verPerfilGlobal(lector: Long?, usuario: String): PerfilVisto {
+        val perfiles = listOf("cajon", "forzudo", "cucha").map { verPerfil(lector, usuario, it) }
+        return perfiles.first().copy(publicaciones = perfiles.flatMap { it.publicaciones }.sortedByDescending { it.cuando }.take(60),
+            cuantas = perfiles.sumOf { it.cuantas }, megusta = perfiles.sumOf { it.megusta })
     }
 
     /* ----- Imágenes de las publicaciones ----- */
@@ -845,73 +893,63 @@ class Social(
      * Sube publicaciones y quita solo las que el teléfono dice ([quitar], por clave). A diferencia de
      * [subirPublicaciones], lo que falta en la lista no se borra: un teléfono nuevo o vacío no se lleva lo publicado.
      */
-    fun subirCambios(yo: Long, c: CambiosPublicaciones) {
-        val actuales = b.usar { leer("SELECT clave FROM publicaciones WHERE cuenta = ?", yo) { it.getString(1) } }.toSet()
-        val quitar = c.quitar.map { it.take(80) }.toSet()
-        val lista = c.lista.filter { it.clave.take(80) !in quitar }
-        // Lo que ya estaba y no se pidió quitar, se queda: se vuelve a mandar tal cual (subirPublicaciones borra lo que no viene).
-        val quedan = actuales - quitar - lista.map { it.clave.take(80) }.toSet()
-        val viejas = if (quedan.isEmpty()) emptyList() else b.usar {
-            leer("SELECT clave, visibilidad, cuando, datos FROM publicaciones WHERE cuenta = ?", yo) { r ->
-                if (r.getString(1) !in quedan) null else {
-                    val d = JsonSocial.parseToJsonElement(r.getString(4)) as JsonObject
-                    PublicacionSubida(r.getString(1), r.getString(2), r.getLong(3), (d["tipo"] as? JsonPrimitive)?.content ?: "", JsonObject(d - "tipo"))
-                }
-            }.filterNotNull()
-        }
-        subirPublicaciones(yo, lista + viejas)
+    fun subirCambios(yo: Long, c: CambiosPublicaciones, app: String = "cajon", estricto: Boolean = app != "cajon") {
+        AppsSocial.validar(app)
+        if (c.lista.size > 2000 || c.quitar.size > 2000) throw Problema(413, "muy_grande")
+        if (estricto) validarLoteApp(app, c)
+        val quitar = (c.quitar + c.lista.filter { it.visibilidad !in Vis.SUBIBLES }.map { it.clave }).map { it.take(80) }.toSet()
+        escribirPublicaciones(yo, c.lista.filter { it.clave.take(80) !in quitar }, app, quitar, estricto)
     }
 
     @Synchronized
-    fun subirPublicaciones(yo: Long, lista: List<PublicacionSubida>) {
+    fun subirPublicaciones(yo: Long, lista: List<PublicacionSubida>) = escribirPublicaciones(yo, lista, "cajon", null)
+
+    private fun escribirPublicaciones(yo: Long, lista: List<PublicacionSubida>, app: String, quitar: Set<String>?, estricto: Boolean = false) {
+        AppsSocial.validar(app)
+        if (app == "cajon" && lista.any { it.tipo in setOf("entreno", "plato", "receta", "resena_restaurante") }) throw Problema(400, "tipo_app")
         if (lista.size > 2000) throw Problema(413, "muy_grande")
         val buenas = lista.filter { it.visibilidad in Vis.SUBIBLES && it.clave.isNotBlank() }.distinctBy { it.clave }
-        var nuevaParaAvisar: String? = null
-        b.usar {
-            autoCommit = false
-            try {
-                val bloqueadas = leer("SELECT clave FROM retiradas WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
-                val buenas = buenas.filter { it.clave.take(80) !in bloqueadas }
-                val claves = buenas.map { it.clave.take(80) }.toSet()
-                val yaEstaban = leer("SELECT clave FROM publicaciones WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
-                nuevaParaAvisar = buenas.filter { it.clave.take(80) !in yaEstaban && ahora() - it.cuando < 24 * 3600_000L }.maxByOrNull { it.cuando }?.clave?.take(80)
-                leer("SELECT id, clave FROM publicaciones WHERE cuenta = ?", yo) { it.getLong(1) to it.getString(2) }
-                    .filter { it.second !in claves }.forEach {
-                        cambiar("DELETE FROM publicaciones WHERE id = ? AND estado = 'visible' AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", it.first)
-                        // Si queda como contenedora de evidencia, deja de ser pública hasta su purga.
-                        cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", it.first)
-                    }
-                val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
-                val videosMios = leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
-                buenas.forEach { p ->
-                    val video = p.datos["video"]
-                    val poster = p.datos["poster"]
-                    if (video != null) {
-                        if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo != "foto") throw Problema(400, "video_formato")
-                        if (poster !is JsonPrimitive || !poster.isString || poster.content !in mias) throw Problema(400, "poster")
-                        val fotos = p.datos["imagenes"] as? kotlinx.serialization.json.JsonArray
-                        val fotosResena = p.datos["fotos"] as? kotlinx.serialization.json.JsonArray
-                        if (!fotos.isNullOrEmpty() || !fotosResena.isNullOrEmpty() || (p.datos["imagen"] as? JsonPrimitive)?.content?.isNotBlank() == true) throw Problema(400, "video_y_fotos")
-                    } else if (poster != null) throw Problema(400, "poster")
-                    val imagenes = p.datos["imagenes"]
-                    if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
-                    if (p.tipo == "resena" && !resenaValida(p.datos, mias)) return@forEach
-                    val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
-                    if (datos.length > 20_000) return@forEach
-                    cambiar("""INSERT INTO publicaciones(cuenta, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?)
-                        ON CONFLICT(cuenta, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible'""",
-                        yo, p.clave.take(80), p.visibilidad, p.cuando, datos)
+        b.transaccion {
+            val bloqueadas = leer("SELECT clave FROM retiradas WHERE cuenta = ? AND app = ?", yo, app) { it.getString(1) }.toSet()
+            val buenas = buenas.filter { it.clave.take(80) !in bloqueadas }
+            val claves = buenas.map { it.clave.take(80) }.toSet()
+            val yaEstaban = leer("SELECT clave FROM publicaciones WHERE cuenta = ? AND app = ?", yo, app) { it.getString(1) }.toSet()
+            val nuevaParaAvisar = buenas.filter { it.clave.take(80) !in yaEstaban && ahora() - it.cuando < 24 * 3600_000L }.maxByOrNull { it.cuando }?.clave?.take(80)
+            leer("SELECT id, clave FROM publicaciones WHERE cuenta = ? AND app = ?", yo, app) { it.getLong(1) to it.getString(2) }
+                .filter { if (quitar == null) it.second !in claves else it.second in quitar }.forEach {
+                    cambiar("DELETE FROM publicaciones WHERE id = ? AND estado = 'visible' AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", it.first)
+                    // Si queda como contenedora de evidencia, deja de ser pública hasta su purga.
+                    cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", it.first)
                 }
-                commit()
-            } catch (x: Exception) { rollback(); throw x } finally { autoCommit = true }
+            val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
+            val videosMios = leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
+            buenas.forEach { p ->
+                val video = p.datos["video"]
+                val poster = p.datos["poster"]
+                if (video != null) {
+                    if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo !in setOf("foto", "entreno")) throw Problema(400, "video_formato")
+                    if (poster !is JsonPrimitive || !poster.isString || poster.content !in mias) throw Problema(400, "poster")
+                    val fotos = p.datos["imagenes"] as? kotlinx.serialization.json.JsonArray
+                    val fotosResena = p.datos["fotos"] as? kotlinx.serialization.json.JsonArray
+                    if (!fotos.isNullOrEmpty() || !fotosResena.isNullOrEmpty() || (p.datos["imagen"] as? JsonPrimitive)?.content?.isNotBlank() == true) throw Problema(400, "video_y_fotos")
+                } else if (poster != null) throw Problema(400, "poster")
+                val imagenes = p.datos["imagenes"]
+                if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
+                if (p.tipo == "resena" && !resenaValida(p.datos, mias)) { if (estricto) throw Problema(400, "resena") else return@forEach }
+                val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
+                if (datos.length > 20_000) { if (estricto) throw Problema(400, "publicacion_grande") else return@forEach }
+                cambiar("""INSERT INTO publicaciones(cuenta, app, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?,?)
+                    ON CONFLICT(cuenta, app, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible'""",
+                    yo, app, p.clave.take(80), p.visibilidad, p.cuando, datos)
+            }
+            nuevaParaAvisar?.let { clave -> avisarSeguidores(yo, clave, app) }
         }
-        nuevaParaAvisar?.let { clave -> avisarSeguidores(yo, clave) }
     }
 
     /** Avisa a sus seguidores que publicó algo (una vez cada 6 horas por autor, para no llenar de avisos). */
-    private fun avisarSeguidores(yo: Long, clave: String) {
-        val id = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND clave = ?", yo, clave) { it.getLong(1) }.firstOrNull() } ?: return
-        val reciente = b.usar { leer("SELECT 1 FROM avisos WHERE de = ? AND tipo = 'publico' AND cuando > ? LIMIT 1", yo, ahora() - 6 * 3600_000L) { 1 }.isNotEmpty() }
+    private fun avisarSeguidores(yo: Long, clave: String, app: String) {
+        val id = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND clave = ? AND app = ?", yo, clave, app) { it.getLong(1) }.firstOrNull() } ?: return
+        val reciente = b.usar { leer("SELECT 1 FROM avisos WHERE de = ? AND tipo = 'publico' AND app = ? AND cuando > ? LIMIT 1", yo, app, ahora() - 6 * 3600_000L) { 1 }.isNotEmpty() }
         if (reciente) return
         b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 1", yo) { it.getLong(1) } }.forEach { avisar(it, yo, "publico", id.toString()) }
     }
@@ -928,13 +966,13 @@ class Social(
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
                     (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta),
                     (SELECT COUNT(*) FROM utiles u WHERE u.pub = p.id AND u.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
-                    EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?)
+                    EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?), p.app
                 FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE p.estado = 'visible' AND c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, lector, *args) { r ->
             val datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
                 r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15),
-                utiles = r.getInt(16), yoUtil = r.getInt(17) == 1)
+                utiles = r.getInt(16), yoUtil = r.getInt(17) == 1, app = r.getString(18))
         }
     }
 
@@ -950,7 +988,7 @@ class Social(
         if (fuente.isBlank() || fuente.length > 120 || parte.length > 80) return emptyList()
         val porParte = if (parte.isBlank()) "" else " AND json_extract(p.datos, '$.parte') = ?"
         val args = mutableListOf<Any?>(fuente).apply { if (parte.isNotBlank()) add(parte) }
-        val lista = filas(lector, """json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena'$porParte AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0
+        val lista = filas(lector, """p.app = 'cajon' AND json_extract(p.datos, '$.fuente') = ? AND json_extract(p.datos, '$.tipo') = 'resena'$porParte AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0
                 AND (? IS NULL OR (p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
                 AND p.cuando < ? ORDER BY p.cuando DESC LIMIT 400""", *args.toTypedArray(), lector, lector, lector, antes ?: Long.MAX_VALUE)
             .filter { (autor, p) -> puedeVer(lector, autor, p.visibilidad) }.map { it.second }
@@ -970,9 +1008,8 @@ class Social(
         b.usar {
             autoCommit = false
             try {
-                val clave = leer("SELECT clave FROM publicaciones WHERE id = ? AND cuenta = ? AND estado = 'visible'", id, yo) { it.getString(1) }.firstOrNull()
-                    ?: throw Problema(404, "no_existe")
-                cambiar("INSERT OR IGNORE INTO retiradas(cuenta, clave, cuando) VALUES(?,?,?)", yo, clave, ahora())
+                if (leer("SELECT 1 FROM publicaciones WHERE id = ? AND cuenta = ? AND estado = 'visible'", id, yo) { 1 }.isEmpty()) throw Problema(404, "no_existe")
+                cambiar("INSERT OR IGNORE INTO retiradas(cuenta, app, clave, cuando) SELECT cuenta, app, clave, ? FROM publicaciones WHERE id = ?", ahora(), id)
                 cambiar("DELETE FROM publicaciones WHERE id = ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", id)
                 cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", id)
                 commit()
@@ -998,9 +1035,9 @@ class Social(
 
 
     /** El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. */
-    fun actividad(yo: Long, antes: Long?, n: Int = 40): List<Publicacion> =
-        filas(yo, """(p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)))
-                AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100)).map { it.second }
+    fun actividad(yo: Long, antes: Long?, n: Int = 40, app: String = "cajon"): List<Publicacion> =
+        filas(yo, """p.app = ? AND (p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)))
+                AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", AppsSocial.validar(app), yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100)).map { it.second }
 
     /**
      * Para descubrir: candidatos iguales para todos (el servidor no perfila a nadie; el teléfono los ordena según los
@@ -1008,13 +1045,13 @@ class Social(
      * reciente de la semana, 20 % lo mejor de lo demás (cota de Wilson) y 10 % lo nuevo con pocas
      * vistas, para que tenga su oportunidad. Cada una con su [Publicacion.calidad].
      */
-    fun explorar(lector: Long?, antes: Long?, n: Int = 200): List<Publicacion> {
+    fun explorar(lector: Long?, antes: Long?, n: Int = 200, app: String = "cajon"): List<Publicacion> {
         val ahora = ahora()
         // Las 1000 más recientes: la semana y lo nuevo salen de ahí, y en una red chiquita también lo más viejo completa.
-        val todas = filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0 AND p.cuando < ?
+        val todas = filas(lector, """p.app = ? AND p.visibilidad = 'publica' AND c.privada = 0 AND p.oculta = 0 AND c.cerrada = 0 AND c.borrar_el = 0 AND p.cuando < ?
                 AND (? IS NULL OR (p.cuenta <> ? AND p.cuenta NOT IN (SELECT a FROM seguir WHERE de = ?)
                     AND p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
-                ORDER BY p.cuando DESC LIMIT 1000""", antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector)
+                ORDER BY p.cuando DESC LIMIT 1000""", AppsSocial.validar(app), antes ?: Long.MAX_VALUE, lector, lector, lector, lector, lector)
             .map { it.second.copy(calidad = calidad(it.second)) }
         val tope = n.coerceIn(1, 200)
         val semana = todas.filter { ahora - it.cuando < 7L * 24 * 3600_000 }.take((tope * 0.7).toInt())
@@ -1055,23 +1092,23 @@ class Social(
     }
 
     /** Las guardadas de [usuario], si las muestra a quien mira ([PerfilVisto.guardadasVisibles]). */
-    fun guardadasDe(lector: Long?, usuario: String): List<Publicacion> {
+    fun guardadasDe(lector: Long?, usuario: String, app: String = "cajon"): List<Publicacion> {
         val id = idDe(usuario)
-        if (!verPerfil(lector, usuario).guardadasVisibles) throw Problema(403, "privada")
-        return guardados(id).filter { pub -> publicacion(lector, pub.id) != null }
+        if (!verPerfil(lector, usuario, app).guardadasVisibles) throw Problema(403, "privada")
+        return guardados(id, app).filter { pub -> publicacion(lector, pub.id) != null }
     }
 
     /** Lo público que lleva la etiqueta #[etiqueta] (en sus palabras), lo más reciente primero. */
-    fun conEtiqueta(lector: Long?, etiqueta: String, antes: Long?): List<Publicacion> {
+    fun conEtiqueta(lector: Long?, etiqueta: String, antes: Long?, app: String = "cajon"): List<Publicacion> {
         val e = etiqueta.trim().removePrefix("#").lowercase().filter { it.isLetterOrDigit() || it == '_' }.take(40)
         if (e.length < 2) return emptyList()
-        return filas(lector, """p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ? AND lower(p.datos) LIKE ? ESCAPE '\'
-                ORDER BY p.cuando DESC LIMIT 60""", antes ?: Long.MAX_VALUE, "%#" + e.replace("_", "\\_") + "%")
+        return filas(lector, """p.app = ? AND p.oculta = 0 AND p.visibilidad = 'publica' AND c.privada = 0 AND p.cuando < ? AND lower(p.datos) LIKE ? ESCAPE '\'
+                ORDER BY p.cuando DESC LIMIT 60""", AppsSocial.validar(app), antes ?: Long.MAX_VALUE, "%#" + e.replace("_", "\\_") + "%")
             .filter { (autor, _) -> lector == null || (!bloqueado(autor, lector) && !bloqueado(lector, autor)) }.map { it.second }
     }
 
-    fun guardados(yo: Long): List<Publicacion> =
-        filas(yo, "p.id IN (SELECT pub FROM guardados WHERE cuenta = ?) ORDER BY (SELECT cuando FROM guardados WHERE pub = p.id AND cuenta = ?) DESC LIMIT 200", yo, yo)
+    fun guardados(yo: Long, app: String = "cajon"): List<Publicacion> =
+        filas(yo, "p.app = ? AND p.id IN (SELECT pub FROM guardados WHERE cuenta = ?) ORDER BY (SELECT cuando FROM guardados WHERE pub = p.id AND cuenta = ?) DESC LIMIT 200", AppsSocial.validar(app), yo, yo)
             .filter { (autor, p) -> puedeVer(yo, autor, p.visibilidad) }.map { it.second }
 
     fun comentarios(lector: Long?, pub: Long): List<Comentario> {
@@ -1382,15 +1419,18 @@ class Social(
 
     private fun avisar(para: Long, de: Long, tipo: String, objeto: String = "") {
         if (para == de) return
-        b.usar { cambiar("INSERT INTO avisos(para, de, tipo, objeto, cuando) VALUES(?,?,?,?,?)", para, de, tipo, objeto, ahora()) }
+        b.usar {
+            val app = if (tipo in setOf("publico", "megusta", "comentario", "respuesta")) leer("SELECT app FROM publicaciones WHERE id = ?", objeto.toLongOrNull()) { it.getString(1) }.firstOrNull() else null
+            cambiar("INSERT INTO avisos(para, de, tipo, objeto, cuando, app) VALUES(?,?,?,?,?,?)", para, de, tipo, objeto, ahora(), app)
+        }
     }
 
-    fun avisos(yo: Long, antes: Long?): List<Aviso> = b.usar {
-        leer("SELECT id, de, tipo, objeto, cuando, leido FROM avisos WHERE para = ? AND cuando < ? ORDER BY cuando DESC LIMIT 60", yo, antes ?: Long.MAX_VALUE) {
-            arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1)
+    fun avisos(yo: Long, antes: Long?, app: String = "cajon"): List<Aviso> = b.usar {
+        leer("SELECT id, de, tipo, objeto, cuando, leido, app FROM avisos WHERE para = ? AND (app IS NULL OR app = ?) AND cuando < ? ORDER BY cuando DESC LIMIT 60", yo, AppsSocial.validar(app), antes ?: Long.MAX_VALUE) {
+            arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1, it.getString(7))
         }
     }.filter { it[2] == "sancion" || (!bloqueado(yo, it[1] as Long) && visible(it[1] as Long)) }
-        .map { Aviso(it[0] as Long, it[2] as String, if (it[2] == "sancion") personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean) }
+        .map { Aviso(it[0] as Long, it[2] as String, if (it[2] == "sancion") personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean, it[6] as String?) }
 
     /**
      * Las sanciones llegan a nombre de Fogón (la cuenta principal), nunca de quien moderó: así nadie del equipo
@@ -1400,13 +1440,13 @@ class Social(
         b.usar { leer("SELECT cuenta FROM roles WHERE rol = 'principal' LIMIT 1") { it.getLong(1) }.firstOrNull() }?.let(::persona)
             ?: Persona("fogon", "Fogón", false)
 
-    fun sinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND leido = 0", yo) { it.getInt(1) }.first() }
+    fun sinLeer(yo: Long, app: String = "cajon"): Int = b.usar { leer("SELECT COUNT(*) FROM avisos WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND (app IS NULL OR app = ?) AND leido = 0", yo, AppsSocial.validar(app)) { it.getInt(1) }.first() }
 
-    fun leidos(yo: Long) { b.usar { cambiar("UPDATE avisos SET leido = 1 WHERE para = ?", yo) } }
+    fun leidos(yo: Long, app: String = "cajon") { b.usar { cambiar("UPDATE avisos SET leido = 1 WHERE para = ? AND (app IS NULL OR app = ?)", yo, AppsSocial.validar(app)) } }
 
     /** Borra un aviso ([id]) o todos (null). */
-    fun borrarAvisos(yo: Long, id: Long?) {
-        b.usar { if (id == null) cambiar("DELETE FROM avisos WHERE para = ?", yo) else cambiar("DELETE FROM avisos WHERE para = ? AND id = ?", yo, id) }
+    fun borrarAvisos(yo: Long, id: Long?, app: String = "cajon") {
+        b.usar { if (id == null) cambiar("DELETE FROM avisos WHERE para = ? AND (app IS NULL OR app = ?)", yo, AppsSocial.validar(app)) else cambiar("DELETE FROM avisos WHERE para = ? AND id = ? AND (app IS NULL OR app = ?)", yo, id, AppsSocial.validar(app)) }
     }
 
     /* ----- Reportes y moderación ----- */
@@ -1533,7 +1573,7 @@ class Social(
     }
 
     private fun marcarRetirada(id: Long?) = b.usar {
-        cambiar("INSERT OR IGNORE INTO retiradas(cuenta, clave, cuando) SELECT cuenta, clave, ? FROM publicaciones WHERE id = ? AND estado = 'retirado'", ahora(), id)
+        cambiar("INSERT OR IGNORE INTO retiradas(cuenta, app, clave, cuando) SELECT cuenta, app, clave, ? FROM publicaciones WHERE id = ? AND estado = 'retirado'", ahora(), id)
     }
 
     fun retirar(yo: Long, d: ContenidoEquipo, token: String?) = b.transaccion {
@@ -1554,7 +1594,7 @@ class Social(
         b.usar {
             val autor = leer("SELECT cuenta FROM $tabla WHERE id = ?", d.objeto.toLongOrNull()) { it.getLong(1) }.singleOrNull()
             if (autor != null) equipo.inferior(yo, autor)
-            if (d.que == "publicacion") cambiar("DELETE FROM retiradas WHERE (cuenta, clave) IN (SELECT cuenta, clave FROM publicaciones WHERE id = ? AND estado = 'retirado')", d.objeto.toLongOrNull())
+            if (d.que == "publicacion") cambiar("DELETE FROM retiradas WHERE (cuenta, app, clave) IN (SELECT cuenta, app, clave FROM publicaciones WHERE id = ? AND estado = 'retirado')", d.objeto.toLongOrNull())
             cambiar("UPDATE $tabla SET estado = 'visible', retirado_hasta = 0 WHERE id = ? AND estado = 'retirado'", d.objeto.toLongOrNull())
             ocultarReportado(d.que, d.objeto, false)
             equipo.registrar(yo.toString(), "contenido_restaurar", d.que + ":" + d.objeto, d.motivo, token)
@@ -1634,7 +1674,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-09"
+        const val POLITICA = "2026-11-10"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

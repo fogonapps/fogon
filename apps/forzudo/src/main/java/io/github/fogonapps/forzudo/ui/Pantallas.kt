@@ -313,6 +313,7 @@ fun Resumen(vm: GymViewModel, e: Estado, r: ResumenEntreno) {
     val f = FogonTema.actual
     Column {
         Cabecera(stringResource(R.string.entreno_guardado), null) { TextButton(vm::cerrar) { Text(stringResource(R.string.listo)) } }
+        BotonCompartirEntreno(vm, r.id)
         // La tarjeta del final, de El Forzudo: el saludo, la rutina y el volumen en puntos; él a la derecha, celebrando.
         io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.FORZUDO, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 16.dp).aparecer(0), celebrar = true) {
             Text(e.nombre?.let { stringResource(R.string.buen_trabajo_nombre, it) } ?: stringResource(R.string.buen_trabajo), style = MaterialTheme.typography.headlineSmall, color = f.texto)
@@ -366,6 +367,7 @@ fun EntrenoGuardado(vm: GymViewModel, e: Estado, sid: String) {
     val dias = L.dias(e)
     Column {
         Cabecera(L.tituloRutina(s, dias), vm::cerrar)
+        BotonCompartirEntreno(vm, sid)
         Trio(stringResource(R.string.tiempo) to (s.ms?.let { duracionPalabras(it) } ?: "–"),
             stringResource(R.string.volumen) to L.volumen(s.entries).let { if (it > 0) fmtVol(it) else "–" },
             stringResource(R.string.series) to "${L.series(s.entries)}")

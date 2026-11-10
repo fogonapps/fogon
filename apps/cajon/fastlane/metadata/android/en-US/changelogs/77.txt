@@ -1,4 +1,0 @@
-• Beta: El Cajón may still change; known issues are in “About”.
-• Without internet, search says so clearly instead of “Nothing found”.
-• Fairer moderation: something is hidden after 10 reports, and sanctions come from Fogón.
-• Updated privacy policy (video, Last.fm and cover votes).

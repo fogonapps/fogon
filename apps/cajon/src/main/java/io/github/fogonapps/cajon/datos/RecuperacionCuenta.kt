@@ -54,38 +54,12 @@ internal class RecuperacionCajon {
     }
 }
 
-/** Un error tardío solo pertenece a la sesión que inició la operación. */
-internal class SesionCuenta(private val token: () -> String?) {
-    class Marca internal constructor(internal val generacion: Long, internal val token: String?)
-    private var generacion = 0L
-
-    fun actual() = Marca(generacion, token())
-    fun vigente(marca: Marca) = marca.generacion == generacion && marca.token == token()
-    fun invalidar() { generacion++ }
-
-    suspend fun intentar(inicio: Marca = actual(), trabajo: suspend () -> Unit, alError: (java.io.IOException) -> Unit): Boolean {
-        return try {
-            trabajo()
-            vigente(inicio)
-        } catch (x: java.io.IOException) {
-            if (vigente(inicio)) alError(x)
-            false
-        }
-    }
-}
-
-/** Recuperar el perfil no consume la subida que motivó el reintento. */
 internal suspend fun prepararSubidaPerfil(
     pendiente: () -> Boolean,
     recuperarPerfil: suspend () -> Boolean,
     recuperarCajon: suspend () -> Boolean,
     vigente: () -> Boolean,
-): Boolean {
-    if (!vigente()) return false
-    if (pendiente() && !recuperarPerfil()) return false
-    if (!vigente() || pendiente()) return false
-    return recuperarCajon() && vigente()
-}
+): Boolean = io.github.fogonapps.social.prepararSubidaPerfil(pendiente, recuperarPerfil, recuperarCajon, vigente)
 
 /** Agrupa las peticiones durante una sincronización en una sola repetición, sin una cola de trabajos. */
 internal class SincronizacionesAgrupadas(private val scope: kotlinx.coroutines.CoroutineScope) {
@@ -119,21 +93,7 @@ internal class SincronizacionesAgrupadas(private val scope: kotlinx.coroutines.C
     }
 }
 
-/** Solo una subida confirmada establece la referencia para omitir repeticiones. */
-internal class SubidasPerfil {
-    private var ultimo: Pair<PerfilSubido, List<PublicacionSubida>>? = null
-    private var generacion = 0L
-
-    fun reiniciar() { generacion++; ultimo = null }
-
-    suspend fun subir(contenido: Pair<PerfilSubido, List<PublicacionSubida>>, enviar: suspend () -> Boolean): Boolean {
-        if (contenido == ultimo) return true
-        val actual = generacion
-        if (!enviar() || actual != generacion) return false
-        ultimo = contenido
-        return true
-    }
-}
+internal typealias SubidasPerfil = io.github.fogonapps.social.SubidasPerfil
 
 /** Identifica la llave autorizada sin guardar otra copia de la llave en claro. */
 internal fun huellaLlaveCajon(llave: String): String = java.util.Base64.getEncoder().encodeToString(

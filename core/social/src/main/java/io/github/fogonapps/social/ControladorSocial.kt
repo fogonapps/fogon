@@ -1,0 +1,268 @@
+package io.github.fogonapps.social
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import java.io.IOException
+
+/** Eventos semánticos; cada app decide su traducción. */
+enum class EventoSocial { SIN_CONEXION, PUBLICACION_GUARDADA, SOLICITUD_ENVIADA, SIGUIENDO, CUENTA_BLOQUEADA, CUENTA_DESBLOQUEADA, REPORTE_ENVIADO, CORREO_VINCULADO, CUENTA_BORRADA }
+
+/** Estado e interacciones de una sesión local; el adaptador conserva los efectos propios de la app. */
+abstract class ControladorSocial(
+    protected val scope: CoroutineScope,
+    protected val sesion: SesionCuenta,
+    usuarioInicial: String?,
+) {
+    protected abstract fun cliente(): ClienteSocial
+    protected abstract suspend fun intentar(
+        avisar: Boolean = true,
+        marca: SesionCuenta.Marca = sesion.actual(),
+        trabajo: suspend () -> Unit,
+    ): Boolean
+    protected fun lanzar(trabajo: suspend () -> Unit) = scope.launch { intentar(trabajo = trabajo) }
+    protected abstract fun avisar(evento: EventoSocial)
+    protected abstract fun olvidarCuenta()
+    protected abstract fun ponerCuenta(cuenta: MiCuenta)
+    protected abstract fun alContarAvisos(cantidad: Int)
+    abstract fun cargarCasos(): Job
+
+    protected val _usuario = MutableStateFlow(usuarioInicial)
+    /** El @usuario de la cuenta en este teléfono, o null si no hay cuenta. */
+    val usuario: StateFlow<String?> = _usuario
+
+    protected val _feed = MutableStateFlow<List<PublicacionSocial>?>(null)
+    val feed: StateFlow<List<PublicacionSocial>?> = _feed
+    protected val _explorar = MutableStateFlow<List<PublicacionSocial>?>(null)
+    val explorar: StateFlow<List<PublicacionSocial>?> = _explorar
+    protected val _perfiles = MutableStateFlow<Map<String, PerfilSocial>>(emptyMap())
+    val perfiles: StateFlow<Map<String, PerfilSocial>> = _perfiles
+    protected val _vistas = MutableStateFlow<Map<Long, PublicacionSocial>>(emptyMap())
+    val vistas: StateFlow<Map<Long, PublicacionSocial>> = _vistas
+    protected val _comentarios = MutableStateFlow<Map<Long, List<ComentarioSocial>>>(emptyMap())
+    val comentarios: StateFlow<Map<Long, List<ComentarioSocial>>> = _comentarios
+    protected val _avisos = MutableStateFlow<List<AvisoSocial>?>(null)
+    val avisos: StateFlow<List<AvisoSocial>?> = _avisos
+    protected val _solicitudes = MutableStateFlow<List<PersonaSocial>>(emptyList())
+    val solicitudes: StateFlow<List<PersonaSocial>> = _solicitudes
+    protected val _sinLeer = MutableStateFlow(0)
+    val sinLeer: StateFlow<Int> = _sinLeer
+    protected val _guardados = MutableStateFlow<List<PublicacionSocial>?>(null)
+    val guardados: StateFlow<List<PublicacionSocial>?> = _guardados
+    /** "seguidores:<usuario>" o "siguiendo:<usuario>" (o "bloqueados") → la lista. */
+    protected val _gente = MutableStateFlow<Map<String, List<PersonaSocial>>>(emptyMap())
+    val gente: StateFlow<Map<String, List<PersonaSocial>>> = _gente
+
+    protected val _cuenta = MutableStateFlow<MiCuenta?>(null)
+    /** Lo de la cuenta en el servidor: correo, si tiene contraseña, desde cuándo puede cambiar el usuario. */
+    val cuenta: StateFlow<MiCuenta?> = _cuenta
+
+    protected val _sesiones = MutableStateFlow<List<SesionMostrada>?>(null)
+    val sesiones: StateFlow<List<SesionMostrada>?> = _sesiones
+    fun cargarSesiones() = lanzar {
+        val marca = sesion.actual()
+        val lista = cliente().sesiones().map { it.paraPantalla() }
+        if (sesion.vigente(marca)) _sesiones.value = lista
+    }
+    fun cerrarSesion(id: String, actual: Boolean) = lanzar {
+        val marca = sesion.actual()
+        cliente().cerrarSesion(id)
+        if (sesion.vigente(marca)) { if (actual) olvidarCuenta() else cargarSesiones() }
+    }
+    fun cerrarOtrasSesiones() = lanzar {
+        val marca = sesion.actual()
+        cliente().cerrarOtrasSesiones()
+        if (sesion.vigente(marca)) cargarSesiones()
+    }
+
+    fun cargarFeed(avisar: Boolean = true) {
+        if (_usuario.value == null) return
+        scope.launch { intentar(avisar = avisar) { _feed.value = cliente().feed() } }
+    }
+
+    fun masFeed() = lanzar {
+        val ya = _feed.value ?: return@lanzar
+        val mas = cliente().feed(ya.lastOrNull()?.cuando)
+        _feed.value = (ya + mas).distinctBy { it.id }
+    }
+
+    fun cargarExplorar() = lanzar { _explorar.value = cliente().explorar() }
+
+    /** Los @usuarios que se buscaron y no existen (para decirlo en vez de quedarse cargando). */
+    protected val _noEstan = MutableStateFlow<Set<String>>(emptySet())
+    val noEstan: StateFlow<Set<String>> = _noEstan
+
+    fun verPerfil(usuario: String) = scope.launch {
+        val marca = sesion.actual()
+        try {
+            val perfil = cliente().perfil(usuario)
+            if (sesion.vigente(marca)) _perfiles.value = _perfiles.value + (usuario to perfil)
+        } catch (x: ErrorSocial) {
+            if (sesion.vigente(marca) && x.codigo == 404) _noEstan.value = _noEstan.value + usuario
+            else intentar(marca = marca) { throw x }
+        } catch (x: IOException) { if (sesion.vigente(marca)) avisar(EventoSocial.SIN_CONEXION) }
+    }
+
+    fun cargarPublicacion(id: Long) = lanzar {
+        _vistas.value = _vistas.value + (id to cliente().publicacion(id))
+        _comentarios.value = _comentarios.value + (id to cliente().comentarios(id))
+    }
+
+    /** Cambia una publicación en todas las listas donde esté (para que el corazón responda al instante). */
+    protected fun tocar(id: Long, f: (PublicacionSocial) -> PublicacionSocial) {
+        fun l(x: List<PublicacionSocial>?) = x?.map { if (it.id == id) f(it) else it }
+        _feed.value = l(_feed.value); _explorar.value = l(_explorar.value); _guardados.value = l(_guardados.value)
+        _vistas.value = _vistas.value.mapValues { if (it.key == id) f(it.value) else it.value }
+        _perfiles.value = _perfiles.value.mapValues { (_, p) -> p.copy(publicaciones = l(p.publicaciones)!!) }
+        _listas.value = _listas.value.mapValues { (_, xs) -> l(xs)!! }
+    }
+
+    fun buscarPublicacion(id: Long): PublicacionSocial? =
+        _vistas.value[id] ?: (_feed.value.orEmpty() + _explorar.value.orEmpty() + _guardados.value.orEmpty() + _perfiles.value.values.flatMap { it.publicaciones }).firstOrNull { it.id == id }
+
+    fun meGusta(p: PublicacionSocial) {
+        val si = !p.yoMeGusta
+        tocar(p.id) { it.copy(yoMeGusta = si, megusta = it.megusta + if (si) 1 else -1) }
+        scope.launch { if (!intentar { cliente().meGusta(p.id, si) }) tocar(p.id) { it.copy(yoMeGusta = !si, megusta = it.megusta + if (si) -1 else 1) } }
+    }
+
+    fun guardar(p: PublicacionSocial) {
+        val si = !p.yoGuardo
+        tocar(p.id) { it.copy(yoGuardo = si) }
+        scope.launch {
+            if (intentar { cliente().guardar(p.id, si) }) { if (si) avisar(EventoSocial.PUBLICACION_GUARDADA) }
+            else tocar(p.id) { it.copy(yoGuardo = !si) }
+        }
+    }
+
+    fun cargarGuardados() = lanzar { _guardados.value = cliente().guardados() }
+
+    /** Las guardadas que alguien muestra en su perfil, y lo que lleva una #etiqueta (clave → lista). */
+    protected val _listas = MutableStateFlow<Map<String, List<PublicacionSocial>>>(emptyMap())
+    val listas: StateFlow<Map<String, List<PublicacionSocial>>> = _listas
+    fun cargarGuardadasDe(usuario: String) = lanzar { _listas.value = _listas.value + ("guardadas:$usuario" to cliente().guardadasDe(usuario)) }
+
+    fun cargarEtiqueta(etiqueta: String) = lanzar { _listas.value = _listas.value + ("#$etiqueta" to cliente().conEtiqueta(etiqueta)) }
+
+    fun comentar(id: Long, texto: String, padre: Long? = null) = lanzar {
+        cliente().comentar(id, texto.trim(), padre)
+        _comentarios.value = _comentarios.value + (id to cliente().comentarios(id))
+        tocar(id) { it.copy(comentarios = it.comentarios + 1) }
+    }
+
+    fun meGustaComentario(pub: Long, comentario: ComentarioSocial) = lanzar {
+        cliente().meGustaComentario(comentario.id, !comentario.yoMeGusta)
+        _comentarios.value = _comentarios.value + (pub to cliente().comentarios(pub))
+    }
+
+    fun borrarComentario(pub: Long, id: Long) = lanzar {
+        cliente().borrarComentario(id)
+        _comentarios.value = _comentarios.value + (pub to cliente().comentarios(pub))
+        tocar(pub) { it.copy(comentarios = (it.comentarios - 1).coerceAtLeast(0)) }
+    }
+
+    /* ----- Seguir ----- */
+
+    fun seguir(usuario: String) = lanzar {
+        val r = cliente().seguir(usuario)
+        avisar(if (r == "pendiente") EventoSocial.SOLICITUD_ENVIADA else EventoSocial.SIGUIENDO)
+        _perfiles.value = _perfiles.value + (usuario to cliente().perfil(usuario))
+        cargarFeed()
+    }
+
+    fun dejarDeSeguir(usuario: String) = lanzar {
+        cliente().dejarDeSeguir(usuario)
+        _perfiles.value = _perfiles.value + (usuario to cliente().perfil(usuario))
+        cargarFeed()
+    }
+
+    fun aceptar(usuario: String) = lanzar { cliente().aceptar(usuario); _solicitudes.value = cliente().solicitudes() }
+    fun rechazar(usuario: String) = lanzar { cliente().rechazar(usuario); _solicitudes.value = cliente().solicitudes() }
+
+    fun quitarSeguidor(usuario: String) = lanzar {
+        cliente().quitarSeguidor(usuario)
+        _usuario.value?.let { yo -> _gente.value = _gente.value + ("seguidores:$yo" to cliente().seguidores(yo)) }
+    }
+
+    fun cargarGente(usuario: String, seguidores: Boolean) = lanzar {
+        val clave = (if (seguidores) "seguidores:" else "siguiendo:") + usuario
+        _gente.value = _gente.value + (clave to if (seguidores) cliente().seguidores(usuario) else cliente().siguiendo(usuario))
+    }
+
+    fun bloquear(usuario: String, si: Boolean) = lanzar {
+        cliente().bloquear(usuario, si)
+        if (si) {
+            _gente.value = quitarCuentaBloqueada(_gente.value, usuario)
+            _feed.value = quitarPublicacionesBloqueadas(_feed.value, usuario)
+        }
+        avisar(if (si) EventoSocial.CUENTA_BLOQUEADA else EventoSocial.CUENTA_DESBLOQUEADA)
+        _perfiles.value = _perfiles.value - usuario
+        _gente.value = _gente.value + ("bloqueados" to cliente().bloqueados())
+        cargarFeed()
+    }
+
+    fun cargarBloqueados() = lanzar { _gente.value = _gente.value + ("bloqueados" to cliente().bloqueados()) }
+
+    fun reportar(que: String, objeto: String, motivo: String) = lanzar { cliente().reportar(que, objeto, motivo); avisar(EventoSocial.REPORTE_ENVIADO) }
+
+    protected val _ocultas = MutableStateFlow<Set<Long>>(emptySet())
+    /** Publicaciones que escondió (o reportó) en esta sesión: dejan de verse al momento. */
+    val ocultas: StateFlow<Set<Long>> = _ocultas
+    fun ocultar(id: Long) { _ocultas.value = _ocultas.value + id }
+
+    protected val _equipoBloqueado = MutableStateFlow(false)
+    val equipoBloqueado: StateFlow<Boolean> = _equipoBloqueado
+    protected val _equipoOcupado = MutableStateFlow(false)
+    val equipoOcupado: StateFlow<Boolean> = _equipoOcupado
+    suspend fun <T> operarEquipo(trabajo: suspend (ClienteSocial) -> T): T? {
+        if (_equipoOcupado.value) return null
+        _equipoOcupado.value = true
+        var resultado: T? = null
+        val marca = sesion.actual()
+        var ok = false
+        try { ok = intentar(marca = marca) { resultado = trabajo(cliente()) } } finally { _equipoOcupado.value = false }
+        return if (ok) resultado else null
+    }
+    suspend fun actualizarEquipo() {
+        val marca = sesion.actual()
+        val c = cliente().miCuenta()
+        if (sesion.vigente(marca)) {
+            ponerCuenta(c)
+            _equipoBloqueado.value = false
+        }
+    }
+    fun restaurar(c: CasoModeracion) = lanzar { cliente().restaurar(c); cargarCasos() }
+
+    protected val _estadoCuenta = MutableStateFlow<EstadoCuentaSocial?>(null)
+    val estadoCuenta: StateFlow<EstadoCuentaSocial?> = _estadoCuenta
+    fun cargarEstadoCuenta() = lanzar { _estadoCuenta.value = cliente().estadoCuenta() }
+
+    protected val _casos = MutableStateFlow<List<CasoModeracion>?>(null)
+    val casos: StateFlow<List<CasoModeracion>?> = _casos
+
+    fun decidir(c: CasoModeracion, decision: String) = lanzar {
+        val regla = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
+        cliente().decidir(c.que, c.objeto, decision, regla)
+        _casos.value = _casos.value?.filterNot { it.que == c.que && it.objeto == c.objeto }
+    }
+
+    fun cargarAvisos() = lanzar {
+        _avisos.value = cliente().avisos()
+        _solicitudes.value = cliente().solicitudes()
+        cliente().leidos()
+        _sinLeer.value = 0
+    }
+
+    fun borrarAviso(id: Long?) = lanzar {
+        cliente().borrarAvisos(id)
+        _avisos.value = if (id == null) emptyList() else _avisos.value?.filter { it.id != id }
+    }
+
+    fun revisarSinLeer() {
+        if (_usuario.value == null) return
+        scope.launch { runCatching { _sinLeer.value = cliente().sinLeer(); alContarAvisos(_sinLeer.value) } }
+    }
+
+}

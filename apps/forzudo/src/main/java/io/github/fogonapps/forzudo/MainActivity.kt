@@ -33,7 +33,13 @@ import io.github.fogonapps.forzudo.datos.iso
 import io.github.fogonapps.forzudo.ui.App
 
 class MainActivity : ComponentActivity() {
-    private val vm: GymViewModel by viewModels()
+    private var perfilVm: String? = null
+    private val vm: GymViewModel get() {
+        val perfil = (application as ForzudoApp).perfilActivo.value
+        if (perfilVm != null && perfilVm != perfil) viewModelStore.clear()
+        perfilVm = perfil
+        return androidx.lifecycle.ViewModelProvider(this)[GymViewModel::class.java]
+    }
 
     override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(io.github.fogonapps.identidad.Idioma.envolver(base))
 
@@ -42,6 +48,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         setContent {
+            val perfil by (application as ForzudoApp).perfilActivo.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(perfil) {
+            val vm = vm
             val apariencia by io.github.fogonapps.identidad.AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
             val oscuro = io.github.fogonapps.identidad.fogonDe(Paleta.Forzudo, apariencia).oscuro
@@ -98,6 +107,7 @@ class MainActivity : ComponentActivity() {
                     onExportar = { exportar.launch("el-forzudo-respaldo-${iso(vm.hoy())}.json") },
                     onImportar = { importar.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
                 )
+            }
             }
         }
     }

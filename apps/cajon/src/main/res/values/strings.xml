@@ -1345,7 +1345,10 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">Posts can now include a video of up to 30 seconds.\nWe explain importing your Last.fm history, which goes through the server without being stored.\nWe note that we keep your vote for a work’s cover (only totals are shown).</string>
+  <string name="politica_resumen">Fogón Social is now the account for every Fogón app: El Cajón and El Forzudo.
+We keep which app you sign in and post from, to show each thing in its app.
+From El Forzudo only what you share from a workout is sent; never your weight or measurements.
+We corrected how often you can change your username: once every 30 days.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
