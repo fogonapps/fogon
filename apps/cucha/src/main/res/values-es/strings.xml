@@ -409,4 +409,7 @@
     <string name="guia_perfil">Tu perfil y tus ajustes</string>
     <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, tus datos, tus metas, los respaldos y este recorrido otra vez.</string>
     <string name="tut_tengo_cuenta">Ya tengo cuenta</string>
+    <string name="red_corregir_lugar">Corregir la dirección del lugar</string>
+    <string name="red_corregir_no">Solo quien creó el lugar puede corregirlo, o no hay conexión.</string>
+    <string name="red_guardar_lugar">Guardar</string>
 </resources>

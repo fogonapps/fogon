@@ -5,7 +5,13 @@ package io.github.fogonapps.social
  * El correo lleva siempre al código. La respuesta cuenta_nueva continúa al registro;
  * la contraseña es un camino independiente y también permite recuperar por código.
  */
-enum class PasoAcceso { CORREO, CLAVE, CODIGO, USUARIO }
+enum class PasoAcceso {
+    CORREO, CLAVE, CODIGO, USUARIO,
+    /** Entró con el código y la cuenta tiene contraseña: se pide para abrir sus datos guardados (D-033). */
+    CLAVE_DATOS,
+    /** Entró con el código y la cuenta no tiene contraseña: se crea para que sus datos se guarden cifrados. */
+    CREAR_CLAVE,
+}
 
 /** Para qué es el código: cuenta nueva, olvidó la contraseña o la cuenta no tenía (en esos dos se pone una nueva). */
 enum class MotivoCodigo { NUEVA, OLVIDO, SIN_CLAVE }

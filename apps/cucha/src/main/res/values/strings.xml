@@ -410,4 +410,7 @@
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile is here, and in its gear: your details, goals, backups and this tour again.</string>
     <string name="tut_tengo_cuenta">I already have an account</string>
+    <string name="red_corregir_lugar">Correct the place’s address</string>
+    <string name="red_corregir_no">Only whoever created the place can correct it, or there’s no connection.</string>
+    <string name="red_guardar_lugar">Save</string>
 </resources>

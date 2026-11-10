@@ -289,6 +289,12 @@ open class RedApp(
     fun util(id: Long, si: Boolean) = lanzar { cliente().util(id, quitar = !si) }
     /** Sugerencias de lugares que ya existen con ese nombre y ciudad. */
     suspend fun buscarLugares(nombre: String, ciudad: String): List<Lugar> = cliente().lugares(nombre, ciudad)
+    /** Corrige la dirección de un lugar; [listo] recibe false si no se pudo (por ejemplo, no lo creó esta cuenta). */
+    fun corregirLugar(id: Long, direccion: String, listo: (Boolean) -> Unit) = scope.launch {
+        val bien = runCatching { cliente().corregirLugar(id, direccion.trim().take(200)) }.isSuccess
+        if (bien) { cargarFeed(); cargarIdentidad() }
+        listo(bien)
+    }
     /** Crea el lugar o devuelve el que ya existe; lanza si no se pudo (sin red, límite diario…). */
     suspend fun crearLugar(nuevo: LugarNuevo): Lugar {
         val marca = sesion.actual()

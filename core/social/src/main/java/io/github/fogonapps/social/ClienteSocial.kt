@@ -211,6 +211,9 @@ open class ClienteSocial(
     /** Lugares de La Cucha: hasta 30 sugerencias por nombre y ciudad (subcadenas, sin tildes ni mayúsculas). */
     suspend fun lugares(nombre: String, ciudad: String) = leer(ListSerializer(Lugar.serializer()),
         pedir("/lugares?nombre=${cod(nombre)}&ciudad=${cod(ciudad)}"))
+    /** Corrige la dirección de un lugar (solo quien lo creó o el equipo). */
+    suspend fun corregirLugar(id: Long, direccion: String) = leer(Lugar.serializer(),
+        pedir("/lugares/$id", "PATCH", json(CorreccionLugar.serializer(), CorreccionLugar(direccion))))
     /** Crea un lugar o devuelve el que ya existe con ese nombre y ciudad. */
     suspend fun crearLugar(nuevo: LugarNuevo) = leer(Lugar.serializer(), pedir("/lugares", "POST", json(LugarNuevo.serializer(), nuevo)))
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))

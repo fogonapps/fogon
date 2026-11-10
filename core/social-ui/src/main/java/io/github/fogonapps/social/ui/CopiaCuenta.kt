@@ -30,7 +30,8 @@ fun CopiaCuenta(red: RedApp, modifier: Modifier = Modifier, soloSiFalta: Boolean
     val cuenta by red.cuenta.collectAsStateWithLifecycle()
     LaunchedEffect(usuario) { if (usuario != null) red.revisarCopia() }
     if (usuario == null) return
-    val sinClave = !lista && !bloqueada && cuenta?.conClave == false
+    // Sin contraseña (cuenta de antes de D-033): se crea aquí mismo; sin correo no se puede, y la tarjeta no insiste.
+    val sinClave = !lista && !bloqueada && cuenta?.conClave == false && !cuenta?.correo.isNullOrBlank()
     if (soloSiFalta && !bloqueada && !sinClave) return
     var clave by remember { mutableStateOf("") }
     var mala by remember { mutableStateOf(false) }
@@ -44,7 +45,13 @@ fun CopiaCuenta(red: RedApp, modifier: Modifier = Modifier, soloSiFalta: Boolean
                 if (mala) Text(stringResource(R.string.social_copia_mala), color = MaterialTheme.colorScheme.error)
                 BotonRiso(stringResource(R.string.social_copia_abrir), { red.desbloquearCopia(clave) { mala = true } }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8)
             }
-            sinClave -> Text(stringResource(R.string.social_copia_sin_clave), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            sinClave -> {
+                Text(stringResource(R.string.social_copia_sin_clave), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave_nueva)) },
+                    singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    supportingText = { Text(stringResource(R.string.social_red_clave_regla)) })
+                BotonRiso(stringResource(R.string.social_copia_crear), { red.ponerClave(clave, "") { clave = "" } }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8)
+            }
             else -> {
                 Text(stringResource(R.string.social_copia_lista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 if (ultima > 0) Text(stringResource(R.string.social_copia_ultima,

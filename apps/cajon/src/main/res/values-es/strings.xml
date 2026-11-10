@@ -1452,5 +1452,13 @@ La Alcancía ya usa la cuenta de Fogón Social: de ella solo salen los logros qu
     <string name="copia_clave">Tu contraseña</string>
     <string name="copia_abrir">Traer y guardar mis datos</string>
     <string name="copia_mala">Esa no es la contraseña.</string>
-    <string name="copia_sin_clave">Crea una contraseña en «Cambiar la contraseña» y tus datos se guardarán solos, cifrados.</string>
+    <string name="copia_sin_clave">Crea una contraseña una vez y tus datos se guardan solos en tu cuenta, cifrados.</string>
+  <string name="nube_aviso_titulo">Tu cajón no se está guardando en tu cuenta</string>
+  <string name="nube_aviso_bloqueado">Escribe tu contraseña una vez y tu cajón vuelve a guardarse solo, cifrado.</string>
+  <string name="nube_aviso_sin_clave">Crea una contraseña una vez y tu cajón se guarda solo en tu cuenta, cifrado.</string>
+    <string name="acceso_clave_datos">Ahora tu contraseña</string>
+    <string name="acceso_clave_datos_pista">Con ella se abren los datos que tienes guardados en tu cuenta y se siguen guardando solos, cifrados.</string>
+    <string name="acceso_crear_clave">Crea una contraseña</string>
+    <string name="acceso_crear_clave_pista">Con ella tus datos se guardan solos en tu cuenta, cifrados, y vuelven si cambias de teléfono o reinstalas.</string>
+    <string name="copia_crear">Crear la contraseña</string>
 </resources>

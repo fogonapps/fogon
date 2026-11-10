@@ -399,6 +399,8 @@ fun MultimediaCucha(vm: CuchaViewModel, datos: JsonObject) {
 fun MenuCucha(vm: CuchaViewModel, interfaz: InterfazSocial, p: PublicacionSocial, cerrar: () -> Unit) {
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val confirmar = LocalConfirmar.current
+    var corrigiendo by remember { mutableStateOf<Lugar?>(null) }
+    corrigiendo?.let { l -> CorregirLugar(vm, l) { corrigiendo = null; cerrar() }; return }
     if (usuario == p.autor.usuario) {
         val borrar = stringResource(R.string.red_borrar)
         val privado = stringResource(R.string.red_privado)
@@ -407,6 +409,7 @@ fun MenuCucha(vm: CuchaViewModel, interfaz: InterfazSocial, p: PublicacionSocial
                 val clave = vm.red.origen(p)
                 val editar = clave?.let { destinoEdicion(vm, it) }
                 if (editar != null) TextButton({ cerrar(); vm.abrir(editar) }) { Text(stringResource(R.string.red_actualizar)) }
+                lugarDe(p.datos)?.let { l -> TextButton({ corrigiendo = l }) { Text(stringResource(R.string.red_corregir_lugar)) } }
                 TextButton({ cerrar(); confirmar(privado, null) { if (clave != null) vm.red.retirar(clave, p.id) else vm.red.borrar(p.id) } }) { Text(privado) }
                 TextButton({ cerrar(); confirmar(borrar, null) { vm.red.borrar(p.id) } }) { Text(borrar) }
             }
@@ -506,4 +509,23 @@ fun PartesCucha(vm: CuchaViewModel) {
             vm.red.publicarPartes(partesCucha(platos, visPlatos, restaurantes, visRestaurantes))
         }, Modifier.fillMaxWidth())
     }
+}
+
+/** Corregir la dirección escrita de un lugar (solo quien lo creó; el servidor lo revisa). */
+@Composable
+private fun CorregirLugar(vm: CuchaViewModel, l: Lugar, cerrar: () -> Unit) {
+    var direccion by remember { mutableStateOf(l.direccion.orEmpty()) }
+    var error by remember { mutableStateOf(false) }
+    var ocupado by remember { mutableStateOf(false) }
+    AlertDialog(onDismissRequest = cerrar, title = { Text(stringResource(R.string.red_corregir_lugar)) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("${l.nombre} · ${l.ciudad}", color = FogonTema.actual.textoSuave)
+            androidx.compose.material3.OutlinedTextField(direccion, { direccion = it.take(200); error = false }, Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.red_lugar_direccion)) })
+            if (error) Text(stringResource(R.string.red_corregir_no), color = FogonTema.actual.texto)
+        }
+    }, confirmButton = {
+        TextButton({ ocupado = true; vm.red.corregirLugar(l.id, direccion) { bien -> ocupado = false; if (bien) cerrar() else error = true } },
+            enabled = !ocupado && direccion.isNotBlank()) { Text(stringResource(R.string.red_guardar_lugar)) }
+    }, dismissButton = { TextButton(cerrar) { Text(stringResource(R.string.volver)) } })
 }

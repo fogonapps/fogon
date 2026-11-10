@@ -1,0 +1,1 @@
+Al entrar con el código del correo, la app te pide tu contraseña en el mismo paso (o te deja crearla si tu cuenta no tenía), y tus datos quedan guardándose solos, cifrados, desde el principio. Ya no hay nada que arreglar después. Si entraste antes solo con el código, Inicio te pide la contraseña ahí mismo para volver a guardar tu cajón.

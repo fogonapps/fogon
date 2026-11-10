@@ -116,7 +116,16 @@ abstract class ControladorCuentaSocial(
         _acceso.value = a.copy(ocupado = true)
         try {
             if (a.motivo == MotivoCodigo.NUEVA) {
-                entro(clienteAcceso().entrar(a.correo, codigo.trim()))
+                val entrada = clienteAcceso().entrar(a.correo, codigo.trim())
+                // Sin la contraseña, los datos guardados en la cuenta no se pueden abrir ni seguir guardando:
+                // se pide (o se crea) aquí mismo, antes de terminar de entrar, para que no quede nada por arreglar.
+                val conClave = if (entrada.nueva || entrada.borrarEl > 0) null
+                    else try { clienteConToken(entrada.token).miCuenta().conClave } catch (x: IOException) { null } catch (x: ErrorSocial) { null }
+                if (conClave == null || !sesion.vigente(marca)) entro(entrada)
+                else {
+                    entradaPendiente = entrada
+                    _acceso.value = EstadoAcceso(if (conClave) PasoAcceso.CLAVE_DATOS else PasoAcceso.CREAR_CLAVE, a.correo)
+                }
             } else {
                 if (entro(clienteAcceso().entrar(a.correo, codigo.trim(), clave = claveNueva))) {
                     marca = sesion.actual()
@@ -132,7 +141,43 @@ abstract class ControladorCuentaSocial(
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
-    fun volverAlCorreo() { _acceso.value = EstadoAcceso() }
+    fun volverAlCorreo() { soltarEntradaPendiente(); _acceso.value = EstadoAcceso() }
+
+    /** La sesión abierta con el código mientras se pide la contraseña; no se usa hasta tenerla. */
+    private var entradaPendiente: Acceso? = null
+    protected open fun clienteConToken(token: String): ClienteSocial = ClienteSocial(token, configuracion = clienteAcceso().configuracion)
+
+    private suspend fun cerrarEntradaPendiente() {
+        val e = entradaPendiente ?: return
+        entradaPendiente = null
+        try { clienteConToken(e.token).salir() } catch (x: IOException) {} catch (x: ErrorSocial) {}
+    }
+    private fun soltarEntradaPendiente() { if (entradaPendiente != null) scope.launch { cerrarEntradaPendiente() } }
+
+    /** Después del código, la contraseña de la cuenta: entra con ella (el servidor la comprueba) y abre los datos. */
+    fun entrarConClaveDatos(clave: String) = lanzar {
+        val correo = _acceso.value.correo
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try {
+            val entrada = clienteAcceso().entrarConClave(correo, clave)
+            cerrarEntradaPendiente()
+            if (entro(entrada)) runCatching { intentar(avisar = false) { llaveConClave(clave) } }
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    /** Después del código, una cuenta sin contraseña la crea: desde ahí sus datos se guardan cifrados con ella. */
+    fun crearClaveDatos(clave: String) = lanzar {
+        val entrada = entradaPendiente ?: return@lanzar
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try {
+            clienteConToken(entrada.token).ponerClave(clave)
+            entradaPendiente = null
+            if (entro(entrada)) runCatching { intentar(avisar = false) { llaveConClave(clave) } }
+        } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    /** Olvidó la contraseña después del código: se cierra esa sesión y se recupera con otro código y una contraseña nueva. */
+    fun olvideClaveDatos() { soltarEntradaPendiente(); pedirCodigo(MotivoCodigo.OLVIDO) }
 
     fun entrarConClave(correo: String, clave: String) = lanzar {
         _acceso.value = _acceso.value.copy(ocupado = true)

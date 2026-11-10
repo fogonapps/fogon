@@ -298,5 +298,10 @@
     <string name="social_copia_clave">Your password</string>
     <string name="social_copia_abrir">Bring and save my data</string>
     <string name="social_copia_mala">That’s not the password.</string>
-    <string name="social_copia_sin_clave">Create a password in “Change password” and your data will be saved automatically, encrypted.</string>
+    <string name="social_copia_sin_clave">Create a password once and your data is saved automatically to your account, encrypted.</string>
+    <string name="social_acceso_clave_datos">Now your password</string>
+    <string name="social_acceso_clave_datos_pista">It opens the data saved in your account and keeps saving it automatically, encrypted.</string>
+    <string name="social_acceso_crear_clave">Create a password</string>
+    <string name="social_acceso_crear_clave_pista">With it, your data is saved automatically to your account, encrypted, and comes back if you change phones or reinstall.</string>
+    <string name="social_copia_crear">Create password</string>
 </resources>

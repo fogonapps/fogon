@@ -197,3 +197,7 @@ data class LugarNuevo(val nombre: String, val ciudad: String, val direccion: Str
 /** D-033: un sobre cifrado (el servidor no lo puede abrir), su versión y la llave común envuelta con la contraseña. */
 @Serializable
 data class CopiaCifrada(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
+
+/** Lo que se corrige de un lugar: la dirección escrita. */
+@Serializable
+data class CorreccionLugar(val direccion: String)

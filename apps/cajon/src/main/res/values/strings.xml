@@ -1450,5 +1450,13 @@ La Alcancía now uses the Fogón Social account: only the achievements you share
     <string name="copia_clave">Your password</string>
     <string name="copia_abrir">Bring and save my data</string>
     <string name="copia_mala">That’s not the password.</string>
-    <string name="copia_sin_clave">Create a password in “Change password” and your data will be saved automatically, encrypted.</string>
+    <string name="copia_sin_clave">Create a password once and your data is saved automatically to your account, encrypted.</string>
+  <string name="nube_aviso_titulo">Your drawer isn’t being saved to your account</string>
+  <string name="nube_aviso_bloqueado">Enter your password once and your drawer is saved automatically again, encrypted.</string>
+  <string name="nube_aviso_sin_clave">Create a password once and your drawer is saved automatically to your account, encrypted.</string>
+    <string name="acceso_clave_datos">Now your password</string>
+    <string name="acceso_clave_datos_pista">It opens the data saved in your account and keeps saving it automatically, encrypted.</string>
+    <string name="acceso_crear_clave">Create a password</string>
+    <string name="acceso_crear_clave_pista">With it, your data is saved automatically to your account, encrypted, and comes back if you change phones or reinstall.</string>
+    <string name="copia_crear">Create password</string>
 </resources>

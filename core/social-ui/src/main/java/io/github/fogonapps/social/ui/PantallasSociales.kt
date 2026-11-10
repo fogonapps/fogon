@@ -423,6 +423,23 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
                 BotonSecundario(stringResource(R.string.social_red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
                 return
             }
+            // D-033: entró con el código; la contraseña abre (o empieza a guardar) sus datos cifrados en la cuenta.
+            PasoAcceso.CLAVE_DATOS, PasoAcceso.CREAR_CLAVE -> {
+                val crear = acceso.paso == PasoAcceso.CREAR_CLAVE
+                var clave by rememberSaveable { mutableStateOf("") }
+                Text(stringResource(if (crear) R.string.social_acceso_crear_clave else R.string.social_acceso_clave_datos), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                Pista(stringResource(if (crear) R.string.social_acceso_crear_clave_pista else R.string.social_acceso_clave_datos_pista))
+                if (crear) CampoClave(clave, { clave = it }, stringResource(R.string.social_red_clave_nueva))
+                else OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave)) }, singleLine = true, shape = forma(18.dp),
+                    visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                BotonRiso(stringResource(R.string.social_red_entrar), { if (crear) vm.red.crearClaveDatos(clave) else vm.red.entrarConClaveDatos(clave) },
+                    Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && clave.length >= 8)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!crear) Pildora(stringResource(R.string.social_red_olvide)) { vm.red.olvideClaveDatos() }
+                    Pildora(stringResource(R.string.social_red_otro_correo)) { vm.red.volverAlCorreo() }
+                }
+                return
+            }
             else -> Unit
         }
         // Cuenta nueva: usuario, apodo y aceptación con el correo comprobado.

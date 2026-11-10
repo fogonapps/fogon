@@ -300,5 +300,10 @@
     <string name="social_copia_clave">Tu contraseña</string>
     <string name="social_copia_abrir">Traer y guardar mis datos</string>
     <string name="social_copia_mala">Esa no es la contraseña.</string>
-    <string name="social_copia_sin_clave">Crea una contraseña en «Cambiar la contraseña» y tus datos se guardarán solos, cifrados.</string>
+    <string name="social_copia_sin_clave">Crea una contraseña una vez y tus datos se guardan solos en tu cuenta, cifrados.</string>
+    <string name="social_acceso_clave_datos">Ahora tu contraseña</string>
+    <string name="social_acceso_clave_datos_pista">Con ella se abren los datos que tienes guardados en tu cuenta y se siguen guardando solos, cifrados.</string>
+    <string name="social_acceso_crear_clave">Crea una contraseña</string>
+    <string name="social_acceso_crear_clave_pista">Con ella tus datos se guardan solos en tu cuenta, cifrados, y vuelven si cambias de teléfono o reinstalas.</string>
+    <string name="social_copia_crear">Crear la contraseña</string>
 </resources>

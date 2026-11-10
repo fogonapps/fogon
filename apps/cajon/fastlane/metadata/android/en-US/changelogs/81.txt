@@ -1,1 +1,0 @@
-Policy and terms updated: now every Fogón app’s data is saved automatically to your account, encrypted with your password, as already happened with your drawer.

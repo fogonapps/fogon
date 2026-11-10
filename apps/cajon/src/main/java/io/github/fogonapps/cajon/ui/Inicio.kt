@@ -91,6 +91,8 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
                 foto = e.perfil.foto.takeIf { it.isNotBlank() }?.let { { FotoPerfil(it, 48.dp) } }) { vm.abrirMiPerfil() }
         }})
 
+    AvisoCajonSinGuardar(vm)
+
     if (menuFrase) io.github.fogonapps.social.ui.MenuFrase(textoDeFrase, gusta, cerrar = { menuFrase = false },
         onGusta = { vm.votarFrase(frase.clave, if (gusta) 0 else 1) },
         onNoMostrar = { vm.votarFrase(frase.clave, -1); vuelta++ },
@@ -349,4 +351,39 @@ fun caraDe(nombre: String): io.github.fogonapps.identidad.Cara = when (nombre) {
     "decidido" -> io.github.fogonapps.identidad.Cara.DECIDIDO
     "guino" -> io.github.fogonapps.identidad.Cara.GUINO
     else -> io.github.fogonapps.identidad.Cara.NORMAL
+}
+
+/**
+ * D-033: desde esta versión, entrar con el código ya pide la contraseña. Esto queda solo para quien entró antes así
+ * (cajón bloqueado) o tiene una cuenta sin contraseña: se resuelve ahí mismo, escribiendo la contraseña, sin ir a otra
+ * pantalla. Sin correo no se puede poner contraseña, y eso sigue en Ajustes → «Tu cajón en tu cuenta».
+ */
+@Composable
+private fun AvisoCajonSinGuardar(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+    val bloqueado by vm.red.cajonBloqueado.collectAsStateWithLifecycle()
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val sync by vm.sync.collectAsStateWithLifecycle()
+    // La llave no es un flujo: se mira cada segundo mientras Inicio está a la vista, y al abrirse la tarjeta se va.
+    val conLlave by androidx.compose.runtime.produceState(vm.hayLlaveCajon(), usuario, bloqueado) {
+        while (true) { value = vm.hayLlaveCajon(); kotlinx.coroutines.delay(1000) }
+    }
+    val c = cuenta
+    if (usuario == null || c == null || c.correo.isBlank() || (!bloqueado && conLlave)) return
+    val crear = !bloqueado && !c.conClave
+    var clave by rememberSaveable { mutableStateOf("") }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.nube_aviso_titulo), style = MaterialTheme.typography.titleSmall, color = f.texto)
+        Text(stringResource(if (crear) R.string.nube_aviso_sin_clave else R.string.nube_aviso_bloqueado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        androidx.compose.material3.OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(),
+            label = { Text(stringResource(if (crear) R.string.red_clave_nueva else R.string.red_clave)) }, singleLine = true,
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
+            supportingText = if (crear) ({ Text(stringResource(R.string.red_clave_regla)) }) else null)
+        BotonRiso(stringResource(if (crear) R.string.nube_activar else R.string.nube_abrir), {
+            if (crear) vm.red.ponerClave(clave, "") { clave = "" } else { vm.red.desbloquearCajon(clave); clave = "" }
+        }, Modifier.fillMaxWidth(), habilitado = clave.length >= 8 && sync.estado != io.github.fogonapps.cajon.EstadoSync.SINCRONIZANDO)
+    }
 }

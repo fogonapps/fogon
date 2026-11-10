@@ -22,6 +22,7 @@ class ControladorCuentaSocialTest {
         override fun reanudarPublicaciones() { pasos += "reanudar" }
         override fun cliente() = transporte
         override fun clienteAcceso() = transporte
+        override fun clienteConToken(token: String) = transporte
         override fun ahoraAcceso() = 100L
         override suspend fun intentar(avisar: Boolean, marca: SesionCuenta.Marca, trabajo: suspend () -> Unit) =
             sesion.intentar(marca, trabajo) { pasos += "error" }
@@ -86,5 +87,43 @@ class ControladorCuentaSocialTest {
         invalidar = true
         cuenta.aceptarPolitica().join()
         assertTrue(cuenta.pasos.isEmpty())
+    }
+    private val accesoJson = """{"usuario":"ana","token":"t","nueva":false,"borrarEl":0,"idCuenta":"c1"}"""
+    private fun servidor(conClave: Boolean, rutas: MutableList<String>) = cliente {
+        val ruta = it.url.encodedPath; rutas += "${it.method} $ruta"
+        when (ruta) {
+            "/v1/cuenta" -> 200 to """{"usuario":"ana","conClave":$conClave}"""
+            "/v1/acceso/codigo/entrar", "/v1/acceso/entrar", "/v1/acceso/clave" -> 200 to accesoJson
+            else -> if (ruta.startsWith("/v1/acceso")) 200 to accesoJson else 200 to ""
+        }
+    }
+    @Test fun codigoConContrasenaLaPideAntesDeEntrarYAbreLosDatos() = runTest {
+        val rutas = mutableListOf<String>()
+        val cuenta = Cuenta(this, servidor(true, rutas), SesionCuenta { "token" })
+        cuenta.usarClave("ana@example.org")
+        cuenta.entrar("123456").join()
+        assertEquals(PasoAcceso.CLAVE_DATOS, cuenta.acceso.value.paso)
+        assertTrue(cuenta.pasos.isEmpty())
+        cuenta.entrarConClaveDatos("una frase larga").join()
+        assertEquals(listOf("entrar", "abrir"), cuenta.pasos)
+        // La sesión del código se cierra: queda solo la de la contraseña.
+        assertTrue("POST /v1/salir" in rutas)
+    }
+    @Test fun codigoSinContrasenaLaCreaYEmpiezaAGuardar() = runTest {
+        val rutas = mutableListOf<String>()
+        val cuenta = Cuenta(this, servidor(false, rutas), SesionCuenta { "token" })
+        cuenta.usarClave("ana@example.org")
+        cuenta.entrar("123456").join()
+        assertEquals(PasoAcceso.CREAR_CLAVE, cuenta.acceso.value.paso)
+        cuenta.crearClaveDatos("una frase larga").join()
+        assertEquals(listOf("entrar", "abrir"), cuenta.pasos)
+        assertTrue("PUT /v1/cuenta/clave" in rutas)
+        assertFalse("POST /v1/salir" in rutas)
+    }
+    @Test fun sinPoderRevisarLaCuentaEntraComoAntes() = runTest {
+        val cuenta = Cuenta(this, cliente { if (it.url.encodedPath == "/v1/cuenta") 500 to "{}" else 200 to accesoJson }, SesionCuenta { "token" })
+        cuenta.usarClave("ana@example.org")
+        cuenta.entrar("123456").join()
+        assertEquals(listOf("entrar"), cuenta.pasos)
     }
 }
