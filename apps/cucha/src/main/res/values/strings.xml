@@ -304,7 +304,7 @@
     <string name="cuenta_intro">La Cucha’s network: your Fogón Social account, the same in every app. Follow other people and share dishes, recipes and restaurants.</string>
     <string name="cuenta_que_sale">Your diary never leaves this phone. Only what you choose to share appears on the network: never your goals, your weight or what you eat each day. A dish’s or recipe’s calories and macros only go out if you include them. A restaurant’s location only goes out if you add it.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your diary is still available.</string>
-    <string name="cuenta_politica_resumen">The policy now covers Fogón Social and its apps: the app you sign in from and what you share from La Cucha. Your diary, goals and weight never leave the phone.</string>
+    <string name="cuenta_politica_resumen">The policy now includes La Cucha and La Alcancía: what you share from here leaves La Cucha; your diary, goals and weight never leave the phone.</string>
     <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the dishes, recipes and reviews you choose are shared, with their visibility. Signing out other sessions and deleting the account affect every app.</string>
     <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local diary is kept until you remove the profile.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and what you share.</string>
@@ -401,4 +401,12 @@
     <string name="red_vis_publica">Public</string>
     <string name="red_vis_seguidores">Followers</string>
     <string name="red_sin_favoritos">None yet.</string>
+    <string name="guia_anotar">Log what you eat</string>
+    <string name="guia_anotar_texto">Tap + to log a meal: search a food, a recipe or scan a barcode.</string>
+    <string name="guia_gente_texto">Your people: dishes, recipes and restaurants shared by the people you follow. You decide what you share.</string>
+    <string name="guia_recetas_texto">Sample recipes and yours, with calories per serving.</string>
+    <string name="guia_plan_texto">The weekly menu and the shopping list that comes from it.</string>
+    <string name="guia_progreso_texto">Your streak, the weekly average and your weight curve.</string>
+    <string name="guia_perfil">Your profile and settings</string>
+    <string name="guia_perfil_texto">Your profile is here, and in its gear: your details, goals, backups and this tour again.</string>
 </resources>

@@ -11,6 +11,11 @@ import kotlin.math.abs
  */
 object Formato {
     @Volatile var idioma: String = "es"
+    /** Ocultar los montos en toda la app (el ojo de Inicio): la pantalla se puede mostrar sin enseñar la plata. */
+    private val ocultarEstado = androidx.compose.runtime.mutableStateOf(false)
+    var ocultar: Boolean
+        get() = ocultarEstado.value
+        set(v) { ocultarEstado.value = v }
     @Volatile var mesesCortos: List<String> = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
     @Volatile var mesesLargos: List<String> = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
         "septiembre", "octubre", "noviembre", "diciembre")
@@ -21,6 +26,7 @@ object Formato {
 
     /** "$ 842.300" en español, "$842,300" en inglés. Los negativos llevan "−" delante. */
     fun pesos(n: Long): String {
+        if (ocultar) return if (idioma == "es") "$ •••••" else "$•••••"
         val s = numeros().format(abs(n))
         val signo = if (n < 0) "− " else ""
         return if (idioma == "es") "$signo$ $s" else "$signo$$s"
@@ -34,6 +40,7 @@ object Formato {
 
     /** Corto, para las barras: "870 mil" y "2,2 M" en español; "870K" y "2.2M" en inglés. */
     fun compacto(n: Long): String {
+        if (ocultar) return "•••"
         val a = abs(n)
         fun dec(x: Double) = (if (x >= 10) Math.round(x).toString() else (Math.round(x * 10) / 10.0).toString().removeSuffix(".0"))
             .let { if (idioma == "es") it.replace('.', ',') else it }

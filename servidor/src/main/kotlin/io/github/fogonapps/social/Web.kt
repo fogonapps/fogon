@@ -69,6 +69,16 @@ private fun tarjeta(p: Publicacion): String = buildString {
             append("<p>${e(texto(ejercicio, "nombre"))}: ${series?.size ?: 0} series</p>")
         }
     }
+    if (p.app == "alcancia") {
+        val meta = texto(d, "meta")
+        val logro = when (texto(d, "logro")) {
+            "meta_cumplida" -> "Cumplió su meta «$meta»"
+            "meta_avance" -> "Va en el ${texto(d, "porcentaje")} % de su meta «$meta»"
+            "primera_anotacion" -> "Empezó a llevar sus cuentas"
+            else -> "Cerró ${texto(d, "cantidad")} meses"
+        }
+        append("<h2>${e(logro)}</h2><p class=\"suave\">La Alcancía</p>")
+    }
     if (p.app == "cucha") {
         append("<h2>${e(texto(d, "nombre").ifBlank { "Reseña de restaurante" })}</h2>")
         texto(d, "nota").takeIf { it.isNotBlank() }?.let { append("<p>Nota: ${e(it)}/5</p>") }

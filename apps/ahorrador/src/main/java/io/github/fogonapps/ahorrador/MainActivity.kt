@@ -15,7 +15,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -41,7 +40,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val vm: AhorradorViewModel by viewModels()
+    private var perfilVm: String? = null
+    /** Un ViewModel por perfil del teléfono: al cambiar de perfil se arma uno nuevo. */
+    private val vm: AhorradorViewModel get() {
+        val perfil = (application as AhorradorApp).perfilActivo.value
+        if (perfilVm != null && perfilVm != perfil) viewModelStore.clear()
+        perfilVm = perfil
+        return androidx.lifecycle.ViewModelProvider(this)[AhorradorViewModel::class.java]
+    }
 
     /** Con el candado activado, la app arranca bloqueada y se abre con la huella o el bloqueo del teléfono. */
     private val bloqueada = MutableStateFlow(false)
@@ -55,6 +61,9 @@ class MainActivity : ComponentActivity() {
         bloqueada.value = vm.candado.value && candadoDisponible()
         if (savedInstanceState == null) abrirDesdeWidget(intent)
         setContent {
+            val perfil by (application as AhorradorApp).perfilActivo.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(perfil) {
+            val vm = vm
             val apariencia by io.github.fogonapps.identidad.AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
             val oscuro = io.github.fogonapps.identidad.fogonDe(Paleta.Ahorrador, apariencia).oscuro
@@ -139,6 +148,7 @@ class MainActivity : ComponentActivity() {
                     candadoDisponible = candadoDisponible(),
                     onImportarExtracto = { importarExtracto.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/vnd.ms-excel", "application/octet-stream")) },
                 )
+            }
             }
         }
     }

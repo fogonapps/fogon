@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import io.github.fogonapps.identidad.rebote
 import androidx.compose.runtime.CompositionLocalProvider
+import io.github.fogonapps.identidad.destinoGuia
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -93,6 +94,9 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
     }
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
+        if (estado.listo) PoliticaCuenta(vm)
+        val guia = io.github.fogonapps.identidad.rememberGuia("alcancia")
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             if (!estado.listo) {
                 Tutorial(vm, onImportar)
@@ -102,6 +106,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
                         when (pestana) {
                             Pestana.INICIO -> Inicio(vm, estado)
+                            Pestana.GENTE -> TuGente(vm)
                             Pestana.RESUMEN -> Resumen(vm, estado)
                             Pestana.SOBRES -> Presupuesto(vm, estado)
                             Pestana.METAS -> Metas(vm, estado)
@@ -131,7 +136,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.EditarSobre -> EditarSobre(vm, estado, p.id)
                             is Pantalla.Cierre -> CierrePantalla(vm, estado, p.mes)
                             is Pantalla.Bancos -> Bancos(vm, estado)
-                            is Pantalla.Perfil -> Perfil(vm, estado)
+                            is Pantalla.Perfil -> Perfil(vm, estado, onExportar)
                             is Pantalla.EditarPerfil -> EditarPerfil(vm, estado)
                             is Pantalla.Ajustes -> Ajustes(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
                             is Pantalla.ImportarExtracto -> ImportarExtracto(vm, estado, p.filas)
@@ -141,6 +146,15 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.Licencias -> Licencias(vm)
                             is Pantalla.Preguntas -> Preguntas(vm)
                             is Pantalla.Reporte -> Reporte(vm)
+                            is Pantalla.AnotarVarios -> AnotarVarios(vm, estado)
+                            is Pantalla.MeAlcanza -> MeAlcanza(vm, estado, p.monto)
+                            is Pantalla.Historial -> Historial(vm, estado)
+                            is Pantalla.CuentaRed -> CuentaRedPantalla(vm, onExportar)
+                            is Pantalla.Seguridad -> SeguridadCuenta(vm, p.ajuste)
+                            is Pantalla.Gente -> io.github.fogonapps.social.ui.GenteRed(interfazCuenta(vm), p.usuario, p.seguidores)
+                            is Pantalla.Transparencia -> TransparenciaAlcancia(vm)
+                            is Pantalla.Social -> RedAlcancia(vm, p)
+                            is Pantalla.CompartirLogro -> CompartirLogro(vm, estado, p.clave)
                         }
                     }
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp)) { AvisoTinta(it.visuals.message) }
@@ -157,7 +171,25 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                 )
             }
         }
+        }
     }
+}
+
+/** El recorrido guiado de La Alcancía (AL-04): cada paso señala un elemento de Inicio o de la barra. */
+@Composable
+private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> {
+    fun p(destino: String?, titulo: Int, texto: Int) = Triple(destino, titulo, texto)
+    return listOf(
+        p("anotar", R.string.guia_anotar, R.string.guia_anotar_texto),
+        p("acciones", R.string.guia_acciones, R.string.guia_acciones_texto),
+        p("alcanza", R.string.alcanza_titulo, R.string.guia_alcanza_texto),
+        p("ojo", R.string.ocultar_montos, R.string.guia_ojo_texto),
+        p("pestana_RESUMEN", R.string.pestana_resumen, R.string.guia_resumen_texto),
+        p("pestana_SOBRES", R.string.pestana_presupuesto, R.string.guia_presupuesto_texto),
+        p("pestana_METAS", R.string.pestana_metas, R.string.guia_metas_texto),
+        p("pestana_GENTE", R.string.pestana_gente, R.string.guia_gente_texto),
+        p("perfil", R.string.guia_perfil, R.string.guia_perfil_texto),
+    ).map { (d, t, x) -> io.github.fogonapps.identidad.PasoGuia(d, stringResource(t), stringResource(x)) }
 }
 
 /** La barra de pestañas: una píldora de vidrio que flota, con el botón de anotar al final. */
@@ -166,6 +198,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
     val f = FogonTema.actual
     val pestanas = listOf(
         Triple(Pestana.INICIO, Iconos.Inicio, R.string.pestana_inicio),
+        Triple(Pestana.GENTE, io.github.fogonapps.identidad.IconosFogon.Gente, R.string.pestana_gente),
         Triple(Pestana.RESUMEN, Iconos.Resumen, R.string.pestana_resumen),
         Triple(Pestana.SOBRES, Iconos.Sobres, R.string.pestana_presupuesto),
         Triple(Pestana.METAS, Iconos.Moneda, R.string.pestana_metas),
@@ -175,10 +208,10 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
             .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        pestanas.forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
+        pestanas.forEach { (pe, ic, t) -> Box(Modifier.destinoGuia("pestana_${pe.name}")) { BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.destinoGuia("anotar").rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }

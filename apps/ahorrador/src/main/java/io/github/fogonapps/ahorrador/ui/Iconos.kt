@@ -28,6 +28,9 @@ object Iconos {
     val Resumen = gordo("resumen", 3.4f, "M5.5 19V11M12 19V5M18.5 19v-5")
     val Sobres = dibujo("sobres", relleno("M3 6.5h18v12.5H3z"), huecoTrazo("M3.6 7.4 12 13l8.4-5.6", 2f))
     val Moneda = IconosFogon.Moneda
+    /** El ojo de Inicio para ocultar o mostrar los montos. */
+    val Ojo = gordo("ojo", 2.2f, "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z", "M14.6 12a2.6 2.6 0 1 1-5.2 0 2.6 2.6 0 0 1 5.2 0z")
+    val OjoCerrado = gordo("ojo-cerrado", 2.2f, "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z", "M4 20 20 4")
     val Mas = IconosFogon.Mas
     val Atras = IconosFogon.Atras
     val Cerrar = IconosFogon.Cerrar

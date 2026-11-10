@@ -1,4 +1,4 @@
-<p>La Alcancía helps you see where your money goes and save for what you want. No ads, no tracking, no internet and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
+<p>La Alcancía helps you see where your money goes and save for what you want. No ads, no tracking and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Log in seconds</b> with a big keypad: expenses, income, transfers between accounts and savings.</li>
@@ -10,10 +10,12 @@
 <li><b>Owed to me and I owe,</b> with partial payments.</li>
 <li><b>Colombia’s 4×1000 tax</b> logged automatically, optional.</li>
 <li><b>Lock</b> with your fingerprint or phone lock.</li>
+<li><b>Log several</b> by typing them (“lunch 25k + uber 12k”) and <b>“Can I afford it?”</b> before spending, with your daily allowance. Everything is calculated on your phone.</li>
+<li><b>Your people, optional:</b> with a Fogón Social account you share your saving achievements and your goals as a percentage. Never amounts, accounts or transactions.</li>
 <li><b>In Spanish and English.</b></li>
 </ul>
 
-<p><b>Your data is yours.</b> Everything stays on your phone, and the app doesn’t even have internet permission. Save a backup any time and export your entries to a spreadsheet.</p>
+<p><b>Your data is yours.</b> Everything stays on your phone. Without a Fogón Social account the app connects to nothing; with one, only the achievements you share go out. Save a backup any time and export your entries to a spreadsheet.</p>
 
 <p>La Alcancía isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>
 

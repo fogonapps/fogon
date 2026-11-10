@@ -122,7 +122,7 @@ fun nombreDispositivo(fabricante: String, modelo: String): String {
 
 data class SesionMostrada(val id: String, val dispositivo: String?, val creada: Long, val ultimoUso: Long, val actual: Boolean)
 fun SesionSocial.paraPantalla(): SesionMostrada {
-    val origen = when (app) { "forzudo" -> "El Forzudo"; "cucha" -> "La Cucha"; else -> "" }
+    val origen = when (app) { "forzudo" -> "El Forzudo"; "cucha" -> "La Cucha"; "alcancia" -> "La Alcancía"; else -> "" }
     val nombre = listOf(origen, dispositivo.trim()).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { null }
     return SesionMostrada(id, nombre, creada, ultimoUso, actual)
 }

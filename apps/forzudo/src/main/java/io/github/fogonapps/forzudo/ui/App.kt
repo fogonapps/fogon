@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.destinoGuia
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
@@ -102,6 +103,9 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
         PoliticaCuenta(vm)
+        val verTutorialGuia by vm.tutorial.collectAsStateWithLifecycle()
+        val guia = io.github.fogonapps.identidad.rememberGuia("forzudo")
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = !verTutorialGuia && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -189,6 +193,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 )
             }
         }
+        }
     }
 }
 
@@ -209,7 +214,7 @@ private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonap
         pestanas.forEach { (p, nombre, icono) ->
             val activa = p == actual
             Row(
-                Modifier.animateContentSize(io.github.fogonapps.identidad.resorte()).rebote(0.92f).height(48.dp).clip(forma)
+                Modifier.destinoGuia("pestana_$p").animateContentSize(io.github.fogonapps.identidad.resorte()).rebote(0.92f).height(48.dp).clip(forma)
                     .background(androidx.compose.animation.animateColorAsState(if (activa) f.tinta1 else f.tinta1.copy(alpha = 0f), label = "pestana").value)
                     .selectable(activa, role = androidx.compose.ui.semantics.Role.Tab) { onElegir(p) }
                     .semantics { contentDescription = nombre }
@@ -219,7 +224,7 @@ private fun <T> BarraPestanas(pestanas: List<Triple<T, String, io.github.fogonap
                 io.github.fogonapps.identidad.IconoRiso(icono, null, tamano = 22.dp, tinta = if (activa) f.sobreTinta1 else f.textoSuave)
             }
         }
-        IconButton(onCrear, Modifier.size(50.dp).clip(forma).background(f.tinta1)) {
+        IconButton(onCrear, Modifier.destinoGuia("crear").size(50.dp).clip(forma).background(f.tinta1)) {
             io.github.fogonapps.identidad.IconoRiso(Iconos.Mas, stringResource(R.string.empezar), tinta = f.sobreTinta1)
         }
     }
@@ -311,3 +316,13 @@ private fun MedidorDescanso(falta: Float, texto: String) {
         Text(texto, fontFamily = FogonTema.actual.cifras, fontSize = 26.sp, color = f.texto)
     }
 }
+
+/** El recorrido guiado de El Forzudo: la barra y el perfil. */
+@Composable
+private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> = listOf(
+    "crear" to (R.string.guia_crear to R.string.guia_crear_texto),
+    "pestana_GENTE" to (R.string.entreno_tu_gente to R.string.guia_gente_texto),
+    "pestana_ENTRENAR" to (R.string.pestana_entrenar to R.string.guia_entrenar_texto),
+    "pestana_RANGOS" to (R.string.pestana_rangos to R.string.guia_rangos_texto),
+    "perfil" to (R.string.guia_perfil to R.string.guia_perfil_texto),
+).map { (d, tx) -> io.github.fogonapps.identidad.PasoGuia(d, stringResource(tx.first), stringResource(tx.second)) }

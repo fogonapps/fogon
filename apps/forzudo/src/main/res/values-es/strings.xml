@@ -500,7 +500,7 @@
     <string name="cuenta_intro">La red de El Forzudo: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
     <string name="cuenta_que_sale">Tu cuaderno no sale de este teléfono. En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
-    <string name="cuenta_politica_resumen">La Cucha ya usa la cuenta de Fogón Social: la política cubre los lugares que reseñas allí (con la ubicación solo si la pones). De El Forzudo solo sale lo que compartes; tu cuaderno, tu peso y tus medidas nunca salen del teléfono.</string>
+    <string name="cuenta_politica_resumen">La Cucha y La Alcancía ya usan la cuenta de Fogón Social: la política cubre los lugares que reseñas en La Cucha y los logros de ahorro, sin montos. De El Forzudo solo sale lo que compartes; tu cuaderno, tu peso y tus medidas nunca salen del teléfono.</string>
     <string name="cuenta_quien_lo_ve">Quién lo ve</string>
     <string name="cuenta_que_se_comparte">Solo el nivel de cada rango y tus medallas; nunca tu peso ni tus medidas.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los entrenos, rangos y medallas que elijas, con su visibilidad. No se publica el cuaderno ni el peso corporal. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
@@ -560,4 +560,11 @@
     <item>Respira, aprieta y suelta.</item>
     <item>Descansar también es entrenar.</item>
   </string-array>
+    <string name="guia_crear">Entrena</string>
+    <string name="guia_crear_texto">Toca + para empezar un entreno o seguir el que tienes en curso.</string>
+    <string name="guia_gente_texto">Tu gente: lo que comparten las personas que sigues y lo que tú decidas compartir de un entreno.</string>
+    <string name="guia_entrenar_texto">Tus rutinas, los programas y los ejercicios.</string>
+    <string name="guia_rangos_texto">Tu nivel por músculo y tus récords.</string>
+    <string name="guia_perfil">Tu perfil y tus ajustes</string>
+    <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes, la copia en GitHub y este recorrido otra vez.</string>
 </resources>

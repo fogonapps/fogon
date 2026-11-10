@@ -1,5 +1,6 @@
 package io.github.fogonapps.cucha.ui
 
+import io.github.fogonapps.identidad.destinoGuia
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -106,6 +107,8 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
         if (estado.listo) PoliticaCuenta(vm)
+        val guia = io.github.fogonapps.identidad.rememberGuia("cucha")
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.HOY) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             if (!estado.listo) {
                 Tutorial(vm, acciones.importar)
@@ -178,6 +181,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                 )
             }
         }
+        }
     }
 }
 
@@ -197,10 +201,10 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
             .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        pestanas.forEach { (pe, ic, t) -> BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } }
+        pestanas.forEach { (pe, ic, t) -> Box(Modifier.destinoGuia("pestana_${pe.name}")) { BotonPestana(ic, stringResource(t), pe == actual) { onIr(pe) } } }
         val anotar = stringResource(R.string.anotar)
         Box(
-            Modifier.rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.destinoGuia("anotar").rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAnotar).semantics { contentDescription = anotar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
@@ -227,3 +231,14 @@ private fun Aviso(mensaje: String) {
         Text(mensaje, color = f.sobrePildora)
     }
 }
+
+/** El recorrido guiado de La Cucha: anotar, la barra y el perfil. */
+@Composable
+private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> = listOf(
+    "anotar" to (R.string.guia_anotar to R.string.guia_anotar_texto),
+    "pestana_GENTE" to (R.string.pestana_gente to R.string.guia_gente_texto),
+    "pestana_RECETAS" to (R.string.pestana_recetas to R.string.guia_recetas_texto),
+    "pestana_PLAN" to (R.string.pestana_plan to R.string.guia_plan_texto),
+    "pestana_PROGRESO" to (R.string.pestana_progreso to R.string.guia_progreso_texto),
+    "perfil" to (R.string.guia_perfil to R.string.guia_perfil_texto),
+).map { (d, tx) -> io.github.fogonapps.identidad.PasoGuia(d, stringResource(tx.first), stringResource(tx.second)) }

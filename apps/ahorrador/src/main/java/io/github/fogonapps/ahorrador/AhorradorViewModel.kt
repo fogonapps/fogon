@@ -22,6 +22,7 @@ import io.github.fogonapps.ahorrador.datos.gmf
 import io.github.fogonapps.ahorrador.datos.mesDe
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,15 +58,44 @@ sealed interface Pantalla {
     data object Licencias : Pantalla
     data object Preguntas : Pantalla
     data object Reporte : Pantalla
+    /** AL-04: anotar varios movimientos escritos o pegados en un texto. */
+    data object AnotarVarios : Pantalla
+    /** AL-04: «¿Me alcanza?», con un valor ya escrito o vacío. */
+    data class MeAlcanza(val monto: Long? = null) : Pantalla
+    /** AL-04: cómo le fue a cada sobre en los meses terminados y las metas cumplidas. */
+    data object Historial : Pantalla
+    /* ----- Cuenta y red (D-032), como La Cucha y El Forzudo ----- */
+    data object CuentaRed : Pantalla
+    data class Seguridad(val ajuste: io.github.fogonapps.social.ui.AjusteSocial) : Pantalla
+    data class Gente(val usuario: String, val seguidores: Boolean) : Pantalla
+    data object Transparencia : Pantalla
+    /** Avisos, moderación, una publicación, un perfil ajeno o una etiqueta de «Tu gente». */
+    data class Social(val destino: String = "red", val id: Long = 0, val usuario: String = "") : Pantalla
+    /** Compartir un logro; con [clave], uno ya elegido (o actualizar uno publicado). */
+    data class CompartirLogro(val clave: String? = null) : Pantalla
 }
 
-enum class Pestana { INICIO, RESUMEN, SOBRES, METAS }
+enum class Pestana { INICIO, GENTE, RESUMEN, SOBRES, METAS }
+
+/** La red de La Alcancía: rutas /v2/apps/alcancia y correos con su nombre. */
+val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("alcancia", "La Alcancía", "LaAlcancia-Fogon")
 
 class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
-    /** Las frases del saludo, como en El Cajón (las propias, al_); La Alcancía aún no tiene red, así que quedan en el teléfono. */
-    val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { null }
+    /** Las frases del saludo, como en El Cajón: las propias (al_), las de la gente de La Alcancía y los votos. */
+    val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) {
+        // Sin cuenta, La Alcancía no se conecta a nada (ni para las frases de la comunidad).
+        if (red.usuario.value != null) red.clienteFrases() else null
+    }
     private val ahorradorApp = app as AhorradorApp
-    private val almacen = ahorradorApp.almacen
+    val idPerfil = ahorradorApp.perfiles.lista.activo
+    private val almacen = ahorradorApp.almacenPerfil(idPerfil)
+    val perfiles get() = ahorradorApp.perfiles
+    private val sesion = io.github.fogonapps.social.SesionApp(app, ahorradorApp.perfiles, idPerfil, "alcancia")
+    /** La cuenta y «Tu gente»: solo logros y metas en porcentaje (D-032), sin chat. */
+    val red = io.github.fogonapps.social.RedApp(ahorradorApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
+        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
+        { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.ahorrador.datos.cabeLogro(it) }, "logros-publicados.json",
+        listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS))
     val L get() = ahorradorApp.logica
     private val prefsUi = app.getSharedPreferences("ui", Context.MODE_PRIVATE)
 
@@ -81,6 +111,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     val mensajes = _mensajes.receiveAsFlow()
 
     private val _candado = MutableStateFlow(prefsUi.getBoolean("candado", false))
+    init { io.github.fogonapps.ahorrador.datos.Formato.ocultar = prefsUi.getBoolean("ocultar", false) }
     val candado: StateFlow<Boolean> = _candado
 
     private var guardado: Job? = null
@@ -89,7 +120,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             almacen.data.collect { _estado.value = it }
         }
-        viewModelScope.launch { almacen.data.first(); anotarFijos() }
+        viewModelScope.launch { almacen.data.first(); ahorradorApp.confirmarCuaderno(); anotarFijos() }
     }
 
     fun hoy(): LocalDate = LocalDate.now()
@@ -150,10 +181,52 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     fun irA(p: Pestana) { _pila.value = emptyList(); _pestana.value = p }
     fun atras() { if (_pila.value.isNotEmpty()) cerrar() else _pestana.value = Pestana.INICIO }
 
+    /* ----- Perfiles del teléfono ----- */
+
+    private var cambiandoPerfil = false
+    fun agregarPerfil() {
+        val nuevo = perfiles.agregar() ?: return
+        cambiarPerfil(nuevo.id)
+    }
+    private var retirarAlCambiar = false
+    fun retirarPerfil() {
+        val otro = perfiles.lista.perfiles.firstOrNull { it.id != idPerfil } ?: perfiles.agregar() ?: return
+        retirarAlCambiar = true
+        cambiarPerfil(otro.id)
+    }
+    /** Termina lo pendiente de este perfil y activa otro; la actividad arma un ViewModel nuevo para él. */
+    fun cambiarPerfil(id: String) {
+        if (id == idPerfil || cambiandoPerfil) return
+        cambiandoPerfil = true
+        viewModelScope.launch {
+            try {
+                red.invalidar()
+                guardado?.join()
+                val actual = kotlinx.coroutines.currentCoroutineContext()[Job]
+                viewModelScope.coroutineContext[Job]?.children?.filter { it != actual }?.toList()?.forEach { it.cancelAndJoin() }
+                if (retirarAlCambiar) {
+                    if (idPerfil == "1") io.github.fogonapps.ahorrador.datos.migracionPerfiles(getApplication()).confirmarArranque()
+                    ahorradorApp.cerrarAlmacen(idPerfil)
+                    perfiles.cambiar(id)
+                    perfiles.quitar(idPerfil) { perfil ->
+                        io.github.fogonapps.social.SesionApp.preferenciasDe("alcancia", perfil).forEach {
+                            check(getApplication<Application>().getSharedPreferences(it, Context.MODE_PRIVATE).edit().clear().commit())
+                        }
+                    }
+                }
+                ahorradorApp.activarPerfil(id)
+                WidgetPlata.actualizar(getApplication())
+            } catch (x: java.io.IOException) {
+                cambiandoPerfil = false
+                avisar(tx(R.string.cuenta_error))
+            }
+        }
+    }
+
     /* ----- Tutorial ----- */
 
     /** Deja la app lista: nombre, sistema, categorías en el idioma de la app y las cuentas con su saldo de hoy. */
-    fun empezar(nombre: String, sistema: Sistema, efectivo: Long, banco: Long, billetera: Long, deudaTarjeta: Long?) {
+    fun empezar(nombre: String, sistema: Sistema, efectivo: Long, banco: Long, billetera: Long, deudaTarjeta: Long?, categorias: Set<String>? = null) {
         cambiar { e ->
             val cuentas = buildList {
                 add(Cuenta("efectivo", tx(R.string.cuenta_efectivo), TipoCuenta.EFECTIVO, efectivo))
@@ -163,7 +236,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
                     io.github.fogonapps.ahorrador.datos.Credito(cupo = 0, diaCorte = 15, diaPago = 30)))
             }
             e.copy(nombre = nombre.trim().ifEmpty { null }, sistema = sistema, cuentas = cuentas,
-                categorias = Categorias.base(getApplication()), listo = true)
+                categorias = Categorias.base(getApplication()).filter { categorias == null || it.id in categorias || it.id in Categorias.SIEMPRE }, listo = true)
         }
     }
 
@@ -192,6 +265,28 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         }
         avisar(tx(if (nuevo) R.string.aviso_guardado else R.string.aviso_actualizado))
         return true
+    }
+
+    /** Guarda de una vez lo leído en «Anotar varios» (con el 4×1000 si toca, como un movimiento suelto). */
+    fun guardarVarios(borradores: List<io.github.fogonapps.ahorrador.datos.Borrador>, cuenta: String, fecha: String) {
+        val e = _estado.value ?: return
+        val buenos = borradores.filter { it.monto > 0 }
+        if (buenos.isEmpty()) return
+        val origen = e.cuentas.firstOrNull { it.id == cuenta }
+        val nuevos = buenos.flatMap { b ->
+            val m = Movimiento(nuevoId("m"), fecha, b.tipo, b.monto, cuenta, categoria = b.categoria ?: if (b.tipo == TipoMovimiento.INGRESO) "extra" else "otros", nota = b.nota)
+            listOfNotNull(m, if (e.gmf && origen?.tipo == TipoCuenta.BANCO && b.tipo == TipoMovimiento.GASTO && gmf(b.monto) > 0)
+                Movimiento(nuevoId("m"), fecha, TipoMovimiento.GASTO, gmf(b.monto), cuenta, categoria = "impuestos", nota = "4×1000") else null)
+        }
+        cambiar { it.copy(movimientos = it.movimientos + nuevos) }
+        avisar(txPlural(R.plurals.varios_guardados, buenos.size))
+        cerrar()
+    }
+
+    /** El ojo de Inicio: oculta o muestra los montos en toda la app (se recuerda en este teléfono). */
+    fun alternarMontos() {
+        io.github.fogonapps.ahorrador.datos.Formato.ocultar = !io.github.fogonapps.ahorrador.datos.Formato.ocultar
+        prefsUi.edit { putBoolean("ocultar", io.github.fogonapps.ahorrador.datos.Formato.ocultar) }
     }
 
     fun borrarMovimiento(id: String) {

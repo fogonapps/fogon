@@ -6,15 +6,58 @@ import io.github.fogonapps.ahorrador.datos.Estado
 import io.github.fogonapps.ahorrador.datos.Formato
 import io.github.fogonapps.ahorrador.datos.Logica
 import io.github.fogonapps.ahorrador.datos.crearAlmacen
+import io.github.fogonapps.ahorrador.datos.migracionPerfiles
 import io.github.fogonapps.identidad.Idioma
+import io.github.fogonapps.social.Perfiles
+import io.github.fogonapps.social.SesionApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
+/**
+ * Objetos únicos por proceso: DataStore exige una sola instancia por archivo. Cada perfil del teléfono tiene su
+ * cuaderno; el widget, los avisos y la lectura del banco usan el del perfil activo.
+ */
 class AhorradorApp : Application() {
-    val almacen: DataStore<Estado> by lazy { crearAlmacen(this) }
+    lateinit var perfiles: Perfiles
+        private set
+    val perfilActivo = MutableStateFlow("1")
+    private val alcances = mutableMapOf<String, CoroutineScope>()
+    private val almacenes = mutableMapOf<String, DataStore<Estado>>()
+    @Synchronized fun almacenPerfil(id: String): DataStore<Estado> = almacenes.getOrPut(id) {
+        val alcance = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        alcances[id] = alcance
+        crearAlmacen(perfiles.directorio(id), alcance)
+    }
+    suspend fun cerrarAlmacen(id: String) {
+        alcances.remove(id)?.coroutineContext?.get(Job)?.let { it.cancel(); it.join() }
+        almacenes.remove(id)
+    }
+    /** El cuaderno del perfil activo. */
+    val almacen get() = almacenPerfil(perfiles.lista.activo)
+    fun activarPerfil(id: String) { perfiles.cambiar(id); perfilActivo.value = id }
     val logica = Logica()
+
+    private var confirmarMigracion = false
+    /** Tras cargar y guardar bien el perfil 1 en un arranque posterior, el respaldo de la migración se borra. */
+    suspend fun confirmarCuaderno() {
+        if (!confirmarMigracion || perfiles.lista.activo != "1") return
+        almacenPerfil("1").updateData { it }
+        migracionPerfiles(this).confirmarArranque()
+        confirmarMigracion = false
+    }
 
     override fun onCreate() {
         super.onCreate()
+        confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").takeIf { it.exists() }?.readText() == "terminada"
+        migracionPerfiles(this).ejecutar()
+        perfiles = Perfiles(filesDir)
+        perfiles.limpiarPendientes { id ->
+            SesionApp.preferenciasDe("alcancia", id).forEach { check(getSharedPreferences(it, MODE_PRIVATE).edit().clear().commit()) }
+        }
+        perfilActivo.value = perfiles.lista.activo
         aplicarIdioma()
         Avisos.programar(this)
     }

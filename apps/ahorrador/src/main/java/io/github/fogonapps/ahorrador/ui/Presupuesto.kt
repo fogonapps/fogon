@@ -97,6 +97,9 @@ fun Presupuesto(vm: AhorradorViewModel, e: Estado) {
     Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
         Text(stringResource(R.string.pestana_presupuesto), style = MaterialTheme.typography.headlineLarge, color = f.texto)
         Text(stringResource(e.sistema.nombre), style = MaterialTheme.typography.labelLarge, color = f.acentoTexto)
+        if (e.sistema == io.github.fogonapps.ahorrador.datos.Sistema.SOBRES) androidx.compose.material3.TextButton({ vm.abrir(Pantalla.Historial) }) {
+            Text(stringResource(R.string.historial_ver), color = f.acentoTexto)
+        }
     }
     if (e.sistema != Sistema.SOLO_ANOTAR) SelectorMes(mes, { mes = it }, hasta = vm.mesActual())
 
@@ -266,6 +269,9 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
 
     Text(stringResource(R.string.pestana_metas), style = MaterialTheme.typography.headlineLarge, color = f.texto,
         modifier = Modifier.padding(start = 20.dp, top = 16.dp, end = 20.dp))
+    if (e.metas.any { L.progreso(e, it) >= 1.0 }) androidx.compose.material3.TextButton({ vm.abrir(Pantalla.Historial) }, Modifier.padding(start = 8.dp)) {
+        Text(stringResource(R.string.historial_ver), color = f.acentoTexto)
+    }
     var abonoReto by remember { mutableStateOf<Pair<Meta, Long>?>(null) }
     TarjetaReto(vm, e) { m, monto -> abonoReto = m to monto }
     if (e.metas.isEmpty()) {

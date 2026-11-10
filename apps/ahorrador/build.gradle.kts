@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.fogonapps.ahorrador"
         minSdk = 26
         targetSdk = 37
-        versionCode = 25
-        versionName = "1.18"
+        versionCode = 26
+        versionName = "1.19"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).

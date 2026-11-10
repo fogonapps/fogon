@@ -1,4 +1,4 @@
-<p>La Alcancía te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo, sin internet y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
+<p>La Alcancía te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios, sin rastreo y sin pedirte las claves del banco. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Anota en segundos</b> con un teclado grande: gastos, ingresos, plata que pasas entre cuentas y ahorros.</li>
@@ -10,10 +10,12 @@
 <li><b>Me deben y debo,</b> con abonos.</li>
 <li><b>4×1000</b> automático, opcional.</li>
 <li><b>Candado</b> con tu huella o el bloqueo del teléfono.</li>
+<li><b>Anotar varios</b> escribiéndolos («almuerzo 25 mil + uber 12k») y <b>«¿Me alcanza?»</b> antes de gastar, con tu cupo por día. Todo se calcula en tu teléfono.</li>
+<li><b>Tu gente, opcional:</b> con una cuenta de Fogón Social compartes tus logros de ahorro y tus metas en porcentaje. Nunca montos, cuentas ni movimientos.</li>
 <li><b>En español e inglés.</b></li>
 </ul>
 
-<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono, y la app ni siquiera tiene permiso de internet. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Sin cuenta de Fogón Social la app no se conecta a nada; con cuenta, solo salen los logros que compartas. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
 
 <p>La Alcancía no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
 

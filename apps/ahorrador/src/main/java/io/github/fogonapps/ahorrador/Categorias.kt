@@ -34,6 +34,13 @@ object Categorias {
         Base("extra", R.string.cat_extra, 0xFF00A0E9, "extra", Grupo.NECESIDAD, ingreso = true),
     )
 
+    /** Las que no se pueden dejar al empezar: el 4×1000 va a impuestos y lo que no se sabe dónde va, a otros. */
+    val SIEMPRE = setOf("otros", "impuestos")
+
+    /** Id y nombre de las que se eligen al empezar (sin las de [SIEMPRE]), con si son de ingreso. */
+    fun elegibles(c: Context): List<Triple<String, String, Boolean>> =
+        base(c).filter { it.id !in SIEMPRE }.map { Triple(it.id, it.nombre, it.ingreso) }
+
     fun base(c: Context): List<Categoria> {
         val r = Idioma.envolver(c).resources
         return BASE.map { Categoria(it.id, r.getString(it.nombre), it.color, it.icono, it.grupo, it.ingreso) }

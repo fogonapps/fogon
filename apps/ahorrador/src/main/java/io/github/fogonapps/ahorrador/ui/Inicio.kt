@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.destinoGuia
 import io.github.fogonapps.identidad.FormaPildora
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -149,9 +150,19 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         frase?.frase?.texto.orEmpty(),
         onMantener = { if (frase != null) menuFrase = true },
         adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
+        acciones = {
+            // El ojo: oculta los montos en toda la app (AL-04).
+            val ocultos = io.github.fogonapps.ahorrador.datos.Formato.ocultar
+            Box(Modifier.destinoGuia("ojo")) {
+                io.github.fogonapps.identidad.BotonIconoSocial(if (ocultos) Iconos.OjoCerrado else Iconos.Ojo,
+                    stringResource(if (ocultos) R.string.mostrar_montos else R.string.ocultar_montos), grande = true) { vm.alternarMontos() }
+            }
+        },
         perfil = {
-            io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.perfil), cara,
-                foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+            Box(Modifier.destinoGuia("perfil")) {
+                io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.perfil), cara,
+                    foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+            }
         })
     if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
         onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida)
@@ -170,12 +181,16 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
     }
 
     // Las acciones, en una tarjeta de vidrio.
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).aparecer(2).vidrio().padding(vertical = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).aparecer(2).destinoGuia("acciones").vidrio().padding(vertical = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
         AccionRedonda(Iconos.Gasto, stringResource(R.string.gasto), { vm.abrir(Pantalla.Anotar(TipoMovimiento.GASTO)) }, acento = true)
         AccionRedonda(Iconos.Ingreso, stringResource(R.string.ingreso), { vm.abrir(Pantalla.Anotar(TipoMovimiento.INGRESO)) })
         AccionRedonda(Iconos.Pasar, stringResource(R.string.pasar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.TRASPASO)) })
         AccionRedonda(Iconos.Moneda, stringResource(R.string.ahorrar), { vm.abrir(Pantalla.Anotar(TipoMovimiento.AHORRO)) })
+        AccionRedonda(Iconos.Lista, stringResource(R.string.varios_accion), { vm.abrir(Pantalla.AnotarVarios) })
     }
+
+    // «¿Me alcanza?», el cupo de hoy y las alertas del mes (AL-04). Con «Solo anotar» no hay plan que vigilar.
+    if (e.sistema != Sistema.SOLO_ANOTAR || e.fijos.isNotEmpty()) TarjetaAlcanza(vm, e, Modifier.aparecer(2).destinoGuia("alcanza"))
 
     // La meta que va más cerca, con su moneda.
     e.metas.maxByOrNull { L.progreso(e, it) }?.let { m ->

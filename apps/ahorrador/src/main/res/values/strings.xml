@@ -323,7 +323,7 @@
   <string name="tut_empezar">Start</string>
   <string name="tut_hola">Hi, I’m La Alcancía</string>
   <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
-  <string name="tut_privado">Everything stays on this phone. The app has no internet access: nobody else sees your money.</string>
+  <string name="tut_privado">Everything stays on this phone: nobody else sees your money. The app only uses the internet if you sign in with your Fogón Social account, and even then your money doesn’t leave.</string>
   <string name="tut_saldos">What are you starting with?</string>
   <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
   <string name="tut_sistema">How do you want to budget?</string>
@@ -391,7 +391,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. In Colombia, open finance only covers regulated companies, and a free app with no server can’t connect. This way nobody has your passwords, either. Logging entries is quick with the app’s keypad.</item>
-    <item>Only on your phone. The app has no internet permission. Save backups from Profile → Backup.</item>
+    <item>Only on your phone. The app only uses the internet if you sign in with your Fogón Social account, and only the achievements you share and your goals as a percentage go out, never amounts. Save backups from Profile → Backup.</item>
     <item>For control, Envelopes. For something simple, the 50/30/20 rule. If you like writing and thinking about the month, kakeibo. If you only want to see where it goes, Just track. You can change it any time.</item>
     <item>Card purchases are expenses from the card account (with their instalments). Paying the card is a transfer from your bank to the card: it isn’t another expense, you already counted it when you bought.</item>
     <item>Because every bank calculates it its own way. The app estimates it with the percent you set on the account; the real figure is on your statement.</item>
@@ -463,7 +463,7 @@
     <string name="aj_apariencia_idioma">Appearance and language</string>
     <string name="aj_privacidad">Privacy</string>
     <string name="aj_que_sale">What leaves your phone</string>
-    <string name="aj_privacidad_texto">La Alcancía has no internet access and sends no data. Backups save your data to a file you choose; CSV files contain your transactions. They only leave your phone if you share them or choose an external destination. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages. Diagnostics keep only counters and times.</string>
+    <string name="aj_privacidad_texto">La Alcancía doesn’t send your data: it only uses the internet if you sign in with your Fogón Social account, and only the achievements you share and your goals as a percentage go out. Backups save your data to a file you choose; CSV files contain your transactions. They only leave your phone if you share them or choose an external destination. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages. Diagnostics keep only counters and times.</string>
     <string name="aj_sistema_pista">Choose how to organize your money</string>
     <string name="aj_importar_pista">Bring transactions from a CSV file</string>
     <string name="aj_apariencia_pista">Theme, colors and comfort</string>
@@ -508,4 +508,125 @@
     <item>Slowly, the piggy bank still fills.</item>
     <item>Clear accounts, calm mind.</item>
   </string-array>
+    <string name="varios_titulo">Log several</string>
+    <string name="varios_pista">Type or paste several entries, separated by “+”, commas or new lines. They’re read on your phone: nothing leaves it.</string>
+    <string name="varios_ejemplo">Lunch 25k + Uber 12k\nGroceries $84,300</string>
+    <string name="varios_sin_categoria">No category: tap to choose one</string>
+    <string name="varios_quitar">Remove %1$s</string>
+    <string name="varios_nada">I didn’t find any amounts. Type, for example, “lunch 25k”.</string>
+    <string name="varios_cuenta">From which account</string>
+    <string name="varios_elegir_categoria">Choose the category</string>
+    <string name="varios_accion">Several</string>
+    <string name="alcanza_titulo">Can I afford it?</string>
+    <string name="alcanza_pista">Type how much you want to spend today. The math happens on your phone with your balances, recurring payments and envelopes.</string>
+    <string name="alcanza_cuanto">How much do you want to spend?</string>
+    <string name="alcanza_hoy">How much do I have left today?</string>
+    <string name="alcanza_mes">How am I doing this month?</string>
+    <string name="alcanza_te_queda_hoy">Left for today</string>
+    <string name="alcanza_cupo_dia">Your daily allowance</string>
+    <string name="alcanza_gastado_hoy">Already spent today</string>
+    <string name="alcanza_dias">Days left this month</string>
+    <string name="alcanza_si">You can afford it</string>
+    <string name="alcanza_se_come">You can afford it, but it eats days</string>
+    <string name="alcanza_no">You can’t afford it</string>
+    <string name="alcanza_tienes">What you have</string>
+    <string name="alcanza_comprometido">Committed (recurring and envelopes)</string>
+    <string name="alcanza_seguro">Safe to spend</string>
+    <string name="alcanza_cuesta">What it costs</string>
+    <string name="alcanza_quedarian">You’d have left</string>
+    <string name="alcanza_se_come_dias">It eats</string>
+    <string name="alcanza_n_dias">%1$.1f days of your pace</string>
+    <string name="alcanza_ritmo_despues">Your pace afterwards</string>
+    <string name="alcanza_por_dia">%1$s per day</string>
+    <string name="alcanza_como">What you have is your accounts minus your cards. Committed means the recurring payments still due this month and what’s left in your envelopes.</string>
+    <string name="alcanza_entro">In this month</string>
+    <string name="alcanza_salio">Out this month</string>
+    <string name="alcanza_va_del_mes">Month elapsed</string>
+    <string name="alcanza_vas_bien">You’re doing well: you spent %1$d %% of what came in and %2$d %% of the month has passed.</string>
+    <string name="alcanza_vas_rapido">You’re spending fast: you spent %1$d %% of what came in and only %2$d %% of the month has passed.</string>
+    <string name="alertas_meta_cerca">Your goal “%1$s” is at %2$d %%</string>
+    <string name="alertas_meta_cumplida">You reached your goal “%1$s”!</string>
+    <string name="historial_titulo">History</string>
+    <string name="historial_sobres">Envelopes</string>
+    <string name="historial_metas">Goals reached</string>
+    <string name="historial_sin_sobres">When a month with envelopes ends, you’ll see here how it went.</string>
+    <string name="historial_sin_metas">You haven’t reached a goal yet. You’re on your way!</string>
+    <string name="historial_respetado">You kept to it: %1$s left over</string>
+    <string name="historial_pasado">You went over by %1$s</string>
+    <string name="historial_meta_cumplida">%1$s of %2$s</string>
+    <string name="historial_ver">See the history</string>
+    <string name="ocultar_montos">Hide amounts</string>
+    <string name="mostrar_montos">Show amounts</string>
+    <string name="tut_categorias">Your categories</string>
+    <string name="tut_categorias_texto">Choose the ones you’ll use. You can always change them later in Settings.</string>
+    <string name="tut_gastos">Expenses</string>
+    <string name="tut_ingresos">Income</string>
+    <plurals name="varios_guardar"><item quantity="one">Save %d entry</item><item quantity="other">Save %d entries</item></plurals>
+    <plurals name="varios_guardados"><item quantity="one">%d entry saved</item><item quantity="other">%d entries saved</item></plurals>
+    <plurals name="alertas_sobres"><item quantity="one">%d envelope over this month</item><item quantity="other">%d envelopes over this month</item></plurals>
+    <string name="pestana_gente">Your people</string>
+    <string name="cuenta_tu_cuenta">Your account</string>
+    <string name="cuenta_tu_cuenta_pista">Fogón Social: profile, people and your achievements</string>
+    <string name="cuenta_error">The operation couldn’t be completed. Check your connection and try again.</string>
+    <string name="cuenta_operacion_lista">Done.</string>
+    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
+    <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
+    <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
+    <string name="cuenta_local">Your accounts, transactions, envelopes, goals and balances stay in this profile on the phone. Signing in doesn’t merge or recover notebooks. Save a backup before removing a profile.</string>
+    <string name="cuenta_intro">La Alcancía’s network: your Fogón Social account, the same in every app. Follow other people and celebrate your saving achievements.</string>
+    <string name="cuenta_que_sale">Your money never leaves this phone. Only what you choose to share appears on the network: an achievement (for example, that you reached a goal) and, if you want, your goals’ progress as a percentage. Never balances, amounts, accounts, banks or transactions.</string>
+    <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
+    <string name="cuenta_politica_resumen">The policy now includes La Alcancía: only the achievements you share and your goals as a percentage go out, never amounts or transactions.</string>
+    <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the achievements you choose and, if you want, your goals as a percentage are shared. Signing out other sessions and deleting the account affect every app.</string>
+    <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local notebook is kept until you remove the profile.</string>
+    <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and the achievements you share.</string>
+    <string name="red_tu_gente">Your people</string>
+    <string name="red_entrar">Sign in to Fogón Social</string>
+    <string name="red_compartir">Share an achievement</string>
+    <string name="red_avisos">Notifications</string>
+    <string name="red_moderacion">Moderation</string>
+    <string name="red_guardados">Saved</string>
+    <string name="red_feed_pie">Saving achievements shared on La Alcancía</string>
+    <string name="red_seguir">Follow</string>
+    <string name="red_dejar_seguir">Unfollow</string>
+    <string name="red_borrar">Delete post?</string>
+    <string name="red_privado">Make it private? It will be removed from the network; what’s on your phone is kept.</string>
+    <string name="red_publicado">Your post</string>
+    <string name="red_actualizar">Update post</string>
+    <string name="red_publicar">Post</string>
+    <string name="red_seguidores">Only for my followers</string>
+    <string name="red_texto">A few words (optional)</string>
+    <string name="red_etiquetas_pista">Use #tags so people can find it (for example #saving).</string>
+    <string name="red_error">Couldn’t post. Check your connection and try again.</string>
+    <string name="red_elegir_logro">Choose an achievement</string>
+    <string name="red_sin_logros">You don’t have achievements to share yet. Create a goal or log your first transaction.</string>
+    <string name="red_aviso_logro">Only this achievement goes out. Never amounts, balances, accounts or transactions.</string>
+    <string name="red_logro_meta_cumplida">I reached my goal “%1$s”</string>
+    <string name="red_logro_meta_avance">I’m at %2$d %% of my goal “%1$s”</string>
+    <string name="red_logro_primera">I started tracking my money</string>
+    <string name="red_logro_cierres">I closed %1$d months</string>
+    <string name="red_logros">Achievements</string>
+    <string name="red_publicados">What you’ve shared</string>
+    <string name="red_sin_publicaciones">Nothing here yet.</string>
+    <string name="red_metas_porcentaje">Goals (as a percentage)</string>
+    <string name="red_quien_lo_ve">Who sees it</string>
+    <string name="red_partes_pista">Your goals, each with its progress as a percentage. Never how much you save or how much is left.</string>
+    <string name="red_vis_privado">Only on this phone</string>
+    <string name="red_vis_publica">Public</string>
+    <string name="red_vis_seguidores">Followers</string>
+    <string name="red_vista_previa">How it will look</string>
+    <string name="red_tipo_logro">Achievement</string>
+    <string name="red_compartir_corto">Share</string>
+    <string name="guia_anotar">Log what you spend</string>
+    <string name="guia_anotar_texto">Tap + to log an expense or income in seconds.</string>
+    <string name="guia_acciones">Shortcuts</string>
+    <string name="guia_acciones_texto">Expense, income, move money between accounts, save for a goal or “Several”: type “lunch 25k + uber 12k” and they’re logged.</string>
+    <string name="guia_alcanza_texto">Your allowance for today and the days left this month. Tap it before spending to know if you can afford it.</string>
+    <string name="guia_ojo_texto">Hides the amounts so you can show the screen without showing your money.</string>
+    <string name="guia_resumen_texto">Where your money goes each month, and how you’re doing compared with previous months.</string>
+    <string name="guia_presupuesto_texto">Your plan for the month: what you give each thing and what’s left. The history is here too.</string>
+    <string name="guia_metas_texto">Save for what you want and see how much is left.</string>
+    <string name="guia_gente_texto">If you want, share your achievements with your Fogón Social account. Amounts never go out.</string>
+    <string name="guia_perfil">Your profile and settings</string>
+    <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, backups and this tour again.</string>
 </resources>

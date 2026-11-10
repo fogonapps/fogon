@@ -4,10 +4,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
 object AppsSocial {
-    fun validar(app: String): String = app.also { if (it !in setOf("cajon", "forzudo", "cucha")) throw Problema(400, "app") }
+    fun validar(app: String): String = app.also { if (it !in setOf("cajon", "forzudo", "cucha", "alcancia")) throw Problema(400, "app") }
     fun nombre(app: String): String = when (validar(app)) {
         "forzudo" -> "El Forzudo"
         "cucha" -> "La Cucha"
+        "alcancia" -> "La Alcancía"
         else -> "El Cajón"
     }
 }
@@ -31,6 +32,7 @@ fun validarLoteApp(app: String, c: CambiosPublicaciones) {
             "cajon" -> if (p.tipo !in setOf("diario", "resena", "lista", "foto")) throw Problema(400, "tipo_app")
             "forzudo" -> { if (p.tipo != "entreno") throw Problema(400, "tipo_app"); validarEntreno(p.datos) }
             "cucha" -> validarComida(p.tipo, p.datos)
+            "alcancia" -> { if (p.tipo != "logro") throw Problema(400, "tipo_app"); validarLogro(p.datos) }
             else -> throw Problema(400, "tipo_app")
         }
     }
@@ -131,4 +133,35 @@ internal fun validarComida(tipo: String, d: JsonObject) {
         if (pasos.size !in 1..50) mal()
         pasos.forEach { texto(buildJsonObject { put("paso", it) }, "paso", 1000) }
     }
+}
+
+/** Los logros que La Alcancía puede compartir (D-032): nunca saldos, montos, cuentas, bancos ni movimientos. */
+val LOGROS_ALCANCIA = setOf("meta_cumplida", "meta_avance", "primera_anotacion", "cierres")
+
+/**
+ * Un logro de La Alcancía con esquema cerrado: el código, el nombre de la meta (si aplica), su avance en
+ * porcentaje entero o cuántos meses cerró. Ningún campo admite dinero.
+ */
+internal fun validarLogro(d: JsonObject) {
+    fun mal(): Nothing = throw Problema(400, "alcancia_esquema")
+    fun texto(k: String, max: Int, vacio: Boolean = false): String {
+        val v = d[k] as? JsonPrimitive ?: mal()
+        if (!v.isString || (!vacio && v.content.isBlank()) || v.content.length > max) mal()
+        return v.content
+    }
+    fun entero(k: String, min: Long, max: Long): Long {
+        val v = d[k] as? JsonPrimitive ?: mal()
+        val n = v.doubleOrNull ?: mal()
+        if (v.isString || !n.isFinite() || n % 1 != 0.0 || n < min || n > max) mal()
+        return n.toLong()
+    }
+    if (d.keys.any { it !in setOf("version", "logro", "meta", "porcentaje", "cantidad", "texto", "imagenes", "video", "poster") }) mal()
+    if (entero("version", 1, 1) != 1L) mal()
+    val logro = texto("logro", 40)
+    if (logro !in LOGROS_ALCANCIA) mal()
+    val conMeta = logro == "meta_cumplida" || logro == "meta_avance"
+    if (conMeta) texto("meta", 60) else if ("meta" in d) mal()
+    if (logro == "meta_avance") entero("porcentaje", 0, 100) else if ("porcentaje" in d) mal()
+    if (logro == "cierres") entero("cantidad", 1, 1200) else if ("cantidad" in d) mal()
+    if ("texto" in d) texto("texto", 2000, vacio = true)
 }

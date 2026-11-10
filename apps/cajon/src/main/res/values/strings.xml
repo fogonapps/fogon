@@ -1345,9 +1345,9 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">La Cucha now uses the Fogón Social account too.
-If you review a restaurant, we keep the place (name, city and, if you add them, the address and the rounded location).
-Only what you share leaves La Cucha: calories and macros only if you include them; never your diary, goals or weight.
+  <string name="politica_resumen">La Cucha and La Alcancía now use the Fogón Social account.
+If you review a restaurant in La Cucha, we keep the place (name, city and, if you add them, the address and the rounded location).
+Only the achievements you share and your goals as a percentage leave La Alcancía; never amounts, accounts or transactions.
 The policy and terms now have an English version.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
@@ -1434,6 +1434,15 @@ The policy and terms now have an English version.</string>
   <string name="app_cajon">El Cajón</string>
   <string name="app_forzudo">El Forzudo</string>
   <string name="app_cucha">La Cucha</string>
+  <string name="app_alcancia">La Alcancía</string>
     <string name="ruta_politica" translatable="false">/privacy</string>
     <string name="ruta_terminos" translatable="false">/terms</string>
+    <string name="guia_agregar">Search and add</string>
+    <string name="guia_agregar_texto">Tap + to search for a film, series, album or book and save it in your drawer.</string>
+    <string name="guia_para_ti">For you</string>
+    <string name="guia_para_ti_texto">Recommendations based on your taste and what you rate.</string>
+    <string name="guia_secciones">Your sections</string>
+    <string name="guia_secciones_texto">Film, music and books, each with your things. Press and hold the bar and slide to switch quickly.</string>
+    <string name="guia_perfil">Your profile and settings</string>
+    <string name="guia_perfil_texto">Your profile, your people and, in the gear, settings, account and this tour again.</string>
 </resources>

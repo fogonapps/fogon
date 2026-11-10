@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.identidad.destinoGuia
 import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -135,6 +136,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
     }
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
+        val guia = io.github.fogonapps.identidad.rememberGuia("cajon")
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             if (!estado.listo) {
                 Tutorial(vm, acciones)
@@ -246,6 +249,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                 )
             }
         }
+        }
     }
 }
 
@@ -285,14 +289,14 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.forEach { pe ->
-            Box(Modifier.onGloballyPositioned { c -> val x = c.positionInParent().x; bordes[pe] = x..(x + c.size.width) }) {
+            Box(Modifier.destinoGuia("pestana_${pe.name}").onGloballyPositioned { c -> val x = c.positionInParent().x; bordes[pe] = x..(x + c.size.width) }) {
                 BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual) { onIr(pe) }
             }
         }
         // Cinco pestañas y el +: se apretan un poco para que quepan en un teléfono angosto.
         val agregar = stringResource(R.string.buscar_y_agregar)
         Box(
-            Modifier.rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.destinoGuia("agregar").rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAgregar).semantics { contentDescription = agregar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
@@ -319,3 +323,12 @@ private fun Aviso(mensaje: String) {
         Text(mensaje, color = f.sobrePildora)
     }
 }
+
+/** El recorrido guiado de El Cajón: agregar, las secciones de la barra y el perfil. */
+@Composable
+private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> = listOf(
+    "agregar" to (R.string.guia_agregar to R.string.guia_agregar_texto),
+    "pestana_PARA_TI" to (R.string.guia_para_ti to R.string.guia_para_ti_texto),
+    "pestana_CINE" to (R.string.guia_secciones to R.string.guia_secciones_texto),
+    "perfil" to (R.string.guia_perfil to R.string.guia_perfil_texto),
+).map { (d, tx) -> io.github.fogonapps.identidad.PasoGuia(d, stringResource(tx.first), stringResource(tx.second)) }

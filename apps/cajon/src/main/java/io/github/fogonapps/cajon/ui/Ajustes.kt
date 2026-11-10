@@ -117,6 +117,8 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
 
     SeccionAjustes(stringResource(R.string.fogon))
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    val guia = io.github.fogonapps.identidad.LocalGuia.current
+    FilaAjuste(Iconos.Estrella, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.privacidad_grupo))
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }

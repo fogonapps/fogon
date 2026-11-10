@@ -90,6 +90,9 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
     var billetera by rememberSaveable { mutableStateOf("") }
     var conTarjeta by rememberSaveable { mutableStateOf(false) }
     var deudaTarjeta by rememberSaveable { mutableStateOf("") }
+    val contexto = LocalContext.current
+    val elegibles = androidx.compose.runtime.remember { io.github.fogonapps.ahorrador.Categorias.elegibles(contexto) }
+    var elegidas by rememberSaveable { mutableStateOf<List<String>>(elegibles.map { it.first }) }
 
     Column(
         Modifier.fillMaxSize().safeDrawingPadding().imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -116,6 +119,24 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
                 }
             }
             2 -> {
+                // AL-04: elegir las categorías al empezar; las que no se eligen no se crean (se agregan después en Ajustes).
+                Text(stringResource(R.string.tut_categorias), style = MaterialTheme.typography.headlineMedium, color = f.texto)
+                Text(stringResource(R.string.tut_categorias_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+                listOf(false to R.string.tut_gastos, true to R.string.tut_ingresos).forEach { (ingreso, titulo) ->
+                    Text(stringResource(titulo), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        elegibles.filter { it.third == ingreso }.forEach { (id, nombre, _) ->
+                            androidx.compose.material3.FilterChip(id in elegidas, { elegidas = if (id in elegidas) elegidas - id else elegidas + id }, { Text(nombre) },
+                                leadingIcon = if (id in elegidas) { { io.github.fogonapps.identidad.IconoRiso(Iconos.Chulo, null, tamano = 16.dp) } } else null)
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BotonSecundario(stringResource(R.string.volver), { paso = 1 }, Modifier.weight(1f))
+                    BotonRiso(stringResource(R.string.siguiente), { paso = 3 }, Modifier.weight(1f))
+                }
+            }
+            3 -> {
                 Text(stringResource(R.string.tut_saldos), style = MaterialTheme.typography.headlineMedium, color = f.texto)
                 Text(stringResource(R.string.tut_saldos_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
                 CampoPesos(efectivo, { efectivo = it }, stringResource(R.string.cuenta_efectivo))
@@ -128,24 +149,24 @@ fun Tutorial(vm: AhorradorViewModel, onImportar: () -> Unit) {
                 if (conTarjeta) CampoPesos(deudaTarjeta, { deudaTarjeta = it }, stringResource(R.string.tut_deuda_tarjeta))
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    BotonSecundario(stringResource(R.string.volver), { paso = 1 }, Modifier.weight(1f))
-                    BotonRiso(stringResource(R.string.siguiente), { paso = 3 }, Modifier.weight(1f))
+                    BotonSecundario(stringResource(R.string.volver), { paso = 2 }, Modifier.weight(1f))
+                    BotonRiso(stringResource(R.string.siguiente), { paso = 4 }, Modifier.weight(1f))
                 }
             }
             else -> {
                 PasoDaleVida(Paleta.Ahorrador, AlmacenApariencia.de(LocalContext.current))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    BotonSecundario(stringResource(R.string.volver), { paso = 2 }, Modifier.weight(1f))
+                    BotonSecundario(stringResource(R.string.volver), { paso = 3 }, Modifier.weight(1f))
                     BotonRiso(stringResource(R.string.tut_empezar), {
                         vm.empezar(nombre, sistema, efectivo.toLongOrNull() ?: 0, banco.toLongOrNull() ?: 0, billetera.toLongOrNull() ?: 0,
-                            if (conTarjeta) deudaTarjeta.toLongOrNull() ?: 0 else null)
+                            if (conTarjeta) deudaTarjeta.toLongOrNull() ?: 0 else null, elegidas.toSet())
                     }, Modifier.weight(1f))
                 }
             }
         }
         // Puntos del paso actual
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            repeat(4) { i ->
+            repeat(5) { i ->
                 androidx.compose.foundation.layout.Box(
                     Modifier.padding(2.dp).then(Modifier.background(if (i == paso) f.paleta.tinta else f.linea, androidx.compose.foundation.shape.CircleShape))
                         .padding(4.dp),

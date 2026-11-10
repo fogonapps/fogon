@@ -52,6 +52,8 @@ fun Ajustes(vm: CuchaViewModel, e: Estado, acciones: Acciones) {
     FilaAjuste(IconosFogon.Inicio, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(contexto, WidgetCaloriasReceptor::class.java) } }
     SeccionAjustes(stringResource(R.string.fogon))
     FilaAjuste(IconosFogon.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    val guia = io.github.fogonapps.identidad.LocalGuia.current
+    FilaAjuste(IconosFogon.Chispa, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cucha.Pestana.HOY); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.aj_privacidad))
     FilaAjuste(IconosFogon.Candado, stringResource(R.string.aj_que_sale), null) { vm.abrir(Pantalla.Transparencia) }
     FilaAjuste(IconosFogon.Bandera, stringResource(RId.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }

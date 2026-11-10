@@ -1347,9 +1347,9 @@
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
-  <string name="politica_resumen">Ahora La Cucha también usa la cuenta de Fogón Social.
-Si reseñas un restaurante, guardamos el lugar (nombre, ciudad y, si los pones, la dirección y la ubicación redondeada).
-De La Cucha solo sale lo que compartes: las calorías y los macros, solo si los incluyes; nunca tu diario, tus metas ni tu peso.
+  <string name="politica_resumen">La Cucha y La Alcancía ya usan la cuenta de Fogón Social.
+Si reseñas un restaurante en La Cucha, guardamos el lugar (nombre, ciudad y, si los pones, la dirección y la ubicación redondeada).
+De La Alcancía solo salen los logros que compartes y tus metas en porcentaje; nunca montos, cuentas ni movimientos.
 La política y los términos ya tienen versión en inglés.</string>
   <string name="politica_aceptar">Aceptar</string>
   <string name="politica_ahora_no">Ahora no</string>
@@ -1436,6 +1436,15 @@ La política y los términos ya tienen versión en inglés.</string>
   <string name="app_cajon">El Cajón</string>
   <string name="app_forzudo">El Forzudo</string>
   <string name="app_cucha">La Cucha</string>
+  <string name="app_alcancia">La Alcancía</string>
     <string name="ruta_politica" translatable="false">/privacidad</string>
     <string name="ruta_terminos" translatable="false">/terminos</string>
+    <string name="guia_agregar">Busca y agrega</string>
+    <string name="guia_agregar_texto">Toca + para buscar una película, serie, disco o libro y guardarlo en tu cajón.</string>
+    <string name="guia_para_ti">Para ti</string>
+    <string name="guia_para_ti_texto">Recomendaciones según tus gustos y lo que calificas.</string>
+    <string name="guia_secciones">Tus secciones</string>
+    <string name="guia_secciones_texto">Cine, música y libros, cada uno con lo tuyo. Mantén pulsada la barra y desliza para cambiar rápido.</string>
+    <string name="guia_perfil">Tu perfil y tus ajustes</string>
+    <string name="guia_perfil_texto">Tu perfil, tu gente y, en el engranaje, los ajustes, la cuenta y este recorrido otra vez.</string>
 </resources>

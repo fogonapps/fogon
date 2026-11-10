@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fogon_guia_titulo">Tutorial</string>
+    <string name="fogon_guia_omitir">Omitir</string>
+    <string name="fogon_guia_siguiente">Siguiente</string>
+    <string name="fogon_guia_entendido">Entendido</string>
+    <string name="fogon_guia_ver">Recorrido por la app</string>
+    <string name="fogon_guia_ver_pista">Te muestra otra vez para qué sirve cada parte</string>
+</resources>

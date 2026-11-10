@@ -59,6 +59,8 @@ fun Ajustes(
     var reparto by remember { mutableStateOf(false) }
 
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
+    val guia = io.github.fogonapps.identidad.LocalGuia.current
+    FilaAjuste(io.github.fogonapps.identidad.IconosFogon.Perfil, stringResource(R.string.cuenta_tu_cuenta), stringResource(R.string.cuenta_tu_cuenta_pista)) { vm.abrir(Pantalla.CuentaRed) }
 
     SeccionAjustes(stringResource(R.string.aj_como_usas))
     Desplegable(Iconos.Resumen, stringResource(R.string.como_te_organizas), stringResource(R.string.aj_sistema_pista)) {
@@ -98,10 +100,11 @@ fun Ajustes(
     SeccionAjustes(stringResource(R.string.fogon))
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
     FilaAjuste(Iconos.Comentario, stringResource(R.string.preguntas_frecuentes), null) { vm.abrir(Pantalla.Preguntas) }
-    SeccionAjustes(stringResource(R.string.aj_privacidad))
-    Desplegable(Iconos.Candado, stringResource(R.string.aj_que_sale), null) {
-        Text(stringResource(R.string.aj_privacidad_texto), color = FogonTema.actual.textoSuave, style = MaterialTheme.typography.bodyMedium)
+    FilaAjuste(Iconos.Estrella, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) {
+        vm.irA(io.github.fogonapps.ahorrador.Pestana.INICIO); guia?.empezar()
     }
+    SeccionAjustes(stringResource(R.string.aj_privacidad))
+    FilaAjuste(Iconos.Candado, stringResource(R.string.aj_que_sale), null) { vm.abrir(Pantalla.Transparencia) }
     if (candadoDisponible) Desplegable(Iconos.Candado, stringResource(R.string.candado), stringResource(R.string.candado_pista)) {
         io.github.fogonapps.identidad.Interruptor(stringResource(R.string.candado), stringResource(R.string.candado_pista), candado, onCambio = vm::cambiarCandado)
     }

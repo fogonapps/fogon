@@ -1025,5 +1025,5 @@ fun FormularioBorrado(vm: CajonViewModel, volver: () -> Unit) { io.github.fogona
 /** Las apps de Fogón Social, para las frases del saludo que modera el equipo. */
 @Composable
 private fun nombresApps(): Map<String, String> = linkedMapOf(
-    "cajon" to stringResource(R.string.app_cajon), "forzudo" to stringResource(R.string.app_forzudo), "cucha" to stringResource(R.string.app_cucha),
+    "cajon" to stringResource(R.string.app_cajon), "forzudo" to stringResource(R.string.app_forzudo), "cucha" to stringResource(R.string.app_cucha), "alcancia" to stringResource(R.string.app_alcancia),
 )

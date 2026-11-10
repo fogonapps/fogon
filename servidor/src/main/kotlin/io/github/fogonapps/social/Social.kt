@@ -812,7 +812,7 @@ class Social(
     }
 
     fun verPerfilGlobal(lector: Long?, usuario: String): PerfilVisto {
-        val perfiles = listOf("cajon", "forzudo", "cucha").map { verPerfil(lector, usuario, it) }
+        val perfiles = listOf("cajon", "forzudo", "cucha", "alcancia").map { verPerfil(lector, usuario, it) }
         return perfiles.first().copy(publicaciones = perfiles.flatMap { it.publicaciones }.sortedByDescending { it.cuando }.take(60),
             cuantas = perfiles.sumOf { it.cuantas }, megusta = perfiles.sumOf { it.megusta })
     }
@@ -957,7 +957,7 @@ class Social(
                 val video = p.datos["video"]
                 val poster = p.datos["poster"]
                 if (video != null) {
-                    if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo !in setOf("foto", "entreno", "plato", "receta", "resena_restaurante")) throw Problema(400, "video_formato")
+                    if (video !is JsonPrimitive || !video.isString || video.content !in videosMios || p.tipo !in setOf("foto", "entreno", "plato", "receta", "resena_restaurante", "logro")) throw Problema(400, "video_formato")
                     if (poster !is JsonPrimitive || !poster.isString || poster.content !in mias) throw Problema(400, "poster")
                     val fotos = p.datos["imagenes"] as? kotlinx.serialization.json.JsonArray
                     val fotosResena = p.datos["fotos"] as? kotlinx.serialization.json.JsonArray
@@ -1721,7 +1721,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-11"
+        const val POLITICA = "2026-11-12"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

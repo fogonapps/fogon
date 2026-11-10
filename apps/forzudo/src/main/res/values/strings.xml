@@ -488,7 +488,7 @@
     <string name="cuenta_intro">El Forzudo’s network: your Fogón Social account, the same in every app. Follow other people and share your ranks and medals.</string>
     <string name="cuenta_que_sale">Your notebook never leaves this phone. Only what you choose to share appears on the network; never your body weight or measurements. Workouts you share, their photos and videos are also sent to Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
-    <string name="cuenta_politica_resumen">La Cucha now uses the Fogón Social account: the policy covers the places you review there (with the location only if you add it). Only what you share leaves El Forzudo; your notebook, weight and measurements never leave the phone.</string>
+    <string name="cuenta_politica_resumen">La Cucha and La Alcancía now use the Fogón Social account: the policy covers the places you review in La Cucha and saving achievements, without amounts. Only what you share leaves El Forzudo; your notebook, weight and measurements never leave the phone.</string>
     <string name="cuenta_quien_lo_ve">Who sees it</string>
     <string name="cuenta_que_se_comparte">Only the level of each rank and your medals; never your weight or measurements.</string>
     <string name="cuenta_compartido">One Fogón Social account across apps, with independent sessions. Name, photo, cover and bio are global. Only the workouts, ranks and badges you choose are shared, with their visibility. Your notebook and body weight are not published. Closing other sessions and deleting the account affect every app.</string>
@@ -548,4 +548,11 @@
     <item>Breathe, push, release.</item>
     <item>Resting is training too.</item>
   </string-array>
+    <string name="guia_crear">Train</string>
+    <string name="guia_crear_texto">Tap + to start a workout or continue the one in progress.</string>
+    <string name="guia_gente_texto">Your people: what the people you follow share, and what you choose to share from a workout.</string>
+    <string name="guia_entrenar_texto">Your routines, programs and exercises.</string>
+    <string name="guia_rangos_texto">Your level per muscle and your records.</string>
+    <string name="guia_perfil">Your profile and settings</string>
+    <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, the GitHub copy and this tour again.</string>
 </resources>

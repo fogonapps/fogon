@@ -32,6 +32,8 @@ fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onI
     }
     FilaAjuste(IconosFogon.Lista, stringResource(R.string.programa), null) { vm.abrir(Pantalla.Programas) }
     FilaAjuste(IconosFogon.Comentario, stringResource(R.string.ver_tutorial), null) { vm.verTutorial() }
+    val guia = io.github.fogonapps.identidad.LocalGuia.current
+    FilaAjuste(IconosFogon.Chispa, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(Pestana.INICIO); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.ajustes_cuaderno))
     Desplegable(IconosFogon.Repetir, stringResource(R.string.sync_titulo), null) { CajaSync(vm, sync, confirmar) }
     Desplegable(IconosFogon.Chulo, stringResource(R.string.respaldo_titulo), stringResource(R.string.pista_respaldo)) {

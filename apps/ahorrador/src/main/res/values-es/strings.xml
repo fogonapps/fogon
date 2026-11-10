@@ -322,7 +322,7 @@
   <string name="tut_empezar">Empezar</string>
   <string name="tut_hola">Hola, soy La Alcancía</string>
   <string name="tut_hola_texto">Te ayudo a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco.</string>
-  <string name="tut_privado">Todo queda en este teléfono. La app no tiene internet: nadie más ve tu plata.</string>
+  <string name="tut_privado">Todo queda en este teléfono: nadie más ve tu plata. La app solo usa internet si entras con tu cuenta de Fogón Social, y aun así tu plata no sale.</string>
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
   <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
   <string name="tut_sistema">¿Cómo te quieres organizar?</string>
@@ -392,7 +392,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.</item>
-    <item>Solo en tu teléfono. La app no tiene permiso de internet. Guarda respaldos desde Perfil → Respaldo.</item>
+    <item>Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social, y de ahí solo salen los logros que compartas y tus metas en porcentaje, nunca montos. Guarda respaldos desde Perfil → Respaldo.</item>
     <item>Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.</item>
     <item>Las compras con la tarjeta son gastos desde la cuenta de la tarjeta (con sus cuotas). Pagar la tarjeta es pasar plata del banco a la tarjeta: no es otro gasto, ya lo contaste al comprar.</item>
     <item>Porque cada banco lo calcula a su manera. La app lo aproxima con el porcentaje que pongas en la cuenta; el valor real está en tu extracto.</item>
@@ -464,7 +464,7 @@
     <string name="aj_apariencia_idioma">Apariencia e idioma</string>
     <string name="aj_privacidad">Privacidad</string>
     <string name="aj_que_sale">Qué sale de tu teléfono</string>
-    <string name="aj_privacidad_texto">La Alcancía no tiene acceso a internet ni envía tus datos. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. Solo salen del teléfono si tú compartes esos archivos o eliges un destino externo. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales. El diagnóstico conserva solo contadores y horas.</string>
+    <string name="aj_privacidad_texto">La Alcancía no envía tus datos: solo usa internet si entras con tu cuenta de Fogón Social, y de ahí solo salen los logros que compartas y tus metas en porcentaje. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. Solo salen del teléfono si tú compartes esos archivos o eliges un destino externo. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales. El diagnóstico conserva solo contadores y horas.</string>
     <string name="aj_sistema_pista">Elige cómo organizas tu plata</string>
     <string name="aj_importar_pista">Trae movimientos de un archivo CSV</string>
     <string name="aj_apariencia_pista">Tema, colores y comodidad</string>
@@ -509,4 +509,125 @@
     <item>Despacio también se llena la alcancía.</item>
     <item>Cuentas claras, cabeza tranquila.</item>
   </string-array>
+    <string name="varios_titulo">Anotar varios</string>
+    <string name="varios_pista">Escribe o pega varios movimientos, separados por «+», comas o renglones. Se leen en tu teléfono: nada sale de él.</string>
+    <string name="varios_ejemplo">Almuerzo 25 mil + Uber 12k\nMercado $84.300</string>
+    <string name="varios_sin_categoria">Sin categoría: toca para elegirla</string>
+    <string name="varios_quitar">Quitar %1$s</string>
+    <string name="varios_nada">No encontré valores. Escribe, por ejemplo, «almuerzo 25 mil».</string>
+    <string name="varios_cuenta">De qué cuenta</string>
+    <string name="varios_elegir_categoria">Elige la categoría</string>
+    <string name="varios_accion">Varios</string>
+    <string name="alcanza_titulo">¿Me alcanza?</string>
+    <string name="alcanza_pista">Escribe cuánto quieres gastar hoy. La cuenta se hace en tu teléfono con tus saldos, tus pagos fijos y tus sobres.</string>
+    <string name="alcanza_cuanto">¿Cuánto quieres gastar?</string>
+    <string name="alcanza_hoy">¿Cuánto me queda hoy?</string>
+    <string name="alcanza_mes">¿Cómo voy este mes?</string>
+    <string name="alcanza_te_queda_hoy">Te queda hoy</string>
+    <string name="alcanza_cupo_dia">Tu cupo por día</string>
+    <string name="alcanza_gastado_hoy">Ya gastaste hoy</string>
+    <string name="alcanza_dias">Días que quedan del mes</string>
+    <string name="alcanza_si">Te alcanza sin problema</string>
+    <string name="alcanza_se_come">Te alcanza, pero se come días</string>
+    <string name="alcanza_no">No te alcanza</string>
+    <string name="alcanza_tienes">Lo que tienes</string>
+    <string name="alcanza_comprometido">Comprometido (fijos y sobres)</string>
+    <string name="alcanza_seguro">Seguro para gastar</string>
+    <string name="alcanza_cuesta">Lo que cuesta</string>
+    <string name="alcanza_quedarian">Te quedarían</string>
+    <string name="alcanza_se_come_dias">Se come</string>
+    <string name="alcanza_n_dias">%1$.1f días de tu ritmo</string>
+    <string name="alcanza_ritmo_despues">Tu ritmo después</string>
+    <string name="alcanza_por_dia">%1$s por día</string>
+    <string name="alcanza_como">Lo que tienes son tus cuentas menos las tarjetas. Lo comprometido son los pagos fijos que faltan este mes y lo que queda en tus sobres.</string>
+    <string name="alcanza_entro">Entró este mes</string>
+    <string name="alcanza_salio">Salió este mes</string>
+    <string name="alcanza_va_del_mes">Va del mes</string>
+    <string name="alcanza_vas_bien">Vas bien: gastaste el %1$d %% de lo que entró y va el %2$d %% del mes.</string>
+    <string name="alcanza_vas_rapido">Vas rápido: gastaste el %1$d %% de lo que entró y solo va el %2$d %% del mes.</string>
+    <string name="alertas_meta_cerca">Tu meta «%1$s» va en el %2$d %%</string>
+    <string name="alertas_meta_cumplida">¡Cumpliste tu meta «%1$s»!</string>
+    <string name="historial_titulo">Historial</string>
+    <string name="historial_sobres">Sobres</string>
+    <string name="historial_metas">Metas cumplidas</string>
+    <string name="historial_sin_sobres">Cuando termine un mes con sobres, aquí verás cómo te fue.</string>
+    <string name="historial_sin_metas">Todavía no has cumplido una meta. ¡Vas en camino!</string>
+    <string name="historial_respetado">Lo respetaste: sobraron %1$s</string>
+    <string name="historial_pasado">Te pasaste por %1$s</string>
+    <string name="historial_meta_cumplida">%1$s de %2$s</string>
+    <string name="historial_ver">Ver el historial</string>
+    <string name="ocultar_montos">Ocultar los montos</string>
+    <string name="mostrar_montos">Mostrar los montos</string>
+    <string name="tut_categorias">Tus categorías</string>
+    <string name="tut_categorias_texto">Elige las que usarás. Siempre puedes cambiarlas después en Ajustes.</string>
+    <string name="tut_gastos">Gastos</string>
+    <string name="tut_ingresos">Ingresos</string>
+    <plurals name="varios_guardar"><item quantity="one">Guardar %d movimiento</item><item quantity="other">Guardar %d movimientos</item></plurals>
+    <plurals name="varios_guardados"><item quantity="one">%d movimiento guardado</item><item quantity="other">%d movimientos guardados</item></plurals>
+    <plurals name="alertas_sobres"><item quantity="one">%d sobre pasado este mes</item><item quantity="other">%d sobres pasados este mes</item></plurals>
+    <string name="pestana_gente">Tu gente</string>
+    <string name="cuenta_tu_cuenta">Tu cuenta</string>
+    <string name="cuenta_tu_cuenta_pista">Fogón Social: perfil, gente y tus logros</string>
+    <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
+    <string name="cuenta_operacion_lista">Operación completada.</string>
+    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
+    <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
+    <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
+    <string name="cuenta_local">Tus cuentas, movimientos, sobres, metas y saldos se quedan en este perfil del teléfono. Entrar no mezcla ni recupera cuadernos. Guarda un respaldo antes de retirar un perfil.</string>
+    <string name="cuenta_intro">La red de La Alcancía: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y celebren sus logros de ahorro.</string>
+    <string name="cuenta_que_sale">Tu plata no sale de este teléfono. En la red solo aparece lo que elijas compartir: un logro (por ejemplo, que cumpliste una meta) y, si quieres, el avance de tus metas en porcentaje. Nunca saldos, montos, cuentas, bancos ni movimientos.</string>
+    <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
+    <string name="cuenta_politica_resumen">La política ahora incluye a La Alcancía: solo salen los logros que compartas y tus metas en porcentaje, nunca montos ni movimientos.</string>
+    <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los logros que elijas y, si quieres, tus metas en porcentaje. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
+    <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. Tu cuaderno local se conserva hasta que retires el perfil.</string>
+    <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y los logros que compartes.</string>
+    <string name="red_tu_gente">Tu gente</string>
+    <string name="red_entrar">Entrar en Fogón Social</string>
+    <string name="red_compartir">Compartir un logro</string>
+    <string name="red_avisos">Avisos</string>
+    <string name="red_moderacion">Moderación</string>
+    <string name="red_guardados">Guardados</string>
+    <string name="red_feed_pie">Logros de ahorro compartidos en La Alcancía</string>
+    <string name="red_seguir">Seguir</string>
+    <string name="red_dejar_seguir">Dejar de seguir</string>
+    <string name="red_borrar">¿Borrar publicación?</string>
+    <string name="red_privado">¿Volver privada? Se retirará de la red; lo de tu teléfono se conserva.</string>
+    <string name="red_publicado">Tu publicación</string>
+    <string name="red_actualizar">Actualizar publicación</string>
+    <string name="red_publicar">Publicar</string>
+    <string name="red_seguidores">Solo para mis seguidores</string>
+    <string name="red_texto">Unas palabras (opcional)</string>
+    <string name="red_etiquetas_pista">Usa #etiquetas para que lo encuentren (por ejemplo #ahorro).</string>
+    <string name="red_error">No se pudo publicar. Revisa la conexión e inténtalo otra vez.</string>
+    <string name="red_elegir_logro">Elige un logro</string>
+    <string name="red_sin_logros">Todavía no tienes logros para compartir. Crea una meta o anota tu primer movimiento.</string>
+    <string name="red_aviso_logro">Solo sale este logro. Nunca montos, saldos, cuentas ni movimientos.</string>
+    <string name="red_logro_meta_cumplida">Cumplí mi meta «%1$s»</string>
+    <string name="red_logro_meta_avance">Voy en el %2$d %% de mi meta «%1$s»</string>
+    <string name="red_logro_primera">Empecé a llevar mis cuentas</string>
+    <string name="red_logro_cierres">Cerré %1$d meses</string>
+    <string name="red_logros">Logros</string>
+    <string name="red_publicados">Lo que has compartido</string>
+    <string name="red_sin_publicaciones">Todavía no hay nada aquí.</string>
+    <string name="red_metas_porcentaje">Metas (en porcentaje)</string>
+    <string name="red_quien_lo_ve">Quién lo ve</string>
+    <string name="red_partes_pista">Tus metas, cada una con su avance en porcentaje. Nunca cuánto ahorras ni cuánto falta.</string>
+    <string name="red_vis_privado">Solo en el teléfono</string>
+    <string name="red_vis_publica">Público</string>
+    <string name="red_vis_seguidores">Seguidores</string>
+    <string name="red_vista_previa">Así se verá</string>
+    <string name="red_tipo_logro">Logro</string>
+    <string name="red_compartir_corto">Compartir</string>
+    <string name="guia_anotar">Anota lo que gastas</string>
+    <string name="guia_anotar_texto">Toca + para anotar un gasto o un ingreso en segundos.</string>
+    <string name="guia_acciones">Atajos</string>
+    <string name="guia_acciones_texto">Gasto, ingreso, pasar plata entre cuentas, ahorrar para una meta o «Varios»: escribes «almuerzo 25 mil + uber 12k» y se anotan solos.</string>
+    <string name="guia_alcanza_texto">Tu cupo de hoy y los días que quedan del mes. Tócalo antes de gastar para saber si te alcanza.</string>
+    <string name="guia_ojo_texto">Esconde los montos para mostrar la pantalla sin enseñar tu plata.</string>
+    <string name="guia_resumen_texto">En qué se te va la plata cada mes, y cómo vas frente a los meses anteriores.</string>
+    <string name="guia_presupuesto_texto">Tu plan del mes: lo que le das a cada cosa y lo que queda. Aquí también está el historial.</string>
+    <string name="guia_metas_texto">Ahorra para lo que quieres y mira cuánto te falta.</string>
+    <string name="guia_gente_texto">Si quieres, comparte tus logros con tu cuenta de Fogón Social. Nunca salen montos.</string>
+    <string name="guia_perfil">Tu perfil y tus ajustes</string>
+    <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes, los respaldos y este recorrido otra vez.</string>
 </resources>
