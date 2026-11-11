@@ -1,1 +1,0 @@
-When you sign in with the email code, the app asks for your password in the same step (or lets you create one if your account had none), and your data is saved automatically, encrypted, from the start. Nothing to fix later. Fix a place's address from your review if you created it.

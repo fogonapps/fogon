@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
 object Moderacion {
     /** Los motivos de reporte (los mismos para cuentas, publicaciones, comentarios y mensajes). */
     const val MENOR_EN_RIESGO = "menor_en_riesgo"
+    /** Cuánto se conserva oculto lo retirado por poner a un menor en riesgo, para entregarlo a las autoridades: un año. */
+    const val CONSERVAR_GRAVE = 365L * 86400_000
     val MOTIVOS = setOf(MENOR_EN_RIESGO, "desnudos", "acoso", "odio", "autolesion", "spam", "menor_de_edad", "derechos", "falso", "otro")
     /** Con cuántas cuentas distintas (de más de 7 días y sin sanción) se oculta algo mientras se revisa. */
     const val UMBRAL = 10

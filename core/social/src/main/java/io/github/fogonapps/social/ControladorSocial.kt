@@ -82,6 +82,13 @@ abstract class ControladorSocial(
         scope.launch { intentar(avisar = avisar) { _feed.value = cliente().feed() } }
     }
 
+    /** X-09: al deslizar hacia abajo, el feed y Explorar de nuevo (sin avisar errores: el gesto ya dice que intentó). */
+    open suspend fun recargarFeed() {
+        if (_usuario.value != null) intentar(avisar = false) { _feed.value = cliente().feed() }
+        intentar(avisar = false) { _explorar.value = cliente().explorar() }
+        revisarSinLeer()
+    }
+
     fun masFeed() = lanzar {
         val ya = _feed.value ?: return@lanzar
         val mas = cliente().feed(ya.lastOrNull()?.cuando)

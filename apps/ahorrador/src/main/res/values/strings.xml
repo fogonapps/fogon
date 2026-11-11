@@ -416,7 +416,7 @@
   <string name="vas_menos">You’re spending %1$d %% less than at this point in %2$s.</string>
   <string name="vas_igual">You’re spending the same as at this point in %1$s.</string>
     <string name="banco_titulo">Record from your bank</string>
-    <string name="banco_explicacion">Android lets this access see all your notifications. La Alcancía filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
+    <string name="banco_explicacion">Android lets this access see all your notifications. La Alcancía filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands; from Nequi, Daviplata, Davivienda, Banco de Bogotá and BBVA it reads their app and texts that name them, and always asks before saving. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
     <string name="banco_activar">Enable</string>
     <string name="banco_local">Everything stays on this phone.</string>
     <string name="banco_permiso">Open notification access in Android</string>
@@ -428,7 +428,8 @@
     <string name="banco_app">What you send and receive in the Nu app. The time comes from the alert.</string>
     <string name="banco_solo">Record automatically</string>
     <string name="banco_solo_pista">Without asking. Review and undo below.</string>
-    <string name="banco_futuros">Other banks can be selected when creating accounts. Their alerts will be available when tested rules exist.</string>
+    <string name="banco_generico">Its app or texts that name it. It reads the amount and whether it\'s an expense or income, and always asks before saving.</string>
+    <string name="banco_futuros">If a bank alert isn\'t clear, the app tells you and saves nothing.</string>
     <string name="banco_enlaces">Linked accounts</string>
     <string name="banco_enlace">%1$s %2$s → %3$s</string>
     <string name="banco_desvincular">Change link</string>
@@ -576,7 +577,7 @@
     <string name="cuenta_intro">La Alcancía’s network: your Fogón Social account, the same in every app. Follow other people and celebrate your saving achievements.</string>
     <string name="cuenta_que_sale">Only what you choose to share appears on the network: an achievement and, if you want, your goals’ progress as a percentage. Never balances, amounts, accounts, banks or transactions. Your notebook is saved to your account encrypted with your password: nobody else can read it, not even Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
-    <string name="cuenta_politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password: if you reinstall, it comes back. Nobody else can read it, not even Fogón. From La Alcancía, only the achievements you share and your goals as a percentage appear on the network.</string>
+    <string name="cuenta_politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
     <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the achievements you choose and, if you want, your goals as a percentage are shared. Signing out other sessions and deleting the account affect every app.</string>
     <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local notebook is kept until you remove the profile.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and the achievements you share.</string>

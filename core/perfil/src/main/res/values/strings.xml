@@ -10,4 +10,6 @@
     <string name="perfil_local_guardar">Save</string>
     <string name="perfil_local_contador">%1$d/%2$d</string>
     <string name="perfil_local_error">Could not open the image</string>
+    <string name="insignia_fogon">Official Fogón account</string>
+    <string name="insignia_verificada">Verified account</string>
 </resources>

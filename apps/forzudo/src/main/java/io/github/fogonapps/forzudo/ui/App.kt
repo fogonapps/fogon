@@ -127,7 +127,10 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 },
             ) { pad ->
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba)
-                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana -> Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState())) {
+                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana ->
+                // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
+                io.github.fogonapps.identidad.DeslizarParaRecargar(if (pestana == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.padding(pad).fillMaxSize()) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     // Inicio y Rangos llevan su propia cabecera gigante.
                     if (pestana == Pestana.ENTRENAR) Text(
                         stringResource(when (pestana) { Pestana.INICIO -> R.string.pestana_inicio; Pestana.GENTE -> R.string.entreno_tu_gente; Pestana.ENTRENAR -> R.string.pestana_entrenar; Pestana.RANGOS -> R.string.pestana_rangos }),
@@ -140,7 +143,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                         Pestana.ENTRENAR -> Entrenar(vm, estado)
                         Pestana.RANGOS -> Rangos(vm, estado)
                     }
-                } }
+                } } }
             }
 
             // Pantallas encima de las pestañas

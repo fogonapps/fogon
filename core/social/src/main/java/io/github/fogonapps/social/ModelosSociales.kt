@@ -12,7 +12,7 @@ class ErrorSocial(val codigo: Int, val error: String, val desde: Long = 0) : IOE
 
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PersonaSocial")
-data class PersonaSocial(val usuario: String, val nombre: String = "", val foto: Boolean = false, val privada: Boolean = false)
+data class PersonaSocial(val usuario: String, val nombre: String = "", val foto: Boolean = false, val privada: Boolean = false, val insignia: String = "")
 
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PublicacionSocial")
@@ -78,7 +78,8 @@ data class Acceso(val usuario: String, val token: String, val nueva: Boolean = f
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.MiCuenta")
 data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
     val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
-    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "", val politica: String = "")
+    val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "", val politica: String = "",
+    val insignia: String = "")
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.CasoModeracion")
 data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
@@ -201,3 +202,9 @@ data class CopiaCifrada(val sobre: String = "", val cambio: Long = 0, val llave:
 /** Lo que se corrige de un lugar: la dirección escrita. */
 @Serializable
 data class CorreccionLugar(val direccion: String)
+
+@Serializable
+data class EmpujeNuevo(val token: String, val app: String)
+
+@Serializable
+data class CambioInsignia(val usuario: String, val insignia: String, val motivo: String)

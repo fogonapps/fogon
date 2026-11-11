@@ -1347,8 +1347,7 @@
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
-  <string name="politica_resumen">Ahora lo de cada app se guarda solo en tu cuenta, cifrado con tu contraseña, como ya pasaba con tu cajón: si reinstalas, vuelve. Nadie más lo puede leer, ni Fogón.
-La Alcancía ya usa la cuenta de Fogón Social: de ella solo salen los logros que compartas y tus metas en porcentaje.</string>
+  <string name="politica_resumen">Ahora, si tienes los avisos prendidos, llegan al instante: cuando tienes algo nuevo, Google (Firebase) le manda a tu teléfono un toque vacío, sin texto ni de quién, y la app pregunta el resto a Fogón. Además, contamos cuánto se guarda lo que se denuncia por poner a un menor en riesgo: un año, para las autoridades.</string>
   <string name="politica_aceptar">Aceptar</string>
   <string name="politica_ahora_no">Ahora no</string>
   <string name="politica_revisar">Revisar la política</string>
@@ -1461,4 +1460,7 @@ La Alcancía ya usa la cuenta de Fogón Social: de ella solo salen los logros qu
     <string name="acceso_crear_clave">Crea una contraseña</string>
     <string name="acceso_crear_clave_pista">Con ella tus datos se guardan solos en tu cuenta, cifrados, y vuelven si cambias de teléfono o reinstalas.</string>
     <string name="copia_crear">Crear la contraseña</string>
+    <string name="busquedas_recientes">Búsquedas recientes</string>
+    <string name="busquedas_borrar">Borrar todas</string>
+    <string name="busquedas_quitar">Quitar «%1$s»</string>
 </resources>

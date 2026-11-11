@@ -70,8 +70,9 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
         ContadorPerfil(e.recetas.size.toString(), stringResource(R.string.pestana_recetas)),
         ContadorPerfil(e.dias.values.sumOf { it.anotados.size }.toString(), stringResource(R.string.perfil_platos)),
     )
+    val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto, portada,
-        bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones)
+        bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones, insignia = miInsignia)
     PerfilComun(vista, parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="insignias_titulo">Insignias</string>
+    <string name="insignias_verificada">Verificada</string>
+    <string name="insignias_fogon">Oficial de Fogón</string>
+    <string name="insignias_no">Nunca</string>
+    <string name="insignias_auto">Automática</string>
+    <string name="insignias_explica">Las cuentas verificadas llevan un sello junto al nombre. Dásela a cuentas conocidas, niégasela a las que se hacen pasar por otra persona o devuelve la cuenta a la regla automática.</string>
+    <string name="insignias_regla">Automática: más de 90 días, correo, foto, sin faltas y 250 seguidores reales.</string>
+    <string name="insignias_motivo">Motivo (queda en el registro del equipo)</string>
+    <string name="insignias_aplicar">Aplicar</string>
+    <string name="insignias_confirmar">La insignia cambia para todos los que vean esta cuenta.</string>
+    <string name="insignias_hecho">Listo. La insignia quedó actualizada.</string>
+</resources>

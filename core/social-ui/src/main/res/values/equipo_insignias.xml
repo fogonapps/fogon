@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="insignias_titulo">Badges</string>
+    <string name="insignias_verificada">Verified</string>
+    <string name="insignias_fogon">Official Fogón</string>
+    <string name="insignias_no">Never</string>
+    <string name="insignias_auto">Automatic</string>
+    <string name="insignias_explica">Verified accounts show a seal next to their name. Grant it to well-known accounts, deny it to accounts impersonating someone, or return the account to the automatic rule.</string>
+    <string name="insignias_regla">Automatic: 90+ days, email, photo, no strikes and 250 real followers.</string>
+    <string name="insignias_motivo">Reason (stays in the team log)</string>
+    <string name="insignias_aplicar">Apply</string>
+    <string name="insignias_confirmar">The badge changes for everyone who sees this account.</string>
+    <string name="insignias_hecho">Done. The badge is updated.</string>
+</resources>

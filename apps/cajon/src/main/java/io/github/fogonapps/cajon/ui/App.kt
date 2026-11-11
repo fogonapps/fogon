@@ -146,7 +146,14 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             } else {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
                 PestanaAnimada(pestana) { p ->
-                    Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
+                    // X-09: deslizar hacia abajo recarga el feed (Para ti) o arma otras recomendaciones (Inicio).
+                    val recargar: (suspend () -> Unit)? = when (p) {
+                        Pestana.INICIO -> ({ vm.recargarRecomendaciones() })
+                        Pestana.PARA_TI -> ({ vm.red.recargarFeed() })
+                        else -> null
+                    }
+                    io.github.fogonapps.identidad.DeslizarParaRecargar(recargar, Modifier.fillMaxSize().statusBarsPadding()) {
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         AvisoPolitica(vm)
                         when (p) {
                             Pestana.INICIO -> Inicio(vm, estado)
@@ -156,6 +163,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
                         }
                         Espacio(120.dp)
+                    }
                     }
                 }
                 BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))

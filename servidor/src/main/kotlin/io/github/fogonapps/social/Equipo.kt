@@ -24,6 +24,14 @@ import javax.crypto.spec.SecretKeySpec
 @Serializable data class RegistroEquipo(val entradas: List<EntradaRegistro>, val cadenaIntegra: Boolean, val siguiente: Long?)
 @Serializable data class ContenidoEquipo(val que: String, val objeto: String, val motivo: String = "")
 @Serializable data class SancionEquipo(val usuario: String, val motivo: String)
+@Serializable data class CambioInsignia(val usuario: String, val insignia: String, val motivo: String)
+
+/** La regla de la insignia automática (X-08). */
+object Verificacion {
+    const val ANTIGUEDAD = 90L * 86400_000
+    const val ANTIGUEDAD_SEGUIDOR = 30L * 86400_000
+    const val SEGUIDORES = 250
+}
 
 /** RFC 6238: contador de 64 bits, truncamiento dinámico y HMAC-SHA1. */
 object Totp {

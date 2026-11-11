@@ -102,6 +102,8 @@ open class ClienteSocial(
     suspend fun restaurar(caso: CasoModeracion) { pedir("/admin/restaurar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo(caso.que, caso.objeto))) }
     suspend fun retirarPublicacion(objeto: String, motivo: String = "") { pedir("/admin/publicaciones/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("publicacion", objeto, motivo))) }
     suspend fun retirarComentario(objeto: String, motivo: String = "") { pedir("/admin/comentarios/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("comentario", objeto, motivo))) }
+    /** X-08: da o quita la insignia ("verificada", "fogon", "no" o "auto"). */
+    suspend fun cambiarInsignia(usuario: String, insignia: String, motivo: String) { pedir("/admin/insignias", "POST", json(CambioInsignia.serializer(), CambioInsignia(usuario, insignia, motivo))) }
     suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
     suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }
@@ -277,6 +279,9 @@ open class ClienteSocial(
 
     /* Avisos y reportes */
     suspend fun avisos(antes: Long? = null) = leer(ListSerializer(AvisoSocial.serializer()), pedir("/avisos" + (antes?.let { "?antes=$it" } ?: "")))
+    /** X-10: el token de avisos (FCM) de este teléfono para esta app; el servidor le manda un toque vacío. */
+    suspend fun registrarEmpuje(token: String) { pedir("/empuje", "PUT", json(EmpujeNuevo.serializer(), EmpujeNuevo(token, configuracion.idApp))) }
+    suspend fun quitarEmpuje(token: String) { pedir("/empuje", "DELETE", json(EmpujeNuevo.serializer(), EmpujeNuevo(token, configuracion.idApp))) }
     suspend fun sinLeer(): Int = JsonSocial.parseToJsonElement(pedir("/avisos/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun leidos() { pedir("/avisos/leidos", "POST") }
     /** [que]: "cuenta", "publicacion", "comentario" o "mensaje". */

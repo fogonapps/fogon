@@ -218,7 +218,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
     val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
         "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
         contadores = listOf(io.github.fogonapps.perfil.ContadorPerfil(perfil.publicaciones.count { it.tipo == TIPO_LOGRO }.toString(), stringResource(R.string.red_logros))),
-        secciones = secciones)
+        secciones = secciones, insignia = perfil.persona.insignia)
     io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
         foto = { AvatarRed(perfil.persona, 96.dp) },
         bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },

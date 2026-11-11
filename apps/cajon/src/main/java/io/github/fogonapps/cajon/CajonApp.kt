@@ -13,7 +13,23 @@ import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.crearAlmacen
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
-class CajonApp : Application(), SingletonImageLoader.Factory {
+class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapps.social.ui.AppConAvisos, io.github.fogonapps.social.ui.AppConTrabajador {
+    /* X-10: los avisos con la app cerrada (la revisión común; El Cajón conserva el nombre AvisosRed). */
+    override val avisosConfiguracion = io.github.fogonapps.social.ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon")
+    override val avisosConMensajes = true
+    override val avisosIcono = R.drawable.ic_notificacion
+    override val trabajadorAvisos: Class<out io.github.fogonapps.social.ui.AvisosFondo> = AvisosRed::class.java
+    override fun avisosCuentas() = perfiles.lista.perfiles.mapNotNull { perfil ->
+        val caja = runCatching { recursos(perfil.id).caja }.getOrNull() ?: return@mapNotNull null
+        val token = caja.tokenSocial ?: return@mapNotNull null
+        io.github.fogonapps.social.ui.CuentaAvisos(perfil.id, token, caja.usuarioSocial.orEmpty()) {
+            caja.tokenSocial == token && perfiles.lista.perfiles.any { it.id == perfil.id }
+        }
+    }
+    override val avisosFirebase = "1:252547803157:android:a6ffdfe3d07510916dc61c"
+    override fun avisosPerfilActivo() = perfiles.lista.activo
+    override fun avisosAbrir(perfil: String) = android.content.Intent(this, MainActivity::class.java).putExtra("perfil", perfil)
+
     private val porPerfil = mutableMapOf<String, RecursosPerfil>()
     private val retirados = mutableSetOf<String>()
     val migracion by lazy { io.github.fogonapps.cajon.datos.migracionPerfiles(this) }

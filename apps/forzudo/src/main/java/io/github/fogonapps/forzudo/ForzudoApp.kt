@@ -10,7 +10,19 @@ import io.github.fogonapps.forzudo.datos.crearAlmacen
 import io.github.fogonapps.identidad.Idioma
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
-class ForzudoApp : Application() {
+class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
+    /* X-10: los avisos de la red con la app cerrada (revisión común en social-ui). */
+    override val avisosConfiguracion get() = io.github.fogonapps.social.ConfiguracionSocial("forzudo", "El Forzudo", "ElForzudo-Fogon")
+    override val avisosIcono = R.drawable.ic_notificacion
+    override fun avisosCuentas() = perfiles.lista.perfiles.mapNotNull { perfil ->
+        val sesion = runCatching { sesionForzudo(this, perfiles, perfil.id) }.getOrNull() ?: return@mapNotNull null
+        val token = sesion.token ?: return@mapNotNull null
+        io.github.fogonapps.social.ui.CuentaAvisos(perfil.id, token, sesion.usuario.orEmpty()) { sesion.token == token }
+    }
+    override val avisosFirebase = "1:252547803157:android:f75535839a8e72c56dc61c"
+    override fun avisosPerfilActivo() = perfiles.lista.activo
+    override fun avisosAbrir(perfil: String) = android.content.Intent(this, MainActivity::class.java).putExtra("perfil", perfil)
+
     lateinit var perfiles: io.github.fogonapps.social.Perfiles
         private set
     val perfilActivo = kotlinx.coroutines.flow.MutableStateFlow("1")

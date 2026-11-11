@@ -43,6 +43,43 @@ class EquipoTest {
         override fun close() { b.cerrar(); dir.deleteRecursively() }
     }
 
+    @Test fun insigniaAutomaticaYDecisionDelEquipo() = Entorno().use { e ->
+        val v = e.alta("vela"); val p = e.alta("principal"); e.rol(p, "principal")
+        val viejo = e.reloj - Verificacion.ANTIGUEDAD - 1
+        e.b.usar {
+            cambiar("UPDATE cuentas SET correo = 'vela@x.co', foto = 1, creada = ? WHERE id = ?", viejo, v.id)
+            repeat(Verificacion.SEGUIDORES) { i ->
+                val f = e.alta("seguidor$i")
+                cambiar("UPDATE cuentas SET correo = ?, creada = ? WHERE id = ?", "f$i@x.co", viejo, f.id)
+                cambiar("INSERT INTO seguir(de, a, cuando) VALUES(?,?,?)", f.id, v.id, e.reloj)
+            }
+        }
+        val insignia = { c: Entorno.Cuenta -> e.b.usar { leer("SELECT insignia FROM cuentas WHERE id = ?", c.id) { it.getString(1) }.single() } }
+        e.s.revisarInsignias()
+        assertEquals("verificada", insignia(v))
+        assertEquals("fogon", insignia(p))
+        assertEquals("verificada", e.s.publicacion(null, e.pub(v))!!.autor.insignia)
+        // Un seguidor recién creado no cuenta: con uno menos de los que valen, se pierde.
+        e.b.usar { cambiar("UPDATE cuentas SET creada = ? WHERE usuario = 'seguidor0'", e.reloj) }
+        e.s.revisarInsignias()
+        assertEquals("", insignia(v))
+        // Lo que decide el equipo manda sobre la regla; "fogon" solo la da la principal.
+        val a = e.alta("lideresa"); e.rol(a, "administrador")
+        val sa = e.inscribir(a).first; e.elevar(a, sa)
+        e.s.verificar(a.id, CambioInsignia("vela", "verificada", "Cuenta conocida"), a.token)
+        assertEquals("verificada", insignia(v))
+        assertEquals(403, assertFailsWith<Problema> { e.s.verificar(a.id, CambioInsignia("vela", "fogon", "Oficial"), a.token) }.codigo)
+        e.s.verificar(a.id, CambioInsignia("vela", "no", "Suplanta a otra persona"), a.token)
+        e.b.usar { cambiar("UPDATE cuentas SET creada = ? WHERE usuario = 'seguidor0'", viejo) }
+        e.s.revisarInsignias()
+        assertEquals("", insignia(v))
+        e.s.verificar(a.id, CambioInsignia("vela", "auto", "Revisado"), a.token)
+        assertEquals("verificada", insignia(v))
+        val sp = e.inscribir(p).first; e.elevar(p, sp)
+        e.s.verificar(p.id, CambioInsignia("vela", "fogon", "Cuenta de El Cajón"), p.token)
+        assertEquals("fogon", insignia(v))
+    }
+
     @Test fun vectoresRfc6238Sha1YBase32() {
         val secreto = "12345678901234567890".toByteArray()
         val vectores = listOf(59L to "94287082", 1111111109L to "07081804", 1111111111L to "14050471", 1234567890L to "89005924", 2000000000L to "69279037", 20000000000L to "65353130")
@@ -183,6 +220,7 @@ class EquipoTest {
         Ruta(HttpMethod.Post, "publicaciones/retirar", "gestionar_publicaciones", { """{"que":"publicacion","objeto":"123"}""" }),
         Ruta(HttpMethod.Post, "comentarios/retirar", "moderar_comentarios", { """{"que":"comentario","objeto":"123"}""" }),
         Ruta(HttpMethod.Post, "restaurar", "gestionar_publicaciones", { """{"que":"publicacion","objeto":"123"}""" }),
+        Ruta(HttpMethod.Post, "insignias", "gestionar_usuarios", { """{"usuario":"destino","insignia":"verificada","motivo":"Cuenta conocida"}""" }),
         Ruta(HttpMethod.Post, "sanciones/levantar", "gestionar_usuarios", { """{"usuario":"destino","motivo":"Apelación aceptada"}""" }),
         Ruta(HttpMethod.Post, "imagenes/bloquear", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg","motivo":"prueba"}""" }),
         Ruta(HttpMethod.Post, "imagenes/permitir", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg"}""" }),

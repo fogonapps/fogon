@@ -107,7 +107,9 @@ class NotificacionesTest {
         assertFalse(paqueteAdmitido("otra.app", null, bancos))
         assertNull(leer("Bancolombia: Tu clave es 123456"))
         assertNull(leer("Hola, $salida"))
-        for (banco in Banco.entries - setOf(Banco.BANCOLOMBIA, Banco.NU)) assertNull(reconocerAviso(banco, "", salida, recibido))
+        assertNull(reconocerAviso(Banco.OTRO, "", salida, recibido))
+        // Los bancos sin reglas exactas la leen con el lector general, sin tomar «a las 15:49» por contraparte.
+        reconocerAviso(Banco.NEQUI, "", salida, recibido)?.let { assertFalse(it.contraparte.startsWith("las")) }
     }
     @Test fun enlacePersistenteSoloConCuentaCompatible() {
         val a = leer(entrada)!!

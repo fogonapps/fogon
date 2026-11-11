@@ -102,6 +102,16 @@ fun AvatarRed(p: PersonaSocial, tamano: Dp = 44.dp) {
     }
 }
 
+/** El nombre (o el usuario) con su insignia, si tiene. */
+@Composable
+fun NombreRed(p: PersonaSocial, modifier: Modifier = Modifier, estilo: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleSmall) {
+    val f = FogonTema.actual
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(p.nombre.ifBlank { p.usuario }, Modifier.weight(1f, fill = false), style = estilo, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        io.github.fogonapps.perfil.InsigniaCuenta(p.insignia, tamano = 15.dp)
+    }
+}
+
 @Composable
 fun FilaPersona(p: PersonaSocial, onClick: () -> Unit, modifier: Modifier = Modifier, derecha: @Composable () -> Unit = {}) {
     val f = FogonTema.actual
@@ -109,7 +119,7 @@ fun FilaPersona(p: PersonaSocial, onClick: () -> Unit, modifier: Modifier = Modi
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         AvatarRed(p)
         Column(Modifier.weight(1f)) {
-            Text(p.nombre.ifBlank { p.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            NombreRed(p)
             Text("@" + p.usuario + if (p.privada) " · " + stringResource(R.string.social_red_privada_corto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
         }
         derecha()
@@ -194,6 +204,7 @@ fun PublicacionRed(vm: InterfazSocial, id: Long) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.clickable { vm.navegacion.perfil(c.autor.usuario) }) { AvatarRed(c.autor, 32.dp) }
                         Text("@${c.autor.usuario} · ${haceCuanto(c.cuando)}", color = f.textoSuave, style = MaterialTheme.typography.labelMedium)
+                        io.github.fogonapps.perfil.InsigniaCuenta(c.autor.insignia, tamano = 14.dp)
                     }
                     Text(c.texto, color = f.texto, style = MaterialTheme.typography.bodyMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -495,6 +506,7 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
             Pildora(stringResource(R.string.social_red_ver_mi_perfil), Iconos.Persona) { vm.navegacion.perfil(usuario) }
         }
         Opcion(stringResource(R.string.social_red_cuenta_privada), privada) { vm.red.cambiarPrivada(it) }
+        AvisosEnCuenta()
         Pista(stringResource(R.string.social_red_cuenta_privada_pista))
         Pista(vm.textosApp.compartido)
         if (correoCuenta.isBlank()) Pista(stringResource(R.string.social_red_vincula_pista))
@@ -662,7 +674,9 @@ fun Moderacion(vm: InterfazSocial) {
         if ("gestionar_frases" in permisos) Pildora(vm.tituloModeracionApp() + cantidadApp.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
         if ("asignar_equipo" in permisos) Pildora(stringResource(R.string.social_equipo_titulo), acento = seccion == 2) { seccion = 2 }
         if ("ver_registro" in permisos) Pildora(stringResource(R.string.social_registro_titulo), acento = seccion == 3) { seccion = 3 }
+        if ("gestionar_usuarios" in permisos) Pildora(stringResource(R.string.insignias_titulo), acento = seccion == 4) { seccion = 4 }
     }
+    if (seccion == 4 && "gestionar_usuarios" in permisos) { InsigniasEquipo(vm); return }
     if (seccion == 2 && "asignar_equipo" in permisos) { Equipo(vm); return }
     if (seccion == 3 && "ver_registro" in permisos) { RegistroEquipoPantalla(vm); return }
     if (seccion == 1 && "gestionar_frases" in permisos) { vm.moderacionApp(); return }
@@ -727,7 +741,7 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AvatarRed(p.autor, 36.dp)
             Column(Modifier.weight(1f)) {
-                Text(p.autor.nombre.ifBlank { p.autor.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                NombreRed(p.autor)
                 Text((if (p.tipo in vm.contenido.tiposAdmitidos) vm.contenido.NombreTipo(p.tipo) else stringResource(R.string.social_red_tipo_publico)) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
             }
             if (p.visibilidad == "amigos") IconoRiso(Iconos.Candado, stringResource(R.string.social_red_para_seguidores), tamano = 16.dp, tinta = f.textoSuave)
@@ -864,5 +878,31 @@ fun EstadoCuenta(vm: InterfazSocial) {
             }
         }
         Pista(stringResource(R.string.social_mod_como_funciona))
+    }
+}
+
+/** X-10: en las apps sin pantalla propia de notificaciones (todas menos El Cajón), los avisos con la app cerrada. */
+@Composable
+private fun AvisosEnCuenta() {
+    val c = androidx.compose.ui.platform.LocalContext.current
+    val app = c.applicationContext as? AppConAvisos ?: return
+    if (app is AppConTrabajador) return
+    val perfil = remember { app.avisosPerfilActivo() }
+    val prefs = remember { c.getSharedPreferences(Avisos.PREFS, android.content.Context.MODE_PRIVATE) }
+    var activo by remember { mutableStateOf(Avisos.activo(prefs, perfil, Avisos.AVISOS)) }
+    val permiso = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+    // Al entrar a la cuenta, con los avisos prendidos, se pide el permiso una sola vez (Android 13 o más nuevo).
+    LaunchedEffect(Unit) {
+        if (activo && android.os.Build.VERSION.SDK_INT >= 33 && !prefs.getBoolean("permiso_pedido", false) &&
+            androidx.core.content.ContextCompat.checkSelfPermission(c, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            prefs.edit().putBoolean("permiso_pedido", true).apply()
+            permiso.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    Opcion(stringResource(R.string.fondo_activar), activo) {
+        activo = it
+        prefs.edit().putBoolean("p$perfil.${Avisos.AVISOS}", it).apply()
+        if (it && android.os.Build.VERSION.SDK_INT >= 33) permiso.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        Avisos.programar(c)
     }
 }

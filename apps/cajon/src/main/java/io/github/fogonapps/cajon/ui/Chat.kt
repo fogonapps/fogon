@@ -205,7 +205,10 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 AvatarRed(persona.copy(foto = persona.foto || personas[usuario] == null), 38.dp)
                 Column(Modifier.weight(1f)) {
-                    Text(nombre, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(nombre, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        io.github.fogonapps.perfil.InsigniaCuenta(persona.insignia, tamano = 15.dp)
+                    }
                     if (persona.nombre.isNotBlank()) Text("@$usuario", style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
                 }
             }
@@ -515,7 +518,10 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
     Cabecera(stringResource(R.string.chat_info), vm::cerrar)
     Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         AvatarRed(persona.copy(foto = persona.foto || personas[usuario] == null), 112.dp)
-        Text(persona.nombre.ifBlank { "@$usuario" }, style = MaterialTheme.typography.headlineSmall, color = f.texto)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(persona.nombre.ifBlank { "@$usuario" }, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.headlineSmall, color = f.texto)
+            io.github.fogonapps.perfil.InsigniaCuenta(persona.insignia, tamano = 20.dp)
+        }
         Text("@$usuario", style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             @Composable

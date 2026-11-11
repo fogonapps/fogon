@@ -20,7 +20,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Objetos únicos por proceso: DataStore exige una sola instancia por archivo. Cada perfil del teléfono tiene su
  * cuaderno; el widget, los avisos y la lectura del banco usan el del perfil activo.
  */
-class AhorradorApp : Application() {
+class AhorradorApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
+    /* X-10: los avisos de la red con la app cerrada (revisión común en social-ui). */
+    override val avisosConfiguracion get() = CONFIGURACION_RED
+    override val avisosIcono = R.drawable.ic_notificacion
+    override fun avisosCuentas() = perfiles.lista.perfiles.mapNotNull { perfil ->
+        val sesion = runCatching { io.github.fogonapps.social.SesionApp(this, perfiles, perfil.id, "alcancia") }.getOrNull() ?: return@mapNotNull null
+        val token = sesion.token ?: return@mapNotNull null
+        io.github.fogonapps.social.ui.CuentaAvisos(perfil.id, token, sesion.usuario.orEmpty()) { sesion.token == token }
+    }
+    override val avisosFirebase = "1:252547803157:android:50c9c9e49d3b998e6dc61c"
+    override fun avisosPerfilActivo() = perfiles.lista.activo
+    override fun avisosAbrir(perfil: String) = android.content.Intent(this, MainActivity::class.java).putExtra("perfil", perfil)
+
     lateinit var perfiles: Perfiles
         private set
     val perfilActivo = MutableStateFlow("1")

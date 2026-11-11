@@ -115,7 +115,9 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
             } else {
                 // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
                 PestanaAnimada(pestana) { p ->
-                    Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
+                    // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
+                    io.github.fogonapps.identidad.DeslizarParaRecargar(if (p == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         when (p) {
                             Pestana.HOY -> Hoy(vm, estado)
                             Pestana.GENTE -> TuGente(vm)
@@ -124,6 +126,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                             Pestana.PROGRESO -> Progreso(vm, estado)
                         }
                         Espacio(120.dp)
+                    }
                     }
                 }
                 BarraFlotante(pestana, vm::irA, vm::anotarAhora, Modifier.align(Alignment.BottomCenter))

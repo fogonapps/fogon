@@ -1,1 +1,0 @@
-Al entrar con el código del correo, la app te pide tu contraseña en el mismo paso (o te deja crearla si tu cuenta no tenía), y tus datos quedan guardándose solos, cifrados, desde el principio. Ya no hay nada que arreglar después. Corrige la dirección de un lugar desde tu reseña si tú lo creaste.

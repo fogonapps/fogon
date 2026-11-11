@@ -50,17 +50,91 @@ data class NotificacionesBanco(
     val noEntendidos: Set<Banco> = emptySet(),
 )
 
+/**
+ * Bancos sin reglas exactas (no tenemos sus alertas reales): se leen con [reconocerGenerico] desde su app o desde un
+ * SMS que los nombra, y lo que se entiende siempre se propone para confirmar, nunca se anota solo.
+ */
+val PAQUETES_GENERICOS = mapOf(
+    Banco.NEQUI to "com.nequi.MobileApp",
+    Banco.DAVIPLATA to "com.davivienda.daviplataapp",
+    Banco.DAVIVIENDA to "com.davivienda.daviviendaapp",
+    Banco.BOGOTA to "com.bancodebogota.bancamovil",
+    Banco.BBVA to "co.com.bbva.mb",
+)
+val GENERICOS = PAQUETES_GENERICOS.keys
+
+/** Cómo se nombra cada banco en un SMS (sin tildes, en minúsculas). Daviplata va antes que Davivienda. */
+private val NOMBRES_SMS = listOf(
+    Banco.NEQUI to Regex("\\bnequi\\b"), Banco.DAVIPLATA to Regex("\\bdaviplata\\b"), Banco.DAVIVIENDA to Regex("\\bdavivienda\\b"),
+    Banco.BOGOTA to Regex("\\bbanco de bogota\\b|\\bbancodebogota\\b"), Banco.BBVA to Regex("\\bbbva\\b"),
+)
+
+private fun sinTildes(t: String) = java.text.Normalizer.normalize(t.lowercase(Locale.ROOT), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+private fun esMensajes(paquete: String, predeterminado: String?) = paquete in PAQUETES_MENSAJES || paquete == predeterminado
+
 /** El paquete se comprueba antes de leer los extras de la notificación. */
 fun paqueteAdmitido(paquete: String, predeterminado: String?, bancos: Set<Banco>): Boolean =
     (Banco.NU in bancos && paquete == PAQUETE_NU) ||
-        (Banco.BANCOLOMBIA in bancos && (paquete in PAQUETES_MENSAJES || paquete == predeterminado))
+        (Banco.BANCOLOMBIA in bancos && esMensajes(paquete, predeterminado)) ||
+        bancos.any { it in GENERICOS && (paquete == PAQUETES_GENERICOS[it] || esMensajes(paquete, predeterminado)) }
 
 /** El prefijo se exige incluso si la app de mensajes es la predeterminada. */
 fun bancoDelTexto(paquete: String, predeterminado: String?, bancos: Set<Banco>, texto: String): Banco? = when {
     !paqueteAdmitido(paquete, predeterminado, bancos) -> null
     paquete == PAQUETE_NU -> Banco.NU
-    texto.startsWith("Bancolombia:") -> Banco.BANCOLOMBIA
+    PAQUETES_GENERICOS.entries.any { it.value == paquete } -> PAQUETES_GENERICOS.entries.first { it.value == paquete }.key.takeIf { it in bancos }
+    Banco.BANCOLOMBIA in bancos && texto.startsWith("Bancolombia:") -> Banco.BANCOLOMBIA
+    esMensajes(paquete, predeterminado) -> sinTildes(texto).let { t -> NOMBRES_SMS.firstOrNull { (b, r) -> b in bancos && r.containsMatchIn(t) }?.first }
     else -> null
+}
+
+/* ----- Lectura general (bancos sin reglas exactas) ----- */
+
+/** Avisos que no son movimientos: códigos, accesos, publicidad. */
+private val NO_ES_MOVIMIENTO = Regex("\\b(codigo|clave dinamica|clave temporal|otp|verificacion|inicio de sesion|iniciaste sesion|ingresaste a|nuevo dispositivo|gana|ganate|oferta|promo|promocion|descuento|preaprobado|preaprobada|cupo disponible|solicita|simula)\\b")
+private val INGRESO = Regex("\\b(recibiste|te (enviaron|llego|llegaron|consignaron|pagaron|abonaron|transfirieron|devolvimos)|abono|abonamos|consignacion|consignaron|reembolso|devolucion|deposito|recibio|entrada de dinero)\\b")
+private val GASTO_TUYO = Regex("\\b(compraste|pagaste|enviaste|transferiste|retiraste|realizaste|hiciste)\\b")
+private val GASTO = Regex("\\b(compra|compraste|pagaste|pago|enviaste|transferiste|transferencia a|retiro|retiraste|debito|debitamos|cobro|cobramos|avance|pse)\\b")
+private val MONTO = Regex("(?:\\$|\\bcop\\b|\\bcol\\$)\\s?([0-9][0-9.,]*[0-9])")
+
+/** Un monto en pesos escrito al estilo colombiano (1.234.567,89) o al de EE. UU. (1,234,567.89). */
+internal fun montoFlexible(s: String): Long? = runCatching {
+    val limpio = when {
+        Regex("[0-9]{1,3}(\\.[0-9]{3})+(,[0-9]{1,2})?").matches(s) -> s.replace(".", "").replace(',', '.')
+        Regex("[0-9]{1,3}(,[0-9]{3})+(\\.[0-9]{1,2})?").matches(s) -> s.replace(",", "")
+        Regex("[0-9]+([.,][0-9]{1,2})?").matches(s) -> s.replace(',', '.')
+        else -> return null
+    }
+    BigDecimal(limpio).setScale(0, RoundingMode.HALF_UP).longValueExact().takeIf { it > 0 }
+}.getOrNull()
+
+/**
+ * Lee cualquier alerta de banco: el monto (con $ o COP), si es ingreso o gasto por sus palabras, la contraparte
+ * («en …», «a …», «de …») y la cuenta (*1234). Si algo no está claro, no la entiende (null) y la app lo dice.
+ */
+fun reconocerGenerico(banco: Banco, titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
+    val original = normalizarAlerta(listOf(titulo, texto).filter(String::isNotBlank).joinToString(". "))
+    val t = sinTildes(original)
+    if (NO_ES_MOVIMIENTO.containsMatchIn(t)) return null
+    val m = MONTO.find(t) ?: return null
+    if (MONTO.findAll(t).map { it.groupValues[1] }.distinct().count() > 2) return null
+    val monto = montoFlexible(m.groupValues[1]) ?: return null
+    val tipo = when {
+        INGRESO.containsMatchIn(t) && !GASTO_TUYO.containsMatchIn(t) -> TipoMovimiento.INGRESO
+        GASTO.containsMatchIn(t) -> TipoMovimiento.GASTO
+        else -> return null
+    }
+    val cuenta = Regex("\\*\\s?([0-9]{3,6})\\b|terminada en ([0-9]{3,6})\\b|cuenta (?:no\\.? ?)?([0-9]{3,6})\\b").find(t)
+        ?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.let { "*$it" }.orEmpty()
+    // La contraparte, en el texto original (con mayúsculas), después del monto si se puede.
+    val desde = original.length.coerceAtMost(m.range.last + 1)
+    val conector = Regex("\\b(?:en|a|de|desde|para)\\s+([\\p{L}0-9&'*][\\p{L}0-9&'*. -]{1,40}?)(?=\\s+(?:el|por|con|desde|hoy|ref|referencia|a las|en tu|a tu|de tu|tu|su)\\b|[.,;:!]|$)")
+    val contraparte = (conector.findAll(original, desde).toList() + conector.findAll(original).toList())
+        .map { it.groupValues[1].trim() }
+        .firstOrNull { c -> val l = sinTildes(c); !l.startsWith("tu ") && !l.startsWith("su ") && !l.startsWith("las ") && !l.startsWith("los ") && !l.startsWith("la llave") && !l.startsWith("la cuenta") && !l.startsWith("cuenta") && l.any(Char::isLetter) && !MONTO.containsMatchIn(l) }
+        .orEmpty()
+    return AvisoBanco(banco, tipo, monto, recibido.withSecond(0).withNano(0).toString(), cuenta, contraparte.take(80), contraparte.take(60))
 }
 
 private fun montoBanco(s: String, colombiano: Boolean): Long? = runCatching {
@@ -94,6 +168,7 @@ fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<Strin
 
 /** Reglas cerradas por banco. Nu usa la hora de la alerta, redondeada al minuto. */
 fun reconocerAviso(banco: Banco, tituloOriginal: String, textoOriginal: String, recibido: LocalDateTime): AvisoBanco? {
+    if (banco in GENERICOS) return reconocerGenerico(banco, tituloOriginal, textoOriginal, recibido)
     val titulo = normalizarAlerta(tituloOriginal)
     val texto = normalizarAlerta(textoOriginal)
     if (banco == Banco.NU) {

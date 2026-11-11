@@ -184,6 +184,11 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     private var sincronizando = false
     private var sincronizarOtraVez = false
 
+    /* X-10: avisos con la app cerrada: lo que se ve al abrir no vuelve a avisar, y la revisión sigue a la sesión. */
+    init {
+        red.alContarAvisosRed = { io.github.fogonapps.social.ui.Avisos.visto(getApplication(), idPerfil, avisos = it) }
+        viewModelScope.launch { red.usuario.collect { io.github.fogonapps.social.ui.Avisos.programar(getApplication()) } }
+    }
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())

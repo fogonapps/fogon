@@ -43,7 +43,11 @@ data class PublicacionSubida(
 )
 
 @Serializable
-data class Persona(val usuario: String, val nombre: String, val foto: Boolean, val privada: Boolean = false)
+data class Persona(
+    val usuario: String, val nombre: String, val foto: Boolean, val privada: Boolean = false,
+    /** "fogon" (cuenta oficial), "verificada" o "" (ver [Social.revisarInsignias]). */
+    val insignia: String = "",
+)
 
 @Serializable
 data class Publicacion(
@@ -113,6 +117,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val mfa: Boolean, val elevadaHasta: Long, val idCuenta: String = "",
     /** La versión de la política que aceptó; si no es [Social.POLITICA], la app pide aceptar la nueva. */
     val politica: String = "",
+    /** Su insignia ("fogon", "verificada" o ""), para verla en su propio perfil. */
+    val insignia: String = "",
 )
 @Serializable data class Aceptacion(val politica: String)
 @Serializable data class VotoImagen(val fuente: String, val url: String)
@@ -159,7 +165,10 @@ class Social(
     private val ahora: () -> Long = System::currentTimeMillis,
     private val cartero: Cartero = Cartero { _, _, _ -> throw Problema(503, "sin_correo") },
     principal: String? = null,
+    mensajero: Mensajero? = null,
 ) {
+
+    val empujes = Empujes(b, ahora, mensajero)
 
     val equipo = Equipo(b, dirFotos.parentFile ?: dirFotos, ahora, cartero, principal)
 
@@ -395,8 +404,8 @@ class Social(
     }
 
     fun miCuenta(yo: Long, token: String? = null): MiCuenta = b.usar {
-        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8))
+        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto, insignia FROM cuentas WHERE id = ?", yo) {
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8), it.getString(9))
         }.first()
     }
 
@@ -715,7 +724,7 @@ class Social(
         b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
 
     private fun persona(id: Long): Persona = b.usar {
-        leer("SELECT usuario, nombre, foto, privada FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1) }.first()
+        leer("SELECT usuario, nombre, foto, privada, insignia FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5)) }.first()
     }
 
     private fun esPrivada(id: Long) = b.usar { leer("SELECT privada FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false
@@ -1015,14 +1024,14 @@ class Social(
                     EXISTS(SELECT 1 FROM guardados g WHERE g.pub = p.id AND g.cuenta = ?),
                     (SELECT COUNT(*) FROM guardados g WHERE g.pub = p.id AND g.cuenta <> p.cuenta),
                     (SELECT COUNT(*) FROM utiles u WHERE u.pub = p.id AND u.cuenta IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0)),
-                    EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?), p.app
+                    EXISTS(SELECT 1 FROM utiles u WHERE u.pub = p.id AND u.cuenta = ?), p.app, c.insignia
                 FROM publicaciones p JOIN cuentas c ON c.id = p.cuenta WHERE p.estado = 'visible' AND c.borrar_el = 0 AND c.cerrada = 0 AND $donde""", lector, lector, lector, *args) { r ->
             var datos = JsonSocial.parseToJsonElement(r.getString(5)) as JsonObject
             if (r.getString(18) == "cucha" && "lugar" in datos) {
                 val ficha = lugar(datos.getValue("lugar").jsonPrimitive.long)
                 datos = JsonObject(datos + ("lugarDetalle" to (ficha?.let { JsonSocial.encodeToJsonElement(Lugar.serializer(), it) } ?: JsonNull)))
             }
-            r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1),
+            r.getLong(2) to Publicacion(r.getLong(1), Persona(r.getString(6), r.getString(7), r.getInt(8) == 1, r.getInt(9) == 1, r.getString(19)),
                 (datos["tipo"] as? JsonPrimitive)?.content ?: "", r.getLong(4), r.getString(3), datos,
                 r.getInt(10), r.getInt(11), r.getInt(13) == 1, r.getInt(14) == 1, r.getInt(12), guardados = r.getInt(15),
                 utiles = r.getInt(16), yoUtil = r.getInt(17) == 1, app = r.getString(18))
@@ -1438,6 +1447,7 @@ class Social(
         if (n >= 300) throw Problema(429, "despacio")
         val id = b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma) VALUES(?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma) }
         timbre(otro).value = id   // quien espera (la app abierta) se entera al instante
+        empujes.tocar(otro)       // y con la app cerrada, su teléfono recibe un toque (FCM)
         return id
     }
 
@@ -1473,10 +1483,12 @@ class Social(
 
     private fun avisar(para: Long, de: Long, tipo: String, objeto: String = "") {
         if (para == de) return
-        b.usar {
+        val app = b.usar {
             val app = if (tipo in setOf("publico", "megusta", "comentario", "respuesta")) leer("SELECT app FROM publicaciones WHERE id = ?", objeto.toLongOrNull()) { it.getString(1) }.firstOrNull() else null
             cambiar("INSERT INTO avisos(para, de, tipo, objeto, cuando, app) VALUES(?,?,?,?,?,?)", para, de, tipo, objeto, ahora(), app)
+            app
         }
+        empujes.tocar(para, app)
     }
 
     fun avisos(yo: Long, antes: Long?, app: String = "cajon"): List<Aviso> = b.usar {
@@ -1611,13 +1623,15 @@ class Social(
         }
         if (d.decision == "sin_falta") { ocultarReportado(d.que, d.objeto, false); return }
         equipo.registrar(yo.toString(), "contenido_retirar", d.que + ":" + d.objeto, d.regla, token)
-        // Se quita lo reportado.
+        // Se quita lo reportado. Lo que pone a un menor en riesgo se conserva oculto un año para las autoridades
+        // (el plazo de referencia de la REPORT Act de 2024); lo demás, 90 días.
         val id = d.objeto.toLongOrNull()
+        val guardar = if (d.regla == Moderacion.MENOR_EN_RIESGO) Moderacion.CONSERVAR_GRAVE else 90 * DIA
         b.usar {
             val retirados = when (d.que) {
                 "lugar" -> cambiar("UPDATE lugares SET retirado = 1 WHERE id = ?", id)
-                "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, id)
-                "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, id)
+                "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + guardar, id)
+                "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + guardar, id)
                 else -> 1
             }
             if (retirados == 0) throw Problema(409, "ya_resuelto")
@@ -1681,6 +1695,47 @@ class Social(
         }
     }
 
+    /* ----- Insignias (X-08) ----- */
+
+    /**
+     * Recalcula la insignia de todas las cuentas. La cuenta principal es la oficial de Fogón ("fogon"); después
+     * manda la decisión del equipo ([verificar]); sin decisión, una cuenta queda "verificada" sola si cumple
+     * [Verificacion]: antigüedad, correo, foto, sin faltas ni restricciones vigentes y suficientes seguidores que
+     * cuentan (cuentas con correo, activas y con antigüedad, para que no sirvan las cuentas hechas en serie).
+     */
+    fun revisarInsignias(): Unit = b.transaccion {
+        val t = ahora()
+        cambiar("""UPDATE cuentas SET insignia = CASE
+            WHEN id IN (SELECT cuenta FROM roles WHERE rol = 'principal') THEN 'fogon'
+            WHEN verificacion IN ('fogon', 'verificada') THEN verificacion
+            WHEN verificacion = 'no' THEN ''
+            WHEN creada <= ? AND correo IS NOT NULL AND foto = 1 AND cerrada = 0 AND borrar_el = 0
+                AND restringida_hasta <= ? AND suspendida_hasta <= ?
+                AND NOT EXISTS(SELECT 1 FROM faltas f WHERE f.cuenta = cuentas.id AND f.vence > ?)
+                AND (SELECT COUNT(*) FROM seguir s JOIN cuentas o ON o.id = s.de WHERE s.a = cuentas.id AND s.aceptada = 1
+                    AND o.borrar_el = 0 AND o.cerrada = 0 AND o.correo IS NOT NULL AND o.creada <= ?) >= ?
+                THEN 'verificada'
+            ELSE '' END""",
+            t - Verificacion.ANTIGUEDAD, t, t, t, t - Verificacion.ANTIGUEDAD_SEGUIDOR, Verificacion.SEGUIDORES)
+    }
+
+    /**
+     * El equipo da o quita la insignia de [CambioInsignia.usuario]: "verificada", "no" (nunca, aunque cumpla la
+     * regla) o "auto" (vuelve a la regla). "fogon" (cuenta oficial) solo la da la cuenta principal.
+     */
+    fun verificar(yo: Long, d: CambioInsignia, token: String? = null): Unit = b.transaccion {
+        equipo.requiere(yo, "gestionar_usuarios", token)
+        if (d.insignia !in setOf("fogon", "verificada", "no", "auto")) throw Problema(400, "insignia")
+        if (d.motivo.isBlank() || d.motivo.length > 500) throw Problema(400, "motivo")
+        if (d.insignia == "fogon" && equipo.rol(yo) != "principal") throw Problema(403, "solo_principal")
+        val destino = b.usar { leer("SELECT id FROM cuentas WHERE usuario = ?", d.usuario.lowercase()) { it.getLong(1) }.singleOrNull() } ?: throw Problema(404, "no_existe")
+        b.usar {
+            cambiar("UPDATE cuentas SET verificacion = ? WHERE id = ?", d.insignia.takeIf { it != "auto" }, destino)
+            equipo.registrar(yo.toString(), "insignia_" + d.insignia, destino.toString(), d.motivo, token)
+        }
+        revisarInsignias()
+    }
+
     private fun puntosVigentes(cuenta: Long) = b.usar { leer("SELECT coalesce(sum(puntos), 0) FROM faltas WHERE cuenta = ? AND vence > ?", cuenta, ahora()) { it.getInt(1) }.first() }
 
     private fun aplicarSancion(cuenta: Long, admin: Long, regla: String) {
@@ -1740,7 +1795,7 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
-        const val POLITICA = "2026-11-13"
+        const val POLITICA = "2026-11-11"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

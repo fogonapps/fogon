@@ -1674,6 +1674,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _recomendaciones = MutableStateFlow<Recomendaciones?>(null)
     val recomendaciones: StateFlow<Recomendaciones?> = _recomendaciones
     private var recomendando: Job? = null
+    /** X-07: las últimas búsquedas de este perfil, solo en el teléfono. */
+    val recientes by lazy { io.github.fogonapps.identidad.BusquedasRecientes(java.io.File(recursos.directorio, "busquedas-recientes.txt")) }
     private val historial by lazy { io.github.fogonapps.cajon.datos.HistorialParaTi(getApplication(), recursos.directorio) }
 
     /** El perfil de gustos, al día con el cajón, lo dicho y lo escuchado (ver [Rec.perfil]). */
@@ -1686,6 +1688,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      * sus géneros. Música: artistas parecidos de ListenBrainz. Libros: de sus autores (Open Library). Pendientes: los
      * suyos más parecidos al perfil. Solo las categorías que eligió.
      */
+    /** X-09: deslizar hacia abajo en Inicio arma otras recomendaciones y espera a que estén. */
+    suspend fun recargarRecomendaciones() { cargarRecomendaciones(otraVez = true); recomendando?.join() }
+
     fun cargarRecomendaciones(otraVez: Boolean = false) {
         if (recomendando?.isActive == true || (!otraVez && _recomendaciones.value != null)) return
         val e = _estado.value ?: return

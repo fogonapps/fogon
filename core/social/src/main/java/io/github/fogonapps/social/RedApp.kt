@@ -84,7 +84,9 @@ open class RedApp(
         _correoCuenta.value = cuenta.correo; _privada.value = cuenta.privada
         perfilesTelefono.actualizar(almacen.perfil, cuenta.nombre, cuenta.usuario, "")
     }
-    override fun alContarAvisos(cantidad: Int) {}
+    /** Lo que hace la app al contar los avisos sin leer (por ejemplo, darlos por vistos para la revisión con la app cerrada). */
+    var alContarAvisosRed: (Int) -> Unit = {}
+    override fun alContarAvisos(cantidad: Int) { alContarAvisosRed(cantidad) }
     override fun cargarCasos() = lanzar { _casos.value = cliente().casos() }
     override suspend fun entro(a: Acceso, nombreNuevo: String): Boolean {
         if (a.borrarEl > 0) { gracia.value = a; return false }

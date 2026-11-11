@@ -69,12 +69,13 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
             guardados.orEmpty().forEach { io.github.fogonapps.social.ui.TarjetaPublicacion(interfazCuenta(vm), it) }
         }
     ) else emptyList()
+    val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(identidad.nombre?.takeIf { it.isNotBlank() } ?: stringResource(R.string.tu_nombre), usuario.orEmpty(), identidad.foto, identidad.portada, identidad.bio,
         emptyList(), true, "yo", listOf(
             ContadorPerfil(e.sessions.size.toString(), stringResource(R.string.titulo_entrenos)),
             ContadorPerfil(vm.L.racha(e, vm.L.dias(e), vm.hoy()).actual.toString(), stringResource(R.string.perfil_racha)),
             ContadorPerfil(e.sessions.flatMap { it.entries.keys }.distinct().count { vm.L.maxKg(e, it) != null || vm.L.maxReps(e, it) != null }.toString(), stringResource(R.string.records)),
-        ), seccionesConGuardados)
+        ), seccionesConGuardados, insignia = miInsignia)
     io.github.fogonapps.perfil.Perfil(vista, elegida, { elegida = it }, nombreSuave = identidad.nombre.isNullOrBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {

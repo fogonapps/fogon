@@ -67,12 +67,13 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
         LaunchedEffect(usuario) { vm.red.cargarGuardados() }
         guardados.orEmpty().forEach { io.github.fogonapps.social.ui.TarjetaPublicacion(interfaz, it) }
     }) else emptyList()
+    val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto,
         portada, bio, emptyList(), true, "yo", listOf(
             ContadorPerfil(dias.toString(), stringResource(R.string.perfil_dias)),
             ContadorPerfil(e.movimientos.size.toString(), stringResource(R.string.movimientos)),
             ContadorPerfil(cumplidas.toString(), stringResource(R.string.perfil_cumplidas)),
-        ), secciones)
+        ), secciones, insignia = miInsignia)
     io.github.fogonapps.perfil.Perfil(vista, pestana, { pestana = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar) {

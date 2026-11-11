@@ -140,6 +140,14 @@ class Base(ruta: String) {
                 columna(s, "cuentas", "suspendida_hasta INTEGER NOT NULL DEFAULT 0")
                 columna(s, "cuentas", "cerrada INTEGER NOT NULL DEFAULT 0")
                 columna(s, "cuentas", "borrar_el INTEGER NOT NULL DEFAULT 0")
+                // X-08: la insignia que se ve junto al nombre ("fogon", "verificada" o nada) y la decisión del equipo
+                // que manda sobre la regla automática ("fogon", "verificada", "no" o null).
+                columna(s, "cuentas", "insignia TEXT NOT NULL DEFAULT ''")
+                columna(s, "cuentas", "verificacion TEXT")
+                // X-10: las direcciones UnifiedPush de los teléfonos (ver Empujes).
+                s.execute("CREATE TABLE IF NOT EXISTS empujes(endpoint TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL, cuando INTEGER NOT NULL)")
+                s.execute("CREATE INDEX IF NOT EXISTS empujes_cuenta ON empujes(cuenta, app)")
+                columna(s, "empujes", "sesion TEXT")
                 s.execute("CREATE TABLE IF NOT EXISTS motivos_borrado(cuando INTEGER NOT NULL, motivo TEXT NOT NULL, texto TEXT NOT NULL DEFAULT '')")
                 s.execute("""CREATE TABLE IF NOT EXISTS cambios_correo(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,

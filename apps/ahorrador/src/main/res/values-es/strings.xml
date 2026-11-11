@@ -417,7 +417,7 @@
   <string name="vas_menos">Vas gastando %1$d %% menos que a esta altura de %2$s.</string>
   <string name="vas_igual">Vas gastando lo mismo que a esta altura de %1$s.</string>
     <string name="banco_titulo">Anotar desde el banco</string>
-    <string name="banco_explicacion">Android permite a este acceso ver todas tus notificaciones. La Alcancía filtra primero por app: de Mensajes solo lee textos que empiezan por «Bancolombia:», si elegiste ese banco; de Nu solo conserva lo que entiende una regla. Todo lo demás se ignora y no se guarda. Solo lee alertas nuevas, no el historial de SMS. Puedes apagarlo aquí o revocar el acceso en Android.</string>
+    <string name="banco_explicacion">Android permite a este acceso ver todas tus notificaciones. La Alcancía filtra primero por app: de Mensajes solo lee textos que empiezan por «Bancolombia:», si elegiste ese banco; de Nu solo conserva lo que entiende una regla; de Nequi, Daviplata, Davivienda, Banco de Bogotá y BBVA lee su app y los SMS que los nombran, y siempre te pregunta antes de anotar. Todo lo demás se ignora y no se guarda. Solo lee alertas nuevas, no el historial de SMS. Puedes apagarlo aquí o revocar el acceso en Android.</string>
     <string name="banco_activar">Activar</string>
     <string name="banco_local">Todo se queda en este teléfono.</string>
     <string name="banco_permiso">Abrir acceso a notificaciones en Android</string>
@@ -429,7 +429,8 @@
     <string name="banco_app">Lo que envías y lo que recibes en la app de Nu. La hora se toma de la alerta.</string>
     <string name="banco_solo">Anotar solo</string>
     <string name="banco_solo_pista">Sin preguntar. Puedes revisar y deshacer abajo.</string>
-    <string name="banco_futuros">Los demás bancos se pueden elegir al crear cuentas. Sus alertas estarán disponibles cuando haya reglas probadas.</string>
+    <string name="banco_generico">Su app o los SMS que lo nombran. Lee el monto y si es gasto o ingreso, y siempre te pregunta antes de anotar.</string>
+    <string name="banco_futuros">Si un banco no entiende bien una alerta, te lo dice y no anota nada.</string>
     <string name="banco_enlaces">Cuentas enlazadas</string>
     <string name="banco_enlace">%1$s %2$s → %3$s</string>
     <string name="banco_desvincular">Cambiar enlace</string>
@@ -577,7 +578,7 @@
     <string name="cuenta_intro">La red de La Alcancía: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y celebren sus logros de ahorro.</string>
     <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir: un logro y, si quieres, el avance de tus metas en porcentaje. Nunca saldos, montos, cuentas, bancos ni movimientos. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
-    <string name="cuenta_politica_resumen">Ahora lo de cada app se guarda solo en tu cuenta, cifrado con tu contraseña: si reinstalas, vuelve. Nadie más lo puede leer, ni Fogón. De La Alcancía, en la red solo salen los logros que compartas y tus metas en porcentaje.</string>
+    <string name="cuenta_politica_resumen">Ahora, si tienes los avisos prendidos, llegan al instante: cuando tienes algo nuevo, Google (Firebase) le manda a tu teléfono un toque vacío, sin texto ni de quién, y la app pregunta el resto a Fogón. Además, contamos cuánto se guarda lo que se denuncia por poner a un menor en riesgo: un año, para las autoridades.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los logros que elijas y, si quieres, tus metas en porcentaje. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
     <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. Tu cuaderno local se conserva hasta que retires el perfil.</string>
     <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y los logros que compartes.</string>

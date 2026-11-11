@@ -15,7 +15,7 @@ import io.github.fogonapps.perfil.SeccionPerfil
 internal fun Estado.aPerfilVista(
     secciones: List<SeccionPerfil> = emptyList(), contadores: List<ContadorPerfil> = emptyList(), cuenta: MiCuenta? = null,
 ) = PerfilVista(ajustes.nombre, cuenta?.usuario ?: perfil.usuario, perfil.foto, perfil.portada, perfil.bio, perfil.enlaces,
-    privada = cuenta?.privada ?: false, relacion = "yo", contadores = contadores, secciones = secciones)
+    privada = cuenta?.privada ?: false, relacion = "yo", contadores = contadores, secciones = secciones, insignia = cuenta?.insignia.orEmpty())
 
 /** El servidor ya filtra las partes por visibilidad y relación; no se reconstruyen desde datos locales. */
 internal fun PerfilSocial.aPerfilVista(
@@ -25,7 +25,8 @@ internal fun PerfilSocial.aPerfilVista(
     return PerfilVista(persona.nombre.ifBlank { persona.usuario }, persona.usuario,
         if (!bloqueado && persona.foto) ClienteSocial.foto(persona.usuario) else "",
         if (bloqueado) "" else portada, if (bloqueado) "" else bio, if (bloqueado) emptyList() else enlaces,
-        persona.privada, relacion, if (bloqueado) emptyList() else contadores, if (cerrada || bloqueado) emptyList() else secciones)
+        persona.privada, relacion, if (bloqueado) emptyList() else contadores, if (cerrada || bloqueado) emptyList() else secciones,
+        insignia = if (bloqueado) "" else persona.insignia)
 }
 
 /** Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). */

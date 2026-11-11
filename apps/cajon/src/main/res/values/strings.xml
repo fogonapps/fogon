@@ -1345,8 +1345,7 @@
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
-  <string name="politica_resumen">Now each app’s data is saved automatically to your account, encrypted with your password, as already happened with your drawer: if you reinstall, it comes back. Nobody else can read it, not even Fogón.
-La Alcancía now uses the Fogón Social account: only the achievements you share and your goals as a percentage come from it.</string>
+  <string name="politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
@@ -1459,4 +1458,7 @@ La Alcancía now uses the Fogón Social account: only the achievements you share
     <string name="acceso_crear_clave">Create a password</string>
     <string name="acceso_crear_clave_pista">With it, your data is saved automatically to your account, encrypted, and comes back if you change phones or reinstall.</string>
     <string name="copia_crear">Create password</string>
+    <string name="busquedas_recientes">Recent searches</string>
+    <string name="busquedas_borrar">Clear all</string>
+    <string name="busquedas_quitar">Remove “%1$s”</string>
 </resources>

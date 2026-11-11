@@ -122,6 +122,11 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     val mensajes = _mensajes.receiveAsFlow()
 
     private val _candado = MutableStateFlow(prefsUi.getBoolean("candado", false))
+    /* X-10: avisos con la app cerrada: lo que se ve al abrir no vuelve a avisar, y la revisión sigue a la sesión. */
+    init {
+        red.alContarAvisosRed = { io.github.fogonapps.social.ui.Avisos.visto(getApplication(), idPerfil, avisos = it) }
+        viewModelScope.launch { red.usuario.collect { io.github.fogonapps.social.ui.Avisos.programar(getApplication()) } }
+    }
     init { io.github.fogonapps.ahorrador.datos.Formato.ocultar = prefsUi.getBoolean("ocultar", false) }
     val candado: StateFlow<Boolean> = _candado
 

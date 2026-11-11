@@ -25,6 +25,8 @@ data class PerfilVista(
     val nombre: String, val usuario: String, val foto: String, val portada: String,
     val bio: String, val enlaces: List<String>, val privada: Boolean, val relacion: String,
     val contadores: List<ContadorPerfil> = emptyList(), val secciones: List<SeccionPerfil> = emptyList(),
+    /** La insignia que da el servidor ("fogon", "verificada" o ""): ver [InsigniaCuenta]. */
+    val insignia: String = "",
 )
 
 /** Conserva el encuadre y el avatar de cada fuente mediante huecos, sin depender de imágenes ni datos culturales. */
@@ -40,9 +42,12 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
         Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             foto()
             Column(Modifier.weight(1f).padding(top = 54.dp)) {
-                Text(vista.nombre, fontFamily = f.titulos, fontSize = 26.sp,
-                    lineHeight = if (interlineado) 26.sp * 1.15f else androidx.compose.ui.unit.TextUnit.Unspecified,
-                    color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(vista.nombre, Modifier.weight(1f, fill = false), fontFamily = f.titulos, fontSize = 26.sp,
+                        lineHeight = if (interlineado) 26.sp * 1.15f else androidx.compose.ui.unit.TextUnit.Unspecified,
+                        color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    InsigniaCuenta(vista.insignia, tamano = 22.dp)
+                }
                 bajoNombre()
             }
         }

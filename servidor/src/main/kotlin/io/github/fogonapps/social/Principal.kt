@@ -54,7 +54,11 @@ fun main(args: Array<String>) {
         finally { base.cerrar() }
         return
     }
-    val social = Social(base, File(datos, "fotos"), cartero = avisos, principal = System.getenv("PRINCIPAL"))
+    // X-10: la cuenta de servicio de Firebase (FCM_CUENTA: la ruta del JSON, fuera del repo). Sin ella, no hay toques.
+    val fcm = System.getenv("FCM_CUENTA")?.takeIf { it.isNotBlank() }?.let { ruta ->
+        runCatching { Fcm(File(ruta).readText()) }.onFailure { System.err.println("FCM_CUENTA no se pudo leer: sin avisos al instante.") }.getOrNull()
+    }
+    val social = Social(base, File(datos, "fotos"), cartero = avisos, principal = System.getenv("PRINCIPAL"), mensajero = fcm)
     correoListo = cartero != null
     Momento.empezar()
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
@@ -82,6 +86,9 @@ data class ErrorConFecha(val error: String, val desde: Long)
 fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY"))) {
     launch {
         while (isActive) {
+            try { social.revisarInsignias() } catch (_: Exception) {
+                environment.log.error("No se pudieron revisar las insignias")
+            }
             try { social.limpiarSeguridad() } catch (_: Exception) {
                 environment.log.error("No se pudo completar la limpieza de seguridad")
             }
@@ -181,6 +188,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             put("/cuenta/apodo") { social.cambiarApodo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/usuario") { call.respond(mapOf("usuario" to social.cambiarUsuario(call.yo(), call.receive()))) }
+            put("/empuje") { social.empujes.registrar(call.yo(), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            delete("/empuje") { social.empujes.quitar(call.yo(), call.receive<EmpujeNuevo>().token); call.respond(HttpStatusCode.NoContent) }
             get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
@@ -331,6 +340,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/admin/publicaciones/retirar") { social.retirar(call.requiere("gestionar_publicaciones"), call.receive<ContenidoEquipo>().copy(que = "publicacion"), call.token()); call.respond(HttpStatusCode.NoContent) }
             post("/admin/comentarios/retirar") { social.retirar(call.requiere("moderar_comentarios"), call.receive<ContenidoEquipo>().copy(que = "comentario"), call.token()); call.respond(HttpStatusCode.NoContent) }
             post("/admin/restaurar") { social.restaurar(call.requiere("gestionar_publicaciones"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/insignias") { social.verificar(call.requiere("gestionar_usuarios"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             post("/admin/sanciones/levantar") { social.levantarSancion(call.requiere("gestionar_usuarios"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/admin/casos") { call.respond(social.casos(call.requiere("ver_reportes"), call.token())) }
             post("/admin/decidir") { social.decidir(call.requiere("sancionar"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }

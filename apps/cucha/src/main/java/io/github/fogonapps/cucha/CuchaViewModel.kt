@@ -94,9 +94,17 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES))
     /** D-033: el diario se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-cucha-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
-        leer = { _estado.value?.let { JsonCucha.encodeToString(Estado.serializer(), it) } },
+        leer = { _estado.value?.let { e -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            io.github.fogonapps.cucha.datos.conFotos(JsonCucha.encodeToString(Estado.serializer(), e), e.fotosRecetas) } } },
         aplicar = { texto ->
-            val remoto = L.normalizar(JsonCucha.decodeFromString(Estado.serializer(), texto))
+            // Las fotos de las recetas vienen adentro: se escriben en este teléfono y reemplazan las rutas de otro.
+            val (json, fotos) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                io.github.fogonapps.cucha.datos.sacarFotos(texto, java.io.File(perfiles.directorio(idPerfil), "recetas"))
+            }
+            val leido = JsonCucha.decodeFromString(Estado.serializer(), json)
+            val conFotos = leido.copy(fotosRecetas = leido.fotosRecetas.filterValues { ruta ->
+                runCatching { java.io.File(java.net.URI(ruta)).exists() }.getOrDefault(false) } + fotos)
+            val remoto = L.normalizar(conFotos)
             _estado.value = remoto; ultimoGuardado = remoto
             almacen.updateData { remoto }
             WidgetCalorias.actualizar(getApplication())
@@ -128,6 +136,11 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     private var guardado: Job? = null
     private val off by lazy { OpenFoodFacts() }
 
+    /* X-10: avisos con la app cerrada: lo que se ve al abrir no vuelve a avisar, y la revisión sigue a la sesión. */
+    init {
+        red.alContarAvisosRed = { io.github.fogonapps.social.ui.Avisos.visto(getApplication(), idPerfil, avisos = it) }
+        viewModelScope.launch { red.usuario.collect { io.github.fogonapps.social.ui.Avisos.programar(getApplication()) } }
+    }
     init {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())

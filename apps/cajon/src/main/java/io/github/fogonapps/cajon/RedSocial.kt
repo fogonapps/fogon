@@ -687,6 +687,10 @@ class RedSocial(
     }
 
     fun cargarNotas() { if (_usuario.value != null) lanzar { _notas.value = cliente().notas() } }
+    override suspend fun recargarFeed() {
+        super.recargarFeed()
+        if (_usuario.value != null) intentar(avisar = false) { _notas.value = cliente().notas() }
+    }
 
     /** Pone (o quita, si está vacía) tu nota de 24 horas; con [obra], va con su portada. */
     fun ponerNota(texto: String, obra: Obra? = null) = lanzar {

@@ -81,7 +81,7 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
         if (!conectado && permiso) BotonSecundario(stringResource(R.string.banco_reconectar), {
             android.service.notification.NotificationListenerService.requestRebind(ComponentName(c, EscuchaBanco::class.java))
         }, Modifier.fillMaxWidth())
-        listOf(Banco.BANCOLOMBIA, Banco.NU).forEach { banco ->
+        (listOf(Banco.BANCOLOMBIA, Banco.NU) + GENERICOS.filter { it in e.notificaciones.elegidos }).forEach { banco ->
             val ultima = remember(revision, banco) { preferencias.getLong("ultima:$banco", 0) }
             val vistas = remember(revision, banco) { preferencias.getLong("vistas:$banco", 0) }
             val entendidas = remember(revision, banco) { preferencias.getLong("entendidas:$banco", 0) }
@@ -92,10 +92,10 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
     }
     SeccionAjustes(stringResource(R.string.banco_elegir))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        listOf(Banco.BANCOLOMBIA, Banco.NU).forEach { banco ->
+        (listOf(Banco.BANCOLOMBIA, Banco.NU) + GENERICOS).forEach { banco ->
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                io.github.fogonapps.identidad.Interruptor(stringResource(banco.nombreBanco), stringResource(if (banco == Banco.BANCOLOMBIA) R.string.banco_sms else R.string.banco_app), banco in e.notificaciones.elegidos) { vm.elegirBanco(banco, it) }
-                if (banco in e.notificaciones.elegidos) io.github.fogonapps.identidad.Interruptor(stringResource(R.string.banco_solo), stringResource(R.string.banco_solo_pista), banco in e.notificaciones.solos) { vm.bancoSolo(banco, it) }
+                io.github.fogonapps.identidad.Interruptor(stringResource(banco.nombreBanco), stringResource(when (banco) { Banco.BANCOLOMBIA -> R.string.banco_sms; Banco.NU -> R.string.banco_app; else -> R.string.banco_generico }), banco in e.notificaciones.elegidos) { vm.elegirBanco(banco, it) }
+                if (banco in e.notificaciones.elegidos && banco !in GENERICOS) io.github.fogonapps.identidad.Interruptor(stringResource(R.string.banco_solo), stringResource(R.string.banco_solo_pista), banco in e.notificaciones.solos) { vm.bancoSolo(banco, it) }
             }
         }
         Pista(stringResource(R.string.banco_futuros), Modifier)

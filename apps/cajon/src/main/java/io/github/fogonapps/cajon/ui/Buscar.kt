@@ -38,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
@@ -78,6 +80,9 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
     val b by vm.busqueda.collectAsStateWithLifecycle()
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) { foco.requestFocus() }
+    // X-07: lo que se buscó queda en «Búsquedas recientes» al salir (o al tocar buscar en el teclado).
+    val textoActual by rememberUpdatedState(b.texto)
+    DisposableEffect(Unit) { onDispose { vm.recientes.anotar(textoActual) } }
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -88,6 +93,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) },
                 trailingIcon = if (b.texto.isNotEmpty()) ({ BotonIcono(Iconos.Cerrar, stringResource(R.string.borrar_texto)) { vm.buscar("") } }) else null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { vm.recientes.anotar(b.texto) }),
             )
         }
         // Los filtros: todo, películas, series, animes, música y libros (se corren a lo ancho).
@@ -234,6 +240,7 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
     val f = FogonTema.actual
     // Con su propio scroll: los géneros de abajo no caben en la pantalla.
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Recientes(vm)
         LoDelMomento(vm, b.seccion)
         Secciones.BUSQUEDA.drop(1).forEach { s ->
             Row(Modifier.fillMaxWidth().vidrio().clickable { vm.cambiarSeccion(s) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
@@ -508,4 +515,26 @@ fun tipoArtista(t: String): String = when (t) {
     Personas.AUTOR -> stringResource(R.string.tipo_autor)
     Personas.DIRECTOR -> stringResource(R.string.tipo_director)
     else -> t
+}
+
+/** X-07: las últimas búsquedas (solo en este teléfono): tocar una la repite; la equis la quita. */
+@Composable
+private fun Recientes(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val lista by vm.recientes.lista.collectAsStateWithLifecycle()
+    if (lista.isEmpty()) return
+    Column {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.busquedas_recientes), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.weight(1f))
+            androidx.compose.material3.TextButton({ vm.recientes.borrarTodas() }) { Text(stringResource(R.string.busquedas_borrar), color = f.textoSuave) }
+        }
+        lista.forEach { t ->
+            Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(12.dp)).clickable { vm.buscar(t) }.padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconoRiso(io.github.fogonapps.identidad.IconosFogon.Reloj, null, tamano = 18.dp, tinta = f.textoSuave)
+                Text(t, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                BotonIcono(Iconos.Cerrar, stringResource(R.string.busquedas_quitar, t)) { vm.recientes.quitar(t) }
+            }
+        }
+    }
 }

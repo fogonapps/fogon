@@ -43,7 +43,7 @@ class EscuchaBanco : NotificationListenerService() {
         val cuando = momentoAlerta(desde, sbn.postTime, sbn.notification.`when`) ?: return
         if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
         val sms = Telephony.Sms.getDefaultSmsPackage(this)
-        if (!paqueteAdmitido(sbn.packageName, sms, setOf(Banco.BANCOLOMBIA, Banco.NU))) return
+        if (!paqueteAdmitido(sbn.packageName, sms, Banco.entries.toSet())) return
         // DataStore es la fuente de verdad también en la primera alerta, antes de cualquier collect.
         val bancos = runBlocking(Dispatchers.IO) { (application as AhorradorApp).almacen.data.first().notificaciones.elegidos }
         if (!paqueteAdmitido(sbn.packageName, sms, bancos)) return
@@ -72,7 +72,7 @@ class EscuchaBanco : NotificationListenerService() {
                     if (BancoAvisos.desde(this@EscuchaBanco) != desde) anterior else {
                         val recibido = recibirBanco(anterior, a)
                         nuevo = recibido != anterior
-                        val resultado = if (nuevo && a.banco in recibido.notificaciones.solos) confirmarBanco(recibido, a.huella, automatico = true) else recibido
+                        val resultado = if (nuevo && a.banco in recibido.notificaciones.solos && a.banco !in GENERICOS) confirmarBanco(recibido, a.huella, automatico = true) else recibido
                         if (resultado != anterior) resultado.copy(updatedAt = System.currentTimeMillis()) else anterior
                     }
                 }
