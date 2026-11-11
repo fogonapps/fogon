@@ -148,6 +148,10 @@ class CajaFuerte(context: Context, val perfilId: String) {
     var usuarioSocial: String?
         get() = prefs.getString(prefijo + "usuario_social", null)
         set(v) = prefs.edit { if (v == null) remove(prefijo + "usuario_social") else putString(prefijo + "usuario_social", v) }
+    /** La revisión del perfil en el servidor que este teléfono ya tiene (si cambia, se editó desde otra app). */
+    var revisionPerfilVista: Long
+        get() = prefs.getLong(prefijo + "revision_perfil", 0L)
+        set(v) = prefs.edit { putLong(prefijo + "revision_perfil", v) }
     /** Recuperación pendiente al entrar; persiste si se cierra la app sin red. */
     var perfilRedPendiente: Boolean
         get() = prefs.getBoolean(prefijo + "perfil_red_pendiente", false)

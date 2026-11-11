@@ -2596,7 +2596,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     if (cambiado) guardarYa()
                     if (mismaSesion()) caja.aparienciaCuentaPendiente = false
                 },
-                local = { _estado.value?.let { io.github.fogonapps.cajon.datos.conImagenesPerfil(paraAfuera(it)) } },
+                local = { _estado.value?.let { paraAfuera(it) } },
+                empacar = { io.github.fogonapps.cajon.datos.empacarImagenes(it) },
+                desempacar = { io.github.fogonapps.cajon.datos.desempacarImagenes(it, java.io.File(recursos.directorio, "portadas")) },
                 guardar = { sobre, cambio -> c.guardarCajon(sobre, cambio) },
                 confirmar = {
                     if (mismaSesion()) caja.aparienciaCuentaPendiente = false

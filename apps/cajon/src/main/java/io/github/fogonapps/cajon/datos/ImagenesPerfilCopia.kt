@@ -38,3 +38,43 @@ fun restaurarImagenesPerfil(e: Estado, carpeta: File): Estado {
     return e.copy(perfil = p.copy(foto = escribir(p.fotoCopia, p.foto, "perfil-foto"), portada = escribir(p.portadaCopia, p.portada, "perfil-portada"),
         fotoCopia = "", portadaCopia = ""))
 }
+
+/*
+ * Lo mismo para todo el cajón: cualquier imagen del teléfono (`file://…`) que use (la foto y la portada del perfil,
+ * las portadas y fondos elegidos desde la galería para una obra, la foto de un artista) viaja en el campo
+ * «imagenesCopia» del JSON (ruta → base64), hasta [TOPE_TOTAL] bytes. Al traerlo, las que no existen en este
+ * teléfono se escriben en la carpeta de la app y la ruta vieja se cambia por la nueva en todo el cajón.
+ */
+private const val TOPE_TOTAL = 4_500_000
+private val RUTA = Regex("\"(file://[^\"\\\\]+)\"")
+
+fun empacarImagenes(json: String): String {
+    var total = 0
+    val datos = mutableMapOf<String, String>()
+    for (ruta in RUTA.findAll(json).map { it.groupValues[1] }.distinct()) {
+        val f = archivoLocal(ruta) ?: continue
+        if (total + f.length() > TOPE_TOTAL) continue
+        total += f.length().toInt()
+        datos[ruta] = Base64.getEncoder().encodeToString(f.readBytes())
+    }
+    if (datos.isEmpty()) return json
+    val o = JsonCajon.parseToJsonElement(json) as? kotlinx.serialization.json.JsonObject ?: return json
+    return kotlinx.serialization.json.JsonObject(o + ("imagenesCopia" to kotlinx.serialization.json.JsonObject(
+        datos.mapValues { kotlinx.serialization.json.JsonPrimitive(it.value) }))).toString()
+}
+
+fun desempacarImagenes(json: String, carpeta: File): String {
+    val o = runCatching { JsonCajon.parseToJsonElement(json) as? kotlinx.serialization.json.JsonObject }.getOrNull() ?: return json
+    val datos = o["imagenesCopia"] as? kotlinx.serialization.json.JsonObject ?: return json
+    var texto = kotlinx.serialization.json.JsonObject(o - "imagenesCopia").toString()
+    for ((ruta, valor) in datos) {
+        if (archivoLocal(ruta) != null) continue
+        val bytes = runCatching { Base64.getDecoder().decode((valor as kotlinx.serialization.json.JsonPrimitive).content) }.getOrNull()?.takeIf { it.size in 1..MAXIMO } ?: continue
+        carpeta.mkdirs()
+        val nombre = ruta.substringAfterLast('/').filter { it.isLetterOrDigit() || it in "-_." }.take(60).ifBlank { "imagen.jpg" }
+        val f = File(carpeta, nombre)
+        if (runCatching { f.writeBytes(bytes) }.isFailure) continue
+        texto = texto.replace("\"$ruta\"", "\"file://${f.absolutePath}\"")
+    }
+    return texto
+}

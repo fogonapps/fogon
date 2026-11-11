@@ -36,6 +36,12 @@ class PalabrasOcultasRed private constructor(c: Context) {
         prefs.edit().putString("lista", nueva.joinToString("\n")).apply()
         _lista.value = nueva
     }
+    /** Para la copia de la cuenta: reemplaza la lista con la que llegó. */
+    fun reemplazar(lista: List<String>) {
+        val nueva = lista.map { it.trim().take(40) }.filter { it.isNotEmpty() }.distinct().take(200)
+        prefs.edit().putString("lista", nueva.joinToString("\n")).apply()
+        _lista.value = nueva
+    }
     companion object {
         @Volatile private var una: PalabrasOcultasRed? = null
         fun de(c: Context) = una ?: synchronized(this) { una ?: PalabrasOcultasRed(c.applicationContext).also { una = it } }
@@ -98,4 +104,15 @@ fun FilasPrivacidadRed() {
     val terminos = stringResource(R.string.social_ruta_terminos)
     FilaAjuste(IconosFogon.Candado, stringResource(R.string.social_red_politica), null) { uri.openUri(ClienteSocial.SERVIDOR + politica) }
     FilaAjuste(IconosFogon.Lista, stringResource(R.string.social_red_terminos), null) { uri.openUri(ClienteSocial.SERVIDOR + terminos) }
+}
+
+/** La copia de la cuenta (JSON de la app) con las palabras ocultas adentro, en «palabrasOcultasCopia». */
+fun conPalabrasOcultas(json: String, c: Context): String = runCatching {
+    org.json.JSONObject(json).put("palabrasOcultasCopia", org.json.JSONArray(PalabrasOcultasRed.de(c).lista.value)).toString()
+}.getOrDefault(json)
+
+/** Si la copia trae palabras ocultas, quedan en este teléfono. */
+fun aplicarPalabrasOcultas(json: String, c: Context) {
+    val arr = runCatching { org.json.JSONObject(json).optJSONArray("palabrasOcultasCopia") }.getOrNull() ?: return
+    PalabrasOcultasRed.de(c).reemplazar((0 until arr.length()).map { arr.optString(it) })
 }

@@ -237,6 +237,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             delete("/foto") { social.quitarFoto(call.yo()); call.respond(HttpStatusCode.NoContent) }
             get("/fotos/{usuario}") { call.respondBytes(social.foto(call.lector(), call.usuario()), ContentType.Image.JPEG) }
             get("/perfiles/{usuario}") { call.respond(social.verPerfil(call.lector(), call.usuario())) }
+            // Cuándo cambió el perfil por última vez (desde cualquier app): El Cajón lo mira para traerse los cambios.
+            get("/perfil/revision") { call.respond(mapOf("revision" to social.revisionPerfil(call.yo()))) }
             get("/buscar") { call.respond(social.buscar(call.lector(), call.request.queryParameters["q"] ?: "")) }
 
             put("/publicaciones") { social.subirPublicaciones(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }

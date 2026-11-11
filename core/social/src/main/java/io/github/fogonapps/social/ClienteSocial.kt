@@ -136,10 +136,8 @@ open class ClienteSocial(
     suspend fun subirPerfil(p: PerfilSubido) {
         check(configuracion.idApp == "cajon") { "Usar subirPerfilApp con identidad explícita" }
         pedir("/perfil", "PUT", json(PerfilSubido.serializer(), p)) }
-    suspend fun revisionPerfil(): Long {
-        check(configuracion.idApp != "cajon")
-        return leer(RevisionPerfil.serializer(), pedir("/perfil/revision")).revision
-    }
+    /** La revisión del perfil (cambia cuando se edita desde cualquier app). */
+    suspend fun revisionPerfil(): Long = leer(RevisionPerfil.serializer(), pedir("/perfil/revision")).revision
     /** La identidad solo se envía tras una edición explícita; nunca se deduce del cuaderno local. */
     suspend fun subirPerfilApp(cambio: CambioPerfilApp): Long {
         check(configuracion.idApp != "cajon")

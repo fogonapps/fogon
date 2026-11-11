@@ -111,10 +111,10 @@ internal fun llaveParaRecuperacion(local: String?, crear: () -> String = Nube::l
 
 internal class CajonIlegible(causa: Exception) : java.io.IOException("No se pudo descifrar el cajón guardado", causa)
 
-internal fun abrirCajonRemoto(sobre: String, llave: String, autorizacion: String?): Estado? {
+internal fun abrirCajonRemoto(sobre: String, llave: String, autorizacion: String?, desempacar: (String) -> String = { it }): Estado? {
     if (sobre.isBlank()) return null
     return try {
-        JsonCajon.decodeFromString(Estado.serializer(), Nube.abrir(sobre, llave))
+        JsonCajon.decodeFromString(Estado.serializer(), desempacar(Nube.abrir(sobre, llave)))
     } catch (x: kotlinx.coroutines.CancellationException) {
         throw x
     } catch (x: Exception) {
@@ -133,20 +133,23 @@ internal suspend fun sincronizarCajonCifrado(
     local: () -> Estado?,
     guardar: suspend (String, Long) -> Unit,
     confirmar: () -> Unit,
+    /** Las imágenes del teléfono adentro de la copia, y de vuelta como archivos (ver ImagenesPerfilCopia). */
+    empacar: (String) -> String = { it },
+    desempacar: (String) -> String = { it },
 ): Boolean {
     while (vigente()) {
         val guardado = descargar()
         if (!vigente()) return false
         val permiso = autorizacion()
         val remoto = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            abrirCajonRemoto(guardado.sobre, llave, permiso)
+            abrirCajonRemoto(guardado.sobre, llave, permiso, desempacar)
         }
         if (!vigente()) return false
         if (remoto != null) unir(remoto)
         if (!vigente()) return false
         val actual = local() ?: return false
         val sobre = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            Nube.cerrar(JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(actual)), llave)
+            Nube.cerrar(empacar(JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(actual))), llave)
         }
         if (!vigente()) return false
         try {

@@ -257,6 +257,7 @@ class RedSocial(
         val marca = sesion.actual()
         if (caja.perfilRedPendiente) intentar(avisar = false) { traerPerfilPropio() }
         if (!sesion.vigente(marca)) return@launch
+        if (!sesion.vigente(marca)) return@launch
         val info = runCatching { ClienteSocial().info() }.getOrNull()
         if (!sesion.vigente(marca)) return@launch
         info?.let { i ->
@@ -275,7 +276,16 @@ class RedSocial(
             if (revision != revisionPolitica) return@intentar
             _privada.value = c.privada; _correoCuenta.value = c.correo; ponerCuenta(c)
             if (caja.redPermitida) {
+                // El perfil es uno solo para las cuatro apps: si se cambió desde otra (foto, nombre, bio, portada),
+                // se trae antes de subir nada, para no mostrar ni volver a subir uno viejo.
+                val r = runCatching { cliente().revisionPerfil() }.getOrNull()
+                if (r != null && sesion.vigente(marca)) {
+                    val vista = caja.revisionPerfilVista
+                    if (vista == 0L) caja.revisionPerfilVista = r
+                    else if (r != vista) caja.perfilRedPendiente = true
+                }
                 if (caja.perfilRedPendiente) traerPerfilPropio()
+                if (r != null && !caja.perfilRedPendiente && sesion.vigente(marca)) caja.revisionPerfilVista = r
                 recuperarCajon(); sincronizarYa()
             }
         }
@@ -548,6 +558,7 @@ class RedSocial(
             )
             if (!subido || !sesion.vigente(marca)) return@intentar
             val foto = e.perfil.foto
+            // Lo que se acaba de subir ya es lo de este teléfono: al final se anota su revisión para no traerlo de vuelta.
             when (accionFoto(foto, ultimaFoto, caja.borrarFotoRed)) {
                 "borrar" -> {
                     cliente.quitarFoto()
@@ -559,6 +570,7 @@ class RedSocial(
                     if (sesion.vigente(marca)) { ultimaFoto = foto; caja.borrarFotoRed = false }
                 }
             }
+            if (sesion.vigente(marca)) runCatching { caja.revisionPerfilVista = cliente.revisionPerfil() }
         }
     }
 

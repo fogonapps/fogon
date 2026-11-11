@@ -112,9 +112,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         { avisar(tx(it)) }, ::cambiarPerfil)
     /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-forzudo-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
-        leer = { _estado.value?.let { io.github.fogonapps.identidad.conApariencia(JsonGym.encodeToString(Estado.serializer(), L.paraNube(L.normalizar(it))), io.github.fogonapps.identidad.AlmacenApariencia.de(app)) } },
+        leer = { _estado.value?.let { io.github.fogonapps.social.ui.conPalabrasOcultas(io.github.fogonapps.identidad.conApariencia(JsonGym.encodeToString(Estado.serializer(), L.paraNube(L.normalizar(it))), io.github.fogonapps.identidad.AlmacenApariencia.de(app)), app) } },
         aplicar = { texto ->
             io.github.fogonapps.identidad.aplicarApariencia(texto, io.github.fogonapps.identidad.AlmacenApariencia.de(app))
+            io.github.fogonapps.social.ui.aplicarPalabrasOcultas(texto, app)
             val remoto = L.normalizar(JsonGym.decodeFromString(Estado.serializer(), texto)).copy(active = _estado.value?.active)
             _estado.value = remoto; ultimoGuardado = remoto
             escribiendo.withLock { almacen.updateData { remoto } }
@@ -190,6 +191,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             var primero = true
             io.github.fogonapps.identidad.AlmacenApariencia.de(getApplication()).estado.collect { if (primero) primero = false else copia.cambio() }
+        }
+        viewModelScope.launch {
+            var primeraVez = true
+            io.github.fogonapps.social.ui.PalabrasOcultasRed.de(getApplication()).lista.collect { if (primeraVez) primeraVez = false else copia.cambio() }
         }
     }
 

@@ -95,9 +95,10 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     /** D-033: el diario se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-cucha-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
         leer = { _estado.value?.let { e -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            io.github.fogonapps.identidad.conApariencia(io.github.fogonapps.cucha.datos.conFotos(JsonCucha.encodeToString(Estado.serializer(), e), e.fotosRecetas), io.github.fogonapps.identidad.AlmacenApariencia.de(app)) } } },
+            io.github.fogonapps.social.ui.conPalabrasOcultas(io.github.fogonapps.identidad.conApariencia(io.github.fogonapps.cucha.datos.conFotos(JsonCucha.encodeToString(Estado.serializer(), e), e.fotosRecetas), io.github.fogonapps.identidad.AlmacenApariencia.de(app)), app) } } },
         aplicar = { texto ->
             io.github.fogonapps.identidad.aplicarApariencia(texto, io.github.fogonapps.identidad.AlmacenApariencia.de(app))
+            io.github.fogonapps.social.ui.aplicarPalabrasOcultas(texto, app)
             // Las fotos de las recetas vienen adentro: se escriben en este teléfono y reemplazan las rutas de otro.
             val (json, fotos) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 io.github.fogonapps.cucha.datos.sacarFotos(texto, java.io.File(perfiles.directorio(idPerfil), "recetas"))
@@ -142,6 +143,10 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             var primero = true
             io.github.fogonapps.identidad.AlmacenApariencia.de(getApplication()).estado.collect { if (primero) primero = false else copia.cambio() }
+        }
+        viewModelScope.launch {
+            var primeraVez = true
+            io.github.fogonapps.social.ui.PalabrasOcultasRed.de(getApplication()).lista.collect { if (primeraVez) primeraVez = false else copia.cambio() }
         }
     }
 
