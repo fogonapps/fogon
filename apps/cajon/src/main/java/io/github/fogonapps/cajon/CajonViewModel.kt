@@ -2580,7 +2580,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 autorizacion = { caja.reemplazarCajonRemoto },
                 vigente = ::mismaSesion,
                 descargar = { c.cajon() },
-                unir = { remoto ->
+                unir = { remoto0 ->
+                    val remoto = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        io.github.fogonapps.cajon.datos.restaurarImagenesPerfil(remoto0, java.io.File(recursos.directorio, "portadas"))
+                    }
                     escuchas.unir(remoto.escuchas)
                     val local = _estado.value ?: throw java.io.IOException("sin cajón local")
                     val entrada = caja.aparienciaCuentaPendiente
@@ -2593,7 +2596,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     if (cambiado) guardarYa()
                     if (mismaSesion()) caja.aparienciaCuentaPendiente = false
                 },
-                local = { _estado.value?.let { paraAfuera(it) } },
+                local = { _estado.value?.let { io.github.fogonapps.cajon.datos.conImagenesPerfil(paraAfuera(it)) } },
                 guardar = { sobre, cambio -> c.guardarCajon(sobre, cambio) },
                 confirmar = {
                     if (mismaSesion()) caja.aparienciaCuentaPendiente = false

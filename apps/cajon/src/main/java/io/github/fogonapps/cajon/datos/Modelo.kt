@@ -330,6 +330,9 @@ data class Perfil(
     val bio: String = "",
     val foto: String = "",
     val portada: String = "",
+    /** Solo en la copia de la cuenta: la foto y la portada del teléfono, en base64 (ver ImagenesPerfilCopia). */
+    val fotoCopia: String = "",
+    val portadaCopia: String = "",
     val enlaces: List<String> = emptyList(),
     /** Hueco de [Destacados] → id de una obra (o de un artista en [Destacados.ARTISTA]). */
     val destacados: Map<String, String> = emptyMap(),
