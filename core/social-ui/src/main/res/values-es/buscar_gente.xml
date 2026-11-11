@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gente_buscar">Buscar personas</string>
+    <string name="gente_pista">Nombre o @usuario</string>
+    <string name="gente_recientes">Búsquedas recientes</string>
+    <string name="gente_borrar">Borrar todas</string>
+    <string name="gente_quitar">Quitar «%1$s»</string>
+    <string name="gente_vacio">Escribe un nombre o un @usuario para encontrar a alguien.</string>
+    <string name="gente_error">No se pudo buscar. Revisa tu conexión.</string>
+    <string name="gente_sin_resultados">Nadie con ese nombre o usuario.</string>
+</resources>

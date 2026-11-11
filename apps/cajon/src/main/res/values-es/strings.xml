@@ -891,12 +891,10 @@
   <string name="aj_traer_pista">Netflix, Letterboxd, Goodreads, Spotify y Last.fm</string>
   <string name="aj_apariencia_idioma">Apariencia e idioma</string>
   <string name="aj_apariencia_pista">Tema, colores y letra</string>
-  <string name="notif_canal">La red</string>
-  <string name="notif_titulo">El Cajón</string>
-  <string name="notif_explica">El permiso de mostrar notificaciones sirve para avisarte de novedades de la red y mensajes con un recuento, sin mostrar su contenido. Con la app cerrada se comprueba cada 15 minutos, si Android lo permite. No permite leer las notificaciones de otras apps.</string>
+  <string name="notif_explica">El permiso de mostrar notificaciones sirve para avisarte de novedades de la red y mensajes: quién y qué («@pedro empezó a seguirte», «@ana te escribió»). Con la app cerrada llegan al instante; en teléfonos sin los servicios de Google, cada 15 minutos o más. No permite leer las notificaciones de otras apps.</string>
   <string name="notif_de_avisos">Me gusta, comentarios, seguidores y publicaciones de tu gente</string>
   <string name="notif_de_mensajes">Mensajes nuevos</string>
-  <string name="notif_privacidad">La notificación solo dice cuántos hay, nunca qué dicen ni de quién son.</string>
+  <string name="notif_privacidad">Nunca se muestra el texto de un mensaje. En la pantalla bloqueada solo se ve cuántos hay.</string>
   <string name="palabras_explica">Las publicaciones y los comentarios que lleven estas palabras no te salen. Solo en tu teléfono: nadie se entera.</string>
   <string name="palabras_agregar">Agregar una palabra</string>
   <string name="palabras_vacio">Todavía no escondes ninguna palabra.</string>
@@ -938,14 +936,6 @@
   <string name="red_usuario_espera">Solo se puede cambiar una vez cada 30 días</string>
   <string name="red_suspendida">Tu cuenta está suspendida por incumplir las normas</string>
   <string name="red_aviso_publico">publicó algo nuevo</string>
-  <plurals name="notif_avisos">
-    <item quantity="one">%1$d aviso nuevo</item>
-    <item quantity="other">%1$d avisos nuevos</item>
-  </plurals>
-  <plurals name="notif_mensajes">
-    <item quantity="one">%1$d mensaje nuevo</item>
-    <item quantity="other">%1$d mensajes nuevos</item>
-  </plurals>
   <string name="red_al_dia">Estás al día</string>
   <string name="red_al_dia_texto">Ya viste lo de ahora. Vuelve más tarde, o anota algo en tu cajón.</string>
   <string name="red_porque_obra">Porque tienes «%1$s» en tu cajón</string>

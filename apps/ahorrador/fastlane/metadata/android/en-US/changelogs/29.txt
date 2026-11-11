@@ -1,1 +1,0 @@
-Logging from your bank now also reads Nequi, Daviplata, Davivienda, Banco de Bogotá and BBVA (it always asks before saving). Notifications from your people with the app closed, right away. Verified badge. Pull down on Your people to refresh. New privacy policy to accept.

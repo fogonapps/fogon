@@ -126,6 +126,9 @@ abstract class ControladorSocial(
         _listas.value = _listas.value.mapValues { (_, xs) -> l(xs)!! }
     }
 
+    /** Personas por nombre o @usuario (X-07). */
+    suspend fun buscarPersonas(q: String): List<PersonaSocial> = cliente().buscar(q)
+
     fun buscarPublicacion(id: Long): PublicacionSocial? =
         _vistas.value[id] ?: (_feed.value.orEmpty() + _explorar.value.orEmpty() + _guardados.value.orEmpty() + _perfiles.value.values.flatMap { it.publicaciones }).firstOrNull { it.id == id }
 

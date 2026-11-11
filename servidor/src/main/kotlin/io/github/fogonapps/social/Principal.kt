@@ -190,6 +190,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             put("/cuenta/usuario") { call.respond(mapOf("usuario" to social.cambiarUsuario(call.yo(), call.receive()))) }
             put("/empuje") { social.empujes.registrar(call.yo(), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             delete("/empuje") { social.empujes.quitar(call.yo(), call.receive<EmpujeNuevo>().token); call.respond(HttpStatusCode.NoContent) }
+            get("/mensajes/remitentes") { call.respond(mapOf("de" to social.remitentesSinLeer(call.yo()))) }
             get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }

@@ -7,6 +7,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
@@ -269,6 +270,10 @@ open class ClienteSocial(
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
+    /** Quiénes escribieron (sin abrir ni borrar nada); vacío si el servidor todavía no lo sabe decir. */
+    suspend fun remitentesSinLeer(): List<String> = runCatching {
+        JsonSocial.parseToJsonElement(pedir("/mensajes/remitentes")!!).jsonObject["de"]!!.jsonArray.map { it.jsonPrimitive.content }
+    }.getOrDefault(emptyList())
     suspend fun mensajesSinLeer(): Int = JsonSocial.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
     /** Como [recibir], pero el servidor espera hasta 25 s a que llegue algo: con la app abierta, el mensaje llega al instante. */

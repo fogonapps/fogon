@@ -34,6 +34,9 @@ class EmpujesTest {
             s.mandar(idBeto, "anabel", SobreNuevo("x".repeat(40), "f".repeat(40)))
             esperar { t3 in tocados && b.usar { leer("SELECT COUNT(*) FROM empujes") { it.getInt(1) }.first() } == 2 }
             assertEquals(3, tocados.size)
+            // La notificación puede decir quién escribió sin abrir ni borrar el mensaje.
+            assertEquals(listOf("roberto"), s.remitentesSinLeer(idAna))
+            assertEquals(1, s.mensajesSinLeer(idAna))
         } finally { b.cerrar(); dir.deleteRecursively() }
     }
 

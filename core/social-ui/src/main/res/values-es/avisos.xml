@@ -10,4 +10,7 @@
         <item quantity="other">%1$d mensajes nuevos</item>
     </plurals>
     <string name="fondo_activar">Avisos con la app cerrada</string>
+    <string name="fondo_y_mas">%1$s, y %2$d más</string>
+    <string name="fondo_te_escribio">@%1$s te escribió</string>
+    <string name="fondo_te_escribieron">Mensajes de %1$s</string>
 </resources>

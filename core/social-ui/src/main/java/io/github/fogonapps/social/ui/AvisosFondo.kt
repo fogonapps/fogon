@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit
 
 /*
  * Los avisos de la red con la app cerrada, iguales en las cuatro apps (X-10): al instante con el toque de
- * [AvisosAlInstante] y, de respaldo, cada 15 minutos con WorkManager (lo que deja Android), la app pregunta con su propia sesión cuántos avisos y mensajes nuevos hay ([AvisosFondo]). La
- * notificación solo dice cuántos, nunca qué ni de quién.
+ * [AvisosAlInstante] y, de respaldo, cada 15 minutos con WorkManager (lo que deja Android), la app pregunta con su
+ * propia sesión qué hay de nuevo ([AvisosFondo]). La notificación dice quién y qué («@pedro empezó a seguirte»,
+ * «@ana te escribió»), nunca el texto de un mensaje; en la pantalla bloqueada, solo cuántos.
  */
 
 /** Una cuenta con sesión en este teléfono. [vigente] dice si la sesión sigue siendo la misma mientras se revisa. */
@@ -59,22 +60,35 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
                 val vigente = cliente.info().politica
                 permitido = vigente.isNotBlank() && !debeAceptarPolitica(true, cliente.miCuenta().politica, vigente)
                 if (!permitido || !cuenta.vigente()) return@runBlocking null
-                cliente.sinLeer() to (if (app.avisosConMensajes) cliente.mensajesSinLeer() else 0)
+                val conteo = cliente.sinLeer() to (if (app.avisosConMensajes) cliente.mensajesSinLeer() else 0)
+                // Quién y qué, solo si hay algo nuevo (para no pedir de más).
+                val p = cuenta.perfil
+                val ultimos = if (conteo.first > prefs.getInt("p$p.avisos", 0)) runCatching { cliente.avisos().filter { !it.leido } }.getOrDefault(emptyList()) else emptyList()
+                val remitentes = if (app.avisosConMensajes && conteo.second > prefs.getInt("p$p.mensajes", 0)) cliente.remitentesSinLeer() else emptyList()
+                Triple(conteo, ultimos, remitentes)
             } }.getOrNull()
             if (resultado == null) { reintentar = true; continue }
             if (!cuenta.vigente()) continue
-            val (avisos, mensajes) = resultado
+            val (conteo, ultimos, remitentes) = resultado
+            val (avisos, mensajes) = conteo
             val p = cuenta.perfil
             val antes = prefs.getInt("p$p.avisos", 0) to prefs.getInt("p$p.mensajes", 0)
             prefs.edit().putInt("p$p.avisos", avisos).putInt("p$p.mensajes", mensajes).apply()
             val nuevosAvisos = avisos > antes.first && Avisos.activo(prefs, p, Avisos.AVISOS)
             val nuevosMensajes = app.avisosConMensajes && mensajes > antes.second && Avisos.activo(prefs, p, Avisos.MENSAJES)
             if (!nuevosAvisos && !nuevosMensajes) continue
-            val texto = listOfNotNull(
+            // En la pantalla bloqueada solo se ve cuántos; desbloqueado, quién y qué (nunca el texto de un mensaje).
+            val cuantos = listOfNotNull(
                 if (nuevosAvisos) c.resources.getQuantityString(R.plurals.fondo_avisos, avisos, avisos) else null,
                 if (nuevosMensajes) c.resources.getQuantityString(R.plurals.fondo_mensajes, mensajes, mensajes) else null,
             ).joinToString(" · ")
-            Avisos.notificar(c, app, texto, p, cuenta.usuario)
+            val detalle = listOfNotNull(
+                if (nuevosAvisos) ultimos.maxByOrNull { it.cuando }?.let { a -> Avisos.frase(c, a).let { f -> if (avisos > 1) c.getString(R.string.fondo_y_mas, f, avisos - 1) else f } } else null,
+                if (nuevosMensajes) remitentes.takeIf { it.isNotEmpty() }?.let { r ->
+                    if (r.size == 1) c.getString(R.string.fondo_te_escribio, r[0]) else c.getString(R.string.fondo_te_escribieron, r.take(3).joinToString(", ") { "@$it" })
+                } else null,
+            ).joinToString(" · ").ifBlank { cuantos }
+            Avisos.notificar(c, app, detalle, p, cuenta.usuario, publico = cuantos)
         }
         return if (reintentar) Result.retry() else Result.success()
     }
@@ -126,14 +140,29 @@ object Avisos {
         }.apply()
     }
 
-    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String) {
+    /** Un aviso en palabras: «@pedro empezó a seguirte». */
+    internal fun frase(c: Context, a: io.github.fogonapps.social.AvisoSocial): String {
+        if (a.tipo == "sancion") return c.getString(R.string.social_red_aviso_sancion)
+        val que = c.getString(when (a.tipo) {
+            "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta
+            "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
+            "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada
+            "publico" -> R.string.social_red_aviso_publico; else -> R.string.social_red_aviso_otro
+        })
+        return "@${a.de.usuario} $que"
+    }
+
+    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto) {
         val nm = c.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CANAL, c.getString(R.string.fondo_canal), NotificationManager.IMPORTANCE_DEFAULT))
         val abrir = PendingIntent.getActivity(c, perfil.toIntOrNull() ?: 0, app.avisosAbrir(perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val titulo = app.avisosConfiguracion.nombreVisible + " · @" + usuario
+        val publica = NotificationCompat.Builder(c, CANAL).setSmallIcon(app.avisosIcono).setContentTitle(titulo).setContentText(publico).build()
         val n = NotificationCompat.Builder(c, CANAL).setSmallIcon(app.avisosIcono)
-            .setContentTitle(app.avisosConfiguracion.nombreVisible + " · @" + usuario)
-            .setContentText(texto).setContentIntent(abrir).setAutoCancel(true).build()
+            .setContentTitle(titulo).setContentText(texto).setStyle(NotificationCompat.BigTextStyle().bigText(texto))
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publica)
+            .setContentIntent(abrir).setAutoCancel(true).build()
         runCatching { nm.notify(perfil, 7, n) }
     }
 }

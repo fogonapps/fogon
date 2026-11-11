@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gente_buscar">Find people</string>
+    <string name="gente_pista">Name or @username</string>
+    <string name="gente_recientes">Recent searches</string>
+    <string name="gente_borrar">Clear all</string>
+    <string name="gente_quitar">Remove “%1$s”</string>
+    <string name="gente_vacio">Type a name or @username to find someone.</string>
+    <string name="gente_error">Couldn\'t search. Check your connection.</string>
+    <string name="gente_sin_resultados">No one with that name or username.</string>
+</resources>

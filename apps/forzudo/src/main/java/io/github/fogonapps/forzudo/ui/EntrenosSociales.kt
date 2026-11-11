@@ -158,6 +158,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
     when (destino.destino) {
         "publicacion" -> PublicacionRed(interfaz, destino.id)
         "avisos" -> AvisosRed(interfaz)
+        "buscar" -> io.github.fogonapps.social.ui.BuscarGente(interfaz, java.io.File(vm.perfiles.directorio(vm.idPerfil), "busquedas-gente.txt"), vm::cerrar)
         "guardados" -> GuardadosRed(interfaz)
         "moderacion" -> Moderacion(interfaz)
         "etiqueta" -> EtiquetaRed(interfaz, destino.usuario)
@@ -209,6 +210,7 @@ fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), con
         if (usuario != null) ConCuentaSocial(sinLeer) {
             BotonIconoSocial(IconosFogon.Campana, stringResource(R.string.entreno_avisos), grande = true) { vm.abrir(Pantalla.Social("avisos")) }
         }
+        if (usuario != null) BotonIconoSocial(io.github.fogonapps.social.ui.IconoBuscar, stringResource(io.github.fogonapps.social.ui.R.string.gente_buscar), grande = true) { vm.abrir(Pantalla.Social("buscar")) }
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.entreno_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }
     if (usuario == null) BotonRiso(stringResource(R.string.entreno_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))

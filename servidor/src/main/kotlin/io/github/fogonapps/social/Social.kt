@@ -1012,6 +1012,11 @@ class Social(
         b.usar { leer("SELECT de FROM seguir WHERE a = ? AND aceptada = 1", yo) { it.getLong(1) } }.forEach { avisar(it, yo, "publico", id.toString()) }
     }
 
+    /** Quiénes le escribieron y todavía no los recibió (los más recientes primero, hasta 5): para la notificación, sin abrir nada. */
+    fun remitentesSinLeer(yo: Long): List<String> = b.usar {
+        leer("SELECT de, MAX(id) FROM mensajes WHERE para = ? GROUP BY de ORDER BY MAX(id) DESC LIMIT 20", yo) { it.getLong(1) }
+    }.filter { !bloqueado(yo, it) && visible(it) }.take(5).map { persona(it).usuario }
+
     fun mensajesSinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ?", yo) { it.getInt(1) }.first() }
 
     /** Las publicaciones que cumplen [donde] (SQL sobre `p`), con su autor y sus cifras, en una sola consulta; con el id del autor. */

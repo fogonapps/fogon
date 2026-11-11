@@ -891,12 +891,10 @@
   <string name="aj_traer_pista">Netflix, Letterboxd, Goodreads, Spotify and Last.fm</string>
   <string name="aj_apariencia_idioma">Appearance and language</string>
   <string name="aj_apariencia_pista">Theme, colors and type</string>
-  <string name="notif_canal">The network</string>
-  <string name="notif_titulo">El Cajón</string>
-  <string name="notif_explica">Permission to show notifications lets you receive counts of network updates and messages without their content. With the app closed, checks run every 15 minutes when Android allows them. It does not grant access to other apps’ notifications.</string>
+  <string name="notif_explica">Permission to show notifications lets you know about network updates and messages: who and what (“@pedro started following you”, “@ana sent you a message”). With the app closed they arrive right away; on phones without Google services, every 15 minutes or more. It does not grant access to other apps’ notifications.</string>
   <string name="notif_de_avisos">Likes, comments, followers and posts from your people</string>
   <string name="notif_de_mensajes">New messages</string>
-  <string name="notif_privacidad">The notification only says how many, never what they say or who they’re from.</string>
+  <string name="notif_privacidad">A message’s text is never shown. On the lock screen you only see how many there are.</string>
   <string name="palabras_explica">Posts and comments with these words won’t show up for you. Only on your phone: nobody knows.</string>
   <string name="palabras_agregar">Add a word</string>
   <string name="palabras_vacio">You’re not hiding any words yet.</string>
@@ -938,14 +936,6 @@
   <string name="red_usuario_espera">You can only change it once every 30 days</string>
   <string name="red_suspendida">Your account is suspended for breaking the rules</string>
   <string name="red_aviso_publico">posted something new</string>
-  <plurals name="notif_avisos">
-    <item quantity="one">%1$d new notification</item>
-    <item quantity="other">%1$d new notifications</item>
-  </plurals>
-  <plurals name="notif_mensajes">
-    <item quantity="one">%1$d new message</item>
-    <item quantity="other">%1$d new messages</item>
-  </plurals>
   <string name="red_al_dia">You’re all caught up</string>
   <string name="red_al_dia_texto">You’ve seen what’s new. Come back later, or log something in your cajón.</string>
   <string name="red_porque_obra">Because you have “%1$s” in your cajón</string>
