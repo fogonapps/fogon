@@ -7,6 +7,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -178,23 +179,51 @@ fun RegistroEquipoPantalla(vm: InterfazSocial) {
         mas = siguiente != null
     }
     LaunchedEffect(Unit) { cargar(true) }
+    // Se busca por persona (@usuario) y por tipo de acción; cada entrada dice quién hizo qué, a quién y cuándo.
+    val grupos = listOf("" to R.string.registro_todo, "sancion" to R.string.registro_sanciones, "reporte" to R.string.registro_reportes,
+        "contenido" to R.string.registro_contenido, "insignia" to R.string.registro_insignias, "equipo" to R.string.registro_equipo,
+        "mfa" to R.string.registro_seguridad, "frase" to R.string.registro_frases)
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Pista(stringResource(R.string.social_registro_filtros))
-        CampoEquipo(actor, { actor = it }, R.string.social_registro_actor)
-        CampoEquipo(accion, { accion = it }, R.string.social_registro_accion)
-        BotonSecundario(stringResource(R.string.social_registro_filtrar), { scope.launch { cargar(true) } }, habilitado = !ocupada)
+        OutlinedTextField(actor, { actor = it.trim().take(40) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
+            label = { Text(stringResource(R.string.registro_quien)) }, prefix = { Text("@") },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { scope.launch { cargar(true) } }))
+        Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            grupos.forEach { (g, texto) -> Pildora(stringResource(texto), acento = accion == g) { accion = g; scope.launch { cargar(true) } } }
+        }
+        BotonSecundario(stringResource(R.string.registro_buscar), { scope.launch { cargar(true) } }, habilitado = !ocupada)
         if (!integra) Text(stringResource(R.string.social_registro_roto), color = MaterialTheme.colorScheme.error)
+        if (entradas.isEmpty() && !ocupada) Pista(stringResource(R.string.registro_vacio))
         entradas.forEach { e ->
-            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(12.dp)) {
-                Text("${e.actor} · ${e.accion}", color = FogonTema.actual.texto)
-                Text(e.objeto, color = FogonTema.actual.texto)
-                Text(e.detalle, color = FogonTema.actual.textoSuave)
-                Text(DateFormat.getDateTimeInstance().format(Date(e.cuando)), color = FogonTema.actual.textoSuave)
+            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                val quien = e.quien.ifBlank { e.actor }.let { if (it == "servidor") stringResource(R.string.registro_servidor) else "@$it" }
+                Text("$quien · ${nombreAccion(e.accion)}", style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.texto)
+                if (e.aQuien.isNotBlank()) Text("→ @${e.aQuien}", color = FogonTema.actual.texto)
+                else if (e.objeto.isNotBlank() && !e.objeto.all(Char::isDigit)) Text(e.objeto, color = FogonTema.actual.textoSuave)
+                if (e.detalle.isNotBlank()) Text(e.detalle, color = FogonTema.actual.textoSuave)
+                Text(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(e.cuando)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave)
             }
         }
         if (mas) BotonSecundario(stringResource(R.string.social_registro_mas), { scope.launch { cargar(false) } }, habilitado = !ocupada)
     }
 }
+
+/** El nombre de una acción del registro, en palabras. */
+@Composable
+private fun nombreAccion(accion: String): String = stringResource(when {
+    accion == "sancion_dar" -> R.string.registro_a_sancion_dar
+    accion == "sancion_levantar" -> R.string.registro_a_sancion_levantar
+    accion == "reporte_decidir" -> R.string.registro_a_reporte_decidir
+    accion == "contenido_retirar" -> R.string.registro_a_contenido_retirar
+    accion == "contenido_restaurar" -> R.string.registro_a_contenido_restaurar
+    accion.startsWith("insignia_") -> R.string.registro_a_insignia
+    accion.startsWith("equipo_") || accion.startsWith("principal_") -> R.string.registro_a_equipo
+    accion.startsWith("mfa_") -> R.string.registro_a_mfa
+    accion.startsWith("frase_") -> R.string.registro_a_frase
+    accion == "mensaje_abrir" -> R.string.registro_a_mensaje
+    accion.startsWith("lugar_") -> R.string.registro_a_lugar
+    else -> R.string.registro_a_otra
+}) + if (accion.startsWith("insignia_")) " (${accion.removePrefix("insignia_")})" else ""
 
 @Composable
 private fun OpcionEquipo(texto: String, valor: Boolean, cambiar: (Boolean) -> Unit) {

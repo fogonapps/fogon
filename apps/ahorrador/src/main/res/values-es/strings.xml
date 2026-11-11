@@ -300,7 +300,6 @@
   <string name="sobre_en_uso">Este sobre tiene gastos o pagos fijos, así que no se puede borrar. Puedes cambiarle el nombre, el color o el ícono.</string>
   <string name="sobre_grupo">Grupo (para 50/30/20 y kakeibo)</string>
   <string name="sobre_nombre">Nombre del sobre</string>
-  <string name="sobres_pista">Toca un sobre para ponerle plata.</string>
   <string name="solo_anotar_pista">Estás en «Solo anotar»: no hay presupuesto. Si quieres uno, elige otro sistema en Perfil.</string>
   <string name="suma_100">Suman %1$d %% (tienen que ser 100)</string>
   <string name="tarjeta_aproximado">El mínimo y los intereses son aproximados: cada banco los calcula a su manera. El valor exacto está en tu extracto.</string>

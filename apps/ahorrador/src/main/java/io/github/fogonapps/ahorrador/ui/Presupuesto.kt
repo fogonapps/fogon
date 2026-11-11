@@ -169,7 +169,6 @@ private fun Sobres(vm: AhorradorViewModel, e: Estado, mes: String) {
         BotonSecundario(stringResource(R.string.copiar_sobres, Formato.mes(mesAnterior(mes))), { vm.copiarSobresAnteriores(mes) },
             Modifier.fillMaxWidth().padding(horizontal = 16.dp))
     }
-    Pista(stringResource(R.string.sobres_pista))
     sobres.sortedByDescending { (it.asignado ?: 0) + it.gastado }.forEach { s -> TarjetaSobre(s, s.nombre) { editando = s } }
     BotonSecundario(stringResource(R.string.nuevo_sobre), { vm.abrir(Pantalla.EditarSobre(null)) }, Modifier.fillMaxWidth().padding(16.dp))
 

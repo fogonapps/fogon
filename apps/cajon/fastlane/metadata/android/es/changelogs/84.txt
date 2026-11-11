@@ -1,1 +1,0 @@
-Las notificaciones ahora dicen quién y qué: «@pedro empezó a seguirte», «@ana te escribió». Nunca muestran el texto de un mensaje, y en la pantalla bloqueada solo se ve cuántos hay.

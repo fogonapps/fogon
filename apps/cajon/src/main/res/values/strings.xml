@@ -682,7 +682,7 @@
   <string name="tut_funcion_compartir">Share from Netflix or Spotify straight to your cajón, or bring your history</string>
   <string name="tut_cuenta_titulo">Keep your cajón in your account</string>
   <string name="tut_cuenta_texto">With your email and a password, everything is saved (encrypted) and you have it on any phone</string>
-  <string name="gustos_elige_minimo">Pick at least 3: what you watch, listen to or read. Tap one and similar ones show up.</string>
+  <string name="gustos_elige_minimo">Pick at least 3: what you watch, listen to or read.</string>
   <string name="gustos_faltan">%1$d to go</string>
   <string name="gustos_recargar">Show others</string>
   <string name="red_correo_no_existe">%1$s doesn\'t have an account yet</string>
@@ -1325,13 +1325,6 @@
     <string name="catalogo_error">Could not load the catalog. Try another section.</string>
     <string name="catalogo_elige_primero">Choose something you like to find similar works.</string>
     <string name="catalogo_vacio">No more works in this section.</string>
-    <string name="tut_ejemplo">Example: %1$s</string>
-    <string name="tut_ejemplo_obra">A journey through pages</string>
-    <string name="tut_ejemplo_tarjeta">a work card</string>
-    <string name="tut_ejemplo_estrellas">four out of five stars</string>
-    <string name="tut_ejemplo_diario">a diary entry with four stars</string>
-    <string name="tut_ejemplo_resena">a review with four stars</string>
-    <string name="tut_ejemplo_resena_texto">I loved getting lost in this story. I want to read it again.</string>
   <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
@@ -1451,4 +1444,9 @@
     <string name="busquedas_recientes">Recent searches</string>
     <string name="busquedas_borrar">Clear all</string>
     <string name="busquedas_quitar">Remove “%1$s”</string>
+  <string name="tut_muestra_peli">Interstellar</string>
+  <string name="tut_muestra_anime">Spirited Away</string>
+  <string name="tut_muestra_libro">One Hundred Years of Solitude</string>
+  <string name="tut_muestra_descripcion">Interstellar, Spirited Away and One Hundred Years of Solitude with their stars, a diary entry and a review.</string>
+  <string name="tut_muestra_resena">Every time I watch it I find something new. The music and the drawings are wonderful.</string>
 </resources>

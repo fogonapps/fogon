@@ -108,7 +108,9 @@ open class ClienteSocial(
     suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
     suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }
-    suspend fun entrarConClave(correo: String, clave: String): Acceso = leer(Acceso.serializer(), pedir("/acceso/clave", "POST", json(EntradaClave.serializer(), EntradaClave(correo, clave, app = appProtocolo))))
+    /** Con la verificación en dos pasos, la primera vez responde 409 «codigo_requerido» y llega un código al correo. */
+    suspend fun entrarConClave(correo: String, clave: String, codigo: String = ""): Acceso = leer(Acceso.serializer(), pedir("/acceso/clave", "POST", json(EntradaClave.serializer(), EntradaClave(correo, clave, app = appProtocolo, codigo = codigo))))
+    suspend fun ponerDosPasos(activo: Boolean, clave: String) { pedir("/cuenta/dos-pasos", "PUT", json(DosPasos.serializer(), DosPasos(activo, clave))) }
     suspend fun ponerClave(nueva: String, actual: String = "") { pedir("/cuenta/clave", "PUT", json(CambioClave.serializer(), CambioClave(nueva, actual))) }
     suspend fun cambiarUsuario(u: String): String =
         JsonSocial.parseToJsonElement(pedir("/cuenta/usuario", "PUT", json(CambioUsuario.serializer(), CambioUsuario(u)))!!).jsonObject["usuario"]!!.jsonPrimitive.content

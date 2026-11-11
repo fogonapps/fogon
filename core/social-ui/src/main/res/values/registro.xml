@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="registro_quien">Who did it (empty: the whole team)</string>
+    <string name="registro_buscar">Search</string>
+    <string name="registro_vacio">Nothing matches those filters.</string>
+    <string name="registro_servidor">The server</string>
+    <string name="registro_todo">All</string>
+    <string name="registro_sanciones">Sanctions</string>
+    <string name="registro_reportes">Reports</string>
+    <string name="registro_contenido">Content</string>
+    <string name="registro_insignias">Badges</string>
+    <string name="registro_equipo">Team</string>
+    <string name="registro_seguridad">Security</string>
+    <string name="registro_frases">Phrases</string>
+    <string name="registro_a_sancion_dar">sanctioned</string>
+    <string name="registro_a_sancion_levantar">lifted a sanction</string>
+    <string name="registro_a_reporte_decidir">decided a report</string>
+    <string name="registro_a_contenido_retirar">removed content</string>
+    <string name="registro_a_contenido_restaurar">restored content</string>
+    <string name="registro_a_insignia">changed a badge</string>
+    <string name="registro_a_equipo">changed the team</string>
+    <string name="registro_a_mfa">two-step verification</string>
+    <string name="registro_a_frase">greeting phrases</string>
+    <string name="registro_a_mensaje">opened a reported message</string>
+    <string name="registro_a_lugar">fixed or removed a place</string>
+    <string name="registro_a_otra">other action</string>
+</resources>

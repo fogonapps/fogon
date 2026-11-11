@@ -1,6 +1,7 @@
 package io.github.fogonapps.cajon
 
 import android.app.Application
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import androidx.datastore.core.DataStore
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -75,6 +76,19 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
                     .dispatcher(okhttp3.Dispatcher().apply { maxRequestsPerHost = 12 })
                     .addInterceptor { c ->
                     c.proceed(c.request().newBuilder().header("User-Agent", "ElCajon-Fogon/${BuildConfig.VERSION_NAME} (fogonapps@gmail.com)").build())
+                }.addInterceptor { c ->
+                    // Open Library y Cover Art Archive tardan ~2 s (redirigen a archive.org): pasan por la caché del
+                    // servidor de Fogón, que las entrega al instante después de la primera vez. Si falla, directo.
+                    val pedido = c.request()
+                    val host = pedido.url.host
+                    if (host == "covers.openlibrary.org" || host == "coverartarchive.org") {
+                        val porServidor = pedido.newBuilder().url(io.github.fogonapps.social.ClienteSocial.SERVIDOR.toHttpUrl().newBuilder()
+                            .addPathSegments("v1/portada").addQueryParameter("u", pedido.url.toString()).build()).build()
+                        val r = runCatching { c.proceed(porServidor) }.getOrNull()
+                        if (r != null && r.isSuccessful) return@addInterceptor r
+                        r?.close()
+                    }
+                    c.proceed(pedido)
                 }.build()
             }))
         }

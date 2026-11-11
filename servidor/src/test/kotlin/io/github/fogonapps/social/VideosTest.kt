@@ -56,6 +56,10 @@ class VideosTest {
             ByteArray(MAX_VIDEO + 1) to "video_grande", mp4().also { it[0] = 127 } to "video_formato"
         )) assertEquals(codigo, assertFailsWith<Problema> { revisarVideo(datos) }.mensaje)
     }
+    @Test fun cupoDiarioDeVideos() = escenario { s, b, ana, _, _ ->
+        b.usar { repeat(Social.MAX_VIDEOS_DIA) { i -> cambiar("INSERT INTO videos(nombre, cuenta, cuando, duracion, ancho, alto) VALUES(?,?,?,1,1,1)", "relleno$i", ana, System.currentTimeMillis()) } }
+        assertEquals(429, assertFailsWith<Problema> { s.subirVideo(ana, mp4()) }.codigo)
+    }
     @Test fun propiedadExclusionVisibilidadYBorrado() = escenario { s, b, ana, beto, _ ->
         val nombre = s.subirVideo(ana, mp4()).nombre
         assertTrue(s.video(nombre, ana, null).isFile)

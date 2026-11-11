@@ -234,7 +234,6 @@ private fun Agua(meta: Int, lleva: Int, idioma: String, modifier: Modifier, onCa
                 ) { IconoRiso(Iconos.Gota, null, tamano = 14.dp, tinta = if (lleno) f.fondo else f.textoSuave) }
             }
         }
-        Pista(stringResource(R.string.agua_pista), adentro = true)
     }
 }
 

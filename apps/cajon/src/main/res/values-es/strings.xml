@@ -682,7 +682,7 @@
   <string name="tut_funcion_compartir">Comparte desde Netflix o Spotify directo a tu cajón, o trae tu historial</string>
   <string name="tut_cuenta_titulo">Guarda tu cajón en tu cuenta</string>
   <string name="tut_cuenta_texto">Con tu correo y una contraseña, todo queda guardado (cifrado) y lo tienes en cualquier teléfono</string>
-  <string name="gustos_elige_minimo">Elige al menos 3: lo que veas, escuches o leas. Al tocar una, salen parecidas.</string>
+  <string name="gustos_elige_minimo">Elige al menos 3: lo que veas, escuches o leas.</string>
   <string name="gustos_faltan">Faltan %1$d</string>
   <string name="gustos_recargar">Ver otras</string>
   <string name="red_correo_no_existe">%1$s no tiene cuenta todavía</string>
@@ -1327,13 +1327,6 @@
     <string name="catalogo_error">No se pudo cargar el catálogo. Prueba otra sección.</string>
     <string name="catalogo_elige_primero">Elige algo que te guste para encontrar obras parecidas.</string>
     <string name="catalogo_vacio">No hay más obras en esta sección.</string>
-    <string name="tut_ejemplo">Ejemplo: %1$s</string>
-    <string name="tut_ejemplo_obra">Un viaje entre páginas</string>
-    <string name="tut_ejemplo_tarjeta">tarjeta de una obra</string>
-    <string name="tut_ejemplo_estrellas">cuatro de cinco estrellas</string>
-    <string name="tut_ejemplo_diario">una entrada del diario con cuatro estrellas</string>
-    <string name="tut_ejemplo_resena">una reseña con cuatro estrellas</string>
-    <string name="tut_ejemplo_resena_texto">Me encantó perderme en esta historia. Quiero volver a leerla.</string>
   <string name="privacidad_grupo">Privacidad</string>
   <string name="privacidad_titulo">Qué sale de tu teléfono</string>
   <string name="politica_actualizada">Actualizamos la política de privacidad</string>
@@ -1453,4 +1446,9 @@
     <string name="busquedas_recientes">Búsquedas recientes</string>
     <string name="busquedas_borrar">Borrar todas</string>
     <string name="busquedas_quitar">Quitar «%1$s»</string>
+  <string name="tut_muestra_peli">Interestelar</string>
+  <string name="tut_muestra_anime">El viaje de Chihiro</string>
+  <string name="tut_muestra_libro">Cien años de soledad</string>
+  <string name="tut_muestra_descripcion">Interestelar, El viaje de Chihiro y Cien años de soledad con sus estrellas, una entrada del diario y una reseña.</string>
+  <string name="tut_muestra_resena">Cada vez que la veo encuentro algo nuevo. La música y los dibujos son una maravilla.</string>
 </resources>

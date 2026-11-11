@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="acceso_ver_clave">Ver la contraseña</string>
+    <string name="acceso_ocultar_clave">Ocultar la contraseña</string>
+    <string name="acceso_sin_cuenta">¿No tienes cuenta?</string>
+    <string name="acceso_crear">Crear cuenta</string>
+    <string name="acceso_codigo_dos">Te mandamos un código a %1$s para terminar de entrar.</string>
+    <string name="acceso_codigo">Código del correo</string>
+    <string name="dos_pasos_titulo">Verificación en dos pasos</string>
+    <string name="dos_pasos_explica">Al entrar con tu contraseña, también te pediremos un código que llega a tu correo. Así nadie entra solo con tu contraseña.</string>
+    <string name="dos_pasos_activa">Activa: al entrar te pediremos también un código del correo.</string>
+    <string name="dos_pasos_clave">Tu contraseña, para confirmar</string>
+    <string name="dos_pasos_activar">Activar</string>
+    <string name="dos_pasos_apagar">Apagar</string>
+    <string name="acceso_olvide_falta_correo">Escribe tu correo arriba y vuelve a tocar.</string>
+</resources>

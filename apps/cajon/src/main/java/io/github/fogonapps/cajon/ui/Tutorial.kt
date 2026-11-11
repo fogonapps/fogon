@@ -22,6 +22,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -108,14 +110,28 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                         Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
                     }
                 }
-                val obraEjemplo = Obra("ejemplo", Tipos.LIBRO, stringResource(R.string.tut_ejemplo_obra), nota = 8, meGusta = true)
-                EjemploTutorial(stringResource(R.string.tut_ejemplo_tarjeta)) { TarjetaObra(obraEjemplo) }
-                EjemploTutorial(stringResource(R.string.tut_ejemplo_estrellas)) { Estrellas(8) }
-                EjemploTutorial(stringResource(R.string.tut_ejemplo_diario)) {
-                    EntradaDiario(obraEjemplo, Registro("ejemplo", vm.hoy().toString(), nota = 8))
-                }
-                EjemploTutorial(stringResource(R.string.tut_ejemplo_resena)) {
-                    TarjetaResena(stringResource(R.string.tut_ejemplo_resena_texto), 8)
+                // Cómo se ve, con obras de verdad: sus portadas y estrellas, una entrada del diario y una reseña.
+                val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true,
+                    portada = "https://image.tmdb.org/t/p/w342/d1QKiYtceF3GDtxvTFXFAqwwah9.jpg")
+                val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true,
+                    portada = "https://image.tmdb.org/t/p/w342/2RcxjDykOssx4SfqshewyI9vfSl.jpg")
+                val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8,
+                    portada = "https://covers.openlibrary.org/b/id/13009946-M.jpg")
+                val descripcion = stringResource(R.string.tut_muestra_descripcion)
+                Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        listOf(peli, anime, libro).forEach { o ->
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                coil3.compose.AsyncImage(o.portada, null, Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(io.github.fogonapps.identidad.forma(10.dp)),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                Text(o.titulo, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                Estrellas(o.nota ?: 0)
+                            }
+                        }
+                    }
+                    EntradaDiario(peli, Registro("muestra", vm.hoy().toString(), nota = 9))
+                    TarjetaResena(stringResource(R.string.tut_muestra_resena), 10)
                 }
                 BotonRiso(stringResource(R.string.siguiente), { paso = 4 }, Modifier.fillMaxWidth())
             }
@@ -140,12 +156,3 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
     }
 }
 
-/** Componentes reales, sin acciones ni nodos interactivos para lectores de pantalla. */
-@Composable
-private fun EjemploTutorial(nombre: String, contenido: @Composable () -> Unit) {
-    val descripcion = stringResource(R.string.tut_ejemplo, nombre)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(descripcion, style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.texto)
-        Box(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }) { contenido() }
-    }
-}

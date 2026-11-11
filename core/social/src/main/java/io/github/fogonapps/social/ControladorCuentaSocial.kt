@@ -141,7 +141,13 @@ abstract class ControladorCuentaSocial(
         finally { _acceso.value = _acceso.value.copy(ocupado = false) }
     }
 
-    fun volverAlCorreo() { soltarEntradaPendiente(); _acceso.value = EstadoAcceso() }
+    fun volverAlCorreo() { soltarEntradaPendiente(); claveEnEspera = null; _acceso.value = EstadoAcceso() }
+
+    /** «¿Olvidaste tu contraseña?» desde la pantalla de entrar: código al correo y contraseña nueva. */
+    fun olvideClave(correo: String) {
+        _acceso.value = EstadoAcceso(correo = correo.trim().lowercase())
+        pedirCodigo(MotivoCodigo.OLVIDO)
+    }
 
     /** La sesión abierta con el código mientras se pide la contraseña; no se usa hasta tenerla. */
     private var entradaPendiente: Acceso? = null
@@ -179,12 +185,46 @@ abstract class ControladorCuentaSocial(
     /** Olvidó la contraseña después del código: se cierra esa sesión y se recupera con otro código y una contraseña nueva. */
     fun olvideClaveDatos() { soltarEntradaPendiente(); pedirCodigo(MotivoCodigo.OLVIDO) }
 
-    fun entrarConClave(correo: String, clave: String) = lanzar {
-        _acceso.value = _acceso.value.copy(ocupado = true)
+    /** La contraseña mientras se espera el código de la verificación en dos pasos (solo en memoria). */
+    private var claveEnEspera: String? = null
+
+    fun entrarConClave(correo: String, clave: String, codigo: String = "") = lanzar {
+        val c = correo.trim().lowercase()
+        _acceso.value = _acceso.value.copy(correo = c, ocupado = true)
         try {
-            if (entro(clienteAcceso().entrarConClave(correo.trim(), clave)))
-                runCatching { intentar(avisar = false) { llaveConClave(clave) } }
+            val entrada = try { clienteAcceso().entrarConClave(c, clave, codigo) } catch (x: ErrorSocial) {
+                if (x.codigo == 409 && x.error == "codigo_requerido") {
+                    claveEnEspera = clave
+                    _reenviarDesde.value = ahoraAcceso() + 60_000
+                    _acceso.value = EstadoAcceso(PasoAcceso.CODIGO_ENTRAR, c)
+                    return@lanzar
+                }
+                throw x
+            }
+            claveEnEspera = null
+            if (entro(entrada)) runCatching { intentar(avisar = false) { llaveConClave(clave) } }
         } finally { _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    /** Segundo paso: el código del correo, con la contraseña que ya se comprobó. */
+    fun entrarConCodigoDosPasos(codigo: String) {
+        val clave = claveEnEspera ?: run { volverAlCorreo(); return }
+        entrarConClave(_acceso.value.correo, clave, codigo)
+    }
+
+    /** Vuelve a pedir el código de la verificación en dos pasos (el servidor lo manda al reintentar sin código). */
+    fun reenviarCodigoDosPasos() = lanzar {
+        val clave = claveEnEspera ?: return@lanzar
+        if (_acceso.value.ocupado || ahoraAcceso() < _reenviarDesde.value) return@lanzar
+        _acceso.value = _acceso.value.copy(ocupado = true)
+        try { clienteAcceso().entrarConClave(_acceso.value.correo, clave) } catch (x: ErrorSocial) { if (!(x.codigo == 409 && x.error == "codigo_requerido")) throw x }
+        finally { _reenviarDesde.value = ahoraAcceso() + 60_000; _acceso.value = _acceso.value.copy(ocupado = false) }
+    }
+
+    /** Prende o apaga la verificación en dos pasos (con la contraseña). */
+    fun ponerDosPasos(activo: Boolean, clave: String) = seguridad {
+        cliente().ponerDosPasos(activo, clave)
+        ponerCuenta(cliente().miCuenta())
     }
 
     var politica = POLITICA_VIGENTE

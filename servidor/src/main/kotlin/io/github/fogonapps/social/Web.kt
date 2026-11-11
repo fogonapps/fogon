@@ -57,7 +57,7 @@ private fun tarjeta(p: Publicacion): String = buildString {
     append("<article>")
     append("<p class=\"suave\"><a href=\"/@${e(p.autor.usuario)}\">@${e(p.autor.usuario)}</a></p>")
     texto(d, "imagen").takeIf { Regex("[A-Za-z0-9_-]{22}").matches(it) }?.let { append("<img class=\"foto\" src=\"/v1/imagenes/$it\" alt=\"\">") }
-    texto(d, "portada").takeIf { it.startsWith("https://") }?.let { append("<img class=\"portada\" src=\"${e(it)}\" alt=\"\">") }
+    texto(d, "portada").takeIf(Social::portadaSegura)?.let { append("<img class=\"portada\" src=\"${e(it)}\" alt=\"\">") }
     texto(d, "titulo").takeIf { it.isNotBlank() }?.let { append("<h2>${e(it)}</h2>") }
     (d["estrellas"] as? JsonPrimitive)?.doubleOrNull?.takeIf { it > 0 }?.let { append("<p class=\"estrellas\">${"★".repeat(it.toInt())}${if (it % 1 >= 0.5) "½" else ""}</p>") }
     if (p.app == "forzudo") {

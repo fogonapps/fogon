@@ -119,13 +119,18 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     val politica: String = "",
     /** Su insignia ("fogon", "verificada" o ""), para verla en su propio perfil. */
     val insignia: String = "",
+    /** Pide además un código del correo al entrar con la contraseña. */
+    val dosPasos: Boolean = false,
 )
 @Serializable data class Aceptacion(val politica: String)
 @Serializable data class VotoImagen(val fuente: String, val url: String)
 @Serializable data class BloqueoImagen(val url: String, val motivo: String = "")
 /** La imagen de la comunidad para una obra (si la hay), los votos por URL y lo bloqueado entre ellas. */
 @Serializable data class ImagenObra(val comunidad: String? = null, val votos: Map<String, Int> = emptyMap(), val miVoto: String? = null, val bloqueadas: List<String> = emptyList())
-@Serializable data class EntradaClave(val correo: String, val clave: String, val app: String = "cajon")
+@Serializable data class EntradaClave(val correo: String, val clave: String, val app: String = "cajon",
+    /** El código del correo, si la cuenta activó la verificación en dos pasos. */
+    val codigo: String = "")
+@Serializable data class DosPasos(val activo: Boolean, val clave: String)
 /** El cajón cifrado ([sobre], base64) y la versión en que va ([cambio]); [llave]: la llave envuelta con la contraseña. */
 @Serializable data class CajonCifrado(val sobre: String = "", val cambio: Long = 0, val llave: String = "")
 @Serializable data class Borrado(val clave: String = "", val codigo: String = "", val motivo: String = "", val motivoTexto: String = "")
@@ -274,8 +279,15 @@ class Social(
             leer("SELECT huella, expira, intentos FROM codigos WHERE correo = ?", correo) { Triple(it.getString(1), it.getLong(2), it.getInt(3)) }.firstOrNull()
         } ?: throw Problema(400, "sin_codigo")
         if (ahora() > expira || intentos >= 5) throw Problema(400, "codigo_vencido")
-        if (Base.huella("$correo:${codigo.trim()}") != huella) {
-            b.usar { cambiar("UPDATE codigos SET intentos = intentos + 1 WHERE correo = ?", correo) }
+        // Además de 5 intentos por código, [FALLOS_CODIGO_DIA] códigos equivocados por correo cada 24 horas: pidiendo
+        // códigos nuevos sin parar se podía adivinar uno con paciencia.
+        if (b.usar { leer("SELECT COUNT(*) FROM fallos_codigo WHERE correo = ? AND cuando > ?", correo, ahora() - 24 * HORA) { it.getInt(1) }.first() } >= FALLOS_CODIGO_DIA)
+            throw Problema(429, "despacio")
+        if (!java.security.MessageDigest.isEqual(Base.huella("$correo:${codigo.trim()}").toByteArray(), huella.toByteArray())) {
+            b.usar {
+                cambiar("INSERT INTO fallos_codigo VALUES(?,?)", correo, ahora())
+                cambiar("UPDATE codigos SET intentos = intentos + 1 WHERE correo = ?", correo)
+            }
             throw Problema(400, "codigo")
         }
     }
@@ -379,6 +391,7 @@ class Social(
             cambiar("DELETE FROM sesiones WHERE ultimo_uso <= ?", ahora() - CADUCIDAD)
             cambiar("DELETE FROM intentos WHERE ultimo_fallo <= ? AND bloqueada_hasta <= ?", ahora() - DIA, ahora())
             cambiar("DELETE FROM envios_codigo WHERE cuando <= ?", ahora() - HORA)
+            cambiar("DELETE FROM fallos_codigo WHERE cuando <= ?", ahora() - 24 * HORA)
             cambiar("DELETE FROM apodo_cambios WHERE cuando <= ?", ahora() - 14 * DIA)
             // La política promete un año para reportes, decisiones y faltas vencidas; lo preservado para las
             // autoridades y lo que sigue abierto no se toca.
@@ -404,8 +417,8 @@ class Social(
     }
 
     fun miCuenta(yo: Long, token: String? = null): MiCuenta = b.usar {
-        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto, insignia FROM cuentas WHERE id = ?", yo) {
-            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8), it.getString(9))
+        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto, insignia, dos_pasos FROM cuentas WHERE id = ?", yo) {
+            MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8), it.getString(9), it.getInt(10) == 1)
         }.first()
     }
 
@@ -486,7 +499,28 @@ class Social(
             throw Problema(400, "clave_mala")
         }
         b.usar { cambiar("DELETE FROM intentos WHERE cuenta = ?", id) }
+        // Verificación en dos pasos (la activa la persona): con la contraseña buena, falta el código del correo.
+        if (b.usar { leer("SELECT dos_pasos FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.first() }) {
+            if (e.codigo.isBlank()) {
+                // Si ya se mandó uno hace menos de un minuto, sirve ese.
+                try { enviarCodigo(correo, app = e.app) } catch (x: Problema) { if (x.codigo != 429) throw x }
+                throw Problema(409, "codigo_requerido")
+            }
+            codigoBueno(correo, e.codigo)
+            b.usar { cambiar("DELETE FROM codigos WHERE correo = ?", correo) }
+        }
         return Acceso(usuario, sesionNueva(id, dispositivo, app = e.app), false, borrarEl(id), idCuenta(id))
+    }
+
+    /** Prende o apaga la verificación en dos pasos (pide la contraseña). Hace falta tener correo y contraseña. */
+    fun ponerDosPasos(yo: Long, d: DosPasos) {
+        val guardada = b.usar { leer("SELECT clave FROM cuentas WHERE id = ? AND correo IS NOT NULL", yo) { it.getString(1) }.firstOrNull() }
+            ?: throw Problema(400, "sin_clave")
+        if (!Claves.comprobar(d.clave, guardada)) throw Problema(400, "clave_mala")
+        b.usar { cambiar("UPDATE cuentas SET dos_pasos = ? WHERE id = ?", if (d.activo) 1 else 0, yo) }
+        avisar(yo, if (d.activo) "Activaste la verificación en dos pasos" else "Apagaste la verificación en dos pasos",
+            if (d.activo) "Desde ahora, al entrar con tu contraseña también te pediremos un código que llega a este correo."
+            else "Desde ahora basta tu contraseña para entrar. Si no fuiste tú, cambia la contraseña y cierra las demás sesiones.")
     }
 
     /** Pone o cambia la contraseña (pide la actual si ya había; sin ella, sirve entrar con el código del correo). */
@@ -758,7 +792,7 @@ class Social(
         val nombre = p.nombre.trim().take(40)
         val cambia = nombre != anterior && apodoDesde(yo) <= ahora()
         val limpio = p.copy(
-            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.take(500).takeIf { it.startsWith("https://") } ?: "",
+            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.takeIf(::portadaSegura) ?: "",
             enlaces = p.enlaces.filter { it.startsWith("https://") || it.startsWith("http://") }.map { it.take(200) }.take(5),
             partes = p.partes.filterValues { it.visibilidad in Vis.SUBIBLES }.entries.take(20).associate { it.key.take(30) to it.value },
         )
@@ -876,6 +910,9 @@ class Social(
     @Synchronized
     fun subirVideo(yo: Long, bytes: ByteArray): ImagenSubida {
         val datos = revisarVideo(bytes)
+        // Cupo diario: sin él, una sola cuenta podía llenar el disco del servidor.
+        val hoy = b.usar { leer("SELECT COUNT(*) FROM videos WHERE cuenta = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() }
+        if (hoy >= MAX_VIDEOS_DIA) throw Problema(429, "despacio")
         val nombre = Base.tokenNuevo().take(22)
         dirVideos.mkdirs()
         val archivo = java.io.File(dirVideos, "$nombre.mp4")
@@ -994,7 +1031,7 @@ class Social(
                 val imagenes = p.datos["imagenes"]
                 if (imagenes != null && (imagenes !is kotlinx.serialization.json.JsonArray || imagenes.size > 10 || imagenes.any { it !is JsonPrimitive || !it.isString || it.content !in mias })) throw Problema(400, "imagenes")
                 if (p.tipo == "resena" && !resenaValida(p.datos, mias)) { if (estricto) throw Problema(400, "resena") else return@forEach }
-                val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(p.datos + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
+                val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(sinPortadasAjenas(p.datos) + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
                 if (datos.length > (if (app == "cucha") 100_000 else 20_000)) { if (estricto) throw Problema(400, "publicacion_grande") else return@forEach }
                 cambiar("""INSERT INTO publicaciones(cuenta, app, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?,?)
                     ON CONFLICT(cuenta, app, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible'""",
@@ -1329,7 +1366,7 @@ class Social(
     fun ponerNota(yo: Long, n: NotaNueva) {
         val t = n.texto.trim().take(60)
         if (t.isEmpty()) { b.usar { cambiar("DELETE FROM notas WHERE cuenta = ?", yo) }; return }
-        val datos = JsonSocial.encodeToString(JsonObject.serializer(), n.datos)
+        val datos = JsonSocial.encodeToString(JsonObject.serializer(), sinPortadasAjenas(n.datos))
         if (datos.length > 4000) throw Problema(413, "muy_grande")
         b.usar { cambiar("INSERT INTO notas(cuenta, texto, datos, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET texto = excluded.texto, datos = excluded.datos, cuando = excluded.cuando", yo, t, datos, ahora()) }
     }
@@ -1800,10 +1837,20 @@ class Social(
 
     companion object {
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
+        const val FALLOS_CODIGO_DIA = 15
+        const val MAX_VIDEOS_DIA = 20
         const val POLITICA = "2026-11-11"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")
+        /** Además, para portadas de publicaciones, notas y perfiles: TVmaze, Spotify y las imágenes subidas a este servidor. */
+        val DOMINIOS_PORTADA = DOMINIOS_IMAGEN + setOf("static.tvmaze.com", "i.scdn.co", "fogonapps.duckdns.org")
+        /** Una portada solo puede venir de esos dominios: una dirección cualquiera delataría la IP de quien la vea. */
+        fun portadaSegura(url: String): Boolean = url.length <= 500 && url.startsWith("https://") &&
+            url.removePrefix("https://").substringBefore('/').substringBefore('?').lowercase() in DOMINIOS_PORTADA
+        /** Quita de [datos] las portadas («portada», «fondo») que no vienen de un dominio permitido. */
+        fun sinPortadasAjenas(datos: JsonObject): JsonObject =
+            JsonObject(datos.filter { (k, v) -> k !in setOf("portada", "fondo") || (v as? JsonPrimitive)?.content.orEmpty().let { it.isEmpty() || !it.startsWith("http") || portadaSegura(it) } })
         /** Lo normal al empezar, sin datos (hipótesis: recalcular con los contadores cuando haya gente). */
         private const val PREVIA_MEGUSTA = 0.08
         private const val PREVIA_GUARDADO = 0.02

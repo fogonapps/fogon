@@ -238,6 +238,43 @@ class AlmacenApariencia private constructor(c: Context) {
 
     private fun recargar() { _estado.value = leer() }
 
+    /**
+     * La apariencia como texto, para guardarla con la cuenta (en la copia cifrada de cada app): las mismas
+     * preferencias, con su tipo. [importar] la devuelve tal cual; lo que no se entiende se ignora.
+     */
+    fun exportar(): String {
+        val o = org.json.JSONObject()
+        prefs.all.forEach { (k, v) ->
+            when (v) {
+                is Int -> o.put(k, org.json.JSONObject().put("i", v))
+                is Boolean -> o.put(k, org.json.JSONObject().put("b", v))
+                is String -> o.put(k, org.json.JSONObject().put("s", v))
+                is Long -> o.put(k, org.json.JSONObject().put("l", v))
+                is Float -> o.put(k, org.json.JSONObject().put("f", v.toDouble()))
+            }
+        }
+        return o.toString()
+    }
+
+    fun importar(texto: String) {
+        val o = runCatching { org.json.JSONObject(texto) }.getOrNull() ?: return
+        prefs.edit {
+            clear()
+            o.keys().forEach { k ->
+                val v = o.optJSONObject(k) ?: return@forEach
+                when {
+                    v.has("i") -> putInt(k, v.optInt("i"))
+                    v.has("b") -> putBoolean(k, v.optBoolean("b"))
+                    v.has("s") -> putString(k, v.optString("s"))
+                    v.has("l") -> putLong(k, v.optLong("l"))
+                    v.has("f") -> putFloat(k, v.optDouble("f").toFloat())
+                }
+            }
+        }
+        migrar()
+        recargar()
+    }
+
     fun elegirEstilo(e: Estilo) { prefs.edit { putString("estilo", e.name) }; recargar() }
 
     fun ponerColor(e: Estilo, r: Ranura, c: Color?) {
@@ -272,4 +309,14 @@ class AlmacenApariencia private constructor(c: Context) {
         @Volatile private var unico: AlmacenApariencia? = null
         fun de(c: Context): AlmacenApariencia = unico ?: synchronized(this) { unico ?: AlmacenApariencia(c.applicationContext).also { unico = it } }
     }
+}
+
+/** La copia de la cuenta (JSON de la app) con la apariencia adentro, en el campo «aparienciaCopia». */
+fun conApariencia(json: String, almacen: AlmacenApariencia): String = runCatching {
+    org.json.JSONObject(json).put("aparienciaCopia", almacen.exportar()).toString()
+}.getOrDefault(json)
+
+/** Si la copia trae apariencia, la pone en este teléfono. */
+fun aplicarApariencia(json: String, almacen: AlmacenApariencia) {
+    runCatching { org.json.JSONObject(json).optString("aparienciaCopia", "") }.getOrNull()?.takeIf { it.isNotBlank() }?.let(almacen::importar)
 }

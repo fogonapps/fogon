@@ -40,7 +40,6 @@
   <string name="agua">Agua</string>
   <string name="agua_lleva">%1$s de %2$s L</string>
   <string name="agua_sumar">Un vaso de agua (250 ml)</string>
-  <string name="agua_pista">Toca un vaso para sumarlo; toca el último lleno para quitarlo.</string>
   <string name="hoy_vacio">Todavía no has anotado nada hoy. Toca el botón del centro para empezar.</string>
   <string name="en_el_menu">En el menú: %1$s</string>
   <string name="repetir_ayer">Lo de ayer</string>
@@ -68,7 +67,7 @@
   <string name="fuente_usda">Valores por 100 g de USDA FoodData Central: «%1$s» (FDC %2$s).</string>
   <string name="fuente_aprox">No está tal cual en USDA: se usa el alimento más parecido, así que es aproximado.</string>
   <string name="fuente_porciones">Las porciones caseras son pesos típicos; si pesas tu comida, usa gramos.</string>
-  <string name="fuente_off">Datos de Open Food Facts (ODbL), hechos por su comunidad. Toca para ver el producto.</string>
+  <string name="fuente_off">Datos de Open Food Facts (ODbL), hechos por su comunidad.</string>
   <string name="fuente_receta">Calculado con los valores de USDA de cada ingrediente.</string>
   <string name="codigo_n">Código: %1$s</string>
   <string name="nombre">Nombre</string>
@@ -108,7 +107,7 @@
   <string name="mercado">Lista de mercado</string>
   <string name="esta_semana">Esta semana</string>
   <string name="proxima_semana">La próxima</string>
-  <string name="mercado_pista">Sale del menú de la semana: una porción de cada receta por comida. Toca para tachar.</string>
+  <string name="mercado_pista">Sale del menú de la semana: una porción de cada receta por comida.</string>
   <string name="mercado_vacio">El menú de esa semana está vacío. Llénalo en la pestaña Menú.</string>
   <string name="agregar_algo">Agregar algo más</string>
   <string name="agregar">Agregar</string>

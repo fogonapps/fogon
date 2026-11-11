@@ -786,7 +786,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             }
             if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") {
                 if (generoLibro != null) { poner(OpenLibrary.porTema(generoLibro.tema, idioma())); return@fuente }
-                fuente("obras_libros") { poner(OpenLibrary.buscar(t, idioma())) }
+                fuente("obras_libros") {
+                    val libros = OpenLibrary.buscar(t, idioma())
+                    poner(libros)
+                    // Después, la portada de una edición en el idioma de la app para los primeros resultados (a la vez).
+                    val primeros = libros.take(10)
+                    val mejores = kotlinx.coroutines.coroutineScope {
+                        primeros.map { l -> async { runCatching { OpenLibrary.portadaEnIdioma(l.fuente, idioma()) }.getOrNull() } }.awaitAll()
+                    }
+                    val cambios = primeros.zip(mejores).mapNotNull { (l, p) -> if (!p.isNullOrBlank() && p != l.portada) l.fuente to p else null }.toMap()
+                    if (cambios.isNotEmpty()) _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras.mapValues { (_, lista) ->
+                        lista.map { e -> cambios[e.fuente]?.let { e.copy(portada = it) } ?: e }
+                    })
+                }
                 // Los escritores, con su foto de Wikimedia Commons (por su id de Open Library en Wikidata).
                 val autores = runCatching { OpenLibrary.buscarAutores(t) }.avisarFallo(aviso("autores")).getOrDefault(emptyList())
                 _busqueda.value = _busqueda.value.copy(autores = autores)
@@ -1960,11 +1972,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         else -> PaginaCatalogo(emptyList(), true)
     }
 
+    /**
+     * Las parecidas a [o], siempre del mismo tipo (una serie no trae animes ni películas). Primero las de la lista
+     * propia; si quedan menos de 3 nuevas, se completan con las recomendaciones de la fuente (TMDB, Open Library…).
+     */
     suspend fun parecidasCatalogo(o: ObraInicial): List<ObraInicial> {
         val incluidas = listasCatalogo.todas().associateBy { it.id }
-        val lista = if (o.parecidos.isNotEmpty()) o.parecidos.mapNotNull { incluidas[it] }.map { Catalogo.enIdioma(it, idioma()) }
-            else parecidasDeFuente(o, idioma(), 1).obras
-        val nuevas = Catalogo.sinRepetir(lista, _estado.value?.let { excluidasCatalogo(it) }.orEmpty())
+        val excluidas = _estado.value?.let { excluidasCatalogo(it) }.orEmpty() + o.fuente
+        val propias = o.parecidos.mapNotNull { incluidas[it] }.filter { it.tipo == o.tipo }.map { Catalogo.enIdioma(it, idioma()) }
+        var nuevas = Catalogo.sinRepetir(propias, excluidas)
+        if (nuevas.size < 3) {
+            val deFuente = runCatching { parecidasDeFuente(o, idioma(), 1).obras }.getOrDefault(emptyList()).filter { it.tipo == o.tipo }
+            nuevas = Catalogo.sinRepetir(nuevas + deFuente, excluidas)
+        }
         nuevas.forEach { conocidasCatalogo[it.fuente] = it }
         return nuevas
     }

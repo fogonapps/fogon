@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="acceso_ver_clave">Show password</string>
+    <string name="acceso_ocultar_clave">Hide password</string>
+    <string name="acceso_sin_cuenta">No account yet?</string>
+    <string name="acceso_crear">Create account</string>
+    <string name="acceso_codigo_dos">We sent a code to %1$s to finish signing in.</string>
+    <string name="acceso_codigo">Code from the email</string>
+    <string name="dos_pasos_titulo">Two-step verification</string>
+    <string name="dos_pasos_explica">When you sign in with your password, we\'ll also ask for a code sent to your email. That way nobody gets in with just your password.</string>
+    <string name="dos_pasos_activa">On: when signing in we\'ll also ask for a code from your email.</string>
+    <string name="dos_pasos_clave">Your password, to confirm</string>
+    <string name="dos_pasos_activar">Turn on</string>
+    <string name="dos_pasos_apagar">Turn off</string>
+    <string name="acceso_olvide_falta_correo">Type your email above and tap again.</string>
+</resources>

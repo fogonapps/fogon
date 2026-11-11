@@ -1,1 +1,0 @@
-Notifications now say who and what: “@pedro started following you”, “@ana sent you a message”. They never show a message’s text, and on the lock screen you only see how many there are.

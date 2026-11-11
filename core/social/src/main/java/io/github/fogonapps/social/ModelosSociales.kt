@@ -79,7 +79,7 @@ data class Acceso(val usuario: String, val token: String, val nueva: Boolean = f
 data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
     val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
     val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "", val politica: String = "",
-    val insignia: String = "")
+    val insignia: String = "", val dosPasos: Boolean = false)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.CasoModeracion")
 data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
@@ -96,7 +96,9 @@ data class EstadoCuentaSocial(val faltas: List<FaltaSocial> = emptyList(), val r
     val cerrada: Boolean = false, val admin: Boolean = false)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.EntradaClave")
-internal data class EntradaClave(val correo: String, val clave: String, val app: String? = null)
+internal data class EntradaClave(val correo: String, val clave: String, val app: String? = null, val codigo: String = "")
+@Serializable
+internal data class DosPasos(val activo: Boolean, val clave: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.Borrado")
 internal data class Borrado(val clave: String, val codigo: String, val motivo: String, val motivoTexto: String)

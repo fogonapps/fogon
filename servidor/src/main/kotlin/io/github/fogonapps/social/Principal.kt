@@ -75,7 +75,14 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.35"
+const val VERSION = "0.36"
+
+/**
+ * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
+ * mande el cliente); se toma la última de la lista, que es la que puso el proxy de este servidor.
+ */
+internal fun ApplicationCall.ipReal(): String =
+    request.header("X-Forwarded-For")?.substringAfterLast(',')?.trim()?.takeIf { it.isNotEmpty() } ?: request.origin.remoteAddress
 
 /** Si el servidor puede mandar los códigos de acceso por correo. */
 var correoListo = false
@@ -83,12 +90,14 @@ var correoListo = false
 @kotlinx.serialization.Serializable
 data class ErrorConFecha(val error: String, val desde: Long)
 
-fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY"))) {
+fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY")),
+    portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas"))) {
     launch {
         while (isActive) {
             try { social.revisarInsignias() } catch (_: Exception) {
                 environment.log.error("No se pudieron revisar las insignias")
             }
+            runCatching { portadas.limpiar() }
             try { social.limpiarSeguridad() } catch (_: Exception) {
                 environment.log.error("No se pudo completar la limpieza de seguridad")
             }
@@ -102,6 +111,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("json")) }
     }
     val general = Limite(120)
+    val imagenes = Limite(900)
     val registros = Limite(5)
     val pedidosCine = Limite(240)
     val pedidosLastfm = Limite(60)
@@ -115,8 +125,13 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             val appDeclarada = call.request.header("X-Fogon-App")?.let(AppsSocial::validar)
             val esChat = ruta == "/v1/llaves" || ruta.startsWith("/v1/llaves/") || ruta == "/v1/mensajes" || ruta.startsWith("/v1/mensajes/") || ruta == "/v1/cajon" || ruta.startsWith("/v1/cajon/")
             if (esChat && (social.appSesion(token) != "cajon" || (appDeclarada != null && appDeclarada != "cajon"))) throw Problema(403, "solo_cajon")
-            val quien = token?.takeIf { it.isNotEmpty() } ?: call.request.origin.remoteAddress
-            if (!general.pasa(quien)) call.respond(HttpStatusCode.TooManyRequests, Error("despacio"))
+            // Por cuenta si la sesión es válida; si no, por la dirección real. Antes se contaba por el texto del token
+            // (uno inventado en cada petición saltaba el límite) y, sin token, por la dirección de Caddy (todos los
+            // visitantes sin sesión compartían un solo cupo, y uno solo podía agotarlo).
+            val quien = social.cuentaDe(token)?.let { "c:$it" } ?: ("ip:" + call.ipReal())
+            // Las portadas tienen su propio cupo (una lista carga muchas a la vez).
+            if (ruta == "/v1/portada") { if (!imagenes.pasa("p:" + call.ipReal())) throw Problema(429, "despacio") }
+            else if (!general.pasa(quien)) throw Problema(429, "despacio")
         }
     })
 
@@ -140,10 +155,18 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
 
     routing {
         route("/v1") {
+            // Portadas de Open Library y Cover Art Archive desde la caché del servidor (ver Portadas).
+            get("/portada") {
+                val u = call.request.queryParameters["u"].orEmpty()
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { portadas.obtener(u) }.getOrElse { if (it is Problema) throw it else null } }
+                    ?: throw Problema(404, "no_existe")
+                call.response.header("Cache-Control", "public, max-age=2592000, immutable")
+                call.respondBytes(r.first, ContentType.parse(r.second))
+            }
             get("/estado") { call.respond(mapOf("fogon" to "social", "version" to VERSION, "correo" to correoListo.toString(), "politica" to Social.POLITICA)) }
 
             // La dirección real llega de Caddy en X-Forwarded-For; sin él, la de la conexión.
-            fun ApplicationCall.ip() = request.header("X-Forwarded-For")?.substringBefore(',')?.trim() ?: request.origin.remoteAddress
+            fun ApplicationCall.ip() = ipReal()
             post("/cuentas") {
                 throw Problema(503, "sin_correo")
             }
@@ -170,15 +193,13 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { cine.pedir(ruta, params) }
                 call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
-            // Obsoleta: se conserva sin cambios para El Cajón 1.47; se retira con C-08b.
-            post("/acceso/correo") {
-                if (!registros.pasa("correo:${call.ip()}")) throw Problema(429, "despacio")
-                call.respond(social.estadoCorreo(call.receive<PedirCodigo>().correo))
-            }
+            // La ruta /acceso/correo (decía si un correo tenía cuenta) ya no existe: ninguna app vigente la
+            // usa y permitía averiguar quién tiene cuenta.
             post("/acceso/clave") {
                 if (!registros.pasa("clave:${call.ip()}")) throw Problema(429, "despacio")
                 call.respond(social.entrarConClave(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()))
             }
+            put("/cuenta/dos-pasos") { social.ponerDosPasos(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/clave") { social.ponerClave(call.yo(), call.receive(), token = call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/sesiones") { call.respond(social.sesiones(call.yo(), call.token())) }
             delete("/sesiones/otras") { social.cerrarOtras(call.yo(), call.token()); call.respond(HttpStatusCode.NoContent) }

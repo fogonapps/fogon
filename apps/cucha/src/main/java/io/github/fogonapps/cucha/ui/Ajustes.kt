@@ -25,6 +25,7 @@ fun Ajustes(vm: CuchaViewModel, e: Estado, acciones: Acciones) {
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
     FilaAjuste(IconosFogon.Perfil, stringResource(R.string.cuenta_tu_cuenta), stringResource(R.string.cuenta_tu_cuenta_pista)) { vm.abrir(Pantalla.Cuenta) }
     SeccionAjustes(stringResource(R.string.aj_como_usas))
+    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm))
     Desplegable(IconosFogon.Perfil, stringResource(R.string.tus_datos), null) {
         DatosPersona(vm, e.nombre, e.perfil, forzudo?.peso != null) { nombre, perfil ->
             vm.cambiarNombre(nombre)
@@ -55,6 +56,7 @@ fun Ajustes(vm: CuchaViewModel, e: Estado, acciones: Acciones) {
     val guia = io.github.fogonapps.identidad.LocalGuia.current
     FilaAjuste(IconosFogon.Chispa, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cucha.Pestana.HOY); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.aj_privacidad))
+    io.github.fogonapps.social.ui.FilasPrivacidadRed()
     FilaAjuste(IconosFogon.Candado, stringResource(R.string.aj_que_sale), null) { vm.abrir(Pantalla.Transparencia) }
     FilaAjuste(IconosFogon.Bandera, stringResource(RId.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
     FilaAjuste(Iconos.Sobres, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }

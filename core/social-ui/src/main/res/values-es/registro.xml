@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="registro_quien">Quién lo hizo (vacío: todo el equipo)</string>
+    <string name="registro_buscar">Buscar</string>
+    <string name="registro_vacio">No hay nada con esos filtros.</string>
+    <string name="registro_servidor">El servidor</string>
+    <string name="registro_todo">Todo</string>
+    <string name="registro_sanciones">Sanciones</string>
+    <string name="registro_reportes">Reportes</string>
+    <string name="registro_contenido">Contenido</string>
+    <string name="registro_insignias">Insignias</string>
+    <string name="registro_equipo">Equipo</string>
+    <string name="registro_seguridad">Seguridad</string>
+    <string name="registro_frases">Frases</string>
+    <string name="registro_a_sancion_dar">sancionó</string>
+    <string name="registro_a_sancion_levantar">levantó una sanción</string>
+    <string name="registro_a_reporte_decidir">decidió un reporte</string>
+    <string name="registro_a_contenido_retirar">retiró contenido</string>
+    <string name="registro_a_contenido_restaurar">restauró contenido</string>
+    <string name="registro_a_insignia">cambió una insignia</string>
+    <string name="registro_a_equipo">cambió el equipo</string>
+    <string name="registro_a_mfa">verificación en dos pasos</string>
+    <string name="registro_a_frase">frases del saludo</string>
+    <string name="registro_a_mensaje">abrió un mensaje reportado</string>
+    <string name="registro_a_lugar">corrigió o retiró un lugar</string>
+    <string name="registro_a_otra">otra acción</string>
+</resources>

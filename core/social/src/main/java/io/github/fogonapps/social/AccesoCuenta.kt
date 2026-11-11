@@ -11,6 +11,8 @@ enum class PasoAcceso {
     CLAVE_DATOS,
     /** Entró con el código y la cuenta no tiene contraseña: se crea para que sus datos se guarden cifrados. */
     CREAR_CLAVE,
+    /** La contraseña era buena y la cuenta tiene verificación en dos pasos: falta el código del correo. */
+    CODIGO_ENTRAR,
 }
 
 /** Para qué es el código: cuenta nueva, olvidó la contraseña o la cuenta no tenía (en esos dos se pone una nueva). */

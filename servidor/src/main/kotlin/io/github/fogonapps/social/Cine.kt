@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 class Cine(private val clave: String?, private val ahora: () -> Long = System::currentTimeMillis) {
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build()
     private val guardadas = ConcurrentHashMap<String, Pair<Long, Respuesta>>()
+    private val ocupado = java.util.concurrent.atomic.AtomicLong()
 
     data class Respuesta(val codigo: Int, val cuerpo: String)
 
@@ -39,13 +40,18 @@ class Cine(private val clave: String?, private val ahora: () -> Long = System::c
         val res = http.send(HttpRequest.newBuilder(URI(url)).timeout(Duration.ofSeconds(20)).header("Accept", "application/json").GET().build(),
             HttpResponse.BodyHandlers.ofString())
         val r = Respuesta(res.statusCode(), res.body())
-        if (r.codigo == 200) {
-            if (guardadas.size > 20_000) guardadas.entries.removeIf { ahora() - it.value.first >= SEIS_HORAS }
-            if (guardadas.size > 20_000) guardadas.clear()
-            guardadas[llave] = ahora() to r
+        // La caché se acota por tamaño (no por cantidad): con búsquedas distintas sin parar se llenaba la memoria.
+        if (r.codigo == 200 && r.cuerpo.length <= 400_000) {
+            if (ocupado.get() + r.cuerpo.length > MAX_CACHE) {
+                guardadas.entries.removeIf { ahora() - it.value.first >= SEIS_HORAS }
+                ocupado.set(guardadas.values.sumOf { it.second.cuerpo.length.toLong() })
+                if (ocupado.get() + r.cuerpo.length > MAX_CACHE) { guardadas.clear(); ocupado.set(0) }
+            }
+            val anterior = guardadas.put(llave, ahora() to r)
+            ocupado.addAndGet(r.cuerpo.length.toLong() - (anterior?.second?.cuerpo?.length ?: 0))
         }
         return r
     }
 
-    companion object { const val SEIS_HORAS = 6 * 3600_000L }
+    companion object { const val SEIS_HORAS = 6 * 3600_000L; const val MAX_CACHE = 24_000_000L }
 }

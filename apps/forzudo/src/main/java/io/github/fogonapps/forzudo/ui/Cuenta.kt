@@ -47,7 +47,7 @@ fun interfazCuenta(vm: GymViewModel): InterfazSocial {
                 @Composable override fun CifrasPerfil(perfil: PerfilSocial) {}
             }
             override fun tx(recurso: Int) = vm.tx(recurso)
-            @Composable override fun palabrasOcultas() = emptyList<String>()
+            @Composable override fun palabrasOcultas() = io.github.fogonapps.social.ui.palabrasOcultasRed()
             @Composable override fun cantidadModeracionApp() = 0
             @Composable override fun tituloModeracionApp() = ""
             override fun salir() { red.salir() }
@@ -55,7 +55,7 @@ fun interfazCuenta(vm: GymViewModel): InterfazSocial {
             override fun silenciar(usuario: String) {
                 (red.feed.value.orEmpty() + red.explorar.value.orEmpty()).filter { it.autor.usuario == usuario }.forEach { red.ocultar(it.id) }
             }
-            override fun mostrarComentario(palabras: List<String>, texto: String) = true
+            override fun mostrarComentario(palabras: List<String>, texto: String) = !io.github.fogonapps.social.ui.PalabrasOcultasRed.lleva(palabras, texto)
             override fun crearConCorreo(usuario: String, nombre: String, clave: String, foto: String?) {
                 val bytes = foto?.let { android.util.Base64.decode(it.substringAfter(','), android.util.Base64.DEFAULT) }
                 red.crear(usuario, nombre, clave, bytes)

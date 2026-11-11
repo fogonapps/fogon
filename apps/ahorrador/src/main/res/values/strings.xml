@@ -301,7 +301,6 @@
   <string name="sobre_en_uso">This envelope has expenses or recurring payments, so it can’t be deleted. You can change its name, color or icon.</string>
   <string name="sobre_grupo">Group (for 50/30/20 and kakeibo)</string>
   <string name="sobre_nombre">Envelope name</string>
-  <string name="sobres_pista">Tap an envelope to put money in it.</string>
   <string name="solo_anotar_pista">You’re on “Just track”: there’s no budget. If you want one, choose another method in Profile.</string>
   <string name="suma_100">They add up to %1$d%% (must be 100)</string>
   <string name="tarjeta_aproximado">The minimum and interest are estimates: every bank calculates them its own way. The exact figure is on your statement.</string>

@@ -34,7 +34,8 @@ data class SancionEquipo(val usuario: String, val motivo: String)
 data class CambioEquipo(val usuario: String, val rol: String = "", val permiso: String = "", val codigo: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.EntradaRegistro")
-data class EntradaRegistro(val id: Long, val actor: String, val accion: String, val objeto: String, val detalle: String, val cuando: Long)
+data class EntradaRegistro(val id: Long, val actor: String, val accion: String, val objeto: String, val detalle: String, val cuando: Long,
+    val quien: String = "", val aQuien: String = "")
 data class RegistroEquipo(val entradas: List<EntradaRegistro>, val cadenaIntegra: Boolean = true, val siguiente: Long? = null)
 private val formatoEquipo = Json { ignoreUnknownKeys = true }
 /** Admite el sobre actual y la lista de servidores anteriores. */

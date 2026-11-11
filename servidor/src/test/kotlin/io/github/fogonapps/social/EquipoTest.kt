@@ -80,6 +80,18 @@ class EquipoTest {
         assertEquals("fogon", insignia(v))
     }
 
+    @Test fun registroLegiblePorUsuarioYGrupo() = Entorno().use { e ->
+        val a = e.alta("lideresa"); e.rol(a, "administrador"); val d = e.alta("destino")
+        val sa = e.inscribir(a).first; e.elevar(a, sa)
+        e.s.verificar(a.id, CambioInsignia("destino", "verificada", "Conocida"), a.token)
+        val todo = e.s.equipo.registro(a.id, a.token, "@lideresa", "insignia", 0)
+        assertEquals(1, todo.size)
+        assertEquals("lideresa", todo.single().quien)
+        assertEquals("destino", todo.single().aQuien)
+        assertTrue(e.s.equipo.registro(a.id, a.token, "@nadie", "", 0).isEmpty())
+        assertTrue(e.s.equipo.registro(a.id, a.token, "", "insig", 0).isEmpty())
+    }
+
     @Test fun vectoresRfc6238Sha1YBase32() {
         val secreto = "12345678901234567890".toByteArray()
         val vectores = listOf(59L to "94287082", 1111111109L to "07081804", 1111111111L to "14050471", 1234567890L to "89005924", 2000000000L to "69279037", 20000000000L to "65353130")

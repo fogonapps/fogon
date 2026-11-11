@@ -391,24 +391,47 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
         val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()
         @Composable
         fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
-            OutlinedTextField(valor, { onCambio(it.take(200)) }, Modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true, shape = forma(18.dp),
-                visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                supportingText = { Text(stringResource(R.string.social_red_clave_regla)) })
+            CampoContrasena(valor, onCambio, etiqueta, ayuda = stringResource(R.string.social_red_clave_regla))
         when (acceso.paso) {
-            // El correo siempre lleva al envío de código; la contraseña tiene su propio camino.
+            // Entrar es con correo y contraseña. El código del correo solo sirve para crear la cuenta, recuperar la
+            // contraseña y, si la persona la activa, la verificación en dos pasos.
             PasoAcceso.CORREO -> {
-                OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_tu_correo)) },
-                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                BotonRiso(stringResource(R.string.social_red_mandar_codigo), { vm.red.revisarCorreo(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto && "." in correoTexto)
-                BotonSecundario(stringResource(R.string.social_red_entrar_clave), { vm.red.usarClave(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
+                var clave by rememberSaveable { mutableStateOf("") }
+                var faltaCorreo by remember { mutableStateOf(false) }
+                val correoValido = "@" in correoTexto && "." in correoTexto.substringAfter('@')
+                OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120); faltaCorreo = false }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_tu_correo)) },
+                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = androidx.compose.ui.text.input.ImeAction.Next))
+                val listo = !acceso.ocupado && correoValido && clave.length >= 8
+                CampoContrasena(clave, { clave = it }, stringResource(R.string.social_red_clave), alListo = { if (listo) vm.red.entrarConClave(correoTexto, clave) })
+                BotonRiso(stringResource(R.string.social_red_entrar), { vm.red.entrarConClave(correoTexto, clave) }, Modifier.fillMaxWidth(), habilitado = listo)
+                androidx.compose.material3.TextButton({ if (correoValido) vm.red.olvideClave(correoTexto) else faltaCorreo = true }, enabled = !acceso.ocupado) {
+                    Text(stringResource(R.string.social_red_olvide), color = f.textoSuave)
+                }
+                if (faltaCorreo) Pista(stringResource(R.string.acceso_olvide_falta_correo))
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    Text(stringResource(R.string.acceso_sin_cuenta), color = f.textoSuave, style = MaterialTheme.typography.bodyMedium)
+                    androidx.compose.material3.TextButton({ if (correoValido) vm.red.revisarCorreo(correoTexto) else faltaCorreo = true }, enabled = !acceso.ocupado) {
+                        Text(stringResource(R.string.acceso_crear), color = f.acentoTexto)
+                    }
+                }
+                return
+            }
+            // Verificación en dos pasos: la contraseña era buena; falta el código que llegó al correo.
+            PasoAcceso.CODIGO_ENTRAR -> {
+                Pista(stringResource(R.string.acceso_codigo_dos, acceso.correo))
+                OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acceso_codigo)) },
+                    singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+                BotonRiso(stringResource(R.string.social_red_entrar), { vm.red.entrarConCodigoDosPasos(codigo) }, Modifier.fillMaxWidth(),
+                    habilitado = !acceso.ocupado && codigo.length == 6)
+                ReenviarCodigo(vm) { vm.red.reenviarCodigoDosPasos() }
+                BotonSecundario(stringResource(R.string.social_red_otro_correo), { vm.red.volverAlCorreo() }, Modifier.fillMaxWidth())
                 return
             }
             // Tiene contraseña: la pide, con "¿Olvidaste tu contraseña?".
             PasoAcceso.CLAVE -> {
                 var clave by rememberSaveable { mutableStateOf("") }
                 Text(acceso.correo, style = MaterialTheme.typography.titleMedium, color = f.texto)
-                OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave)) }, singleLine = true, shape = forma(18.dp),
-                    visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                CampoContrasena(clave, { clave = it }, stringResource(R.string.social_red_clave))
                 BotonRiso(stringResource(R.string.social_red_entrar), { vm.red.entrarConClave(acceso.correo, clave) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && clave.length >= 8)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pildora(stringResource(R.string.social_red_olvide)) { vm.red.pedirCodigo(MotivoCodigo.OLVIDO) }
@@ -441,8 +464,7 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
                 Text(stringResource(if (crear) R.string.social_acceso_crear_clave else R.string.social_acceso_clave_datos), style = MaterialTheme.typography.titleMedium, color = f.texto)
                 Pista(stringResource(if (crear) R.string.social_acceso_crear_clave_pista else R.string.social_acceso_clave_datos_pista))
                 if (crear) CampoClave(clave, { clave = it }, stringResource(R.string.social_red_clave_nueva))
-                else OutlinedTextField(clave, { clave = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave)) }, singleLine = true, shape = forma(18.dp),
-                    visualTransformation = oculta, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                else CampoContrasena(clave, { clave = it }, stringResource(R.string.social_red_clave))
                 BotonRiso(stringResource(R.string.social_red_entrar), { if (crear) vm.red.crearClaveDatos(clave) else vm.red.entrarConClaveDatos(clave) },
                     Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && clave.length >= 8)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -506,7 +528,6 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
             Pildora(stringResource(R.string.social_red_ver_mi_perfil), Iconos.Persona) { vm.navegacion.perfil(usuario) }
         }
         Opcion(stringResource(R.string.social_red_cuenta_privada), privada) { vm.red.cambiarPrivada(it) }
-        AvisosEnCuenta()
         Pista(stringResource(R.string.social_red_cuenta_privada_pista))
         Pista(vm.textosApp.compartido)
         if (correoCuenta.isBlank()) Pista(stringResource(R.string.social_red_vincula_pista))
@@ -542,15 +563,27 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
             var actual by rememberSaveable { mutableStateOf("") }
             var nueva by rememberSaveable { mutableStateOf("") }
             val oculto = androidx.compose.ui.text.input.PasswordVisualTransformation()
-            if (cuenta?.conClave == true) OutlinedTextField(actual, { actual = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave_actual), color = FogonTema.actual.texto) },
-                singleLine = true, shape = forma(18.dp), visualTransformation = oculto)
-            OutlinedTextField(nueva, { nueva = it.take(200) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_clave_nueva)) },
-                singleLine = true, shape = forma(18.dp), visualTransformation = oculto, supportingText = { Text(stringResource(R.string.social_red_clave_regla)) })
+            if (cuenta?.conClave == true) CampoContrasena(actual, { actual = it }, stringResource(R.string.social_red_clave_actual))
+            CampoContrasena(nueva, { nueva = it }, stringResource(R.string.social_red_clave_nueva), ayuda = stringResource(R.string.social_red_clave_regla))
             BotonRiso(stringResource(R.string.social_guardar), { vm.ponerClave(nueva, actual) { nueva = ""; actual = "" } }, Modifier.fillMaxWidth(), habilitado = nueva.length >= 8)
         } else Pista(stringResource(R.string.social_red_clave_pide_correo))
+        // Verificación en dos pasos: la activa la persona; pide la contraseña para cambiarla.
+        if (correoCuenta.isNotBlank() && cuenta?.conClave == true) Desplegable(Iconos.Candado, stringResource(R.string.dos_pasos_titulo),
+            if (cuenta?.dosPasos == true) stringResource(R.string.dos_pasos_activa) else null) {
+            var claveDos by rememberSaveable { mutableStateOf("") }
+            val ocupadaSeg by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
+            Pista(stringResource(R.string.dos_pasos_explica))
+            CampoContrasena(claveDos, { claveDos = it }, stringResource(R.string.dos_pasos_clave))
+            val activa = cuenta?.dosPasos == true
+            if (activa) BotonSecundario(stringResource(R.string.dos_pasos_apagar), { vm.red.ponerDosPasos(false, claveDos); claveDos = "" }, Modifier.fillMaxWidth(), habilitado = !ocupadaSeg && claveDos.length >= 8)
+            else BotonRiso(stringResource(R.string.dos_pasos_activar), { vm.red.ponerDosPasos(true, claveDos); claveDos = "" }, Modifier.fillMaxWidth(), habilitado = !ocupadaSeg && claveDos.length >= 8)
+        }
         FilaVidrio({ vm.navegacion.gente(usuario, true) }) { Text(stringResource(R.string.social_red_tus_seguidores), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.SESIONES) }) { Text(stringResource(R.string.social_red_sesiones), color = f.texto) }
-        FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.ESTADO_CUENTA) }) { Text(stringResource(R.string.social_mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
+        // «Estado de la cuenta» solo aparece si hay algo que ver (una falta o una restricción); no se explica el sistema.
+        val estadoCuenta by vm.red.estadoCuenta.collectAsStateWithLifecycle()
+        LaunchedEffect(Unit) { vm.red.cargarEstadoCuenta() }
+        if (estadoCuenta?.let { it.faltas.isNotEmpty() || it.cerrada || it.suspendidaHasta > System.currentTimeMillis() || it.restringidaHasta > System.currentTimeMillis() } == true) FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.ESTADO_CUENTA) }) { Text(stringResource(R.string.social_mod_estado), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.BLOQUEADOS) }) { Text(stringResource(R.string.social_red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }) { Text(stringResource(R.string.social_red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaTerminos) }) { Text(stringResource(R.string.social_red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
@@ -877,13 +910,12 @@ fun EstadoCuenta(vm: InterfazSocial) {
                 Text(stringResource(R.string.social_mod_falta_vence, fecha(x.cuando), fecha(x.vence)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
         }
-        Pista(stringResource(R.string.social_mod_como_funciona))
     }
 }
 
 /** X-10: en las apps sin pantalla propia de notificaciones (todas menos El Cajón), los avisos con la app cerrada. */
 @Composable
-private fun AvisosEnCuenta() {
+internal fun AvisosEnCuenta() {
     val c = androidx.compose.ui.platform.LocalContext.current
     val app = c.applicationContext as? AppConAvisos ?: return
     if (app is AppConTrabajador) return

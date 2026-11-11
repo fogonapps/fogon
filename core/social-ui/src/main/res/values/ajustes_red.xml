@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ajustes_red_notificaciones">Notifications</string>
+    <string name="ajustes_red_palabras">Hidden words</string>
+    <string name="ajustes_red_palabras_pista">Don’t see posts or comments with certain words</string>
+    <string name="ajustes_red_palabras_explica">Posts and comments with these words won’t show up for you. Only on your phone: nobody knows.</string>
+    <string name="ajustes_red_palabras_agregar">Add a word</string>
+    <string name="ajustes_red_palabras_vacio">You’re not hiding any words yet.</string>
+</resources>

@@ -98,8 +98,9 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS))
     /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-alcancia-p$idPerfil", Context.MODE_PRIVATE), viewModelScope,
-        leer = { _estado.value?.let { JsonAhorrador.encodeToString(Estado.serializer(), it) } },
+        leer = { _estado.value?.let { io.github.fogonapps.identidad.conApariencia(JsonAhorrador.encodeToString(Estado.serializer(), it), io.github.fogonapps.identidad.AlmacenApariencia.de(app)) } },
         aplicar = { texto ->
+            io.github.fogonapps.identidad.aplicarApariencia(texto, io.github.fogonapps.identidad.AlmacenApariencia.de(app))
             val remoto = L.normalizar(JsonAhorrador.decodeFromString(Estado.serializer(), texto))
             _estado.value = almacen.updateData { remoto }
             WidgetPlata.actualizar(getApplication())
@@ -122,6 +123,14 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     val mensajes = _mensajes.receiveAsFlow()
 
     private val _candado = MutableStateFlow(prefsUi.getBoolean("candado", false))
+    /* El tema va con la cuenta: al cambiarlo, la copia se vuelve a guardar. */
+    init {
+        viewModelScope.launch {
+            var primero = true
+            io.github.fogonapps.identidad.AlmacenApariencia.de(getApplication()).estado.collect { if (primero) primero = false else copia.cambio() }
+        }
+    }
+
     /* X-10: avisos con la app cerrada: lo que se ve al abrir no vuelve a avisar, y la revisión sigue a la sesión. */
     init {
         red.alContarAvisosRed = { io.github.fogonapps.social.ui.Avisos.visto(getApplication(), idPerfil, avisos = it) }

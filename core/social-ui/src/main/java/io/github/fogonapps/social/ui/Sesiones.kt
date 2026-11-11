@@ -26,7 +26,7 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
-fun ReenviarCodigo(vm: InterfazSocial) {
+fun ReenviarCodigo(vm: InterfazSocial, reenviar: () -> Unit = { vm.red.reenviarCodigo() }) {
     val desde by vm.red.reenviarDesde.collectAsStateWithLifecycle()
     val acceso by vm.red.acceso.collectAsStateWithLifecycle()
     var segundos by remember(desde) { mutableStateOf(60L) }
@@ -37,7 +37,7 @@ fun ReenviarCodigo(vm: InterfazSocial) {
         } while (segundos > 0)
     }
     BotonSecundario(if (segundos > 0) stringResource(R.string.social_red_reenviar_en, segundos) else stringResource(R.string.social_red_reenviar),
-        { vm.red.reenviarCodigo() }, Modifier.fillMaxWidth(), habilitado = segundos == 0L && !acceso.ocupado)
+        reenviar, Modifier.fillMaxWidth(), habilitado = segundos == 0L && !acceso.ocupado)
 }
 
 @Composable

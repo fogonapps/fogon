@@ -569,7 +569,9 @@ object OpenLibrary {
             val autores = d.arr("author_name").take(2).joinToString(", ") { it.texto() }
             val e = Encontrado(
                 // En la lista, la portada de la obra (suele ser la carátula de verdad); la ficha elige la más linda.
-                Tipos.LIBRO, titulo, d["first_publish_year"].entero(), autores, portada(d["cover_i"].entero(), "M"),
+                // La portada de la edición en el idioma de la app (la de una editorial) si la tiene; si no, la de la obra.
+                Tipos.LIBRO, titulo, d["first_publish_year"].entero(), autores,
+                portada((if (mio in lenguas) ed?.get("cover_i").entero()?.takeIf { it > 0 } else null) ?: d["cover_i"].entero(), "M"),
                 "ol:" + d["key"].texto().removePrefix("/works/"), d["number_of_pages_median"].entero()?.let { "$it p." } ?: "",
                 d["ratings_average"].decimal()?.takeIf { (d["ratings_count"].entero() ?: 0) > 0 }, d["ratings_count"].entero() ?: 0,
             )
@@ -693,6 +695,22 @@ object OpenLibrary {
             offset += entradas.size
         } while (entradas.size == 100 && offset < (datos["size"].entero() ?: offset))
         resultado.distinctBy { it.id }.also { cacheEdiciones[fuente] = System.currentTimeMillis() to it }
+    }
+
+    /**
+     * Para la lista de resultados: la portada de la edición más reciente en el idioma de la app (la de una editorial
+     * de hoy), con una sola consulta (las primeras 100 ediciones). La «portada de la obra» de Open Library suele ser
+     * la de cualquier edición, a veces en otro idioma o un escaneo.
+     */
+    suspend fun portadaEnIdioma(fuente: String, idioma: String): String? {
+        cacheEdiciones[fuente]?.let { return Imagenes.edicion(it.second, idioma)?.portada?.let { p -> Imagenes.url(p, Imagenes.Lugar.LISTA) } }
+        val (id, _) = obra(fuente.removePrefix("ol:"))
+        val eds = pedirJson(base.newBuilder().addPathSegments("works/$id/editions.json").addQueryParameter("limit", "100").build()).jsonObject.arr("entries").map { it.jsonObject }.map { e ->
+            EdicionLibro(e["key"].texto().substringAfterLast('/'), portada(e.arr("covers").mapNotNull { it.entero() }.firstOrNull { it > 0 }, "M"),
+                e.arr("publishers").joinToString { it.texto() }, Regex("\\d{4}").find(e["publish_date"].texto())?.value?.toIntOrNull(),
+                e.arr("languages").map { it.jsonObject["key"].texto().substringAfterLast('/') }, e["number_of_pages"].entero())
+        }
+        return Imagenes.edicion(eds, idioma)?.portada
     }
 
     suspend fun portadasParaElegir(fuente: String): List<String> {

@@ -144,10 +144,15 @@ class Base(ruta: String) {
                 // que manda sobre la regla automática ("fogon", "verificada", "no" o null).
                 columna(s, "cuentas", "insignia TEXT NOT NULL DEFAULT ''")
                 columna(s, "cuentas", "verificacion TEXT")
+                // Verificación en dos pasos: contraseña y, además, un código del correo.
+                columna(s, "cuentas", "dos_pasos INTEGER NOT NULL DEFAULT 0")
                 // X-10: las direcciones UnifiedPush de los teléfonos (ver Empujes).
                 s.execute("CREATE TABLE IF NOT EXISTS empujes(endpoint TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL, cuando INTEGER NOT NULL)")
                 s.execute("CREATE INDEX IF NOT EXISTS empujes_cuenta ON empujes(cuenta, app)")
                 columna(s, "empujes", "sesion TEXT")
+                // Códigos de acceso equivocados por correo (tope diario contra quien intenta adivinarlos).
+                s.execute("CREATE TABLE IF NOT EXISTS fallos_codigo(correo TEXT NOT NULL, cuando INTEGER NOT NULL)")
+                s.execute("CREATE INDEX IF NOT EXISTS fallos_codigo_correo ON fallos_codigo(correo, cuando)")
                 s.execute("CREATE TABLE IF NOT EXISTS motivos_borrado(cuando INTEGER NOT NULL, motivo TEXT NOT NULL, texto TEXT NOT NULL DEFAULT '')")
                 s.execute("""CREATE TABLE IF NOT EXISTS cambios_correo(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,

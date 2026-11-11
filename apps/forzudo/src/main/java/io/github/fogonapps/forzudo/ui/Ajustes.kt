@@ -20,8 +20,10 @@ fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onI
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
+    SeccionAjustes(stringResource(io.github.fogonapps.social.ui.R.string.social_red_tu_cuenta))
     FilaAjuste(IconosFogon.Perfil, stringResource(io.github.fogonapps.social.ui.R.string.social_red_tu_cuenta), null) { vm.abrir(Pantalla.Cuenta) }
     SeccionAjustes(stringResource(R.string.ajustes_uso))
+    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm))
     Desplegable(IconosFogon.Reloj, stringResource(R.string.ajustes_entrenamiento), null) {
         Text(stringResource(R.string.ajustes_entrenamiento_pista), color = FogonTema.actual.texto)
         BotonSecundario(stringResource(R.string.pestana_entrenar), { vm.cerrar(); vm.cerrar(); vm.irA(Pestana.ENTRENAR) })
@@ -51,6 +53,7 @@ fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onI
     FilaAjuste(IconosFogon.Estrella, stringResource(R.string.manifiesto_fogon), null) { vm.abrir(Pantalla.Manifiesto) }
     FilaAjuste(IconosFogon.Comentario, stringResource(R.string.preguntas_frecuentes), null) { vm.abrir(Pantalla.Preguntas) }
     SeccionAjustes(stringResource(R.string.ajustes_privacidad))
+    io.github.fogonapps.social.ui.FilasPrivacidadRed()
     FilaAjuste(IconosFogon.Candado, stringResource(R.string.ajustes_sale), null) { vm.abrir(Pantalla.Transparencia) }
     FilaAjuste(IconosFogon.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
     FilaAjuste(IconoSobres, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }

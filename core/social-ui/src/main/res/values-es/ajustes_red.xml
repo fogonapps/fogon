@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ajustes_red_notificaciones">Notificaciones</string>
+    <string name="ajustes_red_palabras">Palabras ocultas</string>
+    <string name="ajustes_red_palabras_pista">No ver publicaciones ni comentarios con ciertas palabras</string>
+    <string name="ajustes_red_palabras_explica">Las publicaciones y los comentarios que lleven estas palabras no te salen. Solo en tu teléfono: nadie se entera.</string>
+    <string name="ajustes_red_palabras_agregar">Agregar una palabra</string>
+    <string name="ajustes_red_palabras_vacio">Todavía no escondes ninguna palabra.</string>
+</resources>

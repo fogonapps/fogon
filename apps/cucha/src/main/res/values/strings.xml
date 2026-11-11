@@ -41,7 +41,6 @@
   <string name="agua">Water</string>
   <string name="agua_lleva">%1$s of %2$s L</string>
   <string name="agua_sumar">A glass of water (250 ml)</string>
-  <string name="agua_pista">Tap a glass to add it; tap the last full one to remove it.</string>
   <string name="hoy_vacio">You haven’t logged anything today. Tap the middle button to start.</string>
   <string name="en_el_menu">On the menu: %1$s</string>
   <string name="repetir_ayer">Same as yesterday</string>
@@ -69,7 +68,7 @@
   <string name="fuente_usda">Values per 100 g from USDA FoodData Central: “%1$s” (FDC %2$s).</string>
   <string name="fuente_aprox">Not in USDA as such: the closest food is used, so it’s approximate.</string>
   <string name="fuente_porciones">Home portions are typical weights; if you weigh your food, use grams.</string>
-  <string name="fuente_off">Data from Open Food Facts (ODbL), made by its community. Tap to see the product.</string>
+  <string name="fuente_off">Data from Open Food Facts (ODbL), made by its community.</string>
   <string name="fuente_receta">Calculated from each ingredient’s USDA values.</string>
   <string name="codigo_n">Barcode: %1$s</string>
   <string name="nombre">Name</string>
@@ -109,7 +108,7 @@
   <string name="mercado">Shopping list</string>
   <string name="esta_semana">This week</string>
   <string name="proxima_semana">Next week</string>
-  <string name="mercado_pista">It comes from the weekly menu: one serving of each recipe per meal. Tap to cross off.</string>
+  <string name="mercado_pista">It comes from the weekly menu: one serving of each recipe per meal.</string>
   <string name="mercado_vacio">That week’s menu is empty. Fill it in the Menu tab.</string>
   <string name="agregar_algo">Add something else</string>
   <string name="agregar">Add</string>

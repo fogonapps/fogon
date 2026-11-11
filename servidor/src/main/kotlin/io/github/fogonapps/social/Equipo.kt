@@ -20,7 +20,9 @@ import javax.crypto.spec.SecretKeySpec
 @Serializable data class Elevacion(val elevadaHasta: Long)
 @Serializable data class CambioEquipo(val usuario: String, val rol: String = "", val permiso: String = "", val codigo: String = "")
 @Serializable data class Miembro(val cuenta: Long, val usuario: String, val rol: String, val permisos: Set<String>)
-@Serializable data class EntradaRegistro(val id: Long, val actor: String, val accion: String, val objeto: String, val detalle: String, val sesion: String, val cuando: Long, val huellaAnterior: String, val huella: String)
+@Serializable data class EntradaRegistro(val id: Long, val actor: String, val accion: String, val objeto: String, val detalle: String, val sesion: String, val cuando: Long, val huellaAnterior: String, val huella: String,
+    /** Para leerlo: el @usuario de quien actuó y el de la cuenta afectada, si la hay (no entran en la huella). */
+    val quien: String = "", val aQuien: String = "")
 @Serializable data class RegistroEquipo(val entradas: List<EntradaRegistro>, val cadenaIntegra: Boolean, val siguiente: Long?)
 @Serializable data class ContenidoEquipo(val que: String, val objeto: String, val motivo: String = "")
 @Serializable data class SancionEquipo(val usuario: String, val motivo: String)
@@ -266,14 +268,24 @@ class Equipo(private val b: Base, datos: File, private val ahora: () -> Long, pr
     fun registrar(actor: String, accion: String, objeto: String, detalle: String, token: String? = null) = b.usar {
         registrarEquipo(actor, accion, objeto, detalle, token?.let { Base.huella(it) }.orEmpty(), ahora())
     }
+    /** [accion] puede ser exacta («sancion_dar») o un grupo («sancion»: todas las que empiezan por «sancion_»). */
     private fun filas(actor: String = "", accion: String = "", despues: Long = 0, limite: Int = 100) = b.usar {
-        leer("SELECT * FROM registro_equipo WHERE id > ? AND (? = '' OR actor = ?) AND (? = '' OR accion = ?) ORDER BY id LIMIT ?", despues, actor, actor, accion, accion, limite) {
+        leer("SELECT * FROM registro_equipo WHERE id > ? AND (? = '' OR actor = ?) AND (? = '' OR accion = ? OR accion LIKE ? ESCAPE '\\') ORDER BY id LIMIT ?", despues, actor, actor, accion, accion, accion + "\\_%", limite) {
             EntradaRegistro(it.getLong("id"), it.getString("actor"), it.getString("accion"), it.getString("objeto"), it.getString("detalle"), it.getString("sesion"), it.getLong("cuando"), it.getString("huella_anterior"), it.getString("huella"))
         }
     }
+    /** [actor] puede ser el id de la cuenta, «servidor» o un @usuario. */
     fun registro(yo: Long, token: String?, actor: String, accion: String, despues: Long) : List<EntradaRegistro> {
         requiere(yo, "ver_registro", token)
-        return filas(actor, accion, despues)
+        val a = actor.trim().removePrefix("@").lowercase().let { u ->
+            if (u.isEmpty() || u == "servidor" || u.all(Char::isDigit)) u
+            else b.usar { leer("SELECT id FROM cuentas WHERE usuario = ?", u) { it.getLong(1).toString() }.firstOrNull() } ?: "-"
+        }
+        val nombres = mutableMapOf<String, String>()
+        fun usuario(id: String): String = if (!id.all(Char::isDigit) || id.isEmpty()) "" else nombres.getOrPut(id) {
+            b.usar { leer("SELECT usuario FROM cuentas WHERE id = ?", id.toLong()) { it.getString(1) }.firstOrNull() }.orEmpty()
+        }
+        return filas(a, accion.trim(), despues).map { it.copy(quien = if (it.actor == "servidor") "servidor" else usuario(it.actor), aQuien = usuario(it.objeto)) }
     }
     fun registroPaginado(yo: Long, token: String?, actor: String, accion: String, despues: Long): RegistroEquipo = b.transaccion {
         val entradas = registro(yo, token, actor, accion, despues)
