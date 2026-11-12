@@ -373,6 +373,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/historias/{id}/vistas") { call.respond(social.vistasHistoria(call.yo(), call.id())) }
             delete("/historias/{id}") { social.borrarHistoria(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
             get("/amigos") { call.respond(social.amigos(call.yo())) }
+            get("/amigos/cumples") { call.respond(social.cumplesAmigos(call.yo())) }
+            get("/cuenta/cumple") { call.respond(Cumple(social.miCumple(call.yo()))) }
+            put("/cuenta/cumple") { social.ponerCumple(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/mejores-amigos") { call.respond(ListaUsuarios(social.mejoresAmigos(call.yo()))) }
             put("/mejores-amigos") { social.ponerMejoresAmigos(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/historias/silenciar/{usuario}") { social.silenciarHistorias(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }

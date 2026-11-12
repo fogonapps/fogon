@@ -311,6 +311,20 @@ abstract class ControladorSocial(
     protected val _amigos = MutableStateFlow<List<PersonaSocial>>(emptyList())
     val amigos: StateFlow<List<PersonaSocial>> = _amigos
     fun cargarAmigos() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _amigos.value = cliente().amigos() } } }
+    /** Tu cumpleaños ("MM-DD" o vacío) y el de tus amigos (para «hoy cumple años»). */
+    protected val _cumple = MutableStateFlow("")
+    val cumple: StateFlow<String> = _cumple
+    protected val _cumplesHoy = MutableStateFlow<Set<String>>(emptySet())
+    val cumplesHoy: StateFlow<Set<String>> = _cumplesHoy
+    fun cargarCumples() {
+        if (_usuario.value == null) return
+        scope.launch { intentar(avisar = false) {
+            _cumple.value = cliente().cumple()
+            val hoy = java.time.LocalDate.now().let { "%02d-%02d".format(it.monthValue, it.dayOfMonth) }
+            _cumplesHoy.value = cliente().cumplesAmigos().filter { it.fecha == hoy }.map { it.persona.usuario }.toSet()
+        } }
+    }
+    fun ponerCumple(fecha: String) = lanzar { cliente().ponerCumple(fecha); _cumple.value = fecha }
     suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())
     fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }
     fun silenciarHistorias(usuario: String, si: Boolean) = lanzar {

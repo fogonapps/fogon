@@ -225,7 +225,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
         secciones = secciones, insignia = perfil.persona.insignia)
     io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
-        bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) },
+        bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario); (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it) } },
         enlace = {}, acciones = {
             if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
                 if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {

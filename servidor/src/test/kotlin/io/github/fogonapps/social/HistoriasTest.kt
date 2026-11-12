@@ -119,6 +119,11 @@ class HistoriasTest {
             assertTrue(s.historias(cami, "cajon").single().silenciada)
             s.silenciarHistorias(cami, "anabel", false)
             assertFalse(s.historias(cami, "cajon").single().silenciada)
+            // Cumpleaños: solo día y mes válidos; lo ven solo los amigos.
+            assertEquals(400, assertFailsWith<Problema> { s.ponerCumple(beto, Cumple("02-30")) }.codigo)
+            s.ponerCumple(beto, Cumple("03-14")); s.ponerCumple(cami, Cumple("05-01"))
+            assertEquals(listOf("roberto" to "03-14"), s.cumplesAmigos(ana).map { it.persona.usuario to it.fecha })
+            assertEquals("03-14", s.miCumple(beto))
         } finally { b.cerrar(); dir.deleteRecursively() }
     }
 

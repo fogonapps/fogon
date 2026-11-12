@@ -1612,4 +1612,21 @@
     <item quantity="one">1 vote</item>
     <item quantity="other">%1$d votes</item>
   </plurals>
+  <string name="cancion_al_perfil">Set on my profile</string>
+  <string name="cancion_a_la_nota">Put in my note</string>
+  <string name="cancion_a_historia">Share in a story</string>
+  <string name="cumple_hoy_aviso">Today is %1$s’s birthday</string>
+  <string name="cumple_hoy_perfil">Birthday today</string>
+  <string name="cancion_perfil_poner">Set a song</string>
+  <string name="cancion_perfil_titulo">Your song</string>
+  <string name="cancion_perfil_quitar">Remove the song</string>
+  <string name="cumple_titulo">Your birthday</string>
+  <string name="cumple_explica">Day and month only. Only your friends (people who follow you back) see it, and it reminds them that day.</string>
+  <string name="cumple_dia">Day</string>
+  <string name="cumple_mes">Month</string>
+  <string name="cumple_guardar">Save</string>
+  <string name="cumple_quitar">Remove</string>
+  <string name="cumple_guardado">Saved.</string>
+  <string name="chat_silenciar">Mute this chat</string>
+  <string name="chat_silenciado">Muted</string>
 </resources>

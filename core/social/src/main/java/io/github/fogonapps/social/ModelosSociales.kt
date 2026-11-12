@@ -195,7 +195,11 @@ data class IdentidadPerfil(
 data class CambioPerfilApp(
     val revision: Long? = null, val identidad: IdentidadPerfil? = null,
     val partes: Map<String, ParteSubida>? = null,
+    /** Sumar [partes] a las que hay (y quitar las de [quitar]) en vez de reemplazarlas. */
+    val fusionar: Boolean = false, val quitar: List<String> = emptyList(),
 )
+@Serializable internal data class CumpleSocial(val fecha: String = "")
+@Serializable data class CumpleAmigo(val persona: PersonaSocial, val fecha: String)
 
 /* ----- Frases del saludo (comunes a todas las apps) ----- */
 

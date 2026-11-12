@@ -305,6 +305,17 @@ open class RedApp(
         return lugar
     }
     fun visibilidad(clave: String) = almacen.visibilidad(clave)
+    /** La canción del perfil de esta app (con su avance de Apple): se cambia sola, sin tocar las demás partes. */
+    fun ponerCancionPerfil(c: CancionSocial?) = lanzar {
+        val datos = c?.let { kotlinx.serialization.json.buildJsonObject {
+            put("cancion", kotlinx.serialization.json.JsonPrimitive(it.titulo)); put("creador", kotlinx.serialization.json.JsonPrimitive(it.artista))
+            put("titulo", kotlinx.serialization.json.JsonPrimitive(it.album)); put("portada", kotlinx.serialization.json.JsonPrimitive(it.portada))
+            put("audio", kotlinx.serialization.json.JsonPrimitive(it.audio)); put("enlace", kotlinx.serialization.json.JsonPrimitive(it.enlace))
+        } }
+        cliente().subirPerfilApp(CambioPerfilApp(partes = datos?.let { mapOf("cancion" to ParteSubida("publica", it)) } ?: emptyMap(),
+            fusionar = true, quitar = if (c == null) listOf("cancion") else emptyList()))
+        cargarIdentidad()
+    }
     fun publicarPartes(partes: Map<String, ParteSubida>) = lanzar {
         val marca = sesion.actual()
         cliente().subirPerfilApp(CambioPerfilApp(partes = partes))

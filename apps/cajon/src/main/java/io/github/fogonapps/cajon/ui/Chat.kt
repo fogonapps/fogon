@@ -147,6 +147,7 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(ultimo?.let { resumen(it) }.orEmpty(), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1,
                     overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
+                if (estilosChat[u]?.silenciado == true) Text(stringResource(R.string.chat_silenciado), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
                 if (nuevos > 0) Box(Modifier.clip(forma(10.dp)).background(f.tinta1).padding(horizontal = 8.dp, vertical = 2.dp)) {
                     Text("$nuevos", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
                 }
@@ -644,6 +645,15 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
                     Portada(ob.portada, ob.tipo, ob.titulo, Modifier.fillMaxWidth(), conTitulo = false)
                 }
             }
+        }
+        // Silenciar: sus mensajes no avisan (la revisión de avisos lee la lista de silenciados del perfil).
+        val contexto = androidx.compose.ui.platform.LocalContext.current
+        FilaInterruptor(stringResource(R.string.chat_silenciar), estilo.silenciado) { si ->
+            vm.chat.ponerEstilo(usuario, estilo.copy(silenciado = si))
+            val prefs = contexto.getSharedPreferences(io.github.fogonapps.social.ui.Avisos.PREFS, android.content.Context.MODE_PRIVATE)
+            val clave = "p${vm.recursos.id}.silenciados"
+            val actual = prefs.getStringSet(clave, emptySet()).orEmpty()
+            prefs.edit().putStringSet(clave, if (si) actual + usuario else actual - usuario).apply()
         }
         // Un apodo para la otra persona: solo lo ves tú.
         var apodo by remember(usuario) { mutableStateOf(estilo.apodo) }

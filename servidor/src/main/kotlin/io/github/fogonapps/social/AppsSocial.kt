@@ -20,7 +20,12 @@ data class IdentidadParcial(
 )
 
 @Serializable
-data class PerfilApp(val revision: Long? = null, val identidad: IdentidadParcial? = null, val partes: Map<String, Parte>? = null)
+/**
+ * [fusionar]: las [partes] se suman a las que ya hay (y se quitan las de [quitar]) en vez de reemplazarlas; así se
+ * cambia una sola parte (la canción del perfil) sin borrar las demás.
+ */
+data class PerfilApp(val revision: Long? = null, val identidad: IdentidadParcial? = null, val partes: Map<String, Parte>? = null,
+    val fusionar: Boolean = false, val quitar: List<String> = emptyList())
 
 /** El esquema cerrado impide enviar accidentalmente el cuaderno o datos corporales privados. */
 fun validarLoteApp(app: String, c: CambiosPublicaciones) {

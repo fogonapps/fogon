@@ -51,7 +51,9 @@ data class MensajeChat(
  * [apodo] para la otra persona que solo ve quien lo pone.
  */
 @Serializable data class EstiloChat(val color: Int = 0, val puntos: Boolean = false, val letraGrande: Boolean = false,
-    val poster: String = "", val letra: Int = -1, val apodo: String = "") {
+    val poster: String = "", val letra: Int = -1, val apodo: String = "",
+    /** Silenciado: sus mensajes no avisan. */
+    val silenciado: Boolean = false) {
     val tamanoLetra get() = if (letra >= 0) letra else if (letraGrande) 2 else 1
 }
 

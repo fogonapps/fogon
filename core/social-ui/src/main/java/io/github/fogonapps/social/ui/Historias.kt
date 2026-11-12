@@ -1003,7 +1003,9 @@ fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
     val f = FogonTema.actual
     var grupos by remember(usuario) { mutableStateOf<List<GrupoDestacadasSocial>>(emptyList()) }
     var abierto by remember { mutableStateOf<GrupoDestacadasSocial?>(null) }
-    LaunchedEffect(usuario) { grupos = vm.red.destacadas(usuario) }
+    val cumplesHoy by vm.red.cumplesHoy.collectAsStateWithLifecycle()
+    LaunchedEffect(usuario) { grupos = vm.red.destacadas(usuario); vm.red.cargarCumples() }
+    if (usuario in cumplesHoy) Text(stringResource(R.string.cumple_hoy_perfil), style = MaterialTheme.typography.bodyMedium, color = f.acentoTexto)
     if (grupos.isEmpty()) return
     Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         grupos.forEach { g ->
@@ -1020,5 +1022,82 @@ fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
     abierto?.let { g ->
         val persona = PersonaSocial(usuario, g.titulo, foto = true)
         VisorHistorias(vm, listOf(GrupoHistoriasSocial(persona, g.historias.map { it.copy(vista = true) })), 0) { abierto = null }
+    }
+}
+
+/** La canción del perfil (de cualquier app): portada, título, artista, su avance de 30 s y Apple Music. */
+@Composable
+fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null) {
+    val f = FogonTema.actual
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).tarjetaFogon().then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        val portada = datos.t("portada")
+        if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null, Modifier.size(48.dp).clip(forma(8.dp)), contentScale = ContentScale.Crop)
+        Column(Modifier.weight(1f)) {
+            Text(datos.t("cancion"), style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(datos.t("creador"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            EnlaceAppleMusic(datos.t("enlace"))
+        }
+        BotonAvance(datos.t("audio"))
+    }
+}
+
+/** En el perfil propio de las apps sin canción propia de El Cajón: ponerla, cambiarla o quitarla. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CancionPerfilPropia(vm: InterfazSocial) {
+    val f = FogonTema.actual
+    val red = vm.red as? RedApp ?: return
+    val identidad by red.identidad.collectAsStateWithLifecycle()
+    val actual = identidad?.partes?.get("cancion") as? JsonObject
+    var buscando by remember { mutableStateOf(false) }
+    if (actual != null) TarjetaCancionPerfil(actual) { buscando = true }
+    else BotonSecundario(stringResource(R.string.cancion_perfil_poner), { buscando = true }, Modifier.fillMaxWidth())
+    if (buscando) ModalBottomSheet({ buscando = false }, containerColor = f.fondo, contentColor = f.texto) {
+        var q by rememberSaveable { mutableStateOf("") }
+        var l by remember { mutableStateOf<List<CancionSocial>>(emptyList()) }
+        LaunchedEffect(q) { if (q.trim().length >= 2) { delay(400); l = vm.red.canciones(q.trim()) } else l = emptyList() }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.cancion_perfil_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            OutlinedTextField(q, { q = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.historia_buscar_cancion)) })
+            if (actual != null) Pildora(stringResource(R.string.cancion_perfil_quitar), Iconos.Cerrar) { red.ponerCancionPerfil(null); buscando = false }
+            l.forEach { c ->
+                Row(Modifier.fillMaxWidth().clip(forma(12.dp)).clickable { red.ponerCancionPerfil(c); buscando = false }.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    coil3.compose.AsyncImage(c.portada, null, Modifier.size(44.dp).clip(forma(8.dp)), contentScale = ContentScale.Crop)
+                    Column(Modifier.weight(1f)) {
+                        Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(c.artista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    BotonAvance(c.audio)
+                }
+            }
+        }
+    }
+}
+
+/** El cumpleaños en los ajustes de la red: solo día y mes; lo ven solo tus amigos. */
+@Composable
+fun EditorCumple(vm: InterfazSocial) {
+    val f = FogonTema.actual
+    val cumple by vm.red.cumple.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.cargarCumples() }
+    var dia by remember(cumple) { mutableStateOf(cumple.substringAfter('-', "").trimStart('0')) }
+    var mes by remember(cumple) { mutableStateOf(cumple.substringBefore('-', "").trimStart('0')) }
+    val d = dia.toIntOrNull(); val m = mes.toIntOrNull()
+    val valida = d != null && m != null && runCatching { java.time.MonthDay.of(m, d) }.isSuccess
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pista(stringResource(R.string.cumple_explica))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(dia, { dia = it.filter(Char::isDigit).take(2) }, Modifier.width(90.dp), singleLine = true, shape = forma(14.dp), label = { Text(stringResource(R.string.cumple_dia)) },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number))
+            OutlinedTextField(mes, { mes = it.filter(Char::isDigit).take(2) }, Modifier.width(90.dp), singleLine = true, shape = forma(14.dp), label = { Text(stringResource(R.string.cumple_mes)) },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pildora(stringResource(R.string.cumple_guardar), acento = true) { if (valida) vm.red.ponerCumple("%02d-%02d".format(m, d)) }
+            if (cumple.isNotBlank()) Pildora(stringResource(R.string.cumple_quitar)) { vm.red.ponerCumple(""); dia = ""; mes = "" }
+        }
+        if (cumple.isNotBlank()) Text(stringResource(R.string.cumple_guardado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
     }
 }

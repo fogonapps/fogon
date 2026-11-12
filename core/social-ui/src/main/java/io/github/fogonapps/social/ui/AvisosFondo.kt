@@ -64,7 +64,11 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
                 // Quién y qué, solo si hay algo nuevo (para no pedir de más).
                 val p = cuenta.perfil
                 val ultimos = if (conteo.first > prefs.getInt("p$p.avisos", 0)) runCatching { cliente.avisos().filter { !it.leido } }.getOrDefault(emptyList()) else emptyList()
-                val remitentes = if (app.avisosConMensajes && conteo.second > prefs.getInt("p$p.mensajes", 0)) cliente.remitentesSinLeer() else emptyList()
+                // Los chats silenciados (los guarda la app en "p<perfil>.silenciados") no avisan.
+                val silenciados = prefs.getStringSet("p$p.silenciados", emptySet()).orEmpty()
+                val todos = if (app.avisosConMensajes && conteo.second > prefs.getInt("p$p.mensajes", 0)) cliente.remitentesConUsuario() else emptyList()
+                val remitentes = todos.filter { it.first !in silenciados }.map { it.second }
+                if (todos.isNotEmpty() && remitentes.isEmpty()) prefs.edit().putInt("p$p.mensajes", conteo.second).apply()
                 Triple(conteo, ultimos, remitentes)
             } }.getOrNull()
             if (resultado == null) { reintentar = true; continue }
@@ -89,6 +93,18 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
                 } else null,
             ).joinToString(" · ").ifBlank { cuantos }
             Avisos.notificar(c, app, detalle, p, cuenta.usuario, publico = cuantos)
+        }
+        // Una vez al día por cuenta: los cumpleaños de los amigos.
+        val hoy = java.time.LocalDate.now()
+        val clave = "%02d-%02d".format(hoy.monthValue, hoy.dayOfMonth)
+        for (cuenta in app.avisosCuentas()) {
+            val p = cuenta.perfil
+            if (prefs.getString("p$p.cumples", "") == hoy.toString() || !Avisos.activo(prefs, p, Avisos.AVISOS)) continue
+            val cumples = runCatching { runBlocking { ClienteSocial(cuenta.token, { cuenta.vigente() }, app.avisosConfiguracion).cumplesAmigos() } }.getOrNull() ?: continue
+            prefs.edit().putString("p$p.cumples", hoy.toString()).apply()
+            Avisos.cumplesDeHoy(cumples, clave).forEachIndexed { i, a ->
+                Avisos.notificar(c, app, c.getString(R.string.cumple_hoy_aviso, a.persona.nombre.ifBlank { a.persona.usuario }), p, cuenta.usuario, id = 100 + i)
+            }
         }
         return if (reintentar) Result.retry() else Result.success()
     }
@@ -152,7 +168,10 @@ object Avisos {
         return "${a.de.nombre.ifBlank { a.de.usuario }} $que"
     }
 
-    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto) {
+    /** Los amigos que cumplen años en [hoy] ("MM-DD"). */
+    fun cumplesDeHoy(l: List<io.github.fogonapps.social.CumpleAmigo>, hoy: String) = l.filter { it.fecha == hoy }
+
+    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto, id: Int = 7) {
         val nm = c.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CANAL, c.getString(R.string.fondo_canal), NotificationManager.IMPORTANCE_DEFAULT))
         val abrir = PendingIntent.getActivity(c, perfil.toIntOrNull() ?: 0, app.avisosAbrir(perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
@@ -164,7 +183,7 @@ object Avisos {
             .setContentTitle(titulo).setContentText(texto).setStyle(NotificationCompat.BigTextStyle().bigText(texto))
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publica)
             .setContentIntent(abrir).setAutoCancel(true).build()
-        runCatching { nm.notify(perfil, 7, n) }
+        runCatching { nm.notify(perfil, id, n) }
     }
 }
 

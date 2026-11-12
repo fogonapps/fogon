@@ -1,5 +1,10 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import kotlinx.serialization.json.put
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import io.github.fogonapps.cajon.datos.Imagenes
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -204,7 +209,14 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
     Sinopsis(o.sinopsis)
     if (o.canciones.isNotEmpty()) {
         Seccion(stringResource(R.string.canciones))
-        o.canciones.forEachIndexed { i, c -> Text("${i + 1}. ${c.titulo}", style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)) }
+        // Cada canción con su avance (si Apple la tiene) y, al mantenerla, sus acciones.
+        var avances by remember(o.titulo) { mutableStateOf<List<io.github.fogonapps.social.CancionSocial>>(emptyList()) }
+        LaunchedEffect(o.titulo) { avances = vm.cancionesApple(o.titulo, o.creador) }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 6.dp)) {
+            o.canciones.forEachIndexed { i, c ->
+                FilaCancionAlbum(vm, o, i, c.titulo, avances.firstOrNull { vm.L.tituloLimpio(it.titulo) == vm.L.tituloLimpio(c.titulo) })
+            }
+        }
     }
     Pista(stringResource(fuenteDe(o.tipo)), Modifier.padding(top = 12.dp))
 }
@@ -502,7 +514,65 @@ private fun Paginas(vm: CajonViewModel, o: Obra) {
     }
 }
 
+/** Una canción de un álbum que todavía no está en el cajón: número, título, avance y, al tocarla o mantenerla, sus acciones. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun FilaCancionAlbum(vm: CajonViewModel, o: Obra, i: Int, titulo: String, avance: io.github.fogonapps.social.CancionSocial?) {
+    val f = FogonTema.actual
+    var acciones by remember { mutableStateOf(false) }
+    if (acciones) AccionesCancion(vm, o, titulo, avance) { acciones = false }
+    Row(Modifier.fillMaxWidth().combinedClickable(onLongClick = { acciones = true }) { acciones = true }.padding(horizontal = 14.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(28.dp))
+        Text(titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+        avance?.let { io.github.fogonapps.social.ui.BotonAvance(it.audio) }
+    }
+}
+
+/**
+ * Lo que se puede hacer con una canción (como en una app de música): escucharla 30 segundos en Apple Music, ponerla en
+ * tu perfil, en tu nota o en una historia.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AccionesCancion(vm: CajonViewModel, o: Obra, titulo: String, avance: io.github.fogonapps.social.CancionSocial?, onCerrar: () -> Unit) {
+    val f = FogonTema.actual
+    var historia by remember { mutableStateOf(false) }
+    val interfaz = interfazSocial(vm)
+    val adjunto = kotlinx.serialization.json.buildJsonObject {
+        put("tipo", "cancion"); put("titulo", titulo); put("detalle", o.creador)
+        (avance?.portada ?: o.portada).takeIf { it.startsWith("https://") }?.let { put("imagen", it) }
+        avance?.let { put("audio", it.audio); put("enlace", it.enlace) }
+    }
+    ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Text(titulo, style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+            avance?.let { a ->
+                Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    io.github.fogonapps.social.ui.BotonAvance(a.audio)
+                    io.github.fogonapps.social.ui.EnlaceAppleMusic(a.enlace)
+                }
+            }
+            FilaAccion(Iconos.Persona, stringResource(R.string.cancion_al_perfil)) {
+                vm.ponerCancion(listOf("v3", titulo, o.creador, o.titulo, avance?.portada ?: o.portada, avance?.audio.orEmpty(), avance?.enlace.orEmpty()).joinToString("|") { it.replace("|", "/") }); onCerrar()
+            }
+            FilaAccion(Iconos.Comentario, stringResource(R.string.cancion_a_la_nota)) { vm.red.ponerNotaGente("", adjunto); onCerrar() }
+            FilaAccion(Iconos.Mas, stringResource(R.string.cancion_a_historia)) { historia = true }
+        }
+    }
+    if (historia) io.github.fogonapps.social.ui.CrearHistoria(interfaz, adjunto) { historia = false; onCerrar() }
+}
+
+@Composable
+private fun FilaAccion(icono: io.github.fogonapps.identidad.Dibujo, texto: String, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
+        Text(texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+    }
+}
+
 /** Las canciones del álbum, cada una con su nota y su corazón (como en un tracklist con calificación). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Canciones(vm: CajonViewModel, o: Obra) {
     val f = FogonTema.actual
@@ -514,7 +584,9 @@ private fun Canciones(vm: CajonViewModel, o: Obra) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 6.dp)) {
         o.canciones.forEachIndexed { i, c ->
             val avance = avances.firstOrNull { vm.L.tituloLimpio(it.titulo) == vm.L.tituloLimpio(c.titulo) }
-            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)) {
+            var acciones by remember { mutableStateOf(false) }
+            if (acciones) AccionesCancion(vm, o, c.titulo, avance) { acciones = false }
+            Column(Modifier.fillMaxWidth().combinedClickable(onLongClick = { acciones = true }) { acciones = true }.padding(horizontal = 14.dp, vertical = 6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(28.dp))
                     Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)

@@ -454,4 +454,16 @@
     <item quantity="one">Un voto</item>
     <item quantity="other">%1$d votos</item>
   </plurals>
+    <string name="cumple_hoy_aviso">Hoy es el cumpleaños de %1$s</string>
+    <string name="cumple_hoy_perfil">Hoy cumple años</string>
+    <string name="cancion_perfil_poner">Poner una canción</string>
+    <string name="cancion_perfil_titulo">Tu canción</string>
+    <string name="cancion_perfil_quitar">Quitar la canción</string>
+    <string name="cumple_titulo">Tu cumpleaños</string>
+    <string name="cumple_explica">Solo el día y el mes. Lo ven solo tus amigos (quienes se siguen contigo) y les avisa ese día.</string>
+    <string name="cumple_dia">Día</string>
+    <string name="cumple_mes">Mes</string>
+    <string name="cumple_guardar">Guardar</string>
+    <string name="cumple_quitar">Quitar</string>
+    <string name="cumple_guardado">Guardado.</string>
 </resources>

@@ -163,6 +163,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class GrupoDestacadas(val titulo: String, val historias: List<Historia>)
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
+@Serializable data class Cumple(val fecha: String)
+@Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 @Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
@@ -833,9 +835,15 @@ class Social(
         val anterior = leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single()
         val identidad = cambio.identidad
         if (identidad != null && cambio.revision != revisionPerfil(yo)) throw Problema(409, "perfil_revision")
-        val partes = cambio.partes ?: leer("SELECT clave, visibilidad, datos FROM partes_perfil WHERE cuenta = ? AND app = ?", yo, app) {
+        val existentes = leer("SELECT clave, visibilidad, datos FROM partes_perfil WHERE cuenta = ? AND app = ?", yo, app) {
             it.getString(1) to Parte(it.getString(2), JsonSocial.parseToJsonElement(it.getString(3)))
         }.toMap()
+        // Fusionar cambia solo lo enviado; reemplazar conserva la canción del perfil (la manda aparte cada app).
+        val partes = when {
+            cambio.partes == null -> existentes
+            cambio.fusionar -> existentes + cambio.partes - cambio.quitar.toSet()
+            else -> cambio.partes + existentes.filterKeys { it == "cancion" && it !in cambio.partes }
+        }
         if (partes.size > 20 || partes.any { it.key.isBlank() || it.key.length > 30 || it.value.visibilidad !in Vis.SUBIBLES }) throw Problema(400, "partes")
         subirPerfil(yo, anterior.copy(nombre = identidad?.nombre ?: miCuenta(yo).nombre,
             bio = identidad?.bio ?: anterior.bio, portada = identidad?.portada ?: anterior.portada,
@@ -1507,6 +1515,25 @@ class Social(
     fun amigos(yo: Long): List<Persona> = b.usar {
         leer("""SELECT s.a FROM seguir s WHERE s.de = ? AND s.aceptada = 1 AND EXISTS(SELECT 1 FROM seguir t WHERE t.de = s.a AND t.a = ? AND t.aceptada = 1) LIMIT 500""", yo, yo) { it.getLong(1) }
     }.filter { visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo) }.map(::persona).sortedBy { it.nombre.ifBlank { it.usuario }.lowercase() }
+
+    /** Pone (o quita, con "") el cumpleaños: solo día y mes ("MM-DD"). */
+    fun ponerCumple(yo: Long, c: Cumple) {
+        val f = c.fecha.trim()
+        if (f.isNotEmpty()) {
+            if (!Regex("(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])").matches(f)) throw Problema(400, "fecha")
+            runCatching { java.time.MonthDay.parse("--$f") }.getOrElse { throw Problema(400, "fecha") }
+        }
+        b.usar { cambiar("UPDATE cuentas SET cumple = ? WHERE id = ?", f, yo) }
+    }
+    fun miCumple(yo: Long): String = b.usar { leer("SELECT cumple FROM cuentas WHERE id = ?", yo) { it.getString(1) }.first() }
+
+    /** Los cumpleaños de tus amigos (solo quienes lo pusieron): para avisarte el día. */
+    fun cumplesAmigos(yo: Long): List<CumpleAmigo> {
+        val ids = amigos(yo).map { it.usuario }.toSet()
+        if (ids.isEmpty()) return emptyList()
+        return b.usar { leer("SELECT usuario, cumple FROM cuentas WHERE cumple != '' AND usuario IN (${ids.joinToString(",") { "?" }})", *ids.toTypedArray()) { it.getString(1) to it.getString(2) } }
+            .mapNotNull { (u, f) -> amigos(yo).firstOrNull { it.usuario == u }?.let { CumpleAmigo(it, f) } }
+    }
 
     /** Tus mejores amigos (solo entre tus amigos); ellos ven tus historias «solo mejores amigos». */
     fun mejoresAmigos(yo: Long): List<String> = b.usar { leer("SELECT c.usuario FROM mejores_amigos m JOIN cuentas c ON c.id = m.amigo WHERE m.cuenta = ?", yo) { it.getString(1) } }

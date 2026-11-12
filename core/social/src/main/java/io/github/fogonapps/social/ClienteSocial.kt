@@ -254,6 +254,9 @@ open class ClienteSocial(
     suspend fun votarHistoria(id: Long, opcion: Int) = leer(HistoriaSocial.serializer(), pedir("/historias/$id/voto", "POST", json(VotoHistoria.serializer(), VotoHistoria(opcion))))
     suspend fun destacarHistoria(id: Long, titulo: String) { pedir("/historias/$id/destacada", "PUT", json(DestacarHistoria.serializer(), DestacarHistoria(titulo))) }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
+    suspend fun cumple() = leer(CumpleSocial.serializer(), pedir("/cuenta/cumple")).fecha
+    suspend fun ponerCumple(fecha: String) { pedir("/cuenta/cumple", "PUT", json(CumpleSocial.serializer(), CumpleSocial(fecha))) }
+    suspend fun cumplesAmigos() = leer(ListSerializer(CumpleAmigo.serializer()), pedir("/amigos/cumples"))
     suspend fun amigos() = leer(ListSerializer(PersonaSocial.serializer()), pedir("/amigos"))
     suspend fun mejoresAmigos() = leer(ListaUsuarios.serializer(), pedir("/mejores-amigos")).usuarios
     suspend fun ponerMejoresAmigos(l: List<String>) { pedir("/mejores-amigos", "PUT", json(ListaUsuarios.serializer(), ListaUsuarios(l))) }
@@ -305,6 +308,14 @@ open class ClienteSocial(
     suspend fun remitentesSinLeer(): List<String> = runCatching {
         // Los nombres (no el @) para el aviso; un servidor anterior solo manda los usuarios.
         JsonSocial.parseToJsonElement(pedir("/mensajes/remitentes")!!).jsonObject.let { it["nombres"] ?: it["de"] }!!.jsonArray.map { it.jsonPrimitive.content }
+    }.getOrDefault(emptyList())
+
+    /** Quién escribió (usuario y nombre), para no avisar de los chats silenciados. */
+    suspend fun remitentesConUsuario(): List<Pair<String, String>> = runCatching {
+        val o = JsonSocial.parseToJsonElement(pedir("/mensajes/remitentes")!!).jsonObject
+        val de = o["de"]!!.jsonArray.map { it.jsonPrimitive.content }
+        val nombres = (o["nombres"] as? kotlinx.serialization.json.JsonArray)?.map { it.jsonPrimitive.content } ?: de
+        de.zip(nombres)
     }.getOrDefault(emptyList())
     suspend fun mensajesSinLeer(): Int = JsonSocial.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))
