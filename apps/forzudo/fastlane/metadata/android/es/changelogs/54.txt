@@ -1,0 +1,1 @@
+Arreglo: el botón para poner una canción en el perfil ya no queda pegado a los demás; en El Forzudo, La Alcancía y La Cucha la canción y las destacadas pasan debajo de los botones del perfil, a todo lo ancho.

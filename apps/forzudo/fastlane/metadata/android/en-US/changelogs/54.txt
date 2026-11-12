@@ -1,0 +1,1 @@
+Fix: the button to add a song to your profile no longer sits stuck to the others; the song and highlights now go under the profile buttons, full width.

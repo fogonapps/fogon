@@ -85,13 +85,15 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfaz) { FotoPerfilLocal(foto, tamano = 96.dp, vacio = { Personaje(Quien.CUCHA, null, tamano = 80.dp) }) }
                 BotonMasFoto(stringResource(R.string.perfil_foto), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
-        }, bajoNombre = { if (usuario != null) { Text("@$usuario", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, usuario!!); io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) } }, enlace = {}, acciones = {
+        }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {
             BotonSecundario(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
             if (usuario != null) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
-        }, despuesAcciones = { CambiarDeCuenta(vm, acciones?.exportar ?: {}) })
+        }, despuesAcciones = {
+            usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) }
+            CambiarDeCuenta(vm, acciones?.exportar ?: {}) })
 }
 
 @Composable

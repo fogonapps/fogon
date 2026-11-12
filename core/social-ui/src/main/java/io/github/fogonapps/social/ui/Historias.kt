@@ -1152,8 +1152,11 @@ fun CancionPerfilPropia(vm: InterfazSocial) {
     val identidad by red.identidad.collectAsStateWithLifecycle()
     val actual = identidad?.partes?.get("cancion") as? JsonObject
     var buscando by remember { mutableStateOf(false) }
-    if (actual != null) TarjetaCancionPerfil(actual) { buscando = true }
-    else BotonSecundario(stringResource(R.string.cancion_perfil_poner), { buscando = true }, Modifier.fillMaxWidth())
+    // Con aire alrededor: va debajo de los botones del perfil, a todo lo ancho.
+    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        if (actual != null) TarjetaCancionPerfil(actual) { buscando = true }
+        else BotonSecundario(stringResource(R.string.cancion_perfil_poner), { buscando = true }, Modifier.fillMaxWidth())
+    }
     if (buscando) ModalBottomSheet({ buscando = false }, containerColor = f.fondo, contentColor = f.texto) {
         var q by rememberSaveable { mutableStateOf("") }
         var l by remember { mutableStateOf<List<CancionSocial>>(emptyList()) }

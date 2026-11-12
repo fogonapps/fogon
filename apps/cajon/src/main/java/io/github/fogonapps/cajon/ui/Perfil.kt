@@ -381,8 +381,8 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             SelectorPerfiles(vm)
             CrearClaveAviso(vm)
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
-                TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) })
-            } ?: BotonSecundario(stringResource(R.string.cancion_poner), { vm.abrir(Pantalla.ElegirCancion) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+                Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) }) }
+            } ?: BotonSecundario(stringResource(R.string.cancion_poner), { vm.abrir(Pantalla.ElegirCancion) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
         })
 }
 
