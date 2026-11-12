@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +21,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,6 +43,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.identidad.*
 import io.github.fogonapps.social.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
@@ -86,10 +94,14 @@ internal suspend fun jpegHistoria(ctx: android.content.Context, uri: android.net
 @Composable
 fun AvatarConAro(p: PersonaSocial, tamano: Dp, estado: Int, mas: Boolean = false, onClick: (() -> Unit)? = null) {
     val f = FogonTema.actual
-    Box(Modifier.size(tamano + 10.dp).then(if (onClick != null) Modifier.clip(CircleShape).clickable(onClick = onClick) else Modifier), contentAlignment = Alignment.Center) {
-        if (estado > 0) Box(Modifier.matchParentSize().border(if (estado == 1) 3.dp else 1.5.dp, if (estado == 1) f.tinta1 else f.linea, CircleShape))
-        AvatarRed(p, tamano)
-        if (mas) Box(Modifier.align(Alignment.BottomEnd).size(22.dp).clip(CircleShape).background(f.tinta1).border(2.dp, f.fondo, CircleShape), contentAlignment = Alignment.Center) {
+    // El recorte redondo va solo en el avatar: así el «+» de la esquina se ve entero.
+    Box(Modifier.size(tamano + 10.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.matchParentSize().clip(CircleShape).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier), contentAlignment = Alignment.Center) {
+            if (estado > 0) Box(Modifier.matchParentSize().border(if (estado == 1) 3.dp else 1.5.dp, if (estado == 1) f.tinta1 else f.linea, CircleShape))
+            AvatarRed(p, tamano)
+        }
+        if (mas) Box(Modifier.align(Alignment.BottomEnd).size(24.dp).clip(CircleShape).background(f.tinta1).border(2.dp, f.fondo, CircleShape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier), contentAlignment = Alignment.Center) {
             IconoRiso(Iconos.Mas, null, tamano = 14.dp, tinta = f.sobreTinta1)
         }
     }
@@ -212,6 +224,10 @@ private fun nombreTipoAdjunto(tipo: String, tipoObra: String): String = stringRe
     else -> R.string.historia_tipo_otro
 })
 
+/** El botón del avance de 30 segundos (solo de Apple), para usarlo fuera de las historias (la canción del perfil). */
+@Composable
+fun BotonAvance(url: String) { if (url.startsWith("https://audio-ssl.itunes.apple.com/")) Avance(url, false) }
+
 /** El avance de 30 segundos: suena al tocar (o solo, en el visor); se apaga al salir. */
 @Composable
 private fun Avance(url: String, sonar: Boolean) {
@@ -230,6 +246,13 @@ private fun Avance(url: String, sonar: Boolean) {
         onDispose { runCatching { reproductor.release() } }
     }
     LaunchedEffect(sonar) { if (sonar) sonando = true }
+    // Al salir de la app (o apagar la pantalla), la canción se calla.
+    val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(ciclo) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) { sonando = false; runCatching { if (reproductor.isPlaying) reproductor.pause() } } }
+        ciclo.lifecycle.addObserver(obs)
+        onDispose { ciclo.lifecycle.removeObserver(obs) }
+    }
     LaunchedEffect(sonando, listo) { runCatching { if (listo) { if (sonando) reproductor.start() else if (reproductor.isPlaying) reproductor.pause() } } }
     val nombre = stringResource(if (sonando) R.string.historia_pausar else R.string.historia_escuchar)
     Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { sonando = !sonando }, contentAlignment = Alignment.Center) {
@@ -248,21 +271,31 @@ fun ElegirAdjunto(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (JsonObjec
     val alcance = rememberCoroutineScope()
     var buscar by rememberSaveable { mutableStateOf("") }
     var canciones by remember { mutableStateOf<List<CancionSocial>?>(null) }
+    var encontrados by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var ocupado by remember { mutableStateOf(false) }
     val opciones = remember { vm.adjuntosApp() }
     LaunchedEffect(buscar) {
-        if (buscar.trim().length < 2) { canciones = null; return@LaunchedEffect }
-        delay(450); canciones = vm.red.canciones(buscar)
+        if (buscar.trim().length < 2) { canciones = null; encontrados = emptyList(); return@LaunchedEffect }
+        delay(450)
+        // Canciones y lo de la app (películas, series, libros…), a la vez.
+        val obras = async { runCatching { vm.buscarAdjuntos(buscar.trim()) }.getOrDefault(emptyList()) }
+        canciones = vm.red.canciones(buscar)
+        encontrados = obras.await()
     }
     fun elegir(a: JsonObject) { ocupado = true; alcance.launch { val listo = runCatching { vm.completarAdjunto(a) }.getOrDefault(a); ocupado = false; onElegir(listo); onCerrar() } }
     ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.historia_adjuntar), style = MaterialTheme.typography.titleMedium, color = f.texto)
             OutlinedTextField(buscar, { buscar = it.take(80) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
-                placeholder = { Text(stringResource(R.string.historia_buscar_cancion)) })
+                placeholder = { Text(vm.textoBuscarAdjunto() ?: stringResource(R.string.historia_buscar_cancion)) })
             if (ocupado) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            if (encontrados.isNotEmpty()) {
+                Text(stringResource(R.string.historia_obras), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+                encontrados.forEach { a -> Box(Modifier.clip(forma(18.dp)).clickable { elegir(a) }) { TarjetaAdjunto(a) } }
+            }
             canciones?.let { l ->
-                if (l.isEmpty()) Pista(stringResource(R.string.historia_sin_canciones))
+                if (l.isNotEmpty()) Text(stringResource(R.string.historia_tipo_cancion), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+                if (l.isEmpty() && encontrados.isEmpty()) Pista(stringResource(R.string.historia_sin_canciones))
                 l.forEach { c ->
                     Row(Modifier.fillMaxWidth().clip(forma(12.dp)).clickable {
                         elegir(buildJsonObject { put("tipo", "cancion"); put("titulo", c.titulo); put("detalle", c.artista); put("imagen", c.portada); put("audio", c.audio); put("enlace", c.enlace) })
@@ -312,10 +345,10 @@ fun HojaNota(vm: InterfazSocial, mia: NotaGente?, onCerrar: () -> Unit) {
     if (eligiendo) ElegirAdjunto(vm, { eligiendo = false }) { adjunto = it }
 }
 
-/** La nota de otra persona, con su canción sonando. */
+/** La nota de otra persona, con su canción sonando; con [responder] (en los mensajes), se le contesta en el chat. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HojaVerNota(vm: InterfazSocial, n: NotaGente, onCerrar: () -> Unit) {
+fun HojaVerNota(vm: InterfazSocial, n: NotaGente, responder: (() -> Unit)? = null, onCerrar: () -> Unit) {
     val f = FogonTema.actual
     ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -324,74 +357,279 @@ private fun HojaVerNota(vm: InterfazSocial, n: NotaGente, onCerrar: () -> Unit) 
             if (n.texto.isNotBlank()) Text(n.texto, style = MaterialTheme.typography.titleMedium, color = f.texto, textAlign = TextAlign.Center)
             Text(haceCuanto(n.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             (n.datos["adjunto"] as? JsonObject)?.let { TarjetaAdjunto(it, sonar = true) }
+            if (responder != null) BotonRiso(stringResource(R.string.historia_responder), { onCerrar(); responder() }, Modifier.fillMaxWidth())
             BotonSecundario(stringResource(R.string.historia_ver_perfil), { onCerrar(); vm.navegacion.perfil(n.persona.usuario) }, Modifier.fillMaxWidth())
         }
     }
 }
 
-/* ----- Crear una historia ----- */
+/* ----- Crear una historia: el editor ----- */
 
-/** Foto, texto, fondo y adjunto; se comparte con tu gente por 24 horas. */
+/** Una capa sobre la historia: un sticker (WebP en base64 o un dibujo de Fogón) o un texto. */
+private data class Capa(val id: Int, val sticker: String? = null, val recurso: Int? = null, val texto: String = "", val color: Int = 0, val conFondo: Boolean = false)
+
+/** Los stickers de Fogón (los personajes de las apps y la chispa), para cualquier app. */
+private val STICKERS_FOGON = listOf(
+    io.github.fogonapps.identidad.R.drawable.personaje_cajon_feliz, io.github.fogonapps.identidad.R.drawable.personaje_forzudo_feliz,
+    io.github.fogonapps.identidad.R.drawable.personaje_ahorrador_feliz, io.github.fogonapps.identidad.R.drawable.personaje_cucha_feliz,
+    io.github.fogonapps.identidad.R.drawable.chispa,
+)
+
+/** El color de texto y de lápiz (de [colorTexto]) que se lee sobre cada fondo de [fondoHistoria]. */
+private fun contraste(fondo: Int) = if (fondo % 4 == 0 || fondo % 4 == 2) 1 else 0
+
+@Composable
+private fun colorTexto(i: Int): Color { val f = FogonTema.actual; return listOf(f.texto, f.fondo, f.tinta1, f.tinta2)[i % 4] }
+
+/**
+ * El editor de una historia, como en Instagram: la foto se acerca y se mueve con los dedos; encima van textos y
+ * stickers que se mueven, se agrandan o se achican (con dos dedos o con los botones) y se quitan; abajo, la música u
+ * otra cosa de la app. Al compartir, todo se vuelve una sola imagen (la canción suena aparte, al verla).
+ */
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerrar: () -> Unit) {
     val f = FogonTema.actual
     val ctx = LocalContext.current
     val alcance = rememberCoroutineScope()
+    val capa = androidx.compose.ui.graphics.rememberGraphicsLayer()
     var foto by remember { mutableStateOf<android.net.Uri?>(null) }
-    var texto by rememberSaveable { mutableStateOf("") }
+    var zoom by remember { mutableFloatStateOf(1f) }
+    var mover by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     var fondo by rememberSaveable { mutableStateOf(0) }
     var adjunto by remember { mutableStateOf(adjuntoInicial) }
+    val capas = remember { mutableStateListOf<Capa>() }
+    val posiciones = remember { mutableStateMapOf<Int, androidx.compose.ui.geometry.Offset>() }
+    val escalas = remember { mutableStateMapOf<Int, Float>() }
+    var elegida by remember { mutableStateOf<Int?>(null) }
+    var siguiente by remember { mutableStateOf(1) }
+    var escribiendo by remember { mutableStateOf<Capa?>(null) }
+    var eligiendoSticker by remember { mutableStateOf(false) }
     var eligiendo by remember { mutableStateOf(false) }
     var subiendo by remember { mutableStateOf(false) }
+    // Dibujo a mano: cada trazo con su color; mientras se dibuja, los dedos no mueven nada más.
+    val trazos = remember { mutableStateListOf<Pair<Int, List<androidx.compose.ui.geometry.Offset>>>() }
+    var dibujando by remember { mutableStateOf(false) }
+    var colorTrazo by remember { mutableStateOf(2) }
+    val coloresTrazo = (0..3).map { colorTexto(it) }
     val noSePudo = stringResource(R.string.historia_no_se_pudo)
-    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u -> if (u != null) foto = u }
-    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxSize().background(f.fondo).padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
+        if (u != null) { foto = u; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
+    }
+    fun agregar(c: Capa) { capas += c; escalas[c.id] = 1f; posiciones[c.id] = androidx.compose.ui.geometry.Offset.Zero; elegida = c.id; siguiente++ }
+    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)) {
+        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_cerrar)) { onCerrar() }
-                Text(stringResource(R.string.historia_nueva), style = MaterialTheme.typography.titleLarge, color = f.texto, modifier = Modifier.weight(1f).padding(start = 8.dp))
+                Text(stringResource(R.string.historia_nueva), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.weight(1f))
             }
-            val (color, sobre) = fondoHistoria(fondo)
-            Box(Modifier.fillMaxWidth().aspectRatio(9f / 14f).clip(forma(22.dp)).background(color), contentAlignment = Alignment.Center) {
-                foto?.let { coil3.compose.AsyncImage(it, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
-                Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (texto.isNotBlank()) Text(texto, style = MaterialTheme.typography.headlineSmall, color = if (foto != null) f.texto else sobre, textAlign = TextAlign.Center,
-                        modifier = if (foto != null) Modifier.clip(forma(12.dp)).background(f.fondo.copy(alpha = 0.75f)).padding(10.dp) else Modifier)
-                    adjunto?.let { TarjetaAdjunto(it, solida = true) }
+            // El lienzo (9:16): lo que queda adentro es la historia.
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val (color, _) = fondoHistoria(fondo)
+                Box(Modifier.aspectRatio(9f / 16f, matchHeightConstraintsFirst = true).clip(forma(18.dp))
+                    .drawWithContent { capa.record { this@drawWithContent.drawContent() }; drawLayer(capa) }
+                    .background(color)
+                    .pointerInput(foto) {
+                        detectTransformGestures { _, paso, escala, _ ->
+                            if (foto != null) { zoom = (zoom * escala).coerceIn(1f, 5f); mover += paso }
+                        }
+                    }
+                    .pointerInput(Unit) { detectTapGestures { elegida = null } }, contentAlignment = Alignment.Center) {
+                    foto?.let { coil3.compose.AsyncImage(it, null, Modifier.fillMaxSize().graphicsLayer { scaleX = zoom; scaleY = zoom; translationX = mover.x; translationY = mover.y },
+                        contentScale = ContentScale.Crop) }
+                    capas.forEach { c ->
+                        key(c.id) {
+                            val pos = posiciones[c.id] ?: androidx.compose.ui.geometry.Offset.Zero
+                            val esc = escalas[c.id] ?: 1f
+                            Box(Modifier.offset { androidx.compose.ui.unit.IntOffset(pos.x.toInt(), pos.y.toInt()) }
+                                .graphicsLayer { scaleX = esc; scaleY = esc }
+                                .then(if (elegida == c.id) Modifier.border(1.5.dp, f.acentoTexto, forma(10.dp)) else Modifier)
+                                .pointerInput(c.id) {
+                                    detectTransformGestures { _, paso, escala, _ ->
+                                        elegida = c.id
+                                        val e = ((escalas[c.id] ?: 1f) * escala).coerceIn(0.3f, 6f)
+                                        escalas[c.id] = e
+                                        posiciones[c.id] = (posiciones[c.id] ?: androidx.compose.ui.geometry.Offset.Zero) + paso * e
+                                    }
+                                }
+                                .pointerInput(c.id) { detectTapGestures(onDoubleTap = { if (c.sticker == null && c.recurso == null) escribiendo = c }) { elegida = c.id } }
+                                .padding(4.dp)) {
+                                when {
+                                    c.sticker != null -> ImagenB64(c.sticker, Modifier.size(110.dp))
+                                    c.recurso != null -> androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(c.recurso), null, Modifier.size(110.dp))
+                                    else -> Text(c.texto, style = MaterialTheme.typography.headlineSmall, color = colorTexto(c.color), textAlign = TextAlign.Center,
+                                        modifier = Modifier.widthIn(max = 260.dp).then(if (c.conFondo) Modifier.clip(forma(10.dp)).background(if (c.color == 1) f.texto else f.fondo).padding(horizontal = 10.dp, vertical = 4.dp) else Modifier))
+                                }
+                            }
+                        }
+                    }
+                    androidx.compose.foundation.Canvas(Modifier.fillMaxSize().then(if (dibujando) Modifier.pointerInput(colorTrazo) {
+                        detectDragGestures(onDragStart = { o -> trazos += colorTrazo to listOf(o) }) { cambio, _ ->
+                            val ultimo = trazos.removeAt(trazos.lastIndex)
+                            trazos += ultimo.first to (ultimo.second + cambio.position)
+                        }
+                    } else Modifier)) {
+                        trazos.forEach { (c, puntos) ->
+                            if (puntos.size > 1) drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(puntos[0].x, puntos[0].y); puntos.drop(1).forEach { lineTo(it.x, it.y) } },
+                                coloresTrazo[c], style = androidx.compose.ui.graphics.drawscope.Stroke(width = 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                        }
+                    }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            adjunto?.let { a ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f)) { ControlesAdjunto(a) }
+                    BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_quitar_adjunto)) { adjunto = null }
+                }
+            }
+            elegida?.let { id ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Pildora(stringResource(R.string.historia_mas_grande)) { escalas[id] = ((escalas[id] ?: 1f) * 1.25f).coerceAtMost(6f) }
+                    Pildora(stringResource(R.string.historia_mas_chico)) { escalas[id] = ((escalas[id] ?: 1f) / 1.25f).coerceAtLeast(0.3f) }
+                    Pildora(stringResource(R.string.historia_quitar), Iconos.Borrar) { capas.removeAll { it.id == id }; elegida = null }
+                }
+            }
+            if (dibujando) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                coloresTrazo.forEachIndexed { i, c ->
+                    Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(if (colorTrazo == i) 3.dp else 1.dp, if (colorTrazo == i) f.acentoTexto else f.linea, CircleShape).clickable { colorTrazo = i })
+                }
+                if (trazos.isNotEmpty()) Pildora(stringResource(R.string.historia_deshacer)) { trazos.removeAt(trazos.lastIndex) }
+                Pildora(stringResource(R.string.historia_dibujo_listo), acento = true) { dibujando = false }
+            } else androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Pildora(stringResource(R.string.historia_dibujar)) { dibujando = true; elegida = null; colorTrazo = if (foto != null) 0 else contraste(fondo) }
                 Pildora(stringResource(if (foto == null) R.string.historia_foto else R.string.historia_otra_foto), Iconos.Mas) { elegirFoto.launch("image/*") }
+                Pildora(stringResource(R.string.historia_texto_corto)) { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
+                Pildora(stringResource(R.string.historia_sticker)) { eligiendoSticker = true }
+                Pildora(stringResource(R.string.historia_musica)) { eligiendo = true }
                 if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null }
             }
-            if (foto == null) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (foto == null && !dibujando) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 (0..3).forEach { i ->
                     val (c, _) = fondoHistoria(i)
-                    Box(Modifier.size(34.dp).clip(CircleShape).background(c).border(if (fondo == i) 3.dp else 1.dp, if (fondo == i) f.acentoTexto else f.linea, CircleShape).clickable { fondo = i })
+                    Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(if (fondo == i) 3.dp else 1.dp, if (fondo == i) f.acentoTexto else f.linea, CircleShape).clickable { fondo = i })
                 }
             }
-            OutlinedTextField(texto, { texto = it.take(200) }, Modifier.fillMaxWidth(), minLines = 2, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.historia_texto)) })
-            adjunto?.let { Pildora(stringResource(R.string.historia_quitar_adjunto), Iconos.Cerrar) { adjunto = null } }
-                ?: Pildora(stringResource(R.string.historia_adjuntar), Iconos.Mas) { eligiendo = true }
-            Pista(stringResource(R.string.historia_explica))
+            if (capas.isEmpty() && trazos.isEmpty()) Text(stringResource(R.string.historia_editor_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             if (subiendo) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
             BotonRiso(stringResource(R.string.historia_compartir), {
-                subiendo = true
+                subiendo = true; elegida = null; dibujando = false
                 alcance.launch {
-                    val jpeg = foto?.let { jpegHistoria(ctx, it) }
-                    if (foto != null && jpeg == null) { subiendo = false; android.widget.Toast.makeText(ctx, noSePudo, android.widget.Toast.LENGTH_SHORT).show(); return@launch }
+                    // Dos cuadros sin la selección, y se guarda lo que se ve en el lienzo.
+                    androidx.compose.runtime.withFrameNanos { }; androidx.compose.runtime.withFrameNanos { }
+                    val imagen = runCatching { capa.toImageBitmap().asAndroidBitmap() }.getOrNull()
+                    val jpeg = imagen?.let { jpegDeLienzo(it) }
+                    if (jpeg == null) { subiendo = false; android.widget.Toast.makeText(ctx, noSePudo, android.widget.Toast.LENGTH_SHORT).show(); return@launch }
                     val datos = buildJsonObject {
-                        if (texto.isNotBlank()) put("texto", texto.trim())
+                        put("compuesta", true)
+                        // Las palabras van también como texto: para leerlas en voz alta y para moderar.
+                        capas.mapNotNull { it.texto.takeIf { t -> t.isNotBlank() } }.joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("texto", it.take(200)) }
                         put("fondo", fondo)
                         adjunto?.let { put("adjunto", it) }
                     }
                     vm.red.subirHistoria(datos, jpeg) { onCerrar() }
                     delay(15_000); subiendo = false
                 }
-            }, Modifier.fillMaxWidth(), habilitado = !subiendo && (foto != null || texto.isNotBlank() || adjunto != null))
+            }, Modifier.fillMaxWidth(), habilitado = !subiendo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null))
         }
     }
+    escribiendo?.let { c -> EditarTextoHistoria(c, { escribiendo = null }) { nueva ->
+        escribiendo = null
+        if (c.id == 0) agregar(nueva.copy(id = siguiente)) else { val i = capas.indexOfFirst { it.id == c.id }; if (i >= 0) capas[i] = nueva.copy(id = c.id) }
+    } }
+    if (eligiendoSticker) ElegirStickerHistoria(vm, { eligiendoSticker = false }) { b64, recurso -> eligiendoSticker = false; agregar(Capa(siguiente, sticker = b64, recurso = recurso)) }
     if (eligiendo) ElegirAdjunto(vm, { eligiendo = false }) { adjunto = it }
+}
+
+/** La imagen del lienzo a JPEG para subir (lado mayor de hasta 1920 px y menos de 900 KB). */
+private suspend fun jpegDeLienzo(b: android.graphics.Bitmap): ByteArray? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+    runCatching {
+        val escala = minOf(1f, 1920f / maxOf(b.width, b.height))
+        val chica = if (escala < 1f) android.graphics.Bitmap.createScaledBitmap(b, (b.width * escala).toInt(), (b.height * escala).toInt(), true) else b
+        val rgb = chica.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+        var calidad = 90
+        var salida: ByteArray
+        do {
+            salida = java.io.ByteArrayOutputStream().also { rgb.compress(android.graphics.Bitmap.CompressFormat.JPEG, calidad, it) }.toByteArray()
+            calidad -= 10
+        } while (salida.size > 900_000 && calidad > 30)
+        salida.takeIf { it.size <= 900_000 }
+    }.getOrNull()
+}
+
+/** Un sticker guardado (WebP en base64). */
+@Composable
+private fun ImagenB64(b64: String, modifier: Modifier) {
+    val imagen = remember(b64) { runCatching { java.util.Base64.getDecoder().decode(b64).let { android.graphics.BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() } }.getOrNull() }
+    if (imagen != null) androidx.compose.foundation.Image(imagen, null, modifier)
+}
+
+/** Escribir (o cambiar) un texto: color y si va sobre un fondo. */
+@Composable
+private fun EditarTextoHistoria(c: Capa, onCerrar: () -> Unit, onListo: (Capa) -> Unit) {
+    val f = FogonTema.actual
+    var texto by remember { mutableStateOf(c.texto) }
+    var color by remember { mutableStateOf(c.color) }
+    var conFondo by remember { mutableStateOf(c.conFondo) }
+    AlertDialog(onCerrar, containerColor = f.fondo,
+        title = { Text(stringResource(R.string.historia_texto_corto), color = f.texto) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(texto, { texto = it.take(120) }, Modifier.fillMaxWidth(), minLines = 2, shape = forma(18.dp), placeholder = { Text(stringResource(R.string.historia_texto)) })
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    (0..3).forEach { i ->
+                        Box(Modifier.size(30.dp).clip(CircleShape).background(colorTexto(i)).border(if (color == i) 3.dp else 1.dp, if (color == i) f.acentoTexto else f.linea, CircleShape).clickable { color = i })
+                    }
+                }
+                Pildora(stringResource(R.string.historia_con_fondo), acento = conFondo) { conFondo = !conFondo }
+            }
+        },
+        confirmButton = { TextButton({ onListo(c.copy(texto = texto.trim(), color = color, conFondo = conFondo)) }, enabled = texto.isNotBlank()) { Text(stringResource(R.string.sancion_listo), color = f.acentoTexto) } },
+        dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.sancion_cancelar), color = f.textoSuave) } })
+}
+
+/** Los stickers para la historia: los de Fogón y los tuyos (si la app los tiene, como El Cajón). */
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ElegirStickerHistoria(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (String?, Int?) -> Unit) {
+    val f = FogonTema.actual
+    val propios = remember { vm.stickersApp() }
+    ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.historia_sticker), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                STICKERS_FOGON.forEach { r ->
+                    Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficie).clickable { onElegir(null, r) }.padding(8.dp)) {
+                        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(r), null, Modifier.fillMaxSize())
+                    }
+                }
+                propios.forEach { s ->
+                    Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficie).clickable { onElegir(s, null) }.padding(4.dp)) { ImagenB64(s, Modifier.fillMaxSize()) }
+                }
+            }
+        }
+    }
+}
+
+/** La música (u otro adjunto) en pequeño: el avance, el título y sus botones. Va sobre la historia ya armada. */
+@Composable
+fun ControlesAdjunto(a: JsonObject, sonar: Boolean = false) {
+    val f = FogonTema.actual
+    val uri = LocalUriHandler.current
+    Row(Modifier.fillMaxWidth().clip(FormaPildora).background(f.fondo.copy(alpha = 0.9f)).border(f.borde, f.linea, FormaPildora).padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val audio = a.t("audio"); val enlace = a.t("enlace"); val escena = a.t("escena")
+        if (audio.isNotBlank()) Avance(audio, sonar)
+        else a.t("imagen").takeIf { it.isNotBlank() }?.let { coil3.compose.AsyncImage(if (it.startsWith("https://")) it else ClienteSocial.imagen(it), null, Modifier.size(36.dp).clip(CircleShape), contentScale = ContentScale.Crop) }
+        Column(Modifier.weight(1f)) {
+            Text(a.t("titulo"), style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val detalle = listOf(a.t("detalle"), a.t("cifra")).filter { it.isNotBlank() }.joinToString(" · ")
+            if (detalle.isNotBlank()) Text(detalle, style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (audio.isNotBlank() && enlace.isNotBlank()) Pildora(stringResource(R.string.historia_apple_music_corto)) { uri.openUri(enlace) }
+        if (escena.isNotBlank()) Pildora(stringResource(R.string.historia_ver_escena)) {
+            uri.openUri("https://www.youtube.com/watch?v=$escena" + (a["segundo"] as? JsonPrimitive)?.intOrNull?.let { "&t=${it}s" }.orEmpty())
+        }
+    }
 }
 
 /* ----- Ver historias ----- */
@@ -428,23 +666,25 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         val imagen = historia.datos.t("imagen")
         val (color, sobre) = fondoHistoria((historia.datos["fondo"] as? JsonPrimitive)?.intOrNull ?: 0)
-        Box(Modifier.fillMaxSize().background(if (imagen.isNotBlank()) f.fondo else color)
+        Box(Modifier.fillMaxSize().background(if (imagen.isNotBlank()) f.fondo else color).systemBarsPadding()
             .pointerInput(historia.id) {
                 detectTapGestures(onPress = { pausado = true; tryAwaitRelease(); pausado = false },
                     onTap = { o -> if (o.x < size.width / 3f) anterior() else siguiente() })
             }) {
             if (imagen.isNotBlank()) coil3.compose.AsyncImage(ClienteSocial.imagen(imagen), stringResource(R.string.historia_foto_de, grupo.persona.nombre.ifBlank { grupo.persona.usuario }),
                 Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-            Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            val compuesta = (historia.datos["compuesta"] as? JsonPrimitive)?.booleanOrNull == true
+            if (!compuesta) Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 val texto = historia.datos.t("texto")
                 if (texto.isNotBlank() && imagen.isBlank()) Text(texto, style = MaterialTheme.typography.headlineSmall, color = sobre, textAlign = TextAlign.Center)
                 if (adjunto != null && imagen.isBlank()) TarjetaAdjunto(adjunto, sonar = true, solida = true)
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (compuesta) adjunto?.let { ControlesAdjunto(it, sonar = true) }
                 val texto = historia.datos.t("texto")
-                if (texto.isNotBlank() && imagen.isNotBlank()) Text(texto, style = MaterialTheme.typography.titleMedium, color = f.texto, textAlign = TextAlign.Center,
+                if (!compuesta && texto.isNotBlank() && imagen.isNotBlank()) Text(texto, style = MaterialTheme.typography.titleMedium, color = f.texto, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().clip(forma(12.dp)).background(f.fondo.copy(alpha = 0.75f)).padding(10.dp))
-                if (adjunto != null && imagen.isNotBlank()) TarjetaAdjunto(adjunto, sonar = true, solida = true)
+                if (!compuesta && adjunto != null && imagen.isNotBlank()) TarjetaAdjunto(adjunto, sonar = true, solida = true)
                 Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.85f)).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (propia) {
                         Pildora(stringResource(R.string.historia_vistas), Iconos.Anime) { alcance.launch { vistas = vm.red.vistasHistoria(historia) } }
@@ -453,6 +693,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                             vm.confirmar(vm.tx(R.string.historia_borrar), vm.tx(R.string.historia_borrar_confirmar)) { vm.red.borrarHistoria(historia); onCerrar() }
                         }
                     } else {
+                        var gusta by remember(historia.id) { mutableStateOf(historia.meGusta) }
+                        Pildora(stringResource(if (gusta) R.string.historia_te_gusto else R.string.historia_me_gusta), Iconos.Corazon, acento = gusta) { gusta = !gusta; vm.red.meGustaHistoria(historia, gusta) }
                         Pildora(stringResource(R.string.historia_ver_perfil), Iconos.Persona) { onCerrar(); vm.navegacion.perfil(grupo.persona.usuario) }
                         Pildora(stringResource(R.string.social_red_reportar), Iconos.Bandera) { reportando = true }
                     }
@@ -479,7 +721,9 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
             ModalBottomSheet({ vistas = null }, containerColor = f.fondo, contentColor = f.texto) {
                 Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                     Text(pluralStringResourceSeguro(l.size), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                    l.forEach { v -> FilaPersona(v.persona, { vistas = null; onCerrar(); vm.navegacion.perfil(v.persona.usuario) }) }
+                    l.forEach { v -> FilaPersona(v.persona, { vistas = null; onCerrar(); vm.navegacion.perfil(v.persona.usuario) }) {
+                        if (v.meGusta) IconoRiso(Iconos.Corazon, stringResource(R.string.historia_te_gusto), tamano = 20.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
+                    } }
                 }
             }
         }

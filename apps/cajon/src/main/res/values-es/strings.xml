@@ -1558,4 +1558,22 @@
   <string name="chat_sticker_cuadrado">Cuadrado</string>
   <string name="chat_sticker_redondo">Redondo</string>
   <string name="chat_sticker_listo">Listo</string>
+  <string name="historia_mas_grande">Más grande</string>
+  <string name="historia_mas_chico">Más chico</string>
+  <string name="historia_quitar">Quitar</string>
+  <string name="historia_texto_corto">Texto</string>
+  <string name="historia_sticker">Sticker</string>
+  <string name="historia_musica">Música y más</string>
+  <string name="historia_con_fondo">Con fondo</string>
+  <string name="historia_apple_music_corto">Apple Music</string>
+  <string name="historia_dibujar">Dibujar</string>
+  <string name="historia_dibujo_listo">Listo</string>
+  <string name="historia_deshacer">Deshacer</string>
+  <string name="historia_me_gusta">Me gusta</string>
+  <string name="historia_te_gusto">Te gustó</string>
+  <string name="historia_editor_pista">Mueve y acerca la foto con dos dedos. Toca un texto o sticker para elegirlo; arrástralo o agrándalo con dos dedos. Doble toque en un texto para cambiarlo.</string>
+  <string name="red_aviso_historia">le gustó tu historia</string>
+  <string name="historia_obras">Películas, series, libros y más</string>
+  <string name="historia_buscar_todo">Busca una canción, película, serie, anime, libro o álbum</string>
+  <string name="historia_responder">Responder</string>
 </resources>

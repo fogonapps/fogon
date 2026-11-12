@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
 /** Una canción para una nota o una historia: su avance de 30 segundos y el enlace a Apple Music (lo piden sus condiciones). */
-@Serializable data class Cancion(val titulo: String, val artista: String, val portada: String, val audio: String, val enlace: String)
+@Serializable data class Cancion(val titulo: String, val artista: String, val portada: String, val audio: String, val enlace: String, val album: String = "")
 
 /**
  * Buscar canciones en la búsqueda pública de Apple (iTunes Search API, sin clave). Pasa por el servidor para que el
@@ -50,7 +50,7 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
             (JsonSocial.parseToJsonElement(cuerpo).jsonObject["results"] as? JsonArray).orEmpty().mapNotNull { e ->
                 val o = e as? JsonObject ?: return@mapNotNull null
                 fun t(k: String) = (o[k] as? JsonPrimitive)?.contentOrNull.orEmpty()
-                val c = Cancion(t("trackName").take(120), t("artistName").take(120), t("artworkUrl100").replace("100x100bb", "300x300bb"), t("previewUrl"), t("trackViewUrl"))
+                val c = Cancion(t("trackName").take(120), t("artistName").take(120), t("artworkUrl100").replace("100x100bb", "300x300bb"), t("previewUrl"), t("trackViewUrl"), t("collectionName").take(120))
                 c.takeIf { it.titulo.isNotBlank() && Adjuntos.audioSeguro(it.audio) && Adjuntos.enlaceSeguro(it.enlace) && Adjuntos.imagenApple(it.portada) }
             }
         }.getOrDefault(emptyList())

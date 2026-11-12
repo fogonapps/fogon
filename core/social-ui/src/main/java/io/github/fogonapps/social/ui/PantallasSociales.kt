@@ -285,7 +285,7 @@ fun AvisosRed(vm: InterfazSocial) {
           avisosDelGrupo.forEach { a ->
             val que = stringResource(when (a.tipo) {
                 "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta; "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
-                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
+                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
             })
             FilaPersona(a.de, {
                 val pub = a.objeto.toLongOrNull()

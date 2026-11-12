@@ -144,6 +144,19 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         return entrenos + records
     }
 
+    /** Buscar un ejercicio de la biblioteca (con tu mejor marca, si la hay) para una historia o una nota. */
+    fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> {
+        val n = q.trim().lowercase()
+        val e = _estado.value
+        return L.b.ejercicios.filter { n in it.n.lowercase() }.take(12).map { x ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("ejercicio")); put("titulo", kotlinx.serialization.json.JsonPrimitive(x.n))
+                L.b.nombreMusculo(x.m).takeIf { it.isNotBlank() }?.let { put("detalle", kotlinx.serialization.json.JsonPrimitive(it)) }
+                e?.let { L.mejorE1(x.id, it.sessions) }?.let { m -> put("cifra", kotlinx.serialization.json.JsonPrimitive("${"%.1f".format(m.kg).removeSuffix(".0")} kg × ${m.reps.toInt()}")) }
+            }
+        }
+    }
+
     private var cambiandoPerfil = false
     /** Solo hay un perfil local: si ya existe, «añadir» lleva a ese (en él se entra a la otra cuenta). */
     fun agregarPerfil() {

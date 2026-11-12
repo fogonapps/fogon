@@ -372,6 +372,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/historias/{id}/vista") { social.verHistoria(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
             get("/historias/{id}/vistas") { call.respond(social.vistasHistoria(call.yo(), call.id())) }
             delete("/historias/{id}") { social.borrarHistoria(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            post("/historias/{id}/megusta") { social.meGustaHistoria(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/historias/{id}/megusta") { social.meGustaHistoria(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             get("/canciones") {
                 if (!pedidosCine.pasa("cine:${call.ipReal()}")) throw Problema(429, "despacio")
                 val q = call.request.queryParameters["q"].orEmpty(); val pais = call.request.queryParameters["pais"] ?: "CO"

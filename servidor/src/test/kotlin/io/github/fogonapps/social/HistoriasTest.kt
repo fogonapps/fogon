@@ -44,6 +44,16 @@ class HistoriasTest {
             assertTrue(s.historias(beto, "forzudo").single().historias.single().vista)
             assertEquals(listOf("roberto"), s.vistasHistoria(ana, h.id).map { it.persona.usuario })
             assertEquals(404, assertFailsWith<Problema> { s.vistasHistoria(beto, h.id) }.codigo)
+            // Me gusta: le llega un aviso a quien la subió (una sola vez) y lo ve en quién la vio.
+            s.meGustaHistoria(beto, h.id, true); s.meGustaHistoria(beto, h.id, true)
+            assertTrue(s.vistasHistoria(ana, h.id).single().meGusta)
+            assertTrue(s.historias(beto, "forzudo").single().historias.single().meGusta)
+            assertEquals(1, s.avisos(ana, null, "forzudo").count { it.tipo == "historia_megusta" })
+            assertEquals(404, assertFailsWith<Problema> { s.meGustaHistoria(otra, h.id, true) }.codigo)
+            // Hecha en el editor (con foto): queda marcada como compuesta; sin foto, no.
+            val hecha = s.subirHistoria(ana, "forzudo", HistoriaNueva(buildJsonObject { put("imagen", s.subirImagen(ana, jpeg).nombre); put("compuesta", true); put("texto", "Hola") }))
+            assertEquals(true, hecha.datos["compuesta"]?.jsonPrimitive?.boolean)
+            assertNull(s.subirHistoria(ana, "forzudo", HistoriaNueva(buildJsonObject { put("compuesta", true); put("texto", "Hola") })).datos["compuesta"])
             // Reportada y retirada: deja de verse y su imagen también.
             s.reportar(beto, NuevoReporte("historia", "${h.id}", "spam"))
             // A las 24 horas se va; a los dos días se borra con su imagen.

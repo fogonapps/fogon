@@ -412,4 +412,5 @@
     <string name="red_corregir_lugar">Correct the place’s address</string>
     <string name="red_corregir_no">Only whoever created the place can correct it, or there’s no connection.</string>
     <string name="red_guardar_lugar">Save</string>
+    <string name="historia_buscar_app">Search for a song, recipe or food</string>
 </resources>

@@ -1556,4 +1556,22 @@
   <string name="chat_sticker_cuadrado">Square</string>
   <string name="chat_sticker_redondo">Round</string>
   <string name="chat_sticker_listo">Done</string>
+  <string name="historia_mas_grande">Bigger</string>
+  <string name="historia_mas_chico">Smaller</string>
+  <string name="historia_quitar">Remove</string>
+  <string name="historia_texto_corto">Text</string>
+  <string name="historia_sticker">Sticker</string>
+  <string name="historia_musica">Music and more</string>
+  <string name="historia_con_fondo">With background</string>
+  <string name="historia_apple_music_corto">Apple Music</string>
+  <string name="historia_dibujar">Draw</string>
+  <string name="historia_dibujo_listo">Done</string>
+  <string name="historia_deshacer">Undo</string>
+  <string name="historia_me_gusta">Like</string>
+  <string name="historia_te_gusto">You liked it</string>
+  <string name="historia_editor_pista">Move and zoom the photo with two fingers. Tap a text or sticker to pick it; drag it or resize it with two fingers. Double-tap a text to change it.</string>
+  <string name="red_aviso_historia">liked your story</string>
+  <string name="historia_obras">Films, series, books and more</string>
+  <string name="historia_buscar_todo">Search for a song, film, series, anime, book or album</string>
+  <string name="historia_responder">Reply</string>
 </resources>

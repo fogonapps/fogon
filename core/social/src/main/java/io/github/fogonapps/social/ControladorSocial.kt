@@ -307,6 +307,10 @@ abstract class ControladorSocial(
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(vista = true) else it }) }
         scope.launch { runCatching { cliente().verHistoria(h.id) } }
     }
+    fun meGustaHistoria(h: HistoriaSocial, si: Boolean) {
+        _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(meGusta = si) else it }) }
+        scope.launch { runCatching { cliente().meGustaHistoria(h.id, si) } }
+    }
     fun borrarHistoria(h: HistoriaSocial) = lanzar {
         cliente().borrarHistoria(h.id)
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.filterNot { it.id == h.id }) }.filter { it.historias.isNotEmpty() }

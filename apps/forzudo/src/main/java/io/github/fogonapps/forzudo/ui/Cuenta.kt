@@ -24,6 +24,8 @@ fun interfazCuenta(vm: GymViewModel): InterfazSocial {
     val interfaz = remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen) {
         object : InterfazSocial {
             override fun adjuntosApp() = vm.adjuntosHistoria()
+            override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
+            @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_app)
             override val red = vm.red
             override val correoDisponible = red.correoDisponible
             override val textosApp = TextosSocialApp(

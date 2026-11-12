@@ -171,6 +171,18 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     fun hoy(): LocalDate = LocalDate.now()
     fun idioma(): String = Idioma.actual(getApplication())
 
+    /** Buscar una receta o un alimento para una historia o una nota. */
+    fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> {
+        val e = _estado.value ?: return emptyList()
+        val idioma = idioma()
+        return L.buscar(e, q, idioma, 12).filter { it !is io.github.fogonapps.cucha.datos.Comible.DeProducto }.map { c ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("plato")); put("titulo", kotlinx.serialization.json.JsonPrimitive(c.nombre(idioma)))
+                (c as? io.github.fogonapps.cucha.datos.Comible.DeReceta)?.r?.minutos?.takeIf { it > 0 }?.let { put("detalle", kotlinx.serialization.json.JsonPrimitive("$it min")) }
+            }
+        }
+    }
+
     /** Para una historia o una nota: los platos que hiciste hace poco (tus recetas y las de la app que anotaste). */
     fun adjuntosHistoria(): List<kotlinx.serialization.json.JsonObject> {
         val e = _estado.value ?: return emptyList()

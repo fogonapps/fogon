@@ -452,15 +452,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Canciones de afuera para la canción del perfil. */
-    private val _canciones = MutableStateFlow<List<io.github.fogonapps.cajon.datos.MusicBrainz.CancionEncontrada>?>(emptyList())
-    val canciones: StateFlow<List<io.github.fogonapps.cajon.datos.MusicBrainz.CancionEncontrada>?> = _canciones
+    /** Las canciones para el perfil: las de Apple, con su avance de 30 segundos y su enlace a Apple Music. */
+    private val _canciones = MutableStateFlow<List<io.github.fogonapps.social.CancionSocial>?>(emptyList())
+    val canciones: StateFlow<List<io.github.fogonapps.social.CancionSocial>?> = _canciones
     private var buscandoCancion: Job? = null
     fun buscarCancion(q: String) {
         buscandoCancion?.cancel()
         if (q.trim().length < 2) { _canciones.value = emptyList(); return }
         buscandoCancion = viewModelScope.launch {
             delay(400); _canciones.value = null
-            _canciones.value = runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarCanciones(q.trim()) }.getOrDefault(emptyList())
+            _canciones.value = red.canciones(q.trim())
         }
     }
 
@@ -639,6 +640,26 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (o.portada.startsWith("https://")) put("imagen", o.portada)
                 if (o.nota > 0) put("cifra", "${o.nota}/10")
                 if (o.fuente.isNotBlank()) put("fuente", o.fuente)
+            }
+        }
+    }
+
+    /** Buscar cualquier película, serie, anime, libro o álbum (no solo los del cajón) para una historia o una nota. */
+    suspend fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> = kotlinx.coroutines.coroutineScope {
+        val idioma = idioma()
+        val tm = Tmdb(claveCine ?: "")
+        val partes = listOf(
+            async { runCatching { tm.buscar(q, Tipos.PELICULA, idioma).take(5) }.getOrDefault(emptyList()) },
+            async { runCatching { tm.buscar(q, Tipos.SERIE, idioma).take(5) }.getOrDefault(emptyList()) },
+            async { runCatching { io.github.fogonapps.cajon.datos.OpenLibrary.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) },
+            async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarAlbumes(q).take(4) }.getOrDefault(emptyList()) },
+        )
+        partes.flatMap { it.await() }.map { r ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", "obra"); put("tipoObra", r.tipo); put("titulo", r.titulo)
+                listOfNotNull(r.creador.ifBlank { null }, r.anio?.toString()).joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("detalle", it) }
+                if (r.portada.startsWith("https://")) put("imagen", r.portada)
+                if (r.fuente.isNotBlank()) put("fuente", r.fuente)
             }
         }
     }

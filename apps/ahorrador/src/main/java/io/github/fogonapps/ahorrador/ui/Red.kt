@@ -43,6 +43,8 @@ fun interfazCuenta(vm: AhorradorViewModel): InterfazSocial {
     return remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen, nombreTipo) {
         object : InterfazSocial {
             override fun adjuntosApp() = vm.adjuntosHistoria()
+            override suspend fun buscarAdjuntos(q: String) = vm.adjuntosHistoria().filter { (it["titulo"] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty().contains(q.trim(), ignoreCase = true) }
+            @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_app)
             override val red = vm.red
             override val correoDisponible = red.correoDisponible
             override val textosApp = TextosSocialApp(

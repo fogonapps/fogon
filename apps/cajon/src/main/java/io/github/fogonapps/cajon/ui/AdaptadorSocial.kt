@@ -26,6 +26,9 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
     )
     return object : InterfazSocial {
         override fun adjuntosApp() = vm.adjuntosHistoria()
+        override fun stickersApp() = vm.chat.stickers.value.map { it.imagen }
+        override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
+        @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_todo)
         override suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.completarAdjunto(a)
         override val textosApp = textos
         override val red = vm.red

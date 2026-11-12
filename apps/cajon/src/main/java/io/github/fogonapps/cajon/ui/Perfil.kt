@@ -380,7 +380,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             SelectorPerfiles(vm)
             CrearClaveAviso(vm)
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
-                TarjetaCancion(c.titulo, c.artista, c.album, c.portada, onCambiar = { vm.abrir(Pantalla.ElegirCancion) })
+                TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) })
             }
         })
 }

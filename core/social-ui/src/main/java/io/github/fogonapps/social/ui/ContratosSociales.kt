@@ -64,6 +64,12 @@ interface InterfazSocial {
     fun adjuntosApp(): List<kotlinx.serialization.json.JsonObject> = emptyList()
     /** Completa un adjunto antes de usarlo (por ejemplo, la escena del tráiler de una película). */
     suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject): kotlinx.serialization.json.JsonObject = a
+    /** Los stickers propios de la app (WebP en base64), para ponerlos en una historia. */
+    fun stickersApp(): List<String> = emptyList()
+    /** Buscar en las fuentes de la app algo para adjuntar (El Cajón: películas, series, animes, libros y álbumes de cualquier lado). */
+    suspend fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> = emptyList()
+    /** Lo que dice el buscador de adjuntos, si la app busca más que canciones. */
+    @Composable fun textoBuscarAdjunto(): String? = null
 }
 
 /** Explicaciones de la app sobre contenido público y recuperación privada. */

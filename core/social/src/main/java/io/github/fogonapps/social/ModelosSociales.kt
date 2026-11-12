@@ -232,14 +232,14 @@ data class EmpujeNuevo(val token: String, val app: String)
 data class CambioInsignia(val usuario: String, val insignia: String, val motivo: String)
 
 /* ----- Historias y notas (24 horas) ----- */
-@Serializable data class HistoriaSocial(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean = false)
+@Serializable data class HistoriaSocial(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean = false, val meGusta: Boolean = false)
 @Serializable data class GrupoHistoriasSocial(val persona: PersonaSocial, val historias: List<HistoriaSocial> = emptyList()) {
     val todasVistas get() = historias.all { it.vista }
 }
-@Serializable data class VistaHistoriaSocial(val persona: PersonaSocial, val cuando: Long)
+@Serializable data class VistaHistoriaSocial(val persona: PersonaSocial, val cuando: Long, val meGusta: Boolean = false)
 @Serializable internal data class HistoriaNueva(val datos: JsonObject)
 /** La nota de una persona: unas palabras (hasta 60) y, si quiere, un adjunto (canción, obra, entreno, plato, meta…). */
 @Serializable data class NotaGente(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long = 0)
 @Serializable internal data class NotaNuevaGente(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 /** Una canción con su avance de 30 segundos (Apple) y el enlace a Apple Music. */
-@Serializable data class CancionSocial(val titulo: String, val artista: String, val portada: String = "", val audio: String = "", val enlace: String = "")
+@Serializable data class CancionSocial(val titulo: String, val artista: String, val portada: String = "", val audio: String = "", val enlace: String = "", val album: String = "")

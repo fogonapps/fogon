@@ -393,13 +393,16 @@ fun FilaNotas(vm: CajonViewModel, e: Estado) {
     val notas by vm.red.notasGente.collectAsStateWithLifecycle()
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var escribiendo by remember { mutableStateOf(false) }
+    var abierta by remember { mutableStateOf<io.github.fogonapps.social.NotaGente?>(null) }
     val mia = notas.firstOrNull { it.persona.usuario == yo }
     fun texto(n: io.github.fogonapps.social.NotaGente) = n.texto.ifBlank { (n.datos["adjunto"] as? JsonObject)?.get("titulo")?.jsonPrimitive?.contentOrNull.orEmpty() }
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Nota(PersonaSocial(yo.orEmpty(), stringResource(R.string.red_tu_nota), foto = true), mia?.let(::texto) ?: stringResource(R.string.red_nota_pon), mia == null) { escribiendo = true }
-        notas.filter { it.persona.usuario != yo }.forEach { n -> Nota(n.persona, texto(n), false) { vm.abrir(Pantalla.Conversacion(n.persona.usuario)) } }
+        // Tocar una nota la abre (con su canción); desde ahí se le responde en el chat.
+        notas.filter { it.persona.usuario != yo }.forEach { n -> Nota(n.persona, texto(n), false) { abierta = n } }
     }
     if (escribiendo) io.github.fogonapps.social.ui.HojaNota(interfazSocial(vm), mia) { escribiendo = false }
+    abierta?.let { n -> io.github.fogonapps.social.ui.HojaVerNota(interfazSocial(vm), n, responder = { vm.abrir(Pantalla.Conversacion(n.persona.usuario)) }) { abierta = null } }
 }
 
 @Composable
@@ -529,7 +532,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                     }
                 }
             }
-            (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada")) }
+            (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace")) }
             if (p.cerrada) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
@@ -807,7 +810,7 @@ fun tocarCancion(ctx: android.content.Context, titulo: String, artista: String, 
 
 /** La tarjeta de la canción del perfil: portada del álbum, la canción, el artista y ▶. */
 @Composable
-fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, onCambiar: (() -> Unit)? = null) {
+fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null) {
     val f = FogonTema.actual
     val ctx = LocalContext.current
     val sinApp = stringResource(R.string.cancion_sin_app)
@@ -818,7 +821,14 @@ fun TarjetaCancion(titulo: String, artista: String, album: String, portada: Stri
             Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(artista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
+        // Con el avance de Apple: suena 30 segundos aquí, y el botón de Apple Music (lo piden sus condiciones).
+        if (audio.isNotBlank()) {
+            io.github.fogonapps.social.ui.BotonAvance(audio)
+            if (enlace.startsWith("https://music.apple.com/")) {
+                val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                Pildora(stringResource(io.github.fogonapps.social.ui.R.string.historia_apple_music_corto)) { uri.openUri(enlace) }
+            }
+        } else BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
             if (!tocarCancion(ctx, titulo, artista, album)) android.widget.Toast.makeText(ctx, sinApp, android.widget.Toast.LENGTH_SHORT).show()
         }
     }
@@ -843,7 +853,7 @@ fun ElegirCancion(vm: CajonViewModel, e: Estado) {
             lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
             lista.isEmpty() -> Pista(stringResource(R.string.sin_resultados), Modifier.padding(horizontal = 16.dp))
             else -> lista.forEach { c ->
-                Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.ponerCancion(listOf("v2", c.titulo, c.artista, c.album, c.portada).joinToString("|") { it.replace("|", "/") }); vm.cerrar() }
+                Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.ponerCancion(listOf("v3", c.titulo, c.artista, c.album, c.portada, c.audio, c.enlace).joinToString("|") { it.replace("|", "/") }); vm.cerrar() }
                     .padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Portada(c.portada, "album", c.album, Modifier.width(44.dp), conTitulo = false)
                     Column(Modifier.weight(1f)) {

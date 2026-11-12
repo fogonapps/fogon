@@ -630,4 +630,5 @@
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, backups and this tour again.</string>
     <string name="tut_tengo_cuenta">I already have an account</string>
+    <string name="historia_buscar_app">Search for a song or one of your goals</string>
 </resources>

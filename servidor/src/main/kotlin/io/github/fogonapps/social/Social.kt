@@ -155,9 +155,9 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 /** Una historia: [datos] puede llevar "imagen" (una subida propia), "texto" (hasta 200), "fondo" (0 a 7) y "adjunto" ([Adjuntos]). */
 @Serializable data class HistoriaNueva(val datos: JsonObject)
-@Serializable data class Historia(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean)
+@Serializable data class Historia(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean, val meGusta: Boolean = false)
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>)
-@Serializable data class VistaHistoria(val persona: Persona, val cuando: Long)
+@Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
 @Serializable data class Llaves(val cifrar: String, val firmar: String)
@@ -1406,6 +1406,8 @@ class Social(
         val imagen = (d["imagen"] as? JsonPrimitive)?.contentOrNull.orEmpty()
         val adjunto = Adjuntos.limpio(d["adjunto"] as? JsonObject)
         val fondo = (d["fondo"] as? JsonPrimitive)?.intOrNull?.coerceIn(0, 7) ?: 0
+        // Hecha en el editor: foto, textos, stickers y dibujo ya van dentro de la imagen (el texto queda aparte, para leerlo).
+        val compuesta = (d["compuesta"] as? JsonPrimitive)?.booleanOrNull == true && imagen.isNotEmpty()
         if (imagen.isNotEmpty() && b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", imagen, yo) { 1 }.isEmpty() }) throw Problema(400, "imagen")
         if (imagen.isEmpty() && texto.isEmpty() && adjunto == null) throw Problema(400, "vacia")
         if (b.usar { leer("SELECT COUNT(*) FROM historias WHERE cuenta = ? AND cuando > ?", yo, ahora() - DIA) { it.getInt(1) }.first() } >= 30) throw Problema(429, "despacio")
@@ -1413,6 +1415,7 @@ class Social(
             if (imagen.isNotEmpty()) put("imagen", imagen)
             if (texto.isNotEmpty()) put("texto", texto)
             put("fondo", fondo)
+            if (compuesta) put("compuesta", true)
             adjunto?.let { put("adjunto", it) }
         }
         val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira) VALUES(?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA) }
@@ -1422,14 +1425,15 @@ class Social(
     /** Las historias vigentes de [app]: las propias primero, después las de quienes sigue (las no vistas antes). */
     fun historias(yo: Long, app: String): List<GrupoHistorias> {
         AppsSocial.validar(app)
-        val filas = b.usar { leer("""SELECT h.id, h.cuenta, h.datos, h.cuando, EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ?)
+        val filas = b.usar { leer("""SELECT h.id, h.cuenta, h.datos, h.cuando, EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ?),
+                EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ? AND v.megusta = 1)
             FROM historias h WHERE h.app = ? AND h.expira > ? AND h.estado = 'visible' AND (h.oculta = 0 OR h.cuenta = ?)
               AND (h.cuenta = ? OR h.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1))
-            ORDER BY h.cuando LIMIT 600""", yo, app, ahora(), yo, yo, yo) {
-            arrayOf<Any>(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5) == 1)
+            ORDER BY h.cuando LIMIT 600""", yo, yo, app, ahora(), yo, yo, yo) {
+            arrayOf<Any>(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5) == 1, it.getInt(6) == 1)
         } }
         return filas.groupBy { it[1] as Long }.filterKeys { it == yo || (visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo)) }
-            .map { (cuenta, hs) -> cuenta to hs.map { Historia(it[0] as Long, JsonSocial.parseToJsonElement(it[2] as String).jsonObject, it[3] as Long, it[1] == yo || it[4] as Boolean) } }
+            .map { (cuenta, hs) -> cuenta to hs.map { Historia(it[0] as Long, JsonSocial.parseToJsonElement(it[2] as String).jsonObject, it[3] as Long, it[1] == yo || it[4] as Boolean, it[5] as Boolean) } }
             .sortedWith(compareByDescending<Pair<Long, List<Historia>>> { it.first == yo }.thenBy { p -> p.second.all { it.vista } }.thenByDescending { p -> p.second.maxOf { it.cuando } })
             .take(60).map { (cuenta, hs) -> GrupoHistorias(persona(cuenta), hs) }
     }
@@ -1447,8 +1451,18 @@ class Social(
     /** Quién vio una historia propia. */
     fun vistasHistoria(yo: Long, id: Long): List<VistaHistoria> {
         if (b.usar { leer("SELECT 1 FROM historias WHERE id = ? AND cuenta = ?", id, yo) { 1 }.isEmpty() }) throw Problema(404, "no_existe")
-        return b.usar { leer("SELECT cuenta, cuando FROM historia_vistas WHERE historia = ? ORDER BY cuando DESC LIMIT 500", id) { it.getLong(1) to it.getLong(2) } }
-            .filter { visible(it.first) }.map { VistaHistoria(persona(it.first), it.second) }
+        return b.usar { leer("SELECT cuenta, cuando, megusta FROM historia_vistas WHERE historia = ? ORDER BY megusta DESC, cuando DESC LIMIT 500", id) { Triple(it.getLong(1), it.getLong(2), it.getInt(3) == 1) } }
+            .filter { visible(it.first) }.map { VistaHistoria(persona(it.first), it.second, it.third) }
+    }
+
+    /** Me gusta en una historia (como en Instagram): le llega un aviso a quien la subió y lo ve en quién la vio. */
+    fun meGustaHistoria(yo: Long, id: Long, si: Boolean) {
+        verHistoria(yo, id)
+        val autor = b.usar { leer("SELECT cuenta FROM historias WHERE id = ?", id) { it.getLong(1) }.first() }
+        if (autor == yo) return
+        val antes = b.usar { leer("SELECT megusta FROM historia_vistas WHERE historia = ? AND cuenta = ?", id, yo) { it.getInt(1) == 1 }.firstOrNull() } ?: false
+        b.usar { cambiar("UPDATE historia_vistas SET megusta = ? WHERE historia = ? AND cuenta = ?", if (si) 1 else 0, id, yo) }
+        if (si && !antes) avisar(autor, yo, "historia_megusta", id.toString())
     }
 
     fun borrarHistoria(yo: Long, id: Long) {

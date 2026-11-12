@@ -251,6 +251,7 @@ open class ClienteSocial(
     suspend fun verHistoria(id: Long) { pedir("/historias/$id/vista", "POST") }
     suspend fun vistasHistoria(id: Long) = leer(ListSerializer(VistaHistoriaSocial.serializer()), pedir("/historias/$id/vistas"))
     suspend fun borrarHistoria(id: Long) { pedir("/historias/$id", "DELETE") }
+    suspend fun meGustaHistoria(id: Long, si: Boolean) { pedir("/historias/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun notasGente() = leer(ListSerializer(NotaGente.serializer()), pedir("/notas"))
     suspend fun ponerNotaGente(texto: String, datos: kotlinx.serialization.json.JsonObject) { pedir("/nota", "PUT", json(NotaNuevaGente.serializer(), NotaNuevaGente(texto, datos))) }
     /** Buscar canciones (por el servidor de Fogón, que pregunta a Apple). */

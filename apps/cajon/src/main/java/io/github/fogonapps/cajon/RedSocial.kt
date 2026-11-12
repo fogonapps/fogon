@@ -953,10 +953,12 @@ class RedSocial(
         }
 
         /** La canción del perfil (de cualquiera de los dos formatos de [Perfil.cancion]). */
-        data class CancionPerfil(val titulo: String, val artista: String, val album: String, val portada: String)
+        data class CancionPerfil(val titulo: String, val artista: String, val album: String, val portada: String, val audio: String = "", val enlace: String = "")
 
         fun cancionDe(e: Estado): CancionPerfil? {
             val c = e.perfil.cancion
+            // v3 lleva además el avance de 30 segundos y el enlace a Apple Music.
+            if (c.startsWith("v3|")) return c.split("|").let { p -> if (p.size >= 7 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4], p[5], p[6]) else null }
             if (c.startsWith("v2|")) return c.split("|").let { p -> if (p.size >= 5 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4]) else null }
             val (id, titulo) = c.split("|", limit = 2).takeIf { it.size == 2 } ?: return null
             return e.vivas.firstOrNull { it.id == id }?.let { CancionPerfil(titulo, it.creador, it.titulo, it.portada) }
@@ -1003,6 +1005,8 @@ class RedSocial(
             ).toMap() + listOfNotNull(cancionDe(e)?.let { c ->
                 "cancion" to ParteSubida(Visibilidad.PUBLICA, buildJsonObject {
                     put("cancion", c.titulo); put("creador", c.artista); put("titulo", c.album); put("portada", https(c.portada))
+                    if (c.audio.startsWith("https://audio-ssl.itunes.apple.com/")) put("audio", c.audio)
+                    if (c.enlace.startsWith("https://music.apple.com/")) put("enlace", c.enlace)
                 })
             })
             return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), https(p.portada), p.enlaces.filter { it.startsWith("http") }.take(5), partes)

@@ -411,4 +411,5 @@
     <string name="red_corregir_lugar">Corregir la dirección del lugar</string>
     <string name="red_corregir_no">Solo quien creó el lugar puede corregirlo, o no hay conexión.</string>
     <string name="red_guardar_lugar">Guardar</string>
+    <string name="historia_buscar_app">Busca una canción, receta o alimento</string>
 </resources>
