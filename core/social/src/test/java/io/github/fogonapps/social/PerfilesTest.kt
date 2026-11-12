@@ -36,4 +36,19 @@ class PerfilesTest {
             assertNotEquals(otro.id, restaurado.agregar()!!.id)
         } finally { raiz.deleteRecursively() }
     }
+    @Test fun soloUnPerfilLocalAlAnadirCuentas() {
+        val raiz = Files.createTempDirectory("perfiles-local").toFile()
+        try {
+            val registro = Perfiles(raiz)
+            // El perfil 1 está sin cuenta: «añadir» lo reutiliza.
+            assertEquals("1", registro.paraOtraCuenta()!!.id)
+            assertEquals(1, registro.lista.perfiles.size)
+            registro.completarIdCuenta("1", "estable-1"); registro.actualizar("1", "Ana", "ana", "")
+            val local = registro.paraOtraCuenta()!!
+            assertNotEquals("1", local.id)
+            // Mientras ese siga sin cuenta, añadir otra vez no suma perfiles.
+            repeat(3) { assertEquals(local.id, registro.paraOtraCuenta()!!.id) }
+            assertEquals(2, registro.lista.perfiles.size)
+        } finally { raiz.deleteRecursively() }
+    }
 }

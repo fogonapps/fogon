@@ -1,1 +1,0 @@
-Tus palabras ocultas ahora se guardan con tu cuenta y vuelven al reinstalar.

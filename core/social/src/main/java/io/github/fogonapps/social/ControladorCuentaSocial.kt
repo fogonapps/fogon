@@ -188,6 +188,24 @@ abstract class ControladorCuentaSocial(
     /** La contraseña mientras se espera el código de la verificación en dos pasos (solo en memoria). */
     private var claveEnEspera: String? = null
 
+    /**
+     * La pantalla de sanción: se intentó entrar con una cuenta cerrada. Guarda en memoria el correo y la contraseña
+     * (solo mientras está abierta) para mostrar el motivo y apelar; «Entrar con otra cuenta» la cierra.
+     */
+    data class Sancion(val correo: String, val clave: String, val estado: EstadoSancionSocial?)
+    private val _sancion = MutableStateFlow<Sancion?>(null)
+    val sancion: StateFlow<Sancion?> = _sancion
+    private suspend fun abrirSancion(correo: String, clave: String) {
+        val estado = runCatching { clienteAcceso().estadoSancion(correo, clave) }.getOrNull()
+        _sancion.value = Sancion(correo, clave, estado)
+    }
+    fun apelarSancion(texto: String) = lanzar {
+        val s = _sancion.value ?: return@lanzar
+        clienteAcceso().apelarConClave(s.correo, s.clave, texto.trim())
+        _sancion.value = s.copy(estado = runCatching { clienteAcceso().estadoSancion(s.correo, s.clave) }.getOrNull() ?: s.estado)
+    }
+    fun cerrarSancion() { _sancion.value = null; claveEnEspera = null; _acceso.value = EstadoAcceso() }
+
     fun entrarConClave(correo: String, clave: String, codigo: String = "") = lanzar {
         val c = correo.trim().lowercase()
         _acceso.value = _acceso.value.copy(correo = c, ocupado = true)
@@ -199,6 +217,7 @@ abstract class ControladorCuentaSocial(
                     _acceso.value = EstadoAcceso(PasoAcceso.CODIGO_ENTRAR, c)
                     return@lanzar
                 }
+                if (x.codigo == 403 && x.error == "cerrada") { abrirSancion(c, clave); return@lanzar }
                 throw x
             }
             claveEnEspera = null

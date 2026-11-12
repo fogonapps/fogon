@@ -110,6 +110,14 @@ class Base(ruta: String) {
                 // La nota de cada persona: unas palabras (y una obra, si quiere) que duran 24 horas.
                 s.execute("""CREATE TABLE IF NOT EXISTS notas(
                     cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, datos TEXT NOT NULL DEFAULT '{}', cuando INTEGER NOT NULL)""")
+                // Las historias de 24 horas, por app (como el feed), y quién vio cada una.
+                s.execute("""CREATE TABLE IF NOT EXISTS historias(
+                    id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL, datos TEXT NOT NULL,
+                    cuando INTEGER NOT NULL, expira INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'visible', oculta INTEGER NOT NULL DEFAULT 0, retirado_hasta INTEGER NOT NULL DEFAULT 0)""")
+                s.execute("CREATE INDEX IF NOT EXISTS historias_cuenta ON historias(cuenta, app, expira)")
+                s.execute("""CREATE TABLE IF NOT EXISTS historia_vistas(
+                    historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    cuando INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
                 // Las frases del saludo de El Cajón que gustan (1) o no (-1): una por cuenta; se van con la cuenta.
                 s.execute("""CREATE TABLE IF NOT EXISTS frases(
                     clave TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, valor INTEGER NOT NULL,
@@ -190,6 +198,13 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS decisiones(
                     id INTEGER PRIMARY KEY, admin INTEGER NOT NULL, que TEXT NOT NULL, objeto TEXT NOT NULL, decision TEXT NOT NULL,
                     regla TEXT NOT NULL DEFAULT '', cuando INTEGER NOT NULL)""")
+                // Moderación: el mensaje del equipo y el tipo de decisión en cada falta; las apelaciones.
+                columna(s, "faltas", "mensaje TEXT NOT NULL DEFAULT ''")
+                columna(s, "faltas", "decision TEXT NOT NULL DEFAULT ''")
+                columna(s, "faltas", "admin INTEGER")
+                s.execute("""CREATE TABLE IF NOT EXISTS apelaciones(id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    texto TEXT NOT NULL, cuando INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'abierta', respuesta TEXT NOT NULL DEFAULT '',
+                    decidida_por INTEGER, decidida_cuando INTEGER)""")
                 columna(s, "cuentas", "acepto TEXT NOT NULL DEFAULT ''")
                 columna(s, "cuentas", "acepto_cuando INTEGER NOT NULL DEFAULT 0")
                 s.execute("CREATE UNIQUE INDEX IF NOT EXISTS cuentas_correo ON cuentas(correo) WHERE correo IS NOT NULL")

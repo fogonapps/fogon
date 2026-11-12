@@ -84,8 +84,8 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
         },
         portada = { ImagenLocal(identidad.portada, Modifier.matchParentSize()) },
         foto = {
-            Box(Modifier.size(96.dp)) {
-                FotoPerfilLocal(identidad.foto, tamano = 96.dp)
+            Box {
+                io.github.fogonapps.social.ui.AroHistoriasPropias(interfazCuenta(vm)) { FotoPerfilLocal(identidad.foto, tamano = 96.dp) }
                 BotonMasFoto(stringResource(R.string.perfil_editar), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
         }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {

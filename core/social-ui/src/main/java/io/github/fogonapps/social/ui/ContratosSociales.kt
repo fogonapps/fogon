@@ -57,6 +57,13 @@ interface InterfazSocial {
     @Composable fun menu(publicacion: PublicacionSocial, cerrar: () -> Unit)
     @Composable fun moderacionApp()
     @Composable fun contenidoReporte(contenido: String)
+    /**
+     * Lo que la app ofrece para adjuntar a una historia o a una nota (además de una canción): sus obras, entrenos,
+     * récords, platos o metas, como adjuntos ({"tipo", "titulo", "detalle", "imagen", "cifra"…}; ver `Adjuntos` en el servidor).
+     */
+    fun adjuntosApp(): List<kotlinx.serialization.json.JsonObject> = emptyList()
+    /** Completa un adjunto antes de usarlo (por ejemplo, la escena del tráiler de una película). */
+    suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject): kotlinx.serialization.json.JsonObject = a
 }
 
 /** Explicaciones de la app sobre contenido público y recuperación privada. */

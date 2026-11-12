@@ -215,8 +215,20 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Perfiles del teléfono ----- */
 
     private var cambiandoPerfil = false
+    /** Para una historia o una nota: el avance de tus metas en porcentaje (nunca los montos). */
+    fun adjuntosHistoria(): List<kotlinx.serialization.json.JsonObject> {
+        val e = _estado.value ?: return emptyList()
+        return e.metas.filter { it.objetivo > 0 }.map { m ->
+            val pct = (L.ahorradoEn(e, m.id) * 100 / m.objetivo).coerceIn(0, 100)
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("meta")); put("titulo", kotlinx.serialization.json.JsonPrimitive(m.nombre)); put("cifra", kotlinx.serialization.json.JsonPrimitive("$pct %"))
+            }
+        }
+    }
+
+    /** Solo hay un perfil local: si ya existe, «añadir» lleva a ese (en él se entra a la otra cuenta). */
     fun agregarPerfil() {
-        val nuevo = perfiles.agregar() ?: return
+        val nuevo = perfiles.paraOtraCuenta() ?: return
         cambiarPerfil(nuevo.id)
     }
     private var retirarAlCambiar = false

@@ -82,7 +82,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
         portada = { ImagenLocal(portada, Modifier.fillMaxSize()) },
         foto = {
             Box {
-                FotoPerfilLocal(foto, tamano = 96.dp, vacio = { Personaje(Quien.CUCHA, null, tamano = 80.dp) })
+                io.github.fogonapps.social.ui.AroHistoriasPropias(interfaz) { FotoPerfilLocal(foto, tamano = 96.dp, vacio = { Personaje(Quien.CUCHA, null, tamano = 80.dp) }) }
                 BotonMasFoto(stringResource(R.string.perfil_foto), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
         }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {

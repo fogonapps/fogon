@@ -85,7 +85,7 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
             val detalle = listOfNotNull(
                 if (nuevosAvisos) ultimos.maxByOrNull { it.cuando }?.let { a -> Avisos.frase(c, a).let { f -> if (avisos > 1) c.getString(R.string.fondo_y_mas, f, avisos - 1) else f } } else null,
                 if (nuevosMensajes) remitentes.takeIf { it.isNotEmpty() }?.let { r ->
-                    if (r.size == 1) c.getString(R.string.fondo_te_escribio, r[0]) else c.getString(R.string.fondo_te_escribieron, r.take(3).joinToString(", ") { "@$it" })
+                    if (r.size == 1) c.getString(R.string.fondo_te_escribio, r[0]) else c.getString(R.string.fondo_te_escribieron, r.take(3).joinToString(", "))
                 } else null,
             ).joinToString(" · ").ifBlank { cuantos }
             Avisos.notificar(c, app, detalle, p, cuenta.usuario, publico = cuantos)
@@ -140,7 +140,7 @@ object Avisos {
         }.apply()
     }
 
-    /** Un aviso en palabras: «@pedro empezó a seguirte». */
+    /** Un aviso en palabras, con el nombre de la persona (no su @): «Pedro empezó a seguirte». */
     internal fun frase(c: Context, a: io.github.fogonapps.social.AvisoSocial): String {
         if (a.tipo == "sancion") return c.getString(R.string.social_red_aviso_sancion)
         val que = c.getString(when (a.tipo) {
@@ -149,7 +149,7 @@ object Avisos {
             "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada
             "publico" -> R.string.social_red_aviso_publico; else -> R.string.social_red_aviso_otro
         })
-        return "@${a.de.usuario} $que"
+        return "${a.de.nombre.ifBlank { a.de.usuario }} $que"
     }
 
     internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto) {
@@ -157,7 +157,8 @@ object Avisos {
         nm.createNotificationChannel(NotificationChannel(CANAL, c.getString(R.string.fondo_canal), NotificationManager.IMPORTANCE_DEFAULT))
         val abrir = PendingIntent.getActivity(c, perfil.toIntOrNull() ?: 0, app.avisosAbrir(perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val titulo = app.avisosConfiguracion.nombreVisible + " · @" + usuario
+        // Con una sola cuenta basta el nombre de la app; con varias, se dice a cuál le llegó.
+        val titulo = app.avisosConfiguracion.nombreVisible + if (app.avisosCuentas().size > 1 && usuario.isNotBlank()) " · @$usuario" else ""
         val publica = NotificationCompat.Builder(c, CANAL).setSmallIcon(app.avisosIcono).setContentTitle(titulo).setContentText(publico).build()
         val n = NotificationCompat.Builder(c, CANAL).setSmallIcon(app.avisosIcono)
             .setContentTitle(titulo).setContentText(texto).setStyle(NotificationCompat.BigTextStyle().bigText(texto))

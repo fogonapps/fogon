@@ -123,9 +123,31 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         },
         vacio = { _estado.value?.let { it.sessions.isEmpty() && it.routines == null && it.body.isEmpty() && it.nombre == null } ?: true },
         marca = { runCatching { JsonGym.decodeFromString(Estado.serializer(), it).updatedAt }.getOrDefault(0L) })
+    /** Para una historia o una nota: los últimos entrenos y los mejores récords (nunca el peso corporal). */
+    fun adjuntosHistoria(): List<kotlinx.serialization.json.JsonObject> {
+        val e = _estado.value ?: return emptyList()
+        val es = getApplication<Application>().getString(R.string.historia_ejercicios_min)
+        val entrenos = e.sessions.sortedByDescending { it.date }.take(8).map { s ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("entreno")); put("titulo", kotlinx.serialization.json.JsonPrimitive(s.title ?: s.date))
+                put("detalle", kotlinx.serialization.json.JsonPrimitive(String.format(es, s.entries.size, ((s.ms ?: 0L) / 60_000).toInt()) + " · " + s.date))
+            }
+        }
+        val records = e.sessions.flatMap { it.entries.keys }.distinct().mapNotNull { id ->
+            L.mejorE1(id, e.sessions)?.let { m -> Triple(id, m, L.b.ex[id]?.n ?: return@mapNotNull null) }
+        }.sortedByDescending { it.second.v }.take(6).map { (_, m, nombre) ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("logro")); put("titulo", kotlinx.serialization.json.JsonPrimitive(nombre))
+                put("cifra", kotlinx.serialization.json.JsonPrimitive("${"%.1f".format(m.kg).removeSuffix(".0")} kg × ${m.reps.toInt()}"))
+            }
+        }
+        return entrenos + records
+    }
+
     private var cambiandoPerfil = false
+    /** Solo hay un perfil local: si ya existe, «añadir» lleva a ese (en él se entra a la otra cuenta). */
     fun agregarPerfil() {
-        val nuevo = perfiles.agregar() ?: return
+        val nuevo = perfiles.paraOtraCuenta() ?: return
         cambiarPerfil(nuevo.id)
     }
     private var retirarAlCambiar = false

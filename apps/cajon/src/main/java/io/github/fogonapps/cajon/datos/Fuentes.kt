@@ -134,6 +134,18 @@ class Tmdb(private val clave: String = "") {
         return pedirJson(u, if (esToken) mapOf("Authorization" to "Bearer $clave") else emptyMap()).jsonObject
     }
 
+    /** El tráiler (su clave de YouTube) de una película o serie ("tmdb:movie:603"), en el idioma pedido o en inglés. */
+    suspend fun trailer(fuente: String, idioma: String): String? {
+        val partes = fuente.split(':')
+        if (partes.size != 3 || partes[1] !in setOf("movie", "tv")) return null
+        for (lengua in listOf(lengua(idioma), "en-US")) {
+            val l = runCatching { pedir("${partes[1]}/${partes[2]}/videos", "language" to lengua).arr("results") }.getOrNull() ?: continue
+            val videos = l.map { it.jsonObject }.filter { it["site"].texto() == "YouTube" && Regex("[A-Za-z0-9_-]{6,20}").matches(it["key"].texto()) }
+            (videos.firstOrNull { it["type"].texto() == "Trailer" } ?: videos.firstOrNull { it["type"].texto() == "Teaser" } ?: videos.firstOrNull())?.let { return it["key"].texto() }
+        }
+        return null
+    }
+
     /** Páginas de veinte. El proxy admite discover; top_rated todavía no está permitido. */
     suspend fun catalogo(tipo: String, queridas: Boolean, idioma: String, pagina: Int): PaginaCatalogo {
         val anime = tipo == Tipos.ANIME

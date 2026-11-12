@@ -46,6 +46,7 @@ fun interfazCuenta(vm: CuchaViewModel): InterfazSocial {
         TIPO_RESENA to stringResource(R.string.red_tipo_resena))
     return remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen, nombreTipos) {
         object : InterfazSocial {
+            override fun adjuntosApp() = vm.adjuntosHistoria()
             override val red = vm.red
             override val correoDisponible = red.correoDisponible
             override val textosApp = TextosSocialApp(
@@ -212,7 +213,7 @@ private fun PerfilRed(vm: CuchaViewModel, interfaz: InterfazSocial, usuario: Str
         "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
         contadores = cifrasRed(publicaciones), secciones = secciones, insignia = perfil.persona.insignia)
     io.github.fogonapps.perfil.Perfil(vista, elegida, { elegida = it }, portada = {},
-        foto = { AvatarRed(perfil.persona, 96.dp) },
+        foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
         bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
         enlace = {}, acciones = {
             if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
@@ -255,6 +256,7 @@ fun TuGente(vm: CuchaViewModel, interfaz: InterfazSocial = interfazCuenta(vm), c
     }
     if (usuario == null) BotonRiso(stringResource(R.string.red_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
     CopiaCuenta(vm.red, soloSiFalta = true)
+    if (usuario != null) io.github.fogonapps.social.ui.BarraHistorias(interfaz)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.red_compartir)) { eligiendo = true }
     if (eligiendo) ElegirQueCompartir(vm) { eligiendo = false }
     val palabrasOcultas = io.github.fogonapps.social.ui.palabrasOcultasRed()

@@ -86,14 +86,34 @@ data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.Decision")
-internal data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "")
+internal data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "", val mensaje: String = "")
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.FaltaSocial")
-data class FaltaSocial(val regla: String, val puntos: Int, val cuando: Long, val vence: Long)
+data class FaltaSocial(val regla: String, val puntos: Int, val cuando: Long, val vence: Long,
+    /** Lo que el equipo le escribió a la persona; [decision]: "advertencia", "falta", "falta_grave" o "cerrar". */
+    val mensaje: String = "", val decision: String = "falta")
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.EstadoCuentaSocial")
 data class EstadoCuentaSocial(val faltas: List<FaltaSocial> = emptyList(), val restringidaHasta: Long = 0, val suspendidaHasta: Long = 0,
-    val cerrada: Boolean = false, val admin: Boolean = false)
+    val cerrada: Boolean = false, val admin: Boolean = false, val apelacion: ApelacionSocial? = null) {
+    /** Se puede apelar la última sanción en los 30 días siguientes, una vez. */
+    fun puedeApelar(ahora: Long): Boolean {
+        val ultima = faltas.maxOfOrNull { it.cuando } ?: return false
+        return ultima > ahora - 30L * 24 * 3600_000 && (apelacion == null || apelacion.cuando < ultima)
+    }
+}
+/** Una apelación: [estado] "abierta", "aceptada" o "rechazada", con la [respuesta] del equipo. */
+@Serializable
+data class ApelacionSocial(val id: Long, val usuario: String = "", val texto: String = "", val cuando: Long = 0, val estado: String = "abierta",
+    val respuesta: String = "", val faltas: List<FaltaSocial> = emptyList(), val suspendidaHasta: Long = 0, val cerrada: Boolean = false)
+@Serializable
+data class SancionReciente(val usuario: String, val nombre: String = "", val regla: String, val mensaje: String = "", val decision: String = "falta",
+    val cuando: Long, val restringidaHasta: Long = 0, val suspendidaHasta: Long = 0, val cerrada: Boolean = false, val puntos: Int = 0)
+@Serializable internal data class SancionDirecta(val usuario: String, val decision: String, val regla: String, val mensaje: String)
+@Serializable internal data class NuevaApelacion(val texto: String, val correo: String = "", val clave: String = "")
+@Serializable internal data class DecisionApelacion(val id: Long, val aceptar: Boolean, val respuesta: String)
+@Serializable internal data class AccesoSancion(val correo: String, val clave: String)
+@Serializable data class EstadoSancionSocial(val estado: EstadoCuentaSocial, val apelacion: ApelacionSocial? = null)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.EntradaClave")
 internal data class EntradaClave(val correo: String, val clave: String, val app: String? = null, val codigo: String = "")
@@ -210,3 +230,16 @@ data class EmpujeNuevo(val token: String, val app: String)
 
 @Serializable
 data class CambioInsignia(val usuario: String, val insignia: String, val motivo: String)
+
+/* ----- Historias y notas (24 horas) ----- */
+@Serializable data class HistoriaSocial(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean = false)
+@Serializable data class GrupoHistoriasSocial(val persona: PersonaSocial, val historias: List<HistoriaSocial> = emptyList()) {
+    val todasVistas get() = historias.all { it.vista }
+}
+@Serializable data class VistaHistoriaSocial(val persona: PersonaSocial, val cuando: Long)
+@Serializable internal data class HistoriaNueva(val datos: JsonObject)
+/** La nota de una persona: unas palabras (hasta 60) y, si quiere, un adjunto (canción, obra, entreno, plato, meta…). */
+@Serializable data class NotaGente(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long = 0)
+@Serializable internal data class NotaNuevaGente(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
+/** Una canción con su avance de 30 segundos (Apple) y el enlace a Apple Music. */
+@Serializable data class CancionSocial(val titulo: String, val artista: String, val portada: String = "", val audio: String = "", val enlace: String = "")

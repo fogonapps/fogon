@@ -35,6 +35,8 @@ data class MensajeChat(
     val id: String, val mio: Boolean, val cuando: Long, val texto: String = "", val obra: JsonObject? = null,
     val noSeLee: Boolean = false, val leido: Boolean = false, val k: String = "", val responde: Respuesta? = null,
     val sticker: String? = null, val borrado: Boolean = false,
+    /** El tamaño del sticker: 0 chico, 1 normal, 2 grande. */
+    val tamano: Int = 1,
 ) { val clave get() = k.ifBlank { id } }
 
 /** Un sticker guardado: la imagen (WebP en base64) y un nombre para buscarlo. */
@@ -47,6 +49,8 @@ data class MensajeChat(
 @Serializable private data class Contenido(
     val t: String = "", val o: JsonObject? = null, val c: Long = 0, val i: String = "", val r: Respuesta? = null,
     val s: String? = null, val b: String? = null,
+    /** El tamaño del sticker (0 a 2; sin él, normal). */
+    val z: Int? = null,
 )
 
 @Serializable private data class Chats(
@@ -148,7 +152,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
     }.getOrNull()
 
     /** Manda unas palabras, una obra (como tarjeta) o un sticker a [usuario]; con [responde], como respuesta a ese mensaje. */
-    fun enviar(usuario: String, texto: String, obra: Obra? = null, responde: MensajeChat? = null, sticker: String? = null) = scope.launch {
+    fun enviar(usuario: String, texto: String, obra: Obra? = null, responde: MensajeChat? = null, sticker: String? = null, tamano: Int = 1) = scope.launch {
         val yo = red.usuario.value ?: return@launch
         val ahora = System.currentTimeMillis()
         val o = obra?.let { buildJsonObject {
@@ -158,8 +162,9 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         } }
         val r = responde?.let { Respuesta(it.clave, if (it.mio) yo else usuario, resumenCorto(it), sticker = it.sticker != null) }
         val id = "m${ahora.toString(36)}"
-        val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker)
-        if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker))
+        val z = tamano.coerceIn(0, 2).takeIf { sticker != null && it != 1 }
+        val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z)
+        if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1))
     }
 
     /** Un pedacito de un mensaje, para citarlo al responder. */
@@ -235,6 +240,37 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         }.getOrNull()
     }
 
+    /** La foto para el editor de stickers (lado mayor de hasta 1600 px). */
+    suspend fun fotoParaSticker(uri: android.net.Uri): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
+        runCatching {
+            val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
+            val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, medidas)
+            var muestra = 1
+            while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= 1600) muestra *= 2
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra })
+        }.getOrNull()
+    }
+
+    /** El sticker con el recorte que se eligió en el editor ([recorte], en píxeles de la foto) y, si [redondo], en círculo. */
+    suspend fun stickerRecortado(foto: android.graphics.Bitmap, recorte: android.graphics.Rect, redondo: Boolean): String? = withContext(Dispatchers.Default) {
+        runCatching {
+            val r = android.graphics.Rect(recorte.left.coerceIn(0, foto.width - 1), recorte.top.coerceIn(0, foto.height - 1), 0, 0).apply {
+                val lado = minOf(recorte.width(), foto.width - left, foto.height - top).coerceAtLeast(1)
+                right = left + lado; bottom = top + lado
+            }
+            val cuadrada = android.graphics.Bitmap.createBitmap(foto, r.left, r.top, r.width(), r.height())
+            if (!redondo) return@runCatching aSticker(cuadrada)
+            val salida = android.graphics.Bitmap.createBitmap(cuadrada.width, cuadrada.height, android.graphics.Bitmap.Config.ARGB_8888)
+            val lienzo = android.graphics.Canvas(salida)
+            val pincel = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            lienzo.drawCircle(cuadrada.width / 2f, cuadrada.height / 2f, cuadrada.width / 2f, pincel)
+            pincel.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
+            lienzo.drawBitmap(cuadrada, 0f, 0f, pincel)
+            aSticker(salida)
+        }.getOrNull()
+    }
+
     /** Un sticker hecho con una imagen de la app (los objetos de Fogón). */
     suspend fun stickerDe(recurso: Int): String? = withContext(Dispatchers.IO) {
         runCatching { aSticker(android.graphics.BitmapFactory.decodeResource(app.resources, recurso)) }.getOrNull()
@@ -289,7 +325,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
                 c == null -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, noSeLee = true), s.id)
                 // La otra persona borró un mensaje suyo para todos.
                 c.b != null -> { marcarBorrado(de, c.b, mio = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
-                else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }), s.id)
+                else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }, tamano = (c.z ?: 1).coerceIn(0, 2)), s.id)
             }
         }
         if (sobres.isNotEmpty()) cambiar { it.copy(ultimo = cursor) }

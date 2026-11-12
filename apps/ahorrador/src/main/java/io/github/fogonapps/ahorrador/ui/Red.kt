@@ -42,6 +42,7 @@ fun interfazCuenta(vm: AhorradorViewModel): InterfazSocial {
     val nombreTipo = stringResource(R.string.red_tipo_logro)
     return remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen, nombreTipo) {
         object : InterfazSocial {
+            override fun adjuntosApp() = vm.adjuntosHistoria()
             override val red = vm.red
             override val correoDisponible = red.correoDisponible
             override val textosApp = TextosSocialApp(
@@ -221,7 +222,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
         contadores = listOf(io.github.fogonapps.perfil.ContadorPerfil(perfil.publicaciones.count { it.tipo == TIPO_LOGRO }.toString(), stringResource(R.string.red_logros))),
         secciones = secciones, insignia = perfil.persona.insignia)
     io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
-        foto = { AvatarRed(perfil.persona, 96.dp) },
+        foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
         bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
         enlace = {}, acciones = {
             if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
@@ -254,6 +255,7 @@ fun TuGente(vm: AhorradorViewModel, interfaz: InterfazSocial = interfazCuenta(vm
     }
     if (usuario == null) BotonRiso(stringResource(R.string.red_entrar), { vm.abrir(Pantalla.CuentaRed) }, Modifier.padding(16.dp))
     CopiaCuenta(vm.red, soloSiFalta = true)
+    if (usuario != null) io.github.fogonapps.social.ui.BarraHistorias(interfaz)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.red_compartir_corto)) { vm.abrir(Pantalla.CompartirLogro()) }
     val palabrasOcultas = io.github.fogonapps.social.ui.palabrasOcultasRed()
     ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas && !io.github.fogonapps.social.ui.PalabrasOcultasRed.lleva(palabrasOcultas, io.github.fogonapps.social.ui.PalabrasOcultasRed.textoDe(it)) }?.map { it to Unit }, pestana,

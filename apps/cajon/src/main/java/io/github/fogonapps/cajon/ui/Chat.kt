@@ -1,5 +1,13 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.identidad.BotonRiso
+import io.github.fogonapps.identidad.BotonSecundario
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -102,7 +110,7 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
         if (o == null) BotonIcono(Iconos.Lapiz, stringResource(R.string.chat_nuevo), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
     }
     if (usuario == null) { Pista(stringResource(R.string.red_invita_texto), Modifier.padding(16.dp)); return }
-    LaunchedEffect(Unit) { vm.red.cargarNotas() }
+    LaunchedEffect(Unit) { vm.red.cargarHistorias() }
     if (o == null) FilaNotas(vm, e)
     o?.let { Pista(stringResource(R.string.chat_mandar_obra, it.titulo), Modifier.padding(horizontal = 16.dp)) }
     fun abrir(u: String) {
@@ -255,7 +263,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                 }
             }
         }
-        if (stickers) PanelStickers(vm) { s -> vm.chat.enviar(usuario, "", responde = responder, sticker = s); responder = null }
+        if (stickers) PanelStickers(vm) { s, z -> vm.chat.enviar(usuario, "", responde = responder, sticker = s, tamano = z); responder = null }
         // La barra de escribir: una sola píldora, con mandar una obra a la izquierda y los stickers (o enviar) a la derecha.
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
             .padding(horizontal = 6.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -396,7 +404,7 @@ private fun Burbuja(
                     }
                 }
             }
-            m.sticker?.let { ImagenSticker(it, Modifier.size(150.dp)) }
+            m.sticker?.let { ImagenSticker(it, Modifier.size(when (m.tamano) { 0 -> 96.dp; 2 -> 220.dp; else -> 150.dp })) }
             m.obra?.let { o ->
                 val titulo = (o["titulo"] as? JsonPrimitive)?.content.orEmpty()
                 val id = (o["id"] as? JsonPrimitive)?.content
@@ -419,11 +427,16 @@ private fun Burbuja(
 }
 
 /**
- * Los stickers: buscar entre los guardados por su nombre, los de Fogón, y crear uno nuevo con una foto (se recorta
- * cuadrado y se le pone un nombre para encontrarlo). Tocar uno lo manda; con el dedo apretado, se quita.
+ * Los stickers: buscar entre los guardados por su nombre, los de Fogón, y crear uno nuevo con una foto (se elige el
+ * recorte, cuadrado o redondo, y se le pone un nombre para encontrarlo). Tocar uno lo manda en el tamaño elegido
+ * (chico, normal o grande); con el dedo apretado, se quita.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PanelStickers(vm: CajonViewModel, onMandar: (String) -> Unit) {
+private fun PanelStickers(vm: CajonViewModel, onMandarConTamano: (String, Int) -> Unit) {
+    var tamano by rememberSaveable { mutableStateOf(1) }
+    val onMandar: (String) -> Unit = { onMandarConTamano(it, tamano) }
+    var editando by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     val f = FogonTema.actual
     val acciones = LocalAcciones.current
     val guardados by vm.chat.stickers.collectAsStateWithLifecycle()
@@ -434,6 +447,12 @@ private fun PanelStickers(vm: CajonViewModel, onMandar: (String) -> Unit) {
     var quitar by remember { mutableStateOf<Sticker?>(null) }
     val noSePudo = stringResource(R.string.chat_sticker_no_se_pudo)
     Column(Modifier.fillMaxWidth().heightIn(max = 320.dp).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        editando?.let { foto ->
+            EditorSticker(foto, { editando = null }) { recorte, redondo ->
+                editando = null
+                alcance.launch { vm.chat.stickerRecortado(foto, recorte, redondo)?.let { nuevo = it } ?: vm.decir(noSePudo) }
+            }
+        }
         nuevo?.let { s ->
             // Recién creado: ponerle nombre y guardarlo (o mandarlo de una).
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -450,7 +469,13 @@ private fun PanelStickers(vm: CajonViewModel, onMandar: (String) -> Unit) {
         OutlinedTextField(buscar, { buscar = it.take(40) }, Modifier.fillMaxWidth(), placeholder = { Text(stringResource(R.string.chat_stickers_buscar)) }, singleLine = true,
             shape = forma(22.dp), leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 18.dp, tinta = f.textoSuave) })
         if (acciones != null) Pildora(stringResource(R.string.chat_sticker_crear), Iconos.Imagen) {
-            acciones.elegirImagen { uri -> alcance.launch { vm.chat.crearSticker(uri)?.let { nuevo = it } ?: vm.decir(noSePudo) } }
+            acciones.elegirImagen { uri -> alcance.launch { vm.chat.fotoParaSticker(uri)?.let { editando = it } ?: vm.decir(noSePudo) } }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.chat_sticker_tamano), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+            listOf(R.string.chat_sticker_chico, R.string.chat_sticker_normal, R.string.chat_sticker_grande).forEachIndexed { i, t ->
+                Pildora(stringResource(t), acento = tamano == i) { tamano = i }
+            }
         }
         val q = buscar.trim().lowercase()
         val tuyos = guardados.filter { q.isEmpty() || q in it.nombre.lowercase() }
@@ -607,6 +632,56 @@ private fun FilaInterruptor(texto: String, valor: Boolean, onCambio: (Boolean) -
     Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { onCambio(!valor) }, verticalAlignment = Alignment.CenterVertically) {
         Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
         Switch(valor, onCambio)
+    }
+}
+
+/**
+ * El editor de un sticker nuevo: la foto se mueve y se acerca con los dedos dentro del cuadro; lo que queda adentro es
+ * el sticker, cuadrado o redondo.
+ */
+@Composable
+private fun EditorSticker(foto: android.graphics.Bitmap, onCancelar: () -> Unit, onListo: (android.graphics.Rect, Boolean) -> Unit) {
+    val f = FogonTema.actual
+    var zoom by remember { mutableStateOf(1f) }
+    var desplazamiento by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var redondo by remember { mutableStateOf(false) }
+    var lado by remember { mutableStateOf(1) }
+    val imagen = remember(foto) { foto.asImageBitmap() }
+    androidx.compose.ui.window.Dialog(onCancelar) {
+        Column(Modifier.fillMaxWidth().clip(forma(24.dp)).background(f.fondo).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.chat_sticker_editar), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(if (redondo) CircleShape else forma(18.dp)).background(f.superficie)
+                .onSizeChanged { lado = it.width }
+                .pointerInput(foto) {
+                    detectTransformGestures { _, mover, escala, _ ->
+                        zoom = (zoom * escala).coerceIn(1f, 6f)
+                        // Que la foto siempre cubra el cuadro.
+                        val base = lado / minOf(foto.width, foto.height).toFloat()
+                        val maxX = (foto.width * base * zoom - lado) / 2f; val maxY = (foto.height * base * zoom - lado) / 2f
+                        desplazamiento = androidx.compose.ui.geometry.Offset((desplazamiento.x + mover.x).coerceIn(-maxX, maxX), (desplazamiento.y + mover.y).coerceIn(-maxY, maxY))
+                    }
+                }) {
+                Image(imagen, null, Modifier.fillMaxSize().graphicsLayer { scaleX = zoom; scaleY = zoom; translationX = desplazamiento.x; translationY = desplazamiento.y },
+                    contentScale = ContentScale.Crop)
+            }
+            Pista(stringResource(R.string.chat_sticker_editar_pista))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pildora(stringResource(R.string.chat_sticker_cuadrado), acento = !redondo) { redondo = false }
+                Pildora(stringResource(R.string.chat_sticker_redondo), acento = redondo) { redondo = true }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BotonSecundario(stringResource(R.string.cancelar), onCancelar, Modifier.weight(1f))
+                BotonRiso(stringResource(R.string.chat_sticker_listo), {
+                    // Del cuadro en pantalla a píxeles de la foto (la foto se ve recortada, centrada, con el zoom y el desplazamiento).
+                    val s = lado / minOf(foto.width, foto.height).toFloat() * zoom
+                    val izquierda = ((-lado / 2f - desplazamiento.x) / s + foto.width / 2f).toInt()
+                    val arriba = ((-lado / 2f - desplazamiento.y) / s + foto.height / 2f).toInt()
+                    val tam = (lado / s).toInt()
+                    onListo(android.graphics.Rect(izquierda, arriba, izquierda + tam, arriba + tam), redondo)
+                }, Modifier.weight(1f))
+            }
+        }
     }
 }
 

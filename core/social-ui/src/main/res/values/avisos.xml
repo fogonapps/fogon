@@ -11,6 +11,6 @@
     </plurals>
     <string name="fondo_activar">Notifications with the app closed</string>
     <string name="fondo_y_mas">%1$s, and %2$d more</string>
-    <string name="fondo_te_escribio">@%1$s sent you a message</string>
+    <string name="fondo_te_escribio">%1$s sent you a message</string>
     <string name="fondo_te_escribieron">Messages from %1$s</string>
 </resources>

@@ -176,7 +176,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                     "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
                     secciones = secciones, insignia = perfil.persona.insignia)
                 io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
-                    foto = { AvatarRed(perfil.persona, 96.dp) },
+                    foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
                     bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
                     enlace = {}, acciones = {
                         if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
@@ -215,6 +215,7 @@ fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), con
     }
     if (usuario == null) BotonRiso(stringResource(R.string.entreno_entrar), { vm.abrir(Pantalla.Cuenta) }, Modifier.padding(16.dp))
     CopiaCuenta(vm.red, soloSiFalta = true)
+    if (usuario != null) io.github.fogonapps.social.ui.BarraHistorias(interfaz)
     PestanasFeedSocial(pestana, usuario, { pestana = it }, textoPublicar = stringResource(R.string.entreno_compartir)) { eligiendo = true }
     if (eligiendo) AlertDialog(onDismissRequest = { eligiendo = false }, title = { Text(stringResource(R.string.entreno_elegir)) },
         text = {

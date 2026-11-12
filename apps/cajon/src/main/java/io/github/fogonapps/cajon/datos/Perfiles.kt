@@ -40,6 +40,10 @@ class Perfiles(private val raiz: File) {
         require(lista.perfiles.any { it.id == id })
         guardar(lista.copy(activo = id))
     }
+    /** El perfil sin cuenta (solo en este teléfono), si hay. */
+    fun local(): PerfilTelefono? = lista.perfiles.firstOrNull { it.usuario.isBlank() && it.idCuenta.isBlank() }
+    /** «Añadir otra cuenta»: solo puede haber un perfil local; si ya existe, se usa ese en vez de crear otro. */
+    @Synchronized fun paraOtraCuenta(): PerfilTelefono? = local() ?: agregar()
     @Synchronized fun agregar(provisional: Boolean = true): PerfilTelefono? {
         if (lista.perfiles.size >= 5) return null
         val nuevo = PerfilTelefono(lista.siguiente.toString(), provisional = provisional)

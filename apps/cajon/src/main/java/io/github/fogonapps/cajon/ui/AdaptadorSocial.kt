@@ -25,6 +25,8 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
         explicacionOrden = androidx.compose.ui.res.stringResource(R.string.menu_por_que_explica),
     )
     return object : InterfazSocial {
+        override fun adjuntosApp() = vm.adjuntosHistoria()
+        override suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.completarAdjunto(a)
         override val textosApp = textos
         override val red = vm.red
         override val navegacion = NavegacionSocial(

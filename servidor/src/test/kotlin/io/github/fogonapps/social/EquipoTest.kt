@@ -234,6 +234,10 @@ class EquipoTest {
         Ruta(HttpMethod.Post, "restaurar", "gestionar_publicaciones", { """{"que":"publicacion","objeto":"123"}""" }),
         Ruta(HttpMethod.Post, "insignias", "gestionar_usuarios", { """{"usuario":"destino","insignia":"verificada","motivo":"Cuenta conocida"}""" }),
         Ruta(HttpMethod.Post, "sanciones/levantar", "gestionar_usuarios", { """{"usuario":"destino","motivo":"Apelación aceptada"}""" }),
+        Ruta(HttpMethod.Get, "sanciones", "sancionar"),
+        Ruta(HttpMethod.Post, "sanciones", "sancionar", { """{"usuario":"destino","decision":"advertencia","regla":"spam","mensaje":"Deja de repetir el mismo enlace"}""" }),
+        Ruta(HttpMethod.Get, "apelaciones", "sancionar"),
+        Ruta(HttpMethod.Post, "apelaciones", "sancionar", { """{"id":77,"aceptar":false,"respuesta":"La sanción se mantiene"}""" }),
         Ruta(HttpMethod.Post, "imagenes/bloquear", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg","motivo":"prueba"}""" }),
         Ruta(HttpMethod.Post, "imagenes/permitir", "gestionar_publicaciones", { """{"url":"https://image.tmdb.org/t/p/original/a.jpg"}""" }),
     )
@@ -257,6 +261,7 @@ class EquipoTest {
                         "caducada" -> e.reloj += Equipo.DURACION
                     }
                     for (r in rutas) {
+                        if (r.ruta == "apelaciones" && r.metodo == HttpMethod.Post) e.b.usar { cambiar("INSERT OR REPLACE INTO apelaciones(id, cuenta, texto, cuando) VALUES(77, ?, 'Me equivoqué', ?)", destino.id, e.reloj) }
                         if (r.ruta == "decidir") e.b.usar { cambiar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?, 'cuenta', 'destino', 'spam', ?)", destino.id, e.reloj) }
                         val codigo = if (estado == "elevada") e.siguiente(secreto) else "000000"
                         val respuesta = client.request("/v1/admin/${r.ruta}") {
@@ -511,6 +516,51 @@ class EquipoTest {
         e.s.limpiarSeguridad()
         assertFalse(archivo.exists())
         assertTrue(e.b.usar { leer("SELECT nombre FROM imagenes") { it.getString(1) }.isEmpty() })
+    }
+
+    @Test fun advertenciaCorreoSancionYApelacion() = Entorno().use { e ->
+        val m = e.alta("modera"); val u = e.alta("usuaria")
+        e.rol(m, "administrador"); val secreto = e.inscribir(m).first; e.elevar(m, secreto)
+        e.b.usar { cambiar("UPDATE cuentas SET correo = 'usuaria@x.co', clave = ? WHERE id = ?", Claves.huella("frase larga de prueba"), u.id) }
+        // Una advertencia: se quita lo reportado, no suma puntos y llega un correo con el motivo y el mensaje.
+        val pub = e.pub(u)
+        e.s.reportar(m.id, NuevoReporte("publicacion", "$pub", "spam"))
+        e.b.usar { cambiar("DELETE FROM reportes WHERE de = ?", m.id); cambiar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?, 'publicacion', ?, 'spam', ?)", u.id, "$pub", e.reloj) }
+        e.s.decidir(m.id, Decision("publicacion", "$pub", "advertencia", "spam", "No repitas el mismo enlace\u0007 en todos lados"), m.token)
+        val estado = e.s.estadoCuenta(u.id)
+        assertEquals(0, estado.faltas.sumOf { it.puntos })
+        assertEquals("advertencia", estado.faltas.single().decision)
+        assertEquals("No repitas el mismo enlace en todos lados", estado.faltas.single().mensaje)
+        val correo = e.correos.last()
+        assertEquals("usuaria@x.co", correo.first)
+        assertEquals("Una advertencia de Fogón Social", correo.second)
+        assertTrue("spam o estafas" in correo.third && "No repitas el mismo enlace" in correo.third && Moderacion.NORMAS in correo.third && "apelar" in correo.third)
+        assertFalse("modera" in correo.third)
+        // Sanción directa con mensaje: con 3 puntos, 7 días de suspensión; el correo lo dice.
+        assertEquals("mensaje", assertFailsWith<Problema> { e.s.sancionarCuenta(m.id, SancionDirecta("usuaria", "falta", "acoso", " "), m.token) }.mensaje)
+        e.s.sancionarCuenta(m.id, SancionDirecta("usuaria", "falta", "acoso", "Insultaste a otra persona"), m.token)
+        e.s.sancionarCuenta(m.id, SancionDirecta("usuaria", "falta_grave", "acoso", "Lo repetiste"), m.token)
+        assertTrue(e.s.estadoCuenta(u.id).suspendidaHasta > e.reloj)
+        assertEquals("Suspendimos tu cuenta de Fogón Social", e.correos.last().second)
+        assertEquals(3, e.s.sancionesRecientes(m.id, m.token).size)
+        // Apelar: con sesión (la cuenta suspendida puede) o con correo y contraseña; una por sanción.
+        assertEquals("texto", assertFailsWith<Problema> { e.s.apelar(u.id, "corto") }.mensaje)
+        assertEquals("clave_mala", assertFailsWith<Problema> { e.s.apelarConClave(NuevaApelacion("No fue así, era una broma con una amiga", "usuaria@x.co", "otra")) }.mensaje)
+        val ap = e.s.apelarConClave(NuevaApelacion("No fue así, era una broma con una amiga", "usuaria@x.co", "frase larga de prueba"))
+        assertEquals("ya_apelaste", assertFailsWith<Problema> { e.s.apelar(u.id, "Otra vez lo mismo, por favor") }.mensaje)
+        assertEquals(ap.id, e.s.estadoSancion(AccesoSancion("usuaria@x.co", "frase larga de prueba")).apelacion?.id)
+        assertEquals(listOf(ap.id), e.s.apelaciones(m.id, m.token).map { it.id })
+        // Aceptarla quita la última sanción (la falta grave) y la suspensión, y le responde por correo.
+        e.s.decidirApelacion(m.id, DecisionApelacion(ap.id, true, "Tienes razón, lo revisamos"), m.token)
+        val despues = e.s.estadoCuenta(u.id)
+        assertEquals(0L, despues.suspendidaHasta)
+        assertEquals(1, despues.faltas.sumOf { it.puntos })
+        assertEquals("aceptada", despues.apelacion?.estado)
+        assertTrue("Tienes razón" in e.correos.last().third)
+        assertEquals("ya_resuelto", assertFailsWith<Problema> { e.s.decidirApelacion(m.id, DecisionApelacion(ap.id, false, "No"), m.token) }.mensaje)
+        // Pasados 30 días ya no se puede apelar.
+        e.reloj += Moderacion.PLAZO_APELAR + 1
+        assertEquals("sin_sancion", assertFailsWith<Problema> { e.s.apelar(u.id, "Quiero apelar todavía") }.mensaje)
     }
 
     @Test fun permisosDeDecisionYCierreAcumulado() = Entorno().use { e ->

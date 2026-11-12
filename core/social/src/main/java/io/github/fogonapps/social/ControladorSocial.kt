@@ -252,11 +252,75 @@ abstract class ControladorSocial(
     protected val _casos = MutableStateFlow<List<CasoModeracion>?>(null)
     val casos: StateFlow<List<CasoModeracion>?> = _casos
 
-    fun decidir(c: CasoModeracion, decision: String) = lanzar {
-        val regla = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
-        cliente().decidir(c.que, c.objeto, decision, regla)
+    fun decidir(c: CasoModeracion, decision: String, regla: String = c.motivos.maxByOrNull { it.value }?.key.orEmpty(), mensaje: String = "") = lanzar {
+        cliente().decidir(c.que, c.objeto, decision, regla, mensaje.trim())
         _casos.value = _casos.value?.filterNot { it.que == c.que && it.objeto == c.objeto }
     }
+
+    /* Sanciones recientes y apelaciones (equipo). */
+    protected val _sanciones = MutableStateFlow<List<SancionReciente>?>(null)
+    val sanciones: StateFlow<List<SancionReciente>?> = _sanciones
+    protected val _apelaciones = MutableStateFlow<List<ApelacionSocial>?>(null)
+    val apelaciones: StateFlow<List<ApelacionSocial>?> = _apelaciones
+    fun cargarSanciones() = lanzar { _sanciones.value = cliente().sancionesRecientes() }
+    fun cargarApelaciones() = lanzar { _apelaciones.value = cliente().apelaciones() }
+    fun sancionar(usuario: String, decision: String, regla: String, mensaje: String) = lanzar {
+        cliente().sancionar(usuario.trim().removePrefix("@").lowercase(), decision, regla, mensaje.trim())
+        _sanciones.value = cliente().sancionesRecientes()
+    }
+    fun levantar(usuario: String, motivo: String) = lanzar {
+        cliente().levantarSanciones(usuario, motivo.trim())
+        _sanciones.value = cliente().sancionesRecientes()
+    }
+    fun decidirApelacion(a: ApelacionSocial, aceptar: Boolean, respuesta: String) = lanzar {
+        cliente().decidirApelacion(a.id, aceptar, respuesta.trim())
+        _apelaciones.value = _apelaciones.value?.filterNot { it.id == a.id }
+    }
+    /** La persona apela su última sanción desde Estado de la cuenta. */
+    fun apelar(texto: String) = lanzar {
+        cliente().apelar(texto.trim())
+        _estadoCuenta.value = cliente().estadoCuenta()
+    }
+
+    /* ----- Historias y notas (24 horas) ----- */
+    protected val _historias = MutableStateFlow<List<GrupoHistoriasSocial>>(emptyList())
+    /** Las historias de la gente que sigues en esta app (la tuya primero; las no vistas antes). */
+    val historias: StateFlow<List<GrupoHistoriasSocial>> = _historias
+    protected val _notasGente = MutableStateFlow<List<NotaGente>>(emptyList())
+    val notasGente: StateFlow<List<NotaGente>> = _notasGente
+    fun cargarHistorias() {
+        if (_usuario.value == null) return
+        scope.launch { intentar(avisar = false) { _historias.value = cliente().historias() } }
+        scope.launch { intentar(avisar = false) { _notasGente.value = cliente().notasGente() } }
+    }
+    /** Sube una historia ([jpeg]: la foto ya achicada, si hay) y avisa con [listo]. */
+    fun subirHistoria(datos: kotlinx.serialization.json.JsonObject, jpeg: ByteArray?, listo: () -> Unit = {}) = lanzar {
+        val c = cliente()
+        val conFoto = if (jpeg != null) kotlinx.serialization.json.JsonObject(datos + ("imagen" to kotlinx.serialization.json.JsonPrimitive(c.subirImagen(jpeg)))) else datos
+        c.subirHistoria(conFoto)
+        _historias.value = c.historias()
+        listo()
+    }
+    /** Marca una historia como vista (aquí al instante; en el servidor, de fondo). */
+    fun verHistoria(h: HistoriaSocial) {
+        if (h.vista) return
+        _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(vista = true) else it }) }
+        scope.launch { runCatching { cliente().verHistoria(h.id) } }
+    }
+    fun borrarHistoria(h: HistoriaSocial) = lanzar {
+        cliente().borrarHistoria(h.id)
+        _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.filterNot { it.id == h.id }) }.filter { it.historias.isNotEmpty() }
+    }
+    suspend fun vistasHistoria(h: HistoriaSocial): List<VistaHistoriaSocial> = runCatching { cliente().vistasHistoria(h.id) }.getOrDefault(emptyList())
+    suspend fun historiasDe(usuario: String): GrupoHistoriasSocial? =
+        _historias.value.firstOrNull { it.persona.usuario == usuario } ?: runCatching { cliente().historiasDe(usuario) }.getOrNull()?.takeIf { it.historias.isNotEmpty() }
+    /** Pone (o quita, si está vacía y sin adjunto) tu nota de 24 horas. */
+    fun ponerNotaGente(texto: String, adjunto: kotlinx.serialization.json.JsonObject?) = lanzar {
+        val datos = adjunto?.let { kotlinx.serialization.json.JsonObject(mapOf("adjunto" to it)) } ?: kotlinx.serialization.json.JsonObject(emptyMap())
+        cliente().ponerNotaGente(texto.trim().take(60), datos)
+        _notasGente.value = cliente().notasGente()
+    }
+    suspend fun canciones(q: String): List<CancionSocial> = runCatching { cliente().canciones(q, java.util.Locale.getDefault().country.ifBlank { "CO" }) }.getOrDefault(emptyList())
 
     fun cargarAvisos() = lanzar {
         _avisos.value = cliente().avisos()

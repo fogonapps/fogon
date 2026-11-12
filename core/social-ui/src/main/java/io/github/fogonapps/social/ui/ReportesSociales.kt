@@ -13,6 +13,7 @@ fun textoFalta(falta: FaltaSocial, traducir: (Int) -> String): String {
         "amenaza_real" -> R.string.social_rep_violencia
         else -> R.string.social_rep_otro
     }
+    if (falta.decision == "advertencia") return "${traducir(regla)} · ${traducir(R.string.sancion_advertencia)}"
     val puntos = if (falta.puntos == 2) traducir(R.string.social_mod_grave_puntos)
         else if (falta.puntos == 1) traducir(R.string.social_mod_un_punto)
         else if (falta.puntos >= 4) traducir(R.string.social_mod_cierre)

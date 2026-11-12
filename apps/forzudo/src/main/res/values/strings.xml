@@ -555,4 +555,5 @@
     <string name="guia_rangos_texto">Your level per muscle and your records.</string>
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, the GitHub copy and this tour again.</string>
+    <string name="historia_ejercicios_min">%1$d exercises · %2$d min</string>
 </resources>

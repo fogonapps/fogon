@@ -23,6 +23,7 @@ fun interfazCuenta(vm: GymViewModel): InterfazSocial {
     val resumen = stringResource(R.string.cuenta_politica_resumen)
     val interfaz = remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen) {
         object : InterfazSocial {
+            override fun adjuntosApp() = vm.adjuntosHistoria()
             override val red = vm.red
             override val correoDisponible = red.correoDisponible
             override val textosApp = TextosSocialApp(

@@ -83,7 +83,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
         portada = { ImagenLocal(portada, Modifier.matchParentSize()) },
         foto = {
             Box {
-                FotoPerfilLocal(foto)
+                io.github.fogonapps.social.ui.AroHistoriasPropias(interfaz) { FotoPerfilLocal(foto) }
                 BotonMasFoto(stringResource(R.string.perfil_elegir_foto), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
         }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {},

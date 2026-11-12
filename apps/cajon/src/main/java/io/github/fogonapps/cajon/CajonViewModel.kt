@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon
 
+import kotlinx.serialization.json.put
 import io.github.fogonapps.cajon.datos.Catalogo
 import io.github.fogonapps.cajon.datos.ListasCatalogo
 import io.github.fogonapps.cajon.datos.ObraInicial
@@ -277,7 +278,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
     var alCambiarPerfil: ((String, Boolean) -> Unit)? = null
     fun perfilesTelefono() = cajonApp.perfiles.lista
-    fun cambiarPerfil(id: String) { alCambiarPerfil?.invoke(id, false) }
+    /** Al salir de un perfil local recién creado y vacío (se tocó «añadir» y no se entró a ninguna cuenta), se borra. */
+    fun cambiarPerfil(id: String) {
+        val actual = cajonApp.perfiles.lista.perfiles.firstOrNull { it.id == recursos.id }
+        val descartar = actual != null && actual.provisional && actual.usuario.isBlank() && actual.idCuenta.isBlank() && caja.tokenSocial == null &&
+            io.github.fogonapps.cajon.datos.perfilProvisionalVacio(_estado.value, escuchas.oidos.value)
+        alCambiarPerfil?.invoke(id, descartar)
+    }
     fun quitarPerfil() = viewModelScope.launch {
         val token = caja.tokenSocial
         try {
@@ -288,9 +295,17 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         } catch (x: kotlinx.coroutines.CancellationException) { throw x }
         catch (_: Exception) { decir(tx(R.string.perfiles_error)) }
     }
+    /** Solo hay un perfil local: si ya existe, «añadir» lleva a ese y abre la entrada a la cuenta. */
     fun agregarPerfil() {
-        val nuevo = cajonApp.perfiles.agregar()
-        if (nuevo == null) decir(tx(R.string.perfiles_limite)) else alCambiarPerfil?.invoke(nuevo.id, false)
+        val nuevo = cajonApp.perfiles.paraOtraCuenta()
+        when {
+            nuevo == null -> decir(tx(R.string.perfiles_limite))
+            nuevo.id == recursos.id -> abrir(Pantalla.CuentaRed)
+            else -> {
+                cajonApp.getSharedPreferences("perfiles-ui", android.content.Context.MODE_PRIVATE).edit().putString("abrir_cuenta", nuevo.id).apply()
+                cambiarPerfil(nuevo.id)
+            }
+        }
     }
     private suspend fun cuentaDuplicada(acceso: io.github.fogonapps.cajon.datos.Acceso): Boolean {
         val usuario = acceso.usuario
@@ -572,7 +587,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             aplicarApariencia(requireNotNull(_estado.value))
             guardarYa()
             cajonApp.arranqueCorrecto(recursos.id)
-            if (cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }.provisional) {
+            val prefsPerfiles = cajonApp.getSharedPreferences("perfiles-ui", android.content.Context.MODE_PRIVATE)
+            val pedidoEntrar = prefsPerfiles.getString("abrir_cuenta", null) == recursos.id
+            if (pedidoEntrar) prefsPerfiles.edit().remove("abrir_cuenta").apply()
+            if (pedidoEntrar || cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }.provisional) {
                 _estado.value = _estado.value!!.copy(listo = true)
                 abrir(Pantalla.CuentaRed)
             }
@@ -610,6 +628,28 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun hoy(): LocalDate = LocalDate.now()
     fun idioma(): String = Idioma.actual(getApplication())
+
+    /** Para adjuntar a una historia o nota: lo último que tocaste en tu cajón (con su portada y tu nota). */
+    fun adjuntosHistoria(): List<kotlinx.serialization.json.JsonObject> {
+        val e = _estado.value ?: return emptyList()
+        return e.vivas.sortedByDescending { maxOf(it.cambio, it.agregada) }.take(15).map { o ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", "obra"); put("tipoObra", o.tipo); put("titulo", o.titulo)
+                listOfNotNull(o.creador.ifBlank { null }, o.anio?.toString()).joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("detalle", it) }
+                if (o.portada.startsWith("https://")) put("imagen", o.portada)
+                if (o.nota > 0) put("cifra", "${o.nota}/10")
+                if (o.fuente.isNotBlank()) put("fuente", o.fuente)
+            }
+        }
+    }
+
+    /** Una película o serie de TMDB lleva su escena: el tráiler, que se abre en YouTube. */
+    suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject): kotlinx.serialization.json.JsonObject {
+        val fuente = (a["fuente"] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty()
+        if ((a["tipo"] as? kotlinx.serialization.json.JsonPrimitive)?.content != "obra" || !fuente.startsWith("tmdb:")) return a
+        val clave = runCatching { Tmdb(claveCine ?: "").trailer(fuente, idioma()) }.getOrNull() ?: return a
+        return kotlinx.serialization.json.JsonObject(a + ("escena" to kotlinx.serialization.json.JsonPrimitive(clave)))
+    }
     fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
     fun txPlural(id: Int, n: Int, vararg a: Any): String = Idioma.envolver(getApplication()).resources.getQuantityString(id, n, *a)
     private fun avisar(m: String) { _mensajes.trySend(m) }

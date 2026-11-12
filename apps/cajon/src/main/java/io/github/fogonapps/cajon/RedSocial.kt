@@ -177,9 +177,6 @@ class RedSocial(
         if (pendiente && !_politicaPendiente.value) _hojaPolitica.value = true
         _politicaPendiente.value = pendiente
     }
-    private val _notas = MutableStateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>>(emptyList())
-    /** Las notas de 24 horas de tu gente (la tuya primero). */
-    val notas: StateFlow<List<io.github.fogonapps.cajon.datos.NotaSocial>> = _notas
     private val _publicando = MutableStateFlow(false)
     val publicando: StateFlow<Boolean> = _publicando
     private val _progresoVideo = MutableStateFlow<Float?>(null)
@@ -698,16 +695,10 @@ class RedSocial(
         contando = scope.launch { delay(3000); val ids = synchronized(porContar) { porContar.toList() }; runCatching { cliente().vio(ids) } }
     }
 
-    fun cargarNotas() { if (_usuario.value != null) lanzar { _notas.value = cliente().notas() } }
+    /** Las notas y las historias de 24 horas viven en el controlador común ([cargarHistorias]). */
     override suspend fun recargarFeed() {
         super.recargarFeed()
-        if (_usuario.value != null) intentar(avisar = false) { _notas.value = cliente().notas() }
-    }
-
-    /** Pone (o quita, si está vacía) tu nota de 24 horas; con [obra], va con su portada. */
-    fun ponerNota(texto: String, obra: Obra? = null) = lanzar {
-        cliente().ponerNota(io.github.fogonapps.cajon.datos.NotaNueva(texto.trim().take(60), obra?.let(::obraBreve) ?: JsonObject(emptyMap())))
-        _notas.value = cliente().notas()
+        cargarHistorias()
     }
 
     /** Quita de la red una entrada del diario o una lista (la vuelve privada en el cajón). */

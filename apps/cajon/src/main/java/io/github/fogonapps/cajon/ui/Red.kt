@@ -86,6 +86,8 @@ import io.github.fogonapps.identidad.tarjetaFogon
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 
@@ -230,7 +232,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val sinLeer by vm.red.sinLeer.collectAsStateWithLifecycle()
     var pestana by rememberSaveable { mutableStateOf(if (usuario == null) 1 else 0) }
-    LaunchedEffect(pestana, usuario) { if (pestana == 0) vm.red.cargarFeed() else vm.red.cargarExplorar(); vm.red.cargarNotas(); vm.red.revisarSinLeer() }
+    LaunchedEffect(pestana, usuario) { if (pestana == 0) vm.red.cargarFeed() else vm.red.cargarExplorar(); vm.red.cargarHistorias(); vm.red.revisarSinLeer() }
     // Arriba: tu foto al principio (abre tu perfil), el título y, a la derecha, avisos y mensajes con lo que tengan sin leer.
     val chats by vm.chat.conversaciones.collectAsStateWithLifecycle()
     val sinLeerChat = remember(chats) { vm.chat.sinLeer() }
@@ -256,6 +258,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
             BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.fillMaxWidth())
         }
     }
+    if (usuario != null) io.github.fogonapps.social.ui.BarraHistorias(interfazSocial(vm))
     io.github.fogonapps.social.ui.PestanasFeedSocial(pestana, usuario, { pestana = it }) { vm.abrir(Pantalla.Publicar()) }
     if (pestana == 0 && usuario == null) { Pista(stringResource(R.string.red_feed_sin_cuenta), Modifier.padding(16.dp)); return }
     val ocultas by vm.red.ocultas.collectAsStateWithLifecycle()
@@ -381,24 +384,22 @@ private fun PasoGustos(vm: CajonViewModel) {
     }
 }
 
-/** Las notas de 24 horas: la tuya (tocarla la cambia) y las de tu gente (tocarlas abre el chat). */
+/**
+ * Las notas de 24 horas en los mensajes: la tuya (tocarla la cambia; puede llevar una canción u obra) y las de tu
+ * gente (tocarlas abre el chat).
+ */
 @Composable
 fun FilaNotas(vm: CajonViewModel, e: Estado) {
-    val f = FogonTema.actual
-    val notas by vm.red.notas.collectAsStateWithLifecycle()
+    val notas by vm.red.notasGente.collectAsStateWithLifecycle()
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var escribiendo by remember { mutableStateOf(false) }
-    var texto by rememberSaveable { mutableStateOf("") }
     val mia = notas.firstOrNull { it.persona.usuario == yo }
+    fun texto(n: io.github.fogonapps.social.NotaGente) = n.texto.ifBlank { (n.datos["adjunto"] as? JsonObject)?.get("titulo")?.jsonPrimitive?.contentOrNull.orEmpty() }
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Nota(PersonaSocial(yo.orEmpty(), stringResource(R.string.red_tu_nota), foto = true), mia?.texto ?: stringResource(R.string.red_nota_pon), mia == null) { texto = mia?.texto.orEmpty(); escribiendo = true }
-        notas.filter { it.persona.usuario != yo }.forEach { n -> Nota(n.persona, n.texto, false) { vm.abrir(Pantalla.Conversacion(n.persona.usuario)) } }
+        Nota(PersonaSocial(yo.orEmpty(), stringResource(R.string.red_tu_nota), foto = true), mia?.let(::texto) ?: stringResource(R.string.red_nota_pon), mia == null) { escribiendo = true }
+        notas.filter { it.persona.usuario != yo }.forEach { n -> Nota(n.persona, texto(n), false) { vm.abrir(Pantalla.Conversacion(n.persona.usuario)) } }
     }
-    if (escribiendo) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(texto, { texto = it.take(60) }, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.red_nota_pista)) }, singleLine = true, shape = forma(22.dp))
-        BotonIcono(Iconos.Enviar, stringResource(R.string.red_nota_poner), lleno = true) { vm.red.ponerNota(texto); escribiendo = false }
-        if (mia != null) BotonIcono(Iconos.Borrar, stringResource(R.string.red_nota_quitar)) { vm.red.ponerNota(""); escribiendo = false }
-    }
+    if (escribiendo) io.github.fogonapps.social.ui.HojaNota(interfazSocial(vm), mia) { escribiendo = false }
 }
 
 @Composable
@@ -494,7 +495,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     PerfilComun(vistaBase, pestana, { pestana = it },
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop) },
-        foto = { Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } },
+        foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
         bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = f.textoSuave) },
         enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
         acciones = {

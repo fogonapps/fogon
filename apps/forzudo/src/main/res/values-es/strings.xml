@@ -567,4 +567,5 @@
     <string name="guia_rangos_texto">Tu nivel por músculo y tus récords.</string>
     <string name="guia_perfil">Tu perfil y tus ajustes</string>
     <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes, la copia en GitHub y este recorrido otra vez.</string>
+    <string name="historia_ejercicios_min">%1$d ejercicios · %2$d min</string>
 </resources>

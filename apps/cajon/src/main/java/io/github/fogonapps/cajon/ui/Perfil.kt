@@ -343,7 +343,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
             Box {
-                FotoPerfil(p.foto, 96.dp, p.encuadreFoto, borde = true)
+                io.github.fogonapps.social.ui.AroHistoriasPropias(interfazSocial(vm)) { FotoPerfil(p.foto, 96.dp, p.encuadreFoto, borde = true) }
                 if (acciones != null) Box(Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 10.dp).size(48.dp).clip(CircleShape)
                     .clickable { acciones.elegirImagen { vm.subirImagenPerfil(false, it) } }
                     .semantics { contentDescription = descFoto; role = Role.Button }, contentAlignment = Alignment.Center) {

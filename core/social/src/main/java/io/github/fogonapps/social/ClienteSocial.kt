@@ -37,7 +37,8 @@ open class ClienteSocial(
         val porApp = camino in setOf("/actividad", "/explorar", "/guardados", "/perfil", "/perfil/revision", "/publicaciones/cambios") ||
             camino.startsWith("/perfiles/") || camino.startsWith("/etiquetas/") || camino == "/avisos" || camino.startsWith("/avisos/") ||
             camino == "/frases/comunidad" || camino == "/frases/propuestas" ||
-            camino == "/lugares" || camino.startsWith("/lugares/") || camino == "/respaldo" || camino == "/respaldo/llave"
+            camino == "/lugares" || camino.startsWith("/lugares/") || camino == "/respaldo" || camino == "/respaldo/llave" ||
+            camino == "/historias" || camino.startsWith("/historias/de/")
         return if (appProtocolo != null && porApp) "/v2/apps/${configuracion.idApp}" + ruta else "/v1$ruta"
     }
 
@@ -107,7 +108,17 @@ open class ClienteSocial(
     suspend fun cambiarInsignia(usuario: String, insignia: String, motivo: String) { pedir("/admin/insignias", "POST", json(CambioInsignia.serializer(), CambioInsignia(usuario, insignia, motivo))) }
     suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
-    suspend fun decidir(que: String, objeto: String, decision: String, regla: String) { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla))) }
+    suspend fun decidir(que: String, objeto: String, decision: String, regla: String, mensaje: String = "") { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla, mensaje))) }
+    /** Advertir o sancionar una cuenta sin reporte de por medio, con el mensaje que le llega a la persona. */
+    suspend fun sancionar(usuario: String, decision: String, regla: String, mensaje: String) { pedir("/admin/sanciones", "POST", json(SancionDirecta.serializer(), SancionDirecta(usuario, decision, regla, mensaje))) }
+    suspend fun sancionesRecientes() = leer(ListSerializer(SancionReciente.serializer()), pedir("/admin/sanciones"))
+    suspend fun apelaciones() = leer(ListSerializer(ApelacionSocial.serializer()), pedir("/admin/apelaciones"))
+    suspend fun decidirApelacion(id: Long, aceptar: Boolean, respuesta: String) { pedir("/admin/apelaciones", "POST", json(DecisionApelacion.serializer(), DecisionApelacion(id, aceptar, respuesta))) }
+    /** Apelar la última sanción con la sesión (la cuenta suspendida también puede). */
+    suspend fun apelar(texto: String) = leer(ApelacionSocial.serializer(), pedir("/cuenta/apelacion", "POST", json(NuevaApelacion.serializer(), NuevaApelacion(texto))))
+    /** Con la cuenta cerrada no hay sesión: el estado y la apelación van con correo y contraseña. */
+    suspend fun estadoSancion(correo: String, clave: String) = leer(EstadoSancionSocial.serializer(), pedir("/acceso/estado-sancion", "POST", json(AccesoSancion.serializer(), AccesoSancion(correo, clave))))
+    suspend fun apelarConClave(correo: String, clave: String, texto: String) = leer(ApelacionSocial.serializer(), pedir("/acceso/apelacion", "POST", json(NuevaApelacion.serializer(), NuevaApelacion(texto, correo, clave))))
     /** Con la verificación en dos pasos, la primera vez responde 409 «codigo_requerido» y llega un código al correo. */
     suspend fun entrarConClave(correo: String, clave: String, codigo: String = ""): Acceso = leer(Acceso.serializer(), pedir("/acceso/clave", "POST", json(EntradaClave.serializer(), EntradaClave(correo, clave, app = appProtocolo, codigo = codigo))))
     suspend fun ponerDosPasos(activo: Boolean, clave: String) { pedir("/cuenta/dos-pasos", "PUT", json(DosPasos.serializer(), DosPasos(activo, clave))) }
@@ -233,6 +244,18 @@ open class ClienteSocial(
     suspend fun meGustaComentario(id: Long, si: Boolean) { pedir("/comentarios/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun borrarComentario(id: Long) { pedir("/comentarios/$id", "DELETE") }
     /** Sube una imagen (JPEG ya achicado) y devuelve su nombre, para ponerlo en la publicación ("imagen"). */
+    /* Historias de 24 horas (por app) y notas (de la cuenta). */
+    suspend fun historias() = leer(ListSerializer(GrupoHistoriasSocial.serializer()), pedir("/historias"))
+    suspend fun historiasDe(usuario: String) = leer(GrupoHistoriasSocial.serializer(), pedir("/historias/de/${cod(usuario)}"))
+    suspend fun subirHistoria(datos: kotlinx.serialization.json.JsonObject) = leer(HistoriaSocial.serializer(), pedir("/historias", "POST", json(HistoriaNueva.serializer(), HistoriaNueva(datos))))
+    suspend fun verHistoria(id: Long) { pedir("/historias/$id/vista", "POST") }
+    suspend fun vistasHistoria(id: Long) = leer(ListSerializer(VistaHistoriaSocial.serializer()), pedir("/historias/$id/vistas"))
+    suspend fun borrarHistoria(id: Long) { pedir("/historias/$id", "DELETE") }
+    suspend fun notasGente() = leer(ListSerializer(NotaGente.serializer()), pedir("/notas"))
+    suspend fun ponerNotaGente(texto: String, datos: kotlinx.serialization.json.JsonObject) { pedir("/nota", "PUT", json(NotaNuevaGente.serializer(), NotaNuevaGente(texto, datos))) }
+    /** Buscar canciones (por el servidor de Fogón, que pregunta a Apple). */
+    suspend fun canciones(q: String, pais: String = "CO") = leer(ListSerializer(CancionSocial.serializer()), pedir("/canciones?q=${cod(q)}&pais=${cod(pais)}"))
+
     suspend fun subirImagen(jpeg: ByteArray): String =
         JsonSocial.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content
 
@@ -272,7 +295,8 @@ open class ClienteSocial(
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
     /** Quiénes escribieron (sin abrir ni borrar nada); vacío si el servidor todavía no lo sabe decir. */
     suspend fun remitentesSinLeer(): List<String> = runCatching {
-        JsonSocial.parseToJsonElement(pedir("/mensajes/remitentes")!!).jsonObject["de"]!!.jsonArray.map { it.jsonPrimitive.content }
+        // Los nombres (no el @) para el aviso; un servidor anterior solo manda los usuarios.
+        JsonSocial.parseToJsonElement(pedir("/mensajes/remitentes")!!).jsonObject.let { it["nombres"] ?: it["de"] }!!.jsonArray.map { it.jsonPrimitive.content }
     }.getOrDefault(emptyList())
     suspend fun mensajesSinLeer(): Int = JsonSocial.parseToJsonElement(pedir("/mensajes/sin-leer")!!).jsonObject["n"]!!.jsonPrimitive.int
     suspend fun recibir(desde: Long) = leer(ListSerializer(Sobre.serializer()), pedir("/mensajes?desde=$desde"))

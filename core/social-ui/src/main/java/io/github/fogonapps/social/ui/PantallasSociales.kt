@@ -43,6 +43,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -392,6 +393,9 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
         @Composable
         fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
             CampoContrasena(valor, onCambio, etiqueta, ayuda = stringResource(R.string.social_red_clave_regla))
+        // Se intentó entrar con una cuenta cerrada: el motivo, apelar o entrar con otra cuenta.
+        val sancion by vm.red.sancion.collectAsStateWithLifecycle()
+        sancion?.let { SideEffect { correoTexto = "" }; PantallaSancion(vm, it); return }
         when (acceso.paso) {
             // Entrar es con correo y contraseña. El código del correo solo sirve para crear la cuenta, recuperar la
             // contraseña y, si la persona la activa, la verificación en dos pasos.
@@ -707,8 +711,12 @@ fun Moderacion(vm: InterfazSocial) {
         if ("gestionar_frases" in permisos) Pildora(vm.tituloModeracionApp() + cantidadApp.takeIf { it > 0 }?.let { " · $it" }.orEmpty(), Iconos.Comentario, acento = seccion == 1) { seccion = 1 }
         if ("asignar_equipo" in permisos) Pildora(stringResource(R.string.social_equipo_titulo), acento = seccion == 2) { seccion = 2 }
         if ("ver_registro" in permisos) Pildora(stringResource(R.string.social_registro_titulo), acento = seccion == 3) { seccion = 3 }
+        if ("sancionar" in permisos) Pildora(stringResource(R.string.sancion_titulo), acento = seccion == 5) { seccion = 5 }
+        if ("sancionar" in permisos) Pildora(stringResource(R.string.apelacion_titulo), acento = seccion == 6) { seccion = 6 }
         if ("gestionar_usuarios" in permisos) Pildora(stringResource(R.string.insignias_titulo), acento = seccion == 4) { seccion = 4 }
     }
+    if (seccion == 5 && "sancionar" in permisos) { SancionesEquipo(vm, permisos); return }
+    if (seccion == 6 && "sancionar" in permisos) { ApelacionesEquipo(vm, permisos); return }
     if (seccion == 4 && "gestionar_usuarios" in permisos) { InsigniasEquipo(vm); return }
     if (seccion == 2 && "asignar_equipo" in permisos) { Equipo(vm); return }
     if (seccion == 3 && "ver_registro" in permisos) { RegistroEquipoPantalla(vm); return }
@@ -735,22 +743,20 @@ fun Moderacion(vm: InterfazSocial) {
                 if (c.que == "mensaje") Text(limpiarReporteMensaje(c.contenido).take(600),
                     style = MaterialTheme.typography.bodyMedium, color = f.texto)
                 else vm.contenidoReporte(c.contenido)
+                ImagenesReporte(c)
                 Text(pluralStringResource(R.plurals.social_mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.social_mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                val acciones = accionesModeracion(permisos, c.motivos.maxByOrNull { it.value }?.key.orEmpty(), c.faltasAutor)
+                val reglaCaso = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
+                val acciones = accionesModeracion(permisos, reglaCaso, c.faltasAutor)
+                var sancionando by remember(c.que, c.objeto) { mutableStateOf(false) }
+                if (sancionando) HojaSancionar(permisos, reglaCaso, c.faltasAutor, tipo + (c.autor?.let { " · @" + it.usuario }.orEmpty()), pedirMensaje = false, { sancionando = false }) { decision, regla, mensaje ->
+                    confirmar(vm.tx(R.string.sancion_aplicar), vm.tx(R.string.sancion_confirmar)) { vm.red.decidir(c, decision, regla, mensaje) }
+                }
                 if (puedeRestaurar(c.estado, permisos)) Pildora(stringResource(R.string.social_equipo_restaurar)) {
                     confirmar(vm.tx(R.string.social_equipo_restaurar), vm.tx(R.string.social_equipo_restaurar_confirmar)) { vm.red.restaurar(c) }
                 }
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
-                    if ("falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_falta)) {
-                        confirmar(vm.tx(R.string.social_mod_falta), vm.tx(R.string.social_mod_falta_confirmar)) { vm.red.decidir(c, "falta") }
-                    }
-                    if ("falta_grave" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_grave)) {
-                        confirmar(vm.tx(R.string.social_mod_grave), vm.tx(R.string.social_mod_grave_confirmar)) { vm.red.decidir(c, "falta_grave") }
-                    }
-                    if ("cerrar" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_cerrar)) {
-                        confirmar(vm.tx(R.string.social_mod_cerrar), vm.tx(R.string.social_mod_cerrar_confirmar)) { vm.red.decidir(c, "cerrar") }
-                    }
+                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = true }
                 }
             }
         }
@@ -772,7 +778,12 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().clip(FormaPildora).clickable { vm.navegacion.perfil(p.autor.usuario) },
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            AvatarRed(p.autor, 36.dp)
+            // Con historias vigentes, el avatar lleva su aro y tocarlo las abre.
+            val grupos by vm.red.historias.collectAsStateWithLifecycle()
+            val grupo = grupos.firstOrNull { it.persona.usuario == p.autor.usuario && it.historias.isNotEmpty() }
+            var verHistorias by remember(p.id) { mutableStateOf(false) }
+            if (grupo != null) AvatarConAro(p.autor, 32.dp, if (grupo.todasVistas) 2 else 1) { verHistorias = true } else AvatarRed(p.autor, 36.dp)
+            if (verHistorias && grupo != null) VisorHistorias(vm, listOf(grupo), 0) { verHistorias = false }
             Column(Modifier.weight(1f)) {
                 NombreRed(p.autor)
                 Text((if (p.tipo in vm.contenido.tiposAdmitidos) vm.contenido.NombreTipo(p.tipo) else stringResource(R.string.social_red_tipo_publico)) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
@@ -904,12 +915,9 @@ fun EstadoCuenta(vm: InterfazSocial) {
             e.restringidaHasta > ahora -> Text(stringResource(R.string.social_mod_restringida_hasta, fecha(e.restringidaHasta)), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
             e.faltas.isEmpty() -> Text(stringResource(R.string.social_mod_todo_bien), style = MaterialTheme.typography.titleMedium, color = f.texto)
         }
-        e.faltas.forEach { x ->
-            Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp)) {
-                Text(textoFalta(x) { vm.tx(it) }, style = MaterialTheme.typography.titleSmall, color = f.texto)
-                Text(stringResource(R.string.social_mod_falta_vence, fecha(x.cuando), fecha(x.vence)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-        }
+        ListaFaltas(e.faltas) { vm.tx(it) }
+        if (e.faltas.isNotEmpty()) Pista(stringResource(R.string.sancion_como_funciona))
+        BloqueApelar(e, e.apelacion) { vm.red.apelar(it) }
     }
 }
 

@@ -170,6 +170,20 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
 
     fun hoy(): LocalDate = LocalDate.now()
     fun idioma(): String = Idioma.actual(getApplication())
+
+    /** Para una historia o una nota: los platos que hiciste hace poco (tus recetas y las de la app que anotaste). */
+    fun adjuntosHistoria(): List<kotlinx.serialization.json.JsonObject> {
+        val e = _estado.value ?: return emptyList()
+        val idioma = idioma()
+        val recientes = e.dias.toSortedMap().values.reversed().flatMap { it.anotados }.filter { it.ref.startsWith("r:") }.map { it.ref.removePrefix("r:") }
+        val ids = (recientes + e.recetas.filter { it.propia }.map { it.id }).distinct().take(12)
+        return ids.mapNotNull { id -> L.receta(e, id) }.map { r ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", kotlinx.serialization.json.JsonPrimitive("plato")); put("titulo", kotlinx.serialization.json.JsonPrimitive(r.nombre(idioma)))
+                if (r.minutos > 0) put("detalle", kotlinx.serialization.json.JsonPrimitive("${r.minutos} min"))
+            }
+        }
+    }
     fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
     private fun avisar(m: String) { _mensajes.trySend(m) }
     private fun nuevoId(prefijo: String) = prefijo + System.currentTimeMillis().toString(36) + Random.nextInt(1296).toString(36)
@@ -212,8 +226,9 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Perfiles del teléfono ----- */
 
     private var cambiandoPerfil = false
+    /** Solo hay un perfil local: si ya existe, «añadir» lleva a ese (en él se entra a la otra cuenta). */
     fun agregarPerfil() {
-        val nuevo = perfiles.agregar() ?: return
+        val nuevo = perfiles.paraOtraCuenta() ?: return
         cambiarPerfil(nuevo.id)
     }
     private var retirarAlCambiar = false
