@@ -70,6 +70,12 @@ interface InterfazSocial {
     suspend fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> = emptyList()
     /** Lo que dice el buscador de adjuntos, si la app busca más que canciones. */
     @Composable fun textoBuscarAdjunto(): String? = null
+    /** Si la app ofrece fotos de obras o personas para el fondo de una historia (El Cajón: pósteres, escenas, portadas, retratos). */
+    val fotosDeObras: Boolean get() = false
+    /** Buscar obras o personas con fotos ({"titulo", "detalle", "imagen", "fuente"}). */
+    suspend fun buscarConFotos(q: String): List<kotlinx.serialization.json.JsonObject> = emptyList()
+    /** Las fotos para elegir de una obra o persona ([fuente], como "tmdb:movie:603"). */
+    suspend fun fotosDe(fuente: String): List<String> = emptyList()
 }
 
 /** Explicaciones de la app sobre contenido público y recuperación privada. */

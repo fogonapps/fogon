@@ -1380,10 +1380,11 @@ class Social(
     fun ponerNota(yo: Long, n: NotaNueva) {
         val t = n.texto.trim().take(60)
         val adjunto = Adjuntos.limpio(n.datos["adjunto"] as? JsonObject)
+        val adjunto2 = Adjuntos.limpio(n.datos["adjunto2"] as? JsonObject)
         // Sin palabras ni adjunto, la nota se quita; con solo un adjunto (una canción, por ejemplo), vale.
         if (t.isEmpty() && adjunto == null) { b.usar { cambiar("DELETE FROM notas WHERE cuenta = ?", yo) }; return }
-        val base = sinPortadasAjenas(JsonObject(n.datos - "adjunto"))
-        val datos = JsonSocial.encodeToString(JsonObject.serializer(), if (adjunto != null) JsonObject(base + ("adjunto" to adjunto)) else base)
+        val base = sinPortadasAjenas(JsonObject(n.datos - "adjunto" - "adjunto2"))
+        val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(base + listOfNotNull(adjunto?.let { "adjunto" to it }, adjunto2?.let { "adjunto2" to it })))
         if (datos.length > 4000) throw Problema(413, "muy_grande")
         b.usar { cambiar("INSERT INTO notas(cuenta, texto, datos, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET texto = excluded.texto, datos = excluded.datos, cuando = excluded.cuando", yo, t, datos, ahora()) }
     }
@@ -1405,6 +1406,8 @@ class Social(
         val texto = (d["texto"] as? JsonPrimitive)?.contentOrNull?.filter { it == '\n' || !it.isISOControl() }?.trim()?.take(200).orEmpty()
         val imagen = (d["imagen"] as? JsonPrimitive)?.contentOrNull.orEmpty()
         val adjunto = Adjuntos.limpio(d["adjunto"] as? JsonObject)
+        // Un segundo adjunto: la canción y además una obra (o al revés).
+        val adjunto2 = Adjuntos.limpio(d["adjunto2"] as? JsonObject)
         val fondo = (d["fondo"] as? JsonPrimitive)?.intOrNull?.coerceIn(0, 7) ?: 0
         // Hecha en el editor: foto, textos, stickers y dibujo ya van dentro de la imagen (el texto queda aparte, para leerlo).
         val compuesta = (d["compuesta"] as? JsonPrimitive)?.booleanOrNull == true && imagen.isNotEmpty()
@@ -1417,6 +1420,7 @@ class Social(
             put("fondo", fondo)
             if (compuesta) put("compuesta", true)
             adjunto?.let { put("adjunto", it) }
+            adjunto2?.let { put("adjunto2", it) }
         }
         val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira) VALUES(?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA) }
         return Historia(id, datos, ahora(), true)

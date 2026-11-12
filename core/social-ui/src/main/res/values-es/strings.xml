@@ -421,4 +421,9 @@
     <string name="social_red_aviso_historia">le gustó tu historia</string>
     <string name="historia_obras">Películas, series, libros y más</string>
     <string name="historia_responder">Responder</string>
+    <string name="historia_tamano">Cambiar el tamaño</string>
+    <string name="historia_foto_obra">Foto de una obra o persona</string>
+    <string name="historia_otra_obra">Buscar otra</string>
+    <string name="historia_sin_fotos">No hay fotos para esto.</string>
+    <string name="historia_buscar_obra_persona">Busca una película, serie, libro o persona</string>
 </resources>

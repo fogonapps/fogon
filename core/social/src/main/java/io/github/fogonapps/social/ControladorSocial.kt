@@ -319,8 +319,8 @@ abstract class ControladorSocial(
     suspend fun historiasDe(usuario: String): GrupoHistoriasSocial? =
         _historias.value.firstOrNull { it.persona.usuario == usuario } ?: runCatching { cliente().historiasDe(usuario) }.getOrNull()?.takeIf { it.historias.isNotEmpty() }
     /** Pone (o quita, si está vacía y sin adjunto) tu nota de 24 horas. */
-    fun ponerNotaGente(texto: String, adjunto: kotlinx.serialization.json.JsonObject?) = lanzar {
-        val datos = adjunto?.let { kotlinx.serialization.json.JsonObject(mapOf("adjunto" to it)) } ?: kotlinx.serialization.json.JsonObject(emptyMap())
+    fun ponerNotaGente(texto: String, adjunto: kotlinx.serialization.json.JsonObject?, adjunto2: kotlinx.serialization.json.JsonObject? = null) = lanzar {
+        val datos = kotlinx.serialization.json.JsonObject(listOfNotNull(adjunto?.let { "adjunto" to it }, adjunto2?.let { "adjunto2" to it }).toMap())
         cliente().ponerNotaGente(texto.trim().take(60), datos)
         _notasGente.value = cliente().notasGente()
     }

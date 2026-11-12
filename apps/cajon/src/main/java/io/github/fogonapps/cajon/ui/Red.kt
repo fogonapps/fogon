@@ -824,10 +824,7 @@ fun TarjetaCancion(titulo: String, artista: String, album: String, portada: Stri
         // Con el avance de Apple: suena 30 segundos aquí, y el botón de Apple Music (lo piden sus condiciones).
         if (audio.isNotBlank()) {
             io.github.fogonapps.social.ui.BotonAvance(audio)
-            if (enlace.startsWith("https://music.apple.com/")) {
-                val uri = androidx.compose.ui.platform.LocalUriHandler.current
-                Pildora(stringResource(io.github.fogonapps.social.ui.R.string.historia_apple_music_corto)) { uri.openUri(enlace) }
-            }
+            io.github.fogonapps.social.ui.EnlaceAppleMusic(enlace)
         } else BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
             if (!tocarCancion(ctx, titulo, artista, album)) android.widget.Toast.makeText(ctx, sinApp, android.widget.Toast.LENGTH_SHORT).show()
         }

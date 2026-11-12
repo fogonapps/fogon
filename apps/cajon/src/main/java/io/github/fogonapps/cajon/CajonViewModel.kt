@@ -664,6 +664,27 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Obras y personas (directores, actores, escritores) con fotos, para el fondo de una historia. */
+    suspend fun buscarConFotos(q: String): List<kotlinx.serialization.json.JsonObject> = kotlinx.coroutines.coroutineScope {
+        val tm = Tmdb(claveCine ?: "")
+        val personas = async { runCatching { tm.buscarPersonas(q, idioma()).take(5) }.getOrDefault(emptyList()) }
+        val obras = buscarAdjuntos(q).filter { (it["fuente"] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty().let { f -> f.startsWith("tmdb:") || f.startsWith("ol:") } }
+        obras + personas.await().map { p ->
+            kotlinx.serialization.json.buildJsonObject { put("titulo", p.nombre); put("detalle", p.detalle); put("imagen", p.foto); put("fuente", p.fuente) }
+        }
+    }
+
+    /** Las fotos de una obra o persona: escenas y pósteres de TMDB, retratos de una persona o portadas de las ediciones de un libro. */
+    suspend fun fotosDe(fuente: String): List<String> = runCatching {
+        val tm = Tmdb(claveCine ?: "")
+        when {
+            fuente.startsWith("tmdb:person:") -> tm.fotosDePersona(fuente.removePrefix("tmdb:person:")).map { "https://image.tmdb.org/t/p/w780$it" }
+            fuente.startsWith("tmdb:") -> (tm.fondos(fuente, idioma()) + tm.posteres(fuente, idioma())).distinct().take(40)
+            fuente.startsWith("ol:") -> OpenLibrary.ediciones(fuente).map { it.portada }.filter { it.isNotBlank() }.distinct().take(40)
+            else -> emptyList()
+        }
+    }.getOrDefault(emptyList())
+
     /** Una película o serie de TMDB lleva su escena: el tráiler, que se abre en YouTube. */
     suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject): kotlinx.serialization.json.JsonObject {
         val fuente = (a["fuente"] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty()

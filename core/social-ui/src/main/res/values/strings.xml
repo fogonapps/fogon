@@ -419,4 +419,9 @@
     <string name="social_red_aviso_historia">liked your story</string>
     <string name="historia_obras">Films, series, books and more</string>
     <string name="historia_responder">Reply</string>
+    <string name="historia_tamano">Resize</string>
+    <string name="historia_foto_obra">Photo of a work or person</string>
+    <string name="historia_otra_obra">Search another</string>
+    <string name="historia_sin_fotos">No photos for this.</string>
+    <string name="historia_buscar_obra_persona">Search for a film, series, book or person</string>
 </resources>
