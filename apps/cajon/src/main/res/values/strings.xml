@@ -1579,4 +1579,10 @@
   <string name="historia_otra_obra">Search another</string>
   <string name="historia_sin_fotos">No photos for this.</string>
   <string name="historia_buscar_obra_persona">Search for a film, series, book or person</string>
+  <string name="historia_tipo_artista">Artists</string>
+  <string name="historia_tipo_artista_uno">Artist</string>
+  <string name="historia_tipo_albumes">Albums</string>
+  <string name="historia_tipo_peliculas">Films</string>
+  <string name="historia_tipo_series">Series and anime</string>
+  <string name="historia_tipo_libros">Books</string>
 </resources>

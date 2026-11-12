@@ -652,9 +652,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             async { runCatching { tm.buscar(q, Tipos.PELICULA, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { tm.buscar(q, Tipos.SERIE, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { io.github.fogonapps.cajon.datos.OpenLibrary.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) },
-            async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarAlbumes(q).take(4) }.getOrDefault(emptyList()) },
+            async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarAlbumes(q).take(6) }.getOrDefault(emptyList()) },
         )
-        partes.flatMap { it.await() }.map { r ->
+        val artistas = async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarArtistas(q).take(5) }.getOrDefault(emptyList()) }
+        artistas.await().map { a ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", "artista"); put("titulo", a.nombre)
+                listOf(a.pais, a.detalle).filter { it.isNotBlank() }.joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("detalle", it) }
+                put("fuente", a.fuente)
+            }
+        } + partes.flatMap { it.await() }.map { r ->
             kotlinx.serialization.json.buildJsonObject {
                 put("tipo", "obra"); put("tipoObra", r.tipo); put("titulo", r.titulo)
                 listOfNotNull(r.creador.ifBlank { null }, r.anio?.toString()).joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("detalle", it) }

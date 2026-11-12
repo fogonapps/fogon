@@ -62,7 +62,7 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
  * suyo; el servidor solo deja pasar campos conocidos, textos cortos y direcciones de sitios permitidos.
  */
 object Adjuntos {
-    val TIPOS = setOf("cancion", "obra", "entreno", "ejercicio", "logro", "plato", "receta", "meta", "ahorro", "racha", "lugar")
+    val TIPOS = setOf("cancion", "artista", "obra", "entreno", "ejercicio", "logro", "plato", "receta", "meta", "ahorro", "racha", "lugar")
     private val HOSTS_AUDIO = Regex("""https://audio-ssl\.itunes\.apple\.com/[^\s]{1,400}""")
     private val HOSTS_ENLACE = setOf("music.apple.com", "www.youtube.com", "youtube.com", "m.youtube.com", "www.themoviedb.org", "fogonapps.duckdns.org")
 

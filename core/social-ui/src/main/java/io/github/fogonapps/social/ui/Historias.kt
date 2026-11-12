@@ -216,6 +216,7 @@ fun TarjetaAdjunto(a: JsonObject, modifier: Modifier = Modifier, sonar: Boolean 
 @Composable
 private fun nombreTipoAdjunto(tipo: String, tipoObra: String): String = stringResource(when (tipo) {
     "cancion" -> R.string.historia_tipo_cancion
+    "artista" -> R.string.historia_tipo_artista_uno
     "obra" -> when (tipoObra) { "serie" -> R.string.historia_tipo_serie; "libro" -> R.string.historia_tipo_libro; "album", "disco" -> R.string.historia_tipo_album; "anime" -> R.string.historia_tipo_anime; else -> R.string.historia_tipo_pelicula }
     "entreno" -> R.string.historia_tipo_entreno
     "ejercicio" -> R.string.historia_tipo_ejercicio
@@ -301,10 +302,14 @@ fun ElegirAdjunto(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (JsonObjec
             OutlinedTextField(buscar, { buscar = it.take(80) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
                 placeholder = { Text(vm.textoBuscarAdjunto() ?: stringResource(R.string.historia_buscar_cancion)) })
             if (ocupado) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
-            if (encontrados.isNotEmpty()) {
-                Text(stringResource(R.string.historia_obras), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-                encontrados.forEach { a -> Box(Modifier.clip(forma(18.dp)).clickable { elegir(a) }) { TarjetaAdjunto(a) } }
+            // Por secciones, como en un buscador de música: artistas, canciones, álbumes y después lo demás.
+            @Composable fun Seccion(titulo: String, l: List<JsonObject>) {
+                if (l.isEmpty()) return
+                Text(titulo, style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.padding(top = 4.dp))
+                l.forEach { a -> Box(Modifier.clip(forma(18.dp)).clickable { elegir(a) }) { TarjetaAdjunto(a) } }
             }
+            val clave = { a: JsonObject -> if (a.t("tipo") == "obra") a.t("tipoObra") else a.t("tipo") }
+            Seccion(stringResource(R.string.historia_tipo_artista), encontrados.filter { clave(it) == "artista" })
             canciones?.let { l ->
                 if (l.isNotEmpty()) Text(stringResource(R.string.historia_tipo_cancion), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
                 if (l.isEmpty() && encontrados.isEmpty()) Pista(stringResource(R.string.historia_sin_canciones))
@@ -321,6 +326,11 @@ fun ElegirAdjunto(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (JsonObjec
                 }
                 Text(stringResource(R.string.historia_canciones_apple), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
             }
+            Seccion(stringResource(R.string.historia_tipo_albumes), encontrados.filter { clave(it) == "album" })
+            Seccion(stringResource(R.string.historia_tipo_peliculas), encontrados.filter { clave(it) == "pelicula" })
+            Seccion(stringResource(R.string.historia_tipo_series), encontrados.filter { clave(it) == "serie" || clave(it) == "anime" })
+            Seccion(stringResource(R.string.historia_tipo_libros), encontrados.filter { clave(it) == "libro" })
+            Seccion(stringResource(R.string.historia_de_la_app), encontrados.filter { clave(it) !in setOf("artista", "album", "pelicula", "serie", "anime", "libro") })
             if (opciones.isNotEmpty() && canciones == null) {
                 Text(stringResource(R.string.historia_de_la_app), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.padding(top = 6.dp))
                 opciones.forEach { a -> Box(Modifier.clip(forma(18.dp)).clickable { elegir(a) }) { TarjetaAdjunto(a) } }
