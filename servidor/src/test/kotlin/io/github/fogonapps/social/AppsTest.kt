@@ -213,10 +213,9 @@ class AppsTest {
             assertEquals(HttpStatusCode.NoContent, client.put("/v1/publicaciones") { bearerAuth(e.token); contentType(ContentType.Application.Json); setBody("[]") }.status)
             assertEquals("[]", client.get("/v1/actividad") { bearerAuth(e.token) }.bodyAsText())
             assertTrue(client.get("/v2/apps/forzudo/actividad") { bearerAuth(forzudo) }.bodyAsText().contains("entreno"))
-            for (ruta in listOf("/v1/mensajes", "/v1/mensajes/esperar", "/v1/mensajes/sin-leer", "/v1/llaves/ana", "/v1/cajon")) {
-                assertEquals(HttpStatusCode.Forbidden, client.get(ruta) { bearerAuth(forzudo) }.status)
-            }
-            assertEquals(HttpStatusCode.Forbidden, client.put("/v1/llaves") { bearerAuth(forzudo); contentType(ContentType.Application.Json); setBody("{}") }.status)
+            // El chat es de las cuatro apps; la copia del cajón sigue siendo solo de El Cajón.
+            assertEquals(HttpStatusCode.OK, client.get("/v1/mensajes/sin-leer") { bearerAuth(forzudo) }.status)
+            assertEquals(HttpStatusCode.Forbidden, client.get("/v1/cajon") { bearerAuth(forzudo) }.status)
             assertEquals(HttpStatusCode.OK, client.get("/v1/mensajes") { bearerAuth(e.token) }.status)
             val id = e.s.actividad(e.yo, null, app = "forzudo").single().id
             val web = client.get("/p/$id").bodyAsText()

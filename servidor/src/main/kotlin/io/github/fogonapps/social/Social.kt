@@ -1080,11 +1080,18 @@ class Social(
     }
 
     /** Quiénes le escribieron y todavía no los recibió (los más recientes primero, hasta 5): para la notificación, sin abrir nada. */
-    fun remitentesSinLeer(yo: Long): List<Persona> = b.usar {
-        leer("SELECT de, MAX(id) FROM mensajes WHERE para = ? GROUP BY de ORDER BY MAX(id) DESC LIMIT 20", yo) { it.getLong(1) }
+    fun remitentesSinLeer(yo: Long, sesion: String = ""): List<Persona> = b.usar {
+        val desde = leer("SELECT ultimo FROM chat_cursores WHERE huella = ?", sesion) { it.getLong(1) }.firstOrNull() ?: 0
+        leer("SELECT de, MAX(id) FROM mensajes WHERE para = ? AND id > ? GROUP BY de ORDER BY MAX(id) DESC LIMIT 20", yo, desde) { it.getLong(1) }
     }.filter { !bloqueado(yo, it) && visible(it) }.take(5).map { persona(it) }
 
-    fun mensajesSinLeer(yo: Long): Int = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ?", yo) { it.getInt(1) }.first() }
+    /** Los mensajes que esta sesión ([sesion]) todavía no recibió. */
+    fun mensajesSinLeer(yo: Long, sesion: String = ""): Int = b.usar {
+        // Preguntar ya cuenta como usar el chat: desde aquí, lo que llegue espera también a esta sesión.
+        if (sesion.isNotEmpty()) cambiar("INSERT OR IGNORE INTO chat_cursores(huella, cuenta, ultimo, cuando) VALUES(?,?,0,?)", sesion, yo, ahora())
+        val desde = leer("SELECT ultimo FROM chat_cursores WHERE huella = ?", sesion) { it.getLong(1) }.firstOrNull() ?: 0
+        leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND id > ?", yo, desde) { it.getInt(1) }.first()
+    }
 
     /** Las publicaciones que cumplen [donde] (SQL sobre `p`), con su autor y sus cifras, en una sola consulta; con el id del autor. */
     private fun filas(lector: Long?, donde: String, vararg args: Any?): List<Pair<Long, Publicacion>> = b.usar {
@@ -1729,6 +1736,14 @@ class Social(
 
     /* ----- Chat (cifrado de extremo a extremo: aquí solo pasan sobres cerrados) ----- */
 
+    /** Las llaves privadas del chat, cifradas en el teléfono con la llave de la contraseña ("" si no hay). */
+    fun llavesChat(yo: Long): CajonCifrado = CajonCifrado(llave = b.usar { leer("SELECT sobre FROM llaves_chat WHERE cuenta = ?", yo) { it.getString(1) }.firstOrNull() }.orEmpty())
+
+    fun ponerLlavesChat(yo: Long, c: CajonCifrado) {
+        if (c.llave.isBlank() || c.llave.length > 20_000) throw Problema(400, "llaves")
+        b.usar { cambiar("INSERT INTO llaves_chat(cuenta, sobre, cuando) VALUES(?,?,?) ON CONFLICT(cuenta) DO UPDATE SET sobre = excluded.sobre, cuando = excluded.cuando", yo, c.llave, ahora()) }
+    }
+
     fun ponerLlaves(yo: Long, l: Llaves) {
         if (l.cifrar.length !in 20..4000 || l.firmar.length !in 20..4000) throw Problema(400, "llaves")
         b.usar { cambiar("INSERT INTO llaves(cuenta, cifrar, firmar, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET cifrar = excluded.cifrar, firmar = excluded.firmar, cuando = excluded.cuando",
@@ -1763,18 +1778,26 @@ class Social(
      * Como [recibir], pero si no hay nada nuevo espera hasta [espera] milisegundos a que llegue algo (la app abierta
      * deja esta pregunta hecha y el mensaje le llega al instante, sin servicios de terceros).
      */
-    suspend fun esperarMensajes(yo: Long, desde: Long, espera: Long = 25_000): List<Sobre> {
+    suspend fun esperarMensajes(yo: Long, desde: Long, espera: Long = 25_000, sesion: String = ""): List<Sobre> {
         val antes = timbre(yo).value   // se mira antes de revisar: lo que llegue después cambia el número
-        val ya = recibir(yo, desde)
+        val ya = recibir(yo, desde, sesion)
         if (ya.isNotEmpty()) return ya
         kotlinx.coroutines.withTimeoutOrNull(espera) { timbre(yo).first { it != antes } }
-        return recibir(yo, desde)
+        return recibir(yo, desde, sesion)
     }
 
-    /** Los sobres que le llegaron después de [desde]; los anteriores (ya recibidos) y los de más de 30 días se borran. */
-    fun recibir(yo: Long, desde: Long): List<Sobre> {
+    /**
+     * Los sobres que le llegaron después de [desde]. Cada sesión ([sesion], la huella del token: una app en un
+     * teléfono) recuerda hasta dónde recibió; un sobre se borra cuando todas las sesiones que usan el chat lo
+     * recibieron (así llega a las cuatro apps) o a los 30 días.
+     */
+    fun recibir(yo: Long, desde: Long, sesion: String = ""): List<Sobre> {
         b.usar {
-            cambiar("DELETE FROM mensajes WHERE para = ? AND id <= ?", yo, desde)
+            if (sesion.isNotEmpty()) cambiar("""INSERT INTO chat_cursores(huella, cuenta, ultimo, cuando) VALUES(?,?,?,?)
+                ON CONFLICT(huella) DO UPDATE SET ultimo = max(ultimo, excluded.ultimo), cuando = excluded.cuando""", sesion, yo, desde, ahora())
+            cambiar("DELETE FROM chat_cursores WHERE cuando < ? OR huella NOT IN (SELECT huella FROM sesiones)", ahora() - 30L * 24 * 3600_000)
+            val minimo = leer("SELECT min(ultimo) FROM chat_cursores WHERE cuenta = ?", yo) { it.getObject(1) as? Number }.firstOrNull()?.toLong() ?: desde
+            cambiar("DELETE FROM mensajes WHERE para = ? AND id <= ?", yo, minOf(minimo, desde))
             cambiar("DELETE FROM mensajes WHERE cuando < ?", ahora() - 30L * 24 * 3600_000)
         }
         return b.usar { leer("SELECT id, de, cuando, sobre, firma FROM mensajes WHERE para = ? AND id > ? ORDER BY id LIMIT 200", yo, desde) {

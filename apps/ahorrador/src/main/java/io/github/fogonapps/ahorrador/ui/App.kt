@@ -124,7 +124,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
             // Pantallas encima de las pestañas
             io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
-                    Column(Modifier.fillMaxSize().then(if (p is Pantalla.Anotar) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
+                    Column(Modifier.fillMaxSize().then(if (p is Pantalla.Anotar || (p is Pantalla.Social && p.destino == "chat")) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
                             is Pantalla.Anotar -> Anotar(vm, estado, p)
                             is Pantalla.Cuentas -> Cuentas(vm, estado)

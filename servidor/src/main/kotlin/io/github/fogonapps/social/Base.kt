@@ -130,6 +130,13 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, cuando INTEGER NOT NULL)""")
                 columna(s, "publicaciones", "fijada INTEGER NOT NULL DEFAULT 0")
+                // Las llaves privadas del chat, cifradas con la llave de la contraseña (el servidor no las puede abrir):
+                // así las cuatro apps (y otro teléfono) usan las mismas y los mensajes se leen en todas.
+                // Hasta dónde recibió mensajes cada sesión (cada app en cada teléfono): se borran cuando todas los recibieron.
+                s.execute("""CREATE TABLE IF NOT EXISTS chat_cursores(huella TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    ultimo INTEGER NOT NULL, cuando INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS llaves_chat(cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE,
+                    sobre TEXT NOT NULL, cuando INTEGER NOT NULL)""")
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_votos(historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, opcion INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
                 s.execute("""CREATE TABLE IF NOT EXISTS mejores_amigos(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,

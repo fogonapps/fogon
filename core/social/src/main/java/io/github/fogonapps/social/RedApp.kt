@@ -305,6 +305,17 @@ open class RedApp(
         return lugar
     }
     fun visibilidad(clave: String) = almacen.visibilidad(clave)
+
+    /** El chat cifrado de este perfil (el mismo de El Cajón: mismas llaves de la cuenta, compartidas cifradas). */
+    private var chatCreado: ChatSocial? = null
+    fun chat(contexto: android.content.Context, decir: (String) -> Unit): ChatSocial = chatCreado ?: ChatSocial(contexto.applicationContext, scope,
+        java.io.File(carpeta, "chats.json"), object : AlmacenChat {
+            override var chatLlaves: String?
+                get() = almacen.chatLlaves
+                set(v) { almacen.chatLlaves = v }
+            override val llaveCuenta: String? get() = almacen.llaveCopia
+            override val permisoRed = MutableStateFlow(true)
+        }, ::cliente, usuario, decir = decir).also { chatCreado = it }
     /** La canción del perfil de esta app (con su avance de Apple): se cambia sola, sin tocar las demás partes. */
     fun ponerCancionPerfil(c: CancionSocial?) = lanzar {
         val datos = c?.let { kotlinx.serialization.json.buildJsonObject {

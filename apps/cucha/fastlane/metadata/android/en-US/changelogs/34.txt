@@ -1,0 +1,1 @@
+Messages in all four apps: the same encrypted chat as El Cajón (stickers, reactions, nicknames, colors, mute), with friends on top and search. Your keys are shared encrypted with your password, so messages reach all your apps. Reply to stories by message.

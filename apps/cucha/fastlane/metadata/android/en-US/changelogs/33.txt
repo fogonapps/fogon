@@ -1,1 +1,0 @@
-Stories: questions (“Recommend me a book”), mention someone with @, choose who sees it (everyone, friends only or close friends) and share a feed post to your story. Notifications when someone votes in your poll, mentions you or answers your question. Pin a post to the top of your profile.

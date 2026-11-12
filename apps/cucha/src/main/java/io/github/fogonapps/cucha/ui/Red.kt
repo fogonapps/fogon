@@ -47,6 +47,10 @@ fun interfazCuenta(vm: CuchaViewModel): InterfazSocial {
     return remember(vm, confirmar, explicacion, local, borrado, intro, queSale, pausa, resumen, nombreTipos) {
         object : InterfazSocial {
             override fun adjuntosApp() = vm.adjuntosHistoria()
+            override val respondeHistorias = true
+            override fun responderHistoria(usuario: String, texto: String) {
+                vm.red.chat(vm.getApplication()) {}.enviar(usuario, tx(io.github.fogonapps.social.ui.R.string.historia_respondio).format(texto))
+            }
             override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
             @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_app)
             override val red = vm.red
@@ -185,7 +189,11 @@ fun PoliticaCuenta(vm: CuchaViewModel) {
 @Composable
 fun RedCucha(vm: CuchaViewModel, destino: Pantalla.Social) {
     val interfaz = interfazCuenta(vm)
+    val navChat = io.github.fogonapps.social.ui.NavegacionChat({ vm.abrir(Pantalla.Social("chat", usuario = it)) }, { vm.abrir(Pantalla.Social("infochat", usuario = it)) })
     when (destino.destino) {
+        "mensajes" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.ChatsSocial(interfaz, it, navChat) }
+        "chat" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.ConversacionSocial(interfaz, it, navChat, destino.usuario) }
+        "infochat" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.InfoChatSocial(interfaz, it, destino.usuario) }
         "publicacion" -> PublicacionRed(interfaz, destino.id)
         "avisos" -> AvisosRed(interfaz)
         "buscar" -> io.github.fogonapps.social.ui.BuscarGente(interfaz, java.io.File(vm.perfiles.directorio(vm.idPerfil), "busquedas-gente.txt"), vm::cerrar)
@@ -253,6 +261,7 @@ fun TuGente(vm: CuchaViewModel, interfaz: InterfazSocial = interfazCuenta(vm), c
         if (usuario != null) ConCuentaSocial(sinLeer) {
             BotonIconoSocial(IconosFogon.Campana, stringResource(R.string.red_avisos), grande = true) { vm.abrir(Pantalla.Social("avisos")) }
         }
+        if (usuario != null) BotonIconoSocial(IconosSociales.Enviar, stringResource(io.github.fogonapps.social.ui.R.string.social_chat_titulo), grande = true) { vm.abrir(Pantalla.Social("mensajes")) }
         if (usuario != null) BotonIconoSocial(io.github.fogonapps.social.ui.IconoBuscar, stringResource(io.github.fogonapps.social.ui.R.string.gente_buscar), grande = true) { vm.abrir(Pantalla.Social("buscar")) }
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.red_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }

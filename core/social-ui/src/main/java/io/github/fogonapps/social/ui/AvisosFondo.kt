@@ -36,8 +36,8 @@ data class CuentaAvisos(val perfil: String, val token: String, val usuario: Stri
 /** Lo que pone cada app (su Application). */
 interface AppConAvisos {
     val avisosConfiguracion: ConfiguracionSocial
-    /** Solo El Cajón tiene chat. */
-    val avisosConMensajes: Boolean get() = false
+    /** Las cuatro apps tienen el chat (el mismo, con las llaves de la cuenta compartidas). */
+    val avisosConMensajes: Boolean get() = true
     val avisosIcono: Int
     fun avisosCuentas(): List<CuentaAvisos>
     fun avisosAbrir(perfil: String): Intent

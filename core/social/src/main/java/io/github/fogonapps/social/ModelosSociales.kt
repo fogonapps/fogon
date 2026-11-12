@@ -254,3 +254,4 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 @Serializable internal data class NotaNuevaGente(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 /** Una canción con su avance de 30 segundos (Apple) y el enlace a Apple Music. */
 @Serializable data class CancionSocial(val titulo: String, val artista: String, val portada: String = "", val audio: String = "", val enlace: String = "", val album: String = "")
+@Serializable internal data class LlavesChatSobre(val llave: String = "")

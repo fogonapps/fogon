@@ -1645,4 +1645,6 @@
   <string name="historia_tu_respuesta">Your answer</string>
   <string name="historia_sin_respuestas">No answers yet.</string>
   <string name="historia_tipo_publicacion">Post</string>
+  <string name="chat_abre_cajon">To use your messages here, open El Cajón once with your account (so your keys are shared, encrypted).</string>
+  <string name="chat_guardar_apodo">Save the nickname</string>
 </resources>

@@ -304,6 +304,9 @@ open class ClienteSocial(
         }
 
     /* Chat: solo pasan sobres cerrados (ver `Chat`) */
+    /** Las llaves privadas del chat cifradas con la llave de la contraseña ("" si no hay). */
+    suspend fun llavesChat(): String = JsonSocial.parseToJsonElement(pedir("/cuenta/llaves-chat") ?: "{}").jsonObject["llave"]?.jsonPrimitive?.content.orEmpty()
+    suspend fun ponerLlavesChat(sobre: String) { pedir("/cuenta/llaves-chat", "PUT", json(LlavesChatSobre.serializer(), LlavesChatSobre(sobre))) }
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
     suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }

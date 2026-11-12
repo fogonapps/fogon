@@ -137,7 +137,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
             PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     // Las pantallas con lista propia (buscar) manejan su scroll; las demás van en una columna que se desliza.
-                    val conScroll = p !is Pantalla.Anotar
+                    val conScroll = p !is Pantalla.Anotar && !(p is Pantalla.Social && p.destino == "chat")
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         when (p) {
                             is Pantalla.Anotar -> Anotar(vm, estado, p, acciones)

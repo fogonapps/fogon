@@ -1647,4 +1647,6 @@
   <string name="historia_tu_respuesta">Tu respuesta</string>
   <string name="historia_sin_respuestas">Todavía no hay respuestas.</string>
   <string name="historia_tipo_publicacion">Publicación</string>
+  <string name="chat_abre_cajon">Para usar tus mensajes aquí, abre una vez El Cajón con tu cuenta (así se comparten tus llaves, cifradas).</string>
+  <string name="chat_guardar_apodo">Guardar el apodo</string>
 </resources>

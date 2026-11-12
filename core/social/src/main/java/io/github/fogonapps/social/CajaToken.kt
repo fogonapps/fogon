@@ -67,6 +67,11 @@ class SesionApp(
     var llaveCopia: String?
         get() = cajaLlave.token
         set(v) { cajaLlave.token = v }
+    /** Las llaves privadas del chat de este perfil (cifradas en el teléfono). */
+    private val cajaChat = CajaToken(contexto, "chat-$app-p$perfil", "$app-chat")
+    var chatLlaves: String?
+        get() = cajaChat.token
+        set(v) { cajaChat.token = v }
     private val preferencias = contexto.getSharedPreferences("social-p$perfil", Context.MODE_PRIVATE)
     override var token: String?
         get() = caja.token
@@ -88,6 +93,6 @@ class SesionApp(
 
     companion object {
         /** Las preferencias de un perfil que se borran al quitarlo del teléfono. */
-        fun preferenciasDe(app: String, perfil: String) = listOf("sesion-$app-p$perfil", "social-p$perfil", "llave-$app-p$perfil", "copia-$app-p$perfil")
+        fun preferenciasDe(app: String, perfil: String) = listOf("sesion-$app-p$perfil", "social-p$perfil", "llave-$app-p$perfil", "copia-$app-p$perfil", "chat-$app-p$perfil")
     }
 }

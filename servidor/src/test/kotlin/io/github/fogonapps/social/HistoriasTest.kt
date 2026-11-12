@@ -162,4 +162,29 @@ class HistoriasTest {
             assertTrue(s.historias(beto, "cajon").isEmpty())
         } finally { b.cerrar(); dir.deleteRecursively() }
     }
+
+    @Test fun mensajesLleganATodasLasSesiones() {
+        val dir = Files.createTempDirectory("chat").toFile()
+        val b = Base(File(dir, "social.db").path)
+        try {
+            val s = Social(b, File(dir, "fotos"))
+            val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("anabel")).token)!!
+            val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("roberto")).token)!!
+            b.usar { cambiar("INSERT INTO sesiones(huella, cuenta, creada, ultimo_uso, app) VALUES('cajon', ?, 0, 0, 'cajon'), ('forzudo', ?, 0, 0, 'forzudo')", ana, ana) }
+            s.mensajesSinLeer(ana, "forzudo")
+            s.mandar(beto, "anabel", SobreNuevo("x".repeat(40), "f".repeat(40)))
+            // El Cajón lo recibe y confirma; El Forzudo todavía lo encuentra.
+            val id = s.recibir(ana, 0, "cajon").single().id
+            assertTrue(s.recibir(ana, id, "cajon").isEmpty())
+            assertEquals(1, s.mensajesSinLeer(ana, "forzudo"))
+            assertEquals(0, s.mensajesSinLeer(ana, "cajon"))
+            assertEquals(id, s.recibir(ana, 0, "forzudo").single().id)
+            // Cuando las dos lo recibieron, se borra.
+            s.recibir(ana, id, "forzudo")
+            assertTrue(b.usar { leer("SELECT 1 FROM mensajes") { 1 } }.isEmpty())
+            // Las llaves privadas del chat (cifradas en el teléfono) se guardan tal cual.
+            s.ponerLlavesChat(ana, CajonCifrado(llave = "sobre-cifrado"))
+            assertEquals("sobre-cifrado", s.llavesChat(ana).llave)
+        } finally { b.cerrar(); dir.deleteRecursively() }
+    }
 }

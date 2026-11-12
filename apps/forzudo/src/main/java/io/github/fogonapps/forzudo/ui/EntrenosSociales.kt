@@ -155,7 +155,11 @@ fun CompartirEntreno(vm: GymViewModel, estado: Estado, id: String) {
 @Composable
 fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
     val interfaz = interfazCuenta(vm)
+    val navChat = io.github.fogonapps.social.ui.NavegacionChat({ vm.abrir(Pantalla.Social("chat", usuario = it)) }, { vm.abrir(Pantalla.Social("infochat", usuario = it)) })
     when (destino.destino) {
+        "mensajes" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.ChatsSocial(interfaz, it, navChat) }
+        "chat" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.ConversacionSocial(interfaz, it, navChat, destino.usuario) }
+        "infochat" -> io.github.fogonapps.social.ui.rememberChat(interfaz)?.let { io.github.fogonapps.social.ui.InfoChatSocial(interfaz, it, destino.usuario) }
         "publicacion" -> PublicacionRed(interfaz, destino.id)
         "avisos" -> AvisosRed(interfaz)
         "buscar" -> io.github.fogonapps.social.ui.BuscarGente(interfaz, java.io.File(vm.perfiles.directorio(vm.idPerfil), "busquedas-gente.txt"), vm::cerrar)
@@ -210,6 +214,7 @@ fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), con
         if (usuario != null) ConCuentaSocial(sinLeer) {
             BotonIconoSocial(IconosFogon.Campana, stringResource(R.string.entreno_avisos), grande = true) { vm.abrir(Pantalla.Social("avisos")) }
         }
+        if (usuario != null) BotonIconoSocial(IconosSociales.Enviar, stringResource(io.github.fogonapps.social.ui.R.string.social_chat_titulo), grande = true) { vm.abrir(Pantalla.Social("mensajes")) }
         if (usuario != null) BotonIconoSocial(io.github.fogonapps.social.ui.IconoBuscar, stringResource(io.github.fogonapps.social.ui.R.string.gente_buscar), grande = true) { vm.abrir(Pantalla.Social("buscar")) }
         if (!cuenta?.permisos.isNullOrEmpty()) BotonIconoSocial(IconosSociales.Bandera, stringResource(R.string.entreno_moderacion), grande = true) { vm.abrir(Pantalla.Social("moderacion")) }
     }

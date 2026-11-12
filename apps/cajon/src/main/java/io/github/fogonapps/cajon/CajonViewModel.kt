@@ -562,7 +562,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
 
     /** El chat de la red, cifrado de extremo a extremo. */
-    val chat = Chat(app, viewModelScope, caja, red) { avisar(tx(it)) }
+    val chat = chatDeCajon(cajonApp, viewModelScope, caja, red) { avisar(tx(it)) }
 
     private var buscandoGente: Job? = null
     /** Buscar personas de la red (para empezar un chat), en [Busqueda.personas]. */

@@ -1,5 +1,7 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.cajon.obraJson
+import io.github.fogonapps.cajon.enviarObra
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -116,7 +118,7 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
     if (o == null) FilaNotas(vm, e)
     o?.let { Pista(stringResource(R.string.chat_mandar_obra, it.titulo), Modifier.padding(horizontal = 16.dp)) }
     fun abrir(u: String) {
-        if (o != null) { vm.chat.enviar(u, "", o); vm.reemplazar(Pantalla.Conversacion(u)) } else vm.abrir(Pantalla.Conversacion(u))
+        if (o != null) { vm.chat.enviarObra(u, "", o); vm.reemplazar(Pantalla.Conversacion(u)) } else vm.abrir(Pantalla.Conversacion(u))
     }
     // Buscar entre los chats y los amigos (quienes se siguen contigo), que salen primero para escribirles.
     val amigos by vm.red.amigos.collectAsStateWithLifecycle()
@@ -161,7 +163,7 @@ private fun resumen(m: MensajeChat): String = when {
     m.borrado -> stringResource(if (m.mio) R.string.chat_borrado_mio else R.string.chat_borrado_suyo)
     m.noSeLee -> stringResource(R.string.chat_no_se_lee)
     m.sticker != null -> (if (m.mio) stringResource(R.string.chat_tu) + " " else "") + stringResource(R.string.chat_un_sticker)
-    m.obra != null -> "▸ " + ((m.obra["titulo"] as? JsonPrimitive)?.content ?: "")
+    m.obra != null -> "▸ " + ((m.obra?.get("titulo") as? JsonPrimitive)?.content ?: "")
     else -> (if (m.mio) stringResource(R.string.chat_tu) + " " else "") + m.texto
 }
 
@@ -286,7 +288,7 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
         if (elegir) Column(Modifier.fillMaxWidth().heightIn(max = 280.dp).verticalScroll(rememberScrollState())) {
             Seccion(stringResource(R.string.chat_elige_obra)) { Pildora(stringResource(R.string.volver)) { elegir = false } }
             e.vivas.sortedByDescending { it.cambio }.take(30).forEach { o ->
-                Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.chat.enviar(usuario, "", o, responder); responder = null; elegir = false }.padding(horizontal = 16.dp, vertical = 6.dp),
+                Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.chat.enviar(usuario, "", obraJson(o), responder); responder = null; elegir = false }.padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Portada(o.portada, o.tipo, o.titulo, Modifier.width(40.dp), conTitulo = false)
                     Text(o.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)

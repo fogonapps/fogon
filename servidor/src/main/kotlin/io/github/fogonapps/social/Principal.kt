@@ -123,7 +123,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             if ((ruta.startsWith("/v1/") || ruta.startsWith("/v2/")) && ruta !in setOf("/v1/cuenta", "/v1/cuenta/conservar", "/v1/cuenta/borrar", "/v1/salir") && !ruta.startsWith("/v1/acceso"))
                 social.cuentaDe(token)?.let { social.revisarBorrado(it) }
             val appDeclarada = call.request.header("X-Fogon-App")?.let(AppsSocial::validar)
-            val esChat = ruta == "/v1/llaves" || ruta.startsWith("/v1/llaves/") || ruta == "/v1/mensajes" || ruta.startsWith("/v1/mensajes/") || ruta == "/v1/cajon" || ruta.startsWith("/v1/cajon/")
+            // El chat ya es de las cuatro apps (cada sesión lleva su propio punto de lectura); /v1/cajon sigue siendo de El Cajón.
+            val esChat = ruta == "/v1/cajon" || ruta.startsWith("/v1/cajon/")
             if (esChat && (social.appSesion(token) != "cajon" || (appDeclarada != null && appDeclarada != "cajon"))) throw Problema(403, "solo_cajon")
             // Por cuenta si la sesión es válida; si no, por la dirección real. Antes se contaba por el texto del token
             // (uno inventado en cada petición saltaba el límite) y, sin token, por la dirección de Caddy (todos los
@@ -223,10 +224,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             delete("/empuje") { social.empujes.quitar(call.yo(), call.receive<EmpujeNuevo>().token); call.respond(HttpStatusCode.NoContent) }
             // «de»: los usuarios (apps anteriores); «nombres»: cómo se llama cada quien, para los avisos.
             get("/mensajes/remitentes") {
-                val r = social.remitentesSinLeer(call.yo())
+                val r = social.remitentesSinLeer(call.yo(), Base.huella(call.token().orEmpty()))
                 call.respond(mapOf("de" to r.map { it.usuario }, "nombres" to r.map { it.nombre.ifBlank { it.usuario } }))
             }
-            get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo()))) }
+            get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo(), Base.huella(call.token().orEmpty())))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/cuenta") { call.respond(social.miCuenta(call.yo(), call.token())) }
@@ -331,10 +332,12 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/avisos/sin-leer") { call.respond(mapOf("n" to social.sinLeer(call.yo()))) }
             post("/avisos/leidos") { social.leidos(call.yo()); call.respond(HttpStatusCode.NoContent) }
             put("/llaves") { social.ponerLlaves(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/cuenta/llaves-chat") { call.respond(social.llavesChat(call.yo())) }
+            put("/cuenta/llaves-chat") { social.ponerLlavesChat(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/llaves/{usuario}") { call.respond(social.llaves(call.lector(), call.usuario())) }
             post("/mensajes/{usuario}") { call.respond(HttpStatusCode.Created, mapOf("id" to social.mandar(call.yo(), call.usuario(), call.receive()))) }
-            get("/mensajes") { call.respond(social.recibir(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0)) }
-            get("/mensajes/esperar") { call.respond(social.esperarMensajes(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0)) }
+            get("/mensajes") { call.respond(social.recibir(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0, Base.huella(call.token().orEmpty()))) }
+            get("/mensajes/esperar") { call.respond(social.esperarMensajes(call.yo(), call.request.queryParameters["desde"]?.toLongOrNull() ?: 0, sesion = Base.huella(call.token().orEmpty()))) }
             post("/vistas") { social.vio(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             put("/nota") { social.ponerNota(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/notas") { call.respond(social.notas(call.yo())) }

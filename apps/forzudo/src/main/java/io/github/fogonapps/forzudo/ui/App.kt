@@ -149,7 +149,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
             // Pantallas encima de las pestañas
             io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
-                    Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
+                    Column(Modifier.fillMaxSize().then(if (p is Pantalla.Zoom || (p is Pantalla.Social && p.destino == "chat")) Modifier else Modifier.verticalScroll(rememberScrollState()))) {
                         when (p) {
                             is Pantalla.Compartir -> CompartirEntreno(vm, estado, p.id)
                             is Pantalla.Social -> RedEntrenos(vm, p)
