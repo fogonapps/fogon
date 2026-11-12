@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -98,7 +99,7 @@ fun AvatarConAro(p: PersonaSocial, tamano: Dp, estado: Int, mas: Boolean = false
     // El recorte redondo va solo en el avatar: así el «+» de la esquina se ve entero.
     Box(Modifier.size(tamano + 10.dp), contentAlignment = Alignment.Center) {
         Box(Modifier.matchParentSize().clip(CircleShape).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier), contentAlignment = Alignment.Center) {
-            if (estado > 0) Box(Modifier.matchParentSize().border(if (estado == 1) 3.dp else 1.5.dp, if (estado == 1) f.tinta1 else f.linea, CircleShape))
+            if (estado > 0) Box(Modifier.matchParentSize().border(if (estado == 2) 1.5.dp else 3.dp, when (estado) { 2 -> f.linea; 3 -> f.tinta2; else -> f.tinta1 }, CircleShape))
             AvatarRed(p, tamano)
         }
         if (mas) Box(Modifier.align(Alignment.BottomEnd).size(24.dp).clip(CircleShape).background(f.tinta1).border(2.dp, f.fondo, CircleShape)
@@ -136,8 +137,12 @@ fun BarraHistorias(vm: InterfazSocial) {
             alNota = { escribiendoNota = true }) { if (propio == null) creando = true else menuPropio = true }
         otros.forEach { g ->
             val nota = notas.firstOrNull { it.persona.usuario == g.persona.usuario }
-            ItemHistoria(g.persona, nota?.let { it.texto.ifBlank { it.datos["adjunto"]?.jsonObject?.t("titulo").orEmpty() } }, false, if (g.todasVistas) 2 else 1,
-                alNota = { notaAbierta = nota }) { visor = otros to otros.indexOf(g) }
+            // Silenciadas: al final y apagadas. Las de mejores amigos sin ver llevan el aro de la segunda tinta.
+            Box(Modifier.alpha(if (g.silenciada) 0.45f else 1f)) {
+                ItemHistoria(g.persona, nota?.let { it.texto.ifBlank { it.datos["adjunto"]?.jsonObject?.t("titulo").orEmpty() } }, false,
+                    when { g.todasVistas -> 2; g.historias.any { !it.vista && it.mejores } -> 3; else -> 1 },
+                    alNota = { notaAbierta = nota }) { visor = otros to otros.indexOf(g) }
+            }
         }
         soloNota.forEach { n -> ItemHistoria(n.persona, n.texto.ifBlank { n.datos["adjunto"]?.jsonObject?.t("titulo").orEmpty() }, false, 0, alNota = { notaAbierta = n }) { notaAbierta = n } }
     }
@@ -295,13 +300,28 @@ fun ElegirAdjunto(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (JsonObjec
         canciones = vm.red.canciones(buscar)
         encontrados = obras.await()
     }
-    fun elegir(a: JsonObject) { ocupado = true; alcance.launch { val listo = runCatching { vm.completarAdjunto(a) }.getOrDefault(a); ocupado = false; onElegir(listo); onCerrar() } }
+    var dentro by remember { mutableStateOf<Pair<JsonObject, List<JsonObject>>?>(null) }
+    fun usar(a: JsonObject) { ocupado = true; alcance.launch { val listo = runCatching { vm.completarAdjunto(a) }.getOrDefault(a); ocupado = false; onElegir(listo); onCerrar() } }
+    // Un álbum o un artista: primero sus canciones, para elegir una (con su avance); si no hay, se usa tal cual.
+    fun elegir(a: JsonObject) {
+        if (dentro == null && (a.t("tipo") == "artista" || a.t("tipoObra") == "album")) {
+            ocupado = true
+            alcance.launch { val l = runCatching { vm.detallarAdjunto(a) }.getOrDefault(emptyList()); ocupado = false; if (l.isEmpty()) usar(a) else dentro = a to l }
+        } else usar(a)
+    }
     ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.historia_adjuntar), style = MaterialTheme.typography.titleMedium, color = f.texto)
             OutlinedTextField(buscar, { buscar = it.take(80) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
                 placeholder = { Text(vm.textoBuscarAdjunto() ?: stringResource(R.string.historia_buscar_cancion)) })
             if (ocupado) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            dentro?.let { (a, l) ->
+                Pildora(stringResource(R.string.historia_otra_obra), Iconos.Atras) { dentro = null }
+                Text(a.t("titulo"), style = MaterialTheme.typography.titleSmall, color = f.texto)
+                l.forEach { c -> Box(Modifier.clip(forma(18.dp)).clickable { usar(c) }) { TarjetaAdjunto(c) } }
+                if (a.t("tipo") != "artista") Pildora(stringResource(R.string.historia_usar_album)) { usar(a) }
+                return@Column
+            }
             // Por secciones, como en un buscador de música: artistas, canciones, álbumes y después lo demás.
             @Composable fun Seccion(titulo: String, l: List<JsonObject>) {
                 if (l.isEmpty()) return
@@ -436,6 +456,10 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     var eligiendoSticker by remember { mutableStateOf(false) }
     var eligiendo by remember { mutableStateOf(false) }
     var subiendo by remember { mutableStateOf(false) }
+    var soloMejores by rememberSaveable { mutableStateOf(false) }
+    var encuesta by remember { mutableStateOf<Pair<String, List<String>>?>(null) }
+    var creandoEncuesta by remember { mutableStateOf(false) }
+    var listaMejores by remember { mutableStateOf(false) }
     // Dibujo a mano: cada trazo con su color; mientras se dibuja, los dedos no mueven nada más.
     val trazos = remember { mutableStateListOf<Pair<Int, List<androidx.compose.ui.geometry.Offset>>>() }
     var dibujando by remember { mutableStateOf(false) }
@@ -535,6 +559,12 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_quitar_adjunto)) { adjunto2 = null }
                 }
             }
+            encuesta?.let { (p, o) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.historia_encuesta) + ": " + p.ifBlank { o.joinToString(" / ") }, style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_quitar)) { encuesta = null }
+                }
+            }
             elegida?.let { id ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pildora(stringResource(R.string.historia_mas_grande)) { escalas[id] = ((escalas[id] ?: 1f) * 1.25f).coerceAtMost(6f) }
@@ -555,6 +585,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                 Pildora(stringResource(R.string.historia_texto_corto)) { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
                 Pildora(stringResource(R.string.historia_sticker)) { eligiendoSticker = true }
                 Pildora(stringResource(R.string.historia_musica)) { eligiendo = true }
+                Pildora(stringResource(R.string.historia_encuesta)) { creandoEncuesta = true }
                 if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null }
             }
             if (foto == null && !dibujando) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -562,6 +593,10 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     val (c, _) = fondoHistoria(i)
                     Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(if (fondo == i) 3.dp else 1.dp, if (fondo == i) f.acentoTexto else f.linea, CircleShape).clickable { fondo = i })
                 }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Pildora(stringResource(R.string.historia_mejores_amigos), acento = soloMejores) { soloMejores = !soloMejores }
+                Pildora(stringResource(R.string.historia_lista_mejores)) { listaMejores = true }
             }
             if (capas.isEmpty() && trazos.isEmpty()) Text(stringResource(R.string.historia_editor_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             if (subiendo) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
@@ -575,6 +610,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     if (jpeg == null) { subiendo = false; android.widget.Toast.makeText(ctx, noSePudo, android.widget.Toast.LENGTH_SHORT).show(); return@launch }
                     val datos = buildJsonObject {
                         put("compuesta", true)
+                        if (soloMejores) put("mejores", true)
+                        encuesta?.let { (p, o) -> put("encuesta", buildJsonObject { put("pregunta", p); put("opciones", JsonArray(o.map(::JsonPrimitive))) }) }
                         // Las palabras van también como texto: para leerlas en voz alta y para moderar.
                         capas.mapNotNull { it.texto.takeIf { t -> t.isNotBlank() } }.joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("texto", it.take(200)) }
                         put("fondo", fondo)
@@ -584,7 +621,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     vm.red.subirHistoria(datos, jpeg) { onCerrar() }
                     delay(15_000); subiendo = false
                 }
-            }, Modifier.fillMaxWidth(), habilitado = !subiendo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null))
+            }, Modifier.fillMaxWidth(), habilitado = !subiendo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null || encuesta != null))
         }
     }
     escribiendo?.let { c -> EditarTextoHistoria(c, { escribiendo = null }) { nueva ->
@@ -593,6 +630,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     } }
     if (eligiendoSticker) ElegirStickerHistoria(vm, { eligiendoSticker = false }) { b64, recurso -> eligiendoSticker = false; agregar(Capa(siguiente, sticker = b64, recurso = recurso)) }
     if (eligiendo) ElegirAdjunto(vm, { eligiendo = false }) { if (it.t("tipo") == "cancion") adjunto = it else adjunto2 = it }
+    if (listaMejores) HojaMejoresAmigos(vm) { listaMejores = false }
+    if (creandoEncuesta) CrearEncuesta({ creandoEncuesta = false }) { encuesta = it; creandoEncuesta = false }
     if (fotosObra) ElegirFotoDeObra(vm, { fotosObra = false }) { url -> fotosObra = false; foto = url; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
 }
 
@@ -754,6 +793,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
     var progreso by remember { mutableFloatStateOf(0f) }
     var vistas by remember { mutableStateOf<List<VistaHistoriaSocial>?>(null) }
     var reportando by remember { mutableStateOf(false) }
+    var respuesta by remember { mutableStateOf("") }
+    var destacando by remember { mutableStateOf(false) }
     val grupo = grupos.getOrNull(g) ?: run { onCerrar(); return }
     val historia = grupo.historias.getOrNull(h) ?: run { onCerrar(); return }
     val propia = grupo.persona.usuario == yo
@@ -762,8 +803,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
     val adjunto = historia.datos["adjunto"] as? JsonObject
     val duracion = if (adjunto?.t("audio").isNullOrBlank()) 6000f else 15000f
     LaunchedEffect(historia.id) { progreso = 0f; vm.red.verHistoria(historia) }
-    LaunchedEffect(historia.id, pausado, vistas, reportando) {
-        if (pausado || vistas != null || reportando) return@LaunchedEffect
+    LaunchedEffect(historia.id, pausado, vistas, reportando, respuesta.isNotEmpty(), destacando) {
+        if (pausado || vistas != null || reportando || respuesta.isNotEmpty() || destacando) return@LaunchedEffect
         while (progreso < 1f) { delay(50); progreso += 50f / duracion }
         siguiente()
     }
@@ -784,15 +825,25 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                 if (adjunto != null && imagen.isBlank()) TarjetaAdjunto(adjunto, sonar = true, solida = true)
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                (historia.datos["encuesta"] as? JsonObject)?.let { EncuestaHistoria(vm, historia, it, propia) }
                 if (compuesta) adjunto?.let { ControlesAdjunto(it, sonar = true) }
                 (historia.datos["adjunto2"] as? JsonObject)?.let { ControlesAdjunto(it, sonar = adjunto == null) }
                 val texto = historia.datos.t("texto")
                 if (!compuesta && texto.isNotBlank() && imagen.isNotBlank()) Text(texto, style = MaterialTheme.typography.titleMedium, color = f.texto, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().clip(forma(12.dp)).background(f.fondo.copy(alpha = 0.75f)).padding(10.dp))
                 if (!compuesta && adjunto != null && imagen.isNotBlank()) TarjetaAdjunto(adjunto, sonar = true, solida = true)
+                // Responder por mensaje (en las apps con chat).
+                if (!propia && vm.respondeHistorias) Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.85f)).padding(start = 12.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.foundation.text.BasicTextField(respuesta, { respuesta = it.take(500) }, Modifier.weight(1f).padding(vertical = 12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = f.texto), cursorBrush = androidx.compose.ui.graphics.SolidColor(f.texto),
+                        decorationBox = { campo -> if (respuesta.isEmpty()) Text(stringResource(R.string.historia_responder_a, grupo.persona.nombre.ifBlank { grupo.persona.usuario }), color = f.textoSuave, style = MaterialTheme.typography.bodyMedium); campo() })
+                    if (respuesta.isNotBlank()) BotonIcono(Iconos.Enviar, stringResource(R.string.historia_responder)) { vm.responderHistoria(grupo.persona.usuario, respuesta.trim()); respuesta = "" }
+                }
                 Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.85f)).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (propia) {
                         Pildora(stringResource(R.string.historia_vistas), Iconos.Anime) { alcance.launch { vistas = vm.red.vistasHistoria(historia) } }
+                        Pildora(stringResource(R.string.historia_destacar), Iconos.Estrella) { destacando = true }
                         Pildora(stringResource(R.string.historia_borrar), Iconos.Borrar) {
                             pausado = true
                             vm.confirmar(vm.tx(R.string.historia_borrar), vm.tx(R.string.historia_borrar_confirmar)) { vm.red.borrarHistoria(historia); onCerrar() }
@@ -800,7 +851,7 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                     } else {
                         var gusta by remember(historia.id) { mutableStateOf(historia.meGusta) }
                         Pildora(stringResource(if (gusta) R.string.historia_te_gusto else R.string.historia_me_gusta), Iconos.Corazon, acento = gusta) { gusta = !gusta; vm.red.meGustaHistoria(historia, gusta) }
-                        Pildora(stringResource(R.string.historia_ver_perfil), Iconos.Persona) { onCerrar(); vm.navegacion.perfil(grupo.persona.usuario) }
+                        Pildora(stringResource(if (grupo.silenciada) R.string.historia_activar else R.string.historia_silenciar)) { vm.red.silenciarHistorias(grupo.persona.usuario, !grupo.silenciada); onCerrar() }
                         Pildora(stringResource(R.string.social_red_reportar), Iconos.Bandera) { reportando = true }
                     }
                 }
@@ -817,7 +868,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                 Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AvatarRed(grupo.persona, 34.dp)
                     Text(grupo.persona.nombre.ifBlank { grupo.persona.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto)
-                    Text(haceCuanto(historia.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))
+                    Text(haceCuanto(historia.cuando) + if (historia.mejores) " · " + stringResource(R.string.historia_mejores_amigos) else "", style = MaterialTheme.typography.bodySmall,
+                        color = if (historia.mejores) f.acentoTexto else f.textoSuave, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_cerrar)) { onCerrar() }
                 }
             }
@@ -831,6 +883,9 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                     } }
                 }
             }
+        }
+        if (destacando) PedirTexto(stringResource(R.string.historia_destacar), stringResource(R.string.historia_nombre_destacada), { destacando = false }) {
+            vm.red.destacarHistoria(historia, it); destacando = false
         }
         if (reportando) ModalBottomSheet({ reportando = false }, containerColor = f.fondo, contentColor = f.texto) {
             Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
@@ -868,4 +923,102 @@ fun AroHistoriasPropias(vm: InterfazSocial, tamano: Dp = 96.dp, contenido: @Comp
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     val u = yo ?: run { contenido(); return }
     AvatarPerfilConHistorias(vm, PersonaSocial(u, "", foto = true), tamano, contenido)
+}
+
+/** Elegir tus mejores amigos (entre tus amigos): ellos ven tus historias «solo mejores amigos». */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HojaMejoresAmigos(vm: InterfazSocial, onCerrar: () -> Unit) {
+    val f = FogonTema.actual
+    val amigos by vm.red.amigos.collectAsStateWithLifecycle()
+    val elegidos = remember { mutableStateListOf<String>() }
+    LaunchedEffect(Unit) { vm.red.cargarAmigos(); elegidos.addAll(vm.red.mejoresAmigos()) }
+    ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp).verticalScroll(rememberScrollState())) {
+            Text(stringResource(R.string.historia_lista_mejores), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp))
+            Pista(stringResource(R.string.historia_mejores_explica), Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+            if (amigos.isEmpty()) Pista(stringResource(R.string.historia_sin_amigos), Modifier.padding(16.dp))
+            amigos.forEach { p ->
+                FilaPersona(p, { if (p.usuario in elegidos) elegidos.remove(p.usuario) else elegidos.add(p.usuario) }) {
+                    Checkbox(p.usuario in elegidos, { si -> if (si) elegidos.add(p.usuario) else elegidos.remove(p.usuario) },
+                        colors = CheckboxDefaults.colors(checkedColor = f.tinta1, checkmarkColor = f.sobreTinta1))
+                }
+            }
+            BotonRiso(stringResource(R.string.historia_guardar_lista), { vm.red.ponerMejoresAmigos(elegidos.toList()); onCerrar() }, Modifier.fillMaxWidth().padding(16.dp))
+        }
+    }
+}
+
+/** Crear una encuesta: una pregunta y de 2 a 4 opciones. */
+@Composable
+private fun CrearEncuesta(onCerrar: () -> Unit, onListo: (Pair<String, List<String>>) -> Unit) {
+    val f = FogonTema.actual
+    var pregunta by remember { mutableStateOf("") }
+    val opciones = remember { mutableStateListOf("", "") }
+    AlertDialog(onCerrar, containerColor = f.fondo,
+        title = { Text(stringResource(R.string.historia_encuesta), color = f.texto) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(pregunta, { pregunta = it.take(80) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(14.dp), placeholder = { Text(stringResource(R.string.historia_pregunta)) })
+                opciones.forEachIndexed { i, o ->
+                    OutlinedTextField(o, { opciones[i] = it.take(40) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(14.dp), placeholder = { Text(stringResource(R.string.historia_opcion, i + 1)) })
+                }
+                if (opciones.size < 4) Pildora(stringResource(R.string.historia_otra_opcion), Iconos.Mas) { opciones.add("") }
+            }
+        },
+        confirmButton = { TextButton({ onListo(pregunta.trim() to opciones.map { it.trim() }.filter { it.isNotBlank() }) }, enabled = opciones.count { it.isNotBlank() } >= 2) { Text(stringResource(R.string.sancion_listo), color = f.acentoTexto) } },
+        dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.sancion_cancelar), color = f.textoSuave) } })
+}
+
+/** La encuesta de una historia: tocar una opción vota; después (o si es tuya) se ven los porcentajes. */
+@Composable
+private fun EncuestaHistoria(vm: InterfazSocial, h: HistoriaSocial, e: JsonObject, propia: Boolean) {
+    val f = FogonTema.actual
+    val alcance = rememberCoroutineScope()
+    var actual by remember(h.id) { mutableStateOf(h) }
+    val opciones = (e["opciones"] as? JsonArray).orEmpty().map { (it as? JsonPrimitive)?.contentOrNull.orEmpty() }
+    val total = actual.votos.sum()
+    val verResultados = propia || actual.miVoto >= 0
+    Column(Modifier.fillMaxWidth().clip(forma(18.dp)).background(f.fondo).border(f.borde, f.linea, forma(18.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val pregunta = e.t("pregunta")
+        if (pregunta.isNotBlank()) Text(pregunta, style = MaterialTheme.typography.titleSmall, color = f.texto)
+        opciones.forEachIndexed { i, o ->
+            val pct = if (total > 0) (actual.votos.getOrNull(i) ?: 0) * 100 / total else 0
+            Box(Modifier.fillMaxWidth().clip(FormaPildora).background(f.superficie).border(if (actual.miVoto == i) 2.dp else f.borde, if (actual.miVoto == i) f.acentoTexto else f.linea, FormaPildora)
+                .clickable(enabled = !propia) { alcance.launch { vm.red.votarHistoria(actual, i)?.let { actual = actual.copy(votos = it.votos, miVoto = it.miVoto) } } }) {
+                if (verResultados) Box(Modifier.matchParentSize().fillMaxWidth(pct / 100f).background(f.tinta1.copy(alpha = 0.35f)))
+                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Text(o, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
+                    if (verResultados) Text("$pct %", style = MaterialTheme.typography.labelLarge, color = f.texto)
+                }
+            }
+        }
+        if (propia) Text(androidx.compose.ui.res.pluralStringResource(R.plurals.historia_votos, total, total), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
+    }
+}
+
+/** Las destacadas de un perfil: círculos con su nombre; tocar uno abre sus historias (no vencen). */
+@Composable
+fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
+    val f = FogonTema.actual
+    var grupos by remember(usuario) { mutableStateOf<List<GrupoDestacadasSocial>>(emptyList()) }
+    var abierto by remember { mutableStateOf<GrupoDestacadasSocial?>(null) }
+    LaunchedEffect(usuario) { grupos = vm.red.destacadas(usuario) }
+    if (grupos.isEmpty()) return
+    Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        grupos.forEach { g ->
+            Column(Modifier.width(70.dp).clip(forma(14.dp)).clickable { abierto = g }, horizontalAlignment = Alignment.CenterHorizontally) {
+                val imagen = g.historias.firstNotNullOfOrNull { it.datos.t("imagen").takeIf { i -> i.isNotBlank() } }
+                Box(Modifier.size(58.dp).clip(CircleShape).background(f.superficie).border(1.5.dp, f.linea, CircleShape), contentAlignment = Alignment.Center) {
+                    if (imagen != null) coil3.compose.AsyncImage(ClienteSocial.imagen(imagen), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    else IconoRiso(Iconos.Estrella, null, tamano = 22.dp, tinta = f.textoSuave)
+                }
+                Text(g.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+    abierto?.let { g ->
+        val persona = PersonaSocial(usuario, g.titulo, foto = true)
+        VisorHistorias(vm, listOf(GrupoHistoriasSocial(persona, g.historias.map { it.copy(vista = true) })), 0) { abierto = null }
+    }
 }

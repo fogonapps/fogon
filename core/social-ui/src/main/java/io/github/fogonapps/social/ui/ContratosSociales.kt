@@ -72,6 +72,11 @@ interface InterfazSocial {
     @Composable fun textoBuscarAdjunto(): String? = null
     /** Si la app ofrece fotos de obras o personas para el fondo de una historia (El Cajón: pósteres, escenas, portadas, retratos). */
     val fotosDeObras: Boolean get() = false
+    /** Responder una historia por mensaje (solo si la app tiene chat, como El Cajón). */
+    val respondeHistorias: Boolean get() = false
+    fun responderHistoria(usuario: String, texto: String) {}
+    /** Lo que hay dentro de un adjunto para elegir uno (las canciones de un álbum o de un artista). */
+    suspend fun detallarAdjunto(a: kotlinx.serialization.json.JsonObject): List<kotlinx.serialization.json.JsonObject> = emptyList()
     /** Buscar obras o personas con fotos ({"titulo", "detalle", "imagen", "fuente"}). */
     suspend fun buscarConFotos(q: String): List<kotlinx.serialization.json.JsonObject> = emptyList()
     /** Las fotos para elegir de una obra o persona ([fuente], como "tmdb:movie:603"). */

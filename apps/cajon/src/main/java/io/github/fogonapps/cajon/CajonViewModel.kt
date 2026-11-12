@@ -232,6 +232,8 @@ object Secciones {
  * ([obras] por tipo de obra, [artistas] aparte). [cargando] y [errores] van por fuente: "tmdb", "libros", "musica".
  */
 data class Busqueda(
+    /** Canciones (de Apple, con su avance) para «Música» y «Todo». */
+    val canciones: List<io.github.fogonapps.social.CancionSocial> = emptyList(),
     val texto: String = "",
     val seccion: String = Secciones.TODO,
     val obras: Map<String, List<Encontrado>> = emptyMap(),
@@ -671,6 +673,30 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Las canciones de Apple de un álbum (título y artista) o de un artista, con su avance de 30 segundos. */
+    suspend fun cancionesApple(album: String?, artista: String): List<io.github.fogonapps.social.CancionSocial> {
+        fun limpio(s: String) = L.tituloLimpio(s)
+        val l = red.canciones(listOfNotNull(album, artista).joinToString(" "))
+        return if (album != null) l.filter { limpio(it.album).contains(limpio(album)) || limpio(album).contains(limpio(it.album)) }
+        else l.filter { limpio(it.artista).contains(limpio(artista)) }
+    }
+
+    suspend fun detallarAdjunto(a: kotlinx.serialization.json.JsonObject): List<kotlinx.serialization.json.JsonObject> {
+        fun t(k: String) = (a[k] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty()
+        val canciones = when {
+            t("tipo") == "artista" -> cancionesApple(null, t("titulo"))
+            t("tipoObra") == "album" -> cancionesApple(t("titulo"), t("detalle").substringBefore(" · "))
+            else -> emptyList()
+        }
+        return canciones.map { c ->
+            kotlinx.serialization.json.buildJsonObject {
+                put("tipo", "cancion"); put("titulo", c.titulo); put("detalle", c.artista); put("imagen", c.portada); put("audio", c.audio); put("enlace", c.enlace)
+            }
+        }
+    }
+
+    fun responderHistoria(usuario: String, texto: String) = chat.enviar(usuario, tx(R.string.historia_respondio).format(texto))
+
     /** Obras y personas (directores, actores, escritores) con fotos, para el fondo de una historia. */
     suspend fun buscarConFotos(q: String): List<kotlinx.serialization.json.JsonObject> = kotlinx.coroutines.coroutineScope {
         val tm = Tmdb(claveCine ?: "")
@@ -895,6 +921,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
             // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
+            if (musical) fuente("canciones") {
+                val c = red.canciones(t).take(if (seccion == Secciones.MUSICA) 15 else 5)
+                _busqueda.value = _busqueda.value.copy(canciones = c)
+            }
             if (musical) fuente("musica") {
                 fuente("albumes") {
                     val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }

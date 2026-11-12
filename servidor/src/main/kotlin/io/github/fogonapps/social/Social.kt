@@ -155,8 +155,14 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class NotaNueva(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
 /** Una historia: [datos] puede llevar "imagen" (una subida propia), "texto" (hasta 200), "fondo" (0 a 7) y "adjunto" ([Adjuntos]). */
 @Serializable data class HistoriaNueva(val datos: JsonObject)
-@Serializable data class Historia(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean, val meGusta: Boolean = false)
-@Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>)
+@Serializable data class Historia(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean, val meGusta: Boolean = false, val mejores: Boolean = false,
+    /** La encuesta: cuántos votos tiene cada opción y la opción que votó quien mira (-1 si no votó). */
+    val votos: List<Int> = emptyList(), val miVoto: Int = -1, val destacada: String = "")
+@Serializable data class Voto(val opcion: Int)
+@Serializable data class Destacar(val titulo: String)
+@Serializable data class GrupoDestacadas(val titulo: String, val historias: List<Historia>)
+@Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
+@Serializable data class ListaUsuarios(val usuarios: List<String>)
 @Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
@@ -1411,8 +1417,16 @@ class Social(
         val fondo = (d["fondo"] as? JsonPrimitive)?.intOrNull?.coerceIn(0, 7) ?: 0
         // Hecha en el editor: foto, textos, stickers y dibujo ya van dentro de la imagen (el texto queda aparte, para leerlo).
         val compuesta = (d["compuesta"] as? JsonPrimitive)?.booleanOrNull == true && imagen.isNotEmpty()
+        // Solo para tus mejores amigos (como en Instagram).
+        val mejores = (d["mejores"] as? JsonPrimitive)?.booleanOrNull == true
+        // Una encuesta (como en Instagram): una pregunta y de 2 a 4 opciones cortas.
+        val encuesta = (d["encuesta"] as? JsonObject)?.let { e ->
+            val pregunta = (e["pregunta"] as? JsonPrimitive)?.contentOrNull?.filter { !it.isISOControl() }?.trim()?.take(80).orEmpty()
+            val opciones = (e["opciones"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.filter { c -> !c.isISOControl() }?.trim()?.take(40)?.takeIf { o -> o.isNotBlank() } }.take(4)
+            if (opciones.size >= 2) buildJsonObject { put("pregunta", pregunta); put("opciones", JsonArray(opciones.map(::JsonPrimitive))) } else null
+        }
         if (imagen.isNotEmpty() && b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", imagen, yo) { 1 }.isEmpty() }) throw Problema(400, "imagen")
-        if (imagen.isEmpty() && texto.isEmpty() && adjunto == null) throw Problema(400, "vacia")
+        if (imagen.isEmpty() && texto.isEmpty() && adjunto == null && (d["encuesta"] as? JsonObject) == null) throw Problema(400, "vacia")
         if (b.usar { leer("SELECT COUNT(*) FROM historias WHERE cuenta = ? AND cuando > ?", yo, ahora() - DIA) { it.getInt(1) }.first() } >= 30) throw Problema(429, "despacio")
         val datos = buildJsonObject {
             if (imagen.isNotEmpty()) put("imagen", imagen)
@@ -1421,25 +1435,89 @@ class Social(
             if (compuesta) put("compuesta", true)
             adjunto?.let { put("adjunto", it) }
             adjunto2?.let { put("adjunto2", it) }
+            encuesta?.let { put("encuesta", it) }
         }
-        val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira) VALUES(?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA) }
-        return Historia(id, datos, ahora(), true)
+        val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira, mejores) VALUES(?,?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA, if (mejores) 1 else 0) }
+        return Historia(id, datos, ahora(), true, mejores = mejores)
     }
 
     /** Las historias vigentes de [app]: las propias primero, después las de quienes sigue (las no vistas antes). */
     fun historias(yo: Long, app: String): List<GrupoHistorias> {
         AppsSocial.validar(app)
         val filas = b.usar { leer("""SELECT h.id, h.cuenta, h.datos, h.cuando, EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ?),
-                EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ? AND v.megusta = 1)
+                EXISTS(SELECT 1 FROM historia_vistas v WHERE v.historia = h.id AND v.cuenta = ? AND v.megusta = 1), h.mejores
             FROM historias h WHERE h.app = ? AND h.expira > ? AND h.estado = 'visible' AND (h.oculta = 0 OR h.cuenta = ?)
               AND (h.cuenta = ? OR h.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1))
-            ORDER BY h.cuando LIMIT 600""", yo, yo, app, ahora(), yo, yo, yo) {
-            arrayOf<Any>(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5) == 1, it.getInt(6) == 1)
+              AND (h.mejores = 0 OR h.cuenta = ? OR EXISTS(SELECT 1 FROM mejores_amigos m WHERE m.cuenta = h.cuenta AND m.amigo = ?))
+            ORDER BY h.cuando LIMIT 600""", yo, yo, app, ahora(), yo, yo, yo, yo, yo) {
+            arrayOf<Any>(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5) == 1, it.getInt(6) == 1, it.getInt(7) == 1)
         } }
         return filas.groupBy { it[1] as Long }.filterKeys { it == yo || (visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo)) }
-            .map { (cuenta, hs) -> cuenta to hs.map { Historia(it[0] as Long, JsonSocial.parseToJsonElement(it[2] as String).jsonObject, it[3] as Long, it[1] == yo || it[4] as Boolean, it[5] as Boolean) } }
-            .sortedWith(compareByDescending<Pair<Long, List<Historia>>> { it.first == yo }.thenBy { p -> p.second.all { it.vista } }.thenByDescending { p -> p.second.maxOf { it.cuando } })
-            .take(60).map { (cuenta, hs) -> GrupoHistorias(persona(cuenta), hs) }
+            .map { (cuenta, hs) -> cuenta to hs.map { Historia(it[0] as Long, JsonSocial.parseToJsonElement(it[2] as String).jsonObject, it[3] as Long, it[1] == yo || it[4] as Boolean, it[5] as Boolean, it[6] as Boolean) } }
+            .let { l -> val silenciadas = silenciadasDe(yo); l.map { Triple(it.first, it.second, it.first in silenciadas) } }
+            // Las silenciadas van al final (se pueden abrir igual), como en Instagram.
+            .sortedWith(compareByDescending<Triple<Long, List<Historia>, Boolean>> { it.first == yo }.thenBy { it.third }.thenBy { p -> p.second.all { it.vista } }.thenByDescending { p -> p.second.maxOf { it.cuando } })
+            .take(60).map { (cuenta, hs, silenciada) -> GrupoHistorias(persona(cuenta), hs.map { conVotos(it, yo, cuenta == yo) }, silenciada) }
+    }
+
+    /** Los votos de la encuesta de una historia (si tiene): para quien votó o para su autor. */
+    private fun conVotos(h: Historia, yo: Long, propia: Boolean): Historia {
+        val opciones = ((h.datos["encuesta"] as? JsonObject)?.get("opciones") as? JsonArray)?.size ?: return h
+        val mio = b.usar { leer("SELECT opcion FROM historia_votos WHERE historia = ? AND cuenta = ?", h.id, yo) { it.getInt(1) }.firstOrNull() } ?: -1
+        if (mio < 0 && !propia) return h
+        val conteo = b.usar { leer("SELECT opcion, COUNT(*) FROM historia_votos WHERE historia = ? GROUP BY opcion", h.id) { it.getInt(1) to it.getInt(2) }.toMap() }
+        return h.copy(votos = (0 until opciones).map { conteo[it] ?: 0 }, miVoto = mio)
+    }
+
+    /** Votar en la encuesta de una historia (una vez; se puede cambiar). Devuelve la historia con los votos. */
+    fun votarHistoria(yo: Long, id: Long, v: Voto): Historia {
+        verHistoria(yo, id)
+        val (datos, cuando, autor) = b.usar { leer("SELECT datos, cuando, cuenta FROM historias WHERE id = ?", id) { Triple(JsonSocial.parseToJsonElement(it.getString(1)).jsonObject, it.getLong(2), it.getLong(3)) }.first() }
+        val opciones = ((datos["encuesta"] as? JsonObject)?.get("opciones") as? JsonArray)?.size ?: throw Problema(400, "sin_encuesta")
+        if (v.opcion !in 0 until opciones) throw Problema(400, "opcion")
+        b.usar { cambiar("INSERT INTO historia_votos(historia, cuenta, opcion) VALUES(?,?,?) ON CONFLICT(historia, cuenta) DO UPDATE SET opcion = excluded.opcion", id, yo, v.opcion) }
+        return conVotos(Historia(id, datos, cuando, true), yo, autor == yo)
+    }
+
+    /** Guardar (o sacar, con título vacío) una historia propia en las destacadas del perfil: ahí no vence. */
+    fun destacarHistoria(yo: Long, id: Long, d: Destacar) {
+        val titulo = d.titulo.filter { !it.isISOControl() }.trim().take(30)
+        if (b.usar { cambiar("UPDATE historias SET destacada = ? WHERE id = ? AND cuenta = ? AND estado = 'visible'", titulo, id, yo) } == 0) throw Problema(404, "no_existe")
+    }
+
+    /** Las destacadas de un perfil en [app], por grupo; solo si quien mira puede ver ese perfil. */
+    fun destacadas(lector: Long?, usuario: String, app: String): List<GrupoDestacadas> {
+        AppsSocial.validar(app)
+        val id = b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: return emptyList()
+        if (lector != id && (lector != null && (bloqueado(id, lector) || bloqueado(lector, id)) || esPrivada(id) && (lector == null || !sigue(lector, id)))) return emptyList()
+        return b.usar { leer("SELECT id, datos, cuando, destacada FROM historias WHERE cuenta = ? AND app = ? AND destacada != '' AND estado = 'visible' AND oculta = 0 AND mejores = 0 ORDER BY cuando", id, app) {
+            Historia(it.getLong(1), JsonSocial.parseToJsonElement(it.getString(2)).jsonObject, it.getLong(3), true, destacada = it.getString(4))
+        } }.groupBy { it.destacada }.map { (t, l) -> GrupoDestacadas(t, l) }
+    }
+
+    private fun silenciadasDe(yo: Long): Set<Long> = b.usar { leer("SELECT silenciada FROM historias_silenciadas WHERE cuenta = ?", yo) { it.getLong(1) }.toSet() }
+
+    /** Silenciar (o volver a ver) las historias de alguien sin dejar de seguirlo. */
+    fun silenciarHistorias(yo: Long, usuario: String, si: Boolean) {
+        val otro = b.usar { leer("SELECT id FROM cuentas WHERE usuario = ?", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
+        b.usar { if (si) cambiar("INSERT OR IGNORE INTO historias_silenciadas(cuenta, silenciada) VALUES(?,?)", yo, otro) else cambiar("DELETE FROM historias_silenciadas WHERE cuenta = ? AND silenciada = ?", yo, otro) }
+    }
+
+    /** Tus amigos: quienes se siguen contigo mutuamente (los primeros para escribirles). */
+    fun amigos(yo: Long): List<Persona> = b.usar {
+        leer("""SELECT s.a FROM seguir s WHERE s.de = ? AND s.aceptada = 1 AND EXISTS(SELECT 1 FROM seguir t WHERE t.de = s.a AND t.a = ? AND t.aceptada = 1) LIMIT 500""", yo, yo) { it.getLong(1) }
+    }.filter { visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo) }.map(::persona).sortedBy { it.nombre.ifBlank { it.usuario }.lowercase() }
+
+    /** Tus mejores amigos (solo entre tus amigos); ellos ven tus historias «solo mejores amigos». */
+    fun mejoresAmigos(yo: Long): List<String> = b.usar { leer("SELECT c.usuario FROM mejores_amigos m JOIN cuentas c ON c.id = m.amigo WHERE m.cuenta = ?", yo) { it.getString(1) } }
+
+    fun ponerMejoresAmigos(yo: Long, l: ListaUsuarios) {
+        val amigos = amigos(yo).map { it.usuario }.toSet()
+        val elegidos = l.usuarios.map { it.lowercase() }.filter { it in amigos }.distinct().take(200)
+        b.transaccion {
+            cambiar("DELETE FROM mejores_amigos WHERE cuenta = ?", yo)
+            elegidos.forEach { u -> cambiar("INSERT INTO mejores_amigos(cuenta, amigo) SELECT ?, id FROM cuentas WHERE usuario = ?", yo, u) }
+        }
     }
 
     /** Las historias vigentes de una persona en [app] (para abrirlas desde su perfil). */
@@ -1490,7 +1568,7 @@ class Social(
 
     /** Las historias vencidas se borran a los dos días (un día de margen para reportes); las retiradas, al vencer su plazo. */
     fun limpiarHistorias() {
-        val viejas = b.usar { leer("SELECT id, datos FROM historias WHERE (estado = 'visible' AND expira < ?) OR (estado = 'retirado' AND retirado_hasta <= ?)", ahora() - DIA, ahora()) {
+        val viejas = b.usar { leer("SELECT id, datos FROM historias WHERE (estado = 'visible' AND destacada = '' AND expira < ?) OR (estado = 'retirado' AND retirado_hasta <= ?)", ahora() - DIA, ahora()) {
             it.getLong(1) to ((JsonSocial.parseToJsonElement(it.getString(2)).jsonObject["imagen"] as? JsonPrimitive)?.contentOrNull)
         } }
         viejas.forEach { (id, imagen) -> b.usar { cambiar("DELETE FROM historias WHERE id = ?", id) }; imagen?.let(::borrarImagenSuelta) }

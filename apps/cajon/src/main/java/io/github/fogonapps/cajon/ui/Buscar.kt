@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -188,6 +189,23 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                             items(lista.take(8), key = { it.fuente }) { a -> ArtistaRedondo(vm, a) }
                         }
                     } else items(lista, key = { "a" + it.fuente }) { a -> FilaArtista(vm, e, a, Modifier.animateItem()) }
+                }
+            }
+
+            // Canciones (de Apple): escucharlas 30 segundos, ir a Apple Music o, al tocarlas, buscar su álbum.
+            if (b.canciones.isNotEmpty() && (todo || b.seccion == Secciones.MUSICA)) {
+                item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
+                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c ->
+                    Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.cambiarSeccion(Secciones.MUSICA); vm.buscar(c.album.ifBlank { c.titulo } + " " + c.artista) }
+                        .padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        coil3.compose.AsyncImage(c.portada, null, Modifier.size(48.dp).clip(forma(8.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        Column(Modifier.weight(1f)) {
+                            Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(listOf(c.artista, c.album).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            io.github.fogonapps.social.ui.EnlaceAppleMusic(c.enlace)
+                        }
+                        io.github.fogonapps.social.ui.BotonAvance(c.audio)
+                    }
                 }
             }
 

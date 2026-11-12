@@ -88,7 +88,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfazCuenta(vm)) { FotoPerfilLocal(identidad.foto, tamano = 96.dp) }
                 BotonMasFoto(stringResource(R.string.perfil_editar), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
-        }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {
+        }, bajoNombre = { if (usuario != null) { Text("@$usuario", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfazCuenta(vm), usuario!!) } }, enlace = {}, acciones = {
             BotonSecundario(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
             if (usuario != null) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)

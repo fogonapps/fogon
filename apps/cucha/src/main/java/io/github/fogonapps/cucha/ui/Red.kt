@@ -216,10 +216,10 @@ private fun PerfilRed(vm: CuchaViewModel, interfaz: InterfazSocial, usuario: Str
         contadores = cifrasRed(publicaciones), secciones = secciones, insignia = perfil.persona.insignia)
     io.github.fogonapps.perfil.Perfil(vista, elegida, { elegida = it }, portada = {},
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
-        bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
+        bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) },
         enlace = {}, acciones = {
             if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
-                if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {
+                if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {
                 if (perfil.relacion == "sigo") vm.red.dejarDeSeguir(usuario) else vm.red.seguir(usuario)
             }, Modifier.weight(1f))
         })

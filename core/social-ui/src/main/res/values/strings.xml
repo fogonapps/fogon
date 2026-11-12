@@ -430,4 +430,26 @@
     <string name="historia_tipo_peliculas">Films</string>
     <string name="historia_tipo_series">Series and anime</string>
     <string name="historia_tipo_libros">Books</string>
+    <string name="historia_silenciar">Mute their stories</string>
+    <string name="historia_activar">See their stories</string>
+    <string name="historia_responder_a">Reply to %1$s</string>
+    <string name="historia_mejores_amigos">Close friends</string>
+    <string name="historia_lista_mejores">Your list</string>
+    <string name="historia_mejores_explica">Stories marked “Close friends” are only seen by the people on this list. Nobody knows whether they are on it.</string>
+    <string name="historia_sin_amigos">No friends yet: they are the people who follow you back.</string>
+    <string name="historia_guardar_lista">Save the list</string>
+    <string name="historia_usar_album">Use the whole album</string>
+    <string name="historia_respondio">Replied to your story: %1$s</string>
+    <string name="social_amigos">Friends</string>
+    <string name="amigos_dejar">Friends · unfollow</string>
+    <string name="historia_encuesta">Poll</string>
+    <string name="historia_pregunta">Your question (optional)</string>
+    <string name="historia_opcion">Option %1$d</string>
+    <string name="historia_otra_opcion">Another option</string>
+    <string name="historia_destacar">Highlight</string>
+    <string name="historia_nombre_destacada">Highlight name (empty removes it)</string>
+  <plurals name="historia_votos">
+    <item quantity="one">1 vote</item>
+    <item quantity="other">%1$d votes</item>
+  </plurals>
 </resources>

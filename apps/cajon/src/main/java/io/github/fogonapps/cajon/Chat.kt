@@ -37,13 +37,23 @@ data class MensajeChat(
     val sticker: String? = null, val borrado: Boolean = false,
     /** El tamaño del sticker: 0 chico, 1 normal, 2 grande. */
     val tamano: Int = 1,
+    /** Las reacciones (un emoji) de cada quien. */
+    val reaccionMia: String = "", val reaccionSuya: String = "",
 ) { val clave get() = k.ifBlank { id } }
 
 /** Un sticker guardado: la imagen (WebP en base64) y un nombre para buscarlo. */
 @Serializable data class Sticker(val id: String, val imagen: String, val nombre: String = "", val cuando: Long = 0)
 
 /** Cómo se ve una conversación: el color de las burbujas propias (0 = primera tinta, 1 = segunda), fondo de puntos y letra grande. */
-@Serializable data class EstiloChat(val color: Int = 0, val puntos: Boolean = false, val letraGrande: Boolean = false)
+/**
+ * Cómo se ve una conversación: [color] de las burbujas propias (0 a 5, tintas del tema), fondo de puntos o con el
+ * póster de una obra ([poster]), letra ([letra]: 0 chica, 1 normal, 2 grande; [letraGrande] es la de antes) y un
+ * [apodo] para la otra persona que solo ve quien lo pone.
+ */
+@Serializable data class EstiloChat(val color: Int = 0, val puntos: Boolean = false, val letraGrande: Boolean = false,
+    val poster: String = "", val letra: Int = -1, val apodo: String = "") {
+    val tamanoLetra get() = if (letra >= 0) letra else if (letraGrande) 2 else 1
+}
 
 /** Lo que va dentro del sobre cifrado: texto, obra, sticker, respuesta, su clave y, para borrar para todos, la clave a borrar. */
 @Serializable private data class Contenido(
@@ -51,6 +61,8 @@ data class MensajeChat(
     val s: String? = null, val b: String? = null,
     /** El tamaño del sticker (0 a 2; sin él, normal). */
     val z: Int? = null,
+    /** Una reacción: [x] (un emoji; vacío la quita) al mensaje de clave [rk]. */
+    val rk: String? = null, val x: String? = null,
 )
 
 @Serializable private data class Chats(
@@ -165,6 +177,19 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
         val z = tamano.coerceIn(0, 2).takeIf { sticker != null && it != 1 }
         val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z)
         if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1))
+    }
+
+    /** Reaccionar a un mensaje con un emoji (o quitar la reacción, con ""), como en Instagram. */
+    fun reaccion(usuario: String, m: MensajeChat, emoji: String) = scope.launch {
+        val yo = red.usuario.value ?: return@launch
+        val ahora = System.currentTimeMillis()
+        if (mandar(usuario, yo, Contenido(c = ahora, i = "r${ahora.toString(36)}", rk = m.clave, x = emoji))) reaccionar(usuario, m.clave, emoji, mia = true)
+    }
+
+    private suspend fun reaccionar(usuario: String, clave: String, emoji: String, mia: Boolean) = cambiar { c ->
+        c.copy(conversaciones = c.conversaciones + (usuario to c.conversaciones[usuario].orEmpty().map {
+            if (it.clave == clave) (if (mia) it.copy(reaccionMia = emoji) else it.copy(reaccionSuya = emoji)) else it
+        }))
     }
 
     /** Un pedacito de un mensaje, para citarlo al responder. */
@@ -325,6 +350,7 @@ class Chat(private val app: Application, private val scope: CoroutineScope, priv
                 c == null -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, noSeLee = true), s.id)
                 // La otra persona borró un mensaje suyo para todos.
                 c.b != null -> { marcarBorrado(de, c.b, mio = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
+                c.rk != null -> { reaccionar(de, c.rk, c.x.orEmpty().take(8), mia = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
                 else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }, tamano = (c.z ?: 1).coerceIn(0, 2)), s.id)
             }
         }

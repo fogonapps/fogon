@@ -372,6 +372,14 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/historias/{id}/vista") { social.verHistoria(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
             get("/historias/{id}/vistas") { call.respond(social.vistasHistoria(call.yo(), call.id())) }
             delete("/historias/{id}") { social.borrarHistoria(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            get("/amigos") { call.respond(social.amigos(call.yo())) }
+            get("/mejores-amigos") { call.respond(ListaUsuarios(social.mejoresAmigos(call.yo()))) }
+            put("/mejores-amigos") { social.ponerMejoresAmigos(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            post("/historias/silenciar/{usuario}") { social.silenciarHistorias(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/historias/silenciar/{usuario}") { social.silenciarHistorias(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }
+            post("/historias/{id}/voto") { call.respond(social.votarHistoria(call.yo(), call.id(), call.receive())) }
+            put("/historias/{id}/destacada") { social.destacarHistoria(call.yo(), call.id(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/destacadas/{usuario}") { call.respond(social.destacadas(call.lector(), call.usuario(), call.request.queryParameters["app"] ?: "cajon")) }
             post("/historias/{id}/megusta") { social.meGustaHistoria(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/historias/{id}/megusta") { social.meGustaHistoria(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
             get("/canciones") {

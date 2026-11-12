@@ -29,6 +29,9 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
         override fun stickersApp() = vm.chat.stickers.value.map { it.imagen }
         override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
         override val fotosDeObras = true
+        override val respondeHistorias = true
+        override fun responderHistoria(usuario: String, texto: String) { vm.responderHistoria(usuario, texto) }
+        override suspend fun detallarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.detallarAdjunto(a)
         override suspend fun buscarConFotos(q: String) = vm.buscarConFotos(q)
         override suspend fun fotosDe(fuente: String) = vm.fotosDe(fuente)
         @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_todo)

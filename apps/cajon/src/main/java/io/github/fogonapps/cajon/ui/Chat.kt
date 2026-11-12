@@ -56,6 +56,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -116,11 +118,32 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
     fun abrir(u: String) {
         if (o != null) { vm.chat.enviar(u, "", o); vm.reemplazar(Pantalla.Conversacion(u)) } else vm.abrir(Pantalla.Conversacion(u))
     }
+    // Buscar entre los chats y los amigos (quienes se siguen contigo), que salen primero para escribirles.
+    val amigos by vm.red.amigos.collectAsStateWithLifecycle()
+    val estilosChat by vm.chat.estilos.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.cargarAmigos() }
+    val q = buscar.trim().lowercase()
+    fun coincide(p: PersonaSocial, u: String) = q.isEmpty() || q in u.lowercase() || q in p.nombre.lowercase() || q in estilosChat[u]?.apodo.orEmpty().lowercase()
+    if (o == null) OutlinedTextField(buscar, { buscar = it.take(40) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), singleLine = true, shape = forma(22.dp),
+        placeholder = { Text(stringResource(R.string.chat_buscar_amigos)) }, leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 18.dp, tinta = f.textoSuave) })
+    val amigosVisibles = amigos.filter { coincide(it, it.usuario) }
+    if (amigosVisibles.isNotEmpty()) {
+        Text(stringResource(R.string.amigos), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            amigosVisibles.forEach { a ->
+                Column(Modifier.width(68.dp).clip(forma(14.dp)).clickable { abrir(a.usuario) }.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    AvatarRed(a, 52.dp)
+                    Text(estilosChat[a.usuario]?.apodo?.ifBlank { null } ?: a.nombre.ifBlank { a.usuario }, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
     if (chats.isEmpty()) { Pista(stringResource(R.string.chat_vacio), Modifier.padding(16.dp)); return }
-    chats.entries.sortedByDescending { it.value.lastOrNull()?.cuando ?: 0 }.forEach { (u, l) ->
+    chats.entries.filter { (u, _) -> coincide(personas[u] ?: PersonaSocial(u), u) }.sortedByDescending { it.value.lastOrNull()?.cuando ?: 0 }.forEach { (u, l) ->
         val ultimo = l.lastOrNull()
         val nuevos = l.count { !it.mio && !it.leido }
-        FilaPersona(personas[u] ?: PersonaSocial(u, foto = true), { abrir(u) }) {
+        val p = personas[u] ?: PersonaSocial(u, foto = true)
+        FilaPersona(estilosChat[u]?.apodo?.takeIf { it.isNotBlank() }?.let { p.copy(nombre = it) } ?: p, { abrir(u) }) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(ultimo?.let { resumen(it) }.orEmpty(), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1,
                     overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
@@ -148,6 +171,9 @@ private fun coloresPropios(estilo: EstiloChat): Pair<Color, Color> {
     return when (estilo.color) {
         1 -> f.tinta2 to legibleSobre(f.tinta2, listOf(f.texto, f.fondo))
         2 -> f.superficie to f.texto
+        3 -> f.tinta1.copy(alpha = 0.45f).compositeOver(f.fondo).let { it to legibleSobre(it, listOf(f.texto, f.fondo)) }
+        4 -> f.tinta2.copy(alpha = 0.45f).compositeOver(f.fondo).let { it to legibleSobre(it, listOf(f.texto, f.fondo)) }
+        5 -> f.pildora to f.sobrePildora
         else -> f.tinta1 to f.sobreTinta1
     }
 }
@@ -188,8 +214,8 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
     val personas by vm.chat.personas.collectAsStateWithLifecycle()
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     val persona = personas[usuario] ?: PersonaSocial(usuario)
-    val nombre = persona.nombre.ifBlank { "@$usuario" }
     val estilo = estilos[usuario] ?: EstiloChat()
+    val nombre = estilo.apodo.ifBlank { persona.nombre.ifBlank { "@$usuario" } }
     var texto by rememberSaveable { mutableStateOf("") }
     var responder by remember { mutableStateOf<MensajeChat?>(null) }
     var elegir by remember { mutableStateOf(false) }
@@ -205,7 +231,10 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
     // Al llegar o mandar algo, baja a lo último.
     LaunchedEffect(lista.lastOrNull()?.id) { if (lista.isNotEmpty()) estado.animateScrollToItem(0) }
 
-    Column(Modifier.fillMaxSize().then(if (estilo.puntos) Modifier.fondoPuntos(f.linea) else Modifier)) {
+    // El fondo de la conversación: el póster de una obra (tenue), si se eligió uno.
+    val poster = coil3.compose.rememberAsyncImagePainter(estilo.poster.takeIf { it.startsWith("https://") })
+    Column(Modifier.fillMaxSize().then(if (estilo.poster.startsWith("https://")) Modifier.paint(poster, contentScale = ContentScale.Crop, alpha = 0.18f) else Modifier)
+        .then(if (estilo.puntos) Modifier.fondoPuntos(f.linea) else Modifier)) {
         // Arriba: volver, la foto y el nombre (llevan al perfil) y las opciones del chat.
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             BotonIcono(Iconos.Atras, stringResource(R.string.volver)) { vm.cerrar() }
@@ -295,6 +324,15 @@ fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {
                     }
                     return@Column
                 }
+                // Reaccionar con un emoji (tocar la misma la quita).
+                if (!m.borrado && !m.noSeLee) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    listOf("❤️", "😂", "😮", "😢", "👍", "🔥").forEach { emo ->
+                        Box(Modifier.size(44.dp).clip(CircleShape).background(if (m.reaccionMia == emo) f.superficie else Color.Transparent)
+                            .clickable { vm.chat.reaccion(usuario, m, if (m.reaccionMia == emo) "" else emo); menuDe = null }, contentAlignment = Alignment.Center) {
+                            Text(emo, fontSize = 24.sp)
+                        }
+                    }
+                }
                 if (!m.borrado && !m.noSeLee) FilaMenu(Iconos.Comentario, stringResource(R.string.chat_responder)) { responder = m; menuDe = null }
                 if (m.texto.isNotBlank()) {
                     FilaMenu(Iconos.Lista, stringResource(R.string.chat_copiar)) { portapapeles.setText(AnnotatedString(m.texto)); vm.decir(copiado); menuDe = null }
@@ -362,7 +400,7 @@ private fun Burbuja(
     val f = FogonTema.actual
     val (fondoMio, letraMia) = coloresPropios(estilo)
     val color = if (m.mio) letraMia else f.texto
-    val tam = if (estilo.letraGrande) 18.sp else MaterialTheme.typography.bodyMedium.fontSize
+    val tam = when (estilo.tamanoLetra) { 0 -> 13.sp; 2 -> 18.sp; else -> MaterialTheme.typography.bodyMedium.fontSize }
     // Deslizar a la derecha para responder.
     var corrido by remember { mutableFloatStateOf(0f) }
     val umbral = with(LocalDensity.current) { 64.dp.toPx() }
@@ -422,6 +460,10 @@ private fun Burbuja(
             }
             if (m.texto.isNotBlank()) Text(m.texto, style = MaterialTheme.typography.bodyMedium, fontSize = tam, color = color)
             Text(hora, style = MaterialTheme.typography.labelSmall, color = (if (soloSticker) f.textoSuave else color).copy(alpha = 0.7f), modifier = Modifier.align(Alignment.End))
+        }
+        val reacciones = listOf(m.reaccionSuya, m.reaccionMia).filter { it.isNotBlank() }
+        if (reacciones.isNotEmpty()) Box(Modifier.offset(y = (-6).dp).clip(FormaPildora).background(f.fondo).border(f.borde, f.linea, FormaPildora).padding(horizontal = 6.dp, vertical = 2.dp)) {
+            Text(reacciones.joinToString(" "), fontSize = 14.sp)
         }
     }
 }
@@ -579,14 +621,34 @@ fun InfoChat(vm: CajonViewModel, e: Estado, usuario: String) {
     if (personalizar) Seccion(stringResource(R.string.chat_personalizar))
     if (personalizar) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.chat_color_burbujas), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            listOf(f.tinta1, f.tinta2, f.superficie).forEachIndexed { i, c ->
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(f.tinta1, f.tinta2, f.superficie, f.tinta1.copy(alpha = 0.45f).compositeOver(f.fondo), f.tinta2.copy(alpha = 0.45f).compositeOver(f.fondo), f.pildora).forEachIndexed { i, c ->
                 Box(Modifier.size(40.dp).clip(CircleShape).background(c).border(if (estilo.color == i) 3.dp else f.borde, if (estilo.color == i) f.texto else f.linea, CircleShape)
                     .clickable { vm.chat.ponerEstilo(usuario, estilo.copy(color = i)) })
             }
         }
         FilaInterruptor(stringResource(R.string.chat_fondo_puntos), estilo.puntos) { vm.chat.ponerEstilo(usuario, estilo.copy(puntos = it)) }
-        FilaInterruptor(stringResource(R.string.chat_letra_grande), estilo.letraGrande) { vm.chat.ponerEstilo(usuario, estilo.copy(letraGrande = it)) }
+        Text(stringResource(R.string.chat_tamano_letra), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(R.string.chat_sticker_chico, R.string.chat_sticker_normal, R.string.chat_sticker_grande).forEachIndexed { i, t ->
+                Pildora(stringResource(t), acento = estilo.tamanoLetra == i) { vm.chat.ponerEstilo(usuario, estilo.copy(letra = i, letraGrande = i == 2)) }
+            }
+        }
+        // De fondo, el póster (tenue) de una obra de tu cajón.
+        Text(stringResource(R.string.chat_fondo_poster), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.width(56.dp).aspectRatio(2f / 3f).clip(forma(8.dp)).background(f.superficie).border(if (estilo.poster.isBlank()) 3.dp else 1.dp, if (estilo.poster.isBlank()) f.texto else f.linea, forma(8.dp))
+                .clickable { vm.chat.ponerEstilo(usuario, estilo.copy(poster = "")) }, contentAlignment = Alignment.Center) { IconoRiso(Iconos.Cerrar, stringResource(R.string.chat_sin_fondo), tamano = 18.dp, tinta = f.textoSuave) }
+            e.vivas.filter { it.portada.startsWith("https://") }.sortedByDescending { it.cambio }.take(30).forEach { ob ->
+                Box(Modifier.width(56.dp).clip(forma(8.dp)).border(if (estilo.poster == ob.portada) 3.dp else 0.dp, f.texto, forma(8.dp)).clickable { vm.chat.ponerEstilo(usuario, estilo.copy(poster = ob.portada)) }) {
+                    Portada(ob.portada, ob.tipo, ob.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                }
+            }
+        }
+        // Un apodo para la otra persona: solo lo ves tú.
+        var apodo by remember(usuario) { mutableStateOf(estilo.apodo) }
+        OutlinedTextField(apodo, { apodo = it.take(40) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp), label = { Text(stringResource(R.string.chat_apodo)) },
+            trailingIcon = { if (apodo != estilo.apodo) BotonIcono(Iconos.Chulo, stringResource(R.string.guardar)) { vm.chat.ponerEstilo(usuario, estilo.copy(apodo = apodo.trim())) } })
     }
 
     if (verNumero) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(18.dp)).background(f.superficie).border(f.borde, f.linea, forma(18.dp)).padding(14.dp),

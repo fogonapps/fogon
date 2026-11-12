@@ -1587,4 +1587,31 @@
   <string name="historia_tipo_peliculas">Películas</string>
   <string name="historia_tipo_series">Series y animes</string>
   <string name="historia_tipo_libros">Libros</string>
+  <string name="historia_silenciar">Silenciar sus historias</string>
+  <string name="historia_activar">Ver sus historias</string>
+  <string name="historia_responder_a">Responder a %1$s</string>
+  <string name="historia_mejores_amigos">Mejores amigos</string>
+  <string name="historia_lista_mejores">Tu lista</string>
+  <string name="historia_mejores_explica">Las historias marcadas «Mejores amigos» solo las ven las personas de esta lista. Nadie sabe si está o no.</string>
+  <string name="historia_sin_amigos">Todavía no tienes amigos: son quienes se siguen contigo.</string>
+  <string name="historia_guardar_lista">Guardar la lista</string>
+  <string name="historia_usar_album">Usar el álbum entero</string>
+  <string name="historia_respondio">Respondió a tu historia: %1$s</string>
+  <string name="amigos">Amigos</string>
+  <string name="amigos_dejar">Amigos · dejar de seguir</string>
+  <string name="chat_buscar_amigos">Buscar en mensajes y amigos</string>
+  <string name="chat_tamano_letra">Tamaño de la letra</string>
+  <string name="chat_fondo_poster">Fondo con un póster</string>
+  <string name="chat_sin_fondo">Sin póster</string>
+  <string name="chat_apodo">Apodo (solo lo ves tú)</string>
+  <string name="historia_encuesta">Encuesta</string>
+  <string name="historia_pregunta">Tu pregunta (opcional)</string>
+  <string name="historia_opcion">Opción %1$d</string>
+  <string name="historia_otra_opcion">Otra opción</string>
+  <string name="historia_destacar">Destacar</string>
+  <string name="historia_nombre_destacada">Nombre de la destacada (vacío la quita)</string>
+  <plurals name="historia_votos">
+    <item quantity="one">Un voto</item>
+    <item quantity="other">%1$d votos</item>
+  </plurals>
 </resources>

@@ -94,4 +94,57 @@ class HistoriasTest {
         assertEquals(1, pedidos)
         assertTrue(c.buscar("a").isEmpty())
     }
+
+    @Test fun amigosMejoresAmigosYSilenciar() {
+        val dir = Files.createTempDirectory("amigos").toFile()
+        val b = Base(File(dir, "social.db").path)
+        try {
+            val s = Social(b, File(dir, "fotos"))
+            val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("anabel")).token)!!
+            val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("roberto")).token)!!
+            val cami = s.cuentaDe(s.crearCuenta(NuevaCuenta("camila")).token)!!
+            s.seguir(ana, "roberto"); s.seguir(beto, "anabel"); s.seguir(cami, "anabel")
+            // Amigos: solo quien se sigue mutuamente.
+            assertEquals(listOf("roberto"), s.amigos(ana).map { it.usuario })
+            // Mejores amigos: solo entre los amigos; la historia «solo mejores» no la ve quien no está.
+            s.ponerMejoresAmigos(ana, ListaUsuarios(listOf("roberto", "camila")))
+            assertEquals(listOf("roberto"), s.mejoresAmigos(ana))
+            val h = s.subirHistoria(ana, "cajon", HistoriaNueva(buildJsonObject { put("texto", "Solo ustedes"); put("mejores", true) }))
+            assertTrue(h.mejores)
+            assertEquals(1, s.historias(beto, "cajon").size)
+            assertTrue(s.historias(cami, "cajon").isEmpty())
+            // Silenciar: siguen saliendo, marcadas y al final.
+            s.subirHistoria(ana, "cajon", HistoriaNueva(buildJsonObject { put("texto", "Para todos") }))
+            s.silenciarHistorias(cami, "anabel", true)
+            assertTrue(s.historias(cami, "cajon").single().silenciada)
+            s.silenciarHistorias(cami, "anabel", false)
+            assertFalse(s.historias(cami, "cajon").single().silenciada)
+        } finally { b.cerrar(); dir.deleteRecursively() }
+    }
+
+    @Test fun encuestaYDestacadas() {
+        val dir = Files.createTempDirectory("encuesta").toFile()
+        val b = Base(File(dir, "social.db").path)
+        var reloj = 2_000_000_000_000L
+        try {
+            val s = Social(b, File(dir, "fotos"), { reloj })
+            val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("anabel")).token)!!
+            val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("roberto")).token)!!
+            s.seguir(beto, "anabel")
+            val h = s.subirHistoria(ana, "cajon", HistoriaNueva(buildJsonObject {
+                put("encuesta", buildJsonObject { put("pregunta", "¿Cuál primero?"); put("opciones", JsonArray(listOf(JsonPrimitive("Chihiro"), JsonPrimitive("Totoro")))) })
+            }))
+            assertEquals(400, assertFailsWith<Problema> { s.votarHistoria(beto, h.id, Voto(5)) }.codigo)
+            val votada = s.votarHistoria(beto, h.id, Voto(1))
+            assertEquals(listOf(0, 1), votada.votos); assertEquals(1, votada.miVoto)
+            assertEquals(listOf(0, 1), s.historias(ana, "cajon").single().historias.single().votos)
+            // Destacada: sale en el perfil y no se borra al vencer.
+            s.destacarHistoria(ana, h.id, Destacar("Ghibli"))
+            assertEquals(404, assertFailsWith<Problema> { s.destacarHistoria(beto, h.id, Destacar("x")) }.codigo)
+            reloj += 3 * 24 * 3600_000L
+            s.limpiarHistorias()
+            assertEquals(listOf("Ghibli"), s.destacadas(beto, "anabel", "cajon").map { it.titulo })
+            assertTrue(s.historias(beto, "cajon").isEmpty())
+        } finally { b.cerrar(); dir.deleteRecursively() }
+    }
 }

@@ -177,10 +177,10 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                     secciones = secciones, insignia = perfil.persona.insignia)
                 io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
                     foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
-                    bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
+                    bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) },
                     enlace = {}, acciones = {
                         if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
-                            if (perfil.relacion == "sigo") R.string.entreno_dejar_seguir else R.string.entreno_seguir), {
+                            if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.entreno_dejar_seguir else R.string.entreno_seguir), {
                             if (perfil.relacion == "sigo") vm.red.dejarDeSeguir(destino.usuario) else vm.red.seguir(destino.usuario)
                         })
                     })

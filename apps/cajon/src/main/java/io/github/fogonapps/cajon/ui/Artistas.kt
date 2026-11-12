@@ -211,6 +211,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
     // La foto grande, con su crédito (autor y licencia de Wikimedia Commons) debajo.
     Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         FotoArtista(a.foto, a.nombre, 150.dp, a.tipo)
+        if (Personas.esMusico(a)) io.github.fogonapps.social.ui.EnlaceAppleMusic("https://music.apple.com/search?term=" + java.net.URLEncoder.encode(a.nombre, "UTF-8"))
         if (a.foto.isNotBlank() && a.fotoCredito.isNotBlank()) Text(stringResource(R.string.foto_de, a.fotoCredito), style = MaterialTheme.typography.labelSmall,
             color = f.textoSuave, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
         // Si no tiene foto, o no es la que quiere: elegir otra de sus fuentes o subir una del teléfono.

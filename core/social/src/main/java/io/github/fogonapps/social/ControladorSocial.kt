@@ -307,6 +307,22 @@ abstract class ControladorSocial(
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(vista = true) else it }) }
         scope.launch { runCatching { cliente().verHistoria(h.id) } }
     }
+    /** Amigos: quienes se siguen contigo mutuamente. */
+    protected val _amigos = MutableStateFlow<List<PersonaSocial>>(emptyList())
+    val amigos: StateFlow<List<PersonaSocial>> = _amigos
+    fun cargarAmigos() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _amigos.value = cliente().amigos() } } }
+    suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())
+    fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }
+    fun silenciarHistorias(usuario: String, si: Boolean) = lanzar {
+        cliente().silenciarHistorias(usuario, si)
+        _historias.value = cliente().historias()
+    }
+    /** Votar en la encuesta de una historia; devuelve la historia con los votos. */
+    suspend fun votarHistoria(h: HistoriaSocial, opcion: Int): HistoriaSocial? = runCatching { cliente().votarHistoria(h.id, opcion) }.getOrNull()?.also { v ->
+        _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(votos = v.votos, miVoto = v.miVoto) else it }) }
+    }
+    fun destacarHistoria(h: HistoriaSocial, titulo: String) = lanzar { cliente().destacarHistoria(h.id, titulo) }
+    suspend fun destacadas(usuario: String): List<GrupoDestacadasSocial> = runCatching { cliente().destacadas(usuario) }.getOrDefault(emptyList())
     fun meGustaHistoria(h: HistoriaSocial, si: Boolean) {
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(meGusta = si) else it }) }
         scope.launch { runCatching { cliente().meGustaHistoria(h.id, si) } }

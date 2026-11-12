@@ -377,6 +377,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
+            vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
             SelectorPerfiles(vm)
             CrearClaveAviso(vm)
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->

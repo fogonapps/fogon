@@ -508,15 +508,21 @@ private fun Canciones(vm: CajonViewModel, o: Obra) {
     val f = FogonTema.actual
     Seccion(stringResource(R.string.canciones))
     Pista(stringResource(R.string.canciones_pista))
+    // Los avances de Apple de este álbum (si los encuentra), para escuchar 30 segundos de cada canción.
+    var avances by remember(o.id) { mutableStateOf<List<io.github.fogonapps.social.CancionSocial>>(emptyList()) }
+    LaunchedEffect(o.id) { avances = vm.cancionesApple(o.titulo, o.creador) }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 6.dp)) {
         o.canciones.forEachIndexed { i, c ->
+            val avance = avances.firstOrNull { vm.L.tituloLimpio(it.titulo) == vm.L.tituloLimpio(c.titulo) }
             Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(28.dp))
                     Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (c.segundos > 0) Text("%d:%02d".format(c.segundos / 60, c.segundos % 60), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    avance?.let { io.github.fogonapps.social.ui.BotonAvance(it.audio) }
                     BotonIcono(Iconos.Corazon, stringResource(R.string.cancion_favorita), tinta = if (c.favorita) f.acentoTexto else f.linea, lleno = c.favorita) { vm.cancionFavorita(o.id, i) }
                 }
+                avance?.let { Box(Modifier.padding(start = 24.dp)) { io.github.fogonapps.social.ui.EnlaceAppleMusic(it.enlace) } }
                 Box(Modifier.padding(start = 28.dp)) {
                     ElegirEstrellas(c.nota, { vm.notaCancion(o.id, i, it) }, tamano = 20.dp, descripcion = stringResource(R.string.nota_de, c.titulo))
                 }

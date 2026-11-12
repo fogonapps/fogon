@@ -251,6 +251,13 @@ open class ClienteSocial(
     suspend fun verHistoria(id: Long) { pedir("/historias/$id/vista", "POST") }
     suspend fun vistasHistoria(id: Long) = leer(ListSerializer(VistaHistoriaSocial.serializer()), pedir("/historias/$id/vistas"))
     suspend fun borrarHistoria(id: Long) { pedir("/historias/$id", "DELETE") }
+    suspend fun votarHistoria(id: Long, opcion: Int) = leer(HistoriaSocial.serializer(), pedir("/historias/$id/voto", "POST", json(VotoHistoria.serializer(), VotoHistoria(opcion))))
+    suspend fun destacarHistoria(id: Long, titulo: String) { pedir("/historias/$id/destacada", "PUT", json(DestacarHistoria.serializer(), DestacarHistoria(titulo))) }
+    suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
+    suspend fun amigos() = leer(ListSerializer(PersonaSocial.serializer()), pedir("/amigos"))
+    suspend fun mejoresAmigos() = leer(ListaUsuarios.serializer(), pedir("/mejores-amigos")).usuarios
+    suspend fun ponerMejoresAmigos(l: List<String>) { pedir("/mejores-amigos", "PUT", json(ListaUsuarios.serializer(), ListaUsuarios(l))) }
+    suspend fun silenciarHistorias(usuario: String, si: Boolean) { pedir("/historias/silenciar/${cod(usuario)}", if (si) "POST" else "DELETE") }
     suspend fun meGustaHistoria(id: Long, si: Boolean) { pedir("/historias/$id/megusta", if (si) "POST" else "DELETE") }
     suspend fun notasGente() = leer(ListSerializer(NotaGente.serializer()), pedir("/notas"))
     suspend fun ponerNotaGente(texto: String, datos: kotlinx.serialization.json.JsonObject) { pedir("/nota", "PUT", json(NotaNuevaGente.serializer(), NotaNuevaGente(texto, datos))) }

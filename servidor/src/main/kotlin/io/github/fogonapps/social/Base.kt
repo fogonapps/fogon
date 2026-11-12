@@ -119,6 +119,16 @@ class Base(ruta: String) {
                     historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     cuando INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
                 columna(s, "historia_vistas", "megusta INTEGER NOT NULL DEFAULT 0")
+                // Historias solo para mejores amigos, la lista de cada persona y a quién le silenció las historias.
+                columna(s, "historias", "mejores INTEGER NOT NULL DEFAULT 0")
+                // Destacadas: el nombre del grupo en el perfil ('' = no está destacada; no vence).
+                columna(s, "historias", "destacada TEXT NOT NULL DEFAULT ''")
+                s.execute("""CREATE TABLE IF NOT EXISTS historia_votos(historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, opcion INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
+                s.execute("""CREATE TABLE IF NOT EXISTS mejores_amigos(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    amigo INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(cuenta, amigo)) WITHOUT ROWID""")
+                s.execute("""CREATE TABLE IF NOT EXISTS historias_silenciadas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    silenciada INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(cuenta, silenciada)) WITHOUT ROWID""")
                 // Las frases del saludo de El Cajón que gustan (1) o no (-1): una por cuenta; se van con la cuenta.
                 s.execute("""CREATE TABLE IF NOT EXISTS frases(
                     clave TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, valor INTEGER NOT NULL,

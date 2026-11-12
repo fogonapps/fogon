@@ -1,1 +1,0 @@
-You can now set a song on your profile (the button was missing) and it plays for 30 seconds. When searching for something to attach to a note or story, results come in sections: artists, songs, albums, films, series and books.

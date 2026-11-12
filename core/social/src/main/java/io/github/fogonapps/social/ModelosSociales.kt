@@ -232,12 +232,17 @@ data class EmpujeNuevo(val token: String, val app: String)
 data class CambioInsignia(val usuario: String, val insignia: String, val motivo: String)
 
 /* ----- Historias y notas (24 horas) ----- */
-@Serializable data class HistoriaSocial(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean = false, val meGusta: Boolean = false)
-@Serializable data class GrupoHistoriasSocial(val persona: PersonaSocial, val historias: List<HistoriaSocial> = emptyList()) {
+@Serializable data class HistoriaSocial(val id: Long, val datos: JsonObject, val cuando: Long, val vista: Boolean = false, val meGusta: Boolean = false, val mejores: Boolean = false,
+    val votos: List<Int> = emptyList(), val miVoto: Int = -1, val destacada: String = "")
+@Serializable data class GrupoDestacadasSocial(val titulo: String, val historias: List<HistoriaSocial> = emptyList())
+@Serializable internal data class VotoHistoria(val opcion: Int)
+@Serializable internal data class DestacarHistoria(val titulo: String)
+@Serializable data class GrupoHistoriasSocial(val persona: PersonaSocial, val historias: List<HistoriaSocial> = emptyList(), val silenciada: Boolean = false) {
     val todasVistas get() = historias.all { it.vista }
 }
 @Serializable data class VistaHistoriaSocial(val persona: PersonaSocial, val cuando: Long, val meGusta: Boolean = false)
 @Serializable internal data class HistoriaNueva(val datos: JsonObject)
+@Serializable internal data class ListaUsuarios(val usuarios: List<String> = emptyList())
 /** La nota de una persona: unas palabras (hasta 60) y, si quiere, un adjunto (canción, obra, entreno, plato, meta…). */
 @Serializable data class NotaGente(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long = 0)
 @Serializable internal data class NotaNuevaGente(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))
