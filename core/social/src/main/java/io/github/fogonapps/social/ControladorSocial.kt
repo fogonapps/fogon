@@ -335,6 +335,9 @@ abstract class ControladorSocial(
     suspend fun votarHistoria(h: HistoriaSocial, opcion: Int): HistoriaSocial? = runCatching { cliente().votarHistoria(h.id, opcion) }.getOrNull()?.also { v ->
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(votos = v.votos, miVoto = v.miVoto) else it }) }
     }
+    fun responderPregunta(h: HistoriaSocial, texto: String) = lanzar { cliente().responderPregunta(h.id, texto) }
+    suspend fun respuestasPregunta(h: HistoriaSocial) = runCatching { cliente().respuestasPregunta(h.id) }.getOrDefault(emptyList())
+    fun fijarPublicacion(id: Long, si: Boolean) = lanzar { cliente().fijarPublicacion(id, si) }
     fun destacarHistoria(h: HistoriaSocial, titulo: String) = lanzar { cliente().destacarHistoria(h.id, titulo) }
     suspend fun destacadas(usuario: String): List<GrupoDestacadasSocial> = runCatching { cliente().destacadas(usuario) }.getOrDefault(emptyList())
     fun meGustaHistoria(h: HistoriaSocial, si: Boolean) {

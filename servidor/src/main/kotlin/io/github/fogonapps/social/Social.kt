@@ -159,6 +159,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     /** La encuesta: cuántos votos tiene cada opción y la opción que votó quien mira (-1 si no votó). */
     val votos: List<Int> = emptyList(), val miVoto: Int = -1, val destacada: String = "")
 @Serializable data class Voto(val opcion: Int)
+@Serializable data class RespuestaHistoria(val persona: Persona, val texto: String, val cuando: Long)
+@Serializable data class TextoRespuesta(val texto: String)
 @Serializable data class Destacar(val titulo: String)
 @Serializable data class GrupoDestacadas(val titulo: String, val historias: List<Historia>)
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
@@ -883,7 +885,7 @@ class Social(
         val relacion = relacion(lector, id)
         val cerrada = esPrivada(id) && relacion != "yo" && relacion != "sigo"
         val ve = { v: String -> !cerrada && (v == Vis.PUBLICA || relacion == "yo" || relacion == "sigo") }
-        val pubs = if (cerrada) emptyList() else filas(lector, "p.app = ? AND p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.cuando DESC LIMIT 60", app, id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
+        val pubs = if (cerrada) emptyList() else filas(lector, "p.app = ? AND p.cuenta = ? AND (p.oculta = 0 OR p.cuenta = ?) ORDER BY p.fijada DESC, p.cuando DESC LIMIT 60", app, id, lector ?: -1).map { it.second }.filter { ve(it.visibilidad) }
         val (seguidores, siguiendo, cuantas) = b.usar {
             Triple(
                 leer("SELECT COUNT(*) FROM seguir WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND a = ? AND aceptada = 1", id) { it.getInt(1) }.first(),
@@ -1427,6 +1429,11 @@ class Social(
         val compuesta = (d["compuesta"] as? JsonPrimitive)?.booleanOrNull == true && imagen.isNotEmpty()
         // Solo para tus mejores amigos (como en Instagram).
         val mejores = (d["mejores"] as? JsonPrimitive)?.booleanOrNull == true
+        // Solo para amigos (quienes se siguen contigo).
+        val soloAmigos = !mejores && (d["amigos"] as? JsonPrimitive)?.booleanOrNull == true
+        // Una pregunta abierta («Recomiéndame un libro») y las menciones (@), que reciben aviso.
+        val pregunta = (d["pregunta"] as? JsonPrimitive)?.contentOrNull?.filter { !it.isISOControl() }?.trim()?.take(80).orEmpty()
+        val menciones = (d["menciones"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.lowercase()?.trim()?.takeIf { u -> USUARIO.matches(u) } }.distinct().take(5)
         // Una encuesta (como en Instagram): una pregunta y de 2 a 4 opciones cortas.
         val encuesta = (d["encuesta"] as? JsonObject)?.let { e ->
             val pregunta = (e["pregunta"] as? JsonPrimitive)?.contentOrNull?.filter { !it.isISOControl() }?.trim()?.take(80).orEmpty()
@@ -1434,7 +1441,7 @@ class Social(
             if (opciones.size >= 2) buildJsonObject { put("pregunta", pregunta); put("opciones", JsonArray(opciones.map(::JsonPrimitive))) } else null
         }
         if (imagen.isNotEmpty() && b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", imagen, yo) { 1 }.isEmpty() }) throw Problema(400, "imagen")
-        if (imagen.isEmpty() && texto.isEmpty() && adjunto == null && (d["encuesta"] as? JsonObject) == null) throw Problema(400, "vacia")
+        if (imagen.isEmpty() && texto.isEmpty() && adjunto == null && (d["encuesta"] as? JsonObject) == null && (d["pregunta"] as? JsonPrimitive)?.contentOrNull.isNullOrBlank()) throw Problema(400, "vacia")
         if (b.usar { leer("SELECT COUNT(*) FROM historias WHERE cuenta = ? AND cuando > ?", yo, ahora() - DIA) { it.getInt(1) }.first() } >= 30) throw Problema(429, "despacio")
         val datos = buildJsonObject {
             if (imagen.isNotEmpty()) put("imagen", imagen)
@@ -1444,8 +1451,13 @@ class Social(
             adjunto?.let { put("adjunto", it) }
             adjunto2?.let { put("adjunto2", it) }
             encuesta?.let { put("encuesta", it) }
+            if (pregunta.isNotEmpty()) put("pregunta", pregunta)
+            if (menciones.isNotEmpty()) put("menciones", JsonArray(menciones.map(::JsonPrimitive)))
         }
-        val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira, mejores) VALUES(?,?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA, if (mejores) 1 else 0) }
+        val id = b.usar { insertar("INSERT INTO historias(cuenta, app, datos, cuando, expira, mejores, amigos) VALUES(?,?,?,?,?,?,?)", yo, app, datos.toString(), ahora(), ahora() + DIA, if (mejores) 1 else 0, if (soloAmigos) 1 else 0) }
+        // Las menciones reciben aviso (si siguen existiendo y no hay bloqueo).
+        menciones.forEach { u -> b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", u) { it.getLong(1) }.firstOrNull() }
+            ?.takeIf { it != yo && !bloqueado(it, yo) && !bloqueado(yo, it) }?.let { avisar(it, yo, "historia_mencion", id.toString()) } }
         return Historia(id, datos, ahora(), true, mejores = mejores)
     }
 
@@ -1457,7 +1469,8 @@ class Social(
             FROM historias h WHERE h.app = ? AND h.expira > ? AND h.estado = 'visible' AND (h.oculta = 0 OR h.cuenta = ?)
               AND (h.cuenta = ? OR h.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1))
               AND (h.mejores = 0 OR h.cuenta = ? OR EXISTS(SELECT 1 FROM mejores_amigos m WHERE m.cuenta = h.cuenta AND m.amigo = ?))
-            ORDER BY h.cuando LIMIT 600""", yo, yo, app, ahora(), yo, yo, yo, yo, yo) {
+              AND (h.amigos = 0 OR h.cuenta = ? OR EXISTS(SELECT 1 FROM seguir t WHERE t.de = h.cuenta AND t.a = ? AND t.aceptada = 1))
+            ORDER BY h.cuando LIMIT 600""", yo, yo, app, ahora(), yo, yo, yo, yo, yo, yo, yo) {
             arrayOf<Any>(it.getLong(1), it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5) == 1, it.getInt(6) == 1, it.getInt(7) == 1)
         } }
         return filas.groupBy { it[1] as Long }.filterKeys { it == yo || (visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo)) }
@@ -1483,8 +1496,35 @@ class Social(
         val (datos, cuando, autor) = b.usar { leer("SELECT datos, cuando, cuenta FROM historias WHERE id = ?", id) { Triple(JsonSocial.parseToJsonElement(it.getString(1)).jsonObject, it.getLong(2), it.getLong(3)) }.first() }
         val opciones = ((datos["encuesta"] as? JsonObject)?.get("opciones") as? JsonArray)?.size ?: throw Problema(400, "sin_encuesta")
         if (v.opcion !in 0 until opciones) throw Problema(400, "opcion")
+        val nuevo = b.usar { leer("SELECT 1 FROM historia_votos WHERE historia = ? AND cuenta = ?", id, yo) { 1 }.isEmpty() }
         b.usar { cambiar("INSERT INTO historia_votos(historia, cuenta, opcion) VALUES(?,?,?) ON CONFLICT(historia, cuenta) DO UPDATE SET opcion = excluded.opcion", id, yo, v.opcion) }
+        if (nuevo) avisar(autor, yo, "historia_voto", id.toString())
         return conVotos(Historia(id, datos, cuando, true), yo, autor == yo)
+    }
+
+    /** Responder la pregunta de una historia: solo la lee quien la subió (le llega un aviso). Hasta 3 por persona. */
+    fun responderPregunta(yo: Long, id: Long, r: TextoRespuesta) {
+        verHistoria(yo, id)
+        val (datos, autor) = b.usar { leer("SELECT datos, cuenta FROM historias WHERE id = ?", id) { JsonSocial.parseToJsonElement(it.getString(1)).jsonObject to it.getLong(2) }.first() }
+        if ((datos["pregunta"] as? JsonPrimitive)?.contentOrNull.isNullOrBlank()) throw Problema(400, "sin_pregunta")
+        val texto = r.texto.filter { !it.isISOControl() }.trim().take(200)
+        if (texto.isEmpty()) throw Problema(400, "texto")
+        if (b.usar { leer("SELECT COUNT(*) FROM historia_respuestas WHERE historia = ? AND cuenta = ?", id, yo) { it.getInt(1) }.first() } >= 3) throw Problema(429, "despacio")
+        b.usar { cambiar("INSERT INTO historia_respuestas(historia, cuenta, texto, cuando) VALUES(?,?,?,?)", id, yo, texto, ahora()) }
+        avisar(autor, yo, "historia_respuesta", id.toString())
+    }
+
+    fun respuestasPregunta(yo: Long, id: Long): List<RespuestaHistoria> {
+        if (b.usar { leer("SELECT 1 FROM historias WHERE id = ? AND cuenta = ?", id, yo) { 1 }.isEmpty() }) throw Problema(404, "no_existe")
+        return b.usar { leer("SELECT cuenta, texto, cuando FROM historia_respuestas WHERE historia = ? ORDER BY cuando DESC LIMIT 500", id) { Triple(it.getLong(1), it.getString(2), it.getLong(3)) } }
+            .filter { visible(it.first) && !bloqueado(yo, it.first) }.map { RespuestaHistoria(persona(it.first), it.second, it.third) }
+    }
+
+    /** Fijar (o soltar) una publicación propia arriba del perfil de su app; solo una fijada por app. */
+    fun fijarPublicacion(yo: Long, id: Long, si: Boolean) = b.transaccion {
+        val app = leer("SELECT app FROM publicaciones WHERE id = ? AND cuenta = ? AND estado = 'visible'", id, yo) { it.getString(1) }.firstOrNull() ?: throw Problema(404, "no_existe")
+        cambiar("UPDATE publicaciones SET fijada = 0 WHERE cuenta = ? AND app = ?", yo, app)
+        if (si) cambiar("UPDATE publicaciones SET fijada = 1 WHERE id = ?", id)
     }
 
     /** Guardar (o sacar, con título vacío) una historia propia en las destacadas del perfil: ahí no vence. */

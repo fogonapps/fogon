@@ -1629,4 +1629,20 @@
   <string name="cumple_guardado">Saved.</string>
   <string name="chat_silenciar">Mute this chat</string>
   <string name="chat_silenciado">Muted</string>
+  <string name="red_aviso_voto">voted in your poll</string>
+  <string name="red_aviso_mencion">mentioned you in their story</string>
+  <string name="red_aviso_respuesta">answered your question</string>
+  <string name="menu_a_historia">Share to your story</string>
+  <string name="menu_fijar">Pin to the top of your profile</string>
+  <string name="historia_pregunta_corta">Question</string>
+  <string name="historia_pregunta_pista">For example: “Recommend me a book”</string>
+  <string name="historia_mencionar">Mention</string>
+  <string name="historia_agregar">Add</string>
+  <string name="historia_para_todos">Everyone</string>
+  <string name="historia_para_amigos">Friends only</string>
+  <string name="historia_ver_respuestas">See answers</string>
+  <string name="historia_respuesta_enviada">Sent: only the person who posted it sees it.</string>
+  <string name="historia_tu_respuesta">Your answer</string>
+  <string name="historia_sin_respuestas">No answers yet.</string>
+  <string name="historia_tipo_publicacion">Post</string>
 </resources>

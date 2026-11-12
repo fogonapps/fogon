@@ -240,6 +240,8 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
     val votos: List<Int> = emptyList(), val miVoto: Int = -1, val destacada: String = "")
 @Serializable data class GrupoDestacadasSocial(val titulo: String, val historias: List<HistoriaSocial> = emptyList())
 @Serializable internal data class VotoHistoria(val opcion: Int)
+@Serializable internal data class TextoRespuesta(val texto: String)
+@Serializable data class RespuestaHistoriaSocial(val persona: PersonaSocial, val texto: String, val cuando: Long = 0)
 @Serializable internal data class DestacarHistoria(val titulo: String)
 @Serializable data class GrupoHistoriasSocial(val persona: PersonaSocial, val historias: List<HistoriaSocial> = emptyList(), val silenciada: Boolean = false) {
     val todasVistas get() = historias.all { it.vista }

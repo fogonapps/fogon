@@ -1,4 +1,6 @@
 package io.github.fogonapps.social.ui
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.buildJsonObject
 import io.github.fogonapps.identidad.IconosSociales as Iconos
 import io.github.fogonapps.identidad.SeccionSocial as Seccion
 import io.github.fogonapps.identidad.PistaSocial as Pista
@@ -285,7 +287,7 @@ fun AvisosRed(vm: InterfazSocial) {
           avisosDelGrupo.forEach { a ->
             val que = stringResource(when (a.tipo) {
                 "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta; "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
-                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
+                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "historia_voto" -> R.string.social_red_aviso_voto; "historia_mencion" -> R.string.social_red_aviso_mencion; "historia_respuesta" -> R.string.social_red_aviso_respuesta; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
             })
             FilaPersona(a.de, {
                 val pub = a.objeto.toLongOrNull()
@@ -854,6 +856,19 @@ fun MenuPublicacion(vm: InterfazSocial, p: PublicacionSocial, motivo: String, on
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var reportando by remember { mutableStateOf(false) }
     var porque by remember { mutableStateOf(false) }
+    var aHistoria by remember { mutableStateOf(false) }
+    // Compartir la publicación en tu historia (como en Instagram): va como adjunto que lleva a la publicación.
+    if (aHistoria) {
+        val d = p.datos
+        val adjunto = buildJsonObject {
+            put("tipo", "publicacion"); put("titulo", (d.texto("titulo").ifBlank { d.texto("texto") }).take(120).ifBlank { p.autor.nombre.ifBlank { p.autor.usuario } })
+            put("detalle", "@" + p.autor.usuario)
+            imagenesPublicacion(d).firstOrNull()?.let { put("imagen", it) }
+            put("enlace", ClienteSocial.enlacePublicacion(p.id))
+        }
+        CrearHistoria(vm, adjunto) { aHistoria = false; onCerrar() }
+        return
+    }
     androidx.compose.material3.ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             @Composable fun Fila(icono: io.github.fogonapps.identidad.Dibujo, texto: String, peligro: Boolean = false, onClick: () -> Unit) {
@@ -884,6 +899,8 @@ fun MenuPublicacion(vm: InterfazSocial, p: PublicacionSocial, motivo: String, on
                         Fila(Iconos.Cerrar, stringResource(R.string.social_menu_no_me_interesa)) { vm.interesa(p, false); onCerrar() }
                         Fila(Iconos.Persona, stringResource(R.string.social_menu_silenciar, p.autor.usuario)) { vm.silenciar(p.autor.usuario); onCerrar() }
                     }
+                    if (yo != null) Fila(Iconos.Mas, stringResource(R.string.social_menu_a_historia)) { aHistoria = true }
+                    if (p.autor.usuario == yo) Fila(Iconos.Estrella, stringResource(R.string.social_menu_fijar)) { vm.red.fijarPublicacion(p.id, true); onCerrar() }
                     Fila(Iconos.Enlace, stringResource(R.string.social_menu_copiar_enlace)) {
                         (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
                             .setPrimaryClip(android.content.ClipData.newPlainText("", ClienteSocial.enlacePublicacion(p.id))); onCerrar()

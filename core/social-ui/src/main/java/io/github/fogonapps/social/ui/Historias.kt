@@ -226,6 +226,7 @@ private fun nombreTipoAdjunto(tipo: String, tipoObra: String): String = stringRe
     "entreno" -> R.string.historia_tipo_entreno
     "ejercicio" -> R.string.historia_tipo_ejercicio
     "logro", "racha" -> R.string.historia_tipo_logro
+    "publicacion" -> R.string.historia_tipo_publicacion
     "plato", "receta" -> R.string.historia_tipo_plato
     "meta", "ahorro" -> R.string.historia_tipo_meta
     else -> R.string.historia_tipo_otro
@@ -457,6 +458,11 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     var eligiendo by remember { mutableStateOf(false) }
     var subiendo by remember { mutableStateOf(false) }
     var soloMejores by rememberSaveable { mutableStateOf(false) }
+    var soloAmigos by rememberSaveable { mutableStateOf(false) }
+    var pregunta by rememberSaveable { mutableStateOf("") }
+    var preguntando by remember { mutableStateOf(false) }
+    val menciones = remember { mutableStateListOf<String>() }
+    var mencionando by remember { mutableStateOf(false) }
     var encuesta by remember { mutableStateOf<Pair<String, List<String>>?>(null) }
     var creandoEncuesta by remember { mutableStateOf(false) }
     var listaMejores by remember { mutableStateOf(false) }
@@ -586,6 +592,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                 Pildora(stringResource(R.string.historia_sticker)) { eligiendoSticker = true }
                 Pildora(stringResource(R.string.historia_musica)) { eligiendo = true }
                 Pildora(stringResource(R.string.historia_encuesta)) { creandoEncuesta = true }
+                Pildora(stringResource(R.string.historia_pregunta_corta)) { preguntando = true }
+                Pildora(stringResource(R.string.historia_mencionar)) { mencionando = true }
                 if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null }
             }
             if (foto == null && !dibujando) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -594,8 +602,13 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(if (fondo == i) 3.dp else 1.dp, if (fondo == i) f.acentoTexto else f.linea, CircleShape).clickable { fondo = i })
                 }
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Pildora(stringResource(R.string.historia_mejores_amigos), acento = soloMejores) { soloMejores = !soloMejores }
+            if (pregunta.isNotBlank() || menciones.isNotEmpty()) Text(listOfNotNull(pregunta.takeIf { it.isNotBlank() }?.let { "? $it" }, menciones.takeIf { it.isNotEmpty() }?.joinToString(" ") { "@$it" }).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            // Quién la ve: todos los que te siguen, solo tus amigos o tus mejores amigos.
+            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Pildora(stringResource(R.string.historia_para_todos), acento = !soloAmigos && !soloMejores) { soloAmigos = false; soloMejores = false }
+                Pildora(stringResource(R.string.historia_para_amigos), acento = soloAmigos) { soloAmigos = true; soloMejores = false }
+                Pildora(stringResource(R.string.historia_mejores_amigos), acento = soloMejores) { soloMejores = true; soloAmigos = false }
                 Pildora(stringResource(R.string.historia_lista_mejores)) { listaMejores = true }
             }
             if (capas.isEmpty() && trazos.isEmpty()) Text(stringResource(R.string.historia_editor_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -611,6 +624,9 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     val datos = buildJsonObject {
                         put("compuesta", true)
                         if (soloMejores) put("mejores", true)
+                        if (soloAmigos) put("amigos", true)
+                        if (pregunta.isNotBlank()) put("pregunta", pregunta.trim())
+                        if (menciones.isNotEmpty()) put("menciones", JsonArray(menciones.map(::JsonPrimitive)))
                         encuesta?.let { (p, o) -> put("encuesta", buildJsonObject { put("pregunta", p); put("opciones", JsonArray(o.map(::JsonPrimitive))) }) }
                         // Las palabras van también como texto: para leerlas en voz alta y para moderar.
                         capas.mapNotNull { it.texto.takeIf { t -> t.isNotBlank() } }.joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("texto", it.take(200)) }
@@ -631,6 +647,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     if (eligiendoSticker) ElegirStickerHistoria(vm, { eligiendoSticker = false }) { b64, recurso -> eligiendoSticker = false; agregar(Capa(siguiente, sticker = b64, recurso = recurso)) }
     if (eligiendo) ElegirAdjunto(vm, { eligiendo = false }) { if (it.t("tipo") == "cancion") adjunto = it else adjunto2 = it }
     if (listaMejores) HojaMejoresAmigos(vm) { listaMejores = false }
+    if (preguntando) PedirTexto(stringResource(R.string.historia_pregunta_corta), stringResource(R.string.historia_pregunta_pista), { preguntando = false }) { pregunta = it.take(80); preguntando = false }
+    if (mencionando) ElegirMenciones(vm, menciones) { mencionando = false }
     if (creandoEncuesta) CrearEncuesta({ creandoEncuesta = false }) { encuesta = it; creandoEncuesta = false }
     if (fotosObra) ElegirFotoDeObra(vm, { fotosObra = false }) { url -> fotosObra = false; foto = url; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
 }
@@ -826,6 +844,12 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).padding(bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 (historia.datos["encuesta"] as? JsonObject)?.let { EncuestaHistoria(vm, historia, it, propia) }
+                historia.datos.t("pregunta").takeIf { it.isNotBlank() }?.let { PreguntaHistoria(vm, historia, it, propia) { escribiendo -> pausado = escribiendo } }
+                (historia.datos["menciones"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }?.takeIf { it.isNotEmpty() }?.let { l ->
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        l.forEach { u -> Pildora("@$u") { onCerrar(); vm.navegacion.perfil(u) } }
+                    }
+                }
                 if (compuesta) adjunto?.let { ControlesAdjunto(it, sonar = true) }
                 (historia.datos["adjunto2"] as? JsonObject)?.let { ControlesAdjunto(it, sonar = adjunto == null) }
                 val texto = historia.datos.t("texto")
@@ -1099,5 +1123,68 @@ fun EditorCumple(vm: InterfazSocial) {
             if (cumple.isNotBlank()) Pildora(stringResource(R.string.cumple_quitar)) { vm.red.ponerCumple(""); dia = ""; mes = "" }
         }
         if (cumple.isNotBlank()) Text(stringResource(R.string.cumple_guardado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    }
+}
+
+/** Mencionar a alguien (@): elegir entre tus amigos o escribir el usuario; reciben un aviso. Hasta 5. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ElegirMenciones(vm: InterfazSocial, elegidas: MutableList<String>, onCerrar: () -> Unit) {
+    val f = FogonTema.actual
+    val amigos by vm.red.amigos.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.red.cargarAmigos() }
+    var escrito by remember { mutableStateOf("") }
+    ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp).verticalScroll(rememberScrollState())) {
+            Text(stringResource(R.string.historia_mencionar), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp))
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(escrito, { escrito = it.removePrefix("@").lowercase().filter { c -> c.isLetterOrDigit() || c == '.' || c == '_' }.take(30) }, Modifier.weight(1f), singleLine = true, shape = forma(14.dp), placeholder = { Text("@usuario") })
+                Pildora(stringResource(R.string.historia_agregar), Iconos.Mas) { if (escrito.length >= 3 && escrito !in elegidas && elegidas.size < 5) elegidas.add(escrito); escrito = "" }
+            }
+            amigos.forEach { p ->
+                FilaPersona(p, { if (p.usuario in elegidas) elegidas.remove(p.usuario) else if (elegidas.size < 5) elegidas.add(p.usuario) }) {
+                    Checkbox(p.usuario in elegidas, { si -> if (si && elegidas.size < 5) elegidas.add(p.usuario) else elegidas.remove(p.usuario) },
+                        colors = CheckboxDefaults.colors(checkedColor = f.tinta1, checkmarkColor = f.sobreTinta1))
+                }
+            }
+            BotonRiso(stringResource(R.string.sancion_listo), onCerrar, Modifier.fillMaxWidth().padding(16.dp))
+        }
+    }
+}
+
+/** La pregunta de una historia: los demás responden (solo la lee quien la subió); la propia muestra las respuestas. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreguntaHistoria(vm: InterfazSocial, h: HistoriaSocial, pregunta: String, propia: Boolean, alEscribir: (Boolean) -> Unit) {
+    val f = FogonTema.actual
+    val alcance = rememberCoroutineScope()
+    var texto by remember(h.id) { mutableStateOf("") }
+    var enviada by remember(h.id) { mutableStateOf(false) }
+    var respuestas by remember { mutableStateOf<List<RespuestaHistoriaSocial>?>(null) }
+    Column(Modifier.fillMaxWidth().clip(forma(18.dp)).background(f.fondo).border(f.borde, f.linea, forma(18.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(pregunta, style = MaterialTheme.typography.titleSmall, color = f.texto)
+        if (propia) Pildora(stringResource(R.string.historia_ver_respuestas)) { alEscribir(true); alcance.launch { respuestas = vm.red.respuestasPregunta(h) } }
+        else if (enviada) Text(stringResource(R.string.historia_respuesta_enviada), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        else Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(texto, { texto = it.take(200); alEscribir(it.isNotEmpty()) }, Modifier.weight(1f), shape = forma(14.dp), placeholder = { Text(stringResource(R.string.historia_tu_respuesta)) })
+            if (texto.isNotBlank()) BotonIcono(Iconos.Enviar, stringResource(R.string.historia_responder)) { vm.red.responderPregunta(h, texto.trim()); enviada = true; alEscribir(false) }
+        }
+    }
+    respuestas?.let { l ->
+        ModalBottomSheet({ respuestas = null; alEscribir(false) }, containerColor = f.fondo, contentColor = f.texto) {
+            Column(Modifier.fillMaxWidth().padding(bottom = 24.dp).verticalScroll(rememberScrollState())) {
+                Text(pregunta, style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+                if (l.isEmpty()) Pista(stringResource(R.string.historia_sin_respuestas), Modifier.padding(16.dp))
+                l.forEach { r ->
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        AvatarRed(r.persona, 36.dp)
+                        Column(Modifier.weight(1f)) {
+                            NombreRed(r.persona)
+                            Text(r.texto, style = MaterialTheme.typography.bodyMedium, color = f.texto)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -143,6 +143,16 @@ class HistoriasTest {
             val votada = s.votarHistoria(beto, h.id, Voto(1))
             assertEquals(listOf(0, 1), votada.votos); assertEquals(1, votada.miVoto)
             assertEquals(listOf(0, 1), s.historias(ana, "cajon").single().historias.single().votos)
+            assertEquals(1, s.avisos(ana, null, "cajon").count { it.tipo == "historia_voto" })
+            // Pregunta: responder avisa y solo lo lee quien la subió.
+            val p = s.subirHistoria(ana, "cajon", HistoriaNueva(buildJsonObject { put("pregunta", "Recomiéndame un libro"); put("menciones", JsonArray(listOf(JsonPrimitive("roberto")))) }))
+            assertEquals(1, s.avisos(beto, null, "cajon").count { it.tipo == "historia_mencion" })
+            s.responderPregunta(beto, p.id, TextoRespuesta("Rayuela"))
+            assertEquals(listOf("Rayuela"), s.respuestasPregunta(ana, p.id).map { it.texto })
+            assertEquals(404, assertFailsWith<Problema> { s.respuestasPregunta(beto, p.id) }.codigo)
+            // Solo amigos: roberto sigue a ana, pero ana no a él: no la ve.
+            s.subirHistoria(ana, "cajon", HistoriaNueva(buildJsonObject { put("texto", "Amigos"); put("amigos", true) }))
+            assertEquals(2, s.historias(beto, "cajon").single().historias.size)
             // Destacada: sale en el perfil y no se borra al vencer.
             s.destacarHistoria(ana, h.id, Destacar("Ghibli"))
             assertEquals(404, assertFailsWith<Problema> { s.destacarHistoria(beto, h.id, Destacar("x")) }.codigo)

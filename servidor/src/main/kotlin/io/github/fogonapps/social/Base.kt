@@ -125,6 +125,11 @@ class Base(ruta: String) {
                 columna(s, "historias", "destacada TEXT NOT NULL DEFAULT ''")
                 // El cumpleaños (opcional): solo día y mes ("MM-DD"); lo ven solo los amigos.
                 columna(s, "cuentas", "cumple TEXT NOT NULL DEFAULT ''")
+                // Historias solo para amigos, respuestas a la pregunta de una historia y la publicación fijada del perfil.
+                columna(s, "historias", "amigos INTEGER NOT NULL DEFAULT 0")
+                s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, cuando INTEGER NOT NULL)""")
+                columna(s, "publicaciones", "fijada INTEGER NOT NULL DEFAULT 0")
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_votos(historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, opcion INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
                 s.execute("""CREATE TABLE IF NOT EXISTS mejores_amigos(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,

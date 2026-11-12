@@ -1631,4 +1631,20 @@
   <string name="cumple_guardado">Guardado.</string>
   <string name="chat_silenciar">Silenciar este chat</string>
   <string name="chat_silenciado">Silenciado</string>
+  <string name="red_aviso_voto">votó en tu encuesta</string>
+  <string name="red_aviso_mencion">te mencionó en su historia</string>
+  <string name="red_aviso_respuesta">respondió tu pregunta</string>
+  <string name="menu_a_historia">Compartir en tu historia</string>
+  <string name="menu_fijar">Fijar arriba de tu perfil</string>
+  <string name="historia_pregunta_corta">Pregunta</string>
+  <string name="historia_pregunta_pista">Por ejemplo: «Recomiéndame un libro»</string>
+  <string name="historia_mencionar">Mencionar</string>
+  <string name="historia_agregar">Agregar</string>
+  <string name="historia_para_todos">Todos</string>
+  <string name="historia_para_amigos">Solo amigos</string>
+  <string name="historia_ver_respuestas">Ver respuestas</string>
+  <string name="historia_respuesta_enviada">Enviada: solo la ve quien la subió.</string>
+  <string name="historia_tu_respuesta">Tu respuesta</string>
+  <string name="historia_sin_respuestas">Todavía no hay respuestas.</string>
+  <string name="historia_tipo_publicacion">Publicación</string>
 </resources>
