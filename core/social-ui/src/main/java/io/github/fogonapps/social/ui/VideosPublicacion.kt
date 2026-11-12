@@ -121,3 +121,24 @@ fun ReproductorVideo(cabecerasVideo: () -> Map<String, String>, nombre: String, 
         }
     }
 }
+
+/** El video de una historia, a pantalla completa y sin controles: se pausa al mantener apretado. */
+@OptIn(UnstableApi::class)
+@Composable
+fun VideoHistoria(cabecerasVideo: () -> Map<String, String>, nombre: String, pausado: Boolean, modifier: Modifier = Modifier) {
+    val contexto = LocalContext.current
+    val reproductor = remember(nombre) {
+        runCatching {
+            val fuente = DefaultHttpDataSource.Factory().setDefaultRequestProperties(cabecerasVideo())
+            ExoPlayer.Builder(contexto).setMediaSourceFactory(DefaultMediaSourceFactory(contexto).setDataSourceFactory(fuente)).build().apply {
+                setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), true)
+                setMediaItem(MediaItem.fromUri(ClienteSocial.video(nombre)))
+                prepare()
+            }
+        }.getOrNull()
+    }
+    LaunchedEffect(reproductor, pausado) { reproductor?.playWhenReady = !pausado }
+    DisposableEffect(reproductor) { onDispose { reproductor?.release() } }
+    AndroidView(factory = { PlayerView(it).apply { useController = false; isFocusable = false; player = reproductor; setShutterBackgroundColor(androidx.compose.ui.graphics.Color.Transparent.toArgb()) } },
+        modifier = modifier, onRelease = { it.player = null })
+}

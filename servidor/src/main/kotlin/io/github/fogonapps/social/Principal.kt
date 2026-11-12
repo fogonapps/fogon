@@ -387,6 +387,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/historias/{id}/respuestas") { call.respond(social.respuestasPregunta(call.yo(), call.id())) }
             post("/publicaciones/{id}/fijar") { social.fijarPublicacion(call.yo(), call.id(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/publicaciones/{id}/fijar") { social.fijarPublicacion(call.yo(), call.id(), false); call.respond(HttpStatusCode.NoContent) }
+            get("/historias/archivo") { call.respond(social.archivoHistorias(call.yo(), call.request.queryParameters["app"] ?: "cajon")) }
+            put("/historias/{id}/portada") { social.portadaDestacada(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
             post("/historias/{id}/voto") { call.respond(social.votarHistoria(call.yo(), call.id(), call.receive())) }
             put("/historias/{id}/destacada") { social.destacarHistoria(call.yo(), call.id(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/destacadas/{usuario}") { call.respond(social.destacadas(call.lector(), call.usuario(), call.request.queryParameters["app"] ?: "cajon")) }

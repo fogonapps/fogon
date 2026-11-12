@@ -20,7 +20,7 @@ data class VideoPreparado(val archivo: File, val poster: ByteArray, val segundos
 
 /** Solo archivos temporales privados; cancelar también detiene los codificadores. */
 @OptIn(UnstableApi::class)
-suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit, recorte: () -> Unit): VideoPreparado = withContext(Dispatchers.Main.immediate) {
+suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit, recorte: () -> Unit, maximoMs: Long = 30_000): VideoPreparado = withContext(Dispatchers.Main.immediate) {
     val metadatos = withContext(Dispatchers.IO) {
         conMetadatos { lector ->
             lector.setDataSource(contexto, uri)
@@ -28,7 +28,7 @@ suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit
             val ancho = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: error("video_formato")
             val alto = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: error("video_formato")
             val rotacion = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
-            if (rotacion % 180 == 0) Triple(tramoVideo(duracion), ancho, alto) else Triple(tramoVideo(duracion), alto, ancho)
+            if (rotacion % 180 == 0) Triple(tramoVideo(duracion, maximoMs), ancho, alto) else Triple(tramoVideo(duracion, maximoMs), alto, ancho)
         }
     }
     val (tramo, ancho, alto) = metadatos

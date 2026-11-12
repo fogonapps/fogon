@@ -56,10 +56,14 @@ class HistoriasTest {
             assertNull(s.subirHistoria(ana, "forzudo", HistoriaNueva(buildJsonObject { put("compuesta", true); put("texto", "Hola") })).datos["compuesta"])
             // Reportada y retirada: deja de verse y su imagen también.
             s.reportar(beto, NuevoReporte("historia", "${h.id}", "spam"))
-            // A las 24 horas se va; a los dos días se borra con su imagen.
+            // A las 24 horas se va; queda en el archivo de quien la subió y a los 90 días se borra con su imagen.
             reloj += 24 * 3600_000L + 1
             assertTrue(s.historias(beto, "forzudo").isEmpty())
+            assertTrue(s.archivoHistorias(ana, "forzudo").any { it.id == hecha.id })
             reloj += 24 * 3600_000L
+            s.limpiarHistorias()
+            assertTrue(s.archivoHistorias(ana, "forzudo").any { it.id == hecha.id })
+            reloj += 90 * 24 * 3600_000L
             s.limpiarHistorias()
             assertTrue(b.usar { leer("SELECT 1 FROM historias") { 1 } }.isEmpty())
             assertEquals(404, assertFailsWith<Problema> { s.imagen(mia, ana) }.codigo)

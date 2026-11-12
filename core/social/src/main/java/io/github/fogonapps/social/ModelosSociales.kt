@@ -176,7 +176,7 @@ data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList()
 data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.SobreNuevo")
-internal data class SobreNuevo(val sobre: String, val firma: String)
+internal data class SobreNuevo(val sobre: String, val firma: String, val silencioso: Boolean = false)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.Sobre")
 data class Sobre(val id: Long, val de: PersonaSocial, val cuando: Long, val sobre: String, val firma: String)

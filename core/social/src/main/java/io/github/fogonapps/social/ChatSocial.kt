@@ -33,6 +33,10 @@ data class MensajeChat(
     val tamano: Int = 1,
     /** Las reacciones (un emoji) de cada quien. */
     val reaccionMia: String = "", val reaccionSuya: String = "",
+    /** Una foto (JPEG en base64) o una nota de voz (AAC en base64) de [segundos]. */
+    val foto: String? = null, val audio: String? = null, val segundos: Int = 0,
+    /** La otra persona ya lo vio (si los dos tienen las confirmaciones de lectura prendidas). */
+    val visto: Boolean = false,
 ) { val clave get() = k.ifBlank { id } }
 
 /** Un sticker guardado: la imagen (WebP en base64) y un nombre para buscarlo. */
@@ -59,6 +63,10 @@ data class MensajeChat(
     val z: Int? = null,
     /** Una reacción: [x] (un emoji; vacío la quita) al mensaje de clave [rk]. */
     val rk: String? = null, val x: String? = null,
+    /** Una foto [f] (JPEG en base64) o una nota de voz [a] (AAC en base64) de [d] segundos. */
+    val f: String? = null, val a: String? = null, val d: Int? = null,
+    /** «Visto»: la otra persona leyó hasta el mensaje de clave [v]. */
+    val v: String? = null,
 )
 
 @Serializable private data class Chats(
@@ -66,6 +74,8 @@ data class MensajeChat(
     val estilos: Map<String, EstiloChat> = emptyMap(), val stickers: List<Sticker> = emptyList(),
     /** El nombre y si tiene foto de cada persona con la que se habla (para mostrar el nombre y no el @usuario). */
     val personas: Map<String, PersonaSocial> = emptyMap(),
+    /** Sin confirmaciones de lectura: no se manda el «Visto» ni se muestra el de los demás. */
+    val sinVisto: Boolean = false,
 )
 
 fun claveSobre(s: Sobre): String = "s${s.id}:${s.cuando}:${s.de.usuario}"
@@ -131,6 +141,9 @@ class ChatSocial(
     val stickers: StateFlow<List<Sticker>> = _stickers
     private val _personas = MutableStateFlow<Map<String, PersonaSocial>>(emptyMap())
     val personas: StateFlow<Map<String, PersonaSocial>> = _personas
+    private val _confirmaLectura = MutableStateFlow(true)
+    /** Si se manda y se muestra el «Visto» (se puede apagar en la información de cualquier chat). */
+    val confirmaLectura: StateFlow<Boolean> = _confirmaLectura
     private val _enviando = MutableStateFlow(false)
     val enviando: StateFlow<Boolean> = _enviando
     private val llavesDe = HashMap<String, LlavesPublicas>()
@@ -159,7 +172,7 @@ class ChatSocial(
     }
 
     private fun poner(c: Chats) {
-        _chats.value = c; _conversaciones.value = c.conversaciones; _estilos.value = c.estilos; _stickers.value = c.stickers; _personas.value = c.personas
+        _chats.value = c; _confirmaLectura.value = !c.sinVisto; _conversaciones.value = c.conversaciones; _estilos.value = c.estilos; _stickers.value = c.stickers; _personas.value = c.personas
     }
 
     /** Cambia algo de los chats guardados (de a uno a la vez) y lo escribe. */
@@ -212,15 +225,18 @@ class ChatSocial(
     }.getOrNull()
 
     /** Manda unas palabras, una obra (como tarjeta) o un sticker a [usuario]; con [responde], como respuesta a ese mensaje. */
-    fun enviar(usuario: String, texto: String, obra: JsonObject? = null, responde: MensajeChat? = null, sticker: String? = null, tamano: Int = 1) = scope.launch {
+    fun enviar(usuario: String, texto: String, obra: JsonObject? = null, responde: MensajeChat? = null, sticker: String? = null, tamano: Int = 1,
+               foto: String? = null, audio: String? = null, segundos: Int = 0) = scope.launch {
         val yo = this@ChatSocial.usuario.value ?: return@launch
         val ahora = System.currentTimeMillis()
         val o = obra
         val r = responde?.let { Respuesta(it.clave, if (it.mio) yo else usuario, resumenCorto(it), sticker = it.sticker != null) }
         val id = "m${ahora.toString(36)}"
         val z = tamano.coerceIn(0, 2).takeIf { sticker != null && it != 1 }
-        val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z)
-        if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1))
+        val d = segundos.takeIf { audio != null }
+        val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z, f = foto, a = audio, d = d)
+        if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1,
+            foto = foto, audio = audio, segundos = d ?: 0))
     }
 
     /** Reaccionar a un mensaje con un emoji (o quitar la reacción, con ""), como en Instagram. */
@@ -239,12 +255,14 @@ class ChatSocial(
     /** Un pedacito de un mensaje, para citarlo al responder. */
     private fun resumenCorto(m: MensajeChat): String = when {
         m.sticker != null -> ""
+        m.foto != null -> "\uD83D\uDCF7"
+        m.audio != null -> "\uD83C\uDFA4"
         m.obra != null -> "\u25B8 " + ((m.obra["titulo"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: "")
         else -> m.texto.take(120)
     }
 
     /** Cierra y manda un contenido; false si no se pudo (ya avisó por qué). */
-    private suspend fun mandar(usuario: String, yo: String, c: Contenido): Boolean {
+    private suspend fun mandar(usuario: String, yo: String, c: Contenido, silencioso: Boolean = false): Boolean {
         val p = propias() ?: run { asegurarLlaves(); propias() } ?: return false
         _enviando.value = true
         try {
@@ -253,7 +271,7 @@ class ChatSocial(
             }
             val contenido = JsonSocial.encodeToString(Contenido.serializer(), c).toByteArray()
             val (sobre, firma) = withContext(Dispatchers.Default) { Cifrado.cerrar(contenido, yo, usuario, suyas, p) }
-            cliente().mandar(usuario, sobre, firma)
+            cliente().mandar(usuario, sobre, firma, silencioso)
             return true
         } catch (x: ErrorSocial) {
             decir(when (x.error) { "no_existe" -> "no_se_puede"; "muy_grande" -> "muy_grande"; else -> "error" }); return false
@@ -275,7 +293,7 @@ class ChatSocial(
 
     private suspend fun marcarBorrado(usuario: String, clave: String, mio: Boolean) = cambiar { c ->
         c.copy(conversaciones = c.conversaciones + (usuario to c.conversaciones[usuario].orEmpty().map {
-            if (it.clave == clave && it.mio == mio) it.copy(texto = "", obra = null, sticker = null, responde = null, borrado = true) else it
+            if (it.clave == clave && it.mio == mio) it.copy(texto = "", obra = null, sticker = null, foto = null, audio = null, responde = null, borrado = true) else it
         }))
     }
 
@@ -394,8 +412,10 @@ class ChatSocial(
                 c == null -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, noSeLee = true), s.id)
                 // La otra persona borró un mensaje suyo para todos.
                 c.b != null -> { marcarBorrado(de, c.b, mio = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
+                c.v != null -> { marcarVisto(de, c.v); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
                 c.rk != null -> { reaccionar(de, c.rk, c.x.orEmpty().take(8), mia = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
-                else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }, tamano = (c.z ?: 1).coerceIn(0, 2)), s.id)
+                else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }, tamano = (c.z ?: 1).coerceIn(0, 2),
+                    foto = c.f?.takeIf { it.length <= ADJUNTO_MAX }, audio = c.a?.takeIf { it.length <= ADJUNTO_MAX }, segundos = (c.d ?: 0).coerceIn(0, 60)), s.id)
             }
         }
         if (sobres.isNotEmpty()) cambiar { it.copy(ultimo = cursor) }
@@ -407,13 +427,57 @@ class ChatSocial(
     fun sinLeer(): Int = _conversaciones.value.values.sumOf { l -> l.count { !it.mio && !it.leido } }
 
     fun marcarLeida(usuario: String) = scope.launch {
-        candado.withLock {
+        val visto = candado.withLock {
             val c = _chats.value
-            val l = c.conversaciones[usuario] ?: return@withLock
-            if (l.none { !it.leido }) return@withLock
+            val l = c.conversaciones[usuario] ?: return@withLock null
+            if (l.none { !it.leido }) return@withLock null
             poner(c.copy(conversaciones = c.conversaciones + (usuario to l.map { it.copy(leido = true) })))
             guardar()
+            l.lastOrNull { !it.mio && !it.noSeLee && it.k.isNotBlank() }?.k
         }
+        // El «Visto», cifrado como todo y sin avisar.
+        if (visto != null && _confirmaLectura.value) {
+            val yo = this@ChatSocial.usuario.value ?: return@launch
+            val ahora = System.currentTimeMillis()
+            mandar(usuario, yo, Contenido(c = ahora, i = "v${ahora.toString(36)}", v = visto), silencioso = true)
+        }
+    }
+
+    /** La otra persona leyó hasta [clave]: los mensajes propios hasta ese quedan vistos. */
+    private suspend fun marcarVisto(usuario: String, clave: String) = cambiar { c ->
+        val l = c.conversaciones[usuario].orEmpty()
+        val hasta = l.indexOfLast { it.mio && it.clave == clave }
+        if (hasta < 0) c else c.copy(conversaciones = c.conversaciones + (usuario to l.mapIndexed { i, m -> if (m.mio && i <= hasta && !m.visto) m.copy(visto = true) else m }))
+    }
+
+    fun ponerConfirmaLectura(si: Boolean) = scope.launch { cambiar { it.copy(sinVisto = !si) } }
+
+    /** Una foto para mandar: lado mayor de hasta 1080 px, en JPEG, bajando tamaño y calidad hasta que quepa en un sobre. */
+    suspend fun fotoParaMensaje(uri: android.net.Uri): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            val bytes = app.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
+            val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, medidas)
+            var muestra = 1
+            while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= 1080) muestra *= 2
+            var foto = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return@runCatching null
+            // Derecha según la cámara.
+            val giro = runCatching { app.contentResolver.openInputStream(uri)?.use { when (android.media.ExifInterface(it).getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, 1)) {
+                android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90; android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270; else -> 0 } } }.getOrNull() ?: 0
+            if (giro != 0) foto = android.graphics.Bitmap.createBitmap(foto, 0, 0, foto.width, foto.height, android.graphics.Matrix().apply { postRotate(giro.toFloat()) }, true)
+            for (lado in listOf(1080, 860, 680, 520)) {
+                val e = minOf(1f, lado.toFloat() / maxOf(foto.width, foto.height))
+                val chica = if (e < 1f) android.graphics.Bitmap.createScaledBitmap(foto, (foto.width * e).toInt().coerceAtLeast(1), (foto.height * e).toInt().coerceAtLeast(1), true) else foto
+                for (calidad in listOf(70, 55, 40)) {
+                    val salida = java.io.ByteArrayOutputStream()
+                    chica.compress(android.graphics.Bitmap.CompressFormat.JPEG, calidad, salida)
+                    val b64 = java.util.Base64.getEncoder().encodeToString(salida.toByteArray())
+                    if (b64.length <= ADJUNTO_MAX) return@runCatching b64
+                }
+            }
+            null
+        }.getOrNull()
     }
 
     fun borrarConversacion(usuario: String) = scope.launch {
@@ -423,6 +487,10 @@ class ChatSocial(
     companion object {
         /** El tamaño máximo de un sticker en base64 (cabe en un sobre del servidor con lo demás). */
         const val STICKER_MAX = 60_000
+        /** Lo mismo para una foto o una nota de voz (unos 45 KB: una foto chica o medio minuto de voz). */
+        const val ADJUNTO_MAX = 62_000
+        /** La nota de voz más larga, en segundos. */
+        const val VOZ_MAX = 30
     }
 
     private suspend fun borrarTodo() {

@@ -288,16 +288,35 @@ abstract class ControladorSocial(
     val historias: StateFlow<List<GrupoHistoriasSocial>> = _historias
     protected val _notasGente = MutableStateFlow<List<NotaGente>>(emptyList())
     val notasGente: StateFlow<List<NotaGente>> = _notasGente
+    /** Dónde guardar la última barra de historias y notas, para mostrarla al instante y sin conexión (null: no se guarda). */
+    protected open val archivoHistorias: java.io.File? = null
+    @kotlinx.serialization.Serializable private class BarraGuardada(val historias: List<GrupoHistoriasSocial> = emptyList(), val notas: List<NotaGente> = emptyList(), val cuando: Long = 0)
+
     fun cargarHistorias() {
         if (_usuario.value == null) return
-        scope.launch { intentar(avisar = false) { _historias.value = cliente().historias() } }
-        scope.launch { intentar(avisar = false) { _notasGente.value = cliente().notasGente() } }
+        scope.launch {
+            // Primero lo guardado (si es de las últimas 24 horas), después lo nuevo del servidor.
+            if (_historias.value.isEmpty() && _notasGente.value.isEmpty()) archivoHistorias?.let { a ->
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { JsonSocial.decodeFromString(BarraGuardada.serializer(), a.readText()) }.getOrNull() }
+                    ?.takeIf { System.currentTimeMillis() - it.cuando < 24 * 3600_000L }
+                    ?.let { if (_historias.value.isEmpty()) _historias.value = it.historias; if (_notasGente.value.isEmpty()) _notasGente.value = it.notas }
+            }
+            intentar(avisar = false) {
+                val h = cliente().historias(); val n = cliente().notasGente()
+                _historias.value = h; _notasGente.value = n
+                archivoHistorias?.let { a -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { a.writeText(JsonSocial.encodeToString(BarraGuardada.serializer(), BarraGuardada(h, n, System.currentTimeMillis()))) }
+                } }
+            }
+        }
     }
     /** Sube una historia ([jpeg]: la foto ya achicada, si hay) y avisa con [listo]. */
-    fun subirHistoria(datos: kotlinx.serialization.json.JsonObject, jpeg: ByteArray?, listo: () -> Unit = {}) = lanzar {
+    fun subirHistoria(datos: kotlinx.serialization.json.JsonObject, jpeg: ByteArray?, video: java.io.File? = null, listo: () -> Unit = {}) = lanzar {
         val c = cliente()
-        val conFoto = if (jpeg != null) kotlinx.serialization.json.JsonObject(datos + ("imagen" to kotlinx.serialization.json.JsonPrimitive(c.subirImagen(jpeg)))) else datos
+        var conFoto = if (jpeg != null) kotlinx.serialization.json.JsonObject(datos + ("imagen" to kotlinx.serialization.json.JsonPrimitive(c.subirImagen(jpeg)))) else datos
+        if (video != null) conFoto = kotlinx.serialization.json.JsonObject(conFoto + ("video" to kotlinx.serialization.json.JsonPrimitive(c.subirVideo(video))))
         c.subirHistoria(conFoto)
+        video?.delete()
         _historias.value = c.historias()
         listo()
     }
@@ -339,6 +358,9 @@ abstract class ControladorSocial(
     suspend fun respuestasPregunta(h: HistoriaSocial) = runCatching { cliente().respuestasPregunta(h.id) }.getOrDefault(emptyList())
     fun fijarPublicacion(id: Long, si: Boolean) = lanzar { cliente().fijarPublicacion(id, si) }
     fun destacarHistoria(h: HistoriaSocial, titulo: String) = lanzar { cliente().destacarHistoria(h.id, titulo) }
+    /** Tus historias de los últimos 90 días (también las vencidas), para volver a verlas o destacarlas. */
+    suspend fun archivoHistorias(): List<HistoriaSocial> = runCatching { cliente().archivoHistorias() }.getOrDefault(emptyList())
+    fun portadaDestacada(h: HistoriaSocial) = lanzar { cliente().portadaDestacada(h.id) }
     suspend fun destacadas(usuario: String): List<GrupoDestacadasSocial> = runCatching { cliente().destacadas(usuario) }.getOrDefault(emptyList())
     fun meGustaHistoria(h: HistoriaSocial, si: Boolean) {
         _historias.value = _historias.value.map { g -> g.copy(historias = g.historias.map { if (it.id == h.id) it.copy(meGusta = si) else it }) }

@@ -130,6 +130,10 @@ class Base(ruta: String) {
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, texto TEXT NOT NULL, cuando INTEGER NOT NULL)""")
                 columna(s, "publicaciones", "fijada INTEGER NOT NULL DEFAULT 0")
+                // La portada de cada grupo de destacadas (la historia elegida).
+                columna(s, "historias", "portada INTEGER NOT NULL DEFAULT 0")
+                // Sobres que no avisan (el «Visto», una reacción): llegan igual, sin notificación ni contador.
+                columna(s, "mensajes", "silencioso INTEGER NOT NULL DEFAULT 0")
                 // Las llaves privadas del chat, cifradas con la llave de la contraseña (el servidor no las puede abrir):
                 // así las cuatro apps (y otro teléfono) usan las mismas y los mensajes se leen en todas.
                 // Hasta dónde recibió mensajes cada sesión (cada app en cada teléfono): se borran cuando todas los recibieron.

@@ -256,6 +256,8 @@ open class ClienteSocial(
     suspend fun fijarPublicacion(id: Long, si: Boolean) { pedir("/publicaciones/$id/fijar", if (si) "POST" else "DELETE") }
     suspend fun votarHistoria(id: Long, opcion: Int) = leer(HistoriaSocial.serializer(), pedir("/historias/$id/voto", "POST", json(VotoHistoria.serializer(), VotoHistoria(opcion))))
     suspend fun destacarHistoria(id: Long, titulo: String) { pedir("/historias/$id/destacada", "PUT", json(DestacarHistoria.serializer(), DestacarHistoria(titulo))) }
+    suspend fun archivoHistorias() = leer(ListSerializer(HistoriaSocial.serializer()), pedir("/historias/archivo?app=${cod(configuracion.idApp)}"))
+    suspend fun portadaDestacada(id: Long) { pedir("/historias/$id/portada", "PUT") }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
     suspend fun cumple() = leer(CumpleSocial.serializer(), pedir("/cuenta/cumple")).fecha
     suspend fun ponerCumple(fecha: String) { pedir("/cuenta/cumple", "PUT", json(CumpleSocial.serializer(), CumpleSocial(fecha))) }
@@ -309,7 +311,8 @@ open class ClienteSocial(
     suspend fun ponerLlavesChat(sobre: String) { pedir("/cuenta/llaves-chat", "PUT", json(LlavesChatSobre.serializer(), LlavesChatSobre(sobre))) }
     suspend fun ponerLlaves(l: LlavesPublicas) { pedir("/llaves", "PUT", json(LlavesPublicas.serializer(), l)) }
     suspend fun llaves(usuario: String) = leer(LlavesPublicas.serializer(), pedir("/llaves/${cod(usuario)}"))
-    suspend fun mandar(usuario: String, sobre: String, firma: String) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma))) }
+    /** [silencioso]: llega sin notificación ni contador (el «Visto»). */
+    suspend fun mandar(usuario: String, sobre: String, firma: String, silencioso: Boolean = false) { pedir("/mensajes/${cod(usuario)}", "POST", json(SobreNuevo.serializer(), SobreNuevo(sobre, firma, silencioso))) }
     /** Quiénes escribieron (sin abrir ni borrar nada); vacío si el servidor todavía no lo sabe decir. */
     suspend fun remitentesSinLeer(): List<String> = runCatching {
         // Los nombres (no el @) para el aviso; un servidor anterior solo manda los usuarios.

@@ -1,1 +1,0 @@
-Los mensajes ahora llegan también a las otras apps de Fogón: tus llaves se comparten cifradas con tu contraseña (el servidor no puede abrirlas).

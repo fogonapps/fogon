@@ -1,1 +1,0 @@
-Messages now also reach the other Fogón apps: your keys are shared encrypted with your password (the server can’t open them).

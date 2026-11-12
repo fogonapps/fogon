@@ -146,7 +146,9 @@ fun BarraHistorias(vm: InterfazSocial) {
         }
         soloNota.forEach { n -> ItemHistoria(n.persona, n.texto.ifBlank { n.datos["adjunto"]?.jsonObject?.t("titulo").orEmpty() }, false, 0, alNota = { notaAbierta = n }) { notaAbierta = n } }
     }
-    if (menuPropio) MenuHistoriaPropia(vm, { menuPropio = false }, ver = { visor = listOfNotNull(propio) to 0 }, nueva = { creando = true }, nota = { escribiendoNota = true })
+    var archivo by remember { mutableStateOf(false) }
+    if (menuPropio) MenuHistoriaPropia(vm, { menuPropio = false }, ver = { visor = listOfNotNull(propio) to 0 }, nueva = { creando = true }, nota = { escribiendoNota = true }, archivo = { archivo = true })
+    if (archivo) ArchivoHistorias(vm, yoPersona, { archivo = false }) { l, i -> archivo = false; visor = listOf(GrupoHistoriasSocial(yoPersona, l.drop(i).map { it.copy(vista = true) })) to 0 }
     if (creando) CrearHistoria(vm) { creando = false }
     if (escribiendoNota) HojaNota(vm, miNota) { escribiendoNota = false }
     notaAbierta?.let { n -> HojaVerNota(vm, n) { notaAbierta = null } }
@@ -170,15 +172,49 @@ private fun ItemHistoria(p: PersonaSocial, nota: String?, notaVacia: Boolean, es
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MenuHistoriaPropia(vm: InterfazSocial, onCerrar: () -> Unit, ver: () -> Unit, nueva: () -> Unit, nota: () -> Unit) {
+private fun MenuHistoriaPropia(vm: InterfazSocial, onCerrar: () -> Unit, ver: () -> Unit, nueva: () -> Unit, nota: () -> Unit, archivo: () -> Unit) {
     val f = FogonTema.actual
     ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-            listOf(Triple(Iconos.Anime, R.string.historia_ver_tuya, ver), Triple(Iconos.Mas, R.string.historia_nueva, nueva), Triple(Iconos.Comentario, R.string.historia_tu_nota, nota)).forEach { (icono, texto, accion) ->
+            listOf(Triple(Iconos.Anime, R.string.historia_ver_tuya, ver), Triple(Iconos.Mas, R.string.historia_nueva, nueva), Triple(Iconos.Comentario, R.string.historia_tu_nota, nota),
+                Triple(Iconos.Estrella, R.string.historia_archivo, archivo)).forEach { (icono, texto, accion) ->
                 Row(Modifier.fillMaxWidth().clickable { onCerrar(); accion() }.padding(horizontal = 24.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
                     Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                }
+            }
+        }
+    }
+}
+
+/** Tu archivo: las historias de los últimos 90 días, también las que ya vencieron (solo tú las ves). Desde aquí se destacan. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ArchivoHistorias(vm: InterfazSocial, yo: PersonaSocial, onCerrar: () -> Unit, abrir: (List<HistoriaSocial>, Int) -> Unit) {
+    val f = FogonTema.actual
+    var lista by remember { mutableStateOf<List<HistoriaSocial>?>(null) }
+    LaunchedEffect(Unit) { lista = vm.red.archivoHistorias() }
+    ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.historia_archivo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            Text(stringResource(R.string.historia_archivo_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            val l = lista
+            when {
+                l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+                l.isEmpty() -> Text(stringResource(R.string.historia_archivo_vacio), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+                else -> androidx.compose.foundation.lazy.grid.LazyVerticalGrid(androidx.compose.foundation.lazy.grid.GridCells.Fixed(3), Modifier.heightIn(max = 520.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(l.size) { i ->
+                        val h = l[i]
+                        val (color, _) = fondoHistoria((h.datos["fondo"] as? JsonPrimitive)?.intOrNull ?: 0)
+                        Box(Modifier.aspectRatio(9f / 16f).clip(forma(10.dp)).background(color).clickable { abrir(l, i) }) {
+                            h.datos.t("imagen").takeIf { it.isNotBlank() }?.let { coil3.compose.AsyncImage(ClienteSocial.imagen(it), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                            Text(haceCuanto(h.cuando), style = MaterialTheme.typography.labelSmall, color = f.texto,
+                                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).clip(FormaPildora).background(f.fondo.copy(alpha = 0.8f)).padding(horizontal = 6.dp, vertical = 2.dp))
+                            if (h.destacada.isNotBlank()) IconoRiso(Iconos.Estrella, h.destacada, tamano = 16.dp, tinta = f.acentoTexto, modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
+                        }
+                    }
                 }
             }
         }
@@ -440,6 +476,11 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     val capa = androidx.compose.ui.graphics.rememberGraphicsLayer()
     // Una foto del teléfono (Uri) o una de una obra o persona (dirección de internet).
     var foto by remember { mutableStateOf<Any?>(null) }
+    // Un video corto (hasta 15 s): su primer cuadro hace de foto en el lienzo y la historia lo reproduce.
+    var video by remember { mutableStateOf<io.github.fogonapps.social.VideoPreparado?>(null) }
+    var preparandoVideo by remember { mutableStateOf(false) }
+    // Desde qué segundo abre la escena (el tráiler) de una película o serie.
+    var pidiendoSegundo by remember { mutableStateOf(false) }
     var fotosObra by remember { mutableStateOf(false) }
     var zoom by remember { mutableFloatStateOf(1f) }
     var mover by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
@@ -473,8 +514,18 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     val coloresTrazo = (0..3).map { colorTexto(it) }
     val noSePudo = stringResource(R.string.historia_no_se_pudo)
     val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
-        if (u != null) { foto = u; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
+        if (u != null) { foto = u; video?.archivo?.delete(); video = null; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
     }
+    val noSePudoVideo = stringResource(R.string.historia_video_no_se_pudo)
+    val elegirVideo = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
+        if (u != null) { preparandoVideo = true; alcance.launch {
+            runCatching { io.github.fogonapps.social.prepararVideo(ctx, u, {}, {}, maximoMs = 15_000) }
+                .onSuccess { v -> video?.archivo?.delete(); video = v; foto = v.poster; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
+                .onFailure { android.widget.Toast.makeText(ctx, noSePudoVideo, android.widget.Toast.LENGTH_SHORT).show() }
+            preparandoVideo = false
+        } }
+    }
+    DisposableEffect(Unit) { onDispose { video?.archivo?.delete() } }
     fun agregar(c: Capa) { capas += c; escalas[c.id] = 1f; posiciones[c.id] = androidx.compose.ui.geometry.Offset.Zero; elegida = c.id; siguiente++ }
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -564,7 +615,13 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     Box(Modifier.weight(1f)) { ControlesAdjunto(a) }
                     BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_quitar_adjunto)) { adjunto2 = null }
                 }
+                if (a.t("escena").isNotBlank()) Pildora((a["segundo"] as? JsonPrimitive)?.intOrNull?.let { stringResource(R.string.historia_escena_desde_n, it) } ?: stringResource(R.string.historia_escena_desde)) { pidiendoSegundo = true }
             }
+            video?.let { v -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(androidx.compose.ui.res.pluralStringResource(R.plurals.social_video_reproducir, v.segundos, v.segundos), style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f))
+                BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_quitar)) { v.archivo.delete(); video = null; foto = null }
+            } }
+            if (preparandoVideo) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta2, trackColor = f.linea)
             encuesta?.let { (p, o) ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.historia_encuesta) + ": " + p.ifBlank { o.joinToString(" / ") }, style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -587,6 +644,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
             } else androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Pildora(stringResource(R.string.historia_dibujar)) { dibujando = true; elegida = null; colorTrazo = if (foto != null) 0 else contraste(fondo) }
                 Pildora(stringResource(if (foto == null) R.string.historia_foto else R.string.historia_otra_foto), Iconos.Mas) { elegirFoto.launch("image/*") }
+                Pildora(stringResource(R.string.historia_video), Iconos.Mas) { elegirVideo.launch("video/*") }
                 if (vm.fotosDeObras) Pildora(stringResource(R.string.historia_foto_obra)) { fotosObra = true }
                 Pildora(stringResource(R.string.historia_texto_corto)) { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
                 Pildora(stringResource(R.string.historia_sticker)) { eligiendoSticker = true }
@@ -594,7 +652,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                 Pildora(stringResource(R.string.historia_encuesta)) { creandoEncuesta = true }
                 Pildora(stringResource(R.string.historia_pregunta_corta)) { preguntando = true }
                 Pildora(stringResource(R.string.historia_mencionar)) { mencionando = true }
-                if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null }
+                if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null; video?.archivo?.delete(); video = null }
             }
             if (foto == null && !dibujando) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 (0..3).forEach { i ->
@@ -631,13 +689,16 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                         // Las palabras van también como texto: para leerlas en voz alta y para moderar.
                         capas.mapNotNull { it.texto.takeIf { t -> t.isNotBlank() } }.joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("texto", it.take(200)) }
                         put("fondo", fondo)
+                        video?.let { put("segundos", it.segundos) }
                         adjunto?.let { put("adjunto", it) }
                         adjunto2?.let { put("adjunto2", it) }
                     }
-                    vm.red.subirHistoria(datos, jpeg) { onCerrar() }
-                    delay(15_000); subiendo = false
+                    val subir = video?.archivo
+                    video = null
+                    vm.red.subirHistoria(datos, jpeg, subir) { onCerrar() }
+                    delay(if (subir != null) 60_000 else 15_000); subiendo = false
                 }
-            }, Modifier.fillMaxWidth(), habilitado = !subiendo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null || encuesta != null))
+            }, Modifier.fillMaxWidth(), habilitado = !subiendo && !preparandoVideo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null || encuesta != null))
         }
     }
     escribiendo?.let { c -> EditarTextoHistoria(c, { escribiendo = null }) { nueva ->
@@ -650,7 +711,12 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     if (preguntando) PedirTexto(stringResource(R.string.historia_pregunta_corta), stringResource(R.string.historia_pregunta_pista), { preguntando = false }) { pregunta = it.take(80); preguntando = false }
     if (mencionando) ElegirMenciones(vm, menciones) { mencionando = false }
     if (creandoEncuesta) CrearEncuesta({ creandoEncuesta = false }) { encuesta = it; creandoEncuesta = false }
-    if (fotosObra) ElegirFotoDeObra(vm, { fotosObra = false }) { url -> fotosObra = false; foto = url; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
+    if (pidiendoSegundo) PedirTexto(stringResource(R.string.historia_escena_desde), stringResource(R.string.historia_escena_segundo), { pidiendoSegundo = false }) { t ->
+        pidiendoSegundo = false
+        val s = t.trim().split(":").mapNotNull { it.toIntOrNull() }.fold(0) { acc, n -> acc * 60 + n }
+        adjunto2 = adjunto2?.let { a -> JsonObject(if (s > 0) a + ("segundo" to JsonPrimitive(s)) else a - "segundo") }
+    }
+    if (fotosObra) ElegirFotoDeObra(vm, { fotosObra = false }) { url -> fotosObra = false; video?.archivo?.delete(); video = null; foto = url; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
 }
 
 /** Elegir de fondo una foto de una película, serie, libro o persona (como al cambiar una portada). */
@@ -813,13 +879,20 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
     var reportando by remember { mutableStateOf(false) }
     var respuesta by remember { mutableStateOf("") }
     var destacando by remember { mutableStateOf(false) }
+    var portadaLista by remember { mutableStateOf(false) }
+    if (portadaLista) LaunchedEffect(Unit) { delay(1500); portadaLista = false }
     val grupo = grupos.getOrNull(g) ?: run { onCerrar(); return }
     val historia = grupo.historias.getOrNull(h) ?: run { onCerrar(); return }
     val propia = grupo.persona.usuario == yo
     fun siguiente() { if (h < grupo.historias.lastIndex) h++ else if (g < grupos.lastIndex) { g++; h = 0 } else onCerrar() }
     fun anterior() { if (h > 0) h-- else if (g > 0) { g--; h = 0 } }
     val adjunto = historia.datos["adjunto"] as? JsonObject
-    val duracion = if (adjunto?.t("audio").isNullOrBlank()) 6000f else 15000f
+    val videoHistoria = historia.datos.t("video")
+    val duracion = when {
+        videoHistoria.isNotBlank() -> ((historia.datos["segundos"] as? JsonPrimitive)?.intOrNull ?: 15).coerceIn(3, 15) * 1000f
+        adjunto?.t("audio").isNullOrBlank() -> 6000f
+        else -> 15000f
+    }
     LaunchedEffect(historia.id) { progreso = 0f; vm.red.verHistoria(historia) }
     LaunchedEffect(historia.id, pausado, vistas, reportando, respuesta.isNotEmpty(), destacando) {
         if (pausado || vistas != null || reportando || respuesta.isNotEmpty() || destacando) return@LaunchedEffect
@@ -836,6 +909,9 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
             }) {
             if (imagen.isNotBlank()) coil3.compose.AsyncImage(ClienteSocial.imagen(imagen), stringResource(R.string.historia_foto_de, grupo.persona.nombre.ifBlank { grupo.persona.usuario }),
                 Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            if (videoHistoria.isNotBlank()) key(historia.id) {
+                VideoHistoria(vm::cabeceras, videoHistoria, pausado || vistas != null || reportando || respuesta.isNotEmpty() || destacando, Modifier.fillMaxSize())
+            }
             val compuesta = (historia.datos["compuesta"] as? JsonPrimitive)?.booleanOrNull == true
             if (!compuesta) Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 val texto = historia.datos.t("texto")
@@ -868,6 +944,7 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                     if (propia) {
                         Pildora(stringResource(R.string.historia_vistas), Iconos.Anime) { alcance.launch { vistas = vm.red.vistasHistoria(historia) } }
                         Pildora(stringResource(R.string.historia_destacar), Iconos.Estrella) { destacando = true }
+                        if (historia.destacada.isNotBlank()) Pildora(stringResource(R.string.historia_portada), acento = portadaLista) { vm.red.portadaDestacada(historia); portadaLista = true }
                         Pildora(stringResource(R.string.historia_borrar), Iconos.Borrar) {
                             pausado = true
                             vm.confirmar(vm.tx(R.string.historia_borrar), vm.tx(R.string.historia_borrar_confirmar)) { vm.red.borrarHistoria(historia); onCerrar() }

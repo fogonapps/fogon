@@ -492,7 +492,9 @@ class RedSocial(
         }
     }
 
+    override val archivoHistorias get() = java.io.File(directorio, "historias-p${caja.perfilId}.json")
     override fun olvidarCuenta() {
+        archivoHistorias.delete(); _historias.value = emptyList(); _notasGente.value = emptyList()
         caja.redPermitida = false
         _politicaPendiente.value = false; _hojaPolitica.value = false
         decisionBorrado?.complete(false); decisionBorrado = null

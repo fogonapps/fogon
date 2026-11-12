@@ -172,7 +172,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
 @Serializable data class Llaves(val cifrar: String, val firmar: String)
 /** Un mensaje cifrado para alguien: [sobre] es el texto cifrado (base64) y [firma], la firma de quien lo manda. */
-@Serializable data class SobreNuevo(val sobre: String, val firma: String)
+@Serializable data class SobreNuevo(val sobre: String, val firma: String, val silencioso: Boolean = false)
 @Serializable data class Sobre(val id: Long, val de: Persona, val cuando: Long, val sobre: String, val firma: String)
 @Serializable data class Error(val error: String)
 
@@ -962,6 +962,10 @@ class Social(
         if (!visible(autor)) throw Problema(404, "no_existe")
         val publicaciones = b.usar { leer("SELECT estado, visibilidad, oculta FROM publicaciones WHERE cuenta = ? AND instr(datos, ?) > 0", autor, nombre) { Triple(it.getString(1), it.getString(2), it.getInt(3) != 0) } }
         if (publicaciones.any { it.first == "preservado" }) throw Problema(404, "no_existe")
+        // El video de una historia vigente (o destacada): lo ven quien lo subió y quienes lo siguen.
+        val enHistoria = b.usar { leer("SELECT 1 FROM historias WHERE cuenta = ? AND instr(datos, ?) > 0 AND estado = 'visible' AND oculta = 0 AND (expira > ? OR destacada != '')", autor, nombre, ahora()) { 1 }.isNotEmpty() }
+        if (publicaciones.isEmpty() && enHistoria && (lector == autor || (lector != null && sigue(lector, autor) && !bloqueado(autor, lector))))
+            return java.io.File(dirVideos, "$nombre.mp4").takeIf { it.isFile } ?: throw Problema(404, "no_existe")
         if (publicaciones.any { it.first == "retirado" || (it.third && lector != autor) }) {
             if (lector == null || "ver_reportes" !in equipo.permisos(lector)) throw Problema(404, "no_existe")
             equipo.requiere(lector, "ver_reportes", token)
@@ -970,7 +974,7 @@ class Social(
     }
 
     private fun purgarVideosSinPublicacion() = b.usar {
-        leer("SELECT nombre FROM videos WHERE NOT EXISTS(SELECT 1 FROM publicaciones p WHERE p.cuenta = videos.cuenta AND instr(p.datos, videos.nombre) > 0) AND cuando <= ?", ahora() - DIA) { it.getString(1) }.forEach {
+        leer("SELECT nombre FROM videos WHERE NOT EXISTS(SELECT 1 FROM publicaciones p WHERE p.cuenta = videos.cuenta AND instr(p.datos, videos.nombre) > 0) AND NOT EXISTS(SELECT 1 FROM historias h WHERE h.cuenta = videos.cuenta AND instr(h.datos, videos.nombre) > 0) AND cuando <= ?", ahora() - DIA) { it.getString(1) }.forEach {
             if (java.io.File(dirVideos, "$it.mp4").delete() || !java.io.File(dirVideos, "$it.mp4").exists()) cambiar("DELETE FROM videos WHERE nombre = ?", it)
         }
     }
@@ -1082,7 +1086,7 @@ class Social(
     /** Quiénes le escribieron y todavía no los recibió (los más recientes primero, hasta 5): para la notificación, sin abrir nada. */
     fun remitentesSinLeer(yo: Long, sesion: String = ""): List<Persona> = b.usar {
         val desde = leer("SELECT ultimo FROM chat_cursores WHERE huella = ?", sesion) { it.getLong(1) }.firstOrNull() ?: 0
-        leer("SELECT de, MAX(id) FROM mensajes WHERE para = ? AND id > ? GROUP BY de ORDER BY MAX(id) DESC LIMIT 20", yo, desde) { it.getLong(1) }
+        leer("SELECT de, MAX(id) FROM mensajes WHERE para = ? AND id > ? AND silencioso = 0 GROUP BY de ORDER BY MAX(id) DESC LIMIT 20", yo, desde) { it.getLong(1) }
     }.filter { !bloqueado(yo, it) && visible(it) }.take(5).map { persona(it) }
 
     /** Los mensajes que esta sesión ([sesion]) todavía no recibió. */
@@ -1090,7 +1094,7 @@ class Social(
         // Preguntar ya cuenta como usar el chat: desde aquí, lo que llegue espera también a esta sesión.
         if (sesion.isNotEmpty()) cambiar("INSERT OR IGNORE INTO chat_cursores(huella, cuenta, ultimo, cuando) VALUES(?,?,0,?)", sesion, yo, ahora())
         val desde = leer("SELECT ultimo FROM chat_cursores WHERE huella = ?", sesion) { it.getLong(1) }.firstOrNull() ?: 0
-        leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND id > ?", yo, desde) { it.getInt(1) }.first()
+        leer("SELECT COUNT(*) FROM mensajes WHERE de IN (SELECT id FROM cuentas WHERE borrar_el = 0 AND cerrada = 0) AND para = ? AND id > ? AND silencioso = 0", yo, desde) { it.getInt(1) }.first()
     }
 
     /** Las publicaciones que cumplen [donde] (SQL sobre `p`), con su autor y sus cifras, en una sola consulta; con el id del autor. */
@@ -1428,6 +1432,9 @@ class Social(
         val d = h.datos
         val texto = (d["texto"] as? JsonPrimitive)?.contentOrNull?.filter { it == '\n' || !it.isISOControl() }?.trim()?.take(200).orEmpty()
         val imagen = (d["imagen"] as? JsonPrimitive)?.contentOrNull.orEmpty()
+        // Un video corto propio (subido como los de las publicaciones).
+        val video = (d["video"] as? JsonPrimitive)?.contentOrNull.orEmpty()
+        if (video.isNotEmpty() && b.usar { leer("SELECT 1 FROM videos WHERE nombre = ? AND cuenta = ?", video, yo) { 1 }.isEmpty() }) throw Problema(400, "video")
         val adjunto = Adjuntos.limpio(d["adjunto"] as? JsonObject)
         // Un segundo adjunto: la canción y además una obra (o al revés).
         val adjunto2 = Adjuntos.limpio(d["adjunto2"] as? JsonObject)
@@ -1448,10 +1455,11 @@ class Social(
             if (opciones.size >= 2) buildJsonObject { put("pregunta", pregunta); put("opciones", JsonArray(opciones.map(::JsonPrimitive))) } else null
         }
         if (imagen.isNotEmpty() && b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", imagen, yo) { 1 }.isEmpty() }) throw Problema(400, "imagen")
-        if (imagen.isEmpty() && texto.isEmpty() && adjunto == null && (d["encuesta"] as? JsonObject) == null && (d["pregunta"] as? JsonPrimitive)?.contentOrNull.isNullOrBlank()) throw Problema(400, "vacia")
+        if (imagen.isEmpty() && video.isEmpty() && texto.isEmpty() && adjunto == null && (d["encuesta"] as? JsonObject) == null && (d["pregunta"] as? JsonPrimitive)?.contentOrNull.isNullOrBlank()) throw Problema(400, "vacia")
         if (b.usar { leer("SELECT COUNT(*) FROM historias WHERE cuenta = ? AND cuando > ?", yo, ahora() - DIA) { it.getInt(1) }.first() } >= 30) throw Problema(429, "despacio")
         val datos = buildJsonObject {
             if (imagen.isNotEmpty()) put("imagen", imagen)
+            if (video.isNotEmpty()) put("video", video)
             if (texto.isNotEmpty()) put("texto", texto)
             put("fondo", fondo)
             if (compuesta) put("compuesta", true)
@@ -1540,12 +1548,25 @@ class Social(
         if (b.usar { cambiar("UPDATE historias SET destacada = ? WHERE id = ? AND cuenta = ? AND estado = 'visible'", titulo, id, yo) } == 0) throw Problema(404, "no_existe")
     }
 
+    /** Tu archivo: tus historias de los últimos 90 días en [app] (también las que ya vencieron), la más nueva primero. */
+    fun archivoHistorias(yo: Long, app: String): List<Historia> = b.usar {
+        leer("SELECT id, datos, cuando, destacada FROM historias WHERE cuenta = ? AND app = ? AND estado = 'visible' ORDER BY cuando DESC LIMIT 300", yo, AppsSocial.validar(app)) {
+            Historia(it.getLong(1), JsonSocial.parseToJsonElement(it.getString(2)).jsonObject, it.getLong(3), true, destacada = it.getString(4))
+        }
+    }
+
+    /** Elegir la historia que hace de portada de su grupo de destacadas. */
+    fun portadaDestacada(yo: Long, id: Long) = b.transaccion {
+        val titulo = leer("SELECT destacada FROM historias WHERE id = ? AND cuenta = ? AND destacada != ''", id, yo) { it.getString(1) }.firstOrNull() ?: throw Problema(404, "no_existe")
+        cambiar("UPDATE historias SET portada = (id = ?) WHERE cuenta = ? AND destacada = ?", id, yo, titulo)
+    }
+
     /** Las destacadas de un perfil en [app], por grupo; solo si quien mira puede ver ese perfil. */
     fun destacadas(lector: Long?, usuario: String, app: String): List<GrupoDestacadas> {
         AppsSocial.validar(app)
         val id = b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: return emptyList()
         if (lector != id && (lector != null && (bloqueado(id, lector) || bloqueado(lector, id)) || esPrivada(id) && (lector == null || !sigue(lector, id)))) return emptyList()
-        return b.usar { leer("SELECT id, datos, cuando, destacada FROM historias WHERE cuenta = ? AND app = ? AND destacada != '' AND estado = 'visible' AND oculta = 0 AND mejores = 0 ORDER BY cuando", id, app) {
+        return b.usar { leer("SELECT id, datos, cuando, destacada FROM historias WHERE cuenta = ? AND app = ? AND destacada != '' AND estado = 'visible' AND oculta = 0 AND mejores = 0 ORDER BY portada DESC, cuando", id, app) {
             Historia(it.getLong(1), JsonSocial.parseToJsonElement(it.getString(2)).jsonObject, it.getLong(3), true, destacada = it.getString(4))
         } }.groupBy { it.destacada }.map { (t, l) -> GrupoDestacadas(t, l) }
     }
@@ -1642,7 +1663,8 @@ class Social(
 
     /** Las historias vencidas se borran a los dos días (un día de margen para reportes); las retiradas, al vencer su plazo. */
     fun limpiarHistorias() {
-        val viejas = b.usar { leer("SELECT id, datos FROM historias WHERE (estado = 'visible' AND destacada = '' AND expira < ?) OR (estado = 'retirado' AND retirado_hasta <= ?)", ahora() - DIA, ahora()) {
+        // Vencidas, quedan 90 días en el archivo de quien las subió (solo esa persona las ve) y después se borran.
+        val viejas = b.usar { leer("SELECT id, datos FROM historias WHERE (estado = 'visible' AND destacada = '' AND expira < ?) OR (estado = 'retirado' AND retirado_hasta <= ?)", ahora() - 90 * DIA, ahora()) {
             it.getLong(1) to ((JsonSocial.parseToJsonElement(it.getString(2)).jsonObject["imagen"] as? JsonPrimitive)?.contentOrNull)
         } }
         viejas.forEach { (id, imagen) -> b.usar { cambiar("DELETE FROM historias WHERE id = ?", id) }; imagen?.let(::borrarImagenSuelta) }
@@ -1764,9 +1786,12 @@ class Social(
         if (s.sobre.length > 90_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
         val n = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
         if (n >= 300) throw Problema(429, "despacio")
-        val id = b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma) VALUES(?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma) }
+        // A quien no te sigue, hasta 20 por hora (frena el acoso y el spam a desconocidos).
+        if (!sigue(otro, yo) && b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND para = ? AND cuando > ? AND silencioso = 0", yo, otro, ahora() - 3600_000L) { it.getInt(1) }.first() } >= 20)
+            throw Problema(429, "despacio")
+        val id = b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma, silencioso) VALUES(?,?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma, if (s.silencioso) 1 else 0) }
         timbre(otro).value = id   // quien espera (la app abierta) se entera al instante
-        empujes.tocar(otro)       // y con la app cerrada, su teléfono recibe un toque (FCM)
+        if (!s.silencioso) empujes.tocar(otro)       // y con la app cerrada, su teléfono recibe un toque (FCM)
         return id
     }
 

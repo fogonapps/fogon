@@ -36,6 +36,7 @@ open class RedApp(
     private val carpeta = perfilesTelefono.directorio(almacen.perfil)
     private val cache = java.io.File(carpeta, "identidad-social.json")
     private val cacheFoto = java.io.File(carpeta, "foto-social")
+    override val archivoHistorias = java.io.File(carpeta, "historias.json")
     private val cachePortada = java.io.File(carpeta, "portada-social")
     val guardandoPerfil = MutableStateFlow(false)
     private var revision: Long? = null
@@ -68,7 +69,8 @@ open class RedApp(
         sesion.invalidar(); almacen.token = null; almacen.usuario = null; almacen.llaveCopia = null
         copiaLista.value = false; copiaBloqueada.value = false
         _usuario.value = null; _cuenta.value = null; identidad.value = null; foto.value = ""; portadaImagen.value = ""; revision = null
-        listOf(cache, cacheFoto, cachePortada).forEach { it.delete() }
+        listOf(cache, cacheFoto, cachePortada, archivoHistorias).forEach { it.delete() }
+        _historias.value = emptyList(); _notasGente.value = emptyList()
         _feed.value = null; _explorar.value = null; _perfiles.value = emptyMap(); _vistas.value = emptyMap()
         _comentarios.value = emptyMap(); _guardados.value = null; _avisos.value = null; _casos.value = null
         _solicitudes.value = emptyList(); _gente.value = emptyMap(); _listas.value = emptyMap()
