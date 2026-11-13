@@ -212,7 +212,7 @@ private fun PerfilRed(vm: CuchaViewModel, interfaz: InterfazSocial, usuario: Str
     LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
     val perfil = perfiles[usuario]
     var elegida by rememberSaveable(usuario) { mutableIntStateOf(0) }
-    Cabecera(usuario, vm::cerrar)
+    io.github.fogonapps.social.ui.CabeceraPerfilAjeno(interfaz, usuario)
     if (perfil == null) return
     val secciones = seccionesRed {
         FavoritosRed(perfil.partes, it)

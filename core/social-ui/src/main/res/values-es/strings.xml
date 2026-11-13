@@ -594,4 +594,8 @@
     <string name="social_amigos_dejar">Amigos</string>
     <string name="social_dejar_de_seguir_pregunta">¿Dejar de seguir a @%1$s?</string>
     <string name="social_dejar_de_seguir">Dejar de seguir</string>
+    <string name="social_perfil_compartir">Compartir el perfil</string>
+    <string name="social_perfil_bloquear">Bloquear</string>
+    <string name="social_perfil_bloquear_a">¿Bloquear a @%1$s?</string>
+    <string name="social_perfil_bloquear_explica">No podrá seguirte, escribirte ni ver tu perfil.</string>
 </resources>

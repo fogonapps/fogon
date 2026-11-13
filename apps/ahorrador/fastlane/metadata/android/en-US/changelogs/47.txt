@@ -1,3 +1,0 @@
-• More compact profile: lighter header, stats beside the photo and clearer tabs.
-• The profile store is also in "Edit profile".
-• Unfollowing asks first; the profile song shows as a pill.

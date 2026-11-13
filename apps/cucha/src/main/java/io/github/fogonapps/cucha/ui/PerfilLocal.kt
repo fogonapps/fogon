@@ -60,11 +60,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
                 }
             }
         }
-    } + if (usuario != null) listOf(SeccionPerfil(4, IconosSociales.Guardar, stringResource(R.string.red_guardados)) {
-        val guardados by vm.red.guardados.collectAsStateWithLifecycle()
-        LaunchedEffect(usuario) { vm.red.cargarGuardados() }
-        guardados.orEmpty().forEach { io.github.fogonapps.social.ui.TarjetaPublicacion(interfaz, it) }
-    }) else emptyList()
+    }
     val contadores = if (usuario != null) cifrasRed(publicadas) else listOf(
         ContadorPerfil(e.dias.count { it.value.anotados.isNotEmpty() }.toString(), stringResource(R.string.perfil_dias)),
         ContadorPerfil(e.recetas.size.toString(), stringResource(R.string.pestana_recetas)),
@@ -75,9 +71,9 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
         bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones, insignia = miInsignia)
     PerfilComun(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
-            Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {
-                BotonCirculoPerfil(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
-            })
+            io.github.fogonapps.social.ui.CabeceraPerfil(usuario?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
+                io.github.fogonapps.identidad.BotonIconoSocial(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
+            }
         },
         portada = { ImagenLocal(portada, Modifier.fillMaxSize()) },
         foto = {

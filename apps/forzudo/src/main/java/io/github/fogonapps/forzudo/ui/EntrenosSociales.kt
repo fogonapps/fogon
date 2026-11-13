@@ -173,7 +173,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
             val perfiles by vm.red.perfiles.collectAsState()
             LaunchedEffect(destino.usuario) { vm.red.verPerfil(destino.usuario) }
             val perfil = perfiles[destino.usuario]
-            Cabecera(destino.usuario, vm::cerrar)
+            io.github.fogonapps.social.ui.CabeceraPerfilAjeno(interfaz, destino.usuario)
             if (perfil != null) {
                 val yo by vm.red.usuario.collectAsState()
                 val secciones = interfaz.contenido.SeccionesPerfil(perfil, perfil.persona.usuario == yo) {
@@ -191,7 +191,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                         if (perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(
                             if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.entreno_dejar_seguir else R.string.entreno_seguir), {
                             if (perfil.relacion == "sigo") interfaz.confirmar(interfaz.tx(io.github.fogonapps.social.ui.R.string.social_dejar_de_seguir), interfaz.tx(io.github.fogonapps.social.ui.R.string.social_dejar_de_seguir), { vm.red.dejarDeSeguir(destino.usuario) }) else vm.red.seguir(destino.usuario)
-                        })
+                        }, Modifier.weight(1f))
                     }, despuesAcciones = {
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
             // Su canción, sonando sola al entrar (si el ajuste lo deja).

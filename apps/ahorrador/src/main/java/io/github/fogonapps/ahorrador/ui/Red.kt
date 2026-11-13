@@ -219,7 +219,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
     val perfil = perfiles[usuario]
-    Cabecera(usuario, vm::cerrar)
+    io.github.fogonapps.social.ui.CabeceraPerfilAjeno(interfaz, usuario)
     if (perfil == null) return
     val secciones = listOf(SeccionPerfil(0, IconosFogon.Estrella, stringResource(R.string.red_logros)) {
         MetasRed(perfil.partes)

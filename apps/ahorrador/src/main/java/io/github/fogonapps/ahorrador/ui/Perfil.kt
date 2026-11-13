@@ -62,11 +62,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
                 publicados.forEach { io.github.fogonapps.social.ui.TarjetaPublicacion(interfaz, it) }
             }
         },
-    ) + if (usuario != null) listOf(SeccionPerfil(2, io.github.fogonapps.identidad.IconosSociales.Guardar, stringResource(R.string.red_guardados)) {
-        val guardados by vm.red.guardados.collectAsStateWithLifecycle()
-        LaunchedEffect(usuario) { vm.red.cargarGuardados() }
-        guardados.orEmpty().forEach { io.github.fogonapps.social.ui.TarjetaPublicacion(interfaz, it) }
-    }) else emptyList()
+    )
     val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto,
         portada, bio, emptyList(), true, "yo", listOf(
@@ -76,8 +72,8 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
         ), secciones, insignia = miInsignia)
     io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), pestana, { pestana = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
-            Cabecera(stringResource(R.string.tu_perfil), vm::cerrar) {
-                BotonCirculoPerfil(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
+            io.github.fogonapps.social.ui.CabeceraPerfil(usuario?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
+                io.github.fogonapps.identidad.BotonIconoSocial(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
             }
         },
         portada = { ImagenLocal(portada, Modifier.matchParentSize()) },

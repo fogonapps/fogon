@@ -63,7 +63,7 @@ fun Ajustes(
     FilaAjuste(io.github.fogonapps.identidad.IconosFogon.Perfil, stringResource(R.string.cuenta_tu_cuenta), stringResource(R.string.cuenta_tu_cuenta_pista)) { vm.abrir(Pantalla.CuentaRed) }
 
     SeccionAjustes(stringResource(R.string.aj_como_usas))
-    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm))
+    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm)) { vm.abrir(Pantalla.Social("guardados")) }
     Desplegable(Iconos.Resumen, stringResource(R.string.como_te_organizas), stringResource(R.string.aj_sistema_pista)) {
         Sistema.entries.forEach { s -> TarjetaSistema(s, s == e.sistema) { vm.cambiarSistema(s) } }
         if (e.sistema == Sistema.REGLA_50_30_20) BotonSecundario(stringResource(R.string.cambiar_reparto), { reparto = true }, Modifier.fillMaxWidth())

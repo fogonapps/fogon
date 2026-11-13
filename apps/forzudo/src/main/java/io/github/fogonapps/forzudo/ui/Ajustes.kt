@@ -23,7 +23,7 @@ fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onI
     SeccionAjustes(stringResource(io.github.fogonapps.social.ui.R.string.social_red_tu_cuenta))
     FilaAjuste(IconosFogon.Perfil, stringResource(io.github.fogonapps.social.ui.R.string.social_red_tu_cuenta), null) { vm.abrir(Pantalla.Cuenta) }
     SeccionAjustes(stringResource(R.string.ajustes_uso))
-    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm))
+    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm)) { vm.abrir(Pantalla.Social("guardados")) }
     Desplegable(IconosFogon.Reloj, stringResource(R.string.ajustes_entrenamiento), null) {
         Text(stringResource(R.string.ajustes_entrenamiento_pista), color = FogonTema.actual.texto)
         BotonSecundario(stringResource(R.string.pestana_entrenar), { vm.cerrar(); vm.cerrar(); vm.irA(Pestana.ENTRENAR) })

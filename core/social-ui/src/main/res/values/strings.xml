@@ -592,4 +592,8 @@
     <string name="social_amigos_dejar">Friends</string>
     <string name="social_dejar_de_seguir_pregunta">Unfollow @%1$s?</string>
     <string name="social_dejar_de_seguir">Unfollow</string>
+    <string name="social_perfil_compartir">Share profile</string>
+    <string name="social_perfil_bloquear">Block</string>
+    <string name="social_perfil_bloquear_a">Block @%1$s?</string>
+    <string name="social_perfil_bloquear_explica">They won\'t be able to follow you, message you or see your profile.</string>
 </resources>

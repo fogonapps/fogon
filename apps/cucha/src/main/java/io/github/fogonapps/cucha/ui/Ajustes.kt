@@ -25,7 +25,7 @@ fun Ajustes(vm: CuchaViewModel, e: Estado, acciones: Acciones) {
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
     FilaAjuste(IconosFogon.Perfil, stringResource(R.string.cuenta_tu_cuenta), stringResource(R.string.cuenta_tu_cuenta_pista)) { vm.abrir(Pantalla.Cuenta) }
     SeccionAjustes(stringResource(R.string.aj_como_usas))
-    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm))
+    io.github.fogonapps.social.ui.FilasRedEnAjustes(interfazCuenta(vm)) { vm.abrir(Pantalla.Social("guardados")) }
     Desplegable(IconosFogon.Perfil, stringResource(R.string.tus_datos), null) {
         DatosPersona(vm, e.nombre, e.perfil, forzudo?.peso != null) { nombre, perfil ->
             vm.cambiarNombre(nombre)

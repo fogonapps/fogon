@@ -67,9 +67,11 @@ fun palabrasOcultasRed(): List<String> = PalabrasOcultasRed.de(LocalContext.curr
  * ocultas. Solo con cuenta.
  */
 @Composable
-fun FilasRedEnAjustes(vm: InterfazSocial) {
+fun FilasRedEnAjustes(vm: InterfazSocial, guardadas: (() -> Unit)? = null) {
     val usuario by vm.red.usuario.collectAsState()
     if (usuario == null) return
+    // Lo que guardaste (antes, una pestaña del perfil).
+    if (guardadas != null) FilaAjuste(IconosSociales.Guardar, stringResource(R.string.social_red_guardadas), null, onClick = guardadas)
     Desplegable(IconosFogon.Campana, stringResource(R.string.ajustes_red_notificaciones), null) { AvisosEnCuenta() }
     FilaAjuste(IconosSociales.Bandera, stringResource(R.string.social_red_bloqueadas), null) { vm.navegacion.ajustes(AjusteSocial.BLOQUEADOS) }
     Desplegable(IconosSociales.Bandera, stringResource(R.string.ajustes_red_palabras), stringResource(R.string.ajustes_red_palabras_pista)) { EditorPalabrasOcultas() }
