@@ -673,7 +673,7 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
 }
 
 /**
- * «Lo tuyo» de otra persona, en orden: la afinidad contigo (si hay con qué comparar), sus destacados y favoritas, sus
+ * «Lo tuyo» de otra persona, en orden: la maratón de los dos, lo que está viendo, su reto, sus destacados y favoritas, sus
  * artistas en una fila y sus géneros separados en música y en cine, series y libros. De lo largo se ve una parte y
  * «Ver todos» muestra el resto.
  */
@@ -693,7 +693,6 @@ internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.da
     if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty() && artistas.isEmpty() && reto.isEmpty() && insignias.isEmpty() && viendo == null && porVer == null) { NadaAqui(); return }
     fun abrir(o: JsonObject) = vm.abrirObraDePerfil(o.texto("titulo"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("portada"), o.texto("fuente"),
         o.texto("anio").toIntOrNull(), o.texto("creador"))
-    if (!propio) AfinidadConmigo(vm, destacados.map { it.second } + favoritas, generos, artistas)
     if (!propio) MaratonDeLosDos(vm, porVer, e, p.persona.usuario)
     ViendoAhora(vm, viendo, if (propio) null else e)
     val anioReto = (p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.RETO] as? JsonObject)?.texto("anio")?.toIntOrNull() ?: java.time.LocalDate.now().year
@@ -772,86 +771,6 @@ private fun FilaGeneros(vm: CajonViewModel, titulo: String, generos: List<String
     androidx.compose.foundation.layout.FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         visibles.forEach { g -> Pildora(g.replaceFirstChar { it.uppercase() }) { vm.abrir(Pantalla.EtiquetaRed(g.lowercase().filter { it.isLetterOrDigit() })) } }
         if (generos.size > 6) Pildora(stringResource(if (todos) R.string.lotuyo_ver_menos else R.string.lotuyo_ver_todos, generos.size)) { todos = !todos }
-    }
-}
-
-/**
- * La afinidad contigo, como una fusión de gustos: el porcentaje y lo justo de lo que comparten (unos artistas, unos
- * géneros, las obras que les gustan a los dos y la favorita de los dos). Se calcula en el teléfono con tu cajón.
- */
-@Composable
-private fun AfinidadConmigo(vm: CajonViewModel, susObras: List<JsonObject>, susGeneros: List<String>, susArtistas: List<JsonObject>) {
-    val f = FogonTema.actual
-    val e = vm.estado.collectAsStateWithLifecycle().value ?: return
-    val afinidad = remember(e.vivas.size, e.musicosVivos.size, e.gustos.size, susObras, susGeneros, susArtistas) {
-        val porId = e.vivas.associateBy { it.id }
-        io.github.fogonapps.cajon.datos.Afinidades.calcular(
-            misArtistas = e.musicosVivos.map { it.nombre },
-            misGeneros = e.gustos.filter { !it.borrada && it.clave.startsWith("genero:") && it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave.removePrefix("genero:") },
-            misObras = e.vivas,
-            misFavoritas = (e.ajustes.favoritas + e.perfil.destacados.values).mapNotNull { porId[it] },
-            susArtistas = susArtistas.map { it.texto("nombre") },
-            susGeneros = susGeneros,
-            susObras = susObras.map { io.github.fogonapps.cajon.datos.ObraDestacada(it.texto("titulo"), it.texto("tipoObra").ifBlank { "pelicula" }, it.texto("portada"), it.texto("fuente")) },
-        )
-    } ?: return
-    val fotos = susArtistas.associate { it.texto("nombre") to it.texto("foto") }
-    val fuentes = susArtistas.associate { it.texto("nombre") to it.texto("fuente") }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(22.dp)).background(f.superficie).border(f.borde, f.linea, forma(22.dp)).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // El número solo cuando es alto; con poco en común, la tarjeta invita a descubrir lo del otro (no a descartarlo).
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (afinidad.mostrarPorcentaje) Text("${afinidad.porcentaje}%", fontFamily = f.cifras, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = f.acentoTexto)
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(if (afinidad.mostrarPorcentaje) R.string.afinidad_titulo else R.string.afinidad_descubrir_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
-                Text(stringResource(when {
-                    afinidad.porcentaje >= 80 -> R.string.afinidad_casi; afinidad.porcentaje >= 65 -> R.string.afinidad_mucho
-                    afinidad.porcentaje >= io.github.fogonapps.cajon.datos.Afinidades.MOSTRAR_DESDE -> R.string.afinidad_bastante; else -> R.string.afinidad_poco
-                }), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-        }
-        afinidad.favoritaDeLosDos?.let { o ->
-            Row(Modifier.clip(forma(12.dp)).clickable { vm.abrirObraDePerfil(o.titulo, o.tipo, o.portada, o.fuente) }, verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Portada(o.portada, o.tipo, o.titulo, Modifier.width(48.dp), esquina = 8.dp, conTitulo = false)
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.afinidad_favorita), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                    Text(o.titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-        if (afinidad.artistas.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.afinidad_artistas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                afinidad.artistas.forEach { a ->
-                    Column(Modifier.width(72.dp).clip(forma(12.dp)).clickable { vm.abrirArtistaDePerfil(a, fotos[a].orEmpty(), fuentes[a].orEmpty()) },
-                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        FotoArtista(fotos[a].orEmpty(), a, 52.dp)
-                        Text(a, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                    }
-                }
-            }
-        }
-        if (afinidad.generos.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.afinidad_generos), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                afinidad.generos.forEach { g -> Pildora(g.replaceFirstChar { it.uppercase() }) { vm.abrir(Pantalla.EtiquetaRed(g.lowercase().filter { it.isLetterOrDigit() })) } }
-            }
-        }
-        val otras = afinidad.obras.filter { it != afinidad.favoritaDeLosDos }
-        // Con poco en común, en vez de lo compartido: lo suyo que tú no tienes.
-        val mostrar = if (afinidad.mostrarPorcentaje || otras.isNotEmpty()) otras else afinidad.paraDescubrir
-        if (mostrar.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(if (mostrar === otras) R.string.afinidad_obras else R.string.afinidad_te_podria), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                mostrar.forEach { o ->
-                    Column(Modifier.width(76.dp).clip(forma(10.dp)).clickable { vm.abrirObraDePerfil(o.titulo, o.tipo, o.portada, o.fuente) }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 8.dp, conTitulo = false)
-                        Text(o.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-        }
     }
 }
 
