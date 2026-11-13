@@ -338,6 +338,11 @@ object MusicaPerfiles {
     fun silenciar(ctx: android.content.Context, si: Boolean) {
         ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putBoolean("musica_perfiles_silenciada", si).apply(); _silenciada.value = si; leida = true
     }
+
+    /** Cuántas pantallas que tienen su propio sonido están abiertas encima (las historias): mientras haya, el perfil se calla. */
+    private val _tapada = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val tapada: kotlinx.coroutines.flow.StateFlow<Int> = _tapada
+    fun tapar(si: Boolean) { _tapada.value = (_tapada.value + if (si) 1 else -1).coerceAtLeast(0) }
 }
 
 /** La canción de un perfil ajeno: suena sola entrando de a poco; el botón la silencia (en todos los perfiles) o la vuelve a activar. */
@@ -346,12 +351,14 @@ fun MusicaDePerfil(url: String) {
     if (!url.startsWith("https://audio-ssl.itunes.apple.com/")) return
     val ctx = LocalContext.current
     val silenciada by MusicaPerfiles.silenciada(ctx).collectAsStateWithLifecycle()
-    Avance(url, sonar = !silenciada, silencio = true)
+    // Si encima se abrieron las historias, la canción del perfil se calla (y vuelve al cerrarlas).
+    val tapada by MusicaPerfiles.tapada.collectAsStateWithLifecycle()
+    Avance(url, sonar = !silenciada, silencio = true, callada = tapada > 0)
 }
 
 /** El avance de 30 segundos: suena al tocar (o solo, en el visor); se apaga al salir. */
 @Composable
-private fun Avance(url: String, sonar: Boolean, silencio: Boolean = false) {
+private fun Avance(url: String, sonar: Boolean, silencio: Boolean = false, callada: Boolean = false) {
     val f = FogonTema.actual
     val ctx = LocalContext.current
     var sonando by remember(url) { mutableStateOf(false) }
@@ -376,11 +383,11 @@ private fun Avance(url: String, sonar: Boolean, silencio: Boolean = false) {
         ciclo.lifecycle.addObserver(obs)
         onDispose { ciclo.lifecycle.removeObserver(obs) }
     }
-    // Entra de a poco (unos 3 segundos), nunca de golpe.
-    LaunchedEffect(sonando, listo) {
+    // Entra de a poco (unos 3 segundos), nunca de golpe. Callada (otra pantalla con sonido encima): en pausa.
+    LaunchedEffect(sonando, listo, callada) {
         runCatching {
             if (!listo) return@runCatching
-            if (sonando) {
+            if (sonando && !callada) {
                 reproductor.setVolume(0f, 0f); reproductor.start()
                 for (i in 1..30) { kotlinx.coroutines.delay(100); val v = i / 30f; reproductor.setVolume(v * v, v * v) }
             } else if (reproductor.isPlaying) reproductor.pause()
@@ -994,6 +1001,8 @@ fun ControlesAdjunto(a: JsonObject, sonar: Boolean = false) {
 @Composable
 fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inicio: Int, onCerrar: () -> Unit) {
     val f = FogonTema.actual
+    // Mientras se ven las historias, la canción del perfil de atrás se calla.
+    DisposableEffect(Unit) { MusicaPerfiles.tapar(true); onDispose { MusicaPerfiles.tapar(false) } }
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     val alcance = rememberCoroutineScope()
     var g by remember { mutableStateOf(inicio.coerceIn(0, grupos.lastIndex)) }

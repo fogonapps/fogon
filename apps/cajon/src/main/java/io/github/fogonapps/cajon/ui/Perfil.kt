@@ -209,16 +209,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     fun contenidoParte(idSeccion: Int) {
         val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
         fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
-        // Quién ve cada pestaña en la red (con cuenta): se elige aquí mismo.
-        val partesDe = mapOf(1 to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS, PartesPerfil.RETO, PartesPerfil.VIENDO,
-            PartesPerfil.POR_VER, PartesPerfil.INSIGNIAS), 2 to listOf(PartesPerfil.MUSICA),
-        4 to listOf(PartesPerfil.GUARDADAS), 5 to listOf(PartesPerfil.CIFRAS))
-        if (yo != null) partesDe[idSeccion]?.let { partes ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.quien_lo_ve), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                Box(Modifier.weight(1f)) { ElegirVisibilidad(p.visibilidad[partes.first()] ?: "") { v -> partes.forEach { vm.visibilidadPerfil(it, v) } } }
-            }
-        }
+        // Quién ve cada parte se elige en «Editar perfil» (ver QuienVeTuPerfil), no aquí.
         when (idSeccion) {
             0 -> when {
                 yo == null -> NadaAqui()
@@ -464,6 +455,8 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
 
+    QuienVeTuPerfil(vm, p)
+
     Seccion(stringResource(R.string.foto_y_portada))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -671,4 +664,31 @@ fun AjustarImagenPerfil(vm: CajonViewModel, e: Estado, portada: Boolean) {
         BotonRiso(stringResource(R.string.guardar), { vm.encuadrePerfil(portada, Encuadre(zoom, x, y)) }, Modifier.weight(1f))
     }
     Espacio(40.dp)
+}
+
+/**
+ * En «Editar perfil», con cuenta: quién ve cada parte de tu perfil en la red (antes estaba encima de cada pestaña).
+ * «Lo tuyo» junta destacados, favoritas, gustos, el reto, lo que ves, lo que tienes por ver y las insignias.
+ */
+@Composable
+private fun QuienVeTuPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.Perfil) {
+    val f = FogonTema.actual
+    if (vm.red.usuario.collectAsStateWithLifecycle().value == null) return
+    val grupos = listOf(
+        R.string.parte_destacados to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS, PartesPerfil.RETO, PartesPerfil.VIENDO,
+            PartesPerfil.POR_VER, PartesPerfil.INSIGNIAS),
+        R.string.parte_musica to listOf(PartesPerfil.MUSICA),
+        R.string.parte_guardadas to listOf(PartesPerfil.GUARDADAS),
+        R.string.tus_cifras to listOf(PartesPerfil.CIFRAS),
+    )
+    Seccion(stringResource(R.string.quien_ve_tu_perfil))
+    Pista(stringResource(R.string.quien_ve_tu_perfil_pista), Modifier.padding(horizontal = 16.dp))
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        grupos.forEach { (nombre, partes) ->
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(nombre), style = MaterialTheme.typography.titleSmall, color = f.texto)
+                ElegirVisibilidad(p.visibilidad[partes.first()] ?: "") { v -> partes.forEach { vm.visibilidadPerfil(it, v) } }
+            }
+        }
+    }
 }

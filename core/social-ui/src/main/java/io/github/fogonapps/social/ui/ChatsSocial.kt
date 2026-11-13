@@ -269,7 +269,7 @@ private class Grabadora(private val ctx: android.content.Context) {
         val f = archivo ?: return null; archivo = null
         val b64 = runCatching { java.util.Base64.getEncoder().encodeToString(f.readBytes()) }.getOrNull()
         f.delete()
-        return b64?.takeIf { it.isNotEmpty() && it.length <= ChatSocial.ADJUNTO_MAX }?.let { it to segundos }
+        return b64?.takeIf { it.isNotEmpty() && it.length <= ChatSocial.AUDIO_MAX }?.let { it to segundos }
     }
     fun cancelar() { runCatching { rec?.stop() }; rec?.release(); rec = null; archivo?.delete(); archivo = null }
 }
@@ -307,7 +307,7 @@ private fun NotaVoz(b64: String, segundos: Int, color: Color) {
         Box(Modifier.weight(1f).height(4.dp).clip(FormaPildora).background(color.copy(alpha = 0.3f))) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(avance.coerceIn(0f, 1f)).background(color))
         }
-        Text("0:%02d".format(segundos), style = MaterialTheme.typography.labelSmall, color = color)
+        Text("%d:%02d".format(segundos / 60, segundos % 60), style = MaterialTheme.typography.labelSmall, color = color)
     }
 }
 

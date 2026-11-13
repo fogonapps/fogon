@@ -172,7 +172,7 @@ fun <T> Selector(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> U
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         opciones.forEach { (v, t) ->
             FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = FormaPildora,
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.tinta1, selectedLabelColor = f.sobreTinta1))
         }
     }
 }

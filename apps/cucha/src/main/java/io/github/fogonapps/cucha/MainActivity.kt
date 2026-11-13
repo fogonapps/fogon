@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
         val arranque = installSplashScreen()
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
-        if (savedInstanceState == null) abrirDesdeWidget(intent)
+        if (savedInstanceState == null) { abrirDesdeWidget(intent); abrirChatAvisado(intent) }
         setContent {
             val perfil by (application as CuchaApp).perfilActivo.collectAsStateWithLifecycle()
             androidx.compose.runtime.key(perfil) {
@@ -144,9 +144,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Desde el aviso de un mensaje: el chat con quien escribió (o la lista, si fueron varios). */
+    private fun abrirChatAvisado(i: Intent?) {
+        val chat = i?.getStringExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT) ?: return
+        i.removeExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT)
+        vm.abrir(if (chat.isBlank()) Pantalla.Social("mensajes") else Pantalla.Social("chat", usuario = chat))
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         abrirDesdeWidget(intent)
+        abrirChatAvisado(intent)
     }
 
     override fun onStart() {

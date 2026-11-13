@@ -425,7 +425,7 @@ class ChatSocial(
                 c.v != null -> { marcarVisto(de, c.v); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
                 c.rk != null -> { reaccionar(de, c.rk, c.x.orEmpty().take(8), mia = false); cambiar { x -> x.copy(ultimo = maxOf(x.ultimo, s.id)) } }
                 else -> agregar(de, MensajeChat(claveSobre(s), false, s.cuando, c.t, c.o, k = c.i, responde = c.r, sticker = c.s?.takeIf { it.length <= STICKER_MAX }, tamano = (c.z ?: 1).coerceIn(0, 2),
-                    foto = c.f?.takeIf { it.length <= ADJUNTO_MAX }, audio = c.a?.takeIf { it.length <= ADJUNTO_MAX }, segundos = (c.d ?: 0).coerceIn(0, 60)), s.id)
+                    foto = c.f?.takeIf { it.length <= ADJUNTO_MAX }, audio = c.a?.takeIf { it.length <= AUDIO_MAX }, segundos = (c.d ?: 0).coerceIn(0, VOZ_MAX)), s.id)
             }
         }
         if (sobres.isNotEmpty()) cambiar { it.copy(ultimo = cursor) }
@@ -497,10 +497,12 @@ class ChatSocial(
     companion object {
         /** El tamaño máximo de un sticker en base64 (cabe en un sobre del servidor con lo demás). */
         const val STICKER_MAX = 60_000
-        /** Lo mismo para una foto o una nota de voz (unos 45 KB: una foto chica o medio minuto de voz). */
+        /** Lo mismo para una foto (unos 45 KB: una foto chica). */
         const val ADJUNTO_MAX = 62_000
+        /** Una nota de voz en base64: hasta dos minutos a 12 kbps (unos 190 KB). */
+        const val AUDIO_MAX = 260_000
         /** La nota de voz más larga, en segundos. */
-        const val VOZ_MAX = 30
+        const val VOZ_MAX = 120
     }
 
     private suspend fun borrarTodo() {

@@ -82,9 +82,17 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         intent.getStringExtra("perfil")?.let { cambiarPerfil(it) }
         abrirEnlace(intent)
+        abrirChatAvisado(intent)
     }
 
     /** Un enlace de la red: /@usuario abre ese perfil y /p/<id> esa publicación. */
+    /** Desde el aviso de un mensaje: el chat con quien escribió (o la lista, si fueron varios). */
+    private fun abrirChatAvisado(intent: android.content.Intent?) {
+        val chat = intent?.getStringExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT) ?: return
+        intent.removeExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT)
+        vm.abrir(if (chat.isBlank()) Pantalla.Chats() else Pantalla.Conversacion(chat))
+    }
+
     private fun abrirEnlace(intent: android.content.Intent?) {
         // Compartido desde otra app (una peli de Netflix, un álbum de Spotify…): se busca para agregarlo.
         if (intent?.action == android.content.Intent.ACTION_SEND && intent.type == "text/plain") {
@@ -109,7 +117,7 @@ class MainActivity : ComponentActivity() {
         }
         vm.alCambiarPerfil = ::cambiarPerfil
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
-        if (savedInstanceState == null) abrirEnlace(intent)
+        if (savedInstanceState == null) { abrirEnlace(intent); abrirChatAvisado(intent) }
         setContent {
             val apariencia by AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.

@@ -1,0 +1,4 @@
+• Tocar el aviso de un mensaje abre ese chat.
+• Notas de voz de hasta 2 minutos.
+• La canción de un perfil se calla al ver sus historias.
+• «Quién ve tu perfil» ahora está en «Editar perfil».

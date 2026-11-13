@@ -67,7 +67,7 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
                 // Los chats silenciados (los guarda la app en "p<perfil>.silenciados") no avisan.
                 val silenciados = prefs.getStringSet("p$p.silenciados", emptySet()).orEmpty()
                 val todos = if (app.avisosConMensajes && conteo.second > prefs.getInt("p$p.mensajes", 0)) cliente.remitentesConUsuario() else emptyList()
-                val remitentes = todos.filter { it.first !in silenciados }.map { it.second }
+                val remitentes = todos.filter { it.first !in silenciados }
                 if (todos.isNotEmpty() && remitentes.isEmpty()) prefs.edit().putInt("p$p.mensajes", conteo.second).apply()
                 Triple(conteo, ultimos, remitentes)
             } }.getOrNull()
@@ -88,11 +88,13 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
             ).joinToString(" · ")
             val detalle = listOfNotNull(
                 if (nuevosAvisos) ultimos.maxByOrNull { it.cuando }?.let { a -> Avisos.frase(c, a).let { f -> if (avisos > 1) c.getString(R.string.fondo_y_mas, f, avisos - 1) else f } } else null,
-                if (nuevosMensajes) remitentes.takeIf { it.isNotEmpty() }?.let { r ->
+                if (nuevosMensajes) remitentes.map { it.second }.takeIf { it.isNotEmpty() }?.let { r ->
                     if (r.size == 1) c.getString(R.string.fondo_te_escribio, r[0]) else c.getString(R.string.fondo_te_escribieron, r.take(3).joinToString(", "))
                 } else null,
             ).joinToString(" · ").ifBlank { cuantos }
-            Avisos.notificar(c, app, detalle, p, cuenta.usuario, publico = cuantos)
+            // Si son solo mensajes, tocar el aviso abre el chat (de quien escribió; de varios, la lista de chats).
+            val chat = if (nuevosMensajes && !nuevosAvisos) remitentes.singleOrNull()?.first.orEmpty() else null
+            Avisos.notificar(c, app, detalle, p, cuenta.usuario, publico = cuantos, chat = chat)
         }
         // Una vez al día por cuenta: los cumpleaños de los amigos.
         val hoy = java.time.LocalDate.now()
@@ -171,11 +173,14 @@ object Avisos {
     /** Los amigos que cumplen años en [hoy] ("MM-DD"). */
     fun cumplesDeHoy(l: List<io.github.fogonapps.social.CumpleAmigo>, hoy: String) = l.filter { it.fecha == hoy }
 
-    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto, id: Int = 7) {
+    /** En el aviso de mensajes: con quién abrir el chat ("" = la lista de chats). */
+    const val EXTRA_CHAT = "chat"
+
+    internal fun notificar(c: Context, app: AppConAvisos, texto: String, perfil: String, usuario: String, publico: String = texto, id: Int = 7, chat: String? = null) {
         val nm = c.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CANAL, c.getString(R.string.fondo_canal), NotificationManager.IMPORTANCE_DEFAULT))
-        val abrir = PendingIntent.getActivity(c, perfil.toIntOrNull() ?: 0, app.avisosAbrir(perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = app.avisosAbrir(perfil).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).apply { if (chat != null) putExtra(EXTRA_CHAT, chat) }
+        val abrir = PendingIntent.getActivity(c, perfil.toIntOrNull() ?: 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         // Con una sola cuenta basta el nombre de la app; con varias, se dice a cuál le llegó.
         val titulo = app.avisosConfiguracion.nombreVisible + if (app.avisosCuentas().size > 1 && usuario.isNotBlank()) " · @$usuario" else ""
         val publica = NotificationCompat.Builder(c, CANAL).setSmallIcon(app.avisosIcono).setContentTitle(titulo).setContentText(publico).build()

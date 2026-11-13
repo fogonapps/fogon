@@ -1964,7 +1964,8 @@ class Social(
         val otro = idDe(usuario)
         if (otro == yo) throw Problema(400, "eres_tu")
         if (bloqueado(otro, yo) || bloqueado(yo, otro)) throw Problema(404, "no_existe")
-        if (s.sobre.length > 90_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
+        // Hasta ~400 mil caracteres: una nota de voz de dos minutos (cifrada) con lo demás del mensaje.
+        if (s.sobre.length > 400_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
         val n = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
         if (n >= 300) throw Problema(429, "despacio")
         // A quien no te sigue, hasta 20 por hora (frena el acoso y el spam a desconocidos).

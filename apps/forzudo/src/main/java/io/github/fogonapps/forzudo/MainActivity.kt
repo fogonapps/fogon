@@ -43,10 +43,23 @@ class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(base: android.content.Context) = super.attachBaseContext(io.github.fogonapps.identidad.Idioma.envolver(base))
 
+    /** Desde el aviso de un mensaje: el chat con quien escribió (o la lista, si fueron varios). */
+    private fun abrirChatAvisado(i: android.content.Intent?) {
+        val chat = i?.getStringExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT) ?: return
+        i.removeExtra(io.github.fogonapps.social.ui.Avisos.EXTRA_CHAT)
+        vm.abrir(if (chat.isBlank()) Pantalla.Social("mensajes") else Pantalla.Social("chat", usuario = chat))
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        abrirChatAvisado(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val arranque = installSplashScreen()
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
+        if (savedInstanceState == null) abrirChatAvisado(intent)
         setContent {
             val perfil by (application as ForzudoApp).perfilActivo.collectAsStateWithLifecycle()
             androidx.compose.runtime.key(perfil) {
