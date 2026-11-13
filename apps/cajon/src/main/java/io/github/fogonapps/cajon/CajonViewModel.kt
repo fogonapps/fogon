@@ -717,7 +717,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun responderHistoria(usuario: String, texto: String) = chat.enviar(usuario, tx(R.string.historia_respondio).format(texto))
+    fun responderHistoria(usuario: String, texto: String) = chat.enviar(usuario, tx(R.string.historia_respondio, texto))
 
     /** Obras y personas (directores, actores, escritores) con fotos, para el fondo de una historia. */
     suspend fun buscarConFotos(q: String): List<kotlinx.serialization.json.JsonObject> = kotlinx.coroutines.coroutineScope {
@@ -1898,11 +1898,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     val junta = Rec.Junta<Encontrado> { it.fuente }
                     val semillas = Rec.semillas(e, cineQuiere, 8).filter { it.first.fuente.startsWith("tmdb:") }.map { Triple(it.first.fuente, it.second, it.first.titulo) } +
                         perfil.semillas.filter { it.fuente.startsWith("tmdb:") }.take(6).map { Triple(it.fuente, 0.7, it.nombre) }
-                    semillas.distinctBy { it.first }.forEach { (f, p, titulo) -> runCatching { junta.sumar(t.recomendaciones(f, idioma()), p, titulo) }.avisarFallo(registrar) }
+                    // Todas las consultas a la vez (antes, una tras otra: era lo que más tardaba).
+                    semillas.distinctBy { it.first }.map { (f, p, titulo) -> async { Triple(runCatching { t.recomendaciones(f, idioma()) }.avisarFallo(registrar).getOrNull(), p, titulo) } }
+                        .awaitAll().forEach { (l, p, titulo) -> if (l != null) junta.sumar(l, p, titulo) }
                     // Las parecidas que Fogón escribió para lo que eligió de la lista para empezar (con su póster).
-                    curadas(e, cineQuiere.toSet()).forEach { (titulo, lista) ->
-                        junta.sumar(lista.take(4).map { x -> if (x.portada.isBlank()) x.copy(portada = runCatching { t.poster(x.fuente) }.avisarFallo(registrar).getOrDefault("")) else x }, 1.0, titulo)
-                    }
+                    curadas(e, cineQuiere.toSet()).map { (titulo, lista) -> async {
+                        titulo to lista.take(4).map { x -> if (x.portada.isBlank()) x.copy(portada = runCatching { t.poster(x.fuente) }.avisarFallo(registrar).getOrDefault("")) else x }
+                    } }.awaitAll().forEach { (titulo, l) -> junta.sumar(l, 1.0, titulo) }
                     // Sin semillas (o con pocas), lo que más se ve esta semana, según sus géneros.
                     if (semillas.size < 3) runCatching { junta.sumar(t.tendencias(idioma()), 0.0, "") }.avisarFallo(registrar)
                     val c = junta.candidatos({ "obra:" + it.fuente }, { it.generos }) {
@@ -1918,9 +1920,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     val semillas = e.musicosVivos.filter { it.fuente.startsWith("mb:artist:") }.map { Triple(it.fuente, Rec.pesoArtista(it, e, oidos), it.nombre) }
                         .filter { it.second > 0 && perfil.pesoPersona(it.third) >= 0 }.sortedByDescending { it.second }.take(6) +
                         perfil.artistasDichos.filter { it.fuente.startsWith("mb:artist:") }.take(6).map { Triple(it.fuente, 0.7, it.nombre) }
-                    semillas.distinctBy { it.first }.take(10).forEach { (f, p, nombre) ->
-                        runCatching { junta.sumar(io.github.fogonapps.cajon.datos.ListenBrainz.parecidos(f.removePrefix("mb:artist:")), p, nombre) }.avisarFallo(registrar)
-                    }
+                    semillas.distinctBy { it.first }.take(10).map { (f, p, nombre) -> async {
+                        Triple(runCatching { io.github.fogonapps.cajon.datos.ListenBrainz.parecidos(f.removePrefix("mb:artist:")) }.avisarFallo(registrar).getOrNull(), p, nombre)
+                    } }.awaitAll().forEach { (l, p, nombre) -> if (l != null) junta.sumar(l, p, nombre) }
                     val c = junta.candidatos({ Rec.clavePersona(it.nombre) }, persona = { it.nombre }) {
                         "mb:artist:${it.mbid}" in fuentes || L.tituloLimpio(it.nombre) in nombres || L.tituloLimpio(it.nombre) in perfil.artistasDichos.map { d -> L.tituloLimpio(d.nombre) }
                     }
@@ -1948,7 +1950,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         suyos.forEach { sumarAutor(it.nombre, p, it.fuente.removePrefix("ol:author:")) }
                     }
                     perfil.semillas.filter { it.tipo == Tipos.LIBRO && it.creador.isNotBlank() }.forEach { sumarAutor(it.creador.split(",").first().trim(), 1.0, "") }
-                    porAutor.entries.sortedByDescending { it.value.first }.take(5).forEach { (k, v) ->
+                    porAutor.entries.sortedByDescending { it.value.first }.take(5).map { (k, v) -> async {
                         val nombre = e.artistasVivos.firstOrNull { L.tituloLimpio(it.nombre) == k }?.nombre
                             ?: perfil.semillas.firstOrNull { L.tituloLimpio(it.creador.split(",").first()) == k }?.creador?.split(",")?.first()?.trim() ?: k
                         // Sin lo que ya tiene de ese autor, aunque esté en otro idioma u otro registro de Open Library.
@@ -1956,9 +1958,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                             perfil.semillas.filter { it.tipo == Tipos.LIBRO }.map { it.nombre }
                         runCatching {
                             val obras = if (v.second.isNotEmpty()) OpenLibrary.obrasDe(v.second, idioma()) else OpenLibrary.obrasDeNombre(nombre, idioma())
-                            junta.sumar(obras.filter { !Rec.yaLoTiene(it.titulo, suyos) }.take(10), v.first, nombre)
-                        }.avisarFallo(registrar)
-                    }
+                            Triple(obras.filter { !Rec.yaLoTiene(it.titulo, suyos) }.take(10), v.first, nombre)
+                        }.avisarFallo(registrar).getOrNull()
+                    } }.awaitAll().filterNotNull().forEach { (l, p, nombre) -> junta.sumar(l, p, nombre) }
                     // Las parecidas que Fogón escribió para los libros que le gustan (pesan más que "otro del mismo autor").
                     curadas(e, setOf(Tipos.LIBRO)).forEach { (titulo, lista) -> junta.sumar(lista, 1.5, titulo) }
                     // Sin los que solo están en otro alfabeto (Open Library no tiene esa obra en el idioma de la app).

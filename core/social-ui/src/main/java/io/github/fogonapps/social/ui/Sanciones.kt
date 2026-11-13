@@ -1,5 +1,6 @@
 package io.github.fogonapps.social.ui
 
+import androidx.compose.foundation.background
 import io.github.fogonapps.identidad.PistaSocial as Pista
 import io.github.fogonapps.identidad.PildoraSocial as Pildora
 import androidx.compose.foundation.layout.*
@@ -24,7 +25,7 @@ private val DECISIONES = listOf(
     "advertencia" to R.string.sancion_advertencia, "falta" to R.string.sancion_falta,
     "falta_grave" to R.string.social_mod_grave, "cerrar" to R.string.social_mod_cerrar,
 )
-private val CIERRE_DIRECTO = setOf("menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
+internal val CIERRE_DIRECTO = setOf("menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
 
 private fun fechaCorta(t: Long): String = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(t))
 
@@ -35,11 +36,11 @@ private fun fechaCorta(t: Long): String = java.text.DateFormat.getDateTimeInstan
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun HojaSancionar(permisos: Set<String>, reglaInicial: String, faltas: Int, titulo: String, pedirMensaje: Boolean,
-                           onCerrar: () -> Unit, onListo: (decision: String, regla: String, mensaje: String) -> Unit) {
+                           onCerrar: () -> Unit, decisionInicial: String = "advertencia", onListo: (decision: String, regla: String, mensaje: String) -> Unit) {
     val f = FogonTema.actual
     var regla by remember { mutableStateOf(reglaInicial.takeIf { r -> MOTIVOS_REPORTE.any { it.first == r } || r in CIERRE_DIRECTO } ?: "otro") }
     val permitidas = accionesModeracion(permisos, regla, faltas).let { if ("sancionar" in permisos && regla !in CIERRE_DIRECTO) it + "advertencia" else it }
-    var decision by remember { mutableStateOf("advertencia") }
+    var decision by remember { mutableStateOf(decisionInicial) }
     if (decision !in permitidas) decision = DECISIONES.firstOrNull { it.first in permitidas }?.first ?: ""
     var mensaje by remember { mutableStateOf("") }
     ModalBottomSheet(onCerrar, containerColor = f.fondo, contentColor = f.texto) {
@@ -73,9 +74,25 @@ internal fun HojaSancionar(permisos: Set<String>, reglaInicial: String, faltas: 
 
 /** Lo reportado con sus fotos: el texto lo pinta cada app; aquí van las imágenes, el video y, en una cuenta, su foto y portada. */
 @Composable
-internal fun ImagenesReporte(c: CasoModeracion) {
+internal fun ImagenesReporte(c: CasoModeracion, vm: InterfazSocial? = null) {
     val datos = remember(c.contenido) { runCatching { JsonSocial.parseToJsonElement(c.contenido).jsonObject }.getOrNull() }
     when (c.que) {
+        // Una historia: su foto (o el video, que se reproduce al tocarlo), su texto y su pregunta.
+        "historia" -> {
+            val f = FogonTema.actual
+            fun t(k: String) = (datos?.get(k) as? JsonPrimitive)?.content.orEmpty()
+            val imagen = t("imagen"); val video = t("video")
+            var viendo by remember { mutableStateOf(false) }
+            if (imagen.isNotBlank()) coil3.compose.AsyncImage(io.github.fogonapps.social.ClienteSocial.imagen(imagen), null,
+                Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)).then(Modifier.background(f.superficie)), contentScale = ContentScale.Fit)
+            if (video.isNotBlank() && vm != null) {
+                if (viendo) VideoHistoria(vm::cabeceras, video, false, Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)))
+                else Pildora(stringResource(R.string.social_mod_ver_video), IconosMultimedia.Reproducir) { viendo = true }
+            }
+            listOf(t("texto"), t("pregunta")).filter { it.isNotBlank() }.forEach { Text(it.take(600), style = MaterialTheme.typography.bodyMedium, color = f.texto) }
+            if (datos == null || (imagen.isBlank() && video.isBlank() && t("texto").isBlank() && t("pregunta").isBlank()))
+                Text(stringResource(R.string.social_mod_historia_sin_contenido), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
         "publicacion" -> {
             val d = (datos?.get("datos") as? JsonObject) ?: datos ?: return
             val imagenes = imagenesPublicacion(d)

@@ -192,6 +192,8 @@ fun FeedInicio(vm: CajonViewModel) {
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val feed by vm.red.feed.collectAsStateWithLifecycle()
     val sinLeer by vm.red.sinLeer.collectAsStateWithLifecycle()
+    // Al instante lo guardado en el teléfono; lo nuevo llega después.
+    LaunchedEffect(usuario) { if (usuario != null && feed == null) vm.red.cargarFeed(avisar = false) }
     if (usuario == null) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().clickable { vm.irA(io.github.fogonapps.cajon.Pestana.PARA_TI) }.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)) {

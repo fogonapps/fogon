@@ -598,4 +598,8 @@
     <string name="social_perfil_bloquear">Bloquear</string>
     <string name="social_perfil_bloquear_a">¿Bloquear a @%1$s?</string>
     <string name="social_perfil_bloquear_explica">No podrá seguirte, escribirte ni ver tu perfil.</string>
+    <string name="social_mod_tipo_historia">Historia</string>
+    <string name="social_mod_ver_video">Ver el video</string>
+    <string name="social_mod_historia_sin_contenido">La historia ya no tiene contenido para mostrar (venció o se borró).</string>
+    <string name="sancion_advertir">Advertir</string>
 </resources>

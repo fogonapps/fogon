@@ -77,9 +77,26 @@ abstract class ControladorSocial(
         if (sesion.vigente(marca)) cargarSesiones()
     }
 
+    /** Dónde guardar lo último del feed, para mostrarlo al instante al abrir (null: no se guarda). */
+    protected open val archivoFeed: java.io.File? get() = archivoHistorias?.let { java.io.File(it.parentFile, it.name.replace("historias", "feed")) }
+    @kotlinx.serialization.Serializable private class FeedGuardado(val lista: List<PublicacionSocial> = emptyList(), val cuando: Long = 0)
+
     fun cargarFeed(avisar: Boolean = true) {
         if (_usuario.value == null) return
-        scope.launch { intentar(avisar = avisar) { _feed.value = cliente().feed() } }
+        scope.launch {
+            // Primero lo guardado (de los últimos 3 días), al instante; después lo nuevo del servidor.
+            if (_feed.value == null) archivoFeed?.let { a ->
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { JsonSocial.decodeFromString(FeedGuardado.serializer(), a.readText()) }.getOrNull() }
+                    ?.takeIf { System.currentTimeMillis() - it.cuando < 3 * 24 * 3600_000L }?.let { if (_feed.value == null) _feed.value = it.lista }
+            }
+            intentar(avisar = avisar) {
+                val l = cliente().feed()
+                _feed.value = l
+                archivoFeed?.let { a -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { a.writeText(JsonSocial.encodeToString(FeedGuardado.serializer(), FeedGuardado(l.take(40), System.currentTimeMillis()))) }
+                } }
+            }
+        }
     }
 
     /** X-09: al deslizar hacia abajo, el feed y Explorar de nuevo (sin avisar errores: el gesto ya dice que intentó). */

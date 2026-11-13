@@ -26,7 +26,7 @@ fun interfazCuenta(vm: GymViewModel): InterfazSocial {
             override fun adjuntosApp() = vm.adjuntosHistoria()
             override val respondeHistorias = true
             override fun responderHistoria(usuario: String, texto: String) {
-                vm.red.chat(vm.getApplication()) {}.enviar(usuario, tx(io.github.fogonapps.social.ui.R.string.historia_respondio).format(texto))
+                vm.red.chat(vm.getApplication()) {}.enviar(usuario, vm.tx(io.github.fogonapps.social.ui.R.string.historia_respondio, texto))
             }
             override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
             @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_app)

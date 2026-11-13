@@ -737,6 +737,7 @@ fun Moderacion(vm: InterfazSocial) {
                     "cuenta" -> R.string.social_mod_tipo_cuenta
                     "comentario" -> R.string.social_mod_tipo_comentario
                     "mensaje" -> R.string.social_mod_tipo_mensaje
+                    "historia" -> R.string.social_mod_tipo_historia
                     else -> R.string.social_red_publicacion
                 })
                 val motivos = c.motivos.entries.map { (codigo, cantidad) ->
@@ -747,21 +748,23 @@ fun Moderacion(vm: InterfazSocial) {
                 c.autor?.let { Text("@${it.usuario} · ${stringResource(R.string.social_mod_faltas, c.faltasAutor)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave) }
                 if (c.que == "mensaje") Text(limpiarReporteMensaje(c.contenido).take(600),
                     style = MaterialTheme.typography.bodyMedium, color = f.texto)
-                else vm.contenidoReporte(c.contenido)
-                ImagenesReporte(c)
+                else if (c.que != "historia") vm.contenidoReporte(c.contenido)
+                ImagenesReporte(c, vm)
                 Text(pluralStringResource(R.plurals.social_mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.social_mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 val reglaCaso = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
                 val acciones = accionesModeracion(permisos, reglaCaso, c.faltasAutor)
-                var sancionando by remember(c.que, c.objeto) { mutableStateOf(false) }
-                if (sancionando) HojaSancionar(permisos, reglaCaso, c.faltasAutor, tipo + (c.autor?.let { " · @" + it.usuario }.orEmpty()), pedirMensaje = false, { sancionando = false }) { decision, regla, mensaje ->
+                // La hoja se abre con la advertencia elegida («Advertir») o con la falta («Sancionar»).
+                var sancionando by remember(c.que, c.objeto) { mutableStateOf<String?>(null) }
+                sancionando?.let { inicial -> HojaSancionar(permisos, reglaCaso, c.faltasAutor, tipo + (c.autor?.let { " · @" + it.usuario }.orEmpty()), pedirMensaje = false, { sancionando = null }, inicial) { decision, regla, mensaje ->
                     confirmar(vm.tx(R.string.sancion_aplicar), vm.tx(R.string.sancion_confirmar)) { vm.red.decidir(c, decision, regla, mensaje) }
-                }
+                } }
                 if (puedeRestaurar(c.estado, permisos)) Pildora(stringResource(R.string.social_equipo_restaurar)) {
                     confirmar(vm.tx(R.string.social_equipo_restaurar), vm.tx(R.string.social_equipo_restaurar_confirmar)) { vm.red.restaurar(c) }
                 }
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
-                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = true }
+                    if ("sin_falta" in acciones && c.estado != "retirado" && reglaCaso !in CIERRE_DIRECTO) Pildora(stringResource(R.string.sancion_advertir)) { sancionando = "advertencia" }
+                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = "falta" }
                 }
             }
         }

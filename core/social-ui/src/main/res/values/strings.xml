@@ -596,4 +596,8 @@
     <string name="social_perfil_bloquear">Block</string>
     <string name="social_perfil_bloquear_a">Block @%1$s?</string>
     <string name="social_perfil_bloquear_explica">They won\'t be able to follow you, message you or see your profile.</string>
+    <string name="social_mod_tipo_historia">Story</string>
+    <string name="social_mod_ver_video">Play the video</string>
+    <string name="social_mod_historia_sin_contenido">The story has no content left to show (it expired or was deleted).</string>
+    <string name="sancion_advertir">Warn</string>
 </resources>

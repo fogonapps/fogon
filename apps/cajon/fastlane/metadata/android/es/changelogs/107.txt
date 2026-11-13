@@ -1,0 +1,3 @@
+• Responder una historia ya no cierra la app.
+• Moderación: las historias reportadas se ven y hay un botón para advertir.
+• El Inicio carga más rápido: lo de tu gente aparece al instante y las recomendaciones llegan antes.

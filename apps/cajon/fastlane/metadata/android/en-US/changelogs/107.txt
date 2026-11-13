@@ -1,0 +1,3 @@
+• Replying to a story no longer closes the app.
+• Moderation: reported stories show up and there is a button to warn.
+• Home loads faster: your people's posts appear instantly and recommendations arrive sooner.
