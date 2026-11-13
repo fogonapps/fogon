@@ -93,10 +93,17 @@ fun EditarFijo(vm: AhorradorViewModel, e: Estado, id: String?) {
     val confirmar = LocalConfirmar.current
     val fijo = e.fijos.firstOrNull { it.id == id }
     val activas = e.cuentas.filter { !it.archivada }
+    // Sin ninguna cuenta activa (todas archivadas) no hay de dónde pagarlo: se dice y se ofrece crear una.
+    if (activas.isEmpty() && fijo == null) {
+        Cabecera(stringResource(R.string.agregar_fijo), vm::cerrar)
+        Pista(stringResource(R.string.anotar_sin_cuentas), Modifier.padding(16.dp))
+        BotonRiso(stringResource(R.string.nueva_cuenta), { vm.cerrar(); vm.abrir(Pantalla.EditarCuenta(null)) }, Modifier.fillMaxWidth().padding(16.dp))
+        return
+    }
     var nombre by rememberSaveable { mutableStateOf(fijo?.nombre.orEmpty()) }
     var monto by rememberSaveable { mutableStateOf(fijo?.monto?.toString().orEmpty()) }
     var categoria by rememberSaveable { mutableStateOf(fijo?.categoria ?: "servicios") }
-    var cuenta by rememberSaveable { mutableStateOf(fijo?.cuenta ?: (activas.firstOrNull { it.tipo == TipoCuenta.BANCO } ?: activas.first()).id) }
+    var cuenta by rememberSaveable { mutableStateOf(fijo?.cuenta ?: (activas.firstOrNull { it.tipo == TipoCuenta.BANCO } ?: activas.firstOrNull())?.id.orEmpty()) }
     var dia by rememberSaveable { mutableStateOf((fijo?.dia ?: 5).toString()) }
     var automatico by rememberSaveable { mutableStateOf(fijo?.automatico ?: false) }
     var activo by rememberSaveable { mutableStateOf(fijo?.activo ?: true) }

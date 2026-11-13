@@ -222,10 +222,12 @@ private fun PerfilRed(vm: CuchaViewModel, interfaz: InterfazSocial, usuario: Str
     val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
         "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
         contadores = cifrasRed(publicaciones), secciones = secciones, insignia = perfil.persona.insignia)
-    io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco), elegida, { elegida = it }, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize()) },
+    io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco, contadores = io.github.fogonapps.social.ui.cifrasSociales(perfil) + vista.contadores), elegida, { elegida = it }, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize()) },
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
         bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
         enlace = {}, acciones = {
+            // Escribirle (el chat cifrado, igual en las cuatro apps).
+            if (yo != null && perfil.persona.usuario != yo) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_chat_mensaje), { vm.abrir(Pantalla.Social("chat", usuario = perfil.persona.usuario)) }, Modifier.weight(1f))
             if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
                 if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {
                 if (perfil.relacion == "sigo") vm.red.dejarDeSeguir(usuario) else vm.red.seguir(usuario)

@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.fogonapps.forzudo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 56
-        versionName = "1.42"
+        versionCode = 57
+        versionName = "1.43"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -56,6 +56,7 @@ android {
     }
 
     testOptions {
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             it.systemProperty("prueba", providers.gradleProperty("prueba").getOrElse(""))
             it.systemProperty("salida", providers.gradleProperty("salida").getOrElse(""))
@@ -86,4 +87,6 @@ dependencies {
     implementation(libs.okhttp)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(project(":core:revision"))
+    debugImplementation(libs.compose.ui.test.manifest)
 }

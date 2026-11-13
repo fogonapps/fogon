@@ -187,7 +187,7 @@ class ChatSocial(
      * apps cifradas con la llave de la contraseña: si otra app ya las subió, se usan esas; si la cuenta ya tiene
      * llaves pero no se pueden traer, no se crean otras (romperían el chat de la otra app).
      */
-    private suspend fun asegurarLlaves() {
+    private suspend fun asegurarLlaves(forzar: Boolean = false) {
         val llave = caja.llaveCuenta
         val locales = propias()
         val remotas = runCatching { cliente().llavesChat() }.getOrNull()
@@ -204,7 +204,7 @@ class ChatSocial(
         if (remotas == null) return
         val yo = usuario.value ?: return
         val yaTiene = runCatching { cliente().llaves(yo) }.isSuccess
-        if (yaTiene && remotas.isBlank() && !creaLlaves) { if (!avisoAbreCajon) { avisoAbreCajon = true; decir("abre_cajon") }; return }
+        if (yaTiene && remotas.isBlank() && !creaLlaves && !forzar) { if (!avisoAbreCajon) { avisoAbreCajon = true; decir("abre_cajon") }; return }
         val nuevas = withContext(Dispatchers.Default) { Cifrado.nuevas() }
         caja.chatLlaves = JsonSocial.encodeToString(Cifrado.Propias.serializer(), nuevas)
         runCatching { cliente().ponerLlaves(withContext(Dispatchers.Default) { Cifrado.publicas(nuevas) }) }
@@ -213,6 +213,16 @@ class ChatSocial(
 
     /** Si este teléfono ya puede chatear (tiene las llaves). */
     fun listo(): Boolean = propias() != null
+    private val _listoChat = MutableStateFlow(false)
+    /** Si este teléfono ya tiene las llaves para chatear (para avisar en la conversación si todavía no). */
+    val listoChat: StateFlow<Boolean> = _listoChat
+    fun revisarListo() { _listoChat.value = listo() }
+
+    /**
+     * Llaves nuevas en esta app, cuando la cuenta tiene unas viejas que no se pueden traer (las de un teléfono que ya
+     * no está, o de El Cajón sin abrir): desde ahora se chatea; lo de antes cifrado con las viejas no se podrá leer.
+     */
+    fun llavesNuevasAqui() = scope.launch { runCatching { asegurarLlaves(forzar = true) }; _listoChat.value = listo() }
 
     /** Las llaves públicas de [usuario]; [frescas] las pide de nuevo (cambian si la persona entró en otro teléfono). */
     private suspend fun llaves(usuario: String, frescas: Boolean = false): LlavesPublicas =

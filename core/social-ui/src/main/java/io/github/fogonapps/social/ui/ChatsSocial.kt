@@ -421,6 +421,15 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
             if (lista.isEmpty()) item(key = "vacio") { Pista(stringResource(R.string.social_chat_cifrado), Modifier.padding(16.dp)) }
         }
 
+        // Sin llaves en esta app todavía: se dice por qué no se puede escribir y cómo seguir (nunca se borra lo escrito).
+        val listoChat by chat.listoChat.collectAsStateWithLifecycle()
+        LaunchedEffect(usuario) { chat.revisarListo(); while (!chat.listo()) { kotlinx.coroutines.delay(3000); chat.revisarListo() } }
+        if (!listoChat) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(16.dp)).background(f.superficie).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.social_chat_sin_llaves_aqui), style = MaterialTheme.typography.bodySmall, color = f.texto)
+            Pildora(stringResource(R.string.social_chat_llaves_nuevas)) {
+                vm.confirmar(vm.tx(R.string.social_chat_llaves_nuevas), vm.tx(R.string.social_chat_llaves_nuevas_seguro)) { chat.llavesNuevasAqui() }
+            }
+        }
         if (enviando) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = f.tinta1, trackColor = f.linea)
         // Respondiendo a un mensaje: la cita encima del campo.
         responder?.let { r ->
@@ -461,7 +470,7 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
                 BotonIcono(IconosMultimedia.Microfono, stringResource(R.string.social_chat_grabar)) { grabar() }
                 BotonIcono(Iconos.Estrella, stringResource(R.string.social_chat_stickers), tinta = if (stickers) f.acentoTexto else null) { stickers = !stickers; elegirObra = false }
             } else BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_mensaje), lleno = true, activo = !enviando) {
-                chat.enviar(usuario, texto, responde = responder); texto = ""; responder = null
+                if (chat.listo()) { chat.enviar(usuario, texto, responde = responder); texto = ""; responder = null } else chat.revisarListo()
             }
         }
     }

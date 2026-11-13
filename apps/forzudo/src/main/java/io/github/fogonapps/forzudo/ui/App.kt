@@ -55,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -108,6 +109,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = !verTutorialGuia && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             Scaffold(
+                // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
+                modifier = if (pila.isNotEmpty() || verTutorialGuia) Modifier.clearAndSetSemantics {} else Modifier,
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
                 bottomBar = {

@@ -23,7 +23,7 @@ internal fun PerfilSocial.aPerfilVista(
 ): PerfilVista {
     // Una cuenta privada muestra su presentación (foto, portada, bio y enlaces) pero no su contenido.
     return PerfilVista(persona.nombre.ifBlank { persona.usuario }, persona.usuario,
-        if (!bloqueado && persona.foto) ClienteSocial.foto(persona.usuario) else "",
+        if (!bloqueado && persona.foto) ClienteSocial.foto(persona.usuario, persona.fotoV) else "",
         if (bloqueado) "" else portada, if (bloqueado) "" else bio, if (bloqueado) emptyList() else enlaces,
         persona.privada, relacion, if (bloqueado) emptyList() else contadores, if (cerrada || bloqueado) emptyList() else secciones,
         insignia = if (bloqueado) "" else persona.insignia, tema = if (bloqueado) "" else persona.tema, marco = if (bloqueado) "" else persona.marco)

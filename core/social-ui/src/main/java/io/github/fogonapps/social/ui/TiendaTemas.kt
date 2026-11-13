@@ -41,13 +41,17 @@ fun marcoPropio(vm: InterfazSocial): String {
     return if (usuario == null) "" else temas.marco
 }
 
-/** La chispa (la moneda de Fogón): la del logo. */
+/** La chispa (la moneda de Fogón), neutra como un ícono más: un destello de cuatro puntas dentro de un hexágono. */
+private val Chispa = dibujo("chispa",
+    trazo("M12 2.6l8.2 4.7v9.4L12 21.4l-8.2-4.7V7.3z", 2.2f),
+    relleno("M12 7.2l1.3 3.5 3.5 1.3-3.5 1.3L12 16.8l-1.3-3.5L7.2 12l3.5-1.3z"))
+
 @Composable
-private fun IconoChispa(tamano: androidx.compose.ui.unit.Dp) =
-    androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(io.github.fogonapps.identidad.R.drawable.chispa), null, Modifier.size(tamano))
+private fun IconoChispa(tamano: androidx.compose.ui.unit.Dp) = IconoRiso(Chispa, null, tamano = tamano, tinta = FogonTema.actual.texto)
 
 /**
- * Tus chispas, al lado de tu foto (como las monedas de los juegos): tocarlas abre la tienda. Solo con cuenta.
+ * La tienda en la barra de arriba, al lado de tu foto (como la moneda de los juegos): un botón redondo con la chispa,
+ * sin el número (tus chispas se ven al abrirla). Un puntito avisa que puedes reclamar las del día. Solo con cuenta.
  */
 @Composable
 fun ChispasArriba(vm: InterfazSocial, modifier: Modifier = Modifier) {
@@ -57,13 +61,11 @@ fun ChispasArriba(vm: InterfazSocial, modifier: Modifier = Modifier) {
     LaunchedEffect(usuario) { vm.red.cargarTemas() }
     val f = FogonTema.actual
     var abierta by remember { mutableStateOf(false) }
-    val texto = stringResource(R.string.social_chispas_n, temas.chispas)
-    Row(modifier.clip(FormaPildora).background(f.superficie).border(f.borde, if (temas.diario) f.tinta1 else f.linea, FormaPildora)
-        .clickable { abierta = true }.semantics { contentDescription = texto }.padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        IconoChispa(18.dp)
-        Text("${temas.chispas}", style = MaterialTheme.typography.labelLarge, color = f.texto)
-        if (temas.diario) Box(Modifier.size(7.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1))
+    val texto = stringResource(R.string.social_temas_tienda)
+    Box(modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie).border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape)
+        .clickable { abierta = true }.semantics { contentDescription = texto }, contentAlignment = Alignment.Center) {
+        IconoChispa(24.dp)
+        if (temas.diario) Box(Modifier.align(Alignment.TopEnd).padding(9.dp).size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1))
     }
     if (abierta) TiendaTemas(vm) { abierta = false }
 }
@@ -139,3 +141,10 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
 fun PortadaPerfilRed(url: String, modifier: Modifier = Modifier) {
     if (url.isNotBlank()) coil3.compose.AsyncImage(url, null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
 }
+
+/** Las cifras sociales de un perfil ajeno (seguidores y seguidos), las mismas en las cuatro apps. */
+@Composable
+fun cifrasSociales(p: io.github.fogonapps.social.PerfilSocial): List<io.github.fogonapps.perfil.ContadorPerfil> = listOf(
+    io.github.fogonapps.perfil.ContadorPerfil("${p.seguidores}", stringResource(R.string.social_cifra_seguidores)),
+    io.github.fogonapps.perfil.ContadorPerfil("${p.siguiendo}", stringResource(R.string.social_cifra_siguiendo)),
+)

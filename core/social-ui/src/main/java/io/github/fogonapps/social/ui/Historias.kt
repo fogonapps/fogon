@@ -276,7 +276,7 @@ fun EnlaceAppleMusic(enlace: String) {
     val f = FogonTema.actual
     val uri = LocalUriHandler.current
     Text(stringResource(R.string.historia_apple_music_corto), style = MaterialTheme.typography.labelSmall.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline),
-        color = f.textoSuave, modifier = Modifier.clip(forma(6.dp)).clickable { uri.openUri(enlace) }.padding(4.dp))
+        color = f.textoSuave, modifier = Modifier.clip(forma(6.dp)).clickable { uri.openUri(enlace) }.heightIn(min = 32.dp).wrapContentHeight(Alignment.CenterVertically).padding(horizontal = 4.dp))
 }
 
 /** El botón del avance de 30 segundos (solo de Apple), para usarlo fuera de las historias (la canción del perfil). Con [sonar], arranca solo. */

@@ -785,7 +785,7 @@ fun Publicar(vm: CajonViewModel, e: Estado, obra: String?) {
 }
 
 @Composable
-private fun Opcion(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) = io.github.fogonapps.identidad.OpcionSocial(texto, si, onCambio)
+private fun Opcion(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) = FilaInterruptorCajon(texto, si, onCambio = onCambio)
 
 /* ----- La cuenta ----- */
 

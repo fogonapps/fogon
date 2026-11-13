@@ -272,7 +272,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     for (i in 0 until 4) {
                         val o = favoritas.getOrNull(i)
-                        Box(Modifier.weight(1f).clip(forma(10.dp)).clickable(enabled = o != null) { o?.let { vm.abrir(Pantalla.Ficha(it.id)) } }) {
+                        Box(Modifier.weight(1f).clip(forma(10.dp)).then(if (o != null) Modifier.clickable { vm.abrir(Pantalla.Ficha(o.id)) }.semantics { contentDescription = o.titulo } else Modifier)) {
                             Portada(o?.portada ?: "", o?.tipo ?: Tipos.PELICULA, o?.titulo ?: "", Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
                         }
                     }

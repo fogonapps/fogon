@@ -1695,4 +1695,9 @@
     <string name="tienda_sin_marco">No frame</string>
     <string name="tienda_comprar">%1$d sparks</string>
     <string name="chispas_reglas">Sparks can’t be exchanged for money, can’t be sent to other accounts and there are no random draws: what you buy is what you see. You get 1500 to start and can claim 50 more each day you open the app.</string>
+    <string name="chat_sin_llaves_aqui">This app doesn’t have the keys for your encrypted messages yet. Open El Cajón once (they’re there, and it shares them using your password) or start with new keys here.</string>
+    <string name="chat_llaves_nuevas">Use new keys here</string>
+    <string name="chat_llaves_nuevas_seguro">From now on you’ll be able to write from this app. Old messages encrypted with your previous keys won’t be readable on any phone.</string>
+    <string name="cifra_seguidores">followers</string>
+    <string name="cifra_siguiendo">following</string>
 </resources>

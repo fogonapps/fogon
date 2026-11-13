@@ -74,7 +74,7 @@ class ClienteSocial(token: String? = null, permiteRed: () -> Boolean = { true })
         const val SERVIDOR = io.github.fogonapps.social.ClienteSocial.SERVIDOR
         fun enlacePerfil(usuario: String) = io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario)
         fun enlacePublicacion(id: Long) = io.github.fogonapps.social.ClienteSocial.enlacePublicacion(id)
-        fun foto(usuario: String) = io.github.fogonapps.social.ClienteSocial.foto(usuario)
+        fun foto(usuario: String, version: Long = 0) = io.github.fogonapps.social.ClienteSocial.foto(usuario, version)
         fun video(nombre: String) = io.github.fogonapps.social.ClienteSocial.video(nombre)
         fun imagen(nombre: String) = io.github.fogonapps.social.ClienteSocial.imagen(nombre)
         private val JSON = "application/json".toMediaType()

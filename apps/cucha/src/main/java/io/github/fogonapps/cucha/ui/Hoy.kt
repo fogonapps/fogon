@@ -226,7 +226,7 @@ private fun Agua(meta: Int, lleva: Int, idioma: String, modifier: Modifier, onCa
             repeat(maxOf(vasos, llenos)) { i ->
                 val lleno = i < llenos
                 Box(
-                    Modifier.rebote(0.85f).size(30.dp).clip(CircleShape)
+                    Modifier.rebote(0.85f).size(36.dp).clip(CircleShape)
                         .background(if (lleno) f.tinta2 else f.superficie).border(f.borde, if (lleno) f.tinta2 else f.linea, CircleShape)
                         .clickable { onCambio(if (lleno && i == llenos - 1) -250 else 250) }
                         .semantics { contentDescription = sumar },

@@ -51,6 +51,8 @@ data class Persona(
     val tema: String = "",
     /** El marco de su foto (de la tienda); "" = sin marco. */
     val marco: String = "",
+    /** La versión de su foto (cuándo la cambió): va en la dirección de la foto para que nadie se quede con una vieja. */
+    val fotoV: Long = 0,
 )
 
 @Serializable
@@ -801,6 +803,7 @@ class Social(
 
     private fun persona(id: Long): Persona = b.usar {
         leer("SELECT usuario, nombre, foto, privada, insignia, tema, marco FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5), it.getString(6), it.getString(7)) }.first()
+            .let { p -> if (p.foto) p.copy(fotoV = java.io.File(dirFotos, "$id.jpg").lastModified() / 1000) else p }
     }
 
     private fun esPrivada(id: Long) = b.usar { leer("SELECT privada FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false

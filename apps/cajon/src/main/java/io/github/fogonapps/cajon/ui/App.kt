@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -139,35 +140,38 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
         val guia = io.github.fogonapps.identidad.rememberGuia("cajon")
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
-            if (!estado.listo) {
-                Tutorial(vm, acciones)
-                // Los avisos también se ven en el tutorial (errores al entrar o crear la cuenta).
-                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) { Aviso(it.visuals.message) }
-            } else {
-                // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
-                PestanaAnimada(pestana) { p ->
-                    // X-09: deslizar hacia abajo recarga el feed (Para ti) o arma otras recomendaciones (Inicio).
-                    val recargar: (suspend () -> Unit)? = when (p) {
-                        Pestana.INICIO -> ({ vm.recargarRecomendaciones() })
-                        Pestana.PARA_TI -> ({ vm.red.recargarFeed() })
-                        else -> null
-                    }
-                    io.github.fogonapps.identidad.DeslizarParaRecargar(recargar, Modifier.fillMaxSize().statusBarsPadding()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        AvisoPolitica(vm)
-                        when (p) {
-                            Pestana.INICIO -> Inicio(vm, estado)
-                            Pestana.PARA_TI -> PantallaRed(vm, estado, enPestana = true)
-                            Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
-                            Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)
-                            Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
+            // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
+            Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
+                if (!estado.listo) {
+                    Tutorial(vm, acciones)
+                    // Los avisos también se ven en el tutorial (errores al entrar o crear la cuenta).
+                    SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) { Aviso(it.visuals.message) }
+                } else {
+                    // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
+                    PestanaAnimada(pestana) { p ->
+                        // X-09: deslizar hacia abajo recarga el feed (Para ti) o arma otras recomendaciones (Inicio).
+                        val recargar: (suspend () -> Unit)? = when (p) {
+                            Pestana.INICIO -> ({ vm.recargarRecomendaciones() })
+                            Pestana.PARA_TI -> ({ vm.red.recargarFeed() })
+                            else -> null
                         }
-                        Espacio(120.dp)
+                        io.github.fogonapps.identidad.DeslizarParaRecargar(recargar, Modifier.fillMaxSize().statusBarsPadding()) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                            AvisoPolitica(vm)
+                            when (p) {
+                                Pestana.INICIO -> Inicio(vm, estado)
+                                Pestana.PARA_TI -> PantallaRed(vm, estado, enPestana = true)
+                                Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
+                                Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)
+                                Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
+                            }
+                            Espacio(120.dp)
+                        }
+                        }
                     }
-                    }
+                    BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
+                    SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
-                BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
-                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
             }
 
             // Pantallas encima de las pestañas

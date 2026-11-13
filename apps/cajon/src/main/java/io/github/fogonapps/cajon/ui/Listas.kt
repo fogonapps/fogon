@@ -133,11 +133,7 @@ fun EditarLista(vm: CajonViewModel, e: Estado, id: String?) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.nombre), max = 60)
         OutlinedTextField(descripcion, { descripcion = it.take(500) }, Modifier.fillMaxWidth(), minLines = 2, label = { Text(stringResource(R.string.descripcion)) })
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.numerada), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(stringResource(R.string.numerada_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            Switch(numerada, { numerada = it })
+            FilaInterruptorCajon(stringResource(R.string.numerada), numerada, stringResource(R.string.numerada_pista)) { numerada = it }
         }
         if (l != null) {
             Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -1697,4 +1697,9 @@
     <string name="tienda_sin_marco">Sin marco</string>
     <string name="tienda_comprar">%1$d chispas</string>
     <string name="chispas_reglas">Las chispas no se cambian por dinero, no se pasan a otras cuentas y no hay sorteos: lo que compras es lo que ves. Al empezar recibes 1500 y cada día que entras puedes reclamar 50 más.</string>
+    <string name="chat_sin_llaves_aqui">Esta app todavía no tiene las llaves para tus mensajes cifrados. Abre El Cajón una vez (ahí están, y las comparte con tu contraseña) o empieza con llaves nuevas aquí.</string>
+    <string name="chat_llaves_nuevas">Usar llaves nuevas aquí</string>
+    <string name="chat_llaves_nuevas_seguro">Desde ahora vas a poder escribir desde esta app. Los mensajes viejos cifrados con tus llaves anteriores no se podrán leer en ningún teléfono.</string>
+    <string name="cifra_seguidores">seguidores</string>
+    <string name="cifra_siguiendo">siguiendo</string>
 </resources>

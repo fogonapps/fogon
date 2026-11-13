@@ -354,7 +354,7 @@ open class ClienteSocial(
         const val SERVIDOR = "https://fogonapps.duckdns.org"
         fun enlacePerfil(usuario: String) = "$SERVIDOR/@$usuario"
         fun enlacePublicacion(id: Long) = "$SERVIDOR/p/$id"
-        fun foto(usuario: String) = "$SERVIDOR/v1/fotos/$usuario"
+        fun foto(usuario: String, version: Long = 0) = "$SERVIDOR/v1/fotos/$usuario" + if (version > 0) "?v=$version" else ""
         fun video(nombre: String) = "$SERVIDOR/v1/videos/$nombre"
         fun imagen(nombre: String) = "$SERVIDOR/v1/imagenes/$nombre"
         val JSON = "application/json".toMediaType()

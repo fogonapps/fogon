@@ -381,11 +381,7 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.anotar_escuchas), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(stringResource(R.string.anotar_escuchas_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            androidx.compose.material3.Switch(anotar, { anotar = it; vm.anotarEscuchas(it) })
+            FilaInterruptorCajon(stringResource(R.string.anotar_escuchas), anotar, stringResource(R.string.anotar_escuchas_pista)) { anotar = it; vm.anotarEscuchas(it) }
         }
         if (anotar && !permiso) Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.dar_acceso_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -393,21 +389,12 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
                 runCatching { c.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
             }, Modifier.fillMaxWidth())
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.agregar_solos), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(stringResource(R.string.agregar_solos_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            androidx.compose.material3.Switch(solos, { solos = it; vm.agregarSolos(it) })
-        }
+        FilaInterruptorCajon(stringResource(R.string.agregar_solos), solos, stringResource(R.string.agregar_solos_pista)) { solos = it; vm.agregarSolos(it) }
         // De qué apps se anota (las que ya sonaron).
         if (oidos.apps.isNotEmpty()) {
             Text(stringResource(R.string.apps_que_suenan), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             oidos.apps.entries.sortedBy { it.value }.forEach { (paquete, nombre) ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(nombre, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-                    androidx.compose.material3.Switch(paquete !in oidos.sinAnotar, { vm.anotarDeApp(paquete, it) })
-                }
+                FilaInterruptorCajon(nombre, paquete !in oidos.sinAnotar) { vm.anotarDeApp(paquete, it) }
             }
         }
 

@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    // Las pruebas de pantallas (Robolectric) necesitan los recursos de la app.
+    testOptions { unitTests.isIncludeAndroidResources = true }
     namespace = "io.github.fogonapps.cajon"
     compileSdk = 37
 
@@ -12,8 +14,8 @@ android {
         applicationId = "io.github.fogonapps.cajon"
         minSdk = 26
         targetSdk = 37
-        versionCode = 99
-        versionName = "1.83"
+        versionCode = 100
+        versionName = "1.84"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -89,5 +91,7 @@ dependencies {
     implementation(libs.work.runtime)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(project(":core:revision"))
+    debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -110,30 +111,34 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
         val guia = io.github.fogonapps.identidad.rememberGuia("cucha")
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.HOY) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
-            if (!estado.listo) {
-                Tutorial(vm, acciones.importar)
-            } else {
-                // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
-                PestanaAnimada(pestana) { p ->
-                    // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
-                    io.github.fogonapps.identidad.DeslizarParaRecargar(if (p == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        when (p) {
-                            Pestana.HOY -> Hoy(vm, estado)
-                            Pestana.GENTE -> TuGente(vm)
-                            Pestana.RECETAS -> Recetas(vm, estado)
-                            Pestana.PLAN -> Plan(vm, estado)
-                            Pestana.PROGRESO -> Progreso(vm, estado)
+            // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
+            Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
+                if (!estado.listo) {
+                    Tutorial(vm, acciones.importar)
+                } else {
+                    // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
+                    PestanaAnimada(pestana) { p ->
+                        // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
+                        io.github.fogonapps.identidad.DeslizarParaRecargar(if (p == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                            when (p) {
+                                Pestana.HOY -> Hoy(vm, estado)
+                                Pestana.GENTE -> TuGente(vm)
+                                Pestana.RECETAS -> Recetas(vm, estado)
+                                Pestana.PLAN -> Plan(vm, estado)
+                                Pestana.PROGRESO -> Progreso(vm, estado)
+                            }
+                            Espacio(120.dp)
                         }
-                        Espacio(120.dp)
+                        }
                     }
-                    }
+                    BarraFlotante(pestana, vm::irA, vm::anotarAhora, Modifier.align(Alignment.BottomCenter))
+                    SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
-                BarraFlotante(pestana, vm::irA, vm::anotarAhora, Modifier.align(Alignment.BottomCenter))
-                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
+
+                // Pantallas encima de las pestañas
             }
 
-            // Pantallas encima de las pestañas
             PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     // Las pantallas con lista propia (buscar) manejan su scroll; las demás van en una columna que se desliza.

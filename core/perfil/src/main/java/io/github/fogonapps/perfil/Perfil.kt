@@ -6,6 +6,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,7 +51,7 @@ fun FraseFogon(nombre: String, frase: String, modifier: Modifier = Modifier, onM
         Text(nombre, fontFamily = f.titulos, fontSize = 30.sp, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(frase, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, maxLines = 2,
-                modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp)).combinedClickable(onClick = {}, onLongClick = onMantener))
+                modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp)).combinedClickable(onClick = {}, onLongClick = onMantener).heightIn(min = 32.dp).wrapContentHeight(Alignment.CenterVertically))
             adorno()
         }
     }

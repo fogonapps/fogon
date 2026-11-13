@@ -76,6 +76,13 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
     val viejo = borrador ?: p.editar?.let { id -> e.movimientos.firstOrNull { it.id == id } }
     val activas = e.cuentas.filter { !it.archivada }
     val sinCredito = activas.filter { it.tipo != TipoCuenta.CREDITO }
+    // Sin ninguna cuenta activa (todas archivadas) no hay dónde anotar: se dice y se ofrece crear una.
+    if (activas.isEmpty() && viejo == null) {
+        Cabecera(stringResource(R.string.anotar), vm::cerrar)
+        Pista(stringResource(R.string.anotar_sin_cuentas), Modifier.padding(16.dp))
+        BotonRiso(stringResource(R.string.nueva_cuenta), { vm.cerrar(); vm.abrir(Pantalla.EditarCuenta(null)) }, Modifier.fillMaxWidth().padding(16.dp))
+        return
+    }
 
     var tipo by rememberSaveable { mutableStateOf(viejo?.tipo ?: p.tipo) }
     var monto by rememberSaveable { mutableStateOf(viejo?.monto?.toString().orEmpty()) }
@@ -105,7 +112,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
         if (viejo == null && p.banco == null) Selector(TipoMovimiento.entries.map { it to stringResource(it.nombre) }, tipo, {
             tipo = it
             categoria = null
-            if (it != TipoMovimiento.GASTO && esCredito && it != TipoMovimiento.TRASPASO) cuenta = (sinCredito.firstOrNull() ?: activas.first()).id
+            if (it != TipoMovimiento.GASTO && esCredito && it != TipoMovimiento.TRASPASO) (sinCredito.firstOrNull() ?: activas.firstOrNull())?.let { c -> cuenta = c.id }
         }, Modifier.padding(horizontal = 16.dp))
 
         // El monto, grande

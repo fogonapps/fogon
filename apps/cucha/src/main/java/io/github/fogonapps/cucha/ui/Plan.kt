@@ -2,6 +2,7 @@ package io.github.fogonapps.cucha.ui
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,12 +63,14 @@ fun Plan(vm: CuchaViewModel, e: Estado) {
         Pildora(stringResource(R.string.mercado), Iconos.Mercado, acento = true) { vm.abrir(Pantalla.Mercado) }
     }
     Pista(stringResource(R.string.menu_pista))
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    // Toda la fila se toca y el lector de pantalla dice qué cambia.
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).vidrio()
+        .toggleable(e.alternar, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = vm::alternar).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.semanas_ab), style = MaterialTheme.typography.bodyLarge, color = f.texto)
             Text(stringResource(R.string.semanas_ab_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        Switch(e.alternar, vm::alternar)
+        Switch(e.alternar, onCheckedChange = null)
     }
     if (e.alternar) Selector(
         listOf("A" to stringResource(R.string.semana_letra, "A"), "B" to stringResource(R.string.semana_letra, "B")), letra, { elegida = it },

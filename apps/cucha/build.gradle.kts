@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    // Las pruebas de pantallas (Robolectric) necesitan los recursos de la app.
+    testOptions { unitTests.isIncludeAndroidResources = true }
     namespace = "io.github.fogonapps.cucha"
     compileSdk = 37
 
@@ -12,8 +14,8 @@ android {
         applicationId = "io.github.fogonapps.cucha"
         minSdk = 26
         targetSdk = 37
-        versionCode = 38
-        versionName = "1.33"
+        versionCode = 39
+        versionName = "1.34"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -81,4 +83,6 @@ dependencies {
     implementation(libs.zxing.embedded)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(project(":core:revision"))
+    debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -14,7 +14,9 @@ class ErrorSocial(val codigo: Int, val error: String, val desde: Long = 0) : IOE
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PersonaSocial")
 data class PersonaSocial(val usuario: String, val nombre: String = "", val foto: Boolean = false, val privada: Boolean = false, val insignia: String = "",
     /** El fondo de su perfil y el marco de su foto (de la tienda). */
-    val tema: String = "", val marco: String = "")
+    val tema: String = "", val marco: String = "",
+    /** La versión de su foto (cambia cuando la cambia): va en la dirección para no quedarse con una vieja en caché. */
+    val fotoV: Long = 0)
 
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PublicacionSocial")

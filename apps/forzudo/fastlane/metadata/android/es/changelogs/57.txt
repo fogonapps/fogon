@@ -1,0 +1,1 @@
+Revisión completa: cada pantalla se revisa sola antes de publicar. Arreglos: tu foto de perfil se ve desde otras cuentas, se cerraba al anotar sin cuentas, botones chicos o pegados, lector de pantalla. Perfiles ajenos con «Mensaje» y cifras; el fondo del perfil llena la pantalla. Chispas en un botón al lado de tu foto. Chat: aviso claro si faltan las llaves.

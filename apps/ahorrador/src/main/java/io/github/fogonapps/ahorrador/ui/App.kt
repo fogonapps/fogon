@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -98,30 +99,34 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
         val guia = io.github.fogonapps.identidad.rememberGuia("alcancia")
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
-            if (!estado.listo) {
-                Tutorial(vm, onImportar)
-            } else {
-                // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
-                io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana ->
-                    // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
-                    io.github.fogonapps.identidad.DeslizarParaRecargar(if (pestana == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        when (pestana) {
-                            Pestana.INICIO -> Inicio(vm, estado)
-                            Pestana.GENTE -> TuGente(vm)
-                            Pestana.RESUMEN -> Resumen(vm, estado)
-                            Pestana.SOBRES -> Presupuesto(vm, estado)
-                            Pestana.METAS -> Metas(vm, estado)
+            // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
+            Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
+                if (!estado.listo) {
+                    Tutorial(vm, onImportar)
+                } else {
+                    // Cada pestaña con su propio scroll (al cambiar, empieza arriba).
+                    io.github.fogonapps.identidad.PestanaAnimada(pestana) { pestana ->
+                        // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
+                        io.github.fogonapps.identidad.DeslizarParaRecargar(if (pestana == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                            when (pestana) {
+                                Pestana.INICIO -> Inicio(vm, estado)
+                                Pestana.GENTE -> TuGente(vm)
+                                Pestana.RESUMEN -> Resumen(vm, estado)
+                                Pestana.SOBRES -> Presupuesto(vm, estado)
+                                Pestana.METAS -> Metas(vm, estado)
+                            }
+                            Espacio(120.dp)
                         }
-                        Espacio(120.dp)
+                        }
                     }
-                    }
+                    BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Anotar()) }, Modifier.align(Alignment.BottomCenter))
+                    SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { AvisoTinta(it.visuals.message) }
                 }
-                BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Anotar()) }, Modifier.align(Alignment.BottomCenter))
-                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { AvisoTinta(it.visuals.message) }
+
+                // Pantallas encima de las pestañas
             }
 
-            // Pantallas encima de las pestañas
             io.github.fogonapps.identidad.PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     Column(Modifier.fillMaxSize().then(if (p is Pantalla.Anotar || (p is Pantalla.Social && p.destino == "chat")) Modifier else Modifier.verticalScroll(rememberScrollState()))) {

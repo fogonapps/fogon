@@ -4,6 +4,8 @@ import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -235,6 +237,22 @@ fun BotonIcono(icono: Dibujo, descripcion: String, grande: Boolean = false, acti
     ) { IconoRiso(icono, null, tamano = if (grande) 22.dp else 20.dp, tinta = tinta ?: f.texto, relleno = if (lleno) tinta ?: f.texto else null) }
 }
 
+/**
+ * Una fila con interruptor: se toca toda la fila (no solo el interruptor) y el lector de pantalla dice qué cambia.
+ */
+@Composable
+fun FilaInterruptorCajon(texto: String, valor: Boolean, pista: String? = null, modifier: Modifier = Modifier, onCambio: (Boolean) -> Unit) {
+    val f = FogonTema.actual
+    Row(modifier.fillMaxWidth().clip(forma(14.dp)).toggleable(valor, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = onCambio).padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+            if (!pista.isNullOrBlank()) Text(pista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+        androidx.compose.material3.Switch(valor, onCheckedChange = null)
+    }
+}
+
 /** Una píldora que se toca (filtros y acciones pequeñas). */
 @Composable
 fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -242,8 +260,8 @@ fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modif
     Row(
         modifier.rebote().clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
             .border(f.borde, if (acento) f.tinta1 else f.linea, FormaPildora)
-            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .clickable(onClick = onClick).defaultMinSize(minWidth = 48.dp).padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
         if (icono != null) IconoRiso(icono, null, tamano = 16.dp, tinta = if (acento) f.sobreTinta1 else f.texto)
         Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = if (acento) f.sobreTinta1 else f.texto, maxLines = 1)

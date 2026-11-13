@@ -237,7 +237,7 @@ private fun Sinopsis(texto: String) {
     Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = if (abierta) Int.MAX_VALUE else 6, overflow = TextOverflow.Ellipsis,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable { abierta = !abierta })
     if (!abierta && texto.length > 300) Text(stringResource(R.string.leer_mas), style = MaterialTheme.typography.labelLarge, color = f.acentoTexto,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp).clickable { abierta = true })
+        modifier = Modifier.padding(horizontal = 12.dp).clip(forma(8.dp)).clickable { abierta = true }.padding(horizontal = 8.dp, vertical = 8.dp))
 }
 
 /** "Anotar cuándo lo vi", "…lo leí", "…lo escuché": guarda en el diario el día que se vio, leyó o escuchó. */
@@ -661,8 +661,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
         Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(nota, { nota = it }, descripcion = stringResource(R.string.tu_nota))
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.otra_vez_pregunta), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-            Switch(otraVez, { otraVez = it })
+            FilaInterruptorCajon(stringResource(R.string.otra_vez_pregunta), otraVez) { otraVez = it }
         }
         BotonSecundario(stringResource(R.string.resena_escribir), {
             val registro = vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad))

@@ -59,7 +59,7 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
             }
         }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 12.dp)) {
         vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) }
     }
 }
@@ -142,7 +142,8 @@ fun Perfil(vista: PerfilVista, elegida: Int, alElegir: (Int) -> Unit,
     // semitransparentes y con los colores del fondo.
     CompositionLocalProvider(LocalFogon provides FogonTema.actual.conEstilo(estilo)) {
         val f = FogonTema.actual
-        Box(Modifier.fillMaxWidth()) {
+        // Al menos el alto de la pantalla: con poco contenido, el fondo igual la llena.
+        Box(Modifier.fillMaxWidth().heightIn(min = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp)) {
             FondoTemaPerfil(vista.tema, Modifier.matchParentSize())
             Column(Modifier.fillMaxWidth().padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 navegacion()

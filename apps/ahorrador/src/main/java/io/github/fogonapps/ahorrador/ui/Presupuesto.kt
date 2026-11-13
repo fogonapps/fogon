@@ -356,9 +356,10 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.meta_nombre))
         CampoPesos(objetivo, { objetivo = it }, stringResource(R.string.meta_objetivo))
+        val textoConFecha = stringResource(R.string.meta_con_fecha)
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.meta_con_fecha), color = f.texto, modifier = Modifier.weight(1f))
-            Switch(conFecha, { conFecha = it })
+            Switch(conFecha, { conFecha = it }, Modifier.semantics { contentDescription = textoConFecha })
         }
         if (conFecha) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.meta_para), color = f.textoSuave)
@@ -366,10 +367,11 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
         }
         Text(stringResource(R.string.color), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            COLORES_META.forEach { c ->
+            COLORES_META.forEachIndexed { nColor, c ->
                 val valor = c.toArgb().toLong() and 0xFFFFFFFFL
+                val nombreColor = stringResource(R.string.color_n, nColor + 1)
                 Box(Modifier.size(40.dp).clip(CircleShape).background(c).then(if (valor == color) Modifier.border(3.dp, FogonTema.actual.texto, CircleShape) else Modifier)
-                    .clickable { color = valor }.semantics { selected = valor == color })
+                    .clickable { color = valor }.semantics { selected = valor == color; contentDescription = nombreColor })
             }
         }
         Text(stringResource(R.string.icono), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
@@ -451,9 +453,10 @@ fun EditarSobre(vm: AhorradorViewModel, e: Estado, id: String?) {
         Selector(GRUPOS_SOBRE.map { it to stringResource(nombreGrupo(it.name)) }, grupo, { grupo = it })
         Text(stringResource(R.string.color), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            colores.forEach { valor ->
+            colores.forEachIndexed { nColor, valor ->
+                val nombreColor = stringResource(R.string.color_n, nColor + 1)
                 Box(Modifier.size(40.dp).clip(CircleShape).background(colorDe(valor)).then(if (valor == color) Modifier.border(3.dp, f.texto, CircleShape) else Modifier)
-                    .clickable { color = valor }.semantics { selected = valor == color })
+                    .clickable { color = valor }.semantics { selected = valor == color; contentDescription = nombreColor })
             }
         }
         Text(stringResource(R.string.icono), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
