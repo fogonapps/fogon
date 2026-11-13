@@ -348,7 +348,12 @@ abstract class ControladorSocial(
     val temas: StateFlow<TemasCuentaSocial> = _temas
     fun cargarTemas() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _temas.value = cliente().temas() } } }
     fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
-    fun ponerTema(tema: String) = lanzar { cliente().ponerTema(tema); _temas.value = _temas.value.copy(puesto = tema) }
+    fun ponerTema(tema: String) = lanzar {
+        cliente().ponerTema(tema)
+        _temas.value = if (tema.startsWith("marco:")) _temas.value.copy(marco = tema.removePrefix("marco:")) else _temas.value.copy(puesto = tema)
+    }
+    /** Las chispas del día. */
+    fun cobrarDiario() = lanzar { _temas.value = cliente().cobrarDiario() }
     fun ponerCumple(fecha: String) = lanzar { cliente().ponerCumple(fecha); _cumple.value = fecha }
     suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())
     fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }

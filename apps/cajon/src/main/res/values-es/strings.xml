@@ -1671,8 +1671,6 @@
     <string name="chat_confirma_lectura_explica">Muestra «Visto» cuando leen tus mensajes y avisa cuando tú lees los suyos. Si la apagas, tampoco ves el de los demás. Vale para todos tus chats.</string>
     <string name="cumple_escribele">Escríbele</string>
     <string name="imagen_votos_pista">Tocar una imagen la usa para ti. El corazón vota por la portada que verán todos; la «i» dice de dónde salió.</string>
-    <string name="cancion_perfil_sola">La canción de un perfil suena sola</string>
-    <string name="cancion_perfil_sola_pista">Al abrir el perfil de otra persona, su canción empieza a sonar; la pausas con su botón.</string>
     <string name="fotos_girar_titulo">¿Quieres girar alguna?</string>
     <string name="fotos_foto_n">Foto %1$d</string>
     <string name="fotos_girar_izquierda">↺ Girar</string>
@@ -1683,9 +1681,20 @@
     <string name="historia_ver_mas">Ver más</string>
     <string name="historia_ver_menos">Ver menos</string>
     <string name="historia_tu_historia">Tu historia</string>
-    <string name="temas_tienda">Temas del perfil</string>
-    <string name="temas_explica">Dale a tu perfil un estilo propio, como los fondos de perfil de Steam. Por ahora todos se reclaman gratis; el que te pongas lo ve todo el que entre a tu perfil.</string>
+    <string name="temas_tienda">Tienda del perfil</string>
+    <string name="temas_explica">Fondos y marcos para tu perfil, como los de Steam.</string>
     <string name="temas_en_uso">En uso</string>
     <string name="temas_usar">Usar</string>
     <string name="temas_reclamar">Reclamar gratis</string>
+    <string name="cancion_silenciar">Silenciar la música de los perfiles</string>
+    <string name="cancion_activar">Activar la música de los perfiles</string>
+    <string name="chispas_n">%1$d chispas</string>
+    <string name="chispas_explica">Se ganan usando las apps y solo sirven en la tienda.</string>
+    <string name="chispas_diario">Las de hoy</string>
+    <string name="tienda_fondos">Fondos</string>
+    <string name="tienda_marcos">Marcos</string>
+    <string name="tienda_sin_fondo">Sin fondo</string>
+    <string name="tienda_sin_marco">Sin marco</string>
+    <string name="tienda_comprar">%1$d chispas</string>
+    <string name="chispas_reglas">Las chispas no se cambian por dinero, no se pasan a otras cuentas y no hay sorteos: lo que compras es lo que ves. Al empezar recibes 1500 y cada día que entras puedes reclamar 50 más.</string>
 </resources>

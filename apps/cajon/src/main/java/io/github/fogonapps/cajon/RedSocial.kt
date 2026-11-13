@@ -544,7 +544,7 @@ class RedSocial(
         val e = estado() ?: return
         intentar(avisar = false) {
             val aporte = object : io.github.fogonapps.social.AporteSocialApp {
-                override suspend fun perfil() = perfilDe(e).copy(portada = portadaEnLaRed(e.perfil.portada))
+                override suspend fun perfil() = perfilDe(e).copy(portada = portadaEnLaRed(e.perfil.portada, e.perfil.encuadrePortada))
                 override fun publicaciones() = publicacionesDe(e)
             }
             val cliente by lazy { caja.clienteSocial() }
@@ -577,15 +577,18 @@ class RedSocial(
      * La portada como la ve la red: si es una imagen del teléfono, se sube una vez (JPEG de hasta 1600 px) y queda su
      * dirección en el servidor; si ya es de internet, esa misma.
      */
-    private suspend fun portadaEnLaRed(portada: String): String {
+    private suspend fun portadaEnLaRed(portada: String, encuadre: io.github.fogonapps.cajon.datos.Encuadre = io.github.fogonapps.cajon.datos.Encuadre()): String {
         val marca = sesion.actual()
         val cliente = cliente()
         if (portada.isBlank() || portada.startsWith("https://")) return portada.takeIf { it.startsWith("https://") }.orEmpty()
-        caja.portadaSubida?.split('|')?.takeIf { it.size == 2 && it[0] == portada }?.let { return it[1] }
-        val jpg = jpeg(portada, 1600, 900_000) ?: return ""
+        // Se sube ya recortada como se ve en tu perfil (con tu encuadre): así la ven igual los demás.
+        val en = encuadre.limpio()
+        val clave = "$portada#${en.zoom},${en.x},${en.y}"
+        caja.portadaSubida?.split('|')?.takeIf { it.size == 2 && it[0] == clave }?.let { return it[1] }
+        val jpg = jpeg(portada, 1600, 900_000, recorte = en) ?: return ""
         if (!sesion.vigente(marca)) return ""
         val url = ClienteSocial.imagen(cliente.subirImagen(jpg))
-        if (sesion.vigente(marca)) caja.portadaSubida = "$portada|$url"
+        if (sesion.vigente(marca)) caja.portadaSubida = "$clave|$url"
         return url
     }
 
@@ -791,14 +794,26 @@ class RedSocial(
     /* ----- Lo que se sube ----- */
 
     /** Una foto (de un archivo o del selector) achicada a [lado] px y en JPEG de menos de [max] bytes. */
-    private suspend fun jpeg(uri: String, lado: Int, max: Int): ByteArray? = withContext(Dispatchers.IO) {
+    private suspend fun jpeg(uri: String, lado: Int, max: Int, recorte: io.github.fogonapps.cajon.datos.Encuadre? = null): ByteArray? = withContext(Dispatchers.IO) {
         runCatching {
             val bytes = app.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { it.readBytes() } ?: return@runCatching null
             val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
             android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, medidas)
             var muestra = 1
             while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= lado) muestra *= 2
-            val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return@runCatching null
+            var original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return@runCatching null
+            // El recorte de la portada: el marco del perfil (unas 3,2 veces más ancho que alto) con el zoom y la posición elegidos.
+            if (recorte != null) {
+                val aspecto = 3.2f
+                val w = original.width.toFloat(); val h = original.height.toFloat()
+                var cw = if (w / h > aspecto) h * aspecto else w
+                var ch = cw / aspecto
+                cw /= recorte.zoom; ch /= recorte.zoom
+                val cx = w / 2 + recorte.x * (w - cw) / 2
+                val cy = h / 2 + recorte.y * (h - ch) / 2
+                val izq = (cx - cw / 2).toInt().coerceIn(0, (w - 1).toInt()); val arr = (cy - ch / 2).toInt().coerceIn(0, (h - 1).toInt())
+                original = android.graphics.Bitmap.createBitmap(original, izq, arr, cw.toInt().coerceIn(1, original.width - izq), ch.toInt().coerceIn(1, original.height - arr))
+            }
             val escala = minOf(1f, lado.toFloat() / maxOf(original.width, original.height))
             val chica = android.graphics.Bitmap.createScaledBitmap(original, (original.width * escala).toInt().coerceAtLeast(1), (original.height * escala).toInt().coerceAtLeast(1), true)
             var calidad = 88

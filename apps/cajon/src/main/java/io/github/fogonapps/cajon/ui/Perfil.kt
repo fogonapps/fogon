@@ -338,7 +338,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         } else contadoresPerfil(vm, e, anio).forEach { c -> add(ContadorPerfil("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir)) }
     }
     val vistaBase = e.aPerfilVista(secciones = secciones, contadores = contadores, cuenta = cuenta).copy(nombre = e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) })
-    PerfilComun(vistaBase.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
+    PerfilComun(vistaBase.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {

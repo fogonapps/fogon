@@ -74,7 +74,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
             ContadorPerfil(e.movimientos.size.toString(), stringResource(R.string.movimientos)),
             ContadorPerfil(cumplidas.toString(), stringResource(R.string.perfil_cumplidas)),
         ), secciones, insignia = miInsignia)
-    io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz)), pestana, { pestana = it }, nombreSuave = nombre.isBlank(), interlineado = true,
+    io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), pestana, { pestana = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar) {
                 BotonCirculoPerfil(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }

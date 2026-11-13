@@ -260,6 +260,7 @@ open class ClienteSocial(
     suspend fun portadaDestacada(id: Long) { pedir("/historias/$id/portada", "PUT") }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
     suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas"))
+    suspend fun cobrarDiario() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/diario", "POST"))
     suspend fun reclamarTema(tema: String) { pedir("/tienda/temas/${cod(tema)}", "POST") }
     suspend fun ponerTema(tema: String) { pedir("/cuenta/tema", "PUT", json(TemaElegidoSocial.serializer(), TemaElegidoSocial(tema))) }
     suspend fun cumple() = leer(CumpleSocial.serializer(), pedir("/cuenta/cumple")).fecha

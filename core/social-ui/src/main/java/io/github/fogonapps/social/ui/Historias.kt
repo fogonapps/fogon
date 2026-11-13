@@ -283,26 +283,37 @@ fun EnlaceAppleMusic(enlace: String) {
 @Composable
 fun BotonAvance(url: String, sonar: Boolean = false) { if (url.startsWith("https://audio-ssl.itunes.apple.com/")) Avance(url, sonar) }
 
-/** Si la canción de un perfil ajeno suena sola al abrirlo (ajuste del teléfono; de entrada, sí). */
-object CancionPerfilSola {
+/**
+ * La música de los perfiles ajenos: suena sola al entrar, salvo que la hayas silenciado. Silenciarla vale para todos
+ * los perfiles que veas (y queda así hasta que la vuelvas a activar), para no saltar de canción en canción.
+ */
+object MusicaPerfiles {
     private const val PREFS = "fogon_social_ajustes"
-    private val estado = kotlinx.coroutines.flow.MutableStateFlow<Boolean?>(null)
-    fun activa(ctx: android.content.Context): Boolean = estado.value ?: ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getBoolean("cancion_perfil_sola", true).also { estado.value = it }
-    fun poner(ctx: android.content.Context, si: Boolean) { ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putBoolean("cancion_perfil_sola", si).apply(); estado.value = si }
+    private var leida = false
+    private val _silenciada = kotlinx.coroutines.flow.MutableStateFlow(false)
+    fun silenciada(ctx: android.content.Context): kotlinx.coroutines.flow.StateFlow<Boolean> {
+        if (!leida) { _silenciada.value = ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getBoolean("musica_perfiles_silenciada", false); leida = true }
+        return _silenciada
+    }
+    fun silenciar(ctx: android.content.Context, si: Boolean) {
+        ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putBoolean("musica_perfiles_silenciada", si).apply(); _silenciada.value = si; leida = true
+    }
 }
 
-/** El interruptor del ajuste [CancionPerfilSola], para los ajustes de cada app. */
+/** La canción de un perfil ajeno: suena sola entrando de a poco; el botón la silencia (en todos los perfiles) o la vuelve a activar. */
 @Composable
-fun AjusteCancionPerfilSola() {
+fun MusicaDePerfil(url: String) {
+    if (!url.startsWith("https://audio-ssl.itunes.apple.com/")) return
     val ctx = LocalContext.current
-    var si by remember { mutableStateOf(CancionPerfilSola.activa(ctx)) }
-    io.github.fogonapps.identidad.Interruptor(stringResource(R.string.cancion_perfil_sola), stringResource(R.string.cancion_perfil_sola_pista), si) { si = it; CancionPerfilSola.poner(ctx, it) }
+    val silenciada by MusicaPerfiles.silenciada(ctx).collectAsStateWithLifecycle()
+    Avance(url, sonar = !silenciada, silencio = true)
 }
 
 /** El avance de 30 segundos: suena al tocar (o solo, en el visor); se apaga al salir. */
 @Composable
-private fun Avance(url: String, sonar: Boolean) {
+private fun Avance(url: String, sonar: Boolean, silencio: Boolean = false) {
     val f = FogonTema.actual
+    val ctx = LocalContext.current
     var sonando by remember(url) { mutableStateOf(false) }
     val reproductor = remember(url) { android.media.MediaPlayer() }
     var listo by remember(url) { mutableStateOf(false) }
@@ -325,7 +336,26 @@ private fun Avance(url: String, sonar: Boolean) {
         ciclo.lifecycle.addObserver(obs)
         onDispose { ciclo.lifecycle.removeObserver(obs) }
     }
-    LaunchedEffect(sonando, listo) { runCatching { if (listo) { if (sonando) reproductor.start() else if (reproductor.isPlaying) reproductor.pause() } } }
+    // Entra de a poco (unos 3 segundos), nunca de golpe.
+    LaunchedEffect(sonando, listo) {
+        runCatching {
+            if (!listo) return@runCatching
+            if (sonando) {
+                reproductor.setVolume(0f, 0f); reproductor.start()
+                for (i in 1..30) { kotlinx.coroutines.delay(100); val v = i / 30f; reproductor.setVolume(v * v, v * v) }
+            } else if (reproductor.isPlaying) reproductor.pause()
+        }
+    }
+    // En los perfiles: el silencio en lugar de la pausa (y queda para los demás perfiles).
+    if (silencio) {
+        LaunchedEffect(sonar) { sonando = sonar }
+        val nombre = stringResource(if (sonar) R.string.cancion_silenciar else R.string.cancion_activar)
+        Box(Modifier.size(40.dp).clip(CircleShape).background(if (sonar) f.tinta1 else f.superficie).border(f.borde, if (sonar) f.tinta1 else f.linea, CircleShape)
+            .clickable { MusicaPerfiles.silenciar(ctx, sonar) }, contentAlignment = Alignment.Center) {
+            IconoRiso(if (sonar) IconosMultimedia.Sonido else IconosMultimedia.Silencio, nombre, tamano = 20.dp, tinta = if (sonar) f.sobreTinta1 else f.texto)
+        }
+        return
+    }
     val nombre = stringResource(if (sonando) R.string.historia_pausar else R.string.historia_escuchar)
     Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { sonando = !sonando }, contentAlignment = Alignment.Center) {
         IconoRiso(if (sonando) IconosMultimedia.Pausa else IconosMultimedia.Reproducir, nombre, tamano = 20.dp, tinta = f.sobreTinta1)
@@ -1195,7 +1225,7 @@ fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, son
             Text(datos.t("creador"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
             EnlaceAppleMusic(datos.t("enlace"))
         }
-        BotonAvance(datos.t("audio"), sonar)
+        if (sonar) MusicaDePerfil(datos.t("audio")) else BotonAvance(datos.t("audio"))
     }
 }
 

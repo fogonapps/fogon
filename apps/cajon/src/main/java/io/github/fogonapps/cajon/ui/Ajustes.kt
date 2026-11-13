@@ -90,7 +90,6 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     }
     FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
     FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
-    androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { io.github.fogonapps.social.ui.AjusteCancionPerfilSola() }
 
     SeccionAjustes(stringResource(R.string.aj_tu_cajon))
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }

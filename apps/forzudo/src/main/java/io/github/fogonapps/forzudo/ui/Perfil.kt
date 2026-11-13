@@ -76,7 +76,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
             ContadorPerfil(vm.L.racha(e, vm.L.dias(e), vm.hoy()).actual.toString(), stringResource(R.string.perfil_racha)),
             ContadorPerfil(e.sessions.flatMap { it.entries.keys }.distinct().count { vm.L.maxKg(e, it) != null || vm.L.maxReps(e, it) != null }.toString(), stringResource(R.string.records)),
         ), seccionesConGuardados, insignia = miInsignia)
-    io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazCuenta(vm))), elegida, { elegida = it }, nombreSuave = identidad.nombre.isNullOrBlank(), interlineado = true,
+    io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazCuenta(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazCuenta(vm))), elegida, { elegida = it }, nombreSuave = identidad.nombre.isNullOrBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {
                 BotonCirculoPerfil(IconoAjustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }

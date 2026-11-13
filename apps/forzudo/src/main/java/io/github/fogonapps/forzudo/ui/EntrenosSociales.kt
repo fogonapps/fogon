@@ -182,7 +182,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                 val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
                     "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
                     secciones = secciones, insignia = perfil.persona.insignia)
-                io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema), 0, {}, portada = {},
+                io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco), 0, {}, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize()) },
                     foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
                     bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
                     enlace = {}, acciones = {
@@ -194,7 +194,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
             // Su canción, sonando sola al entrar (si el ajuste lo deja).
             (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let {
-                Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it, sonar = perfil.persona.usuario != yo && io.github.fogonapps.social.ui.CancionPerfilSola.activa(androidx.compose.ui.platform.LocalContext.current)) }
+                Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it, sonar = perfil.persona.usuario != yo) }
             }
         })
             }

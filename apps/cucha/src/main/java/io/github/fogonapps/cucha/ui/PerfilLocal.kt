@@ -73,7 +73,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
     val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto, portada,
         bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones, insignia = miInsignia)
-    PerfilComun(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
+    PerfilComun(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {
                 BotonCirculoPerfil(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }

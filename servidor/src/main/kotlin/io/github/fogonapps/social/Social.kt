@@ -47,8 +47,10 @@ data class Persona(
     val usuario: String, val nombre: String, val foto: Boolean, val privada: Boolean = false,
     /** "fogon" (cuenta oficial), "verificada" o "" (ver [Social.revisarInsignias]). */
     val insignia: String = "",
-    /** El tema de su perfil (de la tienda); "" = el de siempre. */
+    /** El fondo de su perfil (de la tienda); "" = el de siempre. */
     val tema: String = "",
+    /** El marco de su foto (de la tienda); "" = sin marco. */
+    val marco: String = "",
 )
 
 @Serializable
@@ -168,13 +170,20 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
 @Serializable data class Cumple(val fecha: String)
-/** Los temas de perfil de la cuenta: los reclamados y el puesto. */
-@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String)
+/** Lo de la tienda de la cuenta: lo que tiene, lo puesto (fondo y marco) y sus chispas. */
+@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false)
 @Serializable data class TemaElegido(val tema: String)
 
-/** La tienda de temas de perfil: por ahora todos se reclaman gratis (los nombres los pone la app). */
+/**
+ * La tienda del perfil: fondos (escenas con su paleta) y marcos de foto, que se compran con chispas. Las chispas se
+ * ganan usando las apps (bienvenida y una por día) y solo sirven aquí: no se cambian por dinero ni se pasan a otros.
+ */
 object TemasPerfil {
-    val GRATIS = listOf("neon", "papel", "atardecer", "arcade", "constelacion", "riso", "selva", "medianoche")
+    val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
+    val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
+    fun precio(item: String): Int? = FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    const val BIENVENIDA = 1500
+    const val DIARIO = 50
 }
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 @Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
@@ -791,7 +800,7 @@ class Social(
         b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
 
     private fun persona(id: Long): Persona = b.usar {
-        leer("SELECT usuario, nombre, foto, privada, insignia, tema FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5), it.getString(6)) }.first()
+        leer("SELECT usuario, nombre, foto, privada, insignia, tema, marco FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5), it.getString(6), it.getString(7)) }.first()
     }
 
     private fun esPrivada(id: Long) = b.usar { leer("SELECT privada FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false
@@ -1594,20 +1603,46 @@ class Social(
         leer("""SELECT s.a FROM seguir s WHERE s.de = ? AND s.aceptada = 1 AND EXISTS(SELECT 1 FROM seguir t WHERE t.de = s.a AND t.a = ? AND t.aceptada = 1) LIMIT 500""", yo, yo) { it.getLong(1) }
     }.filter { visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo) }.map(::persona).sortedBy { it.nombre.ifBlank { it.usuario }.lowercase() }
 
-    fun temas(yo: Long) = TemasCuenta(
-        b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } },
-        b.usar { leer("SELECT tema FROM cuentas WHERE id = ?", yo) { it.getString(1) }.first() })
+    /** Las chispas de la cuenta: la suma de sus movimientos (la bienvenida se da la primera vez). */
+    fun chispas(yo: Long): Int = b.transaccion {
+        if (leer("SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = 'bienvenida'", yo) { 1 }.isEmpty())
+            cambiar("INSERT INTO chispas(cuenta, cantidad, motivo, cuando) VALUES(?,?,?,?)", yo, TemasPerfil.BIENVENIDA, "bienvenida", ahora())
+        leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", yo) { it.getInt(1) }.first()
+    }
+    private fun diaDe(t: Long) = t / (24 * 3600_000L)
+    private fun diarioCobrado(yo: Long) = b.usar { leer("SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = ?", yo, "diario:${diaDe(ahora())}") { 1 }.isNotEmpty() }
 
-    /** Reclamar un tema de la tienda (gratis). */
-    fun reclamarTema(yo: Long, tema: String) {
-        if (tema !in TemasPerfil.GRATIS) throw Problema(404, "no_existe")
-        b.usar { cambiar("INSERT OR IGNORE INTO temas(cuenta, tema, cuando) VALUES(?,?,?)", yo, tema, ahora()) }
+    fun temas(yo: Long): TemasCuenta {
+        val saldo = chispas(yo)
+        val (tema, marco) = b.usar { leer("SELECT tema, marco FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
+        return TemasCuenta(b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } }, tema, marco, saldo, !diarioCobrado(yo))
     }
 
-    /** Ponerse un tema reclamado ("" vuelve al de siempre). */
+    /** Las chispas del día (una vez por día). */
+    fun cobrarDiario(yo: Long) {
+        chispas(yo)
+        b.usar { cambiar("INSERT OR IGNORE INTO chispas(cuenta, cantidad, motivo, cuando) SELECT ?, ?, ?, ? WHERE NOT EXISTS(SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = ?)",
+            yo, TemasPerfil.DIARIO, "diario:${diaDe(ahora())}", ahora(), yo, "diario:${diaDe(ahora())}") }
+    }
+
+    /** Comprar algo de la tienda con chispas (si alcanzan y no lo tiene ya). */
+    fun reclamarTema(yo: Long, tema: String) {
+        val precio = TemasPerfil.precio(tema) ?: throw Problema(404, "no_existe")
+        chispas(yo)
+        b.transaccion {
+            if (leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isNotEmpty()) return@transaccion
+            val saldo = leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", yo) { it.getInt(1) }.first()
+            if (saldo < precio) throw Problema(402, "sin_chispas")
+            cambiar("INSERT INTO chispas(cuenta, cantidad, motivo, cuando) VALUES(?,?,?,?)", yo, -precio, "compra:$tema", ahora())
+            cambiar("INSERT INTO temas(cuenta, tema, cuando) VALUES(?,?,?)", yo, tema, ahora())
+        }
+    }
+
+    /** Ponerse un fondo o un marco que se tiene ("" quita el fondo; "marco:" quita el marco). */
     fun ponerTema(yo: Long, tema: String) {
-        if (tema.isNotEmpty() && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
-        b.usar { cambiar("UPDATE cuentas SET tema = ? WHERE id = ?", tema, yo) }
+        val esMarco = tema.startsWith("marco:")
+        if (tema.isNotEmpty() && tema != "marco:" && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
+        b.usar { cambiar(if (esMarco) "UPDATE cuentas SET marco = ? WHERE id = ?" else "UPDATE cuentas SET tema = ? WHERE id = ?", if (esMarco) tema.removePrefix("marco:") else tema, yo) }
     }
 
     /** Pone (o quita, con "") el cumpleaños: solo día y mes ("MM-DD"). */

@@ -1669,8 +1669,6 @@
     <string name="chat_confirma_lectura_explica">Shows “Seen” when your messages are read and lets others know when you read theirs. If you turn it off, you won\'t see theirs either. Applies to all your chats.</string>
     <string name="cumple_escribele">Write to them</string>
     <string name="imagen_votos_pista">Tap an image to use it for yourself. The heart votes for the cover everyone sees; the “i” tells where it came from.</string>
-    <string name="cancion_perfil_sola">Profile songs play automatically</string>
-    <string name="cancion_perfil_sola_pista">When you open someone’s profile, their song starts playing; pause it with its button.</string>
     <string name="fotos_girar_titulo">Want to rotate any?</string>
     <string name="fotos_foto_n">Photo %1$d</string>
     <string name="fotos_girar_izquierda">↺ Rotate</string>
@@ -1681,9 +1679,20 @@
     <string name="historia_ver_mas">More</string>
     <string name="historia_ver_menos">Less</string>
     <string name="historia_tu_historia">Your story</string>
-    <string name="temas_tienda">Profile themes</string>
-    <string name="temas_explica">Give your profile its own style, like Steam profile backgrounds. For now they are all free to claim; the one you wear is seen by everyone who visits your profile.</string>
+    <string name="temas_tienda">Profile store</string>
+    <string name="temas_explica">Backgrounds and frames for your profile, like Steam ones.</string>
     <string name="temas_en_uso">In use</string>
     <string name="temas_usar">Use</string>
     <string name="temas_reclamar">Claim for free</string>
+    <string name="cancion_silenciar">Mute profile music</string>
+    <string name="cancion_activar">Unmute profile music</string>
+    <string name="chispas_n">%1$d sparks</string>
+    <string name="chispas_explica">Earned by using the apps; they only work in the store.</string>
+    <string name="chispas_diario">Today’s</string>
+    <string name="tienda_fondos">Backgrounds</string>
+    <string name="tienda_marcos">Frames</string>
+    <string name="tienda_sin_fondo">No background</string>
+    <string name="tienda_sin_marco">No frame</string>
+    <string name="tienda_comprar">%1$d sparks</string>
+    <string name="chispas_reglas">Sparks can’t be exchanged for money, can’t be sent to other accounts and there are no random draws: what you buy is what you see. You get 1500 to start and can claim 50 more each day you open the app.</string>
 </resources>

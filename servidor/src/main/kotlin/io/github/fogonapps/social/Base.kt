@@ -127,6 +127,10 @@ class Base(ruta: String) {
                 columna(s, "cuentas", "cumple TEXT NOT NULL DEFAULT ''")
                 // El tema del perfil (estilo de la cabecera) y los temas que la cuenta reclamó en la tienda.
                 columna(s, "cuentas", "tema TEXT NOT NULL DEFAULT ''")
+                columna(s, "cuentas", "marco TEXT NOT NULL DEFAULT ''")
+                // Las chispas: cada movimiento (bienvenida, la del día, una compra); el saldo es la suma.
+                s.execute("CREATE TABLE IF NOT EXISTS chispas(id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cantidad INTEGER NOT NULL, motivo TEXT NOT NULL, cuando INTEGER NOT NULL)")
+                s.execute("CREATE INDEX IF NOT EXISTS chispas_cuenta ON chispas(cuenta, motivo)")
                 s.execute("CREATE TABLE IF NOT EXISTS temas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, tema TEXT NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, tema))")
                 // Historias solo para amigos, respuestas a la pregunta de una historia y la publicación fijada del perfil.
                 columna(s, "historias", "amigos INTEGER NOT NULL DEFAULT 0")

@@ -432,8 +432,10 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     var menu by remember { mutableStateOf(false) }
     var hoja by remember { mutableStateOf<String?>(null) }
     var pestana by rememberSaveable(usuario) { mutableStateOf(PESTANA_INICIAL) }
-    LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
+    // Con la sesión lista (un enlace puede abrir el perfil antes), y de nuevo si no llegó.
+    LaunchedEffect(usuario, yo) { vm.red.verPerfil(usuario) }
     val p = perfiles[usuario]
+    if (p == null && usuario !in noEstan) LaunchedEffect(usuario) { kotlinx.coroutines.delay(4000); while (perfiles[usuario] == null) { vm.red.verPerfil(usuario); kotlinx.coroutines.delay(6000) } }
     val propio = usuario == yo
     val navegacion: @Composable () -> Unit = {
         Cabecera("@$usuario", vm::cerrar, chico = true) {
@@ -534,7 +536,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 }
             }
             // Su canción suena sola al entrar (si el ajuste lo deja; se pausa con su botón).
-            (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio && io.github.fogonapps.social.ui.CancionPerfilSola.activa(ctx)) } }
+            (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio) } }
             if (p.cerrada) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
@@ -825,7 +827,7 @@ fun TarjetaCancion(titulo: String, artista: String, album: String, portada: Stri
         }
         // Con el avance de Apple: suena 30 segundos aquí, y el botón de Apple Music (lo piden sus condiciones).
         if (audio.isNotBlank()) {
-            io.github.fogonapps.social.ui.BotonAvance(audio, sonar)
+            if (sonar) io.github.fogonapps.social.ui.MusicaDePerfil(audio) else io.github.fogonapps.social.ui.BotonAvance(audio)
             io.github.fogonapps.social.ui.EnlaceAppleMusic(enlace)
         } else BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
             if (!tocarCancion(ctx, titulo, artista, album)) android.widget.Toast.makeText(ctx, sinApp, android.widget.Toast.LENGTH_SHORT).show()

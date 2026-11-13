@@ -113,10 +113,10 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
         frase?.frase?.texto.orEmpty(),
         onMantener = { if (frase != null) menuFrase = true },
         adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
-        perfil = { androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.destinoGuia("perfil")) {
+        perfil = { androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { io.github.fogonapps.social.ui.ChispasArriba(interfazCuenta(vm)); androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.destinoGuia("perfil")) {
             io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.CUCHA, stringResource(R.string.perfil), cara,
                 foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
-        }})
+        }}})
     if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
         onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida)
 

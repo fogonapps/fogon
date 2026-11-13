@@ -159,9 +159,12 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
             }
         },
         perfil = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            io.github.fogonapps.social.ui.ChispasArriba(interfazCuenta(vm))
             Box(Modifier.destinoGuia("perfil")) {
                 io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.AHORRADOR, stringResource(R.string.perfil), cara,
                     foto = e.fotoPerfil.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+            }
             }
         })
     if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
