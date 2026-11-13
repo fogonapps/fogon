@@ -8,10 +8,10 @@ import org.junit.Test
 class ImagenesTest {
     @Test fun tamanosPorFuenteYLugar() {
         assertEquals(listOf("w342", "w780", "original"), Lugar.entries.map { Imagenes.tamano("tmdb", it) })
-        assertEquals(listOf("M", "L", "L"), Lugar.entries.map { Imagenes.tamano("ol", it) })
+        assertEquals(listOf("L", "L", "L"), Lugar.entries.map { Imagenes.tamano("ol", it) })
         assertEquals(listOf("500", "1200", "1200"), Lugar.entries.map { Imagenes.tamano("caa", it) })
         assertEquals(listOf("w185", "w342", "w780"), Lugar.entries.map { Imagenes.tamano("tmdb", it, true) })
-        assertEquals(listOf("S", "M", "M"), Lugar.entries.map { Imagenes.tamano("ol", it, true) })
+        assertEquals(listOf("M", "L", "L"), Lugar.entries.map { Imagenes.tamano("ol", it, true) })
         assertEquals(listOf("250", "500", "500"), Lugar.entries.map { Imagenes.tamano("caa", it, true) })
         assertEquals("https://coverartarchive.org/release/x/front-1200", Imagenes.url("https://coverartarchive.org/release/x/front-500", Lugar.FICHA))
         assertEquals("https://covers.openlibrary.org/b/id/3-L.jpg", Imagenes.url("https://covers.openlibrary.org/b/id/3-M.jpg", Lugar.FICHA))

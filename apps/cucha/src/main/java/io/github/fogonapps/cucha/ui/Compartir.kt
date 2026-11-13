@@ -55,7 +55,7 @@ private fun rememberMultimedia(anterior: PublicacionSubida?) = remember(anterior
 private fun ControlesMultimedia(vm: CuchaViewModel, m: Multimedia, ocupado: Boolean) {
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
-    val selectorFotos = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+    val manejar_selectorFotos3: (List<android.net.Uri>) -> Unit = { uris ->
         alcance.launch {
             m.preparando = true; m.error = false
             try {
@@ -68,6 +68,9 @@ private fun ControlesMultimedia(vm: CuchaViewModel, m: Multimedia, ocupado: Bool
             finally { m.preparando = false }
         }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_selectorFotos3 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selectorFotos3(l) }
+    val selectorFotos = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { r -> if (r.isNotEmpty()) girar_selectorFotos3(r) }
     val selectorVideo = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) alcance.launch {
             m.preparando = true; m.error = false

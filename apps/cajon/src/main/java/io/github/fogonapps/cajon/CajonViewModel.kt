@@ -68,6 +68,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import kotlin.random.Random
 
@@ -93,7 +94,8 @@ internal suspend fun buscarEnFuente(
     terminar: () -> Unit,
     trabajo: suspend CoroutineScope.() -> Unit,
 ) {
-    try { coroutineScope { trabajo() } }
+    // Una fuente lenta no deja la búsqueda cargando para siempre: a los 15 segundos se rinde y avisa.
+    try { if (withTimeoutOrNull(15_000) { coroutineScope { trabajo() }; true } == null) error(R.string.buscar_fallo) }
     catch (e: Exception) { error(avisoErrorBusqueda(e)) }
     finally { terminar() }
 }
@@ -824,7 +826,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         buscando?.cancel()
         if (t.length < 2) { _busqueda.value = Busqueda(texto = texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara); return }
         buscando = viewModelScope.launch {
-            delay(350) // espera a que la persona deje de escribir
+            delay(250) // espera a que la persona deje de escribir
             _busqueda.value = Busqueda(texto = texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara)
             fun fuente(nombre: String, trabajo: suspend CoroutineScope.() -> Unit) = launch {
                 _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + nombre)

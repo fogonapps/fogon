@@ -186,7 +186,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val red = yo?.let { perfiles[it] }
     val anio = vm.hoy().year
     val descFoto = stringResource(if (p.foto.isBlank()) R.string.poner_foto else R.string.cambiar_foto_perfil)
-    var pestana by rememberSaveable { mutableStateOf(0) }
+    var pestana by rememberSaveable { mutableStateOf(PESTANA_INICIAL) }
 
     // Arriba: con cuenta de moderación, su espacio (con lo pendiente); siempre, los ajustes.
     val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
@@ -338,7 +338,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         } else contadoresPerfil(vm, e, anio).forEach { c -> add(ContadorPerfil("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir)) }
     }
     val vistaBase = e.aPerfilVista(secciones = secciones, contadores = contadores, cuenta = cuenta).copy(nombre = e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) })
-    PerfilComun(vistaBase, pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
+    PerfilComun(vistaBase.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
@@ -377,6 +377,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
+            io.github.fogonapps.social.ui.BotonTiendaTemas(interfazSocial(vm), Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
             SelectorPerfiles(vm)
             CrearClaveAviso(vm)

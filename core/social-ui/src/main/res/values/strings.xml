@@ -558,4 +558,21 @@
     <string name="social_chat_confirma_lectura">Read receipts</string>
     <string name="social_chat_confirma_lectura_explica">Shows “Seen” when your messages are read and lets others know when you read theirs. If you turn it off, you won\'t see theirs either. Applies to all your chats.</string>
     <string name="cumple_escribele">Write to them</string>
+    <string name="cancion_perfil_sola">Profile songs play automatically</string>
+    <string name="cancion_perfil_sola_pista">When you open someone’s profile, their song starts playing; pause it with its button.</string>
+    <string name="social_fotos_girar_titulo">Want to rotate any?</string>
+    <string name="social_fotos_foto_n">Photo %1$d</string>
+    <string name="social_fotos_girar_izquierda">↺ Rotate</string>
+    <string name="social_fotos_girar_derecha">Rotate ↻</string>
+    <string name="social_fotos_listo">Done</string>
+    <string name="historia_fondo">Background</string>
+    <string name="historia_foto_corto">Photo</string>
+    <string name="historia_ver_mas">More</string>
+    <string name="historia_ver_menos">Less</string>
+    <string name="historia_tu_historia">Your story</string>
+    <string name="social_temas_tienda">Profile themes</string>
+    <string name="social_temas_explica">Give your profile its own style, like Steam profile backgrounds. For now they are all free to claim; the one you wear is seen by everyone who visits your profile.</string>
+    <string name="social_temas_en_uso">In use</string>
+    <string name="social_temas_usar">Use</string>
+    <string name="social_temas_reclamar">Claim for free</string>
 </resources>

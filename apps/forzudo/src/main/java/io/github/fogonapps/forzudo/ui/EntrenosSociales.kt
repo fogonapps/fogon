@@ -70,7 +70,7 @@ fun CompartirEntreno(vm: GymViewModel, estado: Estado, id: String) {
     var error by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
-    val selectorFotos = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+    val manejar_selectorFotos4: (List<android.net.Uri>) -> Unit = { uris ->
         alcance.launch {
             preparando = true; error = false
             try {
@@ -84,6 +84,9 @@ fun CompartirEntreno(vm: GymViewModel, estado: Estado, id: String) {
             finally { preparando = false }
         }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_selectorFotos4 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selectorFotos4(l) }
+    val selectorFotos = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { r -> if (r.isNotEmpty()) girar_selectorFotos4(r) }
     val selectorVideo = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) alcance.launch {
             preparando = true; error = false
@@ -179,15 +182,21 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                 val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
                     "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
                     secciones = secciones, insignia = perfil.persona.insignia)
-                io.github.fogonapps.perfil.Perfil(vista, 0, {}, portada = {},
+                io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema), 0, {}, portada = {},
                     foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
-                    bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario); (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it) } },
+                    bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
                     enlace = {}, acciones = {
                         if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
                             if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.entreno_dejar_seguir else R.string.entreno_seguir), {
                             if (perfil.relacion == "sigo") vm.red.dejarDeSeguir(destino.usuario) else vm.red.seguir(destino.usuario)
                         })
-                    })
+                    }, despuesAcciones = {
+            Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
+            // Su canción, sonando sola al entrar (si el ajuste lo deja).
+            (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let {
+                Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it, sonar = perfil.persona.usuario != yo && io.github.fogonapps.social.ui.CancionPerfilSola.activa(androidx.compose.ui.platform.LocalContext.current)) }
+            }
+        })
             }
         }
         else -> TuGente(vm, interfaz, conAtras = true)

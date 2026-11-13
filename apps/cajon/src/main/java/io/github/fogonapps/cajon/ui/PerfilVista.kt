@@ -26,19 +26,25 @@ internal fun PerfilSocial.aPerfilVista(
         if (!bloqueado && persona.foto) ClienteSocial.foto(persona.usuario) else "",
         if (bloqueado) "" else portada, if (bloqueado) "" else bio, if (bloqueado) emptyList() else enlaces,
         persona.privada, relacion, if (bloqueado) emptyList() else contadores, if (cerrada || bloqueado) emptyList() else secciones,
-        insignia = if (bloqueado) "" else persona.insignia)
+        insignia = if (bloqueado) "" else persona.insignia, tema = if (bloqueado) "" else persona.tema)
 }
 
-/** Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). */
+/**
+ * Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). Lo de la persona
+ * (destacados / lo suyo) va primero y es la pestaña que se abre, con las cifras al lado.
+ */
 internal fun catalogoSeccionesPerfil(propio: Boolean) = listOf(
-    Triple(0, Iconos.Imagen, R.string.red_publicaciones),
     Triple(1, Iconos.Estrella, if (propio) R.string.parte_destacados else R.string.red_lo_suyo),
+    Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
+    Triple(0, Iconos.Imagen, R.string.red_publicaciones),
     Triple(2, Iconos.Artista, R.string.tipo_artistas),
     Triple(3, Iconos.Lista, R.string.pestana_listas),
     Triple(4, Iconos.Guardar, R.string.parte_guardadas),
     Triple(6, Iconos.Lapiz, if (propio) R.string.resena_tuyas else R.string.resenas_suyas),
-    Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
 )
+
+/** La pestaña con que abre un perfil: lo de la persona. */
+internal const val PESTANA_INICIAL = 1
 
 @Composable
 internal fun seccionesCajon(propio: Boolean, contenido: @Composable (Int) -> Unit): List<SeccionPerfil> =

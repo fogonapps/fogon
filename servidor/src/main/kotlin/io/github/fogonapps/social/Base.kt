@@ -125,6 +125,9 @@ class Base(ruta: String) {
                 columna(s, "historias", "destacada TEXT NOT NULL DEFAULT ''")
                 // El cumpleaños (opcional): solo día y mes ("MM-DD"); lo ven solo los amigos.
                 columna(s, "cuentas", "cumple TEXT NOT NULL DEFAULT ''")
+                // El tema del perfil (estilo de la cabecera) y los temas que la cuenta reclamó en la tienda.
+                columna(s, "cuentas", "tema TEXT NOT NULL DEFAULT ''")
+                s.execute("CREATE TABLE IF NOT EXISTS temas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, tema TEXT NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, tema))")
                 // Historias solo para amigos, respuestas a la pregunta de una historia y la publicación fijada del perfil.
                 columna(s, "historias", "amigos INTEGER NOT NULL DEFAULT 0")
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,

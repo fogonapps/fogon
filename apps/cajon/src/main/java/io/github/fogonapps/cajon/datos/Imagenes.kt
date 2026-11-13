@@ -34,7 +34,7 @@ object Imagenes {
         val nivel = (normal - if (ahorro) 1 else 0).coerceAtLeast(0)
         return when (fuente) {
             "tmdb" -> listOf("w185", "w342", "w780", "original")[nivel]
-            "ol" -> listOf("S", "M", "L")[nivel]
+            "ol" -> listOf("M", "L", "L")[nivel]   // La "M" de Open Library (180 px) se ve borrosa en pantallas densas.
             "caa" -> listOf("250", "500", "1200")[nivel]
             else -> ""
         }
@@ -49,10 +49,10 @@ object Imagenes {
         }
     }
     fun clave(url: String) = url(url, Lugar.VISOR)
-    fun descripcion(ed: EdicionLibro, idioma: String = "es"): String {
+    fun descripcion(ed: EdicionLibro, idioma: String = "es", conId: Boolean = true): String {
         val codigos = mapOf("spa" to "es", "eng" to "en", "fra" to "fr", "fre" to "fr", "deu" to "de", "ger" to "de", "ita" to "it", "por" to "pt")
         val idiomas = ed.idiomas.joinToString { java.util.Locale.forLanguageTag(codigos[it] ?: it).getDisplayLanguage(java.util.Locale.forLanguageTag(idioma)) }
-        return listOf(ed.editorial, ed.anio?.toString().orEmpty(), idiomas, ed.id).filter { it.isNotBlank() }.joinToString(" · ")
+        return listOf(ed.editorial, ed.anio?.toString().orEmpty(), idiomas, if (conId) ed.id else "").filter { it.isNotBlank() }.joinToString(" · ")
     }
     fun bloqueada(url: String, bloqueadas: List<String>) = bloqueadas.any { clave(it) == clave(url) }
     fun filtrar(urls: List<String>, bloqueadas: List<String>) = urls.filterNot { bloqueada(it, bloqueadas) }.distinctBy(::clave)

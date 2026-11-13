@@ -74,6 +74,7 @@ fun FilasRedEnAjustes(vm: InterfazSocial) {
     FilaAjuste(IconosSociales.Bandera, stringResource(R.string.social_red_bloqueadas), null) { vm.navegacion.ajustes(AjusteSocial.BLOQUEADOS) }
     Desplegable(IconosSociales.Bandera, stringResource(R.string.ajustes_red_palabras), stringResource(R.string.ajustes_red_palabras_pista)) { EditorPalabrasOcultas() }
     Desplegable(IconosSociales.Estrella, stringResource(R.string.cumple_titulo), null) { EditorCumple(vm) }
+    Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { AjusteCancionPerfilSola() }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

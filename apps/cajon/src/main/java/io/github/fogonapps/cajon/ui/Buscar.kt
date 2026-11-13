@@ -115,16 +115,37 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         // Cada fuente llega a su tiempo y sus grupos van arriba de otros: mientras la persona no haya bajado por
         // su cuenta, la lista vuelve arriba para que lo nuevo no quede escondido.
         val lista = androidx.compose.foundation.lazy.rememberLazyListState()
-        val llegadas = (b.artistas.size + b.autores.size + b.directores.size) * 1000 + b.obras.values.sumOf { it.size }
+        val llegadas = (b.artistas.size + b.autores.size + b.directores.size + b.personas.size + b.canciones.size) * 1000 + b.obras.values.sumOf { it.size }
         val titulos = mapOf("artistas" to nombreTipo(CajonViewModel.TIPO_ARTISTA), "directores" to nombreTipo(Personas.DIRECTOR), "autores" to nombreTipo(Personas.AUTOR))
         // (Se mira si la persona arrastró la lista, no en qué fila está: lo del momento va debajo de los resultados y, sin
         // esto, la lista se quedaba pegada a él y los resultados quedaban arriba, fuera de la vista.)
         var movida by remember(b.texto, b.seccion) { mutableStateOf(false) }
         LaunchedEffect(lista) { lista.interactionSource.interactions.collect { if (it is androidx.compose.foundation.interaction.DragInteraction.Start) movida = true } }
-        LaunchedEffect(llegadas, b.texto, b.seccion) { if (!movida) lista.scrollToItem(0) }
+        // requestScrollToItem gana sobre el ancla de la lista (que si no deja a la vista lo que ya estaba, abajo).
+        LaunchedEffect(llegadas, b.texto, b.seccion) { if (!movida) lista.requestScrollToItem(0) }
         LazyColumn(Modifier.fillMaxWidth().weight(1f), state = lista) {
             val todo = b.seccion == Secciones.TODO
             fun maximo(n: Int) = if (todo) n else Int.MAX_VALUE
+
+            // Lo que ya está en tu cajón con ese nombre: sale al instante, sin esperar a internet.
+            val palabrasCajon = normal(b.texto).split(" ").filter { it.isNotBlank() }
+            val tiposSeccion = Secciones.tipos(b.seccion)
+            val delCajon = if (b.seccion == Secciones.PERSONAS || palabrasCajon.isEmpty()) emptyList() else e.vivas.filter { o ->
+                (todo || o.tipo in tiposSeccion) && normal("${o.titulo} ${o.original} ${o.creador}").let { t -> palabrasCajon.all { it in t } }
+            }.sortedByDescending { if (normal(it.titulo) == normal(b.texto.trim())) 1 else 0 }
+            if (delCajon.isNotEmpty()) {
+                item(key = "t-cajon") { Titulo(stringResource(R.string.buscar_en_tu_cajon), null) }
+                items(delCajon.take(maximo(4)), key = { "caj" + it.id }) { o ->
+                    FilaVidrio({ vm.abrir(Pantalla.Ficha(o.id)) }) {
+                        Portada(o.portada, o.tipo, o.titulo, Modifier.width(46.dp), esquina = 6.dp, conTitulo = false)
+                        Column(Modifier.weight(1f)) {
+                            Text(o.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(listOfNotNull(nombreTipo(o.tipo, plural = false), o.anio?.toString()).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
+                        }
+                        Estrellas(o.nota)
+                    }
+                }
+            }
 
             // Personas de la red (en "Todo", las primeras tres; en "Personas", todas).
             if (b.personas.isNotEmpty()) {
@@ -193,20 +214,10 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             }
 
             // Canciones (de Apple): escucharlas 30 segundos, ir a Apple Music o, al tocarlas, buscar su álbum.
-            if (b.canciones.isNotEmpty() && (todo || b.seccion == Secciones.MUSICA)) {
+            val cancionesArriba = b.seccion == Secciones.MUSICA
+            if (b.canciones.isNotEmpty() && cancionesArriba) {
                 item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
-                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c ->
-                    Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.cambiarSeccion(Secciones.MUSICA); vm.buscar(c.album.ifBlank { c.titulo } + " " + c.artista) }
-                        .padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        coil3.compose.AsyncImage(c.portada, null, Modifier.size(48.dp).clip(forma(8.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                        Column(Modifier.weight(1f)) {
-                            Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(listOf(c.artista, c.album).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            io.github.fogonapps.social.ui.EnlaceAppleMusic(c.enlace)
-                        }
-                        io.github.fogonapps.social.ui.BotonAvance(c.audio)
-                    }
-                }
+                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
             }
 
             // Los grupos de obras, en el orden de la sección.
@@ -218,7 +229,15 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 Secciones.LIBROS -> listOf(Tipos.LIBRO)
                 else -> listOf(Tipos.ALBUM, Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.LIBRO)
             }
-            orden.forEach { t ->
+            // En «Todo», primero el grupo cuyo primer resultado se parece más a lo buscado (una película no queda
+            // debajo de los discos si es lo que se buscaba).
+            val buscado = normal(b.texto.trim())
+            fun parecido(t: String): Int = b.obras[t].orEmpty().take(3).maxOfOrNull { r ->
+                val n = normal(r.titulo)
+                when { n == buscado -> 3; n.startsWith(buscado) -> 2; buscado in n -> 1; else -> 0 }
+            } ?: -1
+            val ordenFinal = if (todo) orden.sortedByDescending { parecido(it) } else orden
+            ordenFinal.forEach { t ->
                 val lista = b.obras[t].orEmpty()
                 if (lista.isNotEmpty()) {
                     item(key = "t-$t") { Titulo(nombreTipo(t), if (todo) ({ vm.cambiarSeccion(Secciones.de(t)) }) else null) }
@@ -235,8 +254,14 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 }
             }
 
-            // Lo del momento también debajo de los resultados (en todas las secciones).
-            item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
+            if (b.canciones.isNotEmpty() && todo) {
+                item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
+                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
+            }
+
+            // Lo del momento también debajo de los resultados (en todas las secciones), cuando ya llegó todo: si
+            // estuviera desde el principio, la lista se quedaría anclada a él y los resultados entrarían por arriba, fuera de la vista.
+            if (b.cargando.isEmpty()) item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
 
             item(key = "pie") {
                 val vacio = !hayDelCajon && b.seccion != Secciones.PERSONAS && b.mostrarNoEncontrado
@@ -248,6 +273,21 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 Espacio(40.dp)
             }
         }
+    }
+}
+
+/** Una canción encontrada (de Apple): escucharla 30 segundos, ir a Apple Music o, al tocarla, buscar su álbum. */
+@Composable
+private fun FilaCancionBuscada(vm: CajonViewModel, c: io.github.fogonapps.social.CancionSocial) {
+    Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.cambiarSeccion(Secciones.MUSICA); vm.buscar(c.album.ifBlank { c.titulo } + " " + c.artista) }
+        .padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        coil3.compose.AsyncImage(c.portada, null, Modifier.size(48.dp).clip(forma(8.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        Column(Modifier.weight(1f)) {
+            Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(listOf(c.artista, c.album).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            io.github.fogonapps.social.ui.EnlaceAppleMusic(c.enlace)
+        }
+        io.github.fogonapps.social.ui.BotonAvance(c.audio)
     }
 }
 

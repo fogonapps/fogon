@@ -90,6 +90,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     }
     FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
     FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
+    androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { io.github.fogonapps.social.ui.AjusteCancionPerfilSola() }
 
     SeccionAjustes(stringResource(R.string.aj_tu_cajon))
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
@@ -317,7 +318,7 @@ private fun SelectorIdioma(vm: CajonViewModel) {
 @Composable
 fun AcercaDe(vm: CajonViewModel) {
     val uri = LocalUriHandler.current
-    Column {
+    Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Cabecera(stringResource(R.string.acerca_de_corto), vm::cerrar)
         AcercaDeFogon(
             quien = io.github.fogonapps.identidad.Quien.CAJON,
@@ -333,9 +334,9 @@ fun AcercaDe(vm: CajonViewModel) {
         androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.logo_tmdb), "TMDB", Modifier.padding(top = 4.dp).height(16.dp))
         }
         Pista(stringResource(R.string.beta_aviso))
-        BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/el-cajon#problemas-conocidos") })
+        BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/el-cajon#problemas-conocidos") }, Modifier.padding(horizontal = 16.dp))
         Pista(stringResource(R.string.tmdb_aviso))
-        BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") })
+        BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") }, Modifier.padding(horizontal = 16.dp))
     }
 }
 

@@ -346,13 +346,16 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
 
     // Fotos y notas de voz.
     val noSePudo = stringResource(R.string.social_chat_foto_no_se_pudo)
-    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
+    val manejar_elegirFoto10: (android.net.Uri?) -> Unit = { u ->
         if (u != null) alcance.launch {
             val b64 = chat.fotoParaMensaje(u)
             if (b64 == null) android.widget.Toast.makeText(ctx, noSePudo, android.widget.Toast.LENGTH_SHORT).show()
             else { chat.enviar(usuario, "", responde = responder, foto = b64); responder = null }
         }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_elegirFoto10 = io.github.fogonapps.social.ui.conGiro { l -> manejar_elegirFoto10(l.firstOrNull()) }
+    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { r -> if (r != null) girar_elegirFoto10(listOf(r)) else manejar_elegirFoto10(null) }
     val grabadora = remember { Grabadora(ctx.applicationContext) }
     var grabando by remember { mutableStateOf(false) }
     var segundosGrabados by remember { mutableStateOf(0) }

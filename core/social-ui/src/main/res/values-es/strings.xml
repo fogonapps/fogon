@@ -560,4 +560,21 @@
     <string name="social_chat_confirma_lectura">Confirmaciones de lectura</string>
     <string name="social_chat_confirma_lectura_explica">Muestra «Visto» cuando leen tus mensajes y avisa cuando tú lees los suyos. Si la apagas, tampoco ves el de los demás. Vale para todos tus chats.</string>
     <string name="cumple_escribele">Escríbele</string>
+    <string name="cancion_perfil_sola">La canción de un perfil suena sola</string>
+    <string name="cancion_perfil_sola_pista">Al abrir el perfil de otra persona, su canción empieza a sonar; la pausas con su botón.</string>
+    <string name="social_fotos_girar_titulo">¿Quieres girar alguna?</string>
+    <string name="social_fotos_foto_n">Foto %1$d</string>
+    <string name="social_fotos_girar_izquierda">↺ Girar</string>
+    <string name="social_fotos_girar_derecha">Girar ↻</string>
+    <string name="social_fotos_listo">Listo</string>
+    <string name="historia_fondo">Fondo</string>
+    <string name="historia_foto_corto">Foto</string>
+    <string name="historia_ver_mas">Ver más</string>
+    <string name="historia_ver_menos">Ver menos</string>
+    <string name="historia_tu_historia">Tu historia</string>
+    <string name="social_temas_tienda">Temas del perfil</string>
+    <string name="social_temas_explica">Dale a tu perfil un estilo propio, como los fondos de perfil de Steam. Por ahora todos se reclaman gratis; el que te pongas lo ve todo el que entre a tu perfil.</string>
+    <string name="social_temas_en_uso">En uso</string>
+    <string name="social_temas_usar">Usar</string>
+    <string name="social_temas_reclamar">Reclamar gratis</string>
 </resources>

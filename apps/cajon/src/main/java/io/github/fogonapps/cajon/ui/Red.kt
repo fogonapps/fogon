@@ -431,7 +431,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     var menu by remember { mutableStateOf(false) }
     var hoja by remember { mutableStateOf<String?>(null) }
-    var pestana by rememberSaveable(usuario) { mutableStateOf(0) }
+    var pestana by rememberSaveable(usuario) { mutableStateOf(PESTANA_INICIAL) }
     LaunchedEffect(usuario) { vm.red.verPerfil(usuario) }
     val p = perfiles[usuario]
     val propio = usuario == yo
@@ -533,7 +533,8 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                     }
                 }
             }
-            (p.partes["cancion"] as? JsonObject)?.let { c -> TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace")) }
+            // Su canción suena sola al entrar (si el ajuste lo deja; se pausa con su botón).
+            (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio && io.github.fogonapps.social.ui.CancionPerfilSola.activa(ctx)) } }
             if (p.cerrada) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
@@ -811,7 +812,7 @@ fun tocarCancion(ctx: android.content.Context, titulo: String, artista: String, 
 
 /** La tarjeta de la canción del perfil: portada del álbum, la canción, el artista y ▶. */
 @Composable
-fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null) {
+fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
     val f = FogonTema.actual
     val ctx = LocalContext.current
     val sinApp = stringResource(R.string.cancion_sin_app)
@@ -824,7 +825,7 @@ fun TarjetaCancion(titulo: String, artista: String, album: String, portada: Stri
         }
         // Con el avance de Apple: suena 30 segundos aquí, y el botón de Apple Music (lo piden sus condiciones).
         if (audio.isNotBlank()) {
-            io.github.fogonapps.social.ui.BotonAvance(audio)
+            io.github.fogonapps.social.ui.BotonAvance(audio, sonar)
             io.github.fogonapps.social.ui.EnlaceAppleMusic(enlace)
         } else BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
             if (!tocarCancion(ctx, titulo, artista, album)) android.widget.Toast.makeText(ctx, sinApp, android.widget.Toast.LENGTH_SHORT).show()

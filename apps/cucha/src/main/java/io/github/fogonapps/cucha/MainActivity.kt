@@ -90,7 +90,10 @@ class MainActivity : ComponentActivity() {
                 }
                 // Una foto del teléfono para una receta: el selector de fotos del sistema (no pide permisos).
                 var alElegir by remember { mutableStateOf<((android.net.Uri) -> Unit)?>(null) }
-                val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> if (uri != null) alElegir?.invoke(uri) }
+                val manejar_imagen2: (android.net.Uri?) -> Unit = { uri -> if (uri != null) alElegir?.invoke(uri) }
+                // Antes de usarla(s), el paso para girarlas.
+                val girar_imagen2 = io.github.fogonapps.social.ui.conGiro { l -> manejar_imagen2(l.firstOrNull()) }
+                val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { r -> if (r != null) girar_imagen2(listOf(r)) else manejar_imagen2(null) }
                 porImportar?.let { d ->
                     AlertDialog(
                         onDismissRequest = { porImportar = null },

@@ -343,6 +343,12 @@ abstract class ControladorSocial(
             _cumplesHoy.value = cliente().cumplesAmigos().filter { it.fecha == hoy }.map { it.persona.usuario }.toSet()
         } }
     }
+    /** Los temas de perfil (tienda): los reclamados y el puesto. */
+    protected val _temas = MutableStateFlow(TemasCuentaSocial())
+    val temas: StateFlow<TemasCuentaSocial> = _temas
+    fun cargarTemas() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _temas.value = cliente().temas() } } }
+    fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
+    fun ponerTema(tema: String) = lanzar { cliente().ponerTema(tema); _temas.value = _temas.value.copy(puesto = tema) }
     fun ponerCumple(fecha: String) = lanzar { cliente().ponerCumple(fecha); _cumple.value = fecha }
     suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())
     fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }

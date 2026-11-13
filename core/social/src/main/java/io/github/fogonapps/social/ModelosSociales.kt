@@ -12,7 +12,9 @@ class ErrorSocial(val codigo: Int, val error: String, val desde: Long = 0) : IOE
 
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PersonaSocial")
-data class PersonaSocial(val usuario: String, val nombre: String = "", val foto: Boolean = false, val privada: Boolean = false, val insignia: String = "")
+data class PersonaSocial(val usuario: String, val nombre: String = "", val foto: Boolean = false, val privada: Boolean = false, val insignia: String = "",
+    /** El tema de su perfil (de la tienda). */
+    val tema: String = "")
 
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.PublicacionSocial")
@@ -174,6 +176,9 @@ data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList()
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.LlavesPublicas")
 data class LlavesPublicas(val cifrar: String, val firmar: String)
+/** Los temas de perfil de la cuenta: los reclamados en la tienda y el puesto. */
+@Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "")
+@Serializable internal data class TemaElegidoSocial(val tema: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.SobreNuevo")
 internal data class SobreNuevo(val sobre: String, val firma: String, val silencioso: Boolean = false)

@@ -259,6 +259,9 @@ open class ClienteSocial(
     suspend fun archivoHistorias() = leer(ListSerializer(HistoriaSocial.serializer()), pedir("/historias/archivo?app=${cod(configuracion.idApp)}"))
     suspend fun portadaDestacada(id: Long) { pedir("/historias/$id/portada", "PUT") }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
+    suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas"))
+    suspend fun reclamarTema(tema: String) { pedir("/tienda/temas/${cod(tema)}", "POST") }
+    suspend fun ponerTema(tema: String) { pedir("/cuenta/tema", "PUT", json(TemaElegidoSocial.serializer(), TemaElegidoSocial(tema))) }
     suspend fun cumple() = leer(CumpleSocial.serializer(), pedir("/cuenta/cumple")).fecha
     suspend fun ponerCumple(fecha: String) { pedir("/cuenta/cumple", "PUT", json(CumpleSocial.serializer(), CumpleSocial(fecha))) }
     suspend fun cumplesAmigos() = leer(ListSerializer(CumpleAmigo.serializer()), pedir("/amigos/cumples"))

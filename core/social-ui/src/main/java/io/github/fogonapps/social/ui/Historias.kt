@@ -7,6 +7,7 @@ import io.github.fogonapps.identidad.BotonIconoSocial as BotonIcono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -278,9 +279,25 @@ fun EnlaceAppleMusic(enlace: String) {
         color = f.textoSuave, modifier = Modifier.clip(forma(6.dp)).clickable { uri.openUri(enlace) }.padding(4.dp))
 }
 
-/** El botón del avance de 30 segundos (solo de Apple), para usarlo fuera de las historias (la canción del perfil). */
+/** El botón del avance de 30 segundos (solo de Apple), para usarlo fuera de las historias (la canción del perfil). Con [sonar], arranca solo. */
 @Composable
-fun BotonAvance(url: String) { if (url.startsWith("https://audio-ssl.itunes.apple.com/")) Avance(url, false) }
+fun BotonAvance(url: String, sonar: Boolean = false) { if (url.startsWith("https://audio-ssl.itunes.apple.com/")) Avance(url, sonar) }
+
+/** Si la canción de un perfil ajeno suena sola al abrirlo (ajuste del teléfono; de entrada, sí). */
+object CancionPerfilSola {
+    private const val PREFS = "fogon_social_ajustes"
+    private val estado = kotlinx.coroutines.flow.MutableStateFlow<Boolean?>(null)
+    fun activa(ctx: android.content.Context): Boolean = estado.value ?: ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getBoolean("cancion_perfil_sola", true).also { estado.value = it }
+    fun poner(ctx: android.content.Context, si: Boolean) { ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putBoolean("cancion_perfil_sola", si).apply(); estado.value = si }
+}
+
+/** El interruptor del ajuste [CancionPerfilSola], para los ajustes de cada app. */
+@Composable
+fun AjusteCancionPerfilSola() {
+    val ctx = LocalContext.current
+    var si by remember { mutableStateOf(CancionPerfilSola.activa(ctx)) }
+    io.github.fogonapps.identidad.Interruptor(stringResource(R.string.cancion_perfil_sola), stringResource(R.string.cancion_perfil_sola_pista), si) { si = it; CancionPerfilSola.poner(ctx, it) }
+}
 
 /** El avance de 30 segundos: suena al tocar (o solo, en el visor); se apaga al salir. */
 @Composable
@@ -481,6 +498,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     var preparandoVideo by remember { mutableStateOf(false) }
     // Desde qué segundo abre la escena (el tráiler) de una película o serie.
     var pidiendoSegundo by remember { mutableStateOf(false) }
+    var verMas by rememberSaveable { mutableStateOf(false) }
     var fotosObra by remember { mutableStateOf(false) }
     var zoom by remember { mutableFloatStateOf(1f) }
     var mover by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
@@ -513,9 +531,12 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     var colorTrazo by remember { mutableStateOf(2) }
     val coloresTrazo = (0..3).map { colorTexto(it) }
     val noSePudo = stringResource(R.string.historia_no_se_pudo)
-    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
+    val manejar_elegirFoto12: (android.net.Uri?) -> Unit = { u ->
         if (u != null) { foto = u; video?.archivo?.delete(); video = null; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_elegirFoto12 = io.github.fogonapps.social.ui.conGiro { l -> manejar_elegirFoto12(l.firstOrNull()) }
+    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { r -> if (r != null) girar_elegirFoto12(listOf(r)) else manejar_elegirFoto12(null) }
     val noSePudoVideo = stringResource(R.string.historia_video_no_se_pudo)
     val elegirVideo = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { u ->
         if (u != null) { preparandoVideo = true; alcance.launch {
@@ -529,11 +550,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
     fun agregar(c: Capa) { capas += c; escalas[c.id] = 1f; posiciones[c.id] = androidx.compose.ui.geometry.Offset.Zero; elegida = c.id; siguiente++ }
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BotonIcono(Iconos.Cerrar, stringResource(R.string.historia_cerrar)) { onCerrar() }
-                Text(stringResource(R.string.historia_nueva), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.weight(1f))
-            }
-            // El lienzo (9:16): lo que queda adentro es la historia.
+            // El lienzo (9:16): lo que queda adentro es la historia. Encima (sin entrar en la imagen): cerrar, a la
+            // izquierda, y las herramientas en columna a la derecha, como en Instagram.
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 val (color, _) = fondoHistoria(fondo)
                 Box(Modifier.aspectRatio(9f / 16f, matchHeightConstraintsFirst = true).clip(forma(18.dp))
@@ -603,6 +621,26 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                         }
                     }
                 }
+                Box(Modifier.align(Alignment.TopStart).padding(6.dp).size(44.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.7f)).clickable { onCerrar() },
+                    contentAlignment = Alignment.Center) { IconoRiso(Iconos.Atras, stringResource(R.string.historia_cerrar), tamano = 22.dp, tinta = f.texto) }
+                if (!dibujando) Column(Modifier.align(Alignment.TopEnd).padding(6.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HerramientaHistoria(stringResource(R.string.historia_texto_corto), letra = "Aa") { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
+                    HerramientaHistoria(stringResource(R.string.historia_sticker), IconosFogon.Estrella) { eligiendoSticker = true }
+                    HerramientaHistoria(stringResource(R.string.historia_musica), letra = "♪") { eligiendo = true }
+                    if (foto == null) HerramientaHistoria(stringResource(R.string.historia_fondo), circulo = fondoHistoria((fondo + 1) % 4).first) { fondo = (fondo + 1) % 4 }
+                    HerramientaHistoria(stringResource(R.string.historia_dibujar), IconosFogon.Lapiz) { dibujando = true; elegida = null; colorTrazo = if (foto != null) 0 else contraste(fondo) }
+                    HerramientaHistoria(stringResource(if (foto == null) R.string.historia_foto_corto else R.string.historia_otra_foto), IconosFogon.Imagen) { elegirFoto.launch("image/*") }
+                    if (verMas) {
+                        HerramientaHistoria(stringResource(R.string.historia_video), IconosMultimedia.Reproducir) { elegirVideo.launch("video/*") }
+                        if (vm.fotosDeObras) HerramientaHistoria(stringResource(R.string.historia_foto_obra), IconosFogon.Imagen) { fotosObra = true }
+                        HerramientaHistoria(stringResource(R.string.historia_encuesta), IconosFogon.Lista) { creandoEncuesta = true }
+                        HerramientaHistoria(stringResource(R.string.historia_pregunta_corta), letra = "?") { preguntando = true }
+                        HerramientaHistoria(stringResource(R.string.historia_mencionar), letra = "@") { mencionando = true }
+                        if (foto != null) HerramientaHistoria(stringResource(R.string.historia_sin_foto), IconosFogon.Cerrar) { foto = null; video?.archivo?.delete(); video = null }
+                    }
+                    HerramientaHistoria(stringResource(if (verMas) R.string.historia_ver_menos else R.string.historia_ver_mas), letra = if (verMas) "⌃" else "⋯") { verMas = !verMas }
+                }
             }
             adjunto?.let { a ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -641,37 +679,22 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                 }
                 if (trazos.isNotEmpty()) Pildora(stringResource(R.string.historia_deshacer)) { trazos.removeAt(trazos.lastIndex) }
                 Pildora(stringResource(R.string.historia_dibujo_listo), acento = true) { dibujando = false }
-            } else androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Pildora(stringResource(R.string.historia_dibujar)) { dibujando = true; elegida = null; colorTrazo = if (foto != null) 0 else contraste(fondo) }
-                Pildora(stringResource(if (foto == null) R.string.historia_foto else R.string.historia_otra_foto), Iconos.Mas) { elegirFoto.launch("image/*") }
-                Pildora(stringResource(R.string.historia_video), Iconos.Mas) { elegirVideo.launch("video/*") }
-                if (vm.fotosDeObras) Pildora(stringResource(R.string.historia_foto_obra)) { fotosObra = true }
-                Pildora(stringResource(R.string.historia_texto_corto)) { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
-                Pildora(stringResource(R.string.historia_sticker)) { eligiendoSticker = true }
-                Pildora(stringResource(R.string.historia_musica)) { eligiendo = true }
-                Pildora(stringResource(R.string.historia_encuesta)) { creandoEncuesta = true }
-                Pildora(stringResource(R.string.historia_pregunta_corta)) { preguntando = true }
-                Pildora(stringResource(R.string.historia_mencionar)) { mencionando = true }
-                if (foto != null) Pildora(stringResource(R.string.historia_sin_foto), Iconos.Cerrar) { foto = null; video?.archivo?.delete(); video = null }
-            }
-            if (foto == null && !dibujando) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                (0..3).forEach { i ->
-                    val (c, _) = fondoHistoria(i)
-                    Box(Modifier.size(30.dp).clip(CircleShape).background(c).border(if (fondo == i) 3.dp else 1.dp, if (fondo == i) f.acentoTexto else f.linea, CircleShape).clickable { fondo = i })
-                }
             }
             if (pregunta.isNotBlank() || menciones.isNotEmpty()) Text(listOfNotNull(pregunta.takeIf { it.isNotBlank() }?.let { "? $it" }, menciones.takeIf { it.isNotEmpty() }?.joinToString(" ") { "@$it" }).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            // Quién la ve: todos los que te siguen, solo tus amigos o tus mejores amigos.
-            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Pildora(stringResource(R.string.historia_para_todos), acento = !soloAmigos && !soloMejores) { soloAmigos = false; soloMejores = false }
-                Pildora(stringResource(R.string.historia_para_amigos), acento = soloAmigos) { soloAmigos = true; soloMejores = false }
-                Pildora(stringResource(R.string.historia_mejores_amigos), acento = soloMejores) { soloMejores = true; soloAmigos = false }
-                Pildora(stringResource(R.string.historia_lista_mejores)) { listaMejores = true }
-            }
             if (capas.isEmpty() && trazos.isEmpty()) Text(stringResource(R.string.historia_editor_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             if (subiendo) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
-            BotonRiso(stringResource(R.string.historia_compartir), {
+            // Abajo, a quién va (todos los que te siguen, tus amigos o tus mejores amigos) y la flecha para compartir.
+            val puedeCompartir = !subiendo && !preparandoVideo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null || encuesta != null)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DestinoHistoria(stringResource(R.string.historia_tu_historia), !soloAmigos && !soloMejores) { soloAmigos = false; soloMejores = false }
+                    DestinoHistoria(stringResource(R.string.historia_para_amigos), soloAmigos) { soloAmigos = true; soloMejores = false }
+                    DestinoHistoria(stringResource(R.string.historia_mejores_amigos), soloMejores, onLargo = { listaMejores = true }) { soloMejores = true; soloAmigos = false }
+                    Pildora(stringResource(R.string.historia_lista_mejores)) { listaMejores = true }
+                }
+                Box(Modifier.size(56.dp).clip(CircleShape).background(if (puedeCompartir) f.tinta1 else f.superficie)
+                    .then(if (puedeCompartir) Modifier.clickable {
                 subiendo = true; elegida = null; dibujando = false
                 alcance.launch {
                     // Dos cuadros sin la selección, y se guarda lo que se ve en el lienzo.
@@ -698,7 +721,10 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                     vm.red.subirHistoria(datos, jpeg, subir) { onCerrar() }
                     delay(if (subir != null) 60_000 else 15_000); subiendo = false
                 }
-            }, Modifier.fillMaxWidth(), habilitado = !subiendo && !preparandoVideo && (foto != null || capas.isNotEmpty() || trazos.isNotEmpty() || adjunto != null || adjunto2 != null || encuesta != null))
+} else Modifier), contentAlignment = Alignment.Center) {
+                    IconoRiso(IconosFogon.Siguiente, stringResource(R.string.historia_compartir), tamano = 24.dp, tinta = if (puedeCompartir) f.sobreTinta1 else f.textoSuave)
+                }
+            }
         }
     }
     escribiendo?.let { c -> EditarTextoHistoria(c, { escribiendo = null }) { nueva ->
@@ -717,6 +743,36 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
         adjunto2 = adjunto2?.let { a -> JsonObject(if (s > 0) a + ("segundo" to JsonPrimitive(s)) else a - "segundo") }
     }
     if (fotosObra) ElegirFotoDeObra(vm, { fotosObra = false }) { url -> fotosObra = false; video?.archivo?.delete(); video = null; foto = url; zoom = 1f; mover = androidx.compose.ui.geometry.Offset.Zero }
+}
+
+/** Una herramienta del editor: su nombre y un botón redondo (con un dibujo, unas letras o un color). */
+@Composable
+private fun HerramientaHistoria(nombre: String, icono: io.github.fogonapps.identidad.Dibujo? = null, letra: String? = null, circulo: Color? = null, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    Row(Modifier.clip(FormaPildora).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1,
+            modifier = Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.55f)).padding(horizontal = 8.dp, vertical = 3.dp))
+        Box(Modifier.size(46.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.8f)).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
+            when {
+                circulo != null -> Box(Modifier.size(24.dp).clip(CircleShape).background(circulo).border(2.dp, f.texto, CircleShape))
+                icono != null -> IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
+                else -> Text(letra.orEmpty(), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            }
+        }
+    }
+}
+
+/** A quién va la historia, como píldora con su punto (la elegida, llena). */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun DestinoHistoria(texto: String, elegido: Boolean, onLargo: (() -> Unit)? = null, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    Row(Modifier.clip(FormaPildora).background(if (elegido) f.tinta1 else f.superficie).border(f.borde, if (elegido) f.tinta1 else f.linea, FormaPildora)
+        .combinedClickable(onLongClick = onLargo, onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.size(10.dp).clip(CircleShape).background(if (elegido) f.sobreTinta1 else f.textoSuave))
+        Text(texto, style = MaterialTheme.typography.labelLarge, color = if (elegido) f.sobreTinta1 else f.texto, maxLines = 1)
+    }
 }
 
 /** Elegir de fondo una foto de una película, serie, libro o persona (como al cambiar una portada). */
@@ -1128,7 +1184,7 @@ fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
 
 /** La canción del perfil (de cualquier app): portada, título, artista, su avance de 30 s y Apple Music. */
 @Composable
-fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null) {
+fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).tarjetaFogon().then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1139,7 +1195,7 @@ fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null) {
             Text(datos.t("creador"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
             EnlaceAppleMusic(datos.t("enlace"))
         }
-        BotonAvance(datos.t("audio"))
+        BotonAvance(datos.t("audio"), sonar)
     }
 }
 
@@ -1154,7 +1210,7 @@ fun CancionPerfilPropia(vm: InterfazSocial) {
     var buscando by remember { mutableStateOf(false) }
     // Con aire alrededor: va debajo de los botones del perfil, a todo lo ancho.
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        if (actual != null) TarjetaCancionPerfil(actual) { buscando = true }
+        if (actual != null) TarjetaCancionPerfil(actual, onCambiar = { buscando = true })
         else BotonSecundario(stringResource(R.string.cancion_perfil_poner), { buscando = true }, Modifier.fillMaxWidth())
     }
     if (buscando) ModalBottomSheet({ buscando = false }, containerColor = f.fondo, contentColor = f.texto) {

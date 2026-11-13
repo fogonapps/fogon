@@ -47,6 +47,8 @@ data class Persona(
     val usuario: String, val nombre: String, val foto: Boolean, val privada: Boolean = false,
     /** "fogon" (cuenta oficial), "verificada" o "" (ver [Social.revisarInsignias]). */
     val insignia: String = "",
+    /** El tema de su perfil (de la tienda); "" = el de siempre. */
+    val tema: String = "",
 )
 
 @Serializable
@@ -166,6 +168,14 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
 @Serializable data class Cumple(val fecha: String)
+/** Los temas de perfil de la cuenta: los reclamados y el puesto. */
+@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String)
+@Serializable data class TemaElegido(val tema: String)
+
+/** La tienda de temas de perfil: por ahora todos se reclaman gratis (los nombres los pone la app). */
+object TemasPerfil {
+    val GRATIS = listOf("neon", "papel", "atardecer", "arcade", "constelacion", "riso", "selva", "medianoche")
+}
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 @Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
@@ -781,7 +791,7 @@ class Social(
         b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", usuario.lowercase()) { it.getLong(1) }.firstOrNull() } ?: throw Problema(404, "no_existe")
 
     private fun persona(id: Long): Persona = b.usar {
-        leer("SELECT usuario, nombre, foto, privada, insignia FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5)) }.first()
+        leer("SELECT usuario, nombre, foto, privada, insignia, tema FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5), it.getString(6)) }.first()
     }
 
     private fun esPrivada(id: Long) = b.usar { leer("SELECT privada FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false
@@ -1583,6 +1593,22 @@ class Social(
     fun amigos(yo: Long): List<Persona> = b.usar {
         leer("""SELECT s.a FROM seguir s WHERE s.de = ? AND s.aceptada = 1 AND EXISTS(SELECT 1 FROM seguir t WHERE t.de = s.a AND t.a = ? AND t.aceptada = 1) LIMIT 500""", yo, yo) { it.getLong(1) }
     }.filter { visible(it) && !bloqueado(yo, it) && !bloqueado(it, yo) }.map(::persona).sortedBy { it.nombre.ifBlank { it.usuario }.lowercase() }
+
+    fun temas(yo: Long) = TemasCuenta(
+        b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } },
+        b.usar { leer("SELECT tema FROM cuentas WHERE id = ?", yo) { it.getString(1) }.first() })
+
+    /** Reclamar un tema de la tienda (gratis). */
+    fun reclamarTema(yo: Long, tema: String) {
+        if (tema !in TemasPerfil.GRATIS) throw Problema(404, "no_existe")
+        b.usar { cambiar("INSERT OR IGNORE INTO temas(cuenta, tema, cuando) VALUES(?,?,?)", yo, tema, ahora()) }
+    }
+
+    /** Ponerse un tema reclamado ("" vuelve al de siempre). */
+    fun ponerTema(yo: Long, tema: String) {
+        if (tema.isNotEmpty() && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
+        b.usar { cambiar("UPDATE cuentas SET tema = ? WHERE id = ?", tema, yo) }
+    }
 
     /** Pone (o quita, con "") el cumpleaños: solo día y mes ("MM-DD"). */
     fun ponerCumple(yo: Long, c: Cumple) {

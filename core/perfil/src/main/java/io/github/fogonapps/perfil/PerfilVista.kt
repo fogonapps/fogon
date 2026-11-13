@@ -3,6 +3,7 @@ package io.github.fogonapps.perfil
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,8 @@ data class PerfilVista(
     val contadores: List<ContadorPerfil> = emptyList(), val secciones: List<SeccionPerfil> = emptyList(),
     /** La insignia que da el servidor ("fogon", "verificada" o ""): ver [InsigniaCuenta]. */
     val insignia: String = "",
+    /** El tema del perfil (ver [TemasPerfil]); "" = el de siempre. */
+    val tema: String = "",
 )
 
 /** Conserva el encuadre y el avatar de cada fuente mediante huecos, sin depender de imágenes ni datos culturales. */
@@ -36,11 +39,13 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
     bajoNombre: @Composable ColumnScope.() -> Unit = {},
 ) {
     val f = FogonTema.actual
-    Box(modifier.fillMaxWidth()) {
+    // Con un tema, su trama va detrás de toda la cabecera (como el fondo de un perfil de Steam).
+    Box(modifier.fillMaxWidth().fondoTemaPerfil(vista.tema)) {
         Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(110.dp).clip(forma(24.dp))
             .tarjetaFogon(forma(24.dp), sombra = false).haloPuntos(f.tinta2.copy(alpha = 0.35f)), content = portada)
         Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            foto()
+            val aro = TemasPerfil.aro(vista.tema)
+            Box(if (aro != null) Modifier.border(3.dp, aro, androidx.compose.foundation.shape.CircleShape).padding(3.dp) else Modifier) { foto() }
             Column(Modifier.weight(1f).padding(top = 54.dp)) {
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(vista.nombre, Modifier.weight(1f, fill = false), fontFamily = f.titulos, fontSize = 26.sp,

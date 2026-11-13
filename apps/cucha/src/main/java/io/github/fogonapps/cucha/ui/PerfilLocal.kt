@@ -73,7 +73,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
     val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto, portada,
         bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones, insignia = miInsignia)
-    PerfilComun(vista, parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
+    PerfilComun(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             Cabecera(stringResource(R.string.tu_perfil), vm::cerrar, derecha = {
                 BotonCirculoPerfil(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
@@ -92,6 +92,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
         }, despuesAcciones = {
+            io.github.fogonapps.social.ui.BotonTiendaTemas(interfaz, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) }
             CambiarDeCuenta(vm, acciones?.exportar ?: {}) })
 }
@@ -124,7 +125,7 @@ fun EditarPerfil(vm: CuchaViewModel, e: Estado) {
     var error by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
-    val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val manejar_selector7: (android.net.Uri?) -> Unit = { uri ->
         if (uri != null) {
             val esPortada = eligiendoPortada
             cargando = true
@@ -137,6 +138,9 @@ fun EditarPerfil(vm: CuchaViewModel, e: Estado) {
             }
         }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_selector7 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector7(l.firstOrNull()) }
+    val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector7(listOf(r)) else manejar_selector7(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     EditorPerfilLocal(nombre, bio, foto, portada,
         onNombre = { nombre = it }, onBio = { bio = it },
@@ -168,7 +172,7 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
     var error by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
-    val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val manejar_selector8: (android.net.Uri?) -> Unit = { uri ->
         if (uri != null) {
             val esPortada = eligiendoPortada
             cargando = true; error = false
@@ -180,6 +184,9 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
             }
         }
     }
+    // Antes de usarla(s), el paso para girarlas.
+    val girar_selector8 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector8(l.firstOrNull()) }
+    val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector8(listOf(r)) else manejar_selector8(null) }
     EditorPerfilLocal(nombre, bio, foto, portada,
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },

@@ -78,8 +78,37 @@ object Logica {
         return m.values.toList()
     }
 
-    /** Ordena y quita lo repetido (por si un respaldo viejo trae duplicados). */
-    fun normalizar(e: Estado): Estado = Resenas.migrar(e.copy(
+    /**
+     * Cada obra de afuera va una sola vez en el cajón. Si quedaron dos con la misma fuente (agregada en dos teléfonos,
+     * o antes de recuperar la copia), se juntan en la más completa: suma los registros del diario y el me gusta, y
+     * las listas y reseñas pasan a ella. La otra queda borrada (así el otro aparato también la quita). La elección no
+     * depende del teléfono, para que los dos lleguen a lo mismo.
+     */
+    fun sinRepetidas(e: Estado): Estado {
+        val grupos = e.obras.filter { !it.borrada && it.fuente.isNotEmpty() }.groupBy { it.fuente }.values.filter { it.size > 1 }
+        if (grupos.isEmpty()) return e
+        val pasa = HashMap<String, String>()
+        val nuevas = HashMap<String, Obra>()
+        for (g in grupos) {
+            val queda = g.sortedWith(compareByDescending<Obra> { it.registros.size }.thenByDescending { it.nota }
+                .thenBy { if (it.agregada > 0) it.agregada else Long.MAX_VALUE }.thenBy { it.id }).first()
+            val otras = g.filter { it.id != queda.id }
+            val marca = g.maxOf { it.cambio } + 1
+            nuevas[queda.id] = queda.copy(
+                registros = (queda.registros + otras.flatMap { it.registros }).distinctBy { it.id },
+                meGusta = g.any { it.meGusta }, nota = if (queda.nota > 0) queda.nota else g.maxOf { it.nota }, cambio = marca)
+            otras.forEach { o -> pasa[o.id] = queda.id; nuevas[o.id] = o.copy(borrada = true, cambio = marca) }
+        }
+        return e.copy(
+            obras = e.obras.map { nuevas[it.id] ?: it },
+            listas = e.listas.map { l -> if (l.obras.none { it in pasa } && l.portada !in pasa) l else l.copy(obras = l.obras.map { pasa[it] ?: it }.distinct(), portada = pasa[l.portada] ?: l.portada, cambio = maxOf(l.cambio, grupos.maxOf { g -> g.maxOf { it.cambio } } + 1)) },
+            resenas = e.resenas.map { r -> pasa[r.obra]?.let { r.copy(obra = it, cambio = r.cambio + 1) } ?: r },
+            ajustes = if (e.ajustes.favoritas.none { it in pasa }) e.ajustes else e.ajustes.copy(favoritas = e.ajustes.favoritas.map { pasa[it] ?: it }.distinct()),
+        )
+    }
+
+    /** Ordena y quita lo repetido (por si un respaldo viejo trae duplicados, o la misma obra entró dos veces). */
+    fun normalizar(e: Estado): Estado = Resenas.migrar(sinRepetidas(e).let { e -> e.copy(
         obras = e.obras.distinctBy { it.id }.map(Imagenes::migrar),
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
@@ -90,7 +119,7 @@ object Logica {
         resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),
-    ))
+    ) })
 
     /* ----- El cajón ----- */
 

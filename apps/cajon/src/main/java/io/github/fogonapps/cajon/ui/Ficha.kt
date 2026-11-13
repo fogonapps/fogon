@@ -93,16 +93,23 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
             var visor by remember { mutableStateOf(false) }
             Portada(o.portada, o.tipo, o.titulo, Modifier.width(112.dp).aparecer(0).clickable { visor = true }, lugar = Imagenes.Lugar.FICHA)
             if (visor) androidx.compose.ui.window.Dialog(onDismissRequest = { visor = false }) {
-                Column(Modifier.background(f.fondo).verticalScroll(rememberScrollState()).padding(16.dp)) {
+                // La portada grande; debajo, de dónde salió y, plegado, reportarla.
+                Column(Modifier.clip(forma(24.dp)).background(f.fondo).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(o.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        BotonIcono(Iconos.Cerrar, stringResource(R.string.volver)) { visor = false }
+                    }
                     Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), lugar = Imagenes.Lugar.VISOR)
                     SobreImagen(vm, o.id, o.portada, o.fuente)
                     if (Imagenes.autorizada(o.portada)) {
-                        Seccion(stringResource(R.string.imagen_reportar))
-                        listOf("no_corresponde" to R.string.imagen_no_corresponde, "ofensiva" to R.string.imagen_ofensiva, "derechos" to R.string.imagen_derechos).forEach { (motivo, texto) ->
-                            BotonSecundario(stringResource(texto), { vm.red.reportar("imagen", Imagenes.clave(o.portada), motivo); visor = false })
+                        var reportar by remember { mutableStateOf(false) }
+                        Pildora(stringResource(R.string.imagen_reportar), Iconos.Bandera, acento = reportar) { reportar = !reportar }
+                        if (reportar) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("no_corresponde" to R.string.imagen_no_corresponde, "ofensiva" to R.string.imagen_ofensiva, "derechos" to R.string.imagen_derechos).forEach { (motivo, texto) ->
+                                Pildora(stringResource(texto)) { vm.red.reportar("imagen", Imagenes.clave(o.portada), motivo); visor = false }
+                            }
                         }
                     }
-                    BotonSecundario(stringResource(R.string.volver), { visor = false })
                 }
             }
             Column(Modifier.weight(1f).padding(top = if (conFondo) 74.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -264,12 +271,20 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     Encabezado(o, vm, conGeneros = false)
     if (o.fuente.startsWith("ol:")) {
         var elegir by rememberSaveable(id) { mutableStateOf(false) }
-        BotonSecundario(stringResource(R.string.imagen_edicion), { elegir = !elegir }, Modifier.padding(horizontal = 16.dp))
+        Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { Pildora(stringResource(R.string.imagen_edicion), Iconos.Libro, acento = elegir) { elegir = !elegir } }
         val ediciones by vm.ediciones.collectAsStateWithLifecycle()
         val comunidades by vm.portadasComunidad.collectAsStateWithLifecycle()
-        if (elegir) ediciones[id].orEmpty().filter { it.portada.isNotBlank() && !Imagenes.bloqueada(it.portada, comunidades[id]?.bloqueadas.orEmpty()) }.forEach { ed ->
-            BotonSecundario(Imagenes.descripcion(ed, vm.idioma()) + if (o.edicion == ed.id) " · " + stringResource(R.string.imagen_elegida) else "",
-                { vm.elegirEdicion(id, ed); elegir = false }, Modifier.padding(horizontal = 16.dp))
+        // Las ediciones como portadas en fila (se desliza): debajo, editorial, año e idioma.
+        if (elegir) androidx.compose.foundation.lazy.LazyRow(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val lista = ediciones[id].orEmpty().filter { it.portada.isNotBlank() && !Imagenes.bloqueada(it.portada, comunidades[id]?.bloqueadas.orEmpty()) }
+            items(lista.size) { i ->
+                val ed = lista[i]
+                val elegida = o.edicion == ed.id
+                Column(Modifier.width(104.dp).clip(forma(12.dp)).clickable { vm.elegirEdicion(id, ed); elegir = false }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Portada(ed.portada, o.tipo, o.titulo, Modifier.fillMaxWidth().then(if (elegida) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier), conTitulo = false)
+                    Text(Imagenes.descripcion(ed, vm.idioma(), conId = false), style = MaterialTheme.typography.labelSmall, color = if (elegida) f.acentoTexto else f.textoSuave, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                }
+            }
         }
     }
 
@@ -453,6 +468,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
         lista.isEmpty() -> Pista(stringResource(R.string.sin_otras_portadas))
         else -> {
             Seccion(stringResource(R.string.elegir_otra))
+            if (o != null && !fondo) Pista(stringResource(R.string.imagen_votos_pista), Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp))
             // Fondos en dos columnas (son anchos); portadas y fotos en tres.
             val columnas = if (fondo) 2 else 3
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -462,26 +478,41 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
                             val opcion = lista.indexOf(url) + 1
                             val nombreOpcion = stringResource(R.string.imagen_opcion, opcion)
                             val elegirLocal = stringResource(R.string.imagen_para_mi, opcion)
-                            Column(Modifier.weight(1f)) {
-                                Box(Modifier.fillMaxWidth().clip(forma(12.dp)).semantics { contentDescription = elegirLocal; selected = url == actual }.clickable { vm.elegirImagen(id, que, url) }
-                                    .then(if (url == actual) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
-                                    when {
-                                        o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
-                                        else -> coil3.compose.AsyncImage(url, null, contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxWidth().semantics { contentDescription = nombreOpcion }.aspectRatio(if (fondo) 16f / 9f else 1f).background(f.superficie))
-                                    }
+                            // Cada opción: la imagen (tocarla la usa para ti), una marca si es la que usas, los votos
+                            // para la portada de todos (con cuenta, tocarlos vota) y la «i» con de dónde salió.
+                            var info by remember(url) { mutableStateOf(false) }
+                            Box(Modifier.weight(1f).clip(forma(12.dp)).semantics { contentDescription = elegirLocal; selected = url == actual }.clickable { vm.elegirImagen(id, que, url) }
+                                .then(if (url == actual) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
+                                when {
+                                    o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                                    else -> coil3.compose.AsyncImage(url, null, contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxWidth().semantics { contentDescription = nombreOpcion }.aspectRatio(if (fondo) 16f / 9f else 1f).background(f.superficie))
                                 }
-                                SobreImagen(vm, id, url, fuente)
+                                if (url == actual) Box(Modifier.align(Alignment.TopStart).padding(6.dp).size(24.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1), contentAlignment = Alignment.Center) {
+                                    IconoRiso(Iconos.Chulo, stringResource(R.string.imagen_elegida), tamano = 14.dp, tinta = f.sobreTinta1)
+                                }
+                                Box(Modifier.align(Alignment.TopEnd).padding(4.dp).size(28.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.fondo.copy(alpha = 0.85f))
+                                    .clickable { info = true }, contentAlignment = Alignment.Center) {
+                                    Text("i", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = "$nombreOpcion · " })
+                                }
                                 if (o != null && !fondo && Imagenes.autorizada(url)) {
                                     val votada = comunidad?.miVoto?.let { Imagenes.clave(it) == Imagenes.clave(url) } == true
                                     val votos = comunidad?.votos.orEmpty().filterKeys { Imagenes.clave(it) == Imagenes.clave(url) }.values.sum()
-                                    Text(stringResource(R.string.imagen_votos, votos), color = f.texto)
                                     val accionVoto = stringResource(if (votada) R.string.imagen_quitar_voto else R.string.imagen_votar)
                                     val estadoVoto = stringResource(if (votada) R.string.imagen_votada else R.string.imagen_sin_voto)
-                                    if (cuenta != null) BotonSecundario(accionVoto,
-                                        { vm.votarImagen(id, if (votada) null else url) }, Modifier.semantics {
-                                            contentDescription = "$nombreOpcion · $accionVoto"; stateDescription = estadoVoto; selected = votada
-                                        })
+                                    Row(Modifier.align(Alignment.BottomEnd).padding(6.dp).clip(io.github.fogonapps.identidad.FormaPildora).background(if (votada) f.tinta1 else f.fondo.copy(alpha = 0.85f))
+                                        .then(if (cuenta != null) Modifier.clickable { vm.votarImagen(id, if (votada) null else url) } else Modifier)
+                                        .semantics(mergeDescendants = true) { contentDescription = "$nombreOpcion · ${if (cuenta != null) accionVoto else ""}"; stateDescription = estadoVoto; selected = votada }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        IconoRiso(Iconos.Corazon, null, tamano = 14.dp, tinta = if (votada) f.sobreTinta1 else f.texto, relleno = if (votada) f.sobreTinta1 else null)
+                                        Text("$votos", style = MaterialTheme.typography.labelMedium, color = if (votada) f.sobreTinta1 else f.texto)
+                                    }
+                                }
+                            }
+                            if (info) androidx.compose.ui.window.Dialog({ info = false }) {
+                                Column(Modifier.clip(forma(24.dp)).background(f.fondo).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    SobreImagen(vm, id, url, fuente, abiertaDeEntrada = true)
+                                    BotonSecundario(stringResource(R.string.volver), { info = false }, Modifier.fillMaxWidth())
                                 }
                             }
                         }
@@ -702,16 +733,16 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
 }
 
 @Composable
-private fun SobreImagen(vm: CajonViewModel, id: String, url: String, fuenteObra: String) {
+private fun SobreImagen(vm: CajonViewModel, id: String, url: String, fuenteObra: String, abiertaDeEntrada: Boolean = false) {
     val f = FogonTema.actual
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
-    var abierta by remember(url) { mutableStateOf(false) }
+    var abierta by remember(url) { mutableStateOf(abiertaDeEntrada) }
     val ediciones by vm.ediciones.collectAsStateWithLifecycle()
     var i by remember(url, ediciones[id]) { mutableStateOf(vm.procedencia(id, url)) }
     LaunchedEffect(url, abierta) {
         if (abierta && i.fuente == "wikimedia") runCatching { io.github.fogonapps.cajon.datos.Wikimedia.procedencia(url) }.getOrNull()?.let { i = it }
     }
-    BotonSecundario(stringResource(R.string.imagen_sobre), { abierta = !abierta })
+    if (!abiertaDeEntrada) Pildora(stringResource(R.string.imagen_sobre), acento = abierta) { abierta = !abierta }
     if (abierta) {
         val texto = when (i.fuente) {
             "tmdb" -> stringResource(R.string.imagen_tmdb)

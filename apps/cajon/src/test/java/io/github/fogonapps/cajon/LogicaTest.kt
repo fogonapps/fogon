@@ -168,7 +168,7 @@ class LogicaTest {
             libro("E", "El amor en los tiempos del cólera", "Gabriel García Márquez", 130, 5),
         ), "es")
         assertEquals(listOf("ol:A", "ol:E"), r.map { it.fuente })
-        assertEquals("https://covers.openlibrary.org/b/id/1-M.jpg", r[0].portada)   // en la lista, la portada de la obra
+        assertEquals("https://covers.openlibrary.org/b/id/1-L.jpg", r[0].portada)   // en la lista, la portada de la obra
     }
 
     @Test fun laTraduccionBuscadaSaleConSuTitulo() {
@@ -427,5 +427,20 @@ class LogicaTest {
         val con = Estado(perfil = io.github.fogonapps.cajon.datos.Perfil(encuadrePortada = io.github.fogonapps.cajon.datos.Encuadre(2f, 0.5f, -0.25f)))
         val ida = JsonCajon.decodeFromString(Estado.serializer(), JsonCajon.encodeToString(Estado.serializer(), con))
         assertEquals(io.github.fogonapps.cajon.datos.Encuadre(2f, 0.5f, -0.25f), ida.perfil.encuadrePortada)
+    }
+
+    @Test fun unaPeliculaRepetidaSeJuntaEnUna() {
+        val a = Obra("o1", "pelicula", "Dune", fuente = "tmdb:movie:438631", agregada = 10, cambio = 10, registros = listOf(Registro("g1", "2026-01-01")))
+        val b = Obra("o2", "pelicula", "Dune", fuente = "tmdb:movie:438631", agregada = 20, cambio = 30, meGusta = true)
+        val lista = io.github.fogonapps.cajon.datos.Lista("l1", "Ciencia ficción", obras = listOf("o2"), cambio = 5)
+        val local = Estado(obras = listOf(a), listas = listOf(lista))
+        val remoto = Estado(obras = listOf(b))
+        val e = Logica.normalizar(Logica.unir(local, remoto))
+        org.junit.Assert.assertEquals(listOf("o1"), e.vivas.map { it.id })
+        org.junit.Assert.assertTrue(e.vivas.single().meGusta)
+        org.junit.Assert.assertEquals(listOf("o1"), e.listas.single().obras)
+        org.junit.Assert.assertTrue(e.obras.single { it.id == "o2" }.borrada)
+        // Volver a normalizar no cambia nada (los dos teléfonos llegan a lo mismo).
+        org.junit.Assert.assertEquals(e, Logica.normalizar(e))
     }
 }

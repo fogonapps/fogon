@@ -1,0 +1,1 @@
+Profile: Steam-style themes (a store to claim them for free) and a profile song plays on its own (can be turned off); the song and highlights now sit below the buttons. Photos can be rotated when you pick them. Stories: a new editor menu.

@@ -498,7 +498,10 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
         var claveCuenta by rememberSaveable { mutableStateOf("") }
         if (acceso.paso == PasoAcceso.USUARIO) CampoClave(claveCuenta, { claveCuenta = it }, stringResource(R.string.social_red_clave))
         var fotoCuenta by rememberSaveable { mutableStateOf<String?>(null) }
-        val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { fotoCuenta = it?.toString() }
+        val manejar_elegirFoto11: (android.net.Uri?) -> Unit = { it -> fotoCuenta = it?.toString() }
+        // Antes de usarla(s), el paso para girarlas.
+        val girar_elegirFoto11 = io.github.fogonapps.social.ui.conGiro { l -> manejar_elegirFoto11(l.firstOrNull()) }
+        val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { r -> if (r != null) girar_elegirFoto11(listOf(r)) else manejar_elegirFoto11(null) }
         BotonSecundario(stringResource(if (fotoCuenta == null) R.string.social_red_foto_opcional else R.string.social_red_foto_elegida), { elegirFoto.launch("image/*") }, Modifier.fillMaxWidth())
         val listo = !acceso.ocupado && acepto && usuario.length >= 3 && (acceso.paso != PasoAcceso.USUARIO || claveCuenta.length >= 8)
         BotonRiso(stringResource(R.string.social_red_crear_cuenta), {

@@ -172,10 +172,13 @@ class MainActivity : ComponentActivity() {
                 }
                 // La foto para una portada: el selector de fotos del sistema (sin permisos; si no hay, el de archivos).
                 var alElegir by remember { mutableStateOf<((android.net.Uri) -> Unit)?>(null) }
-                val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                val manejar_imagen1: (android.net.Uri?) -> Unit = { uri ->
                     if (uri != null) alElegir?.invoke(uri)
                     alElegir = null
                 }
+                // Antes de usarla(s), el paso para girarlas.
+                val girar_imagen1 = io.github.fogonapps.social.ui.conGiro { l -> manejar_imagen1(l.firstOrNull()) }
+                val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { r -> if (r != null) girar_imagen1(listOf(r)) else manejar_imagen1(null) }
                 porImportar?.let { d ->
                     AlertDialog(
                         onDismissRequest = { porImportar = null },
