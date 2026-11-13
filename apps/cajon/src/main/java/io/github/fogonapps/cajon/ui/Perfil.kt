@@ -194,6 +194,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val frasesPendientes by vm.red.frasesPendientes.collectAsStateWithLifecycle()
     LaunchedEffect(cuenta?.permisos) { if (!cuenta?.permisos.isNullOrEmpty()) vm.red.cargarCasos() }
     val navegacion: @Composable () -> Unit = {
+        val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
         Cabecera(yo?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar, chico = true) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!cuenta?.permisos.isNullOrEmpty()) ConCuenta(casos.orEmpty().size + frasesPendientes.size) {
@@ -206,9 +207,11 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
 
     @Composable
     fun contenidoParte(idSeccion: Int) {
+        val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
         fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
         // Quién ve cada pestaña en la red (con cuenta): se elige aquí mismo.
-        val partesDe = mapOf(1 to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS), 2 to listOf(PartesPerfil.MUSICA),
+        val partesDe = mapOf(1 to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS, PartesPerfil.RETO, PartesPerfil.VIENDO,
+            PartesPerfil.POR_VER, PartesPerfil.INSIGNIAS), 2 to listOf(PartesPerfil.MUSICA),
         4 to listOf(PartesPerfil.GUARDADAS), 5 to listOf(PartesPerfil.CIFRAS))
         if (yo != null) partesDe[idSeccion]?.let { partes ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -224,6 +227,10 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                 else -> CuadriculaPublicaciones(vm, red.publicaciones)
             }
             1 -> {
+                // Arriba, tu reto del año (o la invitación a ponerte uno).
+                val metasReto = e.ajustes.retos.filterValues { it > 0 }.map { (t, meta) -> Triple(t, vm.L.cifras(e, anio).porTipo[t] ?: 0, meta) }
+                if (metasReto.isNotEmpty()) TarjetaReto(stringResource(R.string.retos_del_anio, anio), metasReto) { vm.abrir(Pantalla.Retos) }
+                else Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { Pildora(stringResource(R.string.reto_ponerme, anio), Iconos.Trofeo) { vm.abrir(Pantalla.Retos) } }
                 // Favoritos por tipo, las cuatro favoritas, la obra que te marcó y tu descubrimiento.
                 Destacados.FAVORITOS.chunked(3).forEach { fila ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -277,25 +284,14 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                         }
                     }
                 }
+                FilaInsignias(io.github.fogonapps.cajon.datos.Insignias.de(e, anio), propias = true)
             }
             2 -> {
                 // Los artistas con más discos en el cajón primero.
                 val artistas = e.musicosVivos.sortedByDescending { a -> e.vivas.count { it.artista == a.id } }
                 if (artistas.isEmpty()) Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.buscar_artista), Iconos.Mas) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.MUSICA)) } }
-                artistas.take(12).chunked(3).forEach { fila ->
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        fila.forEach { a ->
-                            Column(Modifier.weight(1f).clip(forma(14.dp)).clickable { vm.abrir(Pantalla.VerArtista(a.id)) }, horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                FotoArtista(a.foto, a.nombre, 84.dp, a.tipo)
-                                Text(a.nombre, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                            }
-                        }
-                        repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
-                    }
-                }
-                if (artistas.size > 12) Row(Modifier.padding(16.dp)) { Pildora(stringResource(R.string.ver_todo)) { vm.abrir(Pantalla.Artistas) } }
+                // La misma fila que en los perfiles de los demás: se desliza, y «Ver todos» los muestra todos.
+                if (artistas.isNotEmpty()) FilaArtistasPerfil(artistas.map { it.nombre to it.foto }) { i -> vm.abrir(Pantalla.VerArtista(artistas[i].id)) }
             }
             3 -> {
                 val listas = e.listasVivas
@@ -348,6 +344,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             Box {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfazSocial(vm)) { FotoPerfil(p.foto, 96.dp, p.encuadreFoto, borde = true) }
                 if (acciones != null) Box(Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 10.dp).size(48.dp).clip(CircleShape)
@@ -362,6 +359,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
 
         enlace = { u -> Pildora(Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
         antesBio = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             val enCurso = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }.maxByOrNull { maxOf(it.empezada ?: "", vm.L.ultimaVez(it) ?: "") }
             enCurso?.let { o ->
                 Row(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
@@ -374,6 +372,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         },
         acciones = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
             val u = yo
             if (u == null) io.github.fogonapps.perfil.BotonPerfilDestacado(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
@@ -383,6 +382,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
             CrearClaveAviso(vm)
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->

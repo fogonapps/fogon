@@ -157,6 +157,15 @@ class Base(ruta: String) {
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, opcion INTEGER NOT NULL, PRIMARY KEY(historia, cuenta)) WITHOUT ROWID""")
                 s.execute("""CREATE TABLE IF NOT EXISTS mejores_amigos(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     amigo INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(cuenta, amigo)) WITHOUT ROWID""")
+                // Listas en común: las arma alguien con sus amigos; todos agregan obras y votan (para elegir qué ver).
+                s.execute("""CREATE TABLE IF NOT EXISTS listas_comunes(id INTEGER PRIMARY KEY, creador INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                    nombre TEXT NOT NULL, creada INTEGER NOT NULL, cambio INTEGER NOT NULL)""")
+                s.execute("""CREATE TABLE IF NOT EXISTS lista_miembros(lista INTEGER NOT NULL REFERENCES listas_comunes(id) ON DELETE CASCADE,
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(lista, cuenta)) WITHOUT ROWID""")
+                s.execute("""CREATE TABLE IF NOT EXISTS lista_items(id INTEGER PRIMARY KEY, lista INTEGER NOT NULL REFERENCES listas_comunes(id) ON DELETE CASCADE,
+                    cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL, clave TEXT NOT NULL, datos TEXT NOT NULL, creado INTEGER NOT NULL, UNIQUE(lista, clave))""")
+                s.execute("""CREATE TABLE IF NOT EXISTS lista_votos(item INTEGER NOT NULL REFERENCES lista_items(id) ON DELETE CASCADE,
+                    cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(item, cuenta)) WITHOUT ROWID""")
                 s.execute("""CREATE TABLE IF NOT EXISTS historias_silenciadas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     silenciada INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(cuenta, silenciada)) WITHOUT ROWID""")
                 // Las frases del saludo de El Cajón que gustan (1) o no (-1): una por cuenta; se van con la cuenta.

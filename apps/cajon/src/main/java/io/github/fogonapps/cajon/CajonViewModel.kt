@@ -130,6 +130,9 @@ sealed interface Pantalla {
     data class AgregarALista(val obra: String) : Pantalla
     data object Diario : Pantalla
     data object Listas : Pantalla
+    /** Las listas en común (entre amigos, en Fogón Social) y una de ellas. */
+    data object ListasComunes : Pantalla
+    data class ListaComun(val id: Long) : Pantalla
     /** Las cifras y el perfil (las cuatro favoritas). */
     data object Cifras : Pantalla
     data object Artistas : Pantalla
@@ -956,6 +959,39 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.avisarFallo(aviso("fotos_artistas")).getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
             }
+        }
+    }
+
+    /**
+     * Abrir una obra que alguien muestra en su perfil (destacados, favoritas, la afinidad): su ficha si ya está en tu
+     * cajón; si no, su previa (con la fuente que llegó) o, si no llegó la fuente, se busca por el título.
+     */
+    fun abrirObraDePerfil(titulo: String, tipo: String, portada: String, fuente: String, anio: Int? = null, creador: String = "") {
+        val e = _estado.value ?: return
+        if (fuente.isNotBlank()) { abrirEncontrado(Encontrado(tipo, titulo, anio, creador, portada, fuente)); return }
+        e.vivas.firstOrNull { it.tipo == tipo && L.tituloLimpio(it.titulo) == L.tituloLimpio(titulo) }?.let { abrir(Pantalla.Ficha(it.id)); return }
+        viewModelScope.launch {
+            val r = runCatching {
+                when (tipo) {
+                    Tipos.LIBRO -> OpenLibrary.buscar(titulo, idioma(), creador)
+                    Tipos.ALBUM -> MusicBrainz.buscarAlbum(titulo, creador)
+                    else -> Tmdb(claveCine ?: throw ClaveMala()).buscar(titulo, tipo, idioma(), anio = anio)
+                }
+            }.getOrDefault(emptyList())
+                .firstOrNull { L.tituloLimpio(it.titulo) == L.tituloLimpio(titulo) && (anio == null || it.anio == null || kotlin.math.abs(it.anio - anio) <= 1) }
+            if (r != null) abrirEncontrado(r) else avisar(tx(R.string.aviso_sin_detalles))
+        }
+    }
+
+    /** Abrir un artista de un perfil: el tuyo si lo tienes; si no, su previa (con su fuente o buscándolo por el nombre). */
+    fun abrirArtistaDePerfil(nombre: String, foto: String, fuente: String) {
+        val e = _estado.value ?: return
+        (e.artistasVivos.firstOrNull { fuente.isNotBlank() && it.fuente == fuente } ?: e.artistasVivos.firstOrNull { L.tituloLimpio(it.nombre) == L.tituloLimpio(nombre) })
+            ?.let { abrir(Pantalla.VerArtista(it.id)); return }
+        if (fuente.startsWith("mb:artist:")) { abrir(Pantalla.PreviaArtista(ArtistaEncontrado(fuente.removePrefix("mb:artist:"), nombre, "", null, "", "", foto))); return }
+        viewModelScope.launch {
+            val a = runCatching { MusicBrainz.buscarArtistas(nombre) }.getOrDefault(emptyList()).firstOrNull { L.tituloLimpio(it.nombre) == L.tituloLimpio(nombre) }
+            if (a != null) abrir(Pantalla.PreviaArtista(if (a.foto.isBlank() && foto.isNotBlank()) a.copy(foto = foto) else a)) else avisar(tx(R.string.aviso_sin_detalles))
         }
     }
 

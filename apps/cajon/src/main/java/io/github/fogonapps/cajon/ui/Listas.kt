@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,6 +47,15 @@ fun Listas(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     Cabecera(stringResource(R.string.pestana_listas), vm::cerrar) {
         Pildora(stringResource(R.string.nueva), Iconos.Mas, acento = true) { vm.abrir(Pantalla.EditarLista(null)) }
+    }
+    // Con cuenta: las listas en común con amigos.
+    if (vm.red.usuario.collectAsState().value != null) FilaVidrio({ vm.abrir(Pantalla.ListasComunes) }) {
+        Ficha(f.tinta2, Iconos.Gente)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.listas_comunes), style = MaterialTheme.typography.bodyLarge, color = f.texto)
+            Text(stringResource(R.string.listas_comunes_corta), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+        IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
     val listas = e.listasVivas.sortedByDescending { it.cambio }
     if (listas.isEmpty()) Pista(stringResource(R.string.listas_vacio))
@@ -183,6 +193,7 @@ fun AgregarALista(vm: CajonViewModel, e: Estado, obra: String) {
     Column(Modifier.padding(16.dp)) {
         BotonSecundario(stringResource(R.string.nueva_lista), { vm.abrir(Pantalla.EditarLista(null)) }, Modifier.fillMaxWidth())
     }
+    if (o != null) ListasComunesParaAgregar(vm, o)
 }
 
 /** Todo el diario, por meses. */

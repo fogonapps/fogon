@@ -356,6 +356,17 @@ abstract class ControladorSocial(
     fun cobrarDiario() = lanzar { _temas.value = cliente().cobrarDiario() }
     fun ponerCumple(fecha: String) = lanzar { cliente().ponerCumple(fecha); _cumple.value = fecha }
     suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())
+
+    /* Listas en común (entre amigos). Devuelven null si falló (sin internet o sin permiso). */
+    suspend fun listasComunes(): List<ListaComunSocial>? = runCatching { cliente().listasComunes() }.getOrNull()
+    suspend fun crearListaComun(nombre: String, miembros: List<String>): ListaComunSocial? = runCatching { cliente().crearListaComun(nombre, miembros) }.getOrNull()
+    suspend fun listaComun(id: Long): DetalleListaComunSocial? = runCatching { cliente().listaComun(id) }.getOrNull()
+    suspend fun agregarAListaComun(id: Long, datos: kotlinx.serialization.json.JsonObject) = runCatching { cliente().agregarAListaComun(id, datos) }.isSuccess
+    suspend fun quitarDeListaComun(id: Long, item: Long) = runCatching { cliente().quitarDeListaComun(id, item) }.isSuccess
+    suspend fun votarListaComun(id: Long, item: Long, si: Boolean) = runCatching { cliente().votarListaComun(id, item, si) }.isSuccess
+    suspend fun sumarAListaComun(id: Long, usuario: String) = runCatching { cliente().sumarAListaComun(id, usuario) }.isSuccess
+    suspend fun salirDeListaComun(id: Long) = runCatching { cliente().salirDeListaComun(id) }.isSuccess
+    suspend fun amigosParaListas(): List<PersonaSocial> = runCatching { cliente().amigos() }.getOrDefault(emptyList())
     fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }
     fun silenciarHistorias(usuario: String, si: Boolean) = lanzar {
         cliente().silenciarHistorias(usuario, si)

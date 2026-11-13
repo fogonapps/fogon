@@ -1,0 +1,2 @@
+• Store backgrounds look cleaner on the profile.
+• Improvements to the Fogón network.

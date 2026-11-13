@@ -188,6 +188,12 @@ object TemasPerfil {
     const val DIARIO = 50
 }
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
+/** Una lista en común: quién la armó, quiénes están y cuántas obras tiene. */
+@Serializable data class ListaComun(val id: Long, val nombre: String, val creador: Persona, val miembros: List<Persona>, val obras: Int, val cambio: Long)
+@Serializable data class NuevaListaComun(val nombre: String, val miembros: List<String> = emptyList())
+/** Una obra de una lista en común: quién la agregó, sus datos (título, tipo, portada, fuente) y los votos. */
+@Serializable data class ObraListaComun(val id: Long, val quien: Persona?, val datos: JsonObject, val votos: Int, val yoVoto: Boolean, val cuando: Long)
+@Serializable data class DetalleListaComun(val lista: ListaComun, val obras: List<ObraListaComun>)
 @Serializable data class VistaHistoria(val persona: Persona, val cuando: Long, val meGusta: Boolean = false)
 @Serializable data class Nota(val persona: Persona, val texto: String, val datos: JsonObject, val cuando: Long)
 /** Las llaves públicas de una cuenta (keysets de Tink en JSON, en base64): para cifrar y para comprobar la firma. */
@@ -1676,6 +1682,117 @@ class Social(
         b.transaccion {
             cambiar("DELETE FROM mejores_amigos WHERE cuenta = ?", yo)
             elegidos.forEach { u -> cambiar("INSERT INTO mejores_amigos(cuenta, amigo) SELECT ?, id FROM cuentas WHERE usuario = ?", yo, u) }
+        }
+    }
+
+    /* ----- Listas en común ----- */
+
+    private fun esMiembro(yo: Long, lista: Long) = b.usar { leer("SELECT 1 FROM lista_miembros WHERE lista = ? AND cuenta = ?", lista, yo) { 1 }.isNotEmpty() }
+
+    private fun listaComun(id: Long): ListaComun = b.usar {
+        val (nombre, creador, cambio) = leer("SELECT nombre, creador, cambio FROM listas_comunes WHERE id = ?", id) { Triple(it.getString(1), it.getLong(2), it.getLong(3)) }.firstOrNull()
+            ?: throw Problema(404, "no_existe")
+        val miembros = leer("SELECT cuenta FROM lista_miembros WHERE lista = ? ORDER BY cuenta", id) { it.getLong(1) }
+        val obras = leer("SELECT COUNT(*) FROM lista_items WHERE lista = ?", id) { it.getInt(1) }.first()
+        ListaComun(id, nombre, persona(creador), miembros.map { persona(it) }, obras, cambio)
+    }
+
+    /** Las listas en común donde estás, las que cambiaron hace menos primero. */
+    fun listasComunes(yo: Long): List<ListaComun> =
+        b.usar { leer("SELECT l.id FROM listas_comunes l JOIN lista_miembros m ON m.lista = l.id WHERE m.cuenta = ? ORDER BY l.cambio DESC", yo) { it.getLong(1) } }.map { listaComun(it) }
+
+    /** Arma una lista con amigos (solo amigos: quienes se siguen mutuamente; hasta 20 personas y 30 listas por cuenta). */
+    fun crearListaComun(yo: Long, n: NuevaListaComun): ListaComun {
+        val nombre = n.nombre.trim().take(60).ifBlank { throw Problema(400, "sin_nombre") }
+        if (b.usar { leer("SELECT COUNT(*) FROM lista_miembros WHERE cuenta = ?", yo) { it.getInt(1) }.first() } >= 30) throw Problema(429, "muchas_listas")
+        val amigos = amigos(yo).map { it.usuario }.toSet()
+        val miembros = n.miembros.map { it.lowercase() }.filter { it in amigos }.distinct().take(19)
+        val id = b.transaccion {
+            cambiar("INSERT INTO listas_comunes(creador, nombre, creada, cambio) VALUES(?,?,?,?)", yo, nombre, ahora(), ahora())
+            val id = leer("SELECT last_insert_rowid()") { it.getLong(1) }.first()
+            cambiar("INSERT INTO lista_miembros VALUES(?,?)", id, yo)
+            miembros.forEach { u -> cambiar("INSERT OR IGNORE INTO lista_miembros(lista, cuenta) SELECT ?, id FROM cuentas WHERE usuario = ?", id, u) }
+            id
+        }
+        return listaComun(id)
+    }
+
+    fun detalleListaComun(yo: Long, id: Long): DetalleListaComun {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        val obras = b.usar {
+            leer("""SELECT i.id, i.cuenta, i.datos, i.creado, (SELECT COUNT(*) FROM lista_votos v WHERE v.item = i.id),
+                    EXISTS(SELECT 1 FROM lista_votos v WHERE v.item = i.id AND v.cuenta = ?) FROM lista_items i WHERE i.lista = ? ORDER BY i.creado""", yo, id) {
+                listOf(it.getLong(1), if (it.getObject(2) == null) null else it.getLong(2), it.getString(3), it.getLong(4), it.getInt(5), it.getInt(6) == 1)
+            }
+        }.map { r -> ObraListaComun(r[0] as Long, (r[1] as Long?)?.let { persona(it) }, JsonSocial.parseToJsonElement(r[2] as String) as JsonObject, r[4] as Int, r[5] as Boolean, r[3] as Long) }
+        // Primero las más votadas: así se ve qué quieren todos.
+        return DetalleListaComun(listaComun(id), obras.sortedWith(compareByDescending<ObraListaComun> { it.votos }.thenBy { it.cuando }))
+    }
+
+    /** Solo lo que hace falta para mostrar y abrir una obra (nada de texto libre largo). */
+    private fun datosObraLista(d: JsonObject): JsonObject {
+        fun t(k: String, max: Int) = (d[k] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { it.isString }?.content?.take(max).orEmpty()
+        val titulo = t("titulo", 200).ifBlank { throw Problema(400, "sin_titulo") }
+        return kotlinx.serialization.json.buildJsonObject {
+            put("titulo", kotlinx.serialization.json.JsonPrimitive(titulo))
+            put("tipoObra", kotlinx.serialization.json.JsonPrimitive(t("tipoObra", 20).ifBlank { "pelicula" }))
+            t("portada", 500).takeIf { it.startsWith("https://") }?.let { put("portada", kotlinx.serialization.json.JsonPrimitive(it)) }
+            t("fuente", 120).takeIf { it.isNotBlank() }?.let { put("fuente", kotlinx.serialization.json.JsonPrimitive(it)) }
+            t("creador", 120).takeIf { it.isNotBlank() }?.let { put("creador", kotlinx.serialization.json.JsonPrimitive(it)) }
+            (d["anio"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull()?.let { put("anio", kotlinx.serialization.json.JsonPrimitive(it)) }
+        }
+    }
+
+    /** Agrega una obra (una sola vez por lista; hasta 300). */
+    fun agregarAListaComun(yo: Long, id: Long, datos: JsonObject) {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        val d = datosObraLista(datos)
+        val clave = (d["fuente"] as? kotlinx.serialization.json.JsonPrimitive)?.content
+            ?: ("${(d["tipoObra"] as kotlinx.serialization.json.JsonPrimitive).content}|${(d["titulo"] as kotlinx.serialization.json.JsonPrimitive).content.lowercase().trim()}")
+        b.transaccion {
+            if (leer("SELECT COUNT(*) FROM lista_items WHERE lista = ?", id) { it.getInt(1) }.first() >= 300) throw Problema(413, "lista_llena")
+            cambiar("INSERT OR IGNORE INTO lista_items(lista, cuenta, clave, datos, creado) VALUES(?,?,?,?,?)", id, yo, clave, d.toString(), ahora())
+            cambiar("UPDATE listas_comunes SET cambio = ? WHERE id = ?", ahora(), id)
+        }
+    }
+
+    /** Quitar una obra: quien la agregó o quien armó la lista. */
+    fun quitarDeListaComun(yo: Long, id: Long, item: Long) {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        b.transaccion {
+            val (quien, creador) = leer("SELECT i.cuenta, l.creador FROM lista_items i JOIN listas_comunes l ON l.id = i.lista WHERE i.id = ? AND i.lista = ?", item, id) {
+                (if (it.getObject(1) == null) null else it.getLong(1)) to it.getLong(2) }.firstOrNull() ?: throw Problema(404, "no_existe")
+            if (quien != yo && creador != yo) throw Problema(403, "no_permitido")
+            cambiar("DELETE FROM lista_items WHERE id = ?", item)
+            cambiar("UPDATE listas_comunes SET cambio = ? WHERE id = ?", ahora(), id)
+        }
+    }
+
+    fun votarListaComun(yo: Long, id: Long, item: Long, si: Boolean) {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        b.usar {
+            if (leer("SELECT 1 FROM lista_items WHERE id = ? AND lista = ?", item, id) { 1 }.isEmpty()) throw Problema(404, "no_existe")
+            if (si) cambiar("INSERT OR IGNORE INTO lista_votos VALUES(?,?)", item, yo) else cambiar("DELETE FROM lista_votos WHERE item = ? AND cuenta = ?", item, yo)
+        }
+    }
+
+    /** Sumar a un amigo (cualquiera de la lista puede; solo amigos de quien suma). */
+    fun sumarAListaComun(yo: Long, id: Long, usuario: String) {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        if (amigos(yo).none { it.usuario == usuario.lowercase() }) throw Problema(403, "solo_amigos")
+        b.transaccion {
+            if (leer("SELECT COUNT(*) FROM lista_miembros WHERE lista = ?", id) { it.getInt(1) }.first() >= 20) throw Problema(413, "lista_llena")
+            cambiar("INSERT OR IGNORE INTO lista_miembros VALUES(?,?)", id, idDe(usuario))
+        }
+    }
+
+    /** Salir de una lista; si quien sale la armó (o no queda nadie), la lista se borra para todos. */
+    fun salirDeListaComun(yo: Long, id: Long) {
+        if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
+        b.transaccion {
+            val creador = leer("SELECT creador FROM listas_comunes WHERE id = ?", id) { it.getLong(1) }.first()
+            cambiar("DELETE FROM lista_miembros WHERE lista = ? AND cuenta = ?", id, yo)
+            if (creador == yo || leer("SELECT COUNT(*) FROM lista_miembros WHERE lista = ?", id) { it.getInt(1) }.first() == 0) cambiar("DELETE FROM listas_comunes WHERE id = ?", id)
         }
     }
 

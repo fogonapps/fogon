@@ -195,6 +195,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.AgregarALista -> AgregarALista(vm, estado, p.obra)
                             Pantalla.Diario -> Diario(vm, estado)
                             Pantalla.Listas -> Listas(vm, estado)
+                            Pantalla.ListasComunes -> ListasComunes(vm)
+                            is Pantalla.ListaComun -> ListaComun(vm, estado, p.id)
                             Pantalla.Cifras -> Tu(vm, estado)
                             is Pantalla.CifrasDe -> Tu(vm, estado, p.seccion)
                             Pantalla.Artistas -> Artistas(vm, estado)

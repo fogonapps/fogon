@@ -80,6 +80,8 @@ fun FondoTemaPerfil(tema: String, modifier: Modifier = Modifier) {
     Canvas(modifier) { drawRect(e.base); escena(tema, e, t) }
 }
 
+// Sin lunas, soles ni planetas sueltos: un círculo arriba se confunde con un botón. La escena es el cielo, el paisaje y
+// lo que se mueve (nieve, chispas, estrellas).
 private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
     val w = size.width; val h = size.height
     // La escena se dibuja en la parte de arriba (como un fondo de Steam) y abajo sigue el color de base.
@@ -113,7 +115,6 @@ private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
     }
     when (tema) {
         "nieve" -> {
-            drawCircle(Color(0x33CFE6FF), w * 0.06f, Offset(w * 0.72f, w * 0.075f))
             sierra(alto * 0.45f, alto * 0.18f, 5, Color(0xFF203448), 3)
             pinos(alto * 0.62f, 18, alto * 0.22f, Color(0xFF16263A), 5)
             pinos(alto * 0.78f, 14, alto * 0.26f, Color(0xFF0E1A27), 8)
@@ -121,14 +122,10 @@ private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
         }
         "carmesi" -> {
             for (i in 0 until 6) drawRect(Color(0xFF8B0A0E).copy(alpha = 0.18f + i * 0.08f), Offset(0f, alto * i / 6f), Size(w, alto / 6f))
-            // La luna entera dentro de la barra de arriba, antes de los botones (nunca detrás del nombre ni de las cifras).
-            drawCircle(Color(0xFF050101), w * 0.06f, Offset(w * 0.72f, w * 0.075f))
-            drawCircle(Color(0xFFFF3B30), w * 0.06f, Offset(w * 0.72f, w * 0.075f), style = Stroke(4f))
             sierra(alto * 0.68f, alto * 0.3f, 7, Color(0xFF120203), 21)
             particulas(40, Color(0x88FF6B5E), 1.6f, -1.5f, 0.2f, 4)
         }
         "niebla" -> {
-            drawCircle(Color(0xFFF4F4EE), w * 0.05f, Offset(w * 0.72f, w * 0.075f))
             sierra(alto * 0.42f, alto * 0.22f, 4, Color(0xFF9EA4A2), 7)
             drawRect(Color(0x55E9ECEA), Offset(0f, alto * 0.38f), Size(w, alto * 0.08f))
             sierra(alto * 0.58f, alto * 0.2f, 6, Color(0xFF7D8582), 9)
@@ -151,9 +148,6 @@ private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
         }
         "atardecer" -> {
             for (i in 0 until 8) drawRect(Color(0xFFFF7A45).copy(alpha = 0.06f + i * 0.05f), Offset(0f, alto * 0.06f * i), Size(w, alto * 0.06f))
-            val sol = Offset(w * 0.72f, w * 0.075f); val r = w * 0.06f
-            drawCircle(Color(0xFFFFB35C), r, sol)
-            for (i in 0 until 5) drawRect(Color(0xFF2B1236), Offset(0f, sol.y + r * (0.15f + i * 0.17f)), Size(w, r * 0.06f * (i + 1)))
             sierra(alto * 0.62f, alto * 0.08f, 3, Color(0xFF4A1F4F), 5)
             sierra(alto * 0.74f, alto * 0.06f, 4, Color(0xFF2B1236), 9)
         }
@@ -187,10 +181,6 @@ private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
             val al = java.util.Random(4)
             repeat(160) { val c = Offset(al.nextFloat() * w, al.nextFloat() * h); val b = 0.4f + 0.6f * ((sin((t * 2 * PI * 3 + it).toFloat()) + 1) / 2)
                 drawCircle(Color.White.copy(alpha = b * 0.8f), 0.6f + al.nextFloat() * 1.8f, c) }
-            val pl = Offset(w * 0.72f, w * 0.075f); val r = w * 0.045f
-            drawCircle(Color(0xFF3B2F7A), r, pl)
-            drawCircle(Color(0xFF5B4AB0), r * 0.75f, Offset(pl.x - r * 0.2f, pl.y - r * 0.2f))
-            rotate(-18f, pl) { drawOval(Color(0xFFFFD166), Offset(pl.x - r * 1.7f, pl.y - r * 0.25f), Size(r * 3.4f, r * 0.5f), style = Stroke(4f)) }
         }
     }
 }

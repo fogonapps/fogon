@@ -877,7 +877,8 @@ class RedSocial(
 
         private fun https(s: String) = s.takeIf { it.startsWith("https://") }.orEmpty()
 
-        private fun obraBreve(o: Obra) = buildJsonObject {
+        /** Lo justo de una obra para mostrarla y abrirla en otro teléfono (perfil, listas en común). */
+        fun obraBreve(o: Obra) = buildJsonObject {
             put("titulo", o.titulo); put("tipoObra", o.tipo); put("portada", https(o.portada))
             o.anio?.let { put("anio", it) }
             if (o.creador.isNotBlank()) put("creador", o.creador)
@@ -970,6 +971,44 @@ class RedSocial(
             return salida
         }
 
+        /** Una obra de la que habló tu gente esta semana: sus datos (para mostrarla y abrirla) y quiénes. */
+        data class ObraDeLaSemana(val datos: JsonObject, val quienes: List<io.github.fogonapps.social.PersonaSocial>)
+
+        private fun claveObra(p: PublicacionSocial) = texto(p, "fuente").ifBlank {
+            texto(p, "tipoObra").takeIf { it.isNotBlank() }?.let { t -> "$t|" + io.github.fogonapps.cajon.datos.Logica.tituloLimpio(texto(p, "titulo")) }.orEmpty()
+        }
+
+        /**
+         * «Esta semana en tu red»: de lo que publicó la gente que sigues en los últimos 7 días (diario y reseñas), las
+         * obras de las que más personas hablaron. Solo si hay al menos dos publicaciones con obra.
+         */
+        fun semanaEnTuRed(feed: List<PublicacionSocial>, ahora: Long = System.currentTimeMillis(), cuantas: Int = 3): List<ObraDeLaSemana> {
+            val semana = feed.filter { (it.tipo == "diario" || it.tipo == "resena") && ahora - it.cuando <= 7 * 86_400_000L && claveObra(it).isNotBlank() }
+            if (semana.size < 2) return emptyList()
+            // Primero de las que hablaron más personas; entre iguales, la más reciente.
+            return semana.groupBy { claveObra(it) }.values
+                .sortedWith(compareByDescending<List<PublicacionSocial>> { ps -> ps.map { it.autor.usuario }.toSet().size }.thenByDescending { ps -> ps.maxOf { it.cuando } })
+                .take(cuantas).map { ps -> ObraDeLaSemana(ps.maxBy { it.cuando }.datos, ps.map { it.autor }.distinctBy { it.usuario }) }
+        }
+
+        /** Alguien que no sigues y que habló de obras que tú también tienes (para «Gente con tus gustos»). */
+        data class GenteParecida(val persona: io.github.fogonapps.social.PersonaSocial, val enComun: List<String>)
+
+        /**
+         * «Gente con tus gustos»: de lo que se ve en Explorar, quienes hablaron de obras que tú terminaste o te gustaron.
+         * Sin números ni porcentajes (no es para comparar a nadie): solo lo que comparten.
+         */
+        fun genteParecida(explorar: List<PublicacionSocial>, siguiendo: Set<String>, yo: String?, e: Estado, cuantos: Int = 6): List<GenteParecida> {
+            val mias = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.TERMINADO || it.nota >= 7 || it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }
+            val porFuente = mias.filter { it.fuente.isNotBlank() }.associateBy { it.fuente }
+            val porTitulo = mias.associateBy { "${it.tipo}|" + io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it.titulo) }
+            return explorar.filter { it.autor.usuario != yo && it.autor.usuario !in siguiendo }
+                .mapNotNull { p -> (porFuente[texto(p, "fuente")] ?: porTitulo[claveObra(p)])?.let { p.autor to it.titulo } }
+                .groupBy({ it.first.usuario }, { it })
+                .map { (_, l) -> GenteParecida(l.first().first, l.map { it.second }.distinct()) }
+                .sortedByDescending { it.enComun.size }.take(cuantos)
+        }
+
         /** La canción del perfil (de cualquiera de los dos formatos de [Perfil.cancion]). */
         data class CancionPerfil(val titulo: String, val artista: String, val album: String, val portada: String, val audio: String = "", val enlace: String = "")
 
@@ -1016,7 +1055,7 @@ class RedSocial(
             val generos = e.gustos.filter { !it.borrada && it.clave.startsWith("genero:") && it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave.removePrefix("genero:") }.take(20)
             val terminadas = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.TERMINADO }.groupingBy { it.tipo }.eachCount()
             val partes = listOfNotNull(
-                parte(PartesPerfil.MUSICA, JsonArray(artistas.map { a -> buildJsonObject { put("nombre", a.nombre); put("foto", https(a.foto)) } })).takeIf { artistas.isNotEmpty() },
+                parte(PartesPerfil.MUSICA, JsonArray(artistas.map { a -> buildJsonObject { put("nombre", a.nombre); put("foto", https(a.foto)); if (a.fuente.isNotBlank()) put("fuente", a.fuente) } })).takeIf { artistas.isNotEmpty() },
                 parte(PartesPerfil.GUSTOS, JsonArray(generos.map { JsonPrimitive(it) })).takeIf { generos.isNotEmpty() },
                 parte(PartesPerfil.CIFRAS, JsonObject(terminadas.mapValues { JsonPrimitive(it.value) } + mapOf(
                     "anio" to JsonPrimitive(java.time.LocalDate.now().year),
@@ -1033,8 +1072,48 @@ class RedSocial(
                     if (c.audio.startsWith("https://audio-ssl.itunes.apple.com/")) put("audio", c.audio)
                     if (c.enlace.startsWith("https://music.apple.com/")) put("enlace", c.enlace)
                 })
-            })
+            }) + partesDeLoTuyo(e)
             return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), https(p.portada), p.enlaces.filter { it.startsWith("http") }.take(5), partes)
+        }
+
+        /**
+         * Lo demás de «Lo tuyo», con la misma visibilidad que tus destacados: el reto del año, lo que estás viendo o
+         * leyendo (con por dónde vas), lo que tienes por ver (para la maratón de los dos) y tus insignias.
+         */
+        fun partesDeLoTuyo(e: Estado, hoy: java.time.LocalDate = java.time.LocalDate.now()): Map<String, ParteSubida> {
+            // El reto y las insignias van como tus destacados; lo que ves y lo que tienes por ver, solo si lo elegiste
+            // (quedan privados hasta que cambias la visibilidad de «Lo tuyo» en esta versión o después).
+            fun vis(clave: String, comoDestacados: Boolean) = Visibilidad.de(e.perfil.visibilidad[clave]
+                ?: if (comoDestacados) e.perfil.visibilidad[PartesPerfil.DESTACADOS] else null).takeIf { it != Visibilidad.PRIVADA }
+            val L = io.github.fogonapps.cajon.datos.Logica
+            val anio = hoy.year
+            val c = L.cifras(e, anio)
+            fun conDatos(o: Obra, extra: Map<String, kotlinx.serialization.json.JsonElement>) = JsonObject(obraBreve(o) + extra)
+            val reto = e.ajustes.retos.filterValues { it > 0 }.takeIf { it.isNotEmpty() }?.let { r ->
+                buildJsonObject { put("anio", anio); r.forEach { (t, meta) -> put(t, JsonArray(listOf(JsonPrimitive(c.porTipo[t] ?: 0), JsonPrimitive(meta)))) } }
+            }
+            val viendo = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }
+                .sortedByDescending { maxOf(it.empezada ?: "", L.ultimaVez(it) ?: "") }.take(8)
+                .map { o -> conDatos(o, mapOf("avance" to JsonPrimitive(avanceDe(o)))) }
+            val porVer = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.QUIERO && it.tipo != io.github.fogonapps.cajon.datos.Tipos.ALBUM }
+                .sortedByDescending { it.agregada }.take(30)
+                .map { o -> conDatos(o, o.minutos?.let { mapOf("minutos" to JsonPrimitive(it)) } ?: emptyMap()) }
+            val insignias = io.github.fogonapps.cajon.datos.Insignias.de(e, anio).filter { it.ganada }.map { JsonPrimitive(it.id) }
+            return listOfNotNull(
+                reto?.let { r -> vis(PartesPerfil.RETO, true)?.let { PartesPerfil.RETO to ParteSubida(it, r) } },
+                viendo.takeIf { it.isNotEmpty() }?.let { l -> vis(PartesPerfil.VIENDO, false)?.let { PartesPerfil.VIENDO to ParteSubida(it, JsonArray(l)) } },
+                porVer.takeIf { it.isNotEmpty() }?.let { l -> vis(PartesPerfil.POR_VER, false)?.let { PartesPerfil.POR_VER to ParteSubida(it, JsonArray(l)) } },
+                insignias.takeIf { it.isNotEmpty() }?.let { l -> vis(PartesPerfil.INSIGNIAS, true)?.let { PartesPerfil.INSIGNIAS to ParteSubida(it, JsonArray(l)) } },
+            ).toMap()
+        }
+
+        /** Por dónde va: el último episodio visto («T2 · E5») o la página («p. 120 de 300»). */
+        fun avanceDe(o: Obra): String = when {
+            io.github.fogonapps.cajon.datos.Tipos.porEpisodios(o.tipo) -> o.vistos.mapNotNull { v ->
+                v.split('x').takeIf { it.size == 2 }?.let { (t, ep) -> t.toIntOrNull()?.let { ti -> ep.toIntOrNull()?.let { ti to it } } }
+            }.maxWithOrNull(compareBy({ it.first }, { it.second }))?.let { (t, ep) -> "T$t · E$ep" } ?: ""
+            o.tipo == io.github.fogonapps.cajon.datos.Tipos.LIBRO && o.pagina > 0 -> "p. ${o.pagina}" + (o.paginas?.let { " / $it" } ?: "")
+            else -> ""
         }
 
         /** Lo que se publica: el diario y las reseñas compartidos, las listas compartidas y lo publicado a mano. */

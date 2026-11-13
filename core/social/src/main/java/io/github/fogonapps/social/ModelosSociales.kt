@@ -262,3 +262,10 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 /** Una canción con su avance de 30 segundos (Apple) y el enlace a Apple Music. */
 @Serializable data class CancionSocial(val titulo: String, val artista: String, val portada: String = "", val audio: String = "", val enlace: String = "", val album: String = "")
 @Serializable internal data class LlavesChatSobre(val llave: String = "")
+
+/** Una lista en común (armada entre amigos): quién la armó, quiénes están y cuántas obras tiene. */
+@Serializable data class ListaComunSocial(val id: Long, val nombre: String, val creador: PersonaSocial, val miembros: List<PersonaSocial>, val obras: Int, val cambio: Long)
+@Serializable data class NuevaListaComunSocial(val nombre: String, val miembros: List<String> = emptyList())
+/** Una obra de una lista en común: quién la agregó, sus datos (título, tipo, portada, fuente) y los votos. */
+@Serializable data class ObraListaComunSocial(val id: Long, val quien: PersonaSocial? = null, val datos: kotlinx.serialization.json.JsonObject, val votos: Int, val yoVoto: Boolean, val cuando: Long)
+@Serializable data class DetalleListaComunSocial(val lista: ListaComunSocial, val obras: List<ObraListaComunSocial>)

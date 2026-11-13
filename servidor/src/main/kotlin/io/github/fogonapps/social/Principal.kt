@@ -383,6 +383,15 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/tienda/temas/{tema}") { social.reclamarTema(call.yo(), call.parameters["tema"].orEmpty()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/tema") { social.ponerTema(call.yo(), call.receive<TemaElegido>().tema); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/cumple") { social.ponerCumple(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/listas-comunes") { call.respond(social.listasComunes(call.yo())) }
+            post("/listas-comunes") { call.respond(social.crearListaComun(call.yo(), call.receive())) }
+            get("/listas-comunes/{id}") { call.respond(social.detalleListaComun(call.yo(), call.id())) }
+            post("/listas-comunes/{id}/obras") { social.agregarAListaComun(call.yo(), call.id(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            delete("/listas-comunes/{id}/obras/{item}") { social.quitarDeListaComun(call.yo(), call.id(), call.parameters["item"]?.toLongOrNull() ?: throw Problema(400, "item")); call.respond(HttpStatusCode.NoContent) }
+            post("/listas-comunes/{id}/obras/{item}/voto") { social.votarListaComun(call.yo(), call.id(), call.parameters["item"]?.toLongOrNull() ?: throw Problema(400, "item"), true); call.respond(HttpStatusCode.NoContent) }
+            delete("/listas-comunes/{id}/obras/{item}/voto") { social.votarListaComun(call.yo(), call.id(), call.parameters["item"]?.toLongOrNull() ?: throw Problema(400, "item"), false); call.respond(HttpStatusCode.NoContent) }
+            post("/listas-comunes/{id}/miembros/{usuario}") { social.sumarAListaComun(call.yo(), call.id(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
+            delete("/listas-comunes/{id}/yo") { social.salirDeListaComun(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
             get("/mejores-amigos") { call.respond(ListaUsuarios(social.mejoresAmigos(call.yo()))) }
             put("/mejores-amigos") { social.ponerMejoresAmigos(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/historias/silenciar/{usuario}") { social.silenciarHistorias(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }

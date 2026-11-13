@@ -264,7 +264,59 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
     val ocultas by vm.red.ocultas.collectAsStateWithLifecycle()
     val lista = (if (pestana == 0) feed?.map { it to null } else explorar?.let { remember(it, e) { io.github.fogonapps.cajon.RedSocial.ordenarPorGustos(it, e) } })
         ?.filter { (p, _) -> io.github.fogonapps.cajon.RedSocial.seMuestra(p, e, ocultas) }
+    // Arriba de cada pestaña: en Siguiendo, lo de la semana en tu red; en Explorar, gente con tus gustos.
+    if (pestana == 0) feed?.let { f0 -> SemanaEnTuRed(vm, remember(f0) { io.github.fogonapps.cajon.RedSocial.semanaEnTuRed(f0) }) }
+    else explorar?.let { ex ->
+        val siguiendo = remember(feed) { feed.orEmpty().map { it.autor.usuario }.toSet() }
+        GenteConTusGustos(vm, remember(ex, siguiendo, e.vivas.size) { io.github.fogonapps.cajon.RedSocial.genteParecida(ex, siguiendo, usuario, e) })
+    }
     io.github.fogonapps.social.ui.ListaFeedSocial(lista, pestana, { vm.red.masFeed() }, stringResource(R.string.red_al_dia_texto)) { p, motivo -> TarjetaPublicacion(vm, p, motivo = motivo) }
+}
+
+/** «Esta semana en tu red»: las obras de las que más habló tu gente estos 7 días, con sus caras. */
+@Composable
+private fun SemanaEnTuRed(vm: CajonViewModel, obras: List<io.github.fogonapps.cajon.RedSocial.Companion.ObraDeLaSemana>) {
+    val f = FogonTema.actual
+    if (obras.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(22.dp)).background(f.superficie).border(f.borde, f.linea, forma(22.dp)).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.semana_red_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        obras.forEach { o ->
+            val d = o.datos
+            Row(Modifier.fillMaxWidth().clip(forma(12.dp)).clickable {
+                vm.abrirObraDePerfil(d.texto("titulo"), d.texto("tipoObra").ifBlank { "pelicula" }, d.texto("portada"), d.texto("fuente"), d.texto("anio").toIntOrNull(), d.texto("creador"))
+            }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Portada(d.texto("portada"), d.texto("tipoObra").ifBlank { "pelicula" }, d.texto("titulo"), Modifier.width(44.dp), esquina = 8.dp, conTitulo = false)
+                Column(Modifier.weight(1f)) {
+                    Text(d.texto("titulo"), style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(if (o.quienes.size == 1) "@" + o.quienes.first().usuario else pluralStringResource(R.plurals.semana_red_personas, o.quienes.size - 1, "@" + o.quienes.first().usuario, o.quienes.size - 1),
+                        style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) { o.quienes.take(3).forEach { AvatarRed(it, 28.dp) } }
+            }
+        }
+    }
+}
+
+/** «Gente con tus gustos»: quienes hablaron de lo que a ti también te gusta. Sin números: solo lo que comparten. */
+@Composable
+private fun GenteConTusGustos(vm: CajonViewModel, gente: List<io.github.fogonapps.cajon.RedSocial.Companion.GenteParecida>) {
+    val f = FogonTema.actual
+    if (gente.isEmpty()) return
+    Seccion(stringResource(R.string.gente_gustos_titulo))
+    androidx.compose.foundation.lazy.LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(gente.size) { i ->
+            val g = gente[i]
+            Column(Modifier.width(150.dp).clip(forma(18.dp)).background(f.superficie).border(f.borde, f.linea, forma(18.dp))
+                .clickable { vm.abrir(Pantalla.PerfilRed(g.persona.usuario)) }.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                AvatarRed(g.persona, 56.dp)
+                Text("@" + g.persona.usuario, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.gente_gustos_comparten, g.enComun.take(2).joinToString(", ")), style = MaterialTheme.typography.labelSmall,
+                    color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            }
+        }
+    }
 }
 
 /**
@@ -443,6 +495,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val textoDejar = stringResource(R.string.dejar_de_seguir)
     fun confirmarDejar() = confirmarDejarDeSeguir(preguntaDejar, null) { vm.red.dejarDeSeguir(usuario) }
     val navegacion: @Composable () -> Unit = {
+        val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
         Cabecera("@$usuario", vm::cerrar, chico = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Un solo botón: compartir, copiar el enlace, bloquear y reportar van en el menú.
@@ -477,6 +530,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     }
     @Composable
     fun contenidoParte(idSeccion: Int) {
+        val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
         when (idSeccion) {
             0 -> if (p.publicaciones.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, p.publicaciones)
             1 -> GustosDelPerfil(vm, p, propio)
@@ -497,8 +551,8 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
 
     @Composable
     fun contenidoSeccion(idSeccion: Int) {
-        // «Lo tuyo» junta los destacados y los artistas (antes, dos pestañas).
-        if (idSeccion == 1) { contenidoParte(1); contenidoParte(2) } else contenidoParte(idSeccion)
+        // «Lo tuyo» junta los destacados, los artistas y los géneros (GustosDelPerfil los ordena).
+        contenidoParte(idSeccion)
     }
     val contenidoApp = interfazSocial(vm).contenido
     val secciones = contenidoApp.SeccionesPerfil(p, propio) { contenidoSeccion(it) }
@@ -511,10 +565,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     PerfilComun(vistaBase, pestana, { pestana = it },
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop) },
-        foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, f.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
-        bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = f.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), usuario) },
+        foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, FogonTema.actual.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
+        bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), usuario) },
         enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
         acciones = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             when {
                 yo == null -> io.github.fogonapps.perfil.BotonPerfilDestacado(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
                 else -> {
@@ -529,6 +584,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             }
         },
         despuesAcciones = {
+            val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.
             hoja?.let { h ->
                 androidx.compose.material3.ModalBottomSheet({ hoja = null }, containerColor = f.fondo) {
@@ -616,20 +672,38 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
     }
 }
 
-/** Lo que más le gusta: sus destacados, sus cuatro favoritas, los géneros que dijo y lo que ha terminado. */
+/**
+ * «Lo tuyo» de otra persona, en orden: la afinidad contigo (si hay con qué comparar), sus destacados y favoritas, sus
+ * artistas en una fila y sus géneros separados en música y en cine, series y libros. De lo largo se ve una parte y
+ * «Ver todos» muestra el resto.
+ */
 @Composable
 internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
     val f = FogonTema.actual
     val destacados = (p.partes["destacados"] as? JsonObject)?.entries?.mapNotNull { (h, v) -> (v as? JsonObject)?.let { h to it } }.orEmpty()
     val favoritas = (p.partes["favoritas"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
     val generos = (p.partes["gustos"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
-    if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty()) { NadaAqui(); return }
+    val artistas = (p.partes["musica"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
+    val e = vm.estado.collectAsStateWithLifecycle().value
+    val reto = retoDe(p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.RETO] as? JsonObject)
+    val insignias = (p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.INSIGNIAS] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }
+        ?.map { io.github.fogonapps.cajon.datos.Insignia(it, 1, 1) }.orEmpty()
+    val viendo = p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.VIENDO]
+    val porVer = p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.POR_VER]
+    if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty() && artistas.isEmpty() && reto.isEmpty() && insignias.isEmpty() && viendo == null && porVer == null) { NadaAqui(); return }
+    fun abrir(o: JsonObject) = vm.abrirObraDePerfil(o.texto("titulo"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("portada"), o.texto("fuente"),
+        o.texto("anio").toIntOrNull(), o.texto("creador"))
+    if (!propio) AfinidadConmigo(vm, destacados.map { it.second } + favoritas, generos, artistas)
+    if (!propio) MaratonDeLosDos(vm, porVer, e, p.persona.usuario)
+    ViendoAhora(vm, viendo, if (propio) null else e)
+    val anioReto = (p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.RETO] as? JsonObject)?.texto("anio")?.toIntOrNull() ?: java.time.LocalDate.now().year
+    TarjetaReto(stringResource(R.string.reto_suyo, anioReto), reto, null)
     if (destacados.isNotEmpty()) {
         Seccion(stringResource(R.string.parte_destacados))
         destacados.chunked(3).forEach { fila ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 fila.forEach { (h, o) ->
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Column(Modifier.weight(1f).clip(forma(12.dp)).clickable { abrir(o) }, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Portada(o.texto("portada"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("titulo"), Modifier.fillMaxWidth(), conTitulo = false)
                         Text(o.texto("titulo"), style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(nombreHuecoRed(h), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
@@ -642,14 +716,141 @@ internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.da
     if (favoritas.isNotEmpty()) {
         Seccion(stringResource(R.string.red_sus_favoritas))
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            favoritas.take(4).forEach { o -> Portada(o.texto("portada"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("titulo"), Modifier.weight(1f)) }
+            favoritas.take(4).forEach { o ->
+                Box(Modifier.weight(1f).clip(forma(10.dp)).clickable { abrir(o) }) { Portada(o.texto("portada"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("titulo"), Modifier.fillMaxWidth()) }
+            }
             repeat(4 - favoritas.take(4).size) { Box(Modifier.weight(1f)) }
         }
     }
+    if (artistas.isNotEmpty()) FilaArtistasPerfil(artistas.map { it.texto("nombre") to it.texto("foto") }) { i ->
+        artistas[i].let { a -> vm.abrirArtistaDePerfil(a.texto("nombre"), a.texto("foto"), a.texto("fuente")) }
+    }
     if (generos.isNotEmpty()) {
+        val (musica, otros) = generos.partition { io.github.fogonapps.cajon.datos.GenerosPerfil.esMusical(it) }
         Seccion(stringResource(R.string.parte_gustos))
-        androidx.compose.foundation.layout.FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            generos.forEach { g -> Pildora(g) { vm.abrir(Pantalla.EtiquetaRed(g.lowercase().filter { it.isLetterOrDigit() })) } }
+        if (musica.isNotEmpty()) FilaGeneros(vm, stringResource(R.string.generos_musica), musica)
+        if (otros.isNotEmpty()) FilaGeneros(vm, stringResource(R.string.generos_cine), otros)
+    }
+    FilaInsignias(insignias, propias = false)
+}
+
+/** Los artistas en una fila que se desliza (foto chica y nombre); «Ver todos» los muestra todos en cuadrícula. */
+@Composable
+internal fun FilaArtistasPerfil(artistas: List<Pair<String, String>>, onClick: ((Int) -> Unit)? = null) {
+    val f = FogonTema.actual
+    var todos by rememberSaveable { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.lotuyo_artistas), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.weight(1f))
+        if (artistas.size > 6) Text(stringResource(if (todos) R.string.lotuyo_ver_menos else R.string.lotuyo_ver_todos, artistas.size), style = MaterialTheme.typography.labelLarge,
+            color = f.acentoTexto, modifier = Modifier.clip(forma(8.dp)).clickable { todos = !todos }.padding(horizontal = 8.dp, vertical = 10.dp))
+    }
+    @Composable
+    fun Uno(i: Int, nombre: String, foto: String, modifier: Modifier) {
+        Column(modifier.clip(forma(12.dp)).then(if (onClick != null) Modifier.clickable { onClick(i) } else Modifier).padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            FotoArtista(foto, nombre, 64.dp)
+            Text(nombre, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        }
+    }
+    if (!todos) androidx.compose.foundation.lazy.LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(artistas.size) { i -> Uno(i, artistas[i].first, artistas[i].second, Modifier.width(76.dp)) }
+    } else artistas.withIndex().chunked(4).forEach { fila ->
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            fila.forEach { (i, a) -> Uno(i, a.first, a.second, Modifier.weight(1f)) }
+            repeat(4 - fila.size) { Box(Modifier.weight(1f)) }
+        }
+    }
+}
+
+/** Una fila de géneros con su nombre (Música, o Cine, series y libros): se ven unos pocos y el resto con «Ver todos». */
+@Composable
+private fun FilaGeneros(vm: CajonViewModel, titulo: String, generos: List<String>) {
+    val f = FogonTema.actual
+    var todos by rememberSaveable(titulo) { mutableStateOf(false) }
+    val visibles = if (todos) generos else generos.take(6)
+    Text(titulo, style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.padding(start = 16.dp, top = 6.dp, bottom = 6.dp))
+    androidx.compose.foundation.layout.FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        visibles.forEach { g -> Pildora(g.replaceFirstChar { it.uppercase() }) { vm.abrir(Pantalla.EtiquetaRed(g.lowercase().filter { it.isLetterOrDigit() })) } }
+        if (generos.size > 6) Pildora(stringResource(if (todos) R.string.lotuyo_ver_menos else R.string.lotuyo_ver_todos, generos.size)) { todos = !todos }
+    }
+}
+
+/**
+ * La afinidad contigo, como una fusión de gustos: el porcentaje y lo justo de lo que comparten (unos artistas, unos
+ * géneros, las obras que les gustan a los dos y la favorita de los dos). Se calcula en el teléfono con tu cajón.
+ */
+@Composable
+private fun AfinidadConmigo(vm: CajonViewModel, susObras: List<JsonObject>, susGeneros: List<String>, susArtistas: List<JsonObject>) {
+    val f = FogonTema.actual
+    val e = vm.estado.collectAsStateWithLifecycle().value ?: return
+    val afinidad = remember(e.vivas.size, e.musicosVivos.size, e.gustos.size, susObras, susGeneros, susArtistas) {
+        val porId = e.vivas.associateBy { it.id }
+        io.github.fogonapps.cajon.datos.Afinidades.calcular(
+            misArtistas = e.musicosVivos.map { it.nombre },
+            misGeneros = e.gustos.filter { !it.borrada && it.clave.startsWith("genero:") && it.senal == io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave.removePrefix("genero:") },
+            misObras = e.vivas,
+            misFavoritas = (e.ajustes.favoritas + e.perfil.destacados.values).mapNotNull { porId[it] },
+            susArtistas = susArtistas.map { it.texto("nombre") },
+            susGeneros = susGeneros,
+            susObras = susObras.map { io.github.fogonapps.cajon.datos.ObraDestacada(it.texto("titulo"), it.texto("tipoObra").ifBlank { "pelicula" }, it.texto("portada"), it.texto("fuente")) },
+        )
+    } ?: return
+    val fotos = susArtistas.associate { it.texto("nombre") to it.texto("foto") }
+    val fuentes = susArtistas.associate { it.texto("nombre") to it.texto("fuente") }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(22.dp)).background(f.superficie).border(f.borde, f.linea, forma(22.dp)).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // El número solo cuando es alto; con poco en común, la tarjeta invita a descubrir lo del otro (no a descartarlo).
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            if (afinidad.mostrarPorcentaje) Text("${afinidad.porcentaje}%", fontFamily = f.cifras, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = f.acentoTexto)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(if (afinidad.mostrarPorcentaje) R.string.afinidad_titulo else R.string.afinidad_descubrir_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                Text(stringResource(when {
+                    afinidad.porcentaje >= 80 -> R.string.afinidad_casi; afinidad.porcentaje >= 65 -> R.string.afinidad_mucho
+                    afinidad.porcentaje >= io.github.fogonapps.cajon.datos.Afinidades.MOSTRAR_DESDE -> R.string.afinidad_bastante; else -> R.string.afinidad_poco
+                }), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+        }
+        afinidad.favoritaDeLosDos?.let { o ->
+            Row(Modifier.clip(forma(12.dp)).clickable { vm.abrirObraDePerfil(o.titulo, o.tipo, o.portada, o.fuente) }, verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Portada(o.portada, o.tipo, o.titulo, Modifier.width(48.dp), esquina = 8.dp, conTitulo = false)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.afinidad_favorita), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                    Text(o.titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+        if (afinidad.artistas.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.afinidad_artistas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                afinidad.artistas.forEach { a ->
+                    Column(Modifier.width(72.dp).clip(forma(12.dp)).clickable { vm.abrirArtistaDePerfil(a, fotos[a].orEmpty(), fuentes[a].orEmpty()) },
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FotoArtista(fotos[a].orEmpty(), a, 52.dp)
+                        Text(a, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                    }
+                }
+            }
+        }
+        if (afinidad.generos.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.afinidad_generos), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                afinidad.generos.forEach { g -> Pildora(g.replaceFirstChar { it.uppercase() }) { vm.abrir(Pantalla.EtiquetaRed(g.lowercase().filter { it.isLetterOrDigit() })) } }
+            }
+        }
+        val otras = afinidad.obras.filter { it != afinidad.favoritaDeLosDos }
+        // Con poco en común, en vez de lo compartido: lo suyo que tú no tienes.
+        val mostrar = if (afinidad.mostrarPorcentaje || otras.isNotEmpty()) otras else afinidad.paraDescubrir
+        if (mostrar.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(if (mostrar === otras) R.string.afinidad_obras else R.string.afinidad_te_podria), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                mostrar.forEach { o ->
+                    Column(Modifier.width(76.dp).clip(forma(10.dp)).clickable { vm.abrirObraDePerfil(o.titulo, o.tipo, o.portada, o.fuente) }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 8.dp, conTitulo = false)
+                        Text(o.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
         }
     }
 }

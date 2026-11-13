@@ -267,7 +267,9 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         BotonIcono(Iconos.Imagen, stringResource(R.string.cambiar_portada), grande = true) { vm.abrir(Pantalla.CambiarPortada(o.id)) }
         if (o.fuente.isEmpty()) BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
     }
-    if (compartiendo && acciones != null) DialogoCompartir({ compartiendo = false }, { acciones.compartir(it, o.titulo) }) { TarjetaObra(o, e.resenas.firstOrNull { it.obra == o.id && !it.borrada && !it.spoiler && it.parte.isBlank() }?.texto.orEmpty()) }
+    // La tarjeta se puede editar antes de compartirla (fondo, formato, frase, nota).
+    if (compartiendo && acciones != null) DialogoTarjetaObra(vm, o, e.resenas.firstOrNull { it.obra == o.id && !it.borrada && !it.spoiler && it.parte.isBlank() }?.texto.orEmpty(),
+        { compartiendo = false }) { acciones.compartir(it, o.titulo) }
     Encabezado(o, vm, conGeneros = false)
     if (o.fuente.startsWith("ol:")) {
         var elegir by rememberSaveable(id) { mutableStateOf(false) }

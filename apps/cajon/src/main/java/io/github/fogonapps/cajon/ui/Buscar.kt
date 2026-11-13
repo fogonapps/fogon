@@ -457,7 +457,11 @@ private fun Titulo(texto: String, onVerMas: (() -> Unit)?) {
 fun FotoArtista(foto: String, nombre: String, tamano: Dp, tipo: String = "") {
     val f = FogonTema.actual
     Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-        IconoRiso(when (tipo) { Personas.AUTOR -> Iconos.Libro; Personas.DIRECTOR -> Iconos.Pelicula; else -> Iconos.Artista }, null, tamano = tamano * 0.4f, tinta = f.acentoTexto)
+        // Sin foto: sus iniciales (un micrófono repetido en cada artista no dice quién es).
+        val iniciales = nombre.split(' ').filter { it.firstOrNull()?.isLetterOrDigit() == true }.take(2).joinToString("") { it.take(1).uppercase() }
+        // (Van debajo de la foto: si la foto no carga, se ven igual.)
+        if (iniciales.isNotEmpty()) Text(iniciales, fontFamily = f.titulos, fontSize = (tamano.value * 0.34f).sp, color = f.acentoTexto, maxLines = 1)
+        else IconoRiso(when (tipo) { Personas.AUTOR -> Iconos.Libro; Personas.DIRECTOR -> Iconos.Pelicula; else -> Iconos.Artista }, null, tamano = tamano * 0.4f, tinta = f.acentoTexto)
         // En listas y cuadrículas, la foto de Wikimedia más chica (200 px en vez de 400): baja el doble de rápido.
         val url = if (tamano < 100.dp) foto.replace("?width=400", "?width=200") else foto
         // Recortada un poco hacia arriba: en los retratos la cabeza está arriba, no en el centro.

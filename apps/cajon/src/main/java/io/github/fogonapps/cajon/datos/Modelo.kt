@@ -302,6 +302,11 @@ object PartesPerfil {
     const val GUSTOS = "gustos"
     /** En la red: lo que guardó de otras personas. */
     const val GUARDADAS = "guardadas"
+    /** En la red, con la visibilidad de los destacados: el reto del año, lo que está viendo, lo que tiene por ver y sus insignias. */
+    const val RETO = "reto"
+    const val VIENDO = "viendo"
+    const val POR_VER = "porver"
+    const val INSIGNIAS = "insignias"
     val TODAS = listOf(DESTACADOS, FAVORITAS, MUSICA, GUSTOS, CIFRAS, EVOLUCION, DIARIO, GUARDADAS)
     /** Cómo quedan al crear la cuenta en la red, si la persona no eligió otra cosa: lo que hace que el perfil tenga sentido, a la vista. */
     val AL_CREAR_CUENTA = mapOf(DESTACADOS to "publica", FAVORITAS to "publica", MUSICA to "publica", GUSTOS to "publica", CIFRAS to "publica")
