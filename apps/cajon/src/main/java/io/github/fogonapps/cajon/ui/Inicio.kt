@@ -88,7 +88,7 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
         acciones = { BotonIcono(Iconos.Lapiz, stringResource(R.string.red_publicar), grande = true, lleno = true) { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar()) } },
         perfil = { androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { io.github.fogonapps.social.ui.ChispasArriba(interfazSocial(vm)); androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.destinoGuia("perfil")) {
             io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.tu_perfil), cara,
-                foto = e.perfil.foto.takeIf { it.isNotBlank() }?.let { { FotoPerfil(it, 48.dp) } }) { vm.abrirMiPerfil() }
+                foto = e.perfil.foto.takeIf { it.isNotBlank() }?.let { { FotoPerfil(it, 48.dp, e.perfil.encuadreFoto) } }) { vm.abrirMiPerfil() }
         }}})
 
     AvisoCajonSinGuardar(vm)

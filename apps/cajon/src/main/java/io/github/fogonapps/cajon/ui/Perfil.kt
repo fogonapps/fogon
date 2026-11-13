@@ -377,9 +377,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
-            io.github.fogonapps.social.ui.BotonTiendaTemas(interfazSocial(vm), Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
-            SelectorPerfiles(vm)
             CrearClaveAviso(vm)
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
                 Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) }) }

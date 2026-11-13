@@ -1,1 +1,0 @@
-Full review: every screen is checked automatically before release. Fixes: your profile photo shows from other accounts, crashes when logging without accounts, small or stuck buttons, screen reader. Other profiles have “Message” and counts; profile backgrounds fill the screen. Sparks as a button next to your photo. Chat: clear notice when keys are missing.

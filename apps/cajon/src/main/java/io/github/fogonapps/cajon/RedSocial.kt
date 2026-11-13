@@ -556,14 +556,16 @@ class RedSocial(
                 confirmar = { caja.publicacionesSubidas = it },
             )
             if (!subido || !sesion.vigente(marca)) return@intentar
-            val foto = e.perfil.foto
+            // La foto con su recorte: si cambia el encuadre, se vuelve a subir (así se ve igual en todas partes).
+            val enFoto = e.perfil.encuadreFoto.limpio()
+            val foto = e.perfil.foto.takeIf { it.isBlank() || enFoto == io.github.fogonapps.cajon.datos.Encuadre() } ?: "${e.perfil.foto}#${enFoto.zoom},${enFoto.x},${enFoto.y}"
             // Lo que se acaba de subir ya es lo de este teléfono: al final se anota su revisión para no traerlo de vuelta.
             when (accionFoto(foto, ultimaFoto, caja.borrarFotoRed)) {
                 "borrar" -> {
                     cliente.quitarFoto()
                     if (sesion.vigente(marca)) { caja.borrarFotoRed = false; ultimaFoto = foto }
                 }
-                "subir" -> jpeg(foto, 512, 400_000)?.let {
+                "subir" -> jpeg(e.perfil.foto, 512, 400_000, recorte = enFoto, aspecto = 1f)?.let {
                     if (!sesion.vigente(marca)) return@intentar
                     cliente.subirFoto(it)
                     if (sesion.vigente(marca)) { ultimaFoto = foto; caja.borrarFotoRed = false }
@@ -794,7 +796,7 @@ class RedSocial(
     /* ----- Lo que se sube ----- */
 
     /** Una foto (de un archivo o del selector) achicada a [lado] px y en JPEG de menos de [max] bytes. */
-    private suspend fun jpeg(uri: String, lado: Int, max: Int, recorte: io.github.fogonapps.cajon.datos.Encuadre? = null): ByteArray? = withContext(Dispatchers.IO) {
+    private suspend fun jpeg(uri: String, lado: Int, max: Int, recorte: io.github.fogonapps.cajon.datos.Encuadre? = null, aspecto: Float = 3.2f): ByteArray? = withContext(Dispatchers.IO) {
         runCatching {
             val bytes = app.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { it.readBytes() } ?: return@runCatching null
             val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -802,9 +804,8 @@ class RedSocial(
             var muestra = 1
             while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= lado) muestra *= 2
             var original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return@runCatching null
-            // El recorte de la portada: el marco del perfil (unas 3,2 veces más ancho que alto) con el zoom y la posición elegidos.
+            // El recorte elegido: el marco (la portada, unas 3,2 veces más ancha que alta; la foto, cuadrada) con el zoom y la posición.
             if (recorte != null) {
-                val aspecto = 3.2f
                 val w = original.width.toFloat(); val h = original.height.toFloat()
                 var cw = if (w / h > aspecto) h * aspecto else w
                 var ch = cw / aspecto
