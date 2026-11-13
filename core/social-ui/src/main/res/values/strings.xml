@@ -441,7 +441,7 @@
     <string name="historia_usar_album">Use the whole album</string>
     <string name="historia_respondio">Replied to your story: %1$s</string>
     <string name="social_amigos">Friends</string>
-    <string name="amigos_dejar">Friends · unfollow</string>
+    <string name="amigos_dejar">Friends</string>
     <string name="historia_encuesta">Poll</string>
     <string name="historia_pregunta">Your question (optional)</string>
     <string name="historia_opcion">Option %1$d</string>
@@ -600,4 +600,7 @@
     <string name="social_mod_ver_video">Play the video</string>
     <string name="social_mod_historia_sin_contenido">The story has no content left to show (it expired or was deleted).</string>
     <string name="sancion_advertir">Warn</string>
+    <string name="social_mod_reporte_propio">You reported this, so someone else on the team decides.</string>
+    <string name="social_chat_enviar_voz">Send the voice note</string>
+    <string name="social_te_sigue">follows you</string>
 </resources>

@@ -97,6 +97,8 @@ private fun nombreParte(p: String): String = stringResource(when (p) {
     PartesPerfil.DESTACADOS -> R.string.parte_destacados; PartesPerfil.FAVORITAS -> R.string.tus_favoritas_titulo
     PartesPerfil.CIFRAS -> R.string.parte_cifras; PartesPerfil.EVOLUCION -> R.string.parte_evolucion
     PartesPerfil.MUSICA -> R.string.parte_musica; PartesPerfil.GUSTOS -> R.string.parte_gustos; PartesPerfil.GUARDADAS -> R.string.parte_guardadas
+    PartesPerfil.RETO -> R.string.parte_reto; PartesPerfil.VIENDO -> R.string.viendo_ahora; PartesPerfil.POR_VER -> R.string.parte_por_ver
+    PartesPerfil.INSIGNIAS -> R.string.insignias_titulo
     else -> R.string.tu_diario
 })
 
@@ -455,8 +457,6 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
 
-    QuienVeTuPerfil(vm, p)
-
     Seccion(stringResource(R.string.foto_y_portada))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -501,10 +501,13 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
 
     Seccion(stringResource(R.string.quien_lo_ve))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PartesPerfil.TODAS.forEach { parte ->
+        // Cada parte por separado (lo que estás viendo y lo que tienes por ver empiezan privados).
+        (PartesPerfil.TODAS + listOf(PartesPerfil.RETO, PartesPerfil.INSIGNIAS, PartesPerfil.VIENDO, PartesPerfil.POR_VER)).forEach { parte ->
             Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(nombreParte(parte), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                ElegirVisibilidad(p.visibilidad[parte] ?: "") { vm.visibilidadPerfil(parte, it) }
+                // El reto y las insignias, mientras no elijas, van como tus destacados (lo que de verdad se publica).
+                val actual = p.visibilidad[parte] ?: p.visibilidad[PartesPerfil.DESTACADOS].takeIf { parte == PartesPerfil.RETO || parte == PartesPerfil.INSIGNIAS }
+                ElegirVisibilidad(actual ?: "") { vm.visibilidadPerfil(parte, it) }
             }
         }
     }
@@ -666,29 +669,3 @@ fun AjustarImagenPerfil(vm: CajonViewModel, e: Estado, portada: Boolean) {
     Espacio(40.dp)
 }
 
-/**
- * En «Editar perfil», con cuenta: quién ve cada parte de tu perfil en la red (antes estaba encima de cada pestaña).
- * «Lo tuyo» junta destacados, favoritas, gustos, el reto, lo que ves, lo que tienes por ver y las insignias.
- */
-@Composable
-private fun QuienVeTuPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.Perfil) {
-    val f = FogonTema.actual
-    if (vm.red.usuario.collectAsStateWithLifecycle().value == null) return
-    val grupos = listOf(
-        R.string.parte_destacados to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS, PartesPerfil.RETO, PartesPerfil.VIENDO,
-            PartesPerfil.POR_VER, PartesPerfil.INSIGNIAS),
-        R.string.parte_musica to listOf(PartesPerfil.MUSICA),
-        R.string.parte_guardadas to listOf(PartesPerfil.GUARDADAS),
-        R.string.tus_cifras to listOf(PartesPerfil.CIFRAS),
-    )
-    Seccion(stringResource(R.string.quien_ve_tu_perfil))
-    Pista(stringResource(R.string.quien_ve_tu_perfil_pista), Modifier.padding(horizontal = 16.dp))
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        grupos.forEach { (nombre, partes) ->
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(nombre), style = MaterialTheme.typography.titleSmall, color = f.texto)
-                ElegirVisibilidad(p.visibilidad[partes.first()] ?: "") { v -> partes.forEach { vm.visibilidadPerfil(it, v) } }
-            }
-        }
-    }
-}

@@ -633,4 +633,5 @@
     <string name="historia_buscar_app">Search for a song or one of your goals</string>
     <string name="anotar_sin_cuentas">You need at least one active account to log something (all of them are archived). Create one or reactivate one in Accounts.</string>
     <string name="color_n">Color %1$d</string>
+    <string name="anotar_elige_categoria">Pick a category (otherwise it stays “To review”)</string>
 </resources>

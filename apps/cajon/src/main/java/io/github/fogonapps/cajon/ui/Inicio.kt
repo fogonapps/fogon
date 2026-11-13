@@ -186,7 +186,11 @@ fun Inicio(vm: CajonViewModel, e: Estado) {
 
     // Sus listas.
     val listas = e.listasVivas.sortedByDescending { it.cambio }
-    Seccion(stringResource(R.string.pestana_listas)) { Pildora(stringResource(if (listas.isEmpty()) R.string.nueva else R.string.ver_todo)) { vm.abrir(if (listas.isEmpty()) Pantalla.EditarLista(null) else Pantalla.Listas) } }
+    // «Ver todo» lleva siempre a Listas (ahí están también las listas en común, aunque no tengas listas propias).
+    Seccion(stringResource(R.string.pestana_listas)) {
+        if (listas.isEmpty()) Pildora(stringResource(R.string.nueva)) { vm.abrir(Pantalla.EditarLista(null)) }
+        Pildora(stringResource(R.string.ver_todo)) { vm.abrir(Pantalla.Listas) }
+    }
     if (listas.isEmpty()) Pista(stringResource(R.string.listas_vacio))
     else LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         items(listas, key = { it.id }) { l ->

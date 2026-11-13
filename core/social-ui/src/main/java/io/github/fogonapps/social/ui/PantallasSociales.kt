@@ -761,7 +761,9 @@ fun Moderacion(vm: InterfazSocial) {
                 if (puedeRestaurar(c.estado, permisos)) Pildora(stringResource(R.string.social_equipo_restaurar)) {
                     confirmar(vm.tx(R.string.social_equipo_restaurar), vm.tx(R.string.social_equipo_restaurar_confirmar)) { vm.red.restaurar(c) }
                 }
-                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Lo que reportaste tú no lo decides tú (el servidor no lo deja): se dice, en vez de botones que no harían nada.
+                if (c.propio) Pista(stringResource(R.string.social_mod_reporte_propio))
+                else androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
                     if ("sin_falta" in acciones && c.estado != "retirado" && reglaCaso !in CIERRE_DIRECTO) Pildora(stringResource(R.string.sancion_advertir)) { sancionando = "advertencia" }
                     if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = "falta" }

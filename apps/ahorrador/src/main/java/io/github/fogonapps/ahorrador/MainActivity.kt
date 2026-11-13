@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador
 
+import androidx.compose.ui.unit.dp
 import android.Manifest
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
@@ -73,6 +74,9 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(barra, barra)
             }
             FogonTema(Paleta.Ahorrador, apariencia) {
+                // Los campos de texto redondeados, como el resto de Fogón (por defecto vienen casi rectos).
+                androidx.compose.material3.MaterialTheme(shapes = androidx.compose.material3.MaterialTheme.shapes.copy(
+                    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(18.dp))) {
                 val pila by vm.pila.collectAsStateWithLifecycle()
                 val pestana by vm.pestana.collectAsStateWithLifecycle()
                 val estado by vm.estado.collectAsStateWithLifecycle()
@@ -80,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 if (cerrada) {
                     LaunchedEffect(Unit) { desbloquear() }
                     Bloqueada { desbloquear() }
-                    return@FogonTema
+                    return@MaterialTheme
                 }
                 BackHandler(enabled = pila.isNotEmpty() || pestana != Pestana.INICIO) { vm.atras() }
 
@@ -148,6 +152,7 @@ class MainActivity : ComponentActivity() {
                     candadoDisponible = candadoDisponible(),
                     onImportarExtracto = { importarExtracto.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain", "application/vnd.ms-excel", "application/octet-stream")) },
                 )
+            }
             }
             }
         }

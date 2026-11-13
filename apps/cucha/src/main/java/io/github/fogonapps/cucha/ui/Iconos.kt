@@ -51,7 +51,8 @@ object Iconos {
     private const val TAZON = "M3.4 11h17.2a8.6 7.6 0 0 1-17.2 0z"
     val Sopa = dibujo("sopa", relleno(TAZON), trazo("M9 3.6c-1 1.2 1 2.2 0 3.6M13.4 3.6c-1 1.2 1 2.2 0 3.6", 1.8f), trazo("M7.6 21h8.8", 2.2f))
     val Arroz = dibujo("arroz", relleno(TAZON), relleno("M5 11a7 4.6 0 0 1 14 0z"), huecoTrazo("M8.6 8.8l1 .5M12 7.4l1 .4M15 9l.9.5", 1.4f))
-    val Arepa = dibujo("arepa", relleno("M12 4.2a7.8 7.8 0 1 1 0 15.6 7.8 7.8 0 0 1 0-15.6z"), huecoTrazo("M8.2 10.4l2.2 2.2M12.2 8.2l2.6 2.6M10.4 13.6l2.6 2.6", 1.6f))
+    // Una arepa vista de frente, más ancha que alta, con marcas de parrilla horizontales (en diagonal, chica, parecía «prohibido»).
+    val Arepa = dibujo("arepa", relleno("M12 5.6c4.6 0 8.2 2.9 8.2 6.4S16.6 18.4 12 18.4 3.8 15.5 3.8 12 7.4 5.6 12 5.6z"), huecoTrazo("M7.6 10.4h3.4M13 10.4h3.4M9.3 13.6h5.4", 1.6f))
     val Huevo = dibujo("huevo", relleno("M5 13.4c-1.4-3.6 1.4-7.6 5.4-7.4 2 0 3.4.8 4.8.6 3.2-.4 5.6 2.6 4.6 5.8-.8 2.6-2.6 3.4-4.4 4.4-1.8 1-3 3-6.2 2.6C6.4 19 5.6 15 5 13.4z"), huecoTrazo("M12 9.4a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6z", 1.8f))
     val Ensalada = dibujo("ensalada", relleno(TAZON), trazo("M7 9.6c.6-2.6 2.6-3.8 4.4-3.4M12 9.4c0-2.8 1.6-4.6 4-4.6M15.6 9.8c1-1.6 2.6-2 3.6-1.6", 2.2f))
     val Carne = dibujo("carne", relleno("M4.4 10.6c0-3.6 3.4-6 7.4-6 4.6 0 8.2 2.6 8.2 6.6 0 4.4-3.8 8.4-9.2 8.4-3.8 0-6.4-2.8-6.4-5.6z"), huecoTrazo("M9.6 9.6a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z", 1.6f))

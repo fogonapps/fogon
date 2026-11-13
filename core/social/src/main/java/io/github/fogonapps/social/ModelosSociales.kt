@@ -87,7 +87,9 @@ data class MiCuenta(val usuario: String, val nombre: String = "", val correo: St
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.CasoModeracion")
 data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
-    val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null)
+    val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null,
+    /** Lo reportaste tú: lo decide otra persona del equipo. */
+    val propio: Boolean = false)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.Decision")
 internal data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "", val mensaje: String = "")

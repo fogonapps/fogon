@@ -2115,7 +2115,8 @@ class Social(
                 }.firstOrNull()
             } }
             val estado = estadoContenido?.first ?: "visible"
-            Caso(que, objeto, motivos, rs.map { it[3] }.distinct().size, oculto, contenido, autor?.let(::persona), autor?.let(::puntosVigentes) ?: 0, estado, estadoContenido?.second?.takeIf { estado == "retirado" })
+            Caso(que, objeto, motivos, rs.map { it[3] }.distinct().size, oculto, contenido, autor?.let(::persona), autor?.let(::puntosVigentes) ?: 0, estado, estadoContenido?.second?.takeIf { estado == "retirado" },
+                propio = rs.any { it[3] as Long == yo })
         }.filterNotNull().sortedWith(compareByDescending<Caso> { Moderacion.MENOR_EN_RIESGO in it.motivos }.thenByDescending { it.personas })
     }
 

@@ -634,4 +634,5 @@
     <string name="historia_buscar_app">Busca una canción o una de tus metas</string>
     <string name="anotar_sin_cuentas">Para anotar hace falta al menos una cuenta activa (todas están archivadas). Crea una o vuelve a activar alguna en Cuentas.</string>
     <string name="color_n">Color %1$d</string>
+    <string name="anotar_elige_categoria">Elige una categoría (si no, queda «Por revisar»)</string>
 </resources>

@@ -1,5 +1,7 @@
 package io.github.fogonapps.social.ui
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import io.github.fogonapps.identidad.IconosSociales as Iconos
 import io.github.fogonapps.identidad.PistaSocial as Pista
 import io.github.fogonapps.identidad.PildoraSocial as Pildora
@@ -699,7 +701,8 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                 }
                 Box(Modifier.align(Alignment.TopStart).padding(6.dp).size(44.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.7f)).clickable { onCerrar() },
                     contentAlignment = Alignment.Center) { IconoRiso(Iconos.Atras, stringResource(R.string.historia_cerrar), tamano = 22.dp, tinta = f.texto) }
-                if (!dibujando) Column(Modifier.align(Alignment.TopEnd).padding(6.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End,
+                if (!dibujando) androidx.compose.runtime.CompositionLocalProvider(LocalHerramientasConNombre provides (capas.isEmpty() && trazos.isEmpty() && foto == null && adjunto == null)) {
+                Column(Modifier.align(Alignment.TopEnd).padding(6.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     HerramientaHistoria(stringResource(R.string.historia_texto_corto), letra = "Aa") { escribiendo = Capa(0, color = if (foto != null) 0 else contraste(fondo)) }
                     HerramientaHistoria(stringResource(R.string.historia_sticker), IconosFogon.Estrella) { eligiendoSticker = true }
@@ -716,6 +719,7 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
                         if (foto != null) HerramientaHistoria(stringResource(R.string.historia_sin_foto), IconosFogon.Cerrar) { foto = null; video?.archivo?.delete(); video = null }
                     }
                     HerramientaHistoria(stringResource(if (verMas) R.string.historia_ver_menos else R.string.historia_ver_mas), letra = if (verMas) "⌃" else "⋯") { verMas = !verMas }
+                }
                 }
             }
             adjunto?.let { a ->
@@ -825,8 +829,11 @@ fun CrearHistoria(vm: InterfazSocial, adjuntoInicial: JsonObject? = null, onCerr
 @Composable
 private fun HerramientaHistoria(nombre: String, icono: io.github.fogonapps.identidad.Dibujo? = null, letra: String? = null, circulo: Color? = null, onClick: () -> Unit) {
     val f = FogonTema.actual
-    Row(Modifier.clip(FormaPildora).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1,
+    // Con algo ya puesto en la historia, solo el ícono (el nombre tapaba lo que se escribe); lo dice el lector de pantalla.
+    val conNombre = LocalHerramientasConNombre.current
+    Row(Modifier.clip(FormaPildora).clickable(onClick = onClick).semantics { contentDescription = nombre },
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (conNombre) Text(nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1,
             modifier = Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.55f)).padding(horizontal = 8.dp, vertical = 3.dp))
         Box(Modifier.size(46.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.8f)).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
             when {
@@ -837,6 +844,8 @@ private fun HerramientaHistoria(nombre: String, icono: io.github.fogonapps.ident
         }
     }
 }
+
+private val LocalHerramientasConNombre = androidx.compose.runtime.staticCompositionLocalOf { true }
 
 /** A quién va la historia, como píldora con su punto (la elegida, llena). */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -1033,7 +1042,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
         while (progreso < 1f) { delay(50); progreso += 50f / duracion }
         siguiente()
     }
-    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    // A pantalla completa y con las barras del sistema respetadas una sola vez (antes se cortaban arriba y abajo).
+    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val imagen = historia.datos.t("imagen")
         val (color, sobre) = fondoHistoria((historia.datos["fondo"] as? JsonPrimitive)?.intOrNull ?: 0)
         Box(Modifier.fillMaxSize().background(if (imagen.isNotBlank()) f.fondo else color).systemBarsPadding()
@@ -1074,7 +1084,8 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                         decorationBox = { campo -> if (respuesta.isEmpty()) Text(stringResource(R.string.historia_responder_a, grupo.persona.nombre.ifBlank { grupo.persona.usuario }), color = f.textoSuave, style = MaterialTheme.typography.bodyMedium); campo() })
                     if (respuesta.isNotBlank()) BotonIcono(Iconos.Enviar, stringResource(R.string.historia_responder)) { vm.responderHistoria(grupo.persona.usuario, respuesta.trim()); respuesta = "" }
                 }
-                Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.85f)).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Con borde: sobre la banda oscura de arriba o de abajo de la foto se leen enteras.
+                Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.92f)).border(f.borde, f.linea, FormaPildora).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (propia) {
                         Pildora(stringResource(R.string.historia_vistas), Iconos.Anime) { alcance.launch { vistas = vm.red.vistasHistoria(historia) } }
                         Pildora(stringResource(R.string.historia_destacar), Iconos.Estrella) { destacando = true }
@@ -1100,7 +1111,7 @@ fun VisorHistorias(vm: InterfazSocial, grupos: List<GrupoHistoriasSocial>, inici
                         }
                     }
                 }
-                Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.clip(FormaPildora).background(f.fondo.copy(alpha = 0.92f)).border(f.borde, f.linea, FormaPildora).padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AvatarRed(grupo.persona, 34.dp)
                     Text(grupo.persona.nombre.ifBlank { grupo.persona.usuario }, style = MaterialTheme.typography.titleSmall, color = f.texto)
                     Text(haceCuanto(historia.cuando) + if (historia.mejores) " · " + stringResource(R.string.historia_mejores_amigos) else "", style = MaterialTheme.typography.bodySmall,

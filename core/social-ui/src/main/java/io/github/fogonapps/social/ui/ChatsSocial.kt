@@ -456,7 +456,7 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
                 Box(Modifier.size(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error))
                 Text(stringResource(R.string.social_chat_grabando, segundosGrabados, ChatSocial.VOZ_MAX), style = MaterialTheme.typography.bodyLarge, color = f.texto,
                     modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
-                BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_mensaje), lleno = true, activo = !enviando) { mandarVoz() }
+                BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_enviar_voz), lleno = true, activo = !enviando) { mandarVoz() }
                 return@Row
             }
             if (extras.elegirObra != null && extras.iconoObra != null) Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { elegirObra = !elegirObra; stickers = false }, contentAlignment = Alignment.Center) {

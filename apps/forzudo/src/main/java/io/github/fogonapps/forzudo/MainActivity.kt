@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo
 
+import androidx.compose.ui.unit.dp
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -73,6 +74,9 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(barra, barra)
             }
             FogonTema(Paleta.Forzudo, apariencia) {
+                // Los campos de texto redondeados, como el resto de Fogón (por defecto vienen casi rectos).
+                androidx.compose.material3.MaterialTheme(shapes = androidx.compose.material3.MaterialTheme.shapes.copy(
+                    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(18.dp))) {
                 val pila by vm.pila.collectAsStateWithLifecycle()
                 val pestana by vm.pestana.collectAsStateWithLifecycle()
                 val estado by vm.estado.collectAsStateWithLifecycle()
@@ -120,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     onExportar = { exportar.launch("el-forzudo-respaldo-${iso(vm.hoy())}.json") },
                     onImportar = { importar.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
                 )
+            }
             }
             }
         }

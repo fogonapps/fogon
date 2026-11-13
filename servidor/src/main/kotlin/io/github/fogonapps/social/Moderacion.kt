@@ -51,6 +51,8 @@ object Moderacion {
     /** Lo reportado, para verlo: el texto o los datos de la publicación, o el texto que mandó quien reportó un mensaje. */
     val contenido: String, val autor: Persona?, val faltasAutor: Int,
     val estado: String, val retiradoHasta: Long?,
+    /** Lo reportó quien mira la cola: no lo puede decidir (lo decide otra persona del equipo). */
+    val propio: Boolean = false,
 )
 /**
  * [decision]: "sin_falta", "advertencia" (se quita lo reportado, sin puntos: un aviso con el motivo), "falta",

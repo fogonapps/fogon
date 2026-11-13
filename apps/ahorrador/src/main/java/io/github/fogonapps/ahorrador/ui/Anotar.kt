@@ -136,7 +136,7 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
                 }
             }
 
-            if (categoria == null && (tipo == TipoMovimiento.GASTO || tipo == TipoMovimiento.INGRESO)) Pista(stringResource(R.string.banco_por_revisar))
+            if (categoria == null && (tipo == TipoMovimiento.GASTO || tipo == TipoMovimiento.INGRESO)) Pista(stringResource(R.string.anotar_elige_categoria))
             when (tipo) {
                 TipoMovimiento.GASTO, TipoMovimiento.INGRESO -> {
                     // De a cuatro por fila; la última fila completa con huecos para que no se estire.

@@ -35,7 +35,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
     val secciones = listOf(
         SeccionPerfil(0, Iconos.Pesa, stringResource(R.string.titulo_entrenos)) {
             if (usuario != null) {
-                BotonSecundario(stringResource(R.string.entreno_publicados), { vm.abrir(Pantalla.Social("perfil", usuario = usuario!!)) })
+                BotonSecundario(stringResource(R.string.entreno_publicados), { vm.abrir(Pantalla.Social("perfil", usuario = usuario!!)) }, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
             }
             if (e.sessions.isEmpty()) PerfilVacio(Iconos.Pesa, stringResource(R.string.sin_entrenos))
             e.sessions.sortedByDescending { it.date }.forEach { sesion ->
@@ -81,7 +81,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfazCuenta(vm)) { FotoPerfilLocal(identidad.foto, tamano = 96.dp) }
                 BotonMasFoto(stringResource(R.string.perfil_editar), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
-        }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {
+        }, enlace = {}, acciones = {
             io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
             if (usuario != null) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)

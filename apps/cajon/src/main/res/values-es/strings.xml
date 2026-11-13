@@ -1764,6 +1764,6 @@
         <item quantity="one">%1$d obra</item>
         <item quantity="other">%1$d obras</item>
     </plurals>
-    <string name="quien_ve_tu_perfil">Quién ve tu perfil</string>
-    <string name="quien_ve_tu_perfil_pista">Lo privado no sale de tu teléfono. «Solo amigos» es para quienes se siguen entre ustedes.</string>
+    <string name="parte_reto">Tu reto del año</string>
+    <string name="parte_por_ver">Lo que tienes por ver</string>
 </resources>

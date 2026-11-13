@@ -279,7 +279,8 @@ private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Desca
     AnimatedVisibility(d != null, enter = slideInVertically { it }, exit = slideOutVertically { it }) {
         val dd = d ?: return@AnimatedVisibility
         val rest = maxOf(0L, (dd.fin - ahora + 999) / 1000)
-        Row(Modifier.fillMaxWidth().padding(12.dp).tarjetaFogon(forma(22.dp)).padding(12.dp),
+        // Con fondo sólido debajo del vidrio: flota sobre el entrenamiento y lo de atrás no se mezcla con el reloj.
+        Row(Modifier.fillMaxWidth().padding(12.dp).background(f.fondo, forma(22.dp)).tarjetaFogon(forma(22.dp)).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MedidorDescanso(if (dd.total > 0) rest.toFloat() / dd.total else 0f, "${rest / 60}:${(rest % 60).toString().padStart(2, '0')}")
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {

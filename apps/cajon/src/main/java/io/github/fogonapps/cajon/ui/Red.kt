@@ -193,7 +193,8 @@ fun FeedInicio(vm: CajonViewModel) {
     val feed by vm.red.feed.collectAsStateWithLifecycle()
     val sinLeer by vm.red.sinLeer.collectAsStateWithLifecycle()
     // Al instante lo guardado en el teléfono; lo nuevo llega después.
-    LaunchedEffect(usuario) { if (usuario != null && feed == null) vm.red.cargarFeed(avisar = false) }
+    LaunchedEffect(Unit) { vm.red.feedGuardado() }
+    LaunchedEffect(usuario) { if (usuario != null) vm.red.cargarFeed(avisar = false) }
     if (usuario == null) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().clickable { vm.irA(io.github.fogonapps.cajon.Pestana.PARA_TI) }.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -233,7 +234,7 @@ fun PantallaRed(vm: CajonViewModel, e: Estado, enPestana: Boolean = false) {
     val explorar by vm.red.explorar.collectAsStateWithLifecycle()
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     val sinLeer by vm.red.sinLeer.collectAsStateWithLifecycle()
-    var pestana by rememberSaveable { mutableStateOf(if (usuario == null) 1 else 0) }
+    var pestana by rememberSaveable(usuario != null) { mutableStateOf(if (usuario == null) 1 else 0) }
     LaunchedEffect(pestana, usuario) { if (pestana == 0) vm.red.cargarFeed() else vm.red.cargarExplorar(); vm.red.cargarHistorias(); vm.red.revisarSinLeer() }
     // Arriba: tu foto al principio (abre tu perfil), el título y, a la derecha, avisos y mensajes con lo que tengan sin leer.
     val chats by vm.chat.conversaciones.collectAsStateWithLifecycle()
@@ -427,11 +428,19 @@ private fun PasoGustos(vm: CajonViewModel) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).tarjetaFogon().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.red_paso1_titulo), style = MaterialTheme.typography.titleLarge, color = f.texto)
         Text(stringResource(R.string.red_paso1_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-        opciones.avisos.forEach { Pista(stringResource(it)) }
-        // Una probadita de lo que se elige: portadas de lo del momento.
+        // Una probadita de lo que se elige: portadas de lo del momento. El espacio está reservado desde el principio
+        // (recuadros mientras cargan; el aviso, si falló, en el mismo lugar): así los botones no se mueven bajo el dedo.
         val portadas = (opciones.cine.map { it.portada } + opciones.libros.map { it.portada }).filter { it.isNotBlank() }.take(4)
-        if (portadas.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            portadas.forEach { coil3.compose.AsyncImage(it, null, Modifier.weight(1f).aspectRatio(0.68f).clip(forma(12.dp)), contentScale = ContentScale.Crop) }
+        Box(Modifier.fillMaxWidth().aspectRatio(2.55f), contentAlignment = Alignment.Center) {
+            if (portadas.isEmpty() && opciones.avisos.isNotEmpty()) Pista(stringResource(opciones.avisos.first()))
+            else Row(Modifier.matchParentSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (i in 0 until 4) {
+                    val url = portadas.getOrNull(i)
+                    Box(Modifier.weight(1f).aspectRatio(0.68f).clip(forma(12.dp)).background(f.superficie)) {
+                        if (url != null) coil3.compose.AsyncImage(url, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
+                    }
+                }
+            }
         }
         BotonRiso(stringResource(R.string.red_paso1_boton), { vm.abrir(Pantalla.ElegirGustos) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.ahora_no), { vm.gustosListos() }, Modifier.fillMaxWidth())
@@ -559,8 +568,9 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val contenidoApp = interfazSocial(vm).contenido
     val secciones = contenidoApp.SeccionesPerfil(p, propio) { contenidoSeccion(it) }
     val vistaBase = p.aPerfilVista(secciones = secciones, contadores = listOf(
-        ContadorPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) },
+        // Como en las otras apps (y en Instagram): primero quienes te siguen.
         ContadorPerfil("${p.seguidores}", stringResource(R.string.red_seguidores)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, true)) },
+        ContadorPerfil("${p.siguiendo}", stringResource(R.string.red_siguiendo)) { if (!p.cerrada) vm.abrir(Pantalla.GenteRed(usuario, false)) },
         ContadorPerfil(cifraCorta(p.megusta), stringResource(R.string.red_me_gusta_cifra)),
     ))
     val uri = LocalUriHandler.current

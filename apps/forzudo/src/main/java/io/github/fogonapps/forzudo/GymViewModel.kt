@@ -539,7 +539,8 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         if (s.done) { cambiarSerie(id, i) { it.copy(done = false) }; return }
         val previa = L.anterior(e, id)?.getOrNull(i)
         var kg = s.kg ?: previa?.kg
-        var reps = s.reps ?: previa?.reps
+        // Lo que muestra la casilla en gris: lo de la vez anterior o, si no hay, la meta mínima de la rutina.
+        var reps = s.reps ?: previa?.reps ?: c.lo.takeIf { it > 0 }?.toDouble()
         if (reps == null) { avisar(tx(if (c.e.kind == "s") R.string.aviso_escribe_segundos else R.string.aviso_escribe_reps)); return }
         if (c.e.kind == "w" && kg == null) { avisar(tx(R.string.aviso_escribe_peso)); return }
         if (c.e.kind != "w") kg = s.kg

@@ -89,7 +89,8 @@ internal fun ImagenesReporte(c: CasoModeracion, vm: InterfazSocial? = null) {
                 if (viendo) VideoHistoria(vm::cabeceras, video, false, Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)))
                 else Pildora(stringResource(R.string.social_mod_ver_video), IconosMultimedia.Reproducir) { viendo = true }
             }
-            listOf(t("texto"), t("pregunta")).filter { it.isNotBlank() }.forEach { Text(it.take(600), style = MaterialTheme.typography.bodyMedium, color = f.texto) }
+            val compuesta = (datos?.get("compuesta") as? JsonPrimitive)?.content == "true"
+            listOf(if (compuesta && imagen.isNotBlank()) "" else t("texto"), t("pregunta")).filter { it.isNotBlank() }.forEach { Text(it.take(600), style = MaterialTheme.typography.bodyMedium, color = f.texto) }
             if (datos == null || (imagen.isBlank() && video.isBlank() && t("texto").isBlank() && t("pregunta").isBlank()))
                 Text(stringResource(R.string.social_mod_historia_sin_contenido), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }

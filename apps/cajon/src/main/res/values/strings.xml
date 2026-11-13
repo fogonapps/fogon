@@ -1762,6 +1762,6 @@
         <item quantity="one">%1$d work</item>
         <item quantity="other">%1$d works</item>
     </plurals>
-    <string name="quien_ve_tu_perfil">Who sees your profile</string>
-    <string name="quien_ve_tu_perfil_pista">Private stays on your phone. "Friends only" is for people who follow each other.</string>
+    <string name="parte_reto">Your yearly challenge</string>
+    <string name="parte_por_ver">What you want to watch</string>
 </resources>

@@ -443,7 +443,7 @@
     <string name="historia_usar_album">Usar el álbum entero</string>
     <string name="historia_respondio">Respondió a tu historia: %1$s</string>
     <string name="social_amigos">Amigos</string>
-    <string name="amigos_dejar">Amigos · dejar de seguir</string>
+    <string name="amigos_dejar">Amigos</string>
     <string name="historia_encuesta">Encuesta</string>
     <string name="historia_pregunta">Tu pregunta (opcional)</string>
     <string name="historia_opcion">Opción %1$d</string>
@@ -602,4 +602,7 @@
     <string name="social_mod_ver_video">Ver el video</string>
     <string name="social_mod_historia_sin_contenido">La historia ya no tiene contenido para mostrar (venció o se borró).</string>
     <string name="sancion_advertir">Advertir</string>
+    <string name="social_mod_reporte_propio">Tú lo reportaste: lo decide otra persona del equipo.</string>
+    <string name="social_chat_enviar_voz">Enviar la nota de voz</string>
+    <string name="social_te_sigue">te sigue</string>
 </resources>

@@ -1,2 +1,0 @@
-• Responder una historia ya no cierra la app.
-• Moderación: las historias reportadas se ven y hay un botón para advertir.

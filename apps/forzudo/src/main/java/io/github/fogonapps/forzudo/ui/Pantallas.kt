@@ -225,7 +225,6 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
             io.github.fogonapps.identidad.IconoRiso(Iconos.Reloj, null, tamano = 16.dp, tinta = f.textoSuave, corrida = null)
             Text(stringResource(R.string.descanso_de, "${c.rest / 60}min" + if (c.rest % 60 > 0) " ${c.rest % 60}s" else ""), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        if (c.e.kind == "w") HerramientasSerie(c, series.firstOrNull()?.kg ?: previas.firstOrNull()?.kg, std?.mancuerna == true, c.id in vm.bib.conBarra)
         // Encabezado de la tabla
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             val est = MaterialTheme.typography.labelSmall
@@ -259,6 +258,8 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
             }
         }
         TextButton({ vm.agregarSerie(c.id) }, Modifier.padding(horizontal = 8.dp)) { Text(stringResource(R.string.mas_agregar_serie)) }
+        // Calentamiento y discos, debajo de las series: aparecen al escribir el peso sin mover lo que se está llenando.
+        if (c.e.kind == "w") HerramientasSerie(c, series.firstOrNull()?.kg ?: previas.firstOrNull()?.kg, std?.mancuerna == true, c.id in vm.bib.conBarra)
     }
 }
 

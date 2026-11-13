@@ -1,5 +1,6 @@
 package io.github.fogonapps.cucha
 
+import androidx.compose.ui.unit.dp
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -63,6 +64,9 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(barra, barra)
             }
             FogonTema(Paleta.Cucha, apariencia) {
+                // Los campos de texto redondeados, como el resto de Fogón (por defecto vienen casi rectos).
+                androidx.compose.material3.MaterialTheme(shapes = androidx.compose.material3.MaterialTheme.shapes.copy(
+                    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(18.dp))) {
                 val pila by vm.pila.collectAsStateWithLifecycle()
                 val pestana by vm.pestana.collectAsStateWithLifecycle()
                 BackHandler(enabled = pila.isNotEmpty() || pestana != Pestana.HOY) { vm.atras() }
@@ -114,6 +118,7 @@ class MainActivity : ComponentActivity() {
                     },
                     elegirImagen = { cb -> alElegir = cb; imagen.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 ))
+            }
             }
             }
         }
