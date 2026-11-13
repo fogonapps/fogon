@@ -437,12 +437,17 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val p = perfiles[usuario]
     if (p == null && usuario !in noEstan) LaunchedEffect(usuario) { kotlinx.coroutines.delay(4000); while (perfiles[usuario] == null) { vm.red.verPerfil(usuario); kotlinx.coroutines.delay(6000) } }
     val propio = usuario == yo
+    // Dejar de seguir pide confirmación (el botón dice «Siguiendo» o «Amigos», como en las redes de fotos).
+    val confirmarDejarDeSeguir = LocalConfirmar.current
+    val preguntaDejar = stringResource(R.string.dejar_de_seguir_pregunta, usuario)
+    val textoDejar = stringResource(R.string.dejar_de_seguir)
+    fun confirmarDejar() = confirmarDejarDeSeguir(preguntaDejar, null) { vm.red.dejarDeSeguir(usuario) }
     val navegacion: @Composable () -> Unit = {
         Cabecera("@$usuario", vm::cerrar, chico = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BotonIcono(Iconos.Compartir, stringResource(R.string.compartir_perfil), grande = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-                if (yo != null) Box {
-                    BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones), grande = true) { menu = true }
+                // Un solo botón: compartir, copiar el enlace, bloquear y reportar van en el menú.
+                Box {
+                    BotonIcono(Iconos.Opciones, stringResource(R.string.red_mas_opciones)) { menu = true }
                     // El menú de los tres puntos, desplegado desde ellos (como en las redes).
                     val portapapeles = androidx.compose.ui.platform.LocalClipboardManager.current
                     val copiado = stringResource(R.string.red_enlace_copiado)
@@ -456,8 +461,8 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                         }
                         Opcion(Iconos.Enlace, stringResource(R.string.red_copiar_enlace)) { portapapeles.setText(androidx.compose.ui.text.AnnotatedString(ClienteSocial.enlacePerfil(usuario))); vm.decir(copiado) }
                         Opcion(Iconos.Compartir, stringResource(R.string.compartir_perfil)) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
-                        Opcion(Iconos.Cerrar, stringResource(R.string.red_bloquear)) { hoja = "bloquear" }
-                        Opcion(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { hoja = "reportar" }
+                        if (yo != null) Opcion(Iconos.Cerrar, stringResource(R.string.red_bloquear)) { hoja = "bloquear" }
+                        if (yo != null) Opcion(Iconos.Bandera, stringResource(R.string.red_reportar), peligro = true) { hoja = "reportar" }
                     }
                 }
             }
@@ -471,7 +476,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         return
     }
     @Composable
-    fun contenidoSeccion(idSeccion: Int) {
+    fun contenidoParte(idSeccion: Int) {
         when (idSeccion) {
             0 -> if (p.publicaciones.isEmpty()) NadaAqui() else CuadriculaPublicaciones(vm, p.publicaciones)
             1 -> GustosDelPerfil(vm, p, propio)
@@ -489,6 +494,12 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             else -> interfazSocial(vm).contenido.CifrasPerfil(p)
         }
     }
+
+    @Composable
+    fun contenidoSeccion(idSeccion: Int) {
+        // «Lo tuyo» junta los destacados y los artistas (antes, dos pestañas).
+        if (idSeccion == 1) { contenidoParte(1); contenidoParte(2) } else contenidoParte(idSeccion)
+    }
     val contenidoApp = interfazSocial(vm).contenido
     val secciones = contenidoApp.SeccionesPerfil(p, propio) { contenidoSeccion(it) }
     val vistaBase = p.aPerfilVista(secciones = secciones, contadores = listOf(
@@ -505,15 +516,15 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
         acciones = {
             when {
-                yo == null -> BotonRiso(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+                yo == null -> io.github.fogonapps.perfil.BotonPerfilDestacado(stringResource(R.string.red_crear_para_seguir), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
                 else -> {
                     when (p.relacion) {
                         // Se siguen mutuamente: son amigos (el botón lo dice; tocarlo deja de seguir).
-                        "sigo" -> BotonSecundario(stringResource(if (p.meSigue) R.string.amigos_dejar else R.string.red_dejar_de_seguir), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
-                        "pendiente" -> BotonSecundario(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
-                        else -> BotonRiso(stringResource(if (p.meSigue) R.string.red_seguir_tambien else R.string.red_seguir), { vm.red.seguir(usuario) }, Modifier.weight(1f))
+                        "sigo" -> io.github.fogonapps.perfil.BotonPerfil(stringResource(if (p.meSigue) R.string.amigos_dejar else R.string.red_dejar_de_seguir), { confirmarDejar() }, Modifier.weight(1f))
+                        "pendiente" -> io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.red_pendiente), { vm.red.dejarDeSeguir(usuario) }, Modifier.weight(1f))
+                        else -> io.github.fogonapps.perfil.BotonPerfilDestacado(stringResource(if (p.meSigue) R.string.red_seguir_tambien else R.string.red_seguir), { vm.red.seguir(usuario) }, Modifier.weight(1f))
                     }
-                    BotonSecundario(stringResource(R.string.chat_mensaje), { vm.abrir(Pantalla.Conversacion(usuario)) }, Modifier.weight(1f))
+                    io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.chat_mensaje), { vm.abrir(Pantalla.Conversacion(usuario)) }, Modifier.weight(1f))
                 }
             }
         },
@@ -798,39 +809,24 @@ internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) 
 
 /* ----- La canción del perfil ----- */
 
-/**
- * Pide a la app de música que la persona tenga (la que sea) que busque y toque la canción: es la forma estándar de
- * Android (`MEDIA_PLAY_FROM_SEARCH`), sin depender de ningún servicio ni guardar música en el servidor.
- */
-fun tocarCancion(ctx: android.content.Context, titulo: String, artista: String, album: String): Boolean {
-    val i = Intent(android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
-        .putExtra(android.app.SearchManager.QUERY, "$titulo $artista".trim())
-        .putExtra(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, android.provider.MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
-        .putExtra(android.provider.MediaStore.EXTRA_MEDIA_TITLE, titulo)
-        .putExtra(android.provider.MediaStore.EXTRA_MEDIA_ARTIST, artista)
-        .putExtra(android.provider.MediaStore.EXTRA_MEDIA_ALBUM, album)
-    return runCatching { ctx.startActivity(i) }.isSuccess
-}
 
 /** La tarjeta de la canción del perfil: portada del álbum, la canción, el artista y ▶. */
 @Composable
 fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
     val f = FogonTema.actual
-    val ctx = LocalContext.current
-    val sinApp = stringResource(R.string.cancion_sin_app)
-    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(10.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Portada(portada, "album", album, Modifier.width(52.dp), conTitulo = false)
-        Column(Modifier.weight(1f).then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier)) {
-            Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(artista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    // Compacta, como la canción de un perfil en las redes de fotos: la portada chica, el título y el artista, y el botón.
+    Row(modifier.padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp))
+        .then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Portada(portada, "album", album, Modifier.width(34.dp), esquina = 6.dp, conTitulo = false)
+        Column(Modifier.weight(1f, fill = false)) {
+            Text(titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(artista, style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        // Con el avance de Apple: suena 30 segundos aquí, y el botón de Apple Music (lo piden sus condiciones).
+        // Con el avance de Apple: suena 30 segundos aquí, y el enlace a Apple Music (lo piden sus condiciones).
         if (audio.isNotBlank()) {
             if (sonar) io.github.fogonapps.social.ui.MusicaDePerfil(audio) else io.github.fogonapps.social.ui.BotonAvance(audio)
             io.github.fogonapps.social.ui.EnlaceAppleMusic(enlace)
-        } else BotonIcono(Iconos.Tocar, stringResource(R.string.cancion_tocar), lleno = true) {
-            if (!tocarCancion(ctx, titulo, artista, album)) android.widget.Toast.makeText(ctx, sinApp, android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -862,20 +858,6 @@ fun ElegirCancion(vm: CajonViewModel, e: Estado) {
                         Text(listOf(c.artista, c.album).filter { it.isNotBlank() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
-            }
-        }
-        Seccion(stringResource(R.string.cancion_de_tu_cajon))
-    }
-    val q = buscar.trim().lowercase()
-    val albumes = e.vivas.filter { it.tipo == "album" && it.canciones.isNotEmpty() }.sortedByDescending { it.cambio }
-    if (albumes.isEmpty()) return
-    albumes.forEach { a ->
-        val canciones = a.canciones.filter { q.isEmpty() || q in it.titulo.lowercase() || q in a.titulo.lowercase() || q in a.creador.lowercase() }
-        if (canciones.isEmpty()) return@forEach
-        Seccion("${a.titulo} · ${a.creador}")
-        canciones.take(if (q.isEmpty()) 6 else 40).forEach { c ->
-            Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.ponerCancion(listOf("v2", c.titulo, a.creador, a.titulo, a.portada).joinToString("|") { it.replace("|", "/") }); vm.cerrar() }.padding(horizontal = 20.dp, vertical = 8.dp)) {
-                Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

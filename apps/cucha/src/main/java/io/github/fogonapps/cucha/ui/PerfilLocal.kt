@@ -86,8 +86,8 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
                 BotonMasFoto(stringResource(R.string.perfil_foto), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
         }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {
-            BotonSecundario(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
-            if (usuario != null) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
+            io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
+            if (usuario != null) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
@@ -161,6 +161,7 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     val r = remoto
     if (r == null) { Text(stringResource(R.string.cuenta_edicion_pendiente), Modifier.padding(16.dp), color = FogonTema.actual.texto); return }
+    io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
     var nombre by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarNombrePerfil(r.persona.nombre)) }
     var bio by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarBioPerfil(r.bio)) }
     var foto by remember(fotoRemota) { mutableStateOf(fotoRemota) }

@@ -530,7 +530,7 @@
     <string name="entreno_error">No se pudo preparar la instantánea o el archivo. Revisa los límites e inténtalo otra vez.</string>
     <string name="entreno_publicar">Publicar</string>
     <string name="entreno_seguir">Seguir</string>
-    <string name="entreno_dejar_seguir">Dejar de seguir</string>
+    <string name="entreno_dejar_seguir">Siguiendo</string>
     <string name="entreno_avisos">Avisos</string>
     <string name="entreno_guardados">Guardados</string>
     <string name="entreno_moderacion">Moderación</string>

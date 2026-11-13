@@ -958,9 +958,6 @@
   <string name="buscar_en_internet">Search online</string>
   <string name="puesto_en_perfil">Done: it’s on your profile</string>
   <string name="cancion_en_internet">Online</string>
-  <string name="cancion_de_tu_cajon">From your cajón</string>
-  <string name="cancion_sin_app">No music app can play it</string>
-  <string name="cancion_tocar">Play the song</string>
   <string name="cancion_elegir">Your song</string>
   <string name="cancion_elegir_pista">Search for any song. It shows on your profile and whoever taps it hears it in their music app.</string>
   <string name="cancion_buscar">Search for a song</string>
@@ -1059,7 +1056,7 @@
   <string name="red_cuenta_privada">Private account</string>
   <string name="red_cuenta_privada_pista">With a private account, only approved followers see what you post; anyone who wants to follow you has to ask.</string>
   <string name="red_cuenta_privada_texto">This account is private. Follow it to see what it posts.</string>
-  <string name="red_dejar_de_seguir">Following · unfollow</string>
+  <string name="red_dejar_de_seguir">Following</string>
   <string name="red_desbloqueado">Unblocked</string>
   <string name="red_desbloquear">Unblock</string>
   <string name="red_despacio">Too fast: wait a moment</string>
@@ -1596,7 +1593,7 @@
   <string name="historia_usar_album">Use the whole album</string>
   <string name="historia_respondio">Replied to your story: %1$s</string>
   <string name="amigos">Friends</string>
-  <string name="amigos_dejar">Friends · unfollow</string>
+  <string name="amigos_dejar">Friends</string>
   <string name="chat_buscar_amigos">Search messages and friends</string>
   <string name="chat_tamano_letra">Text size</string>
   <string name="chat_fondo_poster">Background with a poster</string>
@@ -1700,4 +1697,6 @@
     <string name="chat_llaves_nuevas_seguro">From now on you’ll be able to write from this app. Old messages encrypted with your previous keys won’t be readable on any phone.</string>
     <string name="cifra_seguidores">followers</string>
     <string name="cifra_siguiendo">following</string>
+    <string name="dejar_de_seguir_pregunta">Unfollow @%1$s?</string>
+    <string name="dejar_de_seguir">Unfollow</string>
 </resources>

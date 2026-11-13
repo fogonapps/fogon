@@ -132,6 +132,11 @@ class Base(ruta: String) {
                 s.execute("CREATE TABLE IF NOT EXISTS chispas(id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cantidad INTEGER NOT NULL, motivo TEXT NOT NULL, cuando INTEGER NOT NULL)")
                 s.execute("CREATE INDEX IF NOT EXISTS chispas_cuenta ON chispas(cuenta, motivo)")
                 s.execute("CREATE TABLE IF NOT EXISTS temas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, tema TEXT NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, tema))")
+                // Los temas que ya no están en la tienda (los de la primera versión) se quitan: el puesto vuelve al de siempre.
+                val vigentes = (TemasPerfil.FONDOS.keys + TemasPerfil.MARCOS.keys.map { "marco:$it" }).joinToString(",") { "'$it'" }
+                s.execute("UPDATE cuentas SET tema = '' WHERE tema != '' AND tema NOT IN ($vigentes)")
+                s.execute("UPDATE cuentas SET marco = '' WHERE marco != '' AND 'marco:' || marco NOT IN ($vigentes)")
+                s.execute("DELETE FROM temas WHERE tema NOT IN ($vigentes)")
                 // Historias solo para amigos, respuestas a la pregunta de una historia y la publicación fijada del perfil.
                 columna(s, "historias", "amigos INTEGER NOT NULL DEFAULT 0")
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,

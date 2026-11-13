@@ -589,4 +589,7 @@
     <string name="social_chat_llaves_nuevas_seguro">From now on you’ll be able to write from this app. Old messages encrypted with your previous keys won’t be readable on any phone.</string>
     <string name="social_cifra_seguidores">followers</string>
     <string name="social_cifra_siguiendo">following</string>
+    <string name="social_amigos_dejar">Friends</string>
+    <string name="social_dejar_de_seguir_pregunta">Unfollow @%1$s?</string>
+    <string name="social_dejar_de_seguir">Unfollow</string>
 </resources>

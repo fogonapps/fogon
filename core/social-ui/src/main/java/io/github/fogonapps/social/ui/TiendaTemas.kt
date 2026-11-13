@@ -81,6 +81,31 @@ fun BotonTiendaTemas(vm: InterfazSocial, modifier: Modifier = Modifier) {
 }
 
 /**
+ * La tienda dentro de «Editar perfil»: una tarjeta con tus chispas que abre la tienda (fondo y marco son parte de cómo
+ * se ve tu perfil). Solo con cuenta.
+ */
+@Composable
+fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
+    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+    if (usuario == null) return
+    val temas by vm.red.temas.collectAsStateWithLifecycle()
+    LaunchedEffect(usuario) { vm.red.cargarTemas() }
+    val f = FogonTema.actual
+    var abierta by remember { mutableStateOf(false) }
+    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(20.dp)).background(f.superficie).clickable { abierta = true }.padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        IconoChispa(28.dp)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.social_temas_tienda), style = MaterialTheme.typography.titleSmall, color = f.texto)
+            Text(stringResource(R.string.social_chispas_n, temas.chispas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+        if (temas.diario) Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1))
+        IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+    }
+    if (abierta) TiendaTemas(vm) { abierta = false }
+}
+
+/**
  * La tienda del perfil: fondos (escenas con su paleta, como los de Steam) y marcos de foto, que se compran con chispas.
  * Las chispas se ganan usando las apps (la bienvenida y las del día) y solo sirven aquí.
  */

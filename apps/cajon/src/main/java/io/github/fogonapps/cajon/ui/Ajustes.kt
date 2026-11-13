@@ -80,6 +80,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     if (u == null) FilaAjuste(Iconos.Persona, stringResource(R.string.red_crear_cuenta), null) { vm.abrir(Pantalla.CuentaRed) }
     else {
         FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
+        FilaAjuste(Iconos.Guardar, stringResource(R.string.parte_guardadas), null) { vm.abrir(Pantalla.GuardadosRed) }
         FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
     }
     // Cambiar de cuenta (o agregar otra) va aquí, con lo de la cuenta, y no en el perfil.

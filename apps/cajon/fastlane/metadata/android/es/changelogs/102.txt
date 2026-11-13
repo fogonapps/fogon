@@ -1,0 +1,4 @@
+• Perfil más simple y compacto: cuatro pestañas (Publicaciones, Lo tuyo, Reseñas y Cifras), cabecera más liviana y un solo botón arriba para compartir, copiar el enlace, bloquear o reportar.
+• «Guardadas» ahora está en Ajustes.
+• La tienda del perfil también está en «Editar perfil».
+• Seguir y dejar de seguir con confirmación; la canción del perfil se muestra en una píldora.

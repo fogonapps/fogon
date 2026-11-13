@@ -1,0 +1,4 @@
+• Simpler, more compact profile: four tabs (Posts, Yours, Reviews and Stats), a lighter header and a single top button to share, copy the link, block or report.
+• "Saved" now lives in Settings.
+• The profile store is also in "Edit profile".
+• Unfollowing asks first; the profile song shows as a pill.

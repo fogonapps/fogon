@@ -958,9 +958,6 @@
   <string name="buscar_en_internet">Buscar en internet</string>
   <string name="puesto_en_perfil">Listo: está en tu perfil</string>
   <string name="cancion_en_internet">En internet</string>
-  <string name="cancion_de_tu_cajon">De tu cajón</string>
-  <string name="cancion_sin_app">No hay una app de música que pueda tocarla</string>
-  <string name="cancion_tocar">Tocar la canción</string>
   <string name="cancion_elegir">Tu canción</string>
   <string name="cancion_elegir_pista">Busca la canción que quieras. Sale en tu perfil y quien la toque la escucha en su app de música.</string>
   <string name="cancion_buscar">Buscar una canción</string>
@@ -1059,7 +1056,7 @@
   <string name="red_cuenta_privada">Cuenta privada</string>
   <string name="red_cuenta_privada_pista">Con la cuenta privada, solo tus seguidores aprobados ven lo que publicas; quien quiera seguirte te lo pide.</string>
   <string name="red_cuenta_privada_texto">Esta cuenta es privada. Síguela para ver lo que publica.</string>
-  <string name="red_dejar_de_seguir">Siguiendo · dejar de seguir</string>
+  <string name="red_dejar_de_seguir">Siguiendo</string>
   <string name="red_desbloqueado">Desbloqueada</string>
   <string name="red_desbloquear">Desbloquear</string>
   <string name="red_despacio">Vas muy rápido: espera un momento</string>
@@ -1598,7 +1595,7 @@
   <string name="historia_usar_album">Usar el álbum entero</string>
   <string name="historia_respondio">Respondió a tu historia: %1$s</string>
   <string name="amigos">Amigos</string>
-  <string name="amigos_dejar">Amigos · dejar de seguir</string>
+  <string name="amigos_dejar">Amigos</string>
   <string name="chat_buscar_amigos">Buscar en mensajes y amigos</string>
   <string name="chat_tamano_letra">Tamaño de la letra</string>
   <string name="chat_fondo_poster">Fondo con un póster</string>
@@ -1702,4 +1699,6 @@
     <string name="chat_llaves_nuevas_seguro">Desde ahora vas a poder escribir desde esta app. Los mensajes viejos cifrados con tus llaves anteriores no se podrán leer en ningún teléfono.</string>
     <string name="cifra_seguidores">seguidores</string>
     <string name="cifra_siguiendo">siguiendo</string>
+    <string name="dejar_de_seguir_pregunta">¿Dejar de seguir a @%1$s?</string>
+    <string name="dejar_de_seguir">Dejar de seguir</string>
 </resources>

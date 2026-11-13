@@ -197,15 +197,15 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         Cabecera(yo?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar, chico = true) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!cuenta?.permisos.isNullOrEmpty()) ConCuenta(casos.orEmpty().size + frasesPendientes.size) {
-                    BotonIcono(Iconos.Bandera, stringResource(R.string.mod_titulo), grande = true) { vm.abrir(Pantalla.Moderacion) }
+                    BotonIcono(Iconos.Bandera, stringResource(R.string.mod_titulo)) { vm.abrir(Pantalla.Moderacion) }
                 }
-                BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes), grande = true) { vm.abrir(Pantalla.Ajustes) }
+                BotonIcono(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
             }
         }
     }
 
     @Composable
-    fun contenidoSeccion(idSeccion: Int) {
+    fun contenidoParte(idSeccion: Int) {
         fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
         // Quién ve cada pestaña en la red (con cuenta): se elige aquí mismo.
         val partesDe = mapOf(1 to listOf(PartesPerfil.DESTACADOS, PartesPerfil.FAVORITAS, PartesPerfil.GUSTOS), 2 to listOf(PartesPerfil.MUSICA),
@@ -328,6 +328,12 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             else -> CifrasDelPerfil(vm, e, anio)
         }
     }
+
+    @Composable
+    fun contenidoSeccion(idSeccion: Int) {
+        // «Lo tuyo» junta los destacados y los artistas (antes, dos pestañas).
+        if (idSeccion == 1) { contenidoParte(1); contenidoParte(2) } else contenidoParte(idSeccion)
+    }
     val secciones = seccionesCajon(true) { contenidoSeccion(it) }
     val contadores = buildList {
         val u = yo
@@ -368,10 +374,10 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         },
         acciones = {
-            BotonSecundario(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
+            io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
             val u = yo
-            if (u == null) BotonRiso(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
-            else BotonSecundario(stringResource(R.string.compartir_perfil), {
+            if (u == null) io.github.fogonapps.perfil.BotonPerfilDestacado(stringResource(R.string.red_crear_cuenta), { vm.abrir(Pantalla.CuentaRed) }, Modifier.weight(1f))
+            else io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.cajon.datos.ClienteSocial.enlacePerfil(u)), null))
         }, Modifier.weight(1f))
@@ -456,6 +462,7 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     var bio by rememberSaveable { mutableStateOf(p.bio) }
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
+    io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
 
     Seccion(stringResource(R.string.foto_y_portada))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

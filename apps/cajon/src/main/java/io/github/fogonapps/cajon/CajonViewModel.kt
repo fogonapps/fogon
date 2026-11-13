@@ -561,7 +561,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         o.copy(nota = nota, estado = Estados.TERMINADO, terminada = o.terminada ?: hoy().toString(), cambio = ahora())
     }
 
-    fun ponerCancion(c: String) = cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }
+    fun ponerCancion(c: String) { cambiar { e -> e.copy(perfil = e.perfil.copy(cancion = c, cambio = ahora())) }; completarCancion() }
+
+    /**
+     * Una canción del perfil en un formato viejo (elegida de los álbumes del cajón, sin el avance de Apple) pasa al
+     * formato de hoy: se busca en Apple por título y artista y se guarda con su avance y su enlace. Así suena sola en
+     * el perfil para todos, sin que cada teléfono que lo mire tenga que buscarla.
+     */
+    fun completarCancion() = viewModelScope.launch {
+        val e = _estado.value ?: return@launch
+        val actual = io.github.fogonapps.cajon.RedSocial.cancionVieja(e) ?: return@launch
+        fun limpio(t: String) = t.replace("|", " ")
+        // La de Apple si se encuentra (con su avance); si no, la misma en el formato de hoy, sin avance.
+        val c = red.canciones("${actual.titulo} ${actual.artista}").firstOrNull()
+        val nueva = if (c != null) listOf("v3", limpio(c.titulo), limpio(c.artista), limpio(c.album.ifBlank { actual.album }), c.portada.ifBlank { actual.portada }, c.audio, c.enlace).joinToString("|")
+            else listOf("v3", limpio(actual.titulo), limpio(actual.artista), limpio(actual.album), actual.portada, "", "").joinToString("|")
+        if (_estado.value?.perfil?.cancion == e.perfil.cancion) cambiar { x -> x.copy(perfil = x.perfil.copy(cancion = nueva, cambio = ahora())) }
+    }
 
     /** El chat de la red, cifrado de extremo a extremo. */
     val chat = chatDeCajon(cajonApp, viewModelScope, caja, red) { avisar(tx(it)) }
@@ -590,6 +606,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _estado.value = L.normalizar(almacen.data.first())
             aplicarApariencia(requireNotNull(_estado.value))
+            completarCancion()
             guardarYa()
             cajonApp.arranqueCorrecto(recursos.id)
             val prefsPerfiles = cajonApp.getSharedPreferences("perfiles-ui", android.content.Context.MODE_PRIVATE)

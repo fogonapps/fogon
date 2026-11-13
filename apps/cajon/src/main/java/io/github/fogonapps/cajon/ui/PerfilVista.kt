@@ -30,21 +30,19 @@ internal fun PerfilSocial.aPerfilVista(
 }
 
 /**
- * Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). Lo de la persona
- * (destacados / lo suyo) va primero y es la pestaña que se abre, con las cifras al lado.
+ * Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). Solo cuatro, para
+ * que el perfil se vea limpio: publicaciones (con las listas), lo tuyo (destacados, favoritas y artistas), reseñas y
+ * cifras. Las guardadas están en Ajustes.
  */
 internal fun catalogoSeccionesPerfil(propio: Boolean) = listOf(
-    Triple(1, Iconos.Estrella, if (propio) R.string.parte_destacados else R.string.red_lo_suyo),
-    Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
     Triple(0, Iconos.Imagen, R.string.red_publicaciones),
-    Triple(2, Iconos.Artista, R.string.tipo_artistas),
-    Triple(3, Iconos.Lista, R.string.pestana_listas),
-    Triple(4, Iconos.Guardar, R.string.parte_guardadas),
+    Triple(1, Iconos.Estrella, if (propio) R.string.parte_destacados else R.string.red_lo_suyo),
     Triple(6, Iconos.Lapiz, if (propio) R.string.resena_tuyas else R.string.resenas_suyas),
+    Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
 )
 
-/** La pestaña con que abre un perfil: lo de la persona. */
-internal const val PESTANA_INICIAL = 1
+/** La pestaña con que abre un perfil: sus publicaciones. */
+internal const val PESTANA_INICIAL = 0
 
 @Composable
 internal fun seccionesCajon(propio: Boolean, contenido: @Composable (Int) -> Unit): List<SeccionPerfil> =

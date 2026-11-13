@@ -518,7 +518,7 @@
     <string name="entreno_error">Could not prepare the snapshot or file. Check the limits and try again.</string>
     <string name="entreno_publicar">Publish</string>
     <string name="entreno_seguir">Follow</string>
-    <string name="entreno_dejar_seguir">Unfollow</string>
+    <string name="entreno_dejar_seguir">Following</string>
     <string name="entreno_avisos">Notifications</string>
     <string name="entreno_guardados">Saved</string>
     <string name="entreno_moderacion">Moderation</string>

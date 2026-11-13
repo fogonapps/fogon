@@ -236,10 +236,10 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
         bajoNombre = { Text("@${perfil.persona.usuario}", color = FogonTema.actual.textoSuave) },
         enlace = {}, acciones = {
             // Escribirle (el chat cifrado, igual en las cuatro apps).
-            if (yo != null && perfil.persona.usuario != yo) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_chat_mensaje), { vm.abrir(Pantalla.Social("chat", usuario = perfil.persona.usuario)) }, Modifier.weight(1f))
-            if (perfil.persona.usuario != yo) BotonSecundario(stringResource(
+            if (yo != null && perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_chat_mensaje), { vm.abrir(Pantalla.Social("chat", usuario = perfil.persona.usuario)) }, Modifier.weight(1f))
+            if (perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(
                 if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {
-                if (perfil.relacion == "sigo") vm.red.dejarDeSeguir(usuario) else vm.red.seguir(usuario)
+                if (perfil.relacion == "sigo") interfaz.confirmar(interfaz.tx(io.github.fogonapps.social.ui.R.string.social_dejar_de_seguir), interfaz.tx(io.github.fogonapps.social.ui.R.string.social_dejar_de_seguir), { vm.red.dejarDeSeguir(usuario) }) else vm.red.seguir(usuario)
             }, Modifier.weight(1f))
         }, despuesAcciones = {
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }

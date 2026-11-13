@@ -21,7 +21,7 @@ class PerfilVistaTest {
                 visibilidad = PartesPerfil.TODAS.associateWith { visibilidad },
             ))
             val vista = estado.aPerfilVista(secciones())
-            assertEquals((0..6).toSet(), vista.secciones.map { it.id }.toSet())
+            assertEquals(setOf(0, 1, 5, 6), vista.secciones.map { it.id }.toSet())
             assertEquals("Nombre local", vista.nombre)
             assertEquals("local", vista.usuario)
             assertEquals("foto-local", vista.foto)
@@ -38,7 +38,7 @@ class PerfilVistaTest {
         assertEquals("cuenta", vista.usuario)
         assertTrue(vista.privada)
         assertSame(contador, vista.contadores.single())
-        assertEquals(7, vista.secciones.size)
+        assertEquals(4, vista.secciones.size)
     }
 
     @Test fun `las partes filtradas por la red no ocultan pestanas ni se reconstruyen desde el estado local`() {
@@ -50,7 +50,7 @@ class PerfilVistaTest {
                     enlaces = listOf("https://example.org"), relacion = relacion, partes = partes)
                 val secciones = secciones(false)
                 val vista = perfil.aPerfilVista(secciones)
-                assertEquals((0..6).toSet(), vista.secciones.map { it.id }.toSet())
+                assertEquals(setOf(0, 1, 5, 6), vista.secciones.map { it.id }.toSet())
                 assertSame(secciones[2].contenido, vista.secciones[2].contenido)
                 assertEquals(relacion, vista.relacion)
                 assertEquals("Nombre", vista.nombre)
@@ -77,7 +77,7 @@ class PerfilVistaTest {
     @Test fun `cuenta privada seguida muestra las mismas pestanas que la publica`() {
         val vista = PerfilSocial(PersonaSocial("privada", privada = true), relacion = "sigo", cerrada = false)
             .aPerfilVista(secciones(false))
-        assertEquals((0..6).toSet(), vista.secciones.map { it.id }.toSet())
+        assertEquals(setOf(0, 1, 5, 6), vista.secciones.map { it.id }.toSet())
     }
 
     @Test fun `bloquear elimina contenido e imagenes incluso de un perfil publico almacenado`() {
@@ -94,7 +94,7 @@ class PerfilVistaTest {
 
     @Test fun `el catalogo distingue segunda y tercera persona para evitar H CJ 07`() {
         val propio = catalogoSeccionesPerfil(true).associate { it.first to it.third }
-        assertEquals(7, propio.size)
+        assertEquals(4, propio.size)
         val ajeno = catalogoSeccionesPerfil(false).associate { it.first to it.third }
         assertEquals(R.string.parte_destacados, propio[1])
         assertEquals(R.string.red_lo_suyo, ajeno[1])
@@ -102,7 +102,7 @@ class PerfilVistaTest {
         assertEquals(R.string.red_cifras, ajeno[5])
         assertEquals(R.string.resena_tuyas, propio[6])
         assertEquals(R.string.resenas_suyas, ajeno[6])
-        for (id in listOf(0, 2, 3, 4)) assertEquals(propio[id], ajeno[id])
+        assertEquals(propio[0], ajeno[0])
     }
 
     @Test fun `resenas propias excluyen borradas conservan privadas y ordenan por fecha`() {

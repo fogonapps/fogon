@@ -591,4 +591,7 @@
     <string name="social_chat_llaves_nuevas_seguro">Desde ahora vas a poder escribir desde esta app. Los mensajes viejos cifrados con tus llaves anteriores no se podrán leer en ningún teléfono.</string>
     <string name="social_cifra_seguidores">seguidores</string>
     <string name="social_cifra_siguiendo">siguiendo</string>
+    <string name="social_amigos_dejar">Amigos</string>
+    <string name="social_dejar_de_seguir_pregunta">¿Dejar de seguir a @%1$s?</string>
+    <string name="social_dejar_de_seguir">Dejar de seguir</string>
 </resources>

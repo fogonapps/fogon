@@ -1216,16 +1216,18 @@ fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
 @Composable
 fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
     val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).tarjetaFogon().then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Compacta, como la canción de un perfil en las redes de fotos: la portada chica, el título y el artista, y el botón.
+    Row(Modifier.clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp))
+        .then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         val portada = datos.t("portada")
-        if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null, Modifier.size(48.dp).clip(forma(8.dp)), contentScale = ContentScale.Crop)
-        Column(Modifier.weight(1f)) {
-            Text(datos.t("cancion"), style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(datos.t("creador"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            EnlaceAppleMusic(datos.t("enlace"))
+        if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null, Modifier.size(34.dp).clip(forma(6.dp)), contentScale = ContentScale.Crop)
+        Column(Modifier.weight(1f, fill = false)) {
+            Text(datos.t("cancion"), style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(datos.t("creador"), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (sonar) MusicaDePerfil(datos.t("audio")) else BotonAvance(datos.t("audio"))
+        EnlaceAppleMusic(datos.t("enlace"))
     }
 }
 

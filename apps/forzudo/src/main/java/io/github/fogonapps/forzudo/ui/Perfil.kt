@@ -89,8 +89,8 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                 BotonMasFoto(stringResource(R.string.perfil_editar), Modifier.align(Alignment.BottomEnd)) { vm.abrir(Pantalla.EditarPerfil) }
             }
         }, bajoNombre = { if (usuario != null) Text("@$usuario", color = FogonTema.actual.textoSuave) }, enlace = {}, acciones = {
-            BotonSecundario(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
-            if (usuario != null) BotonSecundario(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
+            io.github.fogonapps.perfil.BotonPerfil(stringResource(R.string.perfil_editar), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
+            if (usuario != null) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_red_compartir_perfil), {
                 contexto.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND)
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
@@ -138,6 +138,7 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     val girar_selector9 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector9(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector9(listOf(r)) else manejar_selector9(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
+    io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
     EditorPerfilLocal(nombre, bio, foto, portada,
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },

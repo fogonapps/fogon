@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.heightIn
@@ -32,10 +33,33 @@ import io.github.fogonapps.identidad.forma
 @Composable
 fun RowScope.CifraPerfil(valor: String, etiqueta: String, onClick: (() -> Unit)? = null) {
     val f = FogonTema.actual
-    Column(Modifier.weight(1f).clip(forma(14.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 6.dp),
+    Column(Modifier.weight(1f).clip(forma(12.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(valor, fontFamily = f.cifras, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, color = f.texto)
-        Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 2)
+        Text(valor, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = f.texto)
+        Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+    }
+}
+
+/** Un botón del perfil (seguir, mensaje, editar…): bajo y de esquinas suaves, como en las redes de fotos. */
+@Composable
+fun BotonPerfil(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true) =
+    BotonPerfilBase(texto, onClick, modifier, habilitado, destacado = false)
+
+/** El botón principal del perfil (seguir, crear la cuenta): relleno con la tinta. */
+@Composable
+fun BotonPerfilDestacado(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true) =
+    BotonPerfilBase(texto, onClick, modifier, habilitado, destacado = true)
+
+@Composable
+private fun BotonPerfilBase(texto: String, onClick: () -> Unit, modifier: Modifier, habilitado: Boolean, destacado: Boolean) {
+    val f = FogonTema.actual
+    androidx.compose.foundation.layout.Box(modifier.heightIn(min = 36.dp).clip(forma(10.dp))
+        .background(if (destacado) f.tinta1 else f.superficie)
+        .clickable(enabled = habilitado, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+        .padding(horizontal = 12.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+        Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
+            color = if (destacado) f.sobreTinta1 else f.texto, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
     }
 }
 

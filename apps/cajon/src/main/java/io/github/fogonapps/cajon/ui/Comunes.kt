@@ -186,7 +186,9 @@ fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atra
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (onAtras != null) Box(Modifier.size(46.dp).brillo(f.tinta1, CircleShape).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
+        // En los perfiles (chico), la flecha sola y liviana, como en las redes de fotos.
+        if (onAtras != null) Box(Modifier.size(if (chico) 40.dp else 46.dp).then(if (chico) Modifier else Modifier.brillo(f.tinta1, CircleShape)).clip(CircleShape)
+            .then(if (chico) Modifier else Modifier.background(f.superficie).border(f.borde, f.linea, CircleShape))
             .clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
             IconoRiso(icono, stringResource(R.string.volver), tamano = 22.dp, corrida = null)
         }

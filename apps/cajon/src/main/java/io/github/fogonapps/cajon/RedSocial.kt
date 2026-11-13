@@ -973,10 +973,17 @@ class RedSocial(
         /** La canción del perfil (de cualquiera de los dos formatos de [Perfil.cancion]). */
         data class CancionPerfil(val titulo: String, val artista: String, val album: String, val portada: String, val audio: String = "", val enlace: String = "")
 
+        /** La canción del perfil (con su avance de 30 segundos y su enlace a Apple Music). */
         fun cancionDe(e: Estado): CancionPerfil? {
             val c = e.perfil.cancion
-            // v3 lleva además el avance de 30 segundos y el enlace a Apple Music.
-            if (c.startsWith("v3|")) return c.split("|").let { p -> if (p.size >= 7 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4], p[5], p[6]) else null }
+            if (!c.startsWith("v3|")) return null
+            return c.split("|").let { p -> if (p.size >= 7 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4], p[5], p[6]) else null }
+        }
+
+        /** Solo para convertirla una vez: una canción guardada antes del formato de hoy (sin avance). */
+        fun cancionVieja(e: Estado): CancionPerfil? {
+            val c = e.perfil.cancion
+            if (c.startsWith("v3|") || c.isBlank()) return null
             if (c.startsWith("v2|")) return c.split("|").let { p -> if (p.size >= 5 && p[1].isNotBlank()) CancionPerfil(p[1], p[2], p[3], p[4]) else null }
             val (id, titulo) = c.split("|", limit = 2).takeIf { it.size == 2 } ?: return null
             return e.vivas.firstOrNull { it.id == id }?.let { CancionPerfil(titulo, it.creador, it.titulo, it.portada) }

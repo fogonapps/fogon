@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,53 +36,63 @@ data class PerfilVista(
     val marco: String = "",
 )
 
-/** Conserva el encuadre y el avatar de cada fuente mediante huecos, sin depender de imágenes ni datos culturales. */
+/**
+ * La cabecera del perfil, compacta como en las redes de fotos: la portada arriba, la foto montada sobre su borde con
+ * las cifras a la derecha, y debajo el nombre (una línea, sin letra gigante) y lo que va bajo el nombre.
+ */
 @Composable
 fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuave: Boolean = false, interlineado: Boolean = false,
     portada: @Composable BoxScope.() -> Unit, foto: @Composable () -> Unit,
     bajoNombre: @Composable ColumnScope.() -> Unit = {},
 ) {
     val f = FogonTema.actual
-    Box(modifier.fillMaxWidth()) {
-        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(110.dp).clip(forma(24.dp))
-            .tarjetaFogon(forma(24.dp), sombra = false).haloPuntos(f.tinta2.copy(alpha = 0.35f)), content = portada)
-        Row(Modifier.padding(start = 28.dp, end = 16.dp, top = 62.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            // El marco de la tienda, alrededor de la foto.
-            Box(contentAlignment = androidx.compose.ui.Alignment.Center) { foto(); MarcoFoto(vista.marco, 96.dp) }
-            Column(Modifier.weight(1f).padding(top = 54.dp)) {
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(vista.nombre, Modifier.weight(1f, fill = false), fontFamily = f.titulos, fontSize = 26.sp,
-                        lineHeight = if (interlineado) 26.sp * 1.15f else androidx.compose.ui.unit.TextUnit.Unspecified,
-                        color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    InsigniaCuenta(vista.insignia, tamano = 22.dp)
+    Column(modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth()) {
+            Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(96.dp).clip(forma(18.dp))
+                .tarjetaFogon(forma(18.dp), sombra = false).haloPuntos(f.tinta2.copy(alpha = 0.35f)), content = portada)
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 52.dp), verticalAlignment = androidx.compose.ui.Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // La foto (con el marco de la tienda), un poco más chica que antes.
+                Box(Modifier.size(88.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Box(Modifier.graphicsLayer { scaleX = 88f / 106f; scaleY = 88f / 106f }.requiredSize(106.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        foto(); MarcoFoto(vista.marco, 96.dp)
+                    }
                 }
-                bajoNombre()
+                Row(Modifier.weight(1f).padding(bottom = 4.dp)) { vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) } }
             }
         }
-    }
-    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 12.dp)) {
-        vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) }
+        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(vista.nombre, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                InsigniaCuenta(vista.insignia, tamano = 16.dp)
+            }
+            bajoNombre()
+        }
     }
 }
 
 @Composable
 fun PestanasPerfil(secciones: List<SeccionPerfil>, elegida: Int, alElegir: (Int) -> Unit) {
     val f = FogonTema.actual
-    BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+    // Como en las redes de fotos: íconos livianos y una raya bajo la elegida.
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         val ancho = maxWidth
         Row(Modifier.horizontalScroll(rememberScrollState()).widthIn(min = ancho), horizontalArrangement = Arrangement.SpaceEvenly) {
             secciones.forEach { seccion ->
                 val seleccionada = elegida == seccion.id
-                Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).clip(FormaPildora)
-                    .clickable { alElegir(seccion.id) }, contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Box(Modifier.clip(FormaPildora).background(if (seleccionada) f.tinta1 else Color.Transparent)
-                        .padding(horizontal = 12.dp, vertical = 8.dp)) {
-                        IconoRiso(seccion.icono, seccion.nombreAccesible, tamano = 22.dp, tinta = if (seleccionada) f.sobreTinta1 else f.textoSuave)
+                Column(Modifier.sizeIn(minWidth = 48.dp, minHeight = 44.dp).clickable { alElegir(seccion.id) }.padding(horizontal = 8.dp),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Box(Modifier.padding(vertical = 10.dp)) {
+                        IconoRiso(seccion.icono, seccion.nombreAccesible, tamano = 22.dp, tinta = if (seleccionada) f.texto else f.textoSuave)
                     }
+                    Box(Modifier.width(32.dp).height(2.dp).background(if (seleccionada) f.texto else Color.Transparent))
                 }
             }
         }
     }
+    Box(Modifier.fillMaxWidth().height(f.borde).background(f.linea))
 }
 
 /** El contenido es de la app: el módulo común no conoce obras ni cifras culturales. */
@@ -97,14 +108,14 @@ fun PerfilInformacion(vista: PerfilVista, enlace: @Composable (String) -> Unit,
     antesBio: @Composable () -> Unit = {}, acciones: @Composable RowScope.() -> Unit,
 ) {
     val f = FogonTema.actual
-    Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.padding(start = 20.dp, end = 16.dp, top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         antesBio()
-        if (vista.bio.isNotBlank()) Text(vista.bio, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+        if (vista.bio.isNotBlank()) Text(vista.bio, style = MaterialTheme.typography.bodyMedium, color = f.texto)
         if (vista.enlaces.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             vista.enlaces.forEach { enlace(it) }
         }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), content = acciones)
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), content = acciones)
 }
 
 @Composable

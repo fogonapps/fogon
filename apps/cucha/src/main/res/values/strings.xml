@@ -324,7 +324,7 @@
     <string name="red_guardados">Saved</string>
     <string name="red_feed_pie">Dishes, recipes and restaurants shared on La Cucha</string>
     <string name="red_seguir">Follow</string>
-    <string name="red_dejar_seguir">Unfollow</string>
+    <string name="red_dejar_seguir">Following</string>
     <string name="red_borrar">Delete post?</string>
     <string name="red_privado">Make it private? It will be removed from the network; what’s on your phone is kept.</string>
     <string name="red_publicado">Your post</string>
