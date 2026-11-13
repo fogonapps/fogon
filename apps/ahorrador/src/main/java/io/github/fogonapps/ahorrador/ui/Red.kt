@@ -245,7 +245,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
             // Su canción, sonando sola al entrar (si el ajuste lo deja).
             (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let {
-                Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it, sonar = perfil.persona.usuario != yo) }
+                Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { io.github.fogonapps.social.ui.TarjetaCancionPerfil(it, sonar = perfil.persona.usuario != yo, buscar = { q -> interfaz.red.canciones(q) }) }
             }
         })
 }

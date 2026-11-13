@@ -271,12 +271,52 @@ private fun nombreTipoAdjunto(tipo: String, tipoObra: String): String = stringRe
 
 /** El enlace discreto a la canción en Apple Music (sus condiciones piden el enlace junto al avance; el logo solo no se permite). */
 @Composable
-fun EnlaceAppleMusic(enlace: String) {
+fun EnlaceAppleMusic(enlace: String, enLinea: Boolean = false) {
     if (!enlace.startsWith("https://music.apple.com/")) return
     val f = FogonTema.actual
     val uri = LocalUriHandler.current
     Text(stringResource(R.string.historia_apple_music_corto), style = MaterialTheme.typography.labelSmall.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline),
-        color = f.textoSuave, modifier = Modifier.clip(forma(6.dp)).clickable { uri.openUri(enlace) }.heightIn(min = 32.dp).wrapContentHeight(Alignment.CenterVertically).padding(horizontal = 4.dp))
+        color = f.textoSuave, maxLines = 1, modifier = if (enLinea) Modifier.clickable { uri.openUri(enlace) }
+        else Modifier.clip(forma(6.dp)).clickable { uri.openUri(enlace) }.heightIn(min = 32.dp).wrapContentHeight(Alignment.CenterVertically).padding(horizontal = 4.dp))
+}
+
+/** De los resultados de la búsqueda, la que es la misma canción (el título igual y, si se puede, el mismo artista). */
+fun mismaCancion(titulo: String, artista: String, lista: List<io.github.fogonapps.social.CancionSocial>): io.github.fogonapps.social.CancionSocial? {
+    fun n(s: String) = java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").replace(Regex("[^a-z0-9]+"), " ").trim()
+    val conTitulo = lista.filter { it.audio.isNotBlank() && n(it.titulo).startsWith(n(titulo)) }
+    return conTitulo.firstOrNull { n(it.artista).contains(n(artista)) || n(artista).contains(n(it.artista)) } ?: conTitulo.firstOrNull()
+}
+
+/**
+ * La canción de un perfil, igual en las cuatro apps: a todo lo ancho, la portada, el título y, debajo, el artista con
+ * el enlace a Apple Music (lo piden sus condiciones); a la derecha, el botón del sonido.
+ */
+@Composable
+fun FilaCancion(titulo: String, artista: String, audio0: String, enlace0: String, modifier: Modifier = Modifier, sonar: Boolean = false,
+                onCambiar: (() -> Unit)? = null, buscar: (suspend (String) -> List<io.github.fogonapps.social.CancionSocial>)? = null,
+                portada: @Composable (Modifier) -> Unit) {
+    val f = FogonTema.actual
+    // Una canción guardada en el formato de antes (sin el avance de Apple): se busca la misma (título y artista) para
+    // que igual suene y lleve su enlace, sin cambiar lo que la persona guardó.
+    var hallada by remember(titulo, artista, audio0) { mutableStateOf<io.github.fogonapps.social.CancionSocial?>(null) }
+    if (audio0.isBlank() && buscar != null && titulo.isNotBlank()) LaunchedEffect(titulo, artista) {
+        hallada = runCatching { mismaCancion(titulo, artista, buscar("$titulo $artista")) }.getOrNull()
+    }
+    val audio = audio0.ifBlank { hallada?.audio.orEmpty() }
+    val enlace = enlace0.ifBlank { hallada?.enlace.orEmpty() }
+    Row(modifier.fillMaxWidth().clip(forma(16.dp)).background(f.superficie).border(f.borde, f.linea, forma(16.dp))
+        .then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        portada(Modifier.size(48.dp).clip(forma(8.dp)))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(artista, style = MaterialTheme.typography.labelMedium, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (enlace.startsWith("https://music.apple.com/")) { Text("  ·  ", style = MaterialTheme.typography.labelMedium, color = f.textoSuave); EnlaceAppleMusic(enlace, enLinea = true) }
+            }
+        }
+        if (sonar) MusicaDePerfil(audio) else BotonAvance(audio)
+    }
 }
 
 /** El botón del avance de 30 segundos (solo de Apple), para usarlo fuera de las historias (la canción del perfil). Con [sonar], arranca solo. */
@@ -350,9 +390,8 @@ private fun Avance(url: String, sonar: Boolean, silencio: Boolean = false) {
     if (silencio) {
         LaunchedEffect(sonar) { sonando = sonar }
         val nombre = stringResource(if (sonar) R.string.cancion_silenciar else R.string.cancion_activar)
-        Box(Modifier.size(40.dp).clip(CircleShape).background(if (sonar) f.tinta1 else f.superficie).border(f.borde, if (sonar) f.tinta1 else f.linea, CircleShape)
-            .clickable { MusicaPerfiles.silenciar(ctx, sonar) }, contentAlignment = Alignment.Center) {
-            IconoRiso(if (sonar) IconosMultimedia.Sonido else IconosMultimedia.Silencio, nombre, tamano = 20.dp, tinta = if (sonar) f.sobreTinta1 else f.texto)
+        Box(Modifier.size(40.dp).clip(CircleShape).clickable { MusicaPerfiles.silenciar(ctx, sonar) }, contentAlignment = Alignment.Center) {
+            IconoRiso(if (sonar) IconosMultimedia.Sonido else IconosMultimedia.Silencio, nombre, tamano = 22.dp, tinta = if (sonar) f.texto else f.textoSuave)
         }
         return
     }
@@ -1214,20 +1253,12 @@ fun DestacadasPerfil(vm: InterfazSocial, usuario: String) {
 
 /** La canción del perfil (de cualquier app): portada, título, artista, su avance de 30 s y Apple Music. */
 @Composable
-fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
+fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, sonar: Boolean = false,
+                         buscar: (suspend (String) -> List<io.github.fogonapps.social.CancionSocial>)? = null) {
     val f = FogonTema.actual
-    // Compacta, como la canción de un perfil en las redes de fotos: la portada chica, el título y el artista, y el botón.
-    Row(Modifier.clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp))
-        .then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    FilaCancion(datos.t("cancion"), datos.t("creador"), datos.t("audio"), datos.t("enlace"), sonar = sonar, onCambiar = onCambiar, buscar = buscar) { m ->
         val portada = datos.t("portada")
-        if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null, Modifier.size(34.dp).clip(forma(6.dp)), contentScale = ContentScale.Crop)
-        Column(Modifier.weight(1f, fill = false)) {
-            Text(datos.t("cancion"), style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(datos.t("creador"), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        if (sonar) MusicaDePerfil(datos.t("audio")) else BotonAvance(datos.t("audio"))
-        EnlaceAppleMusic(datos.t("enlace"))
+        if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null, m, contentScale = ContentScale.Crop) else Box(m.background(f.linea))
     }
 }
 

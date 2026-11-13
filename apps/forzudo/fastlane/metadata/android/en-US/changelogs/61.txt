@@ -1,0 +1,3 @@
+• The profile song spans the full width, with Apple Music next to the artist; songs saved earlier play too.
+• Stats no longer touch the banner.
+• Store backgrounds look cleaner: the scene no longer covers the name or stats.

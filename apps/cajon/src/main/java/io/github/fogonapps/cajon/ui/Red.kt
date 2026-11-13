@@ -547,7 +547,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
                 }
             }
             // Su canción suena sola al entrar (si el ajuste lo deja; se pausa con su botón).
-            (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio) } }
+            (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 8.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio, buscar = { vm.red.canciones(it) }) } }
             if (p.cerrada) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconoRiso(Iconos.Candado, null, tamano = 36.dp, tinta = f.textoSuave)
@@ -812,22 +812,12 @@ internal fun EntrarRed(vm: CajonViewModel, e: Estado, conIntro: Boolean = true) 
 
 /** La tarjeta de la canción del perfil: portada del álbum, la canción, el artista y ▶. */
 @Composable
-fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null, sonar: Boolean = false) {
+fun TarjetaCancion(titulo: String, artista: String, album: String, portada: String, modifier: Modifier = Modifier, audio: String = "", enlace: String = "", onCambiar: (() -> Unit)? = null, sonar: Boolean = false,
+                   buscar: (suspend (String) -> List<io.github.fogonapps.social.CancionSocial>)? = null) {
     val f = FogonTema.actual
-    // Compacta, como la canción de un perfil en las redes de fotos: la portada chica, el título y el artista, y el botón.
-    Row(modifier.padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp))
-        .then(if (onCambiar != null) Modifier.clickable(onClick = onCambiar) else Modifier).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Portada(portada, "album", album, Modifier.width(34.dp), esquina = 6.dp, conTitulo = false)
-        Column(Modifier.weight(1f, fill = false)) {
-            Text(titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(artista, style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        // Con el avance de Apple: suena 30 segundos aquí, y el enlace a Apple Music (lo piden sus condiciones).
-        if (audio.isNotBlank()) {
-            if (sonar) io.github.fogonapps.social.ui.MusicaDePerfil(audio) else io.github.fogonapps.social.ui.BotonAvance(audio)
-            io.github.fogonapps.social.ui.EnlaceAppleMusic(enlace)
-        }
+    // La misma fila que en las otras apps, a todo lo ancho (con el avance de Apple y su enlace).
+    io.github.fogonapps.social.ui.FilaCancion(titulo, artista, audio, enlace, modifier.padding(horizontal = 16.dp, vertical = 4.dp), sonar, onCambiar, buscar) { m ->
+        Portada(portada, "album", album, m, esquina = 8.dp, conTitulo = false)
     }
 }
 

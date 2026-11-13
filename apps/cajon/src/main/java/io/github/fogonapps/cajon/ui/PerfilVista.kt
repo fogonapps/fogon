@@ -35,14 +35,14 @@ internal fun PerfilSocial.aPerfilVista(
  * cifras. Las guardadas están en Ajustes.
  */
 internal fun catalogoSeccionesPerfil(propio: Boolean) = listOf(
-    Triple(0, Iconos.Imagen, R.string.red_publicaciones),
     Triple(1, Iconos.Estrella, if (propio) R.string.parte_destacados else R.string.red_lo_suyo),
+    Triple(0, Iconos.Imagen, R.string.red_publicaciones),
     Triple(6, Iconos.Lapiz, if (propio) R.string.resena_tuyas else R.string.resenas_suyas),
     Triple(5, Iconos.Cifras, if (propio) R.string.tus_cifras else R.string.red_cifras),
 )
 
-/** La pestaña con que abre un perfil: sus publicaciones. */
-internal const val PESTANA_INICIAL = 0
+/** La pestaña con que abre un perfil: «Lo tuyo» (lo primero que se ve, antes que las publicaciones). */
+internal const val PESTANA_INICIAL = 1
 
 @Composable
 internal fun seccionesCajon(propio: Boolean, contenido: @Composable (Int) -> Unit): List<SeccionPerfil> =

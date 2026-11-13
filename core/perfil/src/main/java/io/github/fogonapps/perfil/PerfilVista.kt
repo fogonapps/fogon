@@ -58,10 +58,11 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                         foto(); MarcoFoto(vista.marco, 96.dp)
                     }
                 }
-                Row(Modifier.weight(1f).padding(bottom = 4.dp)) { vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) } }
+                // Las cifras un poco más abajo, lejos del borde de la portada.
+                Row(Modifier.weight(1f).offset(y = 12.dp)) { vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) } }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(vista.nombre, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
@@ -149,8 +150,8 @@ fun Perfil(vista: PerfilVista, elegida: Int, alElegir: (Int) -> Unit,
         }
         return
     }
-    // Con un fondo de la tienda (como en Steam): la escena detrás de toda la página, lo demás en paneles
-    // semitransparentes y con los colores del fondo.
+    // Con un fondo de la tienda (como en Steam): la escena detrás de toda la página, lo demás en paneles casi opacos
+    // (la escena se asoma sin meterse en el texto) y con los colores del fondo; botones y tarjetas van encima.
     CompositionLocalProvider(LocalFogon provides FogonTema.actual.conEstilo(estilo)) {
         val f = FogonTema.actual
         // Al menos el alto de la pantalla: con poco contenido, el fondo igual la llena.
@@ -158,12 +159,13 @@ fun Perfil(vista: PerfilVista, elegida: Int, alElegir: (Int) -> Unit,
             FondoTemaPerfil(vista.tema, Modifier.matchParentSize())
             Column(Modifier.fillMaxWidth().padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 navegacion()
-                Column(Modifier.padding(horizontal = 10.dp).clip(forma(24.dp)).background(f.superficie).padding(vertical = 10.dp)) {
+                val panel = estilo.base.copy(alpha = 0.85f)
+                Column(Modifier.padding(horizontal = 10.dp).clip(forma(24.dp)).background(panel).padding(vertical = 10.dp)) {
                     PerfilCabecera(vista, modifier, nombreSuave, interlineado, portada, foto, bajoNombre)
                     PerfilInformacion(vista, enlace, antesBio, acciones)
                     despuesAcciones()
                 }
-                if (vista.secciones.isNotEmpty()) Column(Modifier.padding(horizontal = 10.dp).clip(forma(24.dp)).background(f.superficie).padding(vertical = 6.dp)) {
+                if (vista.secciones.isNotEmpty()) Column(Modifier.padding(horizontal = 10.dp).clip(forma(24.dp)).background(panel).padding(vertical = 6.dp)) {
                     PestanasPerfil(vista.secciones, elegida, alElegir)
                     ContenidoPerfil(vista, elegida)
                 }
