@@ -4,10 +4,8 @@ import io.github.fogonapps.identidad.Idioma
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.fogonapps.forzudo.datos.ClienteGist
 import io.github.fogonapps.forzudo.datos.Dia
 import io.github.fogonapps.forzudo.datos.EntrenoActivo
-import io.github.fogonapps.forzudo.datos.ErrorGitHub
 import io.github.fogonapps.forzudo.datos.Estado
 import io.github.fogonapps.forzudo.datos.Item
 import io.github.fogonapps.forzudo.datos.JsonGym
@@ -80,8 +78,6 @@ data class ResumenEntreno(
 
 data class Descanso(val fin: Long, val total: Int)
 
-enum class EstadoSync { APAGADA, EN_NUBE, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
-data class Sync(val estado: EstadoSync, val mensaje: String? = null, val usuario: String? = null, val ultima: Long = 0)
 
 class GymViewModel(app: Application) : AndroidViewModel(app) {
     private val gymApp = app as ForzudoApp
@@ -102,8 +98,6 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     private val _descanso = MutableStateFlow<Descanso?>(null)
     val descanso: StateFlow<Descanso?> = _descanso.asStateFlow()
 
-    private val _sync = MutableStateFlow(Sync(if (caja.token != null) EstadoSync.EN_NUBE else EstadoSync.APAGADA, usuario = caja.usuario, ultima = caja.ultima))
-    val sync: StateFlow<Sync> = _sync.asStateFlow()
 
     val perfiles get() = gymApp.perfiles
     /** Las frases del saludo, como en El Cajón: las propias (fz_), las de la gente de El Forzudo y los votos. */
@@ -216,10 +210,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     private val escribiendo = Mutex()
     private var guardarJob: Job? = null
-    private var syncJob: Job? = null
     private var descansoJob: Job? = null
-    private var sincronizando = false
-    private var sincronizarOtraVez = false
 
     /* El tema va con la cuenta: al cambiarlo, la copia se vuelve a guardar. */
     init {
@@ -244,7 +235,9 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
             copia.sincronizar()
             gymApp.confirmarCuaderno()
             WidgetRacha.actualizar(getApplication())
-            sincronizar()
+            // La copia en un Gist de GitHub ya no está (la cuenta de Fogón la reemplaza): se desconecta una vez. El Gist
+            // queda en la cuenta de GitHub de la persona; no se borra nada.
+            if (caja.token != null) { caja.token = null; caja.gist = null; caja.usuario = null }
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d ->
                 if (d != ultimoGuardado && d != _estado.value) _estado.value = L.normalizar(d).copy(active = _estado.value?.active)
@@ -269,8 +262,6 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         _estado.value = f(e).copy(updatedAt = System.currentTimeMillis())
         guardarJob?.cancel()
         guardarJob = viewModelScope.launch { delay(300); guardarYa() }
-        syncJob?.cancel()
-        syncJob = viewModelScope.launch { delay(4000); sincronizar() }
     }
 
     /** Escribe en disco ahora (también se llama al salir de la app). */
@@ -636,65 +627,4 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Sincronización con GitHub ----- */
 
-    fun conectar(token: String) {
-        val t = token.trim()
-        if (t.length < 20) { avisar(tx(R.string.aviso_token_corto)); return }
-        avisar(tx(R.string.aviso_conectando))
-        viewModelScope.launch {
-            try {
-                val u = ClienteGist(t).usuario()
-                caja.token = t; caja.usuario = u
-                _sync.value = Sync(EstadoSync.EN_NUBE, usuario = u)
-                sincronizar()
-            } catch (e: ErrorGitHub) {
-                avisar(tx(if (e.codigo == 401) R.string.aviso_token_invalido else R.string.aviso_sin_github))
-            } catch (e: Exception) {
-                avisar(tx(R.string.aviso_sin_github))
-            }
-        }
-    }
-
-    fun desconectar() {
-        caja.borrarTodo(); caja.token = null
-        _sync.value = Sync(EstadoSync.APAGADA)
-    }
-
-    fun sincronizar() {
-        if (cambiandoPerfil) return
-        val token = caja.token ?: return
-        if (sincronizando) { sincronizarOtraVez = true; return }
-        sincronizando = true
-        _sync.value = _sync.value.copy(estado = EstadoSync.SINCRONIZANDO, mensaje = null)
-        viewModelScope.launch {
-            try {
-                val c = ClienteGist(token)
-                val local = _estado.value ?: return@launch
-                val gist = caja.gist ?: c.buscarOCrear(JsonGym.encodeToString(Estado.serializer(), L.paraNube(local))).also { caja.gist = it }
-                val remoto = c.leer(gist)?.let { runCatching { JsonGym.decodeFromString(Estado.serializer(), it) }.getOrNull() }
-                if (remoto != null) {
-                    val actual = _estado.value ?: local
-                    _estado.value = L.normalizar(L.unir(actual, remoto))
-                    guardarYa()
-                }
-                c.escribir(gist, JsonGym.encodeToString(Estado.serializer(), L.paraNube(_estado.value!!)))
-                caja.ultima = System.currentTimeMillis()
-                _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuario, ultima = caja.ultima)
-            } catch (e: ErrorGitHub) {
-                if (e.codigo == 404) caja.gist = null
-                _sync.value = _sync.value.copy(
-                    estado = EstadoSync.ERROR,
-                    mensaje = when (e.codigo) {
-                        401 -> tx(R.string.sync_token_vencido)
-                        403, 404 -> tx(R.string.sync_sin_permiso)
-                        else -> tx(R.string.sync_sin_conexion)
-                    },
-                )
-            } catch (e: java.io.IOException) {
-                _sync.value = _sync.value.copy(estado = EstadoSync.SIN_CONEXION)
-            } finally {
-                sincronizando = false
-                if (sincronizarOtraVez) { sincronizarOtraVez = false; sincronizar() }
-            }
-        }
-    }
 }

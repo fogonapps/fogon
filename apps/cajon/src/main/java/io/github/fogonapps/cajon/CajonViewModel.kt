@@ -20,10 +20,8 @@ import io.github.fogonapps.cajon.datos.permiteReemplazarCajon
 import io.github.fogonapps.cajon.datos.sincronizarCajonCifrado
 import io.github.fogonapps.cajon.datos.ArtistaEncontrado
 import io.github.fogonapps.cajon.datos.ClaveMala
-import io.github.fogonapps.cajon.datos.ClienteGist
 import io.github.fogonapps.cajon.datos.Encontrado
 import io.github.fogonapps.cajon.datos.Encuadre
-import io.github.fogonapps.cajon.datos.ErrorGitHub
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Estados
 import io.github.fogonapps.cajon.datos.Importar
@@ -138,7 +136,6 @@ sealed interface Pantalla {
     data object Artistas : Pantalla
     data object Retos : Pantalla
     data object Ajustes : Pantalla
-    data object Sincronizar : Pantalla
     /** Conectar Spotify, paso a paso. */
     data object ConectarSpotify : Pantalla
     data object AcercaDe : Pantalla
@@ -485,7 +482,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val permisoAvisos = androidx.core.app.NotificationManagerCompat.from(app).areNotificationsEnabled() &&
             canal?.importance != android.app.NotificationManager.IMPORTANCE_NONE
         return io.github.fogonapps.cajon.datos.opcionesPrivacidad(
-            caja.spotifyRenovar != null, caja.tokenGithub != null, EscuchaMusica.conPermiso(app),
+            caja.spotifyRenovar != null, EscuchaMusica.conPermiso(app),
             permisoAvisos,
             AvisosRed.activo(prefs, recursos.id, AvisosRed.AVISOS), AvisosRed.activo(prefs, recursos.id, AvisosRed.MENSAJES),
             caja.tokenSocial != null, caja.llaveCajon != null)
@@ -2714,32 +2711,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- TMDB ----- */
 
 
-    /* ----- Sincronización con el Gist ----- */
+    /* ----- Copia cifrada en la cuenta ----- */
 
-    fun conectar(token: String) {
-        val t = token.trim()
-        if (t.length < 20) { avisar(tx(R.string.aviso_token_corto)); return }
-        avisar(tx(R.string.aviso_conectando))
-        viewModelScope.launch {
-            try {
-                val u = ClienteGist(t).usuario()
-                caja.tokenGithub = t; caja.usuario = u
-                _sync.value = Sync(EstadoSync.EN_NUBE, usuario = u)
-                sincronizar()
-            } catch (e: ErrorGitHub) {
-                avisar(tx(if (e.codigo == 401) R.string.aviso_token_invalido else R.string.aviso_sin_github))
-            } catch (e: Exception) {
-                avisar(tx(R.string.aviso_sin_github))
-            }
-        }
-    }
-
-    fun desconectar() {
-        caja.desconectarGithub()
-        _sync.value = Sync(EstadoSync.APAGADA)
-    }
-
-    /** La exclusión y el permiso para publicar los coordina RedSocial. */
     fun sincronizar() { red.recuperarCajon() }
 
     /** Devuelve éxito solo después de abrir y unir el remoto, y guardar el resultado en la cuenta. */

@@ -30,13 +30,12 @@ class PrivacidadTest {
 
 
     @Test fun opcionesReflejanCredencialesPermisosSesionYPreferencias() {
-        fun estado(spotify: Boolean = false, github: Boolean = false, lectura: Boolean = false,
+        fun estado(spotify: Boolean = false, lectura: Boolean = false,
             permiso: Boolean = false, avisos: Boolean = false, mensajes: Boolean = false,
             sesion: Boolean = false, llave: Boolean = false) =
-            opcionesPrivacidad(spotify, github, lectura, permiso, avisos, mensajes, sesion, llave)
-        assertEquals(OpcionesPrivacidad(false, false, false, false, false), estado())
+            opcionesPrivacidad(spotify, lectura, permiso, avisos, mensajes, sesion, llave)
+        assertEquals(OpcionesPrivacidad(false, false, false, false), estado())
         assertTrue(estado(spotify = true).spotify)
-        assertTrue(estado(github = true).github)
         assertTrue(estado(lectura = true).leerNotificaciones)
         assertFalse(estado(permiso = true, avisos = true).avisos)
         assertFalse(estado(sesion = true, avisos = true).avisos)

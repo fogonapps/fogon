@@ -5,6 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import io.github.fogonapps.cajon.datos.*
 import io.github.fogonapps.cajon.ui.Acciones
 import io.github.fogonapps.cajon.ui.App
+import io.github.fogonapps.identidad.Apariencia
+import io.github.fogonapps.identidad.Estilo
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.revision.Hallazgo
@@ -22,10 +24,23 @@ import org.robolectric.annotation.Config
  * que se vea todo lo de cada una sin desplazarse.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w400dp-h3000dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "en-w400dp-h3000dp-xxhdpi")
 @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
 class RecorridoPantallasTest {
-    @get:Rule val regla = createComposeRule()
+    val regla = createComposeRule()
+    // La escala debe estar aplicada antes de que la regla de Compose cree la actividad.
+    @get:Rule val entorno: org.junit.rules.TestRule = org.junit.rules.RuleChain.outerRule(
+        org.junit.rules.TestRule { base, descripcion ->
+            object : org.junit.runners.model.Statement() {
+                override fun evaluate() {
+                    org.robolectric.RuntimeEnvironment.setFontScale(
+                        if (descripcion.methodName == "espanolChicoLetraGrande") 1.3f else 1f
+                    )
+                    try { base.evaluate() } finally { org.robolectric.RuntimeEnvironment.setFontScale(1f) }
+                }
+            }
+        }
+    ).around(regla)
 
     private fun ejemplo() = Estado(
         listo = true,
@@ -40,14 +55,24 @@ class RecorridoPantallasTest {
         listas = listOf(Lista("li1", "Favoritas", obras = listOf("p1", "l1"))),
     )
 
-    @Test fun ningunaPantallaSeVeMal() {
+    @Test fun ningunaPantallaSeVeMal() = recorrer("inglés, 400 dp, letra normal, oscuro")
+
+    @Test
+    @Config(qualifiers = "es-w360dp-h3000dp-xxhdpi")
+    fun espanolChicoLetraGrande() = recorrer("español, 360 dp, letra 130 %, oscuro")
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h3000dp-xxhdpi")
+    fun inglesClaro() = recorrer("inglés, 360 dp, letra normal, claro", apariencia = Apariencia(estilo = Estilo.CLARO))
+
+    private fun recorrer(variante: String, apariencia: Apariencia = Apariencia()) {
         val app = ApplicationProvider.getApplicationContext<CajonApp>()
         androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(app)
         // La guía de primeros pasos, como ya vista (se probaría encima de todo).
         app.getSharedPreferences("guia", android.content.Context.MODE_PRIVATE).edit().putInt("vista.cajon", 99).commit()
         val vm = CajonViewModel(app)
         val acciones = Acciones({}, {}, {}, { _, _ -> })
-        regla.setContent { FogonTema(Paleta.Cajon) { App(vm, acciones) } }
+        regla.setContent { FogonTema(Paleta.Cajon, apariencia) { App(vm, acciones) } }
         // El cajón de ejemplo se pone cuando terminó de cargar el guardado (si no, lo pisaría).
         regla.waitUntil(20_000) { vm.estado.value != null }
         @Suppress("UNCHECKED_CAST")
@@ -55,22 +80,25 @@ class RecorridoPantallasTest {
         estado.value = ejemplo()
         regla.waitForIdle()
         val hallazgos = mutableListOf<Hallazgo>()
-        Pestana.entries.forEach { p -> vm.irA(p); hallazgos += regla.revisar("pestaña $p", barraAbajo = 140f) }
+        Pestana.entries.forEach { p ->
+            hallazgos += runCatching { vm.irA(p); regla.revisar("pestaña $p", barraAbajo = 140f) }
+                .getOrElse { listOf(Hallazgo("pestaña $p", "falla", it.toString())) }
+        }
         val pantallas: List<Pantalla> = listOf(
             Pantalla.Buscar(Secciones.TODO), Pantalla.Ficha("p1"), Pantalla.Ficha("s1"), Pantalla.Ficha("l1"), Pantalla.Ficha("a1"),
             Pantalla.CambiarPortada("p1"), Pantalla.EditarObra("p1", Tipos.PELICULA), Pantalla.EditarObra(null, Tipos.LIBRO), Pantalla.Registrar("p1"),
             Pantalla.VerArtista("ar1"), Pantalla.VerLista("li1"), Pantalla.EditarLista("li1"), Pantalla.EditarLista(null), Pantalla.AgregarALista("p1"),
-            Pantalla.Diario, Pantalla.Listas, Pantalla.Cifras, Pantalla.Artistas, Pantalla.Retos, Pantalla.Ajustes, Pantalla.Sincronizar,
+            Pantalla.Diario, Pantalla.Listas, Pantalla.Cifras, Pantalla.Artistas, Pantalla.Retos, Pantalla.Ajustes, Pantalla.CajonEnCuenta,
             Pantalla.AcercaDe, Pantalla.Reporte, Pantalla.ElegirGustos, Pantalla.TusGustos, Pantalla.Perfil, Pantalla.EditarPerfil,
             Pantalla.PortadaPerfil, Pantalla.Manifiesto, Pantalla.MusicaEscuchada, Pantalla.Privacidad, Pantalla.CuentaRed, Pantalla.Red,
             Pantalla.Resenar("p1"), Pantalla.ElegirCancion, Pantalla.AjustesAvisos, Pantalla.PalabrasOcultas, Pantalla.Apariencia, Pantalla.Licencias,
             Pantalla.CifrasDe(Secciones.CINE),
         )
         pantallas.forEach { p ->
-            vm.irA(Pestana.INICIO); vm.abrir(p)
-            hallazgos += runCatching { regla.revisar(p.toString().take(60)) }.getOrElse { listOf(Hallazgo(p.toString().take(60), "falla", it.toString().take(200))) }
+            hallazgos += runCatching { vm.irA(Pestana.INICIO); vm.abrir(p); regla.revisar(p.toString().take(60)) }.getOrElse { listOf(Hallazgo(p.toString().take(60), "falla", it.toString().take(200))) }
         }
-        println(hallazgos.joinToString("\n"))
-        assertTrue("Pantallas con problemas:\n" + hallazgos.joinToString("\n"), hallazgos.isEmpty())
+        println("=== cajon | $variante ===\n" + hallazgos.joinToString("\n").ifEmpty { "Sin problemas" })
+        val errores = hallazgos
+        assertTrue("Pantallas con problemas ($variante):\n" + errores.joinToString("\n"), errores.isEmpty())
     }
 }

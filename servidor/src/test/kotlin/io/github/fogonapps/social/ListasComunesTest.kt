@@ -50,4 +50,20 @@ class ListasComunesTest {
         s.salirDeListaComun(ana, l.id)
         assertTrue(s.listasComunes(beto).isEmpty())
     }
+
+    @Test fun losBloqueosCortanLasListasEnComun() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        val caro = s.cuentaDe(s.crearCuenta(NuevaCuenta("caro")).token)!!
+        for ((x, y) in listOf(ana to "beto", beto to "ana", ana to "caro", caro to "ana", beto to "caro", caro to "beto")) s.seguir(x, y)
+        val l = s.crearListaComun(ana, NuevaListaComun("Cine", listOf("beto")))
+        // Beto bloquea a Ana (que armó la lista): sale Beto, y no ve más lo que se agrega.
+        s.bloquear(beto, "ana", true)
+        assertFailsWith<Problema> { s.detalleListaComun(beto, l.id) }
+        assertEquals(listOf("ana"), s.detalleListaComun(ana, l.id).lista.miembros.map { it.usuario })
+        // Una lista de Caro con Ana: Caro no puede sumar a Beto, que bloqueó a Ana.
+        val l2 = s.crearListaComun(caro, NuevaListaComun("Series", listOf("ana")))
+        assertFailsWith<Problema> { s.sumarAListaComun(caro, l2.id, "beto") }
+    }
 }

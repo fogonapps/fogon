@@ -104,7 +104,10 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
         Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.textoSuave, modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 6.dp))
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(lista, key = { it.first.fuente }) { (x, por) ->
-                val motivo = if (libros && por.tipo == Recomendar.Por.SEMILLA) stringResource(R.string.de_autor, por.texto) else porque(por)
+                // «De <autor>» solo si el motivo es su autor; si vino de un libro parecido, «Porque te gustó <libro>».
+                val esAutor = libros && por.tipo == Recomendar.Por.SEMILLA && por.texto.isNotBlank() &&
+                    io.github.fogonapps.cajon.datos.Logica.tituloLimpio(x.creador).contains(io.github.fogonapps.cajon.datos.Logica.tituloLimpio(por.texto))
+                val motivo = if (esAutor) stringResource(R.string.de_autor, por.texto) else porque(por)
                 Column(Modifier.width(112.dp).clip(forma(12.dp)).combinedClickable(
                     onClick = { vm.abiertaRecomendacion("obra:" + x.fuente); vm.abrirEncontrado(x) },
                     onLongClickLabel = decirNo,
@@ -112,7 +115,7 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
                 ), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Portada(x.portada, x.tipo, x.titulo, Modifier.fillMaxWidth(), conTitulo = false)
                     Text(x.titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(if (libros && por.tipo == Recomendar.Por.SEMILLA) stringResource(R.string.de_autor, por.texto) else porque(por),
+                    Text(motivo,
                         style = MaterialTheme.typography.labelSmall, color = if (por.tipo == Recomendar.Por.EXPLORAR) f.tinta1 else f.textoSuave,
                         maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }

@@ -1,0 +1,5 @@
+• Más estable y más claro sin internet.
+• Importar de Letterboxd, Goodreads y Spotify es más fiable: fechas, notas y reseñas completas, y no se cae con archivos dañados.
+• Bloquear a alguien también lo saca de tus listas en común.
+• Ya no está la copia en GitHub; Spotify quedó en Ajustes → Avanzado.
+• Política de privacidad actualizada.

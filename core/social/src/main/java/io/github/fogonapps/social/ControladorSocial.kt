@@ -79,31 +79,46 @@ abstract class ControladorSocial(
 
     /** Dónde guardar lo último del feed, para mostrarlo al instante al abrir (null: no se guarda). */
     protected open val archivoFeed: java.io.File? get() = archivoHistorias?.let { java.io.File(it.parentFile, it.name.replace("historias", "feed")) }
-    @kotlinx.serialization.Serializable private class FeedGuardado(val lista: List<PublicacionSocial> = emptyList(), val cuando: Long = 0)
+    /** Lo guardado: de qué cuenta es (nunca se muestra a otra) y cuándo. */
+    @kotlinx.serialization.Serializable private class FeedGuardado(val lista: List<PublicacionSocial> = emptyList(), val cuando: Long = 0, val usuario: String = "")
+    /** Escribir y borrar el archivo del feed, de a uno (así un borrado al salir no queda pisado por una escritura tardía). */
+    private val candadoFeed = Any()
 
-    /** Lo guardado del feed (de los últimos 3 días), al abrir la app: sin esperar a la sesión ni al servidor. */
+    private fun leerFeedGuardado(usuario: String): List<PublicacionSocial>? = synchronized(candadoFeed) {
+        archivoFeed?.takeIf { it.exists() }?.let { a -> runCatching { JsonSocial.decodeFromString(FeedGuardado.serializer(), a.readText()) }.getOrNull() }
+            ?.takeIf { it.usuario == usuario && System.currentTimeMillis() - it.cuando < 3 * 24 * 3600_000L }?.lista
+    }
+
+    /** Borra lo guardado del feed (al salir de la cuenta). */
+    protected fun borrarFeedGuardado() = synchronized(candadoFeed) { archivoFeed?.delete(); _feed.value = null }
+
+    /** Lo guardado del feed (de los últimos 3 días y de esta cuenta), al abrir la app: sin esperar al servidor. */
     fun feedGuardado() {
+        val u = _usuario.value ?: return
         if (_feed.value != null) return
         scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            archivoFeed?.takeIf { it.exists() }?.let { a -> runCatching { JsonSocial.decodeFromString(FeedGuardado.serializer(), a.readText()) }.getOrNull() }
-                ?.takeIf { System.currentTimeMillis() - it.cuando < 3 * 24 * 3600_000L }?.let { if (_feed.value == null) _feed.value = it.lista }
+            leerFeedGuardado(u)?.let { if (_feed.value == null && _usuario.value == u) _feed.value = it }
         }
     }
 
     fun cargarFeed(avisar: Boolean = true) {
-        if (_usuario.value == null) return
+        val u = _usuario.value ?: return
         scope.launch {
-            // Primero lo guardado (de los últimos 3 días), al instante; después lo nuevo del servidor.
-            if (_feed.value == null) archivoFeed?.let { a ->
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { JsonSocial.decodeFromString(FeedGuardado.serializer(), a.readText()) }.getOrNull() }
-                    ?.takeIf { System.currentTimeMillis() - it.cuando < 3 * 24 * 3600_000L }?.let { if (_feed.value == null) _feed.value = it.lista }
-            }
+            // Primero lo guardado, al instante; después lo nuevo del servidor.
+            if (_feed.value == null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { leerFeedGuardado(u) }
+                ?.let { if (_feed.value == null && _usuario.value == u) _feed.value = it }
             intentar(avisar = avisar) {
                 val l = cliente().feed()
+                // Si mientras tanto se salió o se cambió de cuenta, la respuesta no se usa ni se guarda.
+                if (_usuario.value != u) return@intentar
                 _feed.value = l
-                archivoFeed?.let { a -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    runCatching { a.writeText(JsonSocial.encodeToString(FeedGuardado.serializer(), FeedGuardado(l.take(40), System.currentTimeMillis()))) }
-                } }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    synchronized(candadoFeed) {
+                        if (_usuario.value == u) archivoFeed?.let { a ->
+                            runCatching { a.writeText(JsonSocial.encodeToString(FeedGuardado.serializer(), FeedGuardado(l.take(40), System.currentTimeMillis(), u))) }
+                        }
+                    }
+                }
             }
         }
     }

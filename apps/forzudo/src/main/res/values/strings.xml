@@ -105,13 +105,6 @@
   <string name="aviso_marca_serie">Tick at least one set with ✓ to save</string>
   <string name="descanso_terminado">Rest is over</string>
   <string name="aviso_importado">Data imported</string>
-  <string name="aviso_token_corto">Paste the full token</string>
-  <string name="aviso_conectando">Connecting…</string>
-  <string name="aviso_token_invalido">That token isn’t valid</string>
-  <string name="aviso_sin_github">Couldn’t connect to GitHub</string>
-  <string name="sync_token_vencido">The token is invalid or has expired.</string>
-  <string name="sync_sin_permiso">The token doesn’t have permission for gists.</string>
-  <string name="sync_sin_conexion">Couldn’t connect to GitHub.</string>
   <string name="canal_descanso">End of rest</string>
   <string name="canal_descanso_detalle">Tells you when the rest between sets is over</string>
   <string name="descanso_siguiente">On to the next set!</string>
@@ -148,7 +141,7 @@
   <string name="tut_cuerpo">Listen to your body</string>
   <string name="tut_cuerpo_texto">I help you keep track, but I’m not a doctor or a coach. If you have an injury or a health condition, see a professional before you start. If you feel pain, dizziness or shortness of breath, stop.</string>
   <string name="tut_datos">Your data is yours</string>
-  <string name="tut_datos_texto">You can export a backup whenever you want. If you connect your GitHub (optional), your workouts are saved automatically to a private file in your account.</string>
+  <string name="tut_datos_texto">You can export a backup whenever you want. With a Fogón account (optional), your workouts are saved automatically and encrypted: they come back if you change phones.</string>
   <string name="tut_nombre">What’s your name?</string>
   <string name="tut_paso">Step %1$d of %2$d</string>
   <string name="tut_a_entrenar">Let’s train!</string>
@@ -226,7 +219,6 @@
   <string name="meta_peso">Goal: gain 0.25 to 0.5 kg per week.</string>
   <string name="constancia">Consistency</string>
   <string name="pista_mapa_anual">Each square is a day; the colored ones are days you trained.</string>
-  <string name="sync_titulo">Cloud sync</string>
   <string name="respaldo_titulo">Back up your data</string>
   <string name="exportar">Export</string>
   <string name="importar">Import</string>
@@ -239,25 +231,6 @@
   <string name="manifiesto_fogon">Fogón manifesto</string>
   <string name="preguntas_frecuentes">Frequently asked questions</string>
   <string name="acerca_de">About El Forzudo</string>
-  <string name="sync_explica">Connect your GitHub and your workouts are saved automatically to a private file in your account (a secret Gist). If you change phones or reinstall the app, they come back. It’s optional: without it, the app doesn’t use the internet.</string>
-  <string name="sync_pasos">1. Tap Create token (GitHub opens with everything set).\n2. Under Expiration choose No expiration or 1 year.\n3. Scroll down, tap Generate token, copy it and paste it here.</string>
-  <string name="crear_token">Create token</string>
-  <string name="pega_token">Paste your token here (ghp_…)</string>
-  <string name="conectar">Connect</string>
-  <string name="sincronizando">Syncing…</string>
-  <string name="sin_conexion">Offline</string>
-  <string name="error_sync">Sync error</string>
-  <string name="conectado">Connected.</string>
-  <string name="conectado_como">Connected as %1$s.</string>
-  <string name="ultima_sync">Last sync: %1$s.</string>
-  <string name="sincronizar_ahora">Sync now</string>
-  <string name="desconectar">Disconnect</string>
-  <string name="desconectar_pregunta">Disconnect sync?</string>
-  <string name="desconectar_texto">Your data stays on the phone and in your Gist.</string>
-  <string name="hace_nunca">never</string>
-  <string name="hace_momento">just now</string>
-  <string name="hace_min">%1$d min ago</string>
-  <string name="hace_h">%1$d h ago</string>
   <string name="tu_nombre">Your name</string>
   <plurals name="semanas_seguidas">
     <item quantity="one">week in a row</item>
@@ -286,10 +259,6 @@
   <plurals name="entrenos_guardados">
     <item quantity="one">%d saved workout</item>
     <item quantity="other">%d saved workouts</item>
-  </plurals>
-  <plurals name="hace_dias">
-    <item quantity="one">%d day ago</item>
-    <item quantity="other">%d days ago</item>
   </plurals>
   <string name="como_se_calcula">How is it calculated?</string>
   <string-array name="como_se_calcula_pasos">
@@ -439,7 +408,7 @@
     <item>The photos the app used came from a bank that presented itself as free, but they were actually photos taken from the internet without their owners’ permission. So they were replaced with clearly licensed drawings.</item>
     <item>Each muscle group has its own color, the same throughout the app: the patch on the drawing marks the muscle being worked. The drawing’s shadow tells the area: pink for the upper body, yellow for the arms and blue for the legs.</item>
     <item>From Fogón’s own table, calibrated with real powerlifting meet results (OpenPowerlifting, public domain). The other exercises are estimated from bench press, squat and deadlift, so on machines the rank is approximate.</item>
-    <item>No. Everything is stored on the phone. Only if you connect your own GitHub are your workouts copied to a private file in your account.</item>
+    <item>No. Everything is stored on the phone. Only if you create a Fogón account is your notebook also kept there, encrypted: only your password opens it.</item>
     <item>It had that name up to version 1.2.1. Since 1.3 it carries the name of its character, El Forzudo, like all Fogón apps.</item>
   </string-array>
   <string name="idioma">Language</string>
@@ -468,7 +437,7 @@
   <string name="ajustes_fogon">Fogón</string>
   <string name="ajustes_privacidad">Privacy</string>
   <string name="ajustes_sale">What leaves your phone</string>
-  <string name="ajustes_sale_pista">Your data stays on this phone. Only if you connect sync, your notebook and your profile (with photo and cover) are saved to your Gist. When exporting or reporting, you choose who to share it with.</string>
+  <string name="ajustes_sale_pista">Your data stays on this phone. With a Fogón account, your notebook is also kept there, encrypted. When exporting or reporting, you choose who to share it with.</string>
   <string name="perfil_editar">Edit profile</string>
   <string name="perfil_medallas">Medals</string>
   <string name="perfil_racha">Streak</string>
@@ -492,9 +461,8 @@
     <string name="cuenta_quien_lo_ve">Who sees it</string>
     <string name="cuenta_que_se_comparte">Only the level of each rank and your medals; never your weight or measurements.</string>
     <string name="cuenta_compartido">One Fogón Social account across apps, with independent sessions. Name, photo, cover and bio are global. Only the workouts, ranks and badges you choose are shared, with their visibility. Your notebook and body weight are not published. Closing other sessions and deleting the account affect every app.</string>
-    <string name="cuenta_borrado">Social account deletion has a grace period and affects all apps. Your local notebook and Gist remain until you explicitly remove them.</string>
+    <string name="cuenta_borrado">Deleting your account gives you 7 days to change your mind and affects all apps. The notebook on this phone stays.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and optional sports profile sections.</string>
-    <string name="cuenta_servicio_gist">GitHub Gist: optional backup of this notebook in mi-gym-datos.json.</string>
     <string name="cuenta_rangos">Ranks</string>
     <string name="cuenta_medallas">Medals</string>
     <string name="cuenta_privado">Only on this phone</string>
@@ -554,7 +522,7 @@
     <string name="guia_entrenar_texto">Your routines, programs and exercises.</string>
     <string name="guia_rangos_texto">Your level per muscle and your records.</string>
     <string name="guia_perfil">Your profile and settings</string>
-    <string name="guia_perfil_texto">Your profile is here, and in its gear: settings, the GitHub copy and this tour again.</string>
+    <string name="guia_perfil_texto">Your profile is here, and in its gear: settings and this tour again.</string>
     <string name="historia_ejercicios_min">%1$d exercises · %2$d min</string>
     <string name="historia_buscar_app">Search for a song or an exercise</string>
 </resources>

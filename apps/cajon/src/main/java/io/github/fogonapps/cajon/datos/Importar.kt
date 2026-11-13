@@ -103,20 +103,22 @@ object Importar {
 
     /** El ZIP de Letterboxd o uno de sus CSV. Null si no parece de Letterboxd. */
     fun letterboxd(bytes: ByteArray, nombre: String, nuevoId: (String) -> String, ahora: Long): Importado? {
-        val archivos: Map<String, String> = if (bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()) {
+        val archivos: Map<String, String> = if (nombre.endsWith(".zip", true) || bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()) {
             val m = mutableMapOf<String, String>()
-            ZipInputStream(ByteArrayInputStream(bytes)).use { z ->
-                var e = z.nextEntry
-                while (e != null) {
-                    if (!e.isDirectory && e.name.endsWith(".csv")) m[e.name.substringAfterLast('/')] = z.readBytes().decodeToString()
-                    e = z.nextEntry
+            runCatching {
+                ZipInputStream(ByteArrayInputStream(bytes)).use { z ->
+                    var e = z.nextEntry
+                    while (e != null) {
+                        if (!e.isDirectory && e.name.endsWith(".csv")) m[e.name.substringAfterLast('/')] = z.readBytes().decodeToString()
+                        e = z.nextEntry
+                    }
                 }
-            }
+            }.getOrElse { return null }
             m
         } else mapOf(nombre.substringAfterLast('/') to bytes.decodeToString())
         // Cada película por su enlace de Letterboxd (o nombre y año).
         data class Peli(var titulo: String, var anio: Int?, var nota: Int = 0, var vista: Boolean = false, var meGusta: Boolean = false,
-                        var resena: String = "", val registros: MutableList<Registro> = mutableListOf())
+                        var resena: String = "", var fechaVista: String? = null, val registros: MutableList<Registro> = mutableListOf())
         val pelis = LinkedHashMap<String, Peli>()
         fun clave(f: Map<String, String>) = f["Name"].orEmpty() + "|" + f["Year"].orEmpty()
         fun de(f: Map<String, String>): Peli? {
@@ -138,14 +140,28 @@ object Importar {
                     if (fecha.length == 10) p.registros += Registro(nuevoId("g"), fecha, nota(f["Rating"]), f["Rewatch"].equals("Yes", true))
                 }
                 n.startsWith("ratings") -> filas.forEach { f -> de(f)?.let { it.vista = true; it.nota = nota(f["Rating"]) } }
-                n.startsWith("watched") -> filas.forEach { f -> de(f)?.vista = true }
-                n.startsWith("reviews") -> filas.forEach { f -> de(f)?.let { it.vista = true; if (f["Review"].orEmpty().isNotBlank()) it.resena = f["Review"].orEmpty() } }
+                n.startsWith("watched") -> filas.forEach { f -> de(f)?.let {
+                    it.vista = true
+                    it.fechaVista = runCatching { java.time.LocalDate.parse(f["Date"]).toString() }.getOrNull()
+                } }
+                n.startsWith("reviews") -> filas.forEach { f -> de(f)?.let { p ->
+                    p.vista = true
+                    if (p.nota == 0) p.nota = nota(f["Rating"])
+                    if (f["Review"].orEmpty().isNotBlank()) p.resena = f["Review"].orEmpty()
+                    val fecha = runCatching { java.time.LocalDate.parse(f["Watched Date"]).toString() }.getOrNull()
+                    val otraVez = f["Rewatch"].equals("Yes", true)
+                    if (fecha != null && p.registros.none { it.fecha == fecha && it.otraVez == otraVez }) {
+                        p.registros += Registro(nuevoId("g"), fecha, nota(f["Rating"]), otraVez)
+                    }
+                } }
                 n.startsWith("watchlist") -> filas.forEach { f -> de(f) }
                 n.startsWith("films") || n.startsWith("likes") -> filas.forEach { f -> de(f)?.meGusta = true }
             }
         }
         if (!algo) return null
         val obras = pelis.values.map { p ->
+            // watched.csv guarda cuándo se marcó vista; el diario tiene las fechas precisas de cada visionado.
+            if (p.registros.isEmpty()) p.fechaVista?.let { p.registros += Registro(nuevoId("g"), it) }
             Obra(
                 id = nuevoId("o"), tipo = Tipos.PELICULA, titulo = p.titulo, anio = p.anio,
                 estado = if (p.vista || p.registros.isNotEmpty()) Estados.TERMINADO else Estados.QUIERO,
@@ -182,7 +198,7 @@ object Importar {
         val r = mutableListOf<Escucha>()
         var basico = false
         for ((_, texto) in archivos) {
-            val lista = runCatching { JsonCajon.parseToJsonElement(texto) as? kotlinx.serialization.json.JsonArray }.getOrNull() ?: continue
+            val lista = runCatching { JsonCajon.parseToJsonElement(texto.removePrefix("\uFEFF")) as? kotlinx.serialization.json.JsonArray }.getOrNull() ?: continue
             for (x in lista) {
                 val o = x as? kotlinx.serialization.json.JsonObject ?: continue
                 fun t(k: String) = (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { it.isString }?.content.orEmpty()

@@ -77,14 +77,11 @@ import io.github.fogonapps.identidad.R as RId
 import io.github.fogonapps.identidad.brillo
 import io.github.fogonapps.identidad.NumeroRiso
 import androidx.compose.ui.graphics.Brush
-import io.github.fogonapps.forzudo.EstadoSync
 import io.github.fogonapps.forzudo.GymViewModel
 import io.github.fogonapps.forzudo.Pantalla
 import io.github.fogonapps.forzudo.Pestana
-import io.github.fogonapps.forzudo.Sync
 import io.github.fogonapps.forzudo.datos.Vocabulario
 import io.github.fogonapps.forzudo.datos.Biblioteca
-import io.github.fogonapps.forzudo.datos.ClienteGist
 import io.github.fogonapps.forzudo.datos.Estado
 import io.github.fogonapps.forzudo.datos.Sesion
 import io.github.fogonapps.forzudo.datos.duracionPalabras
@@ -560,51 +557,6 @@ internal fun SelectorIdioma(vm: GymViewModel) {
     }
 }
 
-@Composable
-internal fun CajaSync(vm: GymViewModel, s: Sync, confirmar: Confirmar) {
-    val f = FogonTema.actual
-    val uri = LocalUriHandler.current
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (s.estado == EstadoSync.APAGADA) {
-            Text(stringResource(R.string.sync_explica),
-                style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            Text(stringResource(R.string.sync_pasos),
-                style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            BotonSecundario(stringResource(R.string.crear_token), { uri.openUri(ClienteGist.URL_TOKEN) })
-            var token by remember { mutableStateOf("") }
-            OutlinedTextField(token, { token = it.trim() }, label = { Text(stringResource(R.string.pega_token)) },
-                singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-            BotonRiso(stringResource(R.string.conectar), { vm.conectar(token) })
-        } else {
-            val txt = when (s.estado) {
-                EstadoSync.SINCRONIZANDO -> stringResource(R.string.sincronizando)
-                EstadoSync.SIN_CONEXION -> stringResource(R.string.sin_conexion)
-                EstadoSync.ERROR -> s.mensaje ?: stringResource(R.string.error_sync)
-                else -> (s.usuario?.let { stringResource(R.string.conectado_como, it) } ?: stringResource(R.string.conectado)) + " " + stringResource(R.string.ultima_sync, hace(s.ultima))
-            }
-            Text(txt, style = MaterialTheme.typography.bodyMedium,
-                color = if (s.estado == EstadoSync.ERROR) MaterialTheme.colorScheme.error else f.texto)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                BotonSecundario(stringResource(R.string.sincronizar_ahora), { vm.sincronizar() })
-                BotonSecundario(stringResource(R.string.desconectar), {
-                    confirmar(vm.tx(R.string.desconectar_pregunta), vm.tx(R.string.desconectar_texto)) { vm.desconectar() }
-                }, peligro = true)
-            }
-        }
-    }
-}
-
-@Composable
-fun hace(t: Long): String {
-    if (t == 0L) return stringResource(R.string.hace_nunca)
-    val m = Math.round((System.currentTimeMillis() - t) / 60000.0)
-    if (m < 1) return stringResource(R.string.hace_momento)
-    if (m < 60) return stringResource(R.string.hace_min, m)
-    val h = Math.round(m / 60.0)
-    if (h < 24) return stringResource(R.string.hace_h, h)
-    val d = Math.round(h / 24.0).toInt()
-    return pluralStringResource(R.plurals.hace_dias, d, d)
-}
 
 @Composable
 fun DialogoNombre(actual: String, onListo: (String) -> Unit, onCerrar: () -> Unit) {

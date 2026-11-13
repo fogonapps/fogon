@@ -1,0 +1,5 @@
+• More stable and clearer without internet.
+• Importing from Letterboxd, Goodreads and Spotify is more reliable: full dates, ratings and reviews, and it no longer fails on damaged files.
+• Blocking someone also removes them from your shared lists.
+• The GitHub copy is gone; Spotify is now in Settings → Advanced.
+• Updated privacy policy.

@@ -8,7 +8,15 @@ pantallas (las encuentra solas con `pantallasDe`) en Robolectric, con gráficos 
 - **encimados**: dos cosas tocables que se tapan (más de 2 dp);
 - **chico**: algo tocable de menos de 32 dp;
 - **sin nombre**: algo tocable sin texto ni descripción para el lector de pantalla;
+- **cortado**: texto cuyo ancho desborda su caja, o cuyo alto desborda una caja finita menor que el párrafo,
+  sin ninguna línea con puntos suspensivos. Se ignoran los textos con restricciones de alto infinitas (por ejemplo,
+  dentro de un desplazable). La medición semántica se contrasta con la caja real para evitar falsos avisos por
+  el ancho disponible del contenedor;
 - **falla**: una pantalla que se cae al abrirse.
+
+Cada recorrido corre en tres variantes, todas estrictas (cualquier hallazgo hace fallar la prueba): inglés a 400 dp
+con letra normal y tema oscuro; español a 360 dp con letra al 130 % y tema oscuro; e inglés a 360 dp con letra normal
+y apariencia Claro. Todas usan 3000 dp de alto y densidad xxhdpi.
 
 Corre con `./fogon probar <app>`. Una pantalla nueva entra sola al recorrido; si necesita datos para abrirse, se
 agregan al estado de ejemplo de la prueba.

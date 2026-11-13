@@ -162,9 +162,7 @@
   <string name="borrar_artista_pregunta">Delete %1$s?</string>
   <string name="borrar_artista_texto">Their albums stay in your cajón.</string>
   <string name="tu_nombre">Your name</string>
-  <string name="sync_titulo">Sync with your PC</string>
   <string name="sync_apagada">Off</string>
-  <string name="sync_conectada">Connected as %1$s</string>
   <string name="sync_para_pc">Your cajón on your phone and PC, the same on both.</string>
   <string name="opciones">Options</string>
   <string name="widget_poner">Add the widget to your home screen</string>
@@ -184,21 +182,6 @@
   <string name="acerca_de">About El Cajón</string>
   <string name="acerca_de_corto">About</string>
   <string name="tmdb_aviso">El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
-  <string name="sync_explica">Connect your GitHub and your cajón saves itself to a private file in your account (a secret Gist). El Cajón on your PC reads that same file, so you have the same on both. It’s optional.</string>
-  <string name="sync_pasos">1. Tap Create token (GitHub opens with everything ready).\n2. Under Expiration choose No expiration or 1 year.\n3. Scroll down, tap Generate token, copy it and paste it here.</string>
-  <string name="crear_token">Create token</string>
-  <string name="pega_token">Paste your token here (ghp_…)</string>
-  <string name="conectar">Connect</string>
-  <string name="sync_sincronizando">Syncing…</string>
-  <string name="sync_ultima">Last synced: %1$s</string>
-  <string name="sincronizar_ahora">Sync now</string>
-  <string name="desconectar">Disconnect</string>
-  <string name="desconectar_pregunta">Disconnect GitHub?</string>
-  <string name="desconectar_texto">What’s on this phone stays. The file on your GitHub stays too (delete it there if you want).</string>
-  <string name="sync_privacidad">The token stays encrypted on this phone. The file is secret: only someone with its link or your account can see it.</string>
-  <string name="sync_token_vencido">The token is invalid or expired.</string>
-  <string name="sync_sin_permiso">The token has no gist permission.</string>
-  <string name="sync_sin_conexion">Couldn’t reach GitHub.</string>
   <string name="licencias">Licenses</string>
   <string name="lic_tmdb">Film, series and anime data from the TMDB API, with each person’s own key (free non-commercial license). El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="lic_open_library">Book data and covers from Open Library, an Internet Archive project.</string>
@@ -222,10 +205,6 @@
   <string name="aviso_datos_al_dia">Details refreshed</string>
   <string name="aviso_registrado">Logged in your diary</string>
   <string name="aviso_favoritas_cuatro">Top four only: the oldest one left</string>
-  <string name="aviso_token_corto">Paste the whole token</string>
-  <string name="aviso_conectando">Connecting to GitHub…</string>
-  <string name="aviso_token_invalido">That token isn’t valid</string>
-  <string name="aviso_sin_github">Couldn’t connect to GitHub</string>
   <string name="aviso_no_es_de_otra_app">That file doesn’t look like it’s from Letterboxd or Goodreads.</string>
   <string name="aviso_importado">Backup restored</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
@@ -1337,7 +1316,7 @@
   <string name="privacidad_activa">Enabled</string>
   <string name="privacidad_inactiva">Disabled</string>
   <string name="privacidad_lectura">Notification reading permission</string>
-  <string name="privacidad_opcionales">Spotify optionally reads your listening history, albums and artists without changing your account.\nGitHub receives a copy of your drawer in a secret Gist using your token: this copy does not use Fogón Social encryption.\nNotification access reads playback information to record music locally; recording is enabled separately in Settings → Your drawer.\nAlerts show counts of updates and messages when Android allows them and you have an account.\nThe encrypted copy requires an account and its key; it does not sync while the network is paused.\nLast.fm: importing a public profile sends its username and period to Fogón and Last.fm. Fogón caches responses for five minutes; imported listens stay on your phone.</string>
+  <string name="privacidad_opcionales">Spotify optionally reads your listening history, albums and artists without changing your account.\nNotification access reads playback information to record music locally; recording is enabled separately in Settings → Your drawer.\nAlerts show counts of updates and messages when Android allows them and you have an account.\nThe encrypted copy requires an account and its key; it does not sync while the network is paused.\nLast.fm: importing a public profile sends its username and period to Fogón and Last.fm. Fogón caches responses for five minutes; imported listens stay on your phone.</string>
   <string name="privacidad_contacto">Your data: fogonapps@gmail.com</string>
   <string name="barra_minimo">At least 3 tabs. Home is always visible.</string>
   <string name="barra_restablecer">Restore default order</string>
@@ -1764,4 +1743,5 @@
     </plurals>
     <string name="parte_reto">Your yearly challenge</string>
     <string name="parte_por_ver">What you want to watch</string>
+    <string name="aj_avanzado">Advanced: connect Spotify</string>
 </resources>

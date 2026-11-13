@@ -42,7 +42,6 @@ import io.github.fogonapps.cajon.EstadoSync
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.WidgetCursoReceptor
-import io.github.fogonapps.cajon.datos.ClienteGist
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Tmdb
 import io.github.fogonapps.identidad.SeccionAjustes
@@ -263,42 +262,6 @@ private fun PasoSpotify(n: Int, titulo: String, pista: String, contenido: @Compo
     }
 }
 
-/** Conectar GitHub para sincronizar con el PC (un Gist secreto de la propia cuenta). */
-@Composable
-fun Sincronizar(vm: CajonViewModel) {
-    val f = FogonTema.actual
-    val s by vm.sync.collectAsStateWithLifecycle()
-    val uri = LocalUriHandler.current
-    val confirmar = LocalConfirmar.current
-    var token by rememberSaveable { mutableStateOf("") }
-    Cabecera(stringResource(R.string.sync_titulo), vm::cerrar)
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.sync_explica), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        if (s.estado == EstadoSync.APAGADA) {
-            Text(stringResource(R.string.sync_pasos), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            BotonSecundario(stringResource(R.string.crear_token), { uri.openUri(ClienteGist.URL_TOKEN) }, Modifier.fillMaxWidth())
-            OutlinedTextField(token, { token = it.trim().take(300) }, Modifier.fillMaxWidth(), singleLine = true,
-                label = { Text(stringResource(R.string.pega_token)) }, visualTransformation = PasswordVisualTransformation())
-            BotonRiso(stringResource(R.string.conectar), { vm.conectar(token) }, Modifier.fillMaxWidth(), habilitado = token.length >= 20)
-        } else {
-            Column(Modifier.fillMaxWidth().vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(R.string.sync_conectada, s.usuario ?: ""), style = MaterialTheme.typography.bodyLarge, color = f.texto)
-                Text(when (s.estado) {
-                    EstadoSync.SINCRONIZANDO -> stringResource(R.string.sync_sincronizando)
-                    EstadoSync.SIN_CONEXION -> stringResource(R.string.sync_sin_conexion)
-                    EstadoSync.ERROR -> s.mensaje ?: stringResource(R.string.sync_sin_conexion)
-                    else -> if (s.ultima > 0) stringResource(R.string.sync_ultima, java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(s.ultima))) else ""
-                }, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-            }
-            BotonRiso(stringResource(R.string.sincronizar_ahora), vm::sincronizar, Modifier.fillMaxWidth())
-            BotonSecundario(stringResource(R.string.desconectar), {
-                confirmar(vm.tx(R.string.desconectar_pregunta), vm.tx(R.string.desconectar_texto), vm::desconectar)
-            }, Modifier.fillMaxWidth(), peligro = true)
-        }
-        Pista(stringResource(R.string.sync_privacidad), adentro = true)
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SelectorIdioma(vm: CajonViewModel) {
@@ -401,8 +364,10 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
             }
         }
 
-        // Spotify: con la app de Spotify de la persona (Premium), opcional; se conecta paso a paso en su pantalla.
-        Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Spotify: pide crear una app de desarrollador y Premium, así que va escondido en «Avanzado» (salvo si ya está conectado).
+        var avanzado by rememberSaveable { mutableStateOf(conectado) }
+        if (!avanzado) androidx.compose.material3.TextButton({ avanzado = true }) { Text(stringResource(R.string.aj_avanzado), color = f.textoSuave) }
+        if (avanzado) Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.spotify_titulo), style = MaterialTheme.typography.titleSmall, color = f.texto)
             if (conectado) {
                 Text(stringResource(R.string.spotify_conectado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)

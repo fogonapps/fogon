@@ -1,0 +1,2 @@
+• Safer backups and recipe import: a damaged file no longer erases what you have.
+• Updated privacy policy.

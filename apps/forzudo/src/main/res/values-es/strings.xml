@@ -104,13 +104,6 @@
   <string name="aviso_marca_serie">Marca al menos una serie con ✓ para guardar</string>
   <string name="descanso_terminado">Descanso terminado</string>
   <string name="aviso_importado">Datos importados</string>
-  <string name="aviso_token_corto">Pega el token completo</string>
-  <string name="aviso_conectando">Conectando…</string>
-  <string name="aviso_token_invalido">Ese token no es válido</string>
-  <string name="aviso_sin_github">No se pudo conectar con GitHub</string>
-  <string name="sync_token_vencido">El token no es válido o ya venció.</string>
-  <string name="sync_sin_permiso">El token no tiene permiso para gists.</string>
-  <string name="sync_sin_conexion">No se pudo conectar con GitHub.</string>
   <string name="canal_descanso">Fin del descanso</string>
   <string name="canal_descanso_detalle">Avisa cuando termina el descanso entre series</string>
   <string name="descanso_siguiente">¡A la siguiente serie!</string>
@@ -147,7 +140,7 @@
   <string name="tut_cuerpo">Escucha a tu cuerpo</string>
   <string name="tut_cuerpo_texto">Te ayudo a llevar la cuenta, pero no soy un médico ni un entrenador. Si tienes una lesión o una condición de salud, consulta a un profesional antes de empezar. Si sientes dolor, mareo o falta de aire, para.</string>
   <string name="tut_datos">Tus datos son tuyos</string>
-  <string name="tut_datos_texto">Puedes exportar un respaldo cuando quieras. Si conectas tu GitHub (opcional), tus entrenos se guardan solos en un archivo privado de tu cuenta.</string>
+  <string name="tut_datos_texto">Puedes exportar un respaldo cuando quieras. Con una cuenta de Fogón (opcional), tus entrenos se guardan solos y cifrados: vuelven si cambias de teléfono.</string>
   <string name="tut_nombre">¿Cómo te llamas?</string>
   <string name="tut_paso">Paso %1$d de %2$d</string>
   <string name="tut_a_entrenar">¡A entrenar!</string>
@@ -227,7 +220,6 @@
   <string name="meta_peso">Meta: subir de 0,25 a 0,5 kg por semana.</string>
   <string name="constancia">Constancia</string>
   <string name="pista_mapa_anual">Cada cuadrito es un día; los de color son días que entrenaste.</string>
-  <string name="sync_titulo">Sincronización en la nube</string>
   <string name="respaldo_titulo">Respaldo de tus datos</string>
   <string name="exportar">Exportar</string>
   <string name="importar">Importar</string>
@@ -240,25 +232,6 @@
   <string name="manifiesto_fogon">Manifiesto de Fogón</string>
   <string name="preguntas_frecuentes">Preguntas frecuentes</string>
   <string name="acerca_de">Acerca de El Forzudo</string>
-  <string name="sync_explica">Conecta tu GitHub y tus entrenos se guardan solos en un archivo privado de tu cuenta (un Gist secreto). Si cambias de teléfono o reinstalas la app, se recuperan. Es opcional: sin esto, la app no usa internet.</string>
-  <string name="sync_pasos">1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.</string>
-  <string name="crear_token">Crear token</string>
-  <string name="pega_token">Pega aquí tu token (ghp_…)</string>
-  <string name="conectar">Conectar</string>
-  <string name="sincronizando">Sincronizando…</string>
-  <string name="sin_conexion">Sin conexión</string>
-  <string name="error_sync">Error al sincronizar</string>
-  <string name="conectado">Conectado.</string>
-  <string name="conectado_como">Conectado como %1$s.</string>
-  <string name="ultima_sync">Última sincronización: %1$s.</string>
-  <string name="sincronizar_ahora">Sincronizar ahora</string>
-  <string name="desconectar">Desconectar</string>
-  <string name="desconectar_pregunta">¿Desconectar la sincronización?</string>
-  <string name="desconectar_texto">Tus datos siguen en el teléfono y en tu Gist.</string>
-  <string name="hace_nunca">nunca</string>
-  <string name="hace_momento">hace un momento</string>
-  <string name="hace_min">hace %1$d min</string>
-  <string name="hace_h">hace %1$d h</string>
   <string name="tu_nombre">Tu nombre</string>
   <plurals name="semanas_seguidas">
     <item quantity="one">semana seguida</item>
@@ -294,11 +267,6 @@
     <item quantity="one">%d entreno guardado</item>
     <item quantity="other">%d entrenos guardados</item>
     <item quantity="many">%d entrenos guardados</item>
-  </plurals>
-  <plurals name="hace_dias">
-    <item quantity="one">hace %d día</item>
-    <item quantity="other">hace %d días</item>
-    <item quantity="many">hace %d días</item>
   </plurals>
   <string name="como_se_calcula">¿Cómo se calcula?</string>
   <string-array name="como_se_calcula_pasos">
@@ -451,7 +419,7 @@
     <item>Las fotos que usaba la app venían de un banco que se presentaba como libre, pero en realidad eran fotos sacadas de internet sin permiso de sus dueños. Por eso se cambiaron por dibujos con licencia clara.</item>
     <item>Cada grupo muscular tiene su color, el mismo en toda la app: la mancha del dibujo marca el músculo que trabaja. La sombra del dibujo dice la zona: rosa para el tren superior, amarillo para los brazos y azul para las piernas.</item>
     <item>De una tabla propia de Fogón, calibrada con resultados reales de competencias de powerlifting (OpenPowerlifting, de dominio público). Los demás ejercicios se estiman a partir de banca, sentadilla y peso muerto, así que en máquinas el rango es aproximado.</item>
-    <item>No. Todo se guarda en el teléfono. Solo si conectas tu propio GitHub, los entrenos se copian a un archivo privado de tu cuenta.</item>
+    <item>No. Todo se guarda en el teléfono. Solo si creas una cuenta de Fogón, tu cuaderno se guarda también en ella, cifrado: solo tu contraseña lo abre.</item>
     <item>Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su personaje, El Forzudo, como todas las apps de Fogón.</item>
   </string-array>
   <string name="idioma">Idioma</string>
@@ -480,7 +448,7 @@
   <string name="ajustes_fogon">Fogón</string>
   <string name="ajustes_privacidad">Privacidad</string>
   <string name="ajustes_sale">Qué sale de tu teléfono</string>
-  <string name="ajustes_sale_pista">Tus datos se guardan en este teléfono. Solo si conectas la sincronización, el cuaderno y tu perfil (con la foto y la portada) se guardan en tu Gist. Al exportar o reportar, tú eliges con quién compartirlo.</string>
+  <string name="ajustes_sale_pista">Tus datos se guardan en este teléfono. Con una cuenta de Fogón, tu cuaderno se guarda también en ella, cifrado. Al exportar o reportar, tú eliges con quién compartirlo.</string>
   <string name="perfil_editar">Editar perfil</string>
   <string name="perfil_medallas">Medallas</string>
   <string name="perfil_racha">Racha</string>
@@ -504,9 +472,8 @@
     <string name="cuenta_quien_lo_ve">Quién lo ve</string>
     <string name="cuenta_que_se_comparte">Solo el nivel de cada rango y tus medallas; nunca tu peso ni tus medidas.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los entrenos, rangos y medallas que elijas, con su visibilidad. No se publica el cuaderno ni el peso corporal. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
-    <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. El cuaderno local y el Gist se conservan hasta que los retires explícitamente.</string>
+    <string name="cuenta_borrado">Borrar la cuenta tiene 7 días para arrepentirte y afecta a todas las apps. El cuaderno de este teléfono se conserva.</string>
     <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y partes deportivas voluntarias.</string>
-    <string name="cuenta_servicio_gist">GitHub Gist: copia opcional de este cuaderno en mi-gym-datos.json.</string>
     <string name="cuenta_rangos">Rangos</string>
     <string name="cuenta_medallas">Medallas</string>
     <string name="cuenta_privado">Solo en el teléfono</string>
@@ -566,7 +533,7 @@
     <string name="guia_entrenar_texto">Tus rutinas, los programas y los ejercicios.</string>
     <string name="guia_rangos_texto">Tu nivel por músculo y tus récords.</string>
     <string name="guia_perfil">Tu perfil y tus ajustes</string>
-    <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes, la copia en GitHub y este recorrido otra vez.</string>
+    <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes y este recorrido otra vez.</string>
     <string name="historia_ejercicios_min">%1$d ejercicios · %2$d min</string>
     <string name="historia_buscar_app">Busca una canción o un ejercicio</string>
 </resources>

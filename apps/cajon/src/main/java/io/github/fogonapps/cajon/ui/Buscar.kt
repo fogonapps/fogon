@@ -365,6 +365,8 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
     val dePlataforma = plataforma?.let { p -> tipoPlataforma?.let { enPlataforma["$p|$it"] } }
     if (obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty() && m.avisos.isEmpty()) return
 
+    // Dentro de la búsqueda y sin nada que mostrar (sin internet): ni el título, que quedaba solo.
+    if (compacto && obras.isEmpty() && buscados.isEmpty() && artistas.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.lo_del_momento), style = MaterialTheme.typography.titleMedium, color = f.texto)
         // Dentro de la búsqueda, el aviso ya sale arriba; aquí solo cuando Lo del momento va solo.

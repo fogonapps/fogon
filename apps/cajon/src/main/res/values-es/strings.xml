@@ -161,9 +161,7 @@
   <string name="borrar_artista_pregunta">¿Borrar a %1$s?</string>
   <string name="borrar_artista_texto">Sus álbumes siguen en tu cajón.</string>
   <string name="tu_nombre">Tu nombre</string>
-  <string name="sync_titulo">Sincronizar con tu PC</string>
   <string name="sync_apagada">Apagada</string>
-  <string name="sync_conectada">Conectada como %1$s</string>
   <string name="sync_para_pc">Tu cajón en el teléfono y en el PC, igual en los dos.</string>
   <string name="opciones">Opciones</string>
   <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
@@ -183,21 +181,6 @@
   <string name="acerca_de">Acerca de El Cajón</string>
   <string name="acerca_de_corto">Acerca de</string>
   <string name="tmdb_aviso">El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
-  <string name="sync_explica">Conecta tu GitHub y tu cajón se guarda solo en un archivo privado de tu cuenta (un Gist secreto). La versión de PC de El Cajón lee ese mismo archivo, así que tienes lo mismo en los dos. Es opcional.</string>
-  <string name="sync_pasos">1. Toca Crear token (se abre GitHub con todo listo).\n2. En Expiration elige No expiration o 1 año.\n3. Baja, toca Generate token, cópialo y pégalo aquí.</string>
-  <string name="crear_token">Crear token</string>
-  <string name="pega_token">Pega aquí tu token (ghp_…)</string>
-  <string name="conectar">Conectar</string>
-  <string name="sync_sincronizando">Sincronizando…</string>
-  <string name="sync_ultima">Última vez: %1$s</string>
-  <string name="sincronizar_ahora">Sincronizar ahora</string>
-  <string name="desconectar">Desconectar</string>
-  <string name="desconectar_pregunta">¿Desconectar GitHub?</string>
-  <string name="desconectar_texto">Lo de este teléfono se queda. El archivo en tu GitHub también (bórralo allá si quieres).</string>
-  <string name="sync_privacidad">El token queda cifrado en este teléfono. El archivo es secreto: solo lo ve quien tenga el enlace o tu cuenta.</string>
-  <string name="sync_token_vencido">El token no es válido o ya venció.</string>
-  <string name="sync_sin_permiso">El token no tiene permiso para gists.</string>
-  <string name="sync_sin_conexion">No se pudo conectar con GitHub.</string>
   <string name="licencias">Licencias</string>
   <string name="lic_tmdb">Datos de películas, series y animes con la API de TMDB, con la clave de cada persona (licencia gratis para uso no comercial). El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
   <string name="lic_open_library">Datos y portadas de libros de Open Library, un proyecto del Internet Archive.</string>
@@ -221,10 +204,6 @@
   <string name="aviso_datos_al_dia">Datos al día</string>
   <string name="aviso_registrado">Anotado en tu diario</string>
   <string name="aviso_favoritas_cuatro">Son cuatro favoritas: salió la más vieja</string>
-  <string name="aviso_token_corto">Pega el token completo</string>
-  <string name="aviso_conectando">Conectando con GitHub…</string>
-  <string name="aviso_token_invalido">Ese token no es válido</string>
-  <string name="aviso_sin_github">No se pudo conectar con GitHub</string>
   <string name="aviso_no_es_de_otra_app">Ese archivo no parece de Letterboxd ni de Goodreads.</string>
   <string name="aviso_importado">Respaldo recuperado</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
@@ -1339,7 +1318,7 @@
   <string name="privacidad_activa">Activado</string>
   <string name="privacidad_inactiva">Desactivado</string>
   <string name="privacidad_lectura">Permiso de leer notificaciones</string>
-  <string name="privacidad_opcionales">Spotify, si lo conectas, permite leer tus escuchas, álbumes y artistas; no cambia tu cuenta.\nGitHub recibe una copia de tu cajón en un Gist secreto mediante tu token: esa copia no tiene el cifrado de Fogón Social.\nEl acceso a notificaciones permite leer los datos de reproducción para anotar música localmente; anotar se activa aparte en Ajustes → Tu cajón.\nLos avisos muestran recuentos de novedades y mensajes, si Android los permite y hay cuenta.\nLa copia cifrada depende de la cuenta y su llave; mientras la red está en pausa no se sincroniza.\nLast.fm: al importar un perfil público, Fogón y Last.fm reciben su usuario y periodo. Fogón conserva respuestas cinco minutos; las escuchas importadas quedan en el teléfono.</string>
+  <string name="privacidad_opcionales">Spotify, si lo conectas, permite leer tus escuchas, álbumes y artistas; no cambia tu cuenta.\nEl acceso a notificaciones permite leer los datos de reproducción para anotar música localmente; anotar se activa aparte en Ajustes → Tu cajón.\nLos avisos muestran recuentos de novedades y mensajes, si Android los permite y hay cuenta.\nLa copia cifrada depende de la cuenta y su llave; mientras la red está en pausa no se sincroniza.\nLast.fm: al importar un perfil público, Fogón y Last.fm reciben su usuario y periodo. Fogón conserva respuestas cinco minutos; las escuchas importadas quedan en el teléfono.</string>
   <string name="privacidad_contacto">Tus datos: fogonapps@gmail.com</string>
   <string name="barra_minimo">Al menos 3 pestañas. Inicio siempre visible.</string>
   <string name="barra_restablecer">Volver al orden de siempre</string>
@@ -1766,4 +1745,5 @@
     </plurals>
     <string name="parte_reto">Tu reto del año</string>
     <string name="parte_por_ver">Lo que tienes por ver</string>
+    <string name="aj_avanzado">Avanzado: conectar Spotify</string>
 </resources>

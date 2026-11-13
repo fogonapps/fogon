@@ -1,6 +1,0 @@
-• Stories look better: the name and buttons read in full, and while editing, tool names no longer cover what you write.
-• Profiles: the @ no longer repeats and you can see when someone follows you.
-• Clearer moderation.
-• Profiles match across the four apps: followers first, "Friends" before "Message", and when signed in it opens on your people.
-• The arepa icon no longer looks like a “no” sign.
-• Rounded text fields across the app.

@@ -1,0 +1,3 @@
+• Importar extractos del banco es más fiable con descripciones de varias líneas.
+• Respaldos más seguros: uno dañado no borra lo que tienes.
+• Política de privacidad actualizada.

@@ -205,7 +205,6 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Privacidad -> Transparencia(vm)
                             Pantalla.BorrarCuenta -> FormularioBorrado(vm, vm::cerrar)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
-                            Pantalla.Sincronizar -> Sincronizar(vm)
                             Pantalla.ConectarSpotify -> ConectarSpotify(vm)
                             Pantalla.AcercaDe -> AcercaDe(vm)
                             Pantalla.Reporte -> Reporte(vm)

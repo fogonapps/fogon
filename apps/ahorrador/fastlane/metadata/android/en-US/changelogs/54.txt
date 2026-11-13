@@ -1,0 +1,3 @@
+• Importing bank statements is more reliable with multi-line descriptions.
+• Safer backups: a damaged one no longer erases what you have.
+• Updated privacy policy.

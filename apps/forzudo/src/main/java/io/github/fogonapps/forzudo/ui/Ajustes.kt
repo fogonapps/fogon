@@ -15,7 +15,7 @@ import io.github.fogonapps.identidad.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onImportar: () -> Unit) {
+fun Ajustes(vm: GymViewModel, e: Estado, onExportar: () -> Unit, onImportar: () -> Unit) {
     val confirmar = LocalConfirmar.current
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
@@ -37,7 +37,6 @@ fun Ajustes(vm: GymViewModel, e: Estado, sync: Sync, onExportar: () -> Unit, onI
     val guia = io.github.fogonapps.identidad.LocalGuia.current
     FilaAjuste(IconosFogon.Chispa, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(Pestana.INICIO); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.ajustes_cuaderno))
-    Desplegable(IconosFogon.Repetir, stringResource(R.string.sync_titulo), null) { CajaSync(vm, sync, confirmar) }
     Desplegable(IconosFogon.Chulo, stringResource(R.string.respaldo_titulo), stringResource(R.string.pista_respaldo)) {
         FilaAjuste(IconosFogon.Lista, stringResource(R.string.exportar), null, onExportar)
         FilaAjuste(IconosFogon.Lista, stringResource(R.string.importar), null, onImportar)

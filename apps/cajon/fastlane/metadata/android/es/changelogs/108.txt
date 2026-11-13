@@ -1,6 +1,0 @@
-• Las historias se ven mejor: el nombre y los botones se leen enteros, y al editarlas los nombres de las herramientas ya no tapan lo que escribes.
-• Perfiles: el @ ya no se repite y ves cuando alguien te sigue.
-• Moderación más clara.
-• «Para ti» ya no se mueve mientras carga y Listas siempre está a mano.
-• Perfiles iguales en las cuatro apps: seguidores primero, «Amigos» antes de «Mensaje», y con sesión abre lo de tu gente.
-• Campos de texto redondeados en toda la app.

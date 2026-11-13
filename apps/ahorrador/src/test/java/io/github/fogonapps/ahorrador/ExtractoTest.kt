@@ -48,4 +48,29 @@ class ExtractoTest {
         assertEquals(30000L, totalReto(5000, 3))
         assertEquals(6890000L, totalReto(5000, 52))
     }
+
+    @Test fun bomComillasTildesYSaltosDeLinea() {
+        val csv = "\uFEFFFecha;Descripción;Valor;Saldo\r\n03/02/2024;\"Café, \"\"Niño\"\"\nMañana\";-1.234,50;8.000\r\n"
+        assertEquals(listOf(FilaExtracto("2024-02-03", "Café, \"Niño\"\nMañana", -1235)), leerExtracto(csv))
+    }
+
+    @Test fun vaciosAjenosYFechasImposibles() {
+        assertEquals(emptyList<FilaExtracto>(), leerExtracto(""))
+        assertEquals(emptyList<FilaExtracto>(), leerExtracto("Title,Author,My Rating\nLibro,Ana,5"))
+        assertEquals(emptyList<FilaExtracto>(), leerExtracto("Fecha;Descripción;Valor\n30/02/2024;Café;-100"))
+    }
+
+    @Test fun dosComprasIgualesSeConservanYNoSeReimportan() {
+        var n = 0
+        val filas = List(2) { FilaExtracto("2024-02-03", "Café", -1000) to "comida" }
+        val original = io.github.fogonapps.ahorrador.datos.Estado()
+        val primera = io.github.fogonapps.ahorrador.datos.importarFilasExtracto(original, filas, "c1") { "m${n++}" }
+        assertEquals(2, primera.movimientos.size)
+        assertEquals(primera, io.github.fogonapps.ahorrador.datos.importarFilasExtracto(primera, filas, "c1") { "m${n++}" })
+    }
+
+    @Test(timeout = 10000) fun cincoMilFilas() {
+        val csv = "Fecha\tDescripción\tValor\n" + (1..5000).joinToString("\n") { "03/02/2024\tCompra $it\t-1000" }
+        assertEquals(5000, leerExtracto(csv).size)
+    }
 }

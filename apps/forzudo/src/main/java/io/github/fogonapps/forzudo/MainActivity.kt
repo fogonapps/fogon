@@ -141,10 +141,6 @@ class MainActivity : ComponentActivity() {
         vm.guardarAlSalir()
     }
 
-    override fun onStart() {
-        super.onStart()
-        vm.sincronizar()
-    }
 }
 
 /** Lee como mucho [max] bytes (InputStream.readNBytes solo existe desde Android 13). */

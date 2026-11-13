@@ -119,12 +119,10 @@ fun SeguridadCuenta(vm: GymViewModel, ajuste: AjusteSocial) {
 
 @Composable
 fun TransparenciaForzudo(vm: GymViewModel) {
-    val sync by vm.sync.collectAsState()
     val usuario by vm.red.usuario.collectAsState()
     Transparencia(vm::cerrar, stringResource(R.string.cuenta_local), stringResource(R.string.cuenta_compartido),
         buildList {
             if (usuario != null) add(stringResource(R.string.cuenta_servicio_social))
-            if (sync.estado != EstadoSync.APAGADA) add(stringResource(R.string.cuenta_servicio_gist))
         }, stringResource(R.string.cuenta_borrado), emptyList())
 }
 

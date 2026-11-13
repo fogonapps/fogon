@@ -97,4 +97,29 @@ class ControladorSocialTest {
         assertEquals(emptyList<AvisoSocial>(), red.avisos.value)
         assertEquals(0, red.sinLeer.value)
     }
+
+    @Test fun elFeedQueLlegaDespuesDeSalirNoSeGuardaNiSeMuestra() = runTest {
+        val dir = java.nio.file.Files.createTempDirectory("feed").toFile()
+        val puerta = kotlinx.coroutines.CompletableDeferred<Unit>()
+        class RedConArchivo(scope: CoroutineScope, private val t: ClienteSocial, s: SesionCuenta) : ControladorSocial(scope, s, "ana") {
+            override val archivoHistorias = java.io.File(dir, "historias.json")
+            override fun cliente() = t
+            override suspend fun intentar(avisar: Boolean, marca: SesionCuenta.Marca, trabajo: suspend () -> Unit) = sesion.intentar(marca, trabajo) {}
+            override fun avisar(evento: EventoSocial) {}
+            override fun olvidarCuenta() { _usuario.value = null; borrarFeedGuardado() }
+            override fun ponerCuenta(cuenta: MiCuenta) {}
+            override fun alContarAvisos(cantidad: Int) {}
+            override fun cargarCasos() = scope.launch {}
+            fun salir() = olvidarCuenta()
+        }
+        val red = RedConArchivo(this, cliente { if (it.url.encodedPath.endsWith("/feed")) { kotlinx.coroutines.runBlocking { puerta.await() }; 200 to "[$publicacion]" } else 200 to "[]" },
+            SesionCuenta { "prueba" })
+        red.cargarFeed(avisar = false)
+        kotlinx.coroutines.yield()
+        red.salir()           // sale mientras la respuesta todavía no llega
+        puerta.complete(Unit)
+        coroutineContext[Job]!!.children.toList().joinAll()
+        assertNull(red.feed.value)
+        assertFalse(java.io.File(dir, "feed.json").exists())
+    }
 }

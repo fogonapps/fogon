@@ -86,7 +86,6 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
     val e by vm.estado.collectAsStateWithLifecycle()
     val pila by vm.pila.collectAsStateWithLifecycle()
     val pestana by vm.pestana.collectAsStateWithLifecycle()
-    val sync by vm.sync.collectAsStateWithLifecycle()
     val descanso by vm.descanso.collectAsStateWithLifecycle()
     val f = FogonTema.actual
     val snack = remember { SnackbarHostState() }
@@ -171,7 +170,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Seguridad -> SeguridadCuenta(vm, p.ajuste)
                             is Pantalla.Gente -> io.github.fogonapps.social.ui.GenteRed(interfazCuenta(vm), p.usuario, p.seguidores)
                             is Pantalla.Transparencia -> TransparenciaForzudo(vm)
-                            is Pantalla.Ajustes -> Ajustes(vm, estado, sync, onExportar, onImportar)
+                            is Pantalla.Ajustes -> Ajustes(vm, estado, onExportar, onImportar)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
                             is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }

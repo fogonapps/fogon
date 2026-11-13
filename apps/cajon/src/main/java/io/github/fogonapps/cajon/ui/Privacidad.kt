@@ -45,7 +45,6 @@ fun Transparencia(vm: CajonViewModel) {
         detallesOpcionales = stringResource(R.string.privacidad_opcionales),
         opciones = listOf(
             io.github.fogonapps.social.ui.OpcionPrivacidad(stringResource(R.string.spotify_titulo), opciones.spotify) { vm.abrir(Pantalla.MusicaEscuchada) },
-            io.github.fogonapps.social.ui.OpcionPrivacidad(stringResource(R.string.sync_titulo), opciones.github) { vm.abrir(Pantalla.Sincronizar) },
             io.github.fogonapps.social.ui.OpcionPrivacidad(stringResource(R.string.privacidad_lectura), opciones.leerNotificaciones) {
                 c.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             },

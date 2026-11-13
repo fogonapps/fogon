@@ -69,7 +69,7 @@ open class RedApp(
         sesion.invalidar(); almacen.token = null; almacen.usuario = null; almacen.llaveCopia = null
         copiaLista.value = false; copiaBloqueada.value = false
         _usuario.value = null; _cuenta.value = null; identidad.value = null; foto.value = ""; portadaImagen.value = ""; revision = null
-        listOf(cache, cacheFoto, cachePortada, archivoHistorias).forEach { it.delete() }
+        listOf(cache, cacheFoto, cachePortada, archivoHistorias).forEach { it.delete() }; borrarFeedGuardado()
         _historias.value = emptyList(); _notasGente.value = emptyList()
         _feed.value = null; _explorar.value = null; _perfiles.value = emptyMap(); _vistas.value = emptyMap()
         _comentarios.value = emptyMap(); _guardados.value = null; _avisos.value = null; _casos.value = null

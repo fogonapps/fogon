@@ -1395,6 +1395,13 @@ class Social(
             if (si) {
                 cambiar("INSERT OR IGNORE INTO bloqueos(de, a) VALUES(?,?)", yo, otro)
                 cambiar("DELETE FROM seguir WHERE (de = ? AND a = ?) OR (de = ? AND a = ?)", yo, otro, otro, yo)
+                // Las listas en común que compartían: sale la persona bloqueada (y si ella armó la lista, sale quien
+                // bloquea). Así ninguno sigue viendo lo que el otro agrega.
+                val compartidas = leer("""SELECT l.id, l.creador FROM listas_comunes l JOIN lista_miembros a ON a.lista = l.id AND a.cuenta = ?
+                    JOIN lista_miembros b ON b.lista = l.id AND b.cuenta = ?""", yo, otro) { it.getLong(1) to it.getLong(2) }
+                compartidas.forEach { (lista, creador) ->
+                    cambiar("DELETE FROM lista_miembros WHERE lista = ? AND cuenta = ?", lista, if (creador == otro) yo else otro)
+                }
             } else cambiar("DELETE FROM bloqueos WHERE de = ? AND a = ?", yo, otro)
         }
     }
@@ -1780,9 +1787,13 @@ class Social(
     fun sumarAListaComun(yo: Long, id: Long, usuario: String) {
         if (!esMiembro(yo, id)) throw Problema(404, "no_existe")
         if (amigos(yo).none { it.usuario == usuario.lowercase() }) throw Problema(403, "solo_amigos")
+        val nuevo = idDe(usuario)
         b.transaccion {
             if (leer("SELECT COUNT(*) FROM lista_miembros WHERE lista = ?", id) { it.getInt(1) }.first() >= 20) throw Problema(413, "lista_llena")
-            cambiar("INSERT OR IGNORE INTO lista_miembros VALUES(?,?)", id, idDe(usuario))
+            // Nadie entra a una lista donde está alguien que lo bloqueó o a quien bloqueó.
+            if (leer("""SELECT 1 FROM lista_miembros m JOIN bloqueos k ON (k.de = m.cuenta AND k.a = ?) OR (k.de = ? AND k.a = m.cuenta)
+                WHERE m.lista = ? LIMIT 1""", nuevo, nuevo, id) { 1 }.isNotEmpty()) throw Problema(403, "bloqueo")
+            cambiar("INSERT OR IGNORE INTO lista_miembros VALUES(?,?)", id, nuevo)
         }
     }
 
@@ -2470,7 +2481,7 @@ class Social(
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val FALLOS_CODIGO_DIA = 15
         const val MAX_VIDEOS_DIA = 20
-        const val POLITICA = "2026-11-11"
+        const val POLITICA = "2026-11-13"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

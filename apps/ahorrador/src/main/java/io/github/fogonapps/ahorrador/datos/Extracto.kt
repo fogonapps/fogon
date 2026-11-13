@@ -75,7 +75,18 @@ private fun normal(s: String) = java.text.Normalizer.normalize(s.lowercase(), ja
 
 /** Las filas con fecha y monto del extracto [texto]. Las demás (encabezados, totales, saldos) se saltan. */
 fun leerExtracto(texto: String): List<FilaExtracto> {
-    val lineas = texto.removePrefix("\uFEFF").lines().filter { it.isNotBlank() }
+    // Un salto de línea entre comillas pertenece a la descripción, no empieza otro movimiento.
+    val lineas = mutableListOf<String>()
+    val registro = StringBuilder()
+    var comillas = false
+    for (c in texto.removePrefix("\uFEFF")) {
+        if (c == '"') comillas = !comillas
+        if (!comillas && (c == '\n' || c == '\r')) {
+            if (registro.isNotBlank()) lineas += registro.toString()
+            registro.clear()
+        } else registro.append(c)
+    }
+    if (registro.isNotBlank()) lineas += registro.toString()
     if (lineas.isEmpty()) return emptyList()
     val sep = listOf(';', '\t', ',').maxBy { s -> lineas.take(10).sumOf { l -> celdas(l, s).size } }
     val tabla = lineas.map { celdas(it, sep) }

@@ -8,6 +8,9 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.unit.Constraints
 
 /** Algo que se ve mal en una pantalla. */
 data class Hallazgo(val pantalla: String, val tipo: String, val detalle: String) {
@@ -20,6 +23,7 @@ data class Hallazgo(val pantalla: String, val tipo: String, val detalle: String)
  *   una lista o de un menú, sí van pegados y no cuentan);
  * - «encimados»: dos cosas tocables que se tapan (sin ser una parte de la otra);
  * - «chico»: algo tocable de menos de 32 dp (el alto de un chip), difícil de tocar con el dedo;
+ * - «cortado»: texto que desborda una caja de alto finito sin ninguna línea elipsada;
  * - «sin nombre»: algo tocable sin texto ni descripción (el lector de pantalla no puede decir qué es).
  */
 fun ComposeContentTestRule.revisar(pantalla: String, barraAbajo: Float = 0f): List<Hallazgo> {
@@ -50,6 +54,17 @@ fun ComposeContentTestRule.revisar(pantalla: String, barraAbajo: Float = 0f): Li
     fun ancestro(a: SemanticsNode, b: SemanticsNode): Boolean { var p = b.parent; while (p != null) { if (p.id == a.id) return true; p = p.parent }; return false }
     fun dp(px: Float) = px / densidad
     val hallazgos = mutableListOf<Hallazgo>()
+    // El árbol sin fusionar conserva cada texto y su propia acción de medición, incluso dentro de botones.
+    fun revisarTexto(n: SemanticsNode) {
+        if (visible(n.boundsInRoot)) {
+            val resultados = mutableListOf<TextLayoutResult>()
+            n.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(resultados)
+            resultados.filter { it.estaCortado() }
+                .forEach { r -> hallazgos += Hallazgo(pantalla, "cortado", "«${r.layoutInput.text.text}»") }
+        }
+        n.children.forEach(::revisarTexto)
+    }
+    revisarTexto(onRoot(useUnmergedTree = true).fetchSemanticsNode())
     tocables.forEach { n ->
         val r = n.boundsInRoot
         // (Lo cortado por el borde de la pantalla o de una fila que se desliza no cuenta como chico.)
@@ -75,4 +90,25 @@ fun ComposeContentTestRule.revisar(pantalla: String, barraAbajo: Float = 0f): Li
             hallazgos += Hallazgo(pantalla, "pegados", "«${nombre(a)}» y «${nombre(b)}» (${dp(hueco).toInt()} dp entre ellos)")
     }
     return hallazgos.distinct()
+}
+
+/** Contrasta el texto con su caja, sin tomar las restricciones infinitas de los desplazables como recorte. */
+private fun TextLayoutResult.estaCortado(): Boolean {
+    val entrada = layoutInput
+    if (!entrada.constraints.hasBoundedHeight || size.width <= 0 || size.height <= 0) return false
+    if (!hasVisualOverflow || (0 until lineCount).any(::isLineEllipsized)) return false
+    // La acción semántica puede reconstruir el párrafo con el ancho máximo del contenedor en vez del ancho
+    // de la caja. Medir con la caja real evita confundir ese espacio disponible con texto desbordado.
+    val medido = TextMeasurer(entrada.fontFamilyResolver, entrada.density, entrada.layoutDirection, cacheSize = 0).measure(
+        text = entrada.text,
+        style = entrada.style,
+        overflow = entrada.overflow,
+        softWrap = entrada.softWrap,
+        maxLines = entrada.maxLines,
+        placeholders = entrada.placeholders,
+        constraints = Constraints(maxWidth = size.width, maxHeight = size.height),
+    )
+    val sinElipsis = (0 until medido.lineCount).none(medido::isLineEllipsized)
+    val desbordaAlto = medido.didOverflowHeight && size.height < medido.multiParagraph.height
+    return sinElipsis && (medido.didOverflowWidth || desbordaAlto)
 }
