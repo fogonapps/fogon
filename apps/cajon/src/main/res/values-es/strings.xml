@@ -61,7 +61,7 @@
   <string name="buscar_nada">No encontré «%1$s».</string>
   <string name="ya_en_cajon">Ya está en tu cajón</string>
   <string name="no_esta_a_mano">¿No está? Agrégalo a mano</string>
-  <string name="fuente_tmdb">Películas, series y animes: TMDB, con tu propia clave.</string>
+  <string name="fuente_tmdb">Películas, series y animes: TMDB.</string>
   <string name="fuente_open_library">Libros: Open Library (Internet Archive), datos abiertos.</string>
   <string name="fuente_musicbrainz">Música: MusicBrainz (datos de dominio público) y carátulas del Cover Art Archive.</string>
   <string name="minutos_n">%1$d min</string>
@@ -73,8 +73,8 @@
   <string name="compartir">Compartir</string>
   <string name="corregir_datos">Corregir los datos</string>
   <string name="tu_nota">Tu nota</string>
-  <string name="quitar_favorita">Quitar de tus cuatro favoritas</string>
-  <string name="poner_favorita">Poner en tus cuatro favoritas</string>
+  <string name="quitar_favorita">Quitar de tus 4 favoritas del perfil</string>
+  <string name="poner_favorita">Poner en tus 4 favoritas del perfil</string>
   <string name="agregar_a_lista">Agregar a una lista</string>
   <string name="tu_resena">Tu reseña</string>
   <string name="resena_pista">Qué te pareció (solo tú la ves, a menos que la compartas)</string>
@@ -182,7 +182,7 @@
   <string name="acerca_de_corto">Acerca de</string>
   <string name="tmdb_aviso">El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
   <string name="licencias">Licencias</string>
-  <string name="lic_tmdb">Datos de películas, series y animes con la API de TMDB, con la clave de cada persona (licencia gratis para uso no comercial). El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
+  <string name="lic_tmdb">Datos de películas, series y animes con la API de TMDB, a través del servidor de Fogón (licencia gratis para uso no comercial). El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</string>
   <string name="lic_open_library">Datos y portadas de libros de Open Library, un proyecto del Internet Archive.</string>
   <string name="lic_musicbrainz">Datos de música de MusicBrainz (núcleo de datos CC0, de dominio público). Carátulas del Cover Art Archive (MusicBrainz e Internet Archive); cada carátula es de su dueño.</string>
   <string name="lic_coil">Coil, para cargar las portadas. Apache License 2.0.</string>
@@ -203,7 +203,6 @@
   <string name="aviso_sin_detalles">No se pudieron traer todos los datos; se agrega con lo que hay.</string>
   <string name="aviso_datos_al_dia">Datos al día</string>
   <string name="aviso_registrado">Anotado en tu diario</string>
-  <string name="aviso_favoritas_cuatro">Son cuatro favoritas: salió la más vieja</string>
   <string name="aviso_no_es_de_otra_app">Ese archivo no parece una copia de El Cajón ni de Letterboxd, Goodreads, Netflix o Spotify.</string>
   <string name="aviso_importado">Respaldo recuperado</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
@@ -681,7 +680,6 @@
   <string name="momento_credito_justwatch">Dónde ver: datos de JustWatch</string>
   <string name="mod_pista">Reportes y frases propuestas por revisar</string>
   <string name="resenas">Reseñas</string>
-  <string name="resenas_de_la_gente">De la gente</string>
   <string name="cifras_de">Tus cifras de %1$s</string>
   <string name="genero_favorito">Género favorito</string>
   <string name="artista_favorito">Artista favorito</string>
@@ -959,11 +957,11 @@
   <string name="red_paso2_titulo">Crea tu cuenta</string>
   <string name="red_paso2_texto">Para seguir a otras personas, publicar, comentar y escribir mensajes. Mientras tanto, mira lo que comparte la gente en Explorar.</string>
   <string name="red_feed_sin_cuenta">Con tu cuenta, aquí sale lo de las personas que sigues.</string>
-  <string name="red_tu_nota">Tu nota</string>
-  <string name="red_nota_pon">Pon una nota</string>
+  <string name="red_tu_nota">Tu estado</string>
+  <string name="red_nota_pon">Pon un estado</string>
   <string name="red_nota_pista">¿Qué estás viendo, leyendo o escuchando? (24 h)</string>
-  <string name="red_nota_poner">Poner la nota</string>
-  <string name="red_nota_quitar">Quitar la nota</string>
+  <string name="red_nota_poner">Poner el estado</string>
+  <string name="red_nota_quitar">Quitar el estado</string>
   <string name="red_vistas">vistas</string>
   <string name="red_millones">%1$s mill.</string>
   <string name="red_miles">%1$s mil</string>
@@ -1083,7 +1081,6 @@
   <string name="red_publicaciones">publicaciones</string>
   <string name="red_publicada">Publicada</string>
   <string name="red_publicar">Publicar</string>
-  <string name="red_publicar_sobre">Publicar sobre esto en la red</string>
   <string name="red_que_es">La red de El Cajón: sigue a otras personas, mira lo que ven, leen y escuchan, y comparte tus reseñas, tu diario, tus listas y tus fotos.</string>
   <string name="red_que_sube">Tu cajón se guarda cifrado en tu cuenta: nadie más puede leerlo. En la red solo sale lo que marques como público o para tus seguidores, y lo que publiques.</string>
   <string name="red_que_quieres_decir">¿Qué quieres contar?</string>
@@ -1247,7 +1244,9 @@
     <string name="resena_borrador">El borrador se guarda al salir. Las fotos requieren una cuenta y se suben al añadirlas.</string>
     <string name="resena_elegir_obra">Elegir obra, artista o autor</string>
     <string name="resena_limite">%1$d / 5000 caracteres</string>
-    <string name="resena_con_nota">Añadir nota</string>
+    <string name="resena_escribir_algo">Escribir algo</string>
+    <string name="resena_escribir_parte">Reseñar una parte</string>
+    <string name="resena_nota_compartida">Es la misma nota que ves en la ficha.</string>
     <string name="resena_foto">Foto %1$d de la reseña</string>
     <string name="resena_quitar_foto">Quitar foto %1$d</string>
     <string name="resena_borrar_pregunta">¿Borrar esta reseña?</string>
@@ -1477,10 +1476,10 @@
   <string name="apelacion_tu_texto">Tu explicación</string>
   <string name="apelacion_enviar">Enviar la apelación</string>
   <string name="historia_tu">Tú</string>
-  <string name="historia_nota_pon">Nota</string>
+  <string name="historia_nota_pon">Estado</string>
   <string name="historia_ver_tuya">Ver tu historia</string>
   <string name="historia_nueva">Nueva historia</string>
-  <string name="historia_tu_nota">Tu nota</string>
+  <string name="historia_tu_nota">Tu estado</string>
   <string name="historia_apple_music">Escuchar en Apple Music</string>
   <string name="historia_ver_escena">Ver la escena</string>
   <string name="historia_abrir">Abrir</string>
@@ -1503,11 +1502,11 @@
   <string name="historia_sin_canciones">No encontramos esa canción.</string>
   <string name="historia_canciones_apple">Avances de 30 segundos de Apple Music.</string>
   <string name="historia_de_la_app">De esta app</string>
-  <string name="historia_nota_explica">Tu nota dura 24 horas y la ve tu gente. Puedes ponerle una canción o algo de la app.</string>
+  <string name="historia_nota_explica">Tu estado dura 24 horas y la ve tu gente. Puedes ponerle una canción o algo de la app.</string>
   <string name="historia_nota_pista">¿Qué estás pensando?</string>
   <string name="historia_quitar_adjunto">Quitar lo adjunto</string>
-  <string name="historia_nota_poner">Poner la nota</string>
-  <string name="historia_nota_quitar">Quitar la nota</string>
+  <string name="historia_nota_poner">Poner el estado</string>
+  <string name="historia_nota_quitar">Quitar el estado</string>
   <string name="historia_ver_perfil">Ver perfil</string>
   <string name="historia_no_se_pudo">No se pudo usar esa foto</string>
   <string name="historia_cerrar">Cerrar</string>
@@ -1591,7 +1590,7 @@
     <item quantity="other">%1$d votos</item>
   </plurals>
   <string name="cancion_al_perfil">Poner en mi perfil</string>
-  <string name="cancion_a_la_nota">Poner en mi nota</string>
+  <string name="cancion_a_la_nota">Poner en mi estado</string>
   <string name="cancion_a_historia">Compartir en una historia</string>
   <string name="cumple_hoy_aviso">Hoy es el cumpleaños de %1$s</string>
   <string name="cumple_hoy_perfil">Hoy cumple años</string>
@@ -1747,7 +1746,13 @@
     <string name="parte_por_ver">Lo que tienes por ver</string>
     <string name="aj_avanzado">Avanzado: conectar Spotify</string>
     <string name="red_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
-    <string name="imagenes">Imágenes</string>
     <string name="imagen_de_obra">Imagen %1$d de %2$s</string>
   <string name="detener_enlace">Detener</string>
+    <string name="red_califico">Calificó %1$s</string>
+    <string name="aviso_favoritas_llenas">Ya tienes tus 4 favoritas del perfil. Quita una para poner esta.</string>
+    <string name="tipo_calificacion">Calificación</string>
+    <string name="resena_filtro_todas">Todas</string>
+    <string name="resena_filtro_buenas">Buenas</string>
+    <string name="resena_filtro_malas">Malas</string>
+    <string name="destacado_desde_favoritas">Primero ponle la estrella en su ficha: estos destacados salen de tus 4 favoritas.</string>
 </resources>

@@ -62,7 +62,7 @@
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
   <string name="ya_en_cajon">Already in your cajón</string>
   <string name="no_esta_a_mano">Not there? Add it by hand</string>
-  <string name="fuente_tmdb">Films, series and anime: TMDB, with your own key.</string>
+  <string name="fuente_tmdb">Films, series and anime: TMDB.</string>
   <string name="fuente_open_library">Books: Open Library (Internet Archive), open data.</string>
   <string name="fuente_musicbrainz">Music: MusicBrainz (public domain data) and covers from the Cover Art Archive.</string>
   <string name="minutos_n">%1$d min</string>
@@ -74,8 +74,8 @@
   <string name="compartir">Share</string>
   <string name="corregir_datos">Edit details</string>
   <string name="tu_nota">Your rating</string>
-  <string name="quitar_favorita">Remove from your top four</string>
-  <string name="poner_favorita">Add to your top four</string>
+  <string name="quitar_favorita">Remove from your 4 profile favorites</string>
+  <string name="poner_favorita">Add to your 4 profile favorites</string>
   <string name="agregar_a_lista">Add to a list</string>
   <string name="tu_resena">Your review</string>
   <string name="resena_pista">What you thought (only you see it unless you share it)</string>
@@ -183,7 +183,7 @@
   <string name="acerca_de_corto">About</string>
   <string name="tmdb_aviso">El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="licencias">Licenses</string>
-  <string name="lic_tmdb">Film, series and anime data from the TMDB API, with each person’s own key (free non-commercial license). El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
+  <string name="lic_tmdb">Film, series and anime data from the TMDB API, through the Fogón server (free non-commercial license). El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="lic_open_library">Book data and covers from Open Library, an Internet Archive project.</string>
   <string name="lic_musicbrainz">Music data from MusicBrainz (core data CC0, public domain). Covers from the Cover Art Archive (MusicBrainz and Internet Archive); each cover belongs to its owner.</string>
   <string name="lic_coil">Coil, to load covers. Apache License 2.0.</string>
@@ -204,7 +204,6 @@
   <string name="aviso_sin_detalles">Couldn’t get all the details; it’ll be added with what’s there.</string>
   <string name="aviso_datos_al_dia">Details refreshed</string>
   <string name="aviso_registrado">Logged in your diary</string>
-  <string name="aviso_favoritas_cuatro">Top four only: the oldest one left</string>
   <string name="aviso_no_es_de_otra_app">That file doesn’t look like an El Cajón copy or a Letterboxd, Goodreads, Netflix or Spotify export.</string>
   <string name="aviso_importado">Backup restored</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
@@ -681,7 +680,6 @@
   <string name="momento_credito_justwatch">Where to watch: data from JustWatch</string>
   <string name="mod_pista">Reports and suggested phrases to review</string>
   <string name="resenas">Reviews</string>
-  <string name="resenas_de_la_gente">From people</string>
   <string name="cifras_de">Your %1$s stats</string>
   <string name="genero_favorito">Favorite genre</string>
   <string name="artista_favorito">Favorite artist</string>
@@ -959,11 +957,11 @@
   <string name="red_paso2_titulo">Create your account</string>
   <string name="red_paso2_texto">To follow people, post, comment and send messages. Meanwhile, see what people share in Explore.</string>
   <string name="red_feed_sin_cuenta">With your account, posts from people you follow show up here.</string>
-  <string name="red_tu_nota">Your note</string>
-  <string name="red_nota_pon">Add a note</string>
+  <string name="red_tu_nota">Your status</string>
+  <string name="red_nota_pon">Add a status</string>
   <string name="red_nota_pista">What are you watching, reading or listening to? (24 h)</string>
-  <string name="red_nota_poner">Post note</string>
-  <string name="red_nota_quitar">Remove note</string>
+  <string name="red_nota_poner">Post status</string>
+  <string name="red_nota_quitar">Remove status</string>
   <string name="red_vistas">views</string>
   <string name="red_millones">%1$sM</string>
   <string name="red_miles">%1$sK</string>
@@ -1083,7 +1081,6 @@
   <string name="red_publicaciones">posts</string>
   <string name="red_publicada">Posted</string>
   <string name="red_publicar">Post</string>
-  <string name="red_publicar_sobre">Post about this on the network</string>
   <string name="red_que_es">The El Cajón network: follow people, see what they watch, read and listen to, and share your reviews, diary, lists and photos.</string>
   <string name="red_que_sube">Your cajón is saved encrypted in your account: nobody else can read it. Only what you mark as public or for your followers, and what you post, shows on the network.</string>
   <string name="red_que_quieres_decir">What do you want to say?</string>
@@ -1247,7 +1244,9 @@
     <string name="resena_borrador">Your draft is saved when you leave. Photos require an account and are uploaded when added.</string>
     <string name="resena_elegir_obra">Choose a work, artist or author</string>
     <string name="resena_limite">%1$d / 5000 characters</string>
-    <string name="resena_con_nota">Add a rating</string>
+    <string name="resena_escribir_algo">Write something</string>
+    <string name="resena_escribir_parte">Review a part</string>
+    <string name="resena_nota_compartida">It\'s the same rating shown on the page.</string>
     <string name="resena_foto">Review photo %1$d</string>
     <string name="resena_quitar_foto">Remove photo %1$d</string>
     <string name="resena_borrar_pregunta">Delete this review?</string>
@@ -1475,10 +1474,10 @@
   <string name="apelacion_tu_texto">Your explanation</string>
   <string name="apelacion_enviar">Send the appeal</string>
   <string name="historia_tu">You</string>
-  <string name="historia_nota_pon">Note</string>
+  <string name="historia_nota_pon">Status</string>
   <string name="historia_ver_tuya">See your story</string>
   <string name="historia_nueva">New story</string>
-  <string name="historia_tu_nota">Your note</string>
+  <string name="historia_tu_nota">Your status</string>
   <string name="historia_apple_music">Listen on Apple Music</string>
   <string name="historia_ver_escena">Watch the scene</string>
   <string name="historia_abrir">Open</string>
@@ -1501,11 +1500,11 @@
   <string name="historia_sin_canciones">We couldn\'t find that song.</string>
   <string name="historia_canciones_apple">30-second previews from Apple Music.</string>
   <string name="historia_de_la_app">From this app</string>
-  <string name="historia_nota_explica">Your note lasts 24 hours and your people see it. You can add a song or something from the app.</string>
+  <string name="historia_nota_explica">Your status lasts 24 hours and your people see it. You can add a song or something from the app.</string>
   <string name="historia_nota_pista">What\'s on your mind?</string>
   <string name="historia_quitar_adjunto">Remove the attachment</string>
-  <string name="historia_nota_poner">Post the note</string>
-  <string name="historia_nota_quitar">Remove the note</string>
+  <string name="historia_nota_poner">Post the status</string>
+  <string name="historia_nota_quitar">Remove the status</string>
   <string name="historia_ver_perfil">See profile</string>
   <string name="historia_no_se_pudo">That photo couldn\'t be used</string>
   <string name="historia_cerrar">Close</string>
@@ -1589,7 +1588,7 @@
     <item quantity="other">%1$d votes</item>
   </plurals>
   <string name="cancion_al_perfil">Set on my profile</string>
-  <string name="cancion_a_la_nota">Put in my note</string>
+  <string name="cancion_a_la_nota">Put in my status</string>
   <string name="cancion_a_historia">Share in a story</string>
   <string name="cumple_hoy_aviso">Today is %1$s’s birthday</string>
   <string name="cumple_hoy_perfil">Birthday today</string>
@@ -1745,7 +1744,13 @@
     <string name="parte_por_ver">What you want to watch</string>
     <string name="aj_avanzado">Advanced: connect Spotify</string>
     <string name="red_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
-    <string name="imagenes">Images</string>
     <string name="imagen_de_obra">Image %1$d of %2$s</string>
   <string name="detener_enlace">Stop</string>
+    <string name="red_califico">Rated %1$s</string>
+    <string name="aviso_favoritas_llenas">You already have your 4 profile favorites. Remove one to add this.</string>
+    <string name="tipo_calificacion">Rating</string>
+    <string name="resena_filtro_todas">All</string>
+    <string name="resena_filtro_buenas">Good</string>
+    <string name="resena_filtro_malas">Bad</string>
+    <string name="destacado_desde_favoritas">First give it the star on its page: these highlights come from your top 4.</string>
 </resources>

@@ -796,7 +796,7 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
             if (verHistorias && grupo != null) VisorHistorias(vm, listOf(grupo), 0) { verHistorias = false }
             Column(Modifier.weight(1f)) {
                 NombreRed(p.autor)
-                Text((if (p.tipo in vm.contenido.tiposAdmitidos) vm.contenido.NombreTipo(p.tipo) else stringResource(R.string.social_red_tipo_publico)) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
+                Text((if (p.tipo in vm.contenido.tiposAdmitidos) vm.contenido.NombrePublicacion(p) else stringResource(R.string.social_red_tipo_publico)) + " · " + haceCuanto(p.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
             }
             if (p.visibilidad == "amigos") IconoRiso(Iconos.Candado, stringResource(R.string.social_red_para_seguidores), tamano = 16.dp, tinta = f.textoSuave)
             BotonIcono(Iconos.Opciones, stringResource(R.string.social_red_mas_opciones), tinta = f.textoSuave) { menu = true }

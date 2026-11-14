@@ -49,7 +49,7 @@ internal fun seccionesCajon(propio: Boolean, contenido: @Composable (Int) -> Uni
     catalogoSeccionesPerfil(propio).map { (id, icono, nombre) -> SeccionPerfil(id, icono, stringResource(nombre)) { contenido(id) } }
 
 /** Selección local: la visibilidad nunca oculta reseñas a su dueño. */
-internal fun Estado.resenasDelPerfil() = resenas.filter { !it.borrada }.sortedByDescending { it.fecha }
+internal fun Estado.resenasDelPerfil() = resenas.filter { !it.borrada && it.texto.isNotBlank() }.sortedByDescending { it.fecha }
 
 /** La visibilidad ya viene resuelta por el servidor. */
-internal fun PerfilSocial.resenasDelPerfil() = publicaciones.filter { it.tipo == "resena" }
+internal fun PerfilSocial.resenasDelPerfil() = publicaciones.filter { it.tipo == "resena" && !io.github.fogonapps.social.ui.esCalificacion(it) }

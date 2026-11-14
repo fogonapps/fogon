@@ -3,6 +3,7 @@ package io.github.fogonapps.cajon
 import kotlinx.serialization.json.put
 import io.github.fogonapps.cajon.datos.Catalogo
 import io.github.fogonapps.cajon.datos.ListasCatalogo
+import io.github.fogonapps.cajon.datos.Visibilidad
 import io.github.fogonapps.cajon.datos.ObraInicial
 import io.github.fogonapps.cajon.datos.PaginaCatalogo
 import io.github.fogonapps.cajon.datos.SeccionCatalogo
@@ -818,9 +819,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Pone o quita una obra de las cuatro favoritas del perfil. */
     fun favorita(id: String) = cambiar { e ->
         val f = e.ajustes.favoritas
-        val nuevas = if (id in f) f - id else (f + id).takeLast(4)
-        if (id !in f && f.size >= 4) avisar(tx(R.string.aviso_favoritas_cuatro))
-        e.copy(ajustes = e.ajustes.copy(favoritas = nuevas, cambio = ahora()))
+        if (id !in f && f.size >= 4) avisar(tx(R.string.aviso_favoritas_llenas))
+        L.favorita(e, id, ahora())
     }
 
     fun cambiarIdioma(codigo: String) {
@@ -1055,8 +1055,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val ya = e.artistasVivos.firstOrNull { (fuenteArtista.isNotEmpty() && it.fuente == fuenteArtista) || io.github.fogonapps.cajon.datos.normal(it.nombre) == io.github.fogonapps.cajon.datos.normal(o.creador) }
                 artistaId = ya?.id ?: nuevoId("a").also { artistas = artistas + Artista(it, o.creador, fuenteArtista, cambio = ahora()) }
             }
-            var nueva = L.cambiarEstado(o.copy(id = id, artista = artistaId, agregada = ahora(), cambio = ahora()), estado, hoy)
-            if (estado == Estados.TERMINADO) nueva = nueva.copy(registros = listOf(Registro(nuevoId("g"), hoy.toString())))
+            val nueva = L.cambiarEstadoConRegistro(o.copy(id = id, artista = artistaId, agregada = ahora(), cambio = ahora()), estado, hoy, nuevoId("g"))
             e.copy(obras = e.obras + nueva, artistas = artistas)
         }
         avisar(tx(R.string.aviso_agregada, o.titulo))
@@ -1067,12 +1066,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Cambia una obra y marca la hora del cambio (para sincronizar). */
-    fun cambiarObra(id: String, f: (Obra) -> Obra) = cambiar { e ->
-        e.copy(obras = e.obras.map { if (it.id == id) f(it).copy(cambio = ahora()) else it })
+    fun cambiarObra(id: String, f: (Obra) -> Obra) = cambiarResenas { e ->
+        val anterior = e.vivas.firstOrNull { it.id == id }
+        val cambio = ahora()
+        val nuevo = e.copy(obras = e.obras.map { if (it.id == id) io.github.fogonapps.cajon.datos.Resenas.actualizarNotasCanciones(e, f(it)).copy(cambio = cambio) else it })
+        val nota = nuevo.vivas.firstOrNull { it.id == id }?.nota
+        if (nota != null && anterior?.nota != nota)
+            io.github.fogonapps.cajon.datos.Resenas.aplicarNota(nuevo, id, nota, cambio) else nuevo
     }
 
-    fun ponerEstado(id: String, estado: String) = cambiarObra(id) { L.cambiarEstado(it, estado, hoy()) }
-    fun ponerNota(id: String, nota: Int) = cambiarObra(id) { it.copy(nota = nota.coerceIn(0, 10)) }
+    fun ponerEstado(id: String, estado: String) = cambiarObra(id) { L.cambiarEstadoConRegistro(it, estado, hoy(), nuevoId("g")) }
+    fun ponerNota(id: String, nota: Int) = cambiarResenas { e ->
+        io.github.fogonapps.cajon.datos.Resenas.aplicarNota(e, id, nota, ahora())
+    }
     fun meGusta(id: String) = cambiarObra(id) { it.copy(meGusta = !it.meGusta) }
     fun ponerNotas(id: String, texto: String) = cambiarObra(id) { it.copy(notas = texto.take(5000)) }
 
@@ -1084,8 +1090,20 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         r
     }
 
-    fun notaCancion(id: String, i: Int, nota: Int) = cambiarObra(id) { o ->
-        o.copy(canciones = o.canciones.mapIndexed { k, c -> if (k == i) c.copy(nota = nota.coerceIn(0, 10)) else c })
+    fun notaCancion(id: String, i: Int, nota: Int) = cambiarResenas { e ->
+        val o = e.vivas.firstOrNull { it.id == id } ?: return@cambiarResenas e
+        if (i !in o.canciones.indices) return@cambiarResenas e
+        val parte = io.github.fogonapps.cajon.datos.Resenas.deCancion(e, o, i)?.parte
+            ?: io.github.fogonapps.cajon.datos.Resenas.parteCancion(o, i)
+        io.github.fogonapps.cajon.datos.Resenas.calificar(e, id, nota, ahora(), parte = parte)
+    }
+
+    fun resenaCancion(obra: String, indice: Int) {
+        val e = _estado.value ?: return
+        val o = e.vivas.firstOrNull { it.id == obra } ?: return
+        if (indice !in o.canciones.indices) return
+        val r = io.github.fogonapps.cajon.datos.Resenas.deCancion(e, o, indice)
+        escribirResena(obra, editar = r?.id, parte = r?.parte ?: io.github.fogonapps.cajon.datos.Resenas.parteCancion(o, indice))
     }
 
     fun cancionFavorita(id: String, i: Int) = cambiarObra(id) { o ->
@@ -1140,7 +1158,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 obras = e.obras.map { if (it.id == id) it.copy(borrada = true, cambio = ahora()) else it },
                 listas = e.listas.map { l -> if (id in l.obras) l.copy(obras = l.obras - id, cambio = ahora()) else l },
                 ajustes = if (id in e.ajustes.favoritas) e.ajustes.copy(favoritas = e.ajustes.favoritas - id, cambio = ahora()) else e.ajustes,
-            )
+            ).let { L.quitarDestacadosDe(it, id, ahora()) }
         }
         _pila.value = _pila.value.filterNot { it is Pantalla.Ficha && it.id == id || it is Pantalla.Registrar && it.id == id }
     }
@@ -1163,15 +1181,15 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val d = detalles(r)
                 kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                 cambiarObra(id) { v ->
-                    // Las etiquetas (géneros) y la sinopsis que ya tenía se respetan: la persona pudo haberlas ajustado; la
-                    // portada también, si la eligió ella.
+                    // Los géneros de una obra con fuente son los de la fuente (no se editan); a mano, los suyos. La sinopsis
+                    // que ya tenía se respeta, y la portada también, si la eligió ella.
                     // Un autor en otro alfabeto ("Πλάτων") no reemplaza el que se escribió ("Platón").
                     val creador = if (v.creador.isNotBlank() && d.creador.any { it.isLetter() && it.code > 0x24F }) v.creador else d.creador.ifBlank { v.creador }
                     // En libros, el título es el de la traducción que se leyó: si el de la fuente es otro ("Convenience
                     // store woman" para "La dependienta"), se queda el de la persona; si es el mismo, el de la fuente.
                     val titulo = if (v.tipo == Tipos.LIBRO && v.titulo.isNotBlank() && L.tituloLimpio(v.titulo) != L.tituloLimpio(d.titulo)) v.titulo else d.titulo
                     v.copy(titulo = titulo, original = if (titulo != d.titulo && d.original.isBlank()) d.titulo else d.original, anio = d.anio ?: v.anio, creador = creador,
-                        generos = v.generos.ifEmpty { d.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
+                        generos = if (v.fuente.isEmpty()) v.generos.ifEmpty { d.generos } else d.generos.ifEmpty { v.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
                         portada = if (v.portadaPropia) v.portada else Imagenes.elegir(v,
                             _portadasComunidad.value[id] ?: PortadasComunidad(), d.portada.ifBlank { v.portadaRecomendada ?: v.portada }),
                         portadaRecomendada = d.portada.ifBlank { v.portadaRecomendada ?: v.portada },
@@ -1392,17 +1410,26 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Reseñas ----- */
 
-    fun escribirResena(obra: String = "", registro: String? = null, editar: String? = null) {
+    fun escribirResena(obra: String = "", registro: String? = null, editar: String? = null, deParte: Boolean = false, parte: String = "") {
         val e = _estado.value ?: return
         val existente = editar?.let { id -> e.resenas.firstOrNull { it.id == id && !it.borrada } }
             ?: registro?.let { r -> e.resenas.firstOrNull { it.obra == obra && it.registro == r && !it.borrada } }
+            ?: if (!deParte && registro == null && parte.isEmpty()) io.github.fogonapps.cajon.datos.Resenas.deObra(e, obra) else null
         val borrador = e.borradoresResena.firstOrNull { !it.borrada &&
-            (if (existente != null) it.id == existente.id else (obra.isEmpty() || it.obra == obra) && it.registro == registro && e.resenas.none { r -> r.id == it.id }) }
+            (if (existente != null) it.id == existente.id else (obra.isEmpty() || it.obra == obra) && it.registro == registro && (parte.isEmpty() || it.parte == parte) && (!deParte || it.parte.isNotEmpty()) &&
+                (deParte || parte.isNotEmpty() || registro != null || e.vivas.none { o -> o.id == obra } || it.parte.isEmpty()) && e.resenas.none { r -> r.id == it.id }) }
         val entrada = e.vivas.firstOrNull { it.id == obra }?.registros?.firstOrNull { it.id == registro }
         val o = io.github.fogonapps.cajon.datos.Resenas.obra(e, obra)
         val r = borrador ?: existente ?: io.github.fogonapps.cajon.datos.Resena("n:" + java.util.UUID.randomUUID(), obra,
-            parte = if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else "",
-            fecha = entrada?.fecha ?: hoy().toString(), registro = registro, nota = entrada?.nota?.takeIf { it > 0 })
+            parte = if (parte.isNotEmpty()) parte else if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else if (deParte && o != null) when {
+                Tipos.porEpisodios(o.tipo) -> o.temporadas.firstOrNull()?.let { "temp:${it.numero}" } ?: ""
+                o.tipo == Tipos.LIBRO -> "cap:"
+                o.tipo == Tipos.ALBUM -> io.github.fogonapps.cajon.datos.Resenas.partes(o).firstOrNull { it.isNotEmpty() }.orEmpty()
+                else -> ""
+            } else "",
+            fecha = entrada?.fecha ?: hoy().toString(), registro = registro, nota = (if (registro != null) entrada?.nota else if (parte.isNotEmpty() && o != null)
+                io.github.fogonapps.cajon.datos.Resenas.indiceCancion(o, parte)?.let { o.canciones[it].nota }
+                else if (!deParte) e.vivas.firstOrNull { it.id == obra }?.nota else null)?.takeIf { it > 0 })
         borradorResena(r)
         completarCancionesResena(io.github.fogonapps.cajon.datos.Resenas.obra(e, r.obra))
         abrir(Pantalla.Resenar(r.id, elegirObra = obra.isEmpty() && editar == null))
@@ -1420,7 +1447,15 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val r = _estado.value?.borradoresResena?.firstOrNull { it.id == id } ?: return
         val o = _estado.value?.let { io.github.fogonapps.cajon.datos.Resenas.obra(it, obra) }
         completarCancionesResena(o)
-        borradorResena(r.copy(obra = obra, parte = if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else ""))
+        val existente = _estado.value?.let { io.github.fogonapps.cajon.datos.Resenas.deObra(it, obra) }
+        if (existente != null && r.registro == null) {
+            borradorResena(r.copy(borrada = true))
+            borradorResena(existente.copy(texto = r.texto.ifBlank { existente.texto }))
+            _pila.value = _pila.value.map {
+                if (it is Pantalla.Resenar && it.id == id) it.copy(id = existente.id) else it
+            }
+        } else borradorResena(r.copy(obra = obra, parte = if (o?.tipo in listOf("autor", "artista")) "${o!!.tipo}:${o.fuente}" else "",
+            nota = if (r.registro == null && o?.tipo !in listOf("autor", "artista")) o?.nota?.takeIf { it > 0 } else r.nota))
         cerrar()
     }
 
@@ -1432,35 +1467,89 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun guardarResena(r: io.github.fogonapps.cajon.datos.Resena) {
         val o = _estado.value?.let { io.github.fogonapps.cajon.datos.Resenas.obra(it, r.obra) } ?: return
         if (!io.github.fogonapps.cajon.datos.Resenas.valida(r) || !io.github.fogonapps.cajon.datos.Resenas.parteValida(o, r.parte)) return
-        cambiar { e -> e.copy(resenas = e.resenas.filterNot { it.id == r.id } + r.copy(cambio = ahora()),
-            borradoresResena = e.borradoresResena.map { if (it.id == r.id) it.copy(borrada = true, cambio = ahora()) else it }) }
+        if (!puedeCompartirResena(r.visibilidad)) return
+        cambiarResenas { e -> io.github.fogonapps.cajon.datos.Resenas.guardar(e, r, ahora()) }
         cerrar()
     }
 
+    fun puedeCompartirResena(visibilidad: String): Boolean {
+        if (Visibilidad.de(visibilidad) != Visibilidad.PRIVADA && red.usuario.value == null) {
+            abrir(Pantalla.CuentaRed)
+            return false
+        }
+        return true
+    }
+
+    fun visibilidadBorradorResena(r: io.github.fogonapps.cajon.datos.Resena, visibilidad: String) {
+        if (!puedeCompartirResena(visibilidad)) return
+        borradorResena(r.copy(visibilidad = visibilidad))
+    }
+
+    fun visibilidadResenaObra(obra: String, visibilidad: String) = visibilidadDestino(obra, "", visibilidad)
+
+    fun visibilidadResenaCancion(obra: String, indice: Int, visibilidad: String) {
+        val e = _estado.value ?: return
+        val o = e.vivas.firstOrNull { it.id == obra } ?: return
+        if (indice !in o.canciones.indices) return
+        visibilidadDestino(obra, io.github.fogonapps.cajon.datos.Resenas.deCancion(e, o, indice)?.parte
+            ?: io.github.fogonapps.cajon.datos.Resenas.parteCancion(o, indice), visibilidad)
+    }
+
+    private fun visibilidadDestino(obra: String, parte: String, visibilidad: String) {
+        if (!puedeCompartirResena(visibilidad)) return
+        val e = _estado.value ?: return
+        val o = e.vivas.firstOrNull { it.id == obra } ?: return
+        val r = io.github.fogonapps.cajon.datos.Resenas.deDestino(e, obra, parte)
+        val nota = if (parte.isEmpty()) o.nota else io.github.fogonapps.cajon.datos.Resenas.indiceCancion(o, parte)?.let { o.canciones[it].nota } ?: 0
+        if (r != null || nota > 0) cambiarResenas { estado ->
+            val nuevo = if (r == null) io.github.fogonapps.cajon.datos.Resenas.calificar(estado, obra, nota, ahora(), parte) else estado
+            val resena = r ?: io.github.fogonapps.cajon.datos.Resenas.deDestino(nuevo, obra, parte) ?: return@cambiarResenas nuevo
+            io.github.fogonapps.cajon.datos.Resenas.guardar(nuevo, resena.copy(visibilidad = visibilidad), ahora())
+        } else if (visibilidad != Visibilidad.PRIVADA) {
+            escribirResena(obra, parte = parte)
+            val borrador = _estado.value?.borradoresResena?.lastOrNull { it.obra == obra && it.parte == parte && !it.borrada } ?: return
+            borradorResena(borrador.copy(visibilidad = visibilidad))
+        }
+    }
+
+    /** Conserva el mismo camino de subida y retirada que las reseñas editadas o borradas. */
+    private fun cambiarResenas(f: (Estado) -> Estado) {
+        val antes = _estado.value ?: return
+        cambiar(f)
+        val despues = _estado.value ?: return
+        antes.resenas.filter { !it.borrada && Visibilidad.de(it.visibilidad) != Visibilidad.PRIVADA }.forEach { r ->
+            if (despues.resenas.none { it.id == r.id && !it.borrada && Visibilidad.de(it.visibilidad) != Visibilidad.PRIVADA })
+                red.borrarResena(r.id)
+        }
+    }
+
     fun borrarResena(id: String) {
-        cambiar { e -> e.copy(resenas = e.resenas.map { if (it.id == id) it.copy(borrada = true, cambio = ahora()) else it },
-            borradoresResena = e.borradoresResena.map { if (it.id == id) it.copy(borrada = true, cambio = ahora()) else it }) }
-        red.borrarResena(id)
+        cambiarResenas { e -> io.github.fogonapps.cajon.datos.Resenas.borrar(e, id, ahora()) }
     }
 
     /* ----- Diario ----- */
 
-    fun registrar(id: String, r: Registro): String {
+    fun registrar(id: String, r: Registro, texto: String = ""): String {
+        if (!puedeCompartirResena(r.visibilidad)) return ""
         val nuevo = if (r.id.isEmpty()) r.copy(id = nuevoId("g")) else r
-        cambiarObra(id) { o ->
-            val lista = if (o.registros.any { it.id == nuevo.id }) o.registros.map { if (it.id == nuevo.id) it.copy(fecha = nuevo.fecha, nota = nuevo.nota, otraVez = nuevo.otraVez, visibilidad = nuevo.visibilidad) else it } else o.registros + nuevo
-            // Registrar algo terminado: la obra queda terminada y, si no tenía nota, toma la del registro.
-            var x = o.copy(registros = lista, nota = if (o.nota == 0) nuevo.nota else o.nota)
-            if (o.estado != Estados.TERMINADO && (o.tipo == Tipos.PELICULA || o.tipo == Tipos.ALBUM || o.tipo == Tipos.LIBRO))
-                x = L.cambiarEstado(x, Estados.TERMINADO, hoy()).copy(terminada = nuevo.fecha)
-            x
+        cambiarResenas { e ->
+            val guardado = io.github.fogonapps.cajon.datos.Resenas.registrar(e, id, nuevo, texto, ahora())
+            guardado.copy(obras = guardado.obras.map { o ->
+                if (o.id == id && o.estado != Estados.TERMINADO && o.tipo in listOf(Tipos.PELICULA, Tipos.ALBUM, Tipos.LIBRO))
+                    L.cambiarEstado(o, Estados.TERMINADO, hoy()).copy(terminada = nuevo.fecha) else o
+            })
         }
         cerrar()
         avisar(tx(R.string.aviso_registrado))
         return nuevo.id
     }
 
-    fun borrarRegistro(id: String, registro: String) = cambiarObra(id) { o -> o.copy(registros = o.registros.filter { it.id != registro }) }
+    fun borrarRegistro(id: String, registro: String) = cambiarResenas { e ->
+        val resenas = e.resenas.filter { it.obra == id && it.registro == registro && !it.borrada }
+        val nuevo = resenas.fold(e) { estado, r -> io.github.fogonapps.cajon.datos.Resenas.borrar(estado, r.id, ahora()) }
+        nuevo.copy(obras = nuevo.obras.map { o -> if (o.id == id) o.copy(cambio = ahora(),
+            registros = o.registros.filterNot { it.id == registro }) else o })
+    }
 
     /* ----- Artistas ----- */
 

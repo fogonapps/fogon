@@ -1,0 +1,5 @@
+Your review joins stars and text: keep it private or publish it. Same for songs, episodes and your diary.
+Your notes move into your private review. On the network, the short note is now called “status”.
+Genres come from the source: tap one to browse that genre.
+Reviews in one section, with a good/bad filter.
+Your profile highlights come from your top 4.

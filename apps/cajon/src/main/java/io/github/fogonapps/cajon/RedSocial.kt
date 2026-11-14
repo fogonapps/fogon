@@ -711,6 +711,15 @@ class RedSocial(
 
     /** Quita de la red una entrada del diario o una lista (la vuelve privada en el cajón). */
     fun quitarDeLaRed(clave: String) {
+        if (estado()?.resenas?.any { it.id == clave && !it.borrada } == true) {
+            cambiar { e ->
+                val r = e.resenas.firstOrNull { it.id == clave && !it.borrada } ?: return@cambiar e
+                io.github.fogonapps.cajon.datos.Resenas.guardar(e, r.copy(visibilidad = Visibilidad.PRIVADA), System.currentTimeMillis())
+            }
+            borrarResena(clave)
+            sincronizarYa(); cargarFeed(); decir(R.string.red_quitada)
+            return
+        }
         when {
             clave.startsWith("r:") -> { val (_, obra, reg) = clave.split(":", limit = 3)
                 cambiar { e -> e.copy(obras = e.obras.map { o -> if (o.id != obra) o else o.copy(cambio = System.currentTimeMillis(),
@@ -780,7 +789,7 @@ class RedSocial(
     fun borrarPublicacion(id: Long, clave: String) = lanzar {
         cliente().borrarPublicacion(id)
         if (clave.startsWith("o:") || clave.startsWith("r:") || clave.startsWith("n:")) {
-            cambiar { e -> e.copy(resenas = e.resenas.map { if (it.id == clave) it.copy(borrada = true, cambio = System.currentTimeMillis()) else it }) }
+            cambiar { e -> io.github.fogonapps.cajon.datos.Resenas.borrar(e, clave, System.currentTimeMillis()) }
             borrarResena(clave, eliminarEnRed = false)
         } else borrarPropia(clave.removePrefix("f:"))
     }
@@ -1139,6 +1148,7 @@ class RedSocial(
                 val cuando = runCatching { LocalDate.parse(r.fecha).atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli() }.getOrDefault(r.cambio)
                 PublicacionSubida(r.id, Visibilidad.de(r.visibilidad), cuando, "resena", JsonObject(obraBreve(o) + buildJsonObject {
                     put("fuente", o.fuente); put("parte", r.parte); put("texto", r.texto.take(5000))
+                    io.github.fogonapps.cajon.datos.Resenas.indiceCancion(o, r.parte)?.let { i -> put("parteEtiqueta", o.canciones[i].titulo) }
                     r.nota?.let { put("nota", it); put("estrellas", it / 2.0) }
                     put("spoiler", r.spoiler)
                     put("fotos", JsonArray(r.fotos.take(4).map { JsonPrimitive(it) }))

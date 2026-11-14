@@ -72,10 +72,10 @@ fun EscribirResena(vm: CajonViewModel, e: Estado, id: String, elegirObra: Boolea
         OutlinedTextField(r.texto, { vm.borradorResena(r.copy(texto = it)) }, Modifier.fillMaxWidth(), minLines = 5,
             label = { Text(stringResource(R.string.resena_pista)) }, isError = r.texto.length > 5000,
             supportingText = { Text(stringResource(R.string.resena_limite, r.texto.length)) })
-        FilaResena(stringResource(R.string.resena_con_nota), r.nota != null) {
-            vm.borradorResena(r.copy(nota = if (it) 0 else null))
-        }
-        r.nota?.let { ElegirEstrellas(it, { n -> vm.borradorResena(r.copy(nota = n)) }, descripcion = stringResource(R.string.tu_nota), ceroCalificado = true) }
+        ElegirEstrellas(r.nota ?: 0, { n -> vm.borradorResena(r.copy(nota = n.takeIf { it > 0 })) },
+            descripcion = stringResource(R.string.tu_nota))
+        if (Resenas.esDeObraEntera(e, r)) Text(stringResource(R.string.resena_nota_compartida),
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         FilaResena(stringResource(R.string.red_tiene_spoilers), r.spoiler) { vm.borradorResena(r.copy(spoiler = it)) }
         r.fotos.forEachIndexed { i, foto ->
             coil3.compose.AsyncImage(ClienteSocial.imagen(foto), stringResource(R.string.resena_foto, i + 1), Modifier.fillMaxWidth().height(180.dp))
@@ -85,7 +85,7 @@ fun EscribirResena(vm: CajonViewModel, e: Estado, id: String, elegirObra: Boolea
         if (acciones != null && r.fotos.size < 4) BotonSecundario(stringResource(R.string.red_agregar_foto), {
             acciones.elegirImagen { uri -> vm.red.subirFotoResena(uri) { foto -> vm.fotoResena(id, foto) } }
         }, Modifier.fillMaxWidth(), habilitado = !subiendo && usuario != null)
-        ElegirVisibilidad(r.visibilidad) { vm.borradorResena(r.copy(visibilidad = it)) }
+        ElegirVisibilidad(r.visibilidad) { vm.visibilidadBorradorResena(r, it) }
         BotonRiso(stringResource(R.string.red_publicar), { vm.guardarResena(r) }, Modifier.fillMaxWidth(),
             habilitado = !subiendo && Resenas.valida(r) && o != null && Resenas.parteValida(o, r.parte))
         if (e.resenas.any { it.id == id && !it.borrada }) BotonSecundario(stringResource(R.string.borrar), {
@@ -132,8 +132,12 @@ private fun PartesResena(vm: CajonViewModel, o: Obra, r: Resena, cambiar: (Strin
 @Composable
 fun ResenasPropias(vm: CajonViewModel, e: Estado, o: Obra) {
     val f = FogonTema.actual
-    val propias = e.resenas.filter { it.obra == o.id && !it.borrada }.sortedByDescending { it.fecha }
+    val propias = e.resenas.filter { it.obra == o.id && !it.borrada && !Resenas.esDeObraEntera(e, it) }.sortedByDescending { it.fecha }
     val confirmar = LocalConfirmar.current
+    val tienePartes = Tipos.porEpisodios(o.tipo) || o.tipo in listOf(Tipos.LIBRO, Tipos.ALBUM)
+    val persona = o.tipo in listOf("autor", "artista")
+    // Una película sin reseñas de partes no deja un hueco vacío en la sección.
+    if (propias.isEmpty() && !tienePartes && !persona) return
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (propias.isNotEmpty()) Text(stringResource(R.string.resena_tuyas), style = MaterialTheme.typography.titleSmall, color = f.texto)
         propias.forEach { r ->
@@ -143,7 +147,7 @@ fun ResenasPropias(vm: CajonViewModel, e: Estado, o: Obra) {
             var destapada by rememberSaveable(r.id) { mutableStateOf(false) }
             if (r.spoiler && !destapada) BotonSecundario(stringResource(R.string.red_spoiler_tocar), { destapada = true }, Modifier.fillMaxWidth())
             else {
-                TarjetaResena(r.texto, null)
+                if (r.texto.isNotBlank()) TarjetaResena(r.texto, null)
                 r.fotos.forEach { coil3.compose.AsyncImage(ClienteSocial.imagen(it), null, Modifier.fillMaxWidth().height(160.dp)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -153,7 +157,8 @@ fun ResenasPropias(vm: CajonViewModel, e: Estado, o: Obra) {
                 }
             }
         }
-        BotonSecundario(stringResource(R.string.resena_escribir), { vm.escribirResena(o.id) }, Modifier.fillMaxWidth())
+        if (tienePartes || persona) BotonSecundario(stringResource(if (persona) R.string.resena_escribir else R.string.resena_escribir_parte),
+            { vm.escribirResena(o.id, deParte = tienePartes) }, Modifier.fillMaxWidth())
     }
 }
 
@@ -168,18 +173,22 @@ fun ResenasDeLaGente(vm: CajonViewModel, o: Obra) {
     var parte by rememberSaveable(o.id) { mutableStateOf("") }
     val clave = vm.red.claveResenas(o.fuente, parte, orden)
     LaunchedEffect(o.fuente, parte, orden) { vm.red.cargarResenas(o.fuente, parte, orden) }
+    var calificacion by rememberSaveable(o.id) { mutableStateOf(Resenas.FILTRO_TODAS) }
     val todas = listas[clave].orEmpty()
     val opciones = (listas[vm.red.claveResenas(o.fuente, "", orden)].orEmpty() + todas).mapNotNull {
         (it.datos["parte"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { p -> p.isNotBlank() }
     }.distinct()
-    Seccion(stringResource(R.string.resenas_de_la_gente))
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SelectorResena(listOf("utiles" to stringResource(R.string.resena_mas_utiles), "recientes" to stringResource(R.string.resena_recientes)), orden, { orden = it })
+        SelectorResena(listOf(Resenas.FILTRO_TODAS to stringResource(R.string.resena_filtro_todas), Resenas.FILTRO_BUENAS to stringResource(R.string.resena_filtro_buenas),
+            Resenas.FILTRO_MALAS to stringResource(R.string.resena_filtro_malas)), calificacion, { calificacion = it })
         if (opciones.isNotEmpty()) SelectorResena(listOf("" to stringResource(R.string.resena_todas_partes)) + opciones.map {
             it to Resenas.etiqueta(it, o, vm.idioma() == "en")
         }, parte, { parte = it })
     }
-    todas.filter { it.autor.usuario != yo }.forEach { TarjetaPublicacion(vm, it) }
+    todas.filter { it.autor.usuario != yo && !io.github.fogonapps.social.ui.esCalificacion(it) &&
+        Resenas.pasaFiltroNota((it.datos["nota"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull(), calificacion) }
+        .forEach { TarjetaPublicacion(vm, it) }
     if (clave in cargando) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
     else if (clave !in fin) BotonSecundario(stringResource(R.string.resena_cargar_mas), {
         vm.red.cargarResenas(o.fuente, parte, orden, mas = true)

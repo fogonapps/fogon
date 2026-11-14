@@ -119,7 +119,7 @@ object Logica {
         resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),
-    ) })
+    ) }.let(::favoritasDeDestacados))
 
     /* ----- El cajón ----- */
 
@@ -313,6 +313,45 @@ object Logica {
             pagina = o.paginas ?: o.pagina,
         )
         else -> o.copy(estado = estado)
+    }
+
+    fun cambiarEstadoConRegistro(o: Obra, estado: String, hoy: LocalDate, idRegistro: String): Obra {
+        val cambiada = cambiarEstado(o, estado, hoy)
+        return if (estado == Estados.TERMINADO && o.registros.none { it.fecha == hoy.toString() })
+            cambiada.copy(registros = o.registros + Registro(idRegistro, hoy.toString(), visibilidad = Visibilidad.PRIVADA)) else cambiada
+    }
+
+    fun favorita(e: Estado, id: String, cambio: Long): Estado {
+        val favoritas = e.ajustes.favoritas
+        if (id !in favoritas && favoritas.size >= 4) return e
+        if (id in favoritas) return quitarDestacadosDe(e.copy(ajustes = e.ajustes.copy(favoritas = favoritas - id, cambio = cambio)), id, cambio)
+        return e.copy(ajustes = e.ajustes.copy(favoritas = favoritas + id, cambio = cambio))
+    }
+
+    /** Los destacados del perfil que salen de las cuatro favoritas (los de obras de un tipo). */
+    val HUECOS_DE_FAVORITAS = setOf(Destacados.PELICULA, Destacados.SERIE, Destacados.ANIME, Destacados.ALBUM, Destacados.LIBRO)
+
+    /** Las favoritas que se pueden poner en un hueco de destacados (las de su tipo). */
+    fun favoritasPara(e: Estado, tipo: String): List<Obra> =
+        e.ajustes.favoritas.mapNotNull { id -> e.vivas.firstOrNull { it.id == id && it.tipo == tipo } }
+
+    /** Una obra que deja de ser favorita (o se borra) sale también de su destacado. */
+    fun quitarDestacadosDe(e: Estado, id: String, cambio: Long): Estado {
+        val quitar = e.perfil.destacados.filter { (hueco, obra) -> hueco in HUECOS_DE_FAVORITAS && obra == id }.keys
+        if (quitar.isEmpty()) return e
+        return e.copy(perfil = e.perfil.copy(destacados = e.perfil.destacados - quitar, porQue = e.perfil.porQue - quitar, cambio = cambio))
+    }
+
+    /**
+     * Los destacados elegidos antes de que salieran de las favoritas: su obra pasa a favoritas si hay lugar; si no, el
+     * destacado se queda como está (no se pierde lo que la persona eligió).
+     */
+    fun favoritasDeDestacados(e: Estado): Estado {
+        val faltan = e.perfil.destacados.filter { (hueco, id) -> hueco in HUECOS_DE_FAVORITAS && id !in e.ajustes.favoritas && e.vivas.any { it.id == id } }
+            .values.distinct()
+        val lugar = 4 - e.ajustes.favoritas.size
+        if (faltan.isEmpty() || lugar <= 0) return e
+        return e.copy(ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas + faltan.take(lugar), cambio = e.ajustes.cambio + 1))
     }
 
     /* ----- Estadísticas ----- */

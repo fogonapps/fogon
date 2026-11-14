@@ -550,11 +550,32 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
             if (actual != null) BotonRiso(stringResource(R.string.guardar), { vm.ponerDestacado(hueco, actual, porQue); vm.cerrar() }, Modifier.fillMaxWidth())
         }
         if (actual != null) BotonSecundario(stringResource(R.string.quitar_de_aqui), { vm.ponerDestacado(hueco, null); vm.cerrar() }, Modifier.fillMaxWidth())
-        BotonRiso(stringResource(R.string.buscar_en_internet), { vm.abrir(Pantalla.Buscar(seccionDeHueco(hueco), "destacado:$hueco")) }, Modifier.fillMaxWidth())
-        CampoTexto(texto, { texto = it }, stringResource(R.string.buscar_en_tu_cajon), Modifier.fillMaxWidth())
+        // Los de una película, serie, anime, álbum o libro favorito salen de las cuatro favoritas (la estrella de la ficha).
+        if (hueco !in Logica.HUECOS_DE_FAVORITAS) {
+            BotonRiso(stringResource(R.string.buscar_en_internet), { vm.abrir(Pantalla.Buscar(seccionDeHueco(hueco), "destacado:$hueco")) }, Modifier.fillMaxWidth())
+            CampoTexto(texto, { texto = it }, stringResource(R.string.buscar_en_tu_cajon), Modifier.fillMaxWidth())
+        }
     }
     val q = Logica.tituloLimpio(texto)
-    if (hueco == Destacados.ARTISTA) {
+    if (hueco in Logica.HUECOS_DE_FAVORITAS) {
+        val tipo = when (hueco) { Destacados.PELICULA -> Tipos.PELICULA; Destacados.SERIE -> Tipos.SERIE; Destacados.ANIME -> Tipos.ANIME
+            Destacados.ALBUM -> Tipos.ALBUM; else -> Tipos.LIBRO }
+        val lista = Logica.favoritasPara(e, tipo)
+        if (lista.isEmpty()) Pista(stringResource(R.string.destacado_desde_favoritas))
+        lista.chunked(3).forEach { fila ->
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                fila.forEach { o ->
+                    Column(Modifier.weight(1f).clip(forma(12.dp)).clickable { vm.ponerDestacado(hueco, o.id); vm.cerrar() },
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                        Text(o.titulo, style = MaterialTheme.typography.labelLarge, color = if (o.id == actual) f.acentoTexto else f.texto, maxLines = 2,
+                            overflow = TextOverflow.Ellipsis)
+                    }
+                }
+                repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    } else if (hueco == Destacados.ARTISTA) {
         val lista = e.musicosVivos.filter { q.isEmpty() || q in Logica.tituloLimpio(it.nombre) }
             .sortedWith(compareByDescending<io.github.fogonapps.cajon.datos.Artista> { it.id == actual }.thenByDescending { it.favorito }.thenByDescending { it.nota }.thenBy { it.nombre }).take(60)
         if (lista.isEmpty()) Pista(stringResource(R.string.sin_resultados))

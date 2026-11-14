@@ -12,6 +12,239 @@ class ResenasTest {
         resena = "Opinión antigua", resenaVisibilidad = Visibilidad.AMIGOS, cambio = 10,
         registros = listOf(Registro("entrada", "2026-01-02", 7, texto = "La segunda vez", visibilidad = Visibilidad.PUBLICA)))
 
+    @Test fun calificacionesNoCuentanParaLaInsigniaDeResenas() {
+        val e = Estado(resenas = List(20) { Resena("n:$it", obra.id, nota = 10) } +
+            Resena("n:texto", obra.id, texto = "a".repeat(280)))
+        assertEquals(1, Insignias.de(e, 2026).first { it.id == "critico" }.lleva)
+    }
+
+    @Test fun estrellasYResenaDeCancionCompartenNotaSinMezclarDestinos() {
+        val album = obra.copy(tipo = Tipos.ALBUM, canciones = listOf(
+            Cancion("Primera", mbid = "uno"), Cancion("Segunda", mbid = "dos")))
+        var e = Resenas.calificar(Estado(obras = listOf(album)), album.id, 8, 100, "cancion:uno")
+        val primera = Resenas.deCancion(e, e.obras.single(), 0)!!
+        assertEquals(8, primera.nota)
+        assertEquals(Visibilidad.PRIVADA, primera.visibilidad)
+        assertTrue(Resenas.valida(primera))
+        assertEquals(listOf(8, 0), e.obras.single().canciones.map { it.nota })
+        assertEquals(album.nota, e.obras.single().nota)
+        e = Resenas.calificar(e, album.id, 4, 200, "cancion:dos")
+        val segunda = Resenas.deCancion(e, e.obras.single(), 1)!!
+        e = Resenas.guardar(e, primera.copy(texto = "Texto", nota = 6, visibilidad = Visibilidad.PUBLICA), 300)
+        assertEquals(listOf(6, 4), e.obras.single().canciones.map { it.nota })
+        assertEquals(segunda, Resenas.deCancion(e, e.obras.single(), 1))
+        assertEquals(6, RedSocial.publicacionesDe(e).first { it.clave == primera.id }.datos["nota"]!!.jsonPrimitive.int)
+        e = Resenas.borrar(e, primera.id, 400)
+        assertEquals(listOf(0, 4), e.obras.single().canciones.map { it.nota })
+        assertEquals(segunda, Resenas.deCancion(e, e.obras.single(), 1))
+        assertTrue(RedSocial.publicacionesDe(e).none { it.clave == primera.id })
+    }
+
+    @Test fun cancionLocalConservaResenaAlCompletarIdentificadorYReordenar() {
+        val album = obra.copy(tipo = Tipos.ALBUM, canciones = listOf(Cancion("Sin id"), Cancion("Otra")))
+        val parte = Resenas.parteCancion(album, 0)
+        val e = Resenas.calificar(Estado(obras = listOf(album)), album.id, 8, 100, parte)
+        val completado = album.copy(canciones = listOf(Cancion("Otra", mbid = "dos"), Cancion("Sin id", mbid = "uno")))
+        val nuevo = e.copy(obras = listOf(Resenas.actualizarNotasCanciones(e, completado)))
+        assertEquals(listOf(0, 8), nuevo.obras.single().canciones.map { it.nota })
+        assertTrue(Resenas.parteValida(completado, parte))
+        assertEquals("Sin id", Resenas.etiqueta(parte, completado))
+        assertNull(Resenas.deCancion(nuevo, completado, 0))
+        val calificada = Resenas.calificar(nuevo, album.id, 6, 200, "cancion:uno")
+        assertEquals(1, calificada.resenas.size)
+        assertEquals(e.resenas.single().id, calificada.resenas.single().id)
+        assertEquals(listOf(0, 6), calificada.obras.single().canciones.map { it.nota })
+        val repetidas = album.copy(canciones = listOf(Cancion("Misma"), Cancion("Misma")))
+        assertNotEquals(Resenas.parteCancion(repetidas, 0), Resenas.parteCancion(repetidas, 1))
+    }
+
+    @Test fun diarioComparteNotaTextoYVisibilidadSinMezclarRegistros() {
+        val base = Estado(obras = listOf(obra.copy(registros = listOf(
+            Registro("uno", "2026-01-01"), Registro("dos", "2026-01-02")))))
+        var e = Resenas.registrar(base, obra.id, Registro("uno", "2026-01-01", 8), "", 100)
+        val primera = Resenas.deDestino(e, obra.id, registro = "uno")!!
+        assertEquals(8, primera.nota)
+        assertEquals(Visibilidad.PRIVADA, primera.visibilidad)
+        assertEquals(Visibilidad.PRIVADA, e.obras.single().registros.first { it.id == "uno" }.visibilidad)
+        e = Resenas.registrar(e, obra.id, Registro("dos", "2026-01-02", 4), "Otra vez", 200)
+        val segunda = Resenas.deDestino(e, obra.id, registro = "dos")!!
+        e = Resenas.guardar(e, primera.copy(texto = "Mi vez", nota = 6, visibilidad = Visibilidad.AMIGOS), 300)
+        assertEquals(6, e.obras.single().registros.first { it.id == "uno" }.nota)
+        assertEquals(Visibilidad.AMIGOS, e.obras.single().registros.first { it.id == "uno" }.visibilidad)
+        assertEquals(segunda, Resenas.deDestino(e, obra.id, registro = "dos"))
+        assertEquals(obra.nota, e.obras.single().nota)
+        e = Resenas.borrar(e, primera.id, 400)
+        assertEquals(0, e.obras.single().registros.first { it.id == "uno" }.nota)
+        assertEquals(Visibilidad.PRIVADA, e.obras.single().registros.first { it.id == "uno" }.visibilidad)
+        assertEquals(segunda, Resenas.deDestino(e, obra.id, registro = "dos"))
+        assertEquals(4, e.obras.single().registros.first { it.id == "dos" }.nota)
+    }
+
+    @Test fun editarDiarioActualizaLaResenaExistenteYPermiteTextoSinEstrellas() {
+        val base = Estado(obras = listOf(obra))
+        val r = Registro("entrada", "2026-01-02", 8, visibilidad = Visibilidad.PUBLICA)
+        val primera = Resenas.registrar(base, obra.id, r, "Mi texto", 100)
+        val segunda = Resenas.registrar(primera, obra.id, r.copy(nota = 6, visibilidad = Visibilidad.PRIVADA), "Nuevo texto", 200)
+        assertEquals(primera.resenas.single().id, segunda.resenas.single().id)
+        assertEquals(6, segunda.resenas.single().nota)
+        assertEquals("Nuevo texto", segunda.resenas.single().texto)
+        assertEquals(Visibilidad.PRIVADA, segunda.resenas.single().visibilidad)
+        assertTrue(RedSocial.publicacionesDe(segunda).none { it.clave == segunda.resenas.single().id })
+        val sinEstrellas = Resenas.registrar(segunda, obra.id, r.copy(nota = 0, visibilidad = Visibilidad.PRIVADA), "Texto", 300)
+        assertNull(sinEstrellas.resenas.single().nota)
+        assertEquals(0, sinEstrellas.obras.single().registros.single().nota)
+        assertTrue(Resenas.valida(sinEstrellas.resenas.single()))
+    }
+
+    @Test fun notasSinResenaSeMigranUnaVezSinPublicarse() {
+        val e = Estado(obras = listOf(obra.copy(resena = "", registros = emptyList(), notas = "Mis datos privados")))
+        val migrado = Resenas.migrar(e)
+        val r = Resenas.deObra(migrado, obra.id)!!
+        assertEquals("Mis datos privados", r.texto)
+        assertEquals(Visibilidad.PRIVADA, r.visibilidad)
+        assertEquals(obra.nota, r.nota)
+        assertEquals("", migrado.obras.single().notas)
+        assertEquals(migrado, Resenas.migrar(migrado))
+        assertTrue(RedSocial.publicacionesDe(migrado).none { it.clave == r.id })
+    }
+
+    @Test fun notasConResenaPrivadaSeAgreganSinPerderTexto() {
+        val r = Resena("n:privada", obra.id, texto = "Reseña", nota = 6)
+        val e = Estado(obras = listOf(obra.copy(resena = "", registros = emptyList(), notas = "Datos")), resenas = listOf(r))
+        val migrado = Resenas.migrar(e)
+        assertEquals("Reseña\n\nDatos", migrado.resenas.single().texto)
+        assertEquals(r.id, migrado.resenas.single().id)
+        assertEquals(Visibilidad.PRIVADA, migrado.resenas.single().visibilidad)
+        assertEquals("", migrado.obras.single().notas)
+        assertEquals(migrado, Resenas.migrar(migrado))
+    }
+
+    @Test fun notasConResenaCompartidaSeQuedanPrivadasEnElCampoAntiguo() {
+        for (visibilidad in listOf(Visibilidad.PUBLICA, Visibilidad.AMIGOS)) {
+            val r = Resena("n:publica", obra.id, texto = "Reseña publicada", visibilidad = visibilidad)
+            val e = Estado(obras = listOf(obra.copy(resena = "", registros = emptyList(), notas = "No publicar")), resenas = listOf(r))
+            assertEquals(e, Resenas.migrar(e))
+            assertFalse(RedSocial.publicacionesDe(Resenas.migrar(e)).any { it.datos.toString().contains("No publicar") })
+        }
+    }
+
+    @Test fun terminarDesdeLaFichaAnadeHoySinDuplicar() {
+        val hoy = java.time.LocalDate.of(2026, 1, 3)
+        val primera = Logica.cambiarEstadoConRegistro(obra, Estados.TERMINADO, hoy, "hoy")
+        assertEquals(listOf("2026-01-02", "2026-01-03"), primera.registros.map { it.fecha })
+        assertEquals(Visibilidad.PRIVADA, primera.registros.last().visibilidad)
+        assertEquals(primera, Logica.cambiarEstadoConRegistro(primera, Estados.TERMINADO, hoy, "otro"))
+        assertEquals(obra.registros, Logica.cambiarEstadoConRegistro(obra, Estados.EN_CURSO, hoy, "otro").registros)
+    }
+
+    @Test fun quintaFavoritaNoReemplazaNingunaDelPerfil() {
+        val e = Estado(ajustes = Ajustes(favoritas = listOf("a", "b", "c", "d")))
+        assertEquals(e, Logica.favorita(e, "e", 100))
+        val sinUna = Logica.favorita(e, "b", 100)
+        assertEquals(listOf("a", "c", "d"), sinUna.ajustes.favoritas)
+        assertEquals(listOf("a", "c", "d", "e"), Logica.favorita(sinUna, "e", 200).ajustes.favoritas)
+    }
+
+    @Test fun guardarOtraEnteraReutilizaLaResenaDeLaFicha() {
+        val e = Resenas.aplicarNota(Estado(obras = listOf(obra)), obra.id, 6, 100)
+        val r = Resenas.deObra(e, obra.id)!!
+        val guardado = Resenas.guardar(e, Resena("n:borrador", obra.id, texto = "Ahora con texto", nota = 8), 200)
+        assertEquals(1, guardado.resenas.size)
+        assertEquals(r.id, guardado.resenas.single().id)
+        assertEquals("Ahora con texto", guardado.resenas.single().texto)
+        assertEquals(8, guardado.obras.single().nota)
+    }
+
+    @Test fun estrellasSinResenaCreanUnaPrivadaConLaMismaNota() {
+        val e = Resenas.aplicarNota(Estado(obras = listOf(obra.copy(nota = 0))), obra.id, 6, 100)
+        val r = Resenas.deObra(e, obra.id)!!
+        assertEquals(6, e.obras.single().nota)
+        assertEquals(6, r.nota)
+        assertEquals("", r.texto)
+        assertEquals(Visibilidad.PRIVADA, r.visibilidad)
+        assertTrue(Resenas.valida(r))
+        val actualizado = Resenas.aplicarNota(e, obra.id, 8, 200)
+        assertEquals(r.id, actualizado.resenas.single().id)
+        assertEquals(8, actualizado.resenas.single().nota)
+        val borrado = Resenas.borrar(actualizado, r.id, 300)
+        assertEquals(0, borrado.obras.single().nota)
+        assertTrue(borrado.resenas.single().borrada)
+        assertEquals(300L, borrado.resenas.single().cambio)
+        assertNull(Resenas.deObra(borrado, obra.id))
+        val recreado = Resenas.aplicarNota(borrado, obra.id, 5, 400)
+        assertNotEquals(r.id, Resenas.deObra(recreado, obra.id)!!.id)
+    }
+
+    @Test fun todasLasResenasPermitenSoloNota() {
+        val e = Estado(obras = listOf(obra), artistas = listOf(Artista("a", "Autora")))
+        val r = Resena("n:nota", obra.id, nota = 8, visibilidad = Visibilidad.PUBLICA)
+        assertTrue(Resenas.valida(r))
+        assertFalse(Resenas.valida(r.copy(nota = 0)))
+        assertFalse(Resenas.valida(r.copy(nota = null)))
+        assertTrue(Resenas.valida(r.copy(parte = "ep:S1E1")))
+        assertTrue(Resenas.valida(r.copy(registro = "entrada")))
+        assertTrue(Resenas.valida(r.copy(obra = "a")))
+        val publica = Resenas.guardar(e, r, 100)
+        assertEquals(8, RedSocial.publicacionesDe(publica).first { it.clave == r.id }.datos["nota"]!!.jsonPrimitive.int)
+        val privada = Resenas.guardar(publica, r.copy(visibilidad = Visibilidad.PRIVADA), 200)
+        assertTrue(RedSocial.publicacionesDe(privada).none { it.clave == r.id })
+        assertEquals(8, Resenas.deObra(privada, obra.id)!!.nota)
+    }
+
+    @Test fun quitarEstrellasSinTextoBorraPeroConTextoConserva() {
+        val e = Resenas.aplicarNota(Estado(obras = listOf(obra)), obra.id, 6, 100)
+        val sinNota = Resenas.aplicarNota(e, obra.id, 0, 200)
+        assertEquals(0, sinNota.obras.single().nota)
+        assertTrue(sinNota.resenas.single().borrada)
+        val conTexto = Resenas.guardar(e, e.resenas.single().copy(texto = "Opinión"), 200)
+        val sinEstrellas = Resenas.aplicarNota(conTexto, obra.id, 0, 300)
+        assertEquals("Opinión", Resenas.deObra(sinEstrellas, obra.id)!!.texto)
+        assertNull(Resenas.deObra(sinEstrellas, obra.id)!!.nota)
+        assertTrue(Resenas.valida(sinEstrellas.resenas.single()))
+    }
+
+    @Test fun guardarResenaEnteraActualizaNotaDeObra() {
+        val r = Resena("n:entera", obra.id, texto = "Opinión", nota = 8)
+        val e = Resenas.guardar(Estado(obras = listOf(obra.copy(nota = 2)), borradoresResena = listOf(r)), r, 100)
+        assertEquals(8, e.obras.single().nota)
+        assertEquals(8, e.resenas.single().nota)
+        assertEquals(100L, e.obras.single().cambio)
+        assertTrue(e.borradoresResena.single().borrada)
+        for (nota in listOf(null, 0)) {
+            val sinNota = Resenas.guardar(e, r.copy(nota = nota), 200)
+            assertEquals(0, sinNota.obras.single().nota)
+            assertNull(sinNota.resenas.single().nota)
+        }
+    }
+
+    @Test fun notaDeFichaSoloCambiaResenasEnterasVivasYSePreparaParaSubir() {
+        val entera = Resena("n:entera", obra.id, texto = "Opinión", nota = 8, visibilidad = Visibilidad.PUBLICA)
+        val episodio = entera.copy(id = "n:episodio", parte = "ep:S1E1")
+        val diario = entera.copy(id = "n:diario", registro = "entrada")
+        val borrada = entera.copy(id = "n:borrada", borrada = true)
+        val otra = entera.copy(id = "n:otra")
+        val e = Estado(obras = listOf(obra), resenas = listOf(entera, episodio, diario, borrada, otra))
+        val cambiado = Resenas.aplicarNota(e, obra.id, 6, 100)
+        assertEquals(6, cambiado.obras.single().nota)
+        assertEquals(listOf(entera.copy(nota = 6, cambio = 100), episodio, diario, borrada,
+            otra.copy(nota = 6, cambio = 100)), cambiado.resenas)
+        val publicacion = RedSocial.publicacionesDe(cambiado).first { it.clave == entera.id }
+        assertEquals(6, publicacion.datos["nota"]!!.jsonPrimitive.int)
+        assertNotEquals(RedSocial.publicacionesDe(e), RedSocial.publicacionesDe(cambiado))
+    }
+
+    @Test fun guardarParteODiarioNoCambiaNotaDeObra() {
+        val e = Estado(obras = listOf(obra))
+        for (r in listOf(Resena("n:episodio", obra.id, parte = "ep:S1E1", nota = 3),
+            Resena("n:diario", obra.id, registro = "entrada", nota = 3))) {
+            assertFalse(Resenas.esDeObraEntera(e, r))
+            assertEquals(obra.nota, Resenas.guardar(e, r, 100).obras.single().nota)
+        }
+        val artista = Artista("artista", "Nombre")
+        assertFalse(Resenas.esDeObraEntera(Estado(artistas = listOf(artista)), Resena("n:a", artista.id)))
+        assertFalse(Resenas.esDeObraEntera(e, Resena("n:a", obra.id, parte = "autor:1")))
+    }
+
     @Test fun migracionConIdsExactosFechaNotaYRespaldoSinCambiar() {
         val e = Resenas.migrar(Estado(obras = listOf(obra)))
         assertEquals(listOf("o:obra", "r:obra:entrada"), e.resenas.map { it.id })
@@ -111,7 +344,7 @@ class ResenasTest {
         assertFalse(Resenas.parteValida(libro, "cap:"))
         assertFalse(Resenas.parteValida(libro, "pag:" + "x".repeat(41)))
         val album = obra.copy(tipo = Tipos.ALBUM, canciones = listOf(Cancion("Canción", mbid = "mbid"), Cancion("Sin id")))
-        assertEquals(listOf("", "cancion:mbid"), Resenas.partes(album))
+        assertEquals(listOf("", "cancion:mbid", Resenas.parteCancion(album, 1)), Resenas.partes(album))
         assertEquals(listOf(""), Resenas.partes(obra.copy(tipo = Tipos.PELICULA)))
         assertTrue(Resenas.parteValida(obra, "artista:mb:artist:1"))
         assertTrue(Resenas.parteValida(libro, "autor:ol:author:1"))

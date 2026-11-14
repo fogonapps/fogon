@@ -356,10 +356,10 @@
     <string name="apelacion_tu_texto">Tu explicación</string>
     <string name="apelacion_enviar">Enviar la apelación</string>
     <string name="historia_tu">Tú</string>
-    <string name="historia_nota_pon">Nota</string>
+    <string name="historia_nota_pon">Estado</string>
     <string name="historia_ver_tuya">Ver tu historia</string>
     <string name="historia_nueva">Nueva historia</string>
-    <string name="historia_tu_nota">Tu nota</string>
+    <string name="historia_tu_nota">Tu estado</string>
     <string name="historia_apple_music">Escuchar en Apple Music</string>
     <string name="historia_ver_escena">Ver la escena</string>
     <string name="historia_abrir">Abrir</string>
@@ -382,11 +382,11 @@
     <string name="historia_sin_canciones">No encontramos esa canción.</string>
     <string name="historia_canciones_apple">Avances de 30 segundos de Apple Music.</string>
     <string name="historia_de_la_app">De esta app</string>
-    <string name="historia_nota_explica">Tu nota dura 24 horas y la ve tu gente. Puedes ponerle una canción o algo de la app.</string>
+    <string name="historia_nota_explica">Tu estado dura 24 horas y la ve tu gente. Puedes ponerle una canción o algo de la app.</string>
     <string name="historia_nota_pista">¿Qué estás pensando?</string>
     <string name="historia_quitar_adjunto">Quitar lo adjunto</string>
-    <string name="historia_nota_poner">Poner la nota</string>
-    <string name="historia_nota_quitar">Quitar la nota</string>
+    <string name="historia_nota_poner">Poner el estado</string>
+    <string name="historia_nota_quitar">Quitar el estado</string>
     <string name="historia_ver_perfil">Ver perfil</string>
     <string name="historia_no_se_pudo">No se pudo usar esa foto</string>
     <string name="historia_cerrar">Cerrar</string>
@@ -605,4 +605,5 @@
     <string name="social_mod_reporte_propio">Tú lo reportaste: lo decide otra persona del equipo.</string>
     <string name="social_chat_enviar_voz">Enviar la nota de voz</string>
     <string name="social_te_sigue">te sigue</string>
+    <string name="social_tipo_calificacion">Calificación</string>
 </resources>

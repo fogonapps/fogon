@@ -3,6 +3,7 @@ package io.github.fogonapps.social.ui
 import androidx.compose.runtime.Composable
 import io.github.fogonapps.social.*
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.JsonPrimitive
 
 /** Destinos resueltos por la app, sin transportar su árbol de pantallas. */
 data class NavegacionSocial(
@@ -19,12 +20,17 @@ data class AdjuntoSocial(val tipo: String, val id: String)
 
 enum class AjusteSocial { SESIONES, ESTADO_CUENTA, BLOQUEADOS, BORRAR_CUENTA }
 
+fun esCalificacion(publicacion: PublicacionSocial): Boolean = publicacion.tipo == "resena" &&
+    (publicacion.datos["texto"] as? JsonPrimitive)?.content.orEmpty().isBlank()
+
 /** La app conserva sus compositores y la interpretación de sus datos. */
 interface ContenidoSocialApp {
     val tiposAdmitidos: Set<String>
     fun multimediaEnCuerpo(tipo: String): Boolean
     @Composable fun Compositor(tipo: String, adjunto: AdjuntoSocial?)
     @Composable fun NombreTipo(tipo: String): String
+    @Composable fun NombrePublicacion(publicacion: PublicacionSocial): String = if (esCalificacion(publicacion))
+        androidx.compose.ui.res.stringResource(R.string.social_tipo_calificacion) else NombreTipo(publicacion.tipo)
     @Composable fun Cuerpo(publicacion: PublicacionSocial, destapado: Boolean)
     @Composable fun SeccionesPerfil(perfil: PerfilSocial, propio: Boolean, contenido: @Composable (Int) -> Unit): List<io.github.fogonapps.perfil.SeccionPerfil>
     @Composable fun CifrasPerfil(perfil: PerfilSocial)

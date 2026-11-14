@@ -237,8 +237,8 @@ private fun Galeria(vm: CajonViewModel, o: Obra) {
     var abierta by rememberSaveable(o.fuente) { mutableStateOf<Int?>(null) }
     LaunchedEffect(vm, o.fuente) { fotos = vm.galeria(o.fuente) }
     if (fotos.isEmpty()) return
-    Seccion(stringResource(R.string.imagenes))
     androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier.padding(vertical = 12.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -319,12 +319,12 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
 
     // Sin fuente y sin clave de TMDB, las películas, series y animes no pueden traer portada ni datos: se dice cómo.
 
-    // Los géneros, como etiquetas (tocar uno busca lo del cajón con ese género).
+    // Los géneros: de la fuente, solo informativos (tocar uno abre esa sección con lo de ese género); a mano, editables.
     val tituloEtiquetas = stringResource(if (o.tipo == Tipos.LIBRO) R.string.temas else R.string.generos)
     val textoAgregar = stringResource(if (o.tipo == Tipos.LIBRO) R.string.agregar_tema else R.string.agregar_genero)
     EditorEtiquetas("g" + o.id, tituloEtiquetas, o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
         { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, textoAgregar,
-        textoVisible = { etiquetaLibroVisible(o, it, idioma) })
+        textoVisible = { etiquetaLibroVisible(o, it, idioma) }, editable = o.fuente.isEmpty())
 
     // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
     var celebrando by remember(id) { mutableStateOf(false) }
@@ -339,25 +339,33 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         }
     }
 
-    // La nota, el corazón y las favoritas.
+    // Tu reseña, el corazón y las favoritas.
+    val resenaEntera = io.github.fogonapps.cajon.datos.Resenas.deObra(e, o.id)
     Column(Modifier.aparecer(1).fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.tu_resena), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.weight(1f))
             val fav = o.id in e.ajustes.favoritas
             BotonIcono(Iconos.Estrella, stringResource(if (fav) R.string.quitar_favorita else R.string.poner_favorita), tinta = if (fav) f.acentoTexto else f.textoSuave, lleno = fav) { vm.favorita(o.id) }
             BotonIcono(Iconos.Corazon, stringResource(R.string.me_gusta), tinta = if (o.meGusta) f.acentoTexto else f.textoSuave, lleno = o.meGusta) { vm.meGusta(o.id) }
         }
         ElegirEstrellas(o.nota, { vm.ponerNota(o.id, it) }, descripcion = stringResource(R.string.tu_nota))
+        if (!resenaEntera?.texto.isNullOrBlank()) {
+            Text(resenaEntera.texto, style = MaterialTheme.typography.bodyMedium, color = f.texto,
+                maxLines = 3, overflow = TextOverflow.Ellipsis)
+            BotonSecundario(stringResource(R.string.editar), { vm.escribirResena(o.id, editar = resenaEntera.id) }, Modifier.fillMaxWidth())
+        } else BotonSecundario(stringResource(R.string.resena_escribir_algo), { vm.escribirResena(o.id) }, Modifier.fillMaxWidth())
+        ElegirVisibilidad(resenaEntera?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) {
+            vm.visibilidadResenaObra(o.id, it)
+        }
         BotonRiso(textoAnotar(o.tipo), { vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.agregar_a_lista), { vm.abrir(Pantalla.AgregarALista(o.id)) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.chat_mandar_a_alguien), { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Chats(o.id)) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.red_publicar_sobre), { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Publicar(o.id)) }, Modifier.fillMaxWidth())
     }
 
     // El progreso: páginas o canciones.
     when {
         o.tipo == Tipos.LIBRO -> Paginas(vm, o)
-        o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> Canciones(vm, o)
+        o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> Canciones(vm, e, o)
     }
 
     Sinopsis(o.sinopsis)
@@ -365,13 +373,10 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
 
     // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
     Seccion(stringResource(R.string.resenas))
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).
-        var notas by rememberSaveable(o.id) { mutableStateOf(o.notas) }
-        var conNotas by rememberSaveable(o.id) { mutableStateOf(o.notas.isNotBlank()) }
-        if (conNotas) OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
+    if (o.notas.isNotBlank()) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        var notas by rememberSaveable(o.id, o.notas) { mutableStateOf(o.notas) }
+        OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
             label = { Text(stringResource(R.string.datos_curiosos)) })
-        else Pildora(stringResource(R.string.agregar_datos_curiosos), Iconos.Mas) { conNotas = true }
     }
     ResenasPropias(vm, e, o)
     ResenasDeLaGente(vm, o)
@@ -635,7 +640,7 @@ private fun FilaAccion(icono: io.github.fogonapps.identidad.Dibujo, texto: Strin
 /** Las canciones del álbum, cada una con su nota y su corazón (como en un tracklist con calificación). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Canciones(vm: CajonViewModel, o: Obra) {
+private fun Canciones(vm: CajonViewModel, e: Estado, o: Obra) {
     val f = FogonTema.actual
     Seccion(stringResource(R.string.canciones))
     Pista(stringResource(R.string.canciones_pista))
@@ -659,6 +664,14 @@ private fun Canciones(vm: CajonViewModel, o: Obra) {
                 Box(Modifier.padding(start = 28.dp)) {
                     ElegirEstrellas(c.nota, { vm.notaCancion(o.id, i, it) }, tamano = 20.dp, descripcion = stringResource(R.string.nota_de, c.titulo))
                 }
+                val resena = io.github.fogonapps.cajon.datos.Resenas.deCancion(e, o, i)
+                if (!resena?.texto.isNullOrBlank()) Text(resena.texto, style = MaterialTheme.typography.bodySmall,
+                    color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                BotonSecundario(stringResource(if (resena?.texto.isNullOrBlank()) R.string.resena_escribir_algo else R.string.editar),
+                    { vm.resenaCancion(o.id, i) }, Modifier.fillMaxWidth())
+                ElegirVisibilidad(resena?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) {
+                    vm.visibilidadResenaCancion(o.id, i, it)
+                }
             }
         }
     }
@@ -676,9 +689,11 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     if (o == null) { Cabecera("", vm::cerrar); Pista(stringResource(R.string.ya_no_esta)); return }
     val viejo = p.registro?.let { r -> o.registros.firstOrNull { it.id == r } }
     var fecha by rememberSaveable { mutableStateOf(viejo?.fecha ?: vm.hoy().toString()) }
-    var nota by rememberSaveable { mutableStateOf(viejo?.nota ?: o.nota) }
+    val resena = viejo?.let { io.github.fogonapps.cajon.datos.Resenas.deDestino(e, o.id, registro = it.id) }
+    var nota by rememberSaveable { mutableStateOf(resena?.nota ?: viejo?.nota ?: 0) }
+    var texto by rememberSaveable { mutableStateOf(resena?.texto.orEmpty()) }
     var otraVez by rememberSaveable { mutableStateOf(viejo?.otraVez ?: o.registros.isNotEmpty()) }
-    var visibilidad by rememberSaveable { mutableStateOf(viejo?.visibilidad ?: "") }
+    var visibilidad by rememberSaveable { mutableStateOf(resena?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) }
 
     Cabecera(textoAnotar(o.tipo), vm::cerrar)
     Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -688,21 +703,18 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(stringResource(R.string.cuando), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         BotonFecha(fecha, vm.idioma(), { fecha = it }, vm.hoy())
-        Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+        Text(stringResource(R.string.tu_resena), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(nota, { nota = it }, descripcion = stringResource(R.string.tu_nota))
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             FilaInterruptorCajon(stringResource(R.string.otra_vez_pregunta), otraVez) { otraVez = it }
         }
-        BotonSecundario(stringResource(R.string.resena_escribir), {
-            val registro = vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad))
-            vm.escribirResena(o.id, registro)
-        }, Modifier.fillMaxWidth())
-        // Quién la vería cuando haya perfiles públicos (sin elegir, como diga el diario en el perfil).
-        Text(stringResource(R.string.quien_ve_entrada), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
-        Selector(listOf("" to stringResource(R.string.como_el_diario), io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA to stringResource(R.string.vis_privada),
-            io.github.fogonapps.cajon.datos.Visibilidad.AMIGOS to stringResource(R.string.vis_amigos), io.github.fogonapps.cajon.datos.Visibilidad.PUBLICA to stringResource(R.string.vis_publica)),
-            visibilidad, { visibilidad = it })
-        BotonRiso(stringResource(R.string.guardar), { vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad)) }, Modifier.fillMaxWidth())
+        OutlinedTextField(texto, { texto = it }, Modifier.fillMaxWidth(), minLines = 3,
+            label = { Text(stringResource(R.string.resena_pista)) }, isError = texto.length > 5000,
+            supportingText = { Text(stringResource(R.string.resena_limite, texto.length)) })
+        ElegirVisibilidad(visibilidad) { if (vm.puedeCompartirResena(it)) visibilidad = it }
+        BotonRiso(stringResource(R.string.guardar), {
+            vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad), texto)
+        }, Modifier.fillMaxWidth(), habilitado = texto.length <= 5000)
         if (viejo != null) BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_registro_pregunta), null) { vm.borrarRegistro(o.id, viejo.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)

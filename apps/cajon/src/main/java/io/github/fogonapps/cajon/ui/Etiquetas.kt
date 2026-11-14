@@ -44,14 +44,18 @@ fun EditorEtiquetas(
     textoAgregar: String,
     modifier: Modifier = Modifier,
     textoVisible: (String) -> String = { it },
+    /** Sin edición (lo que viene de una fuente, como los géneros de TMDB): solo se ven y se tocan. */
+    editable: Boolean = true,
 ) {
     var editando by rememberSaveable(clave) { mutableStateOf(false) }
+    if (!editable) editando = false
+    if (etiquetas.isEmpty() && !editable) return
     if (etiquetas.isEmpty() && !editando) {
         Box(modifier.padding(horizontal = 16.dp, vertical = 6.dp)) { Pildora(textoAgregar, Iconos.Mas) { editando = true } }
         return
     }
     Column(modifier) {
-        Seccion(titulo) { Pildora(stringResource(if (editando) R.string.listo else R.string.editar)) { editando = !editando } }
+        Seccion(titulo) { if (editable) Pildora(stringResource(if (editando) R.string.listo else R.string.editar)) { editando = !editando } }
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             etiquetas.forEach { g ->
                 if (editando) Pildora(textoVisible(g), Iconos.Cerrar) { onCambio(etiquetas - g) }

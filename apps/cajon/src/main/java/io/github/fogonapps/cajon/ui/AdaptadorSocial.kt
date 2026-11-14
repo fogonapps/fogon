@@ -49,7 +49,7 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
                 AjusteSocial.BLOQUEADOS -> Pantalla.BloqueadosRed
                 AjusteSocial.BORRAR_CUENTA -> Pantalla.BorrarCuenta
             }) },
-            adjunto = { vm.abrir(Pantalla.Publicar(it.id)) },
+            adjunto = { vm.escribirResena(it.id) },
             volver = vm::cerrar,
             gente = { usuario, seguidores -> vm.abrir(Pantalla.GenteRed(usuario, seguidores)) },
         )
@@ -65,6 +65,10 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
                 "lista" -> R.string.red_tipo_lista
                 else -> R.string.red_tipo_publico
             })
+            @Composable override fun NombrePublicacion(publicacion: PublicacionSocial): String = if (esCalificacion(publicacion))
+                androidx.compose.ui.res.stringResource(R.string.red_califico,
+                    (publicacion.datos["titulo"] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty())
+                else NombreTipo(publicacion.tipo)
             @Composable override fun Cuerpo(publicacion: PublicacionSocial, destapado: Boolean) = CuerpoPublicacionCajon(vm, publicacion, destapado)
             @Composable override fun SeccionesPerfil(perfil: PerfilSocial, propio: Boolean, contenido: @Composable (Int) -> Unit) = seccionesCajon(propio, contenido)
             @Composable override fun CifrasPerfil(perfil: PerfilSocial) = CifrasDeLaRed(perfil)

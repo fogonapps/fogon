@@ -166,11 +166,11 @@ internal fun CuerpoPublicacionCajon(vm: CajonViewModel, p: PublicacionSocial, de
             val o = e?.let { estado -> estado.vivas.firstOrNull { it.fuente == d.texto("fuente") }
                 ?: estado.artistasVivos.firstOrNull { it.fuente == d.texto("fuente") }?.let { io.github.fogonapps.cajon.datos.Resenas.obra(estado, it.id) } }
             d.texto("parte").takeIf { it.isNotBlank() }?.let {
-                Text(io.github.fogonapps.cajon.datos.Resenas.etiqueta(it, o, vm.idioma() == "en"), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                Text(d.texto("parteEtiqueta").ifBlank { io.github.fogonapps.cajon.datos.Resenas.etiqueta(it, o, vm.idioma() == "en") }, style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
             }
             if (d.texto("spoiler") != "true" || destapado) CarruselFotos(imagenesPublicacion(d))
             val yo by vm.red.usuario.collectAsStateWithLifecycle()
-            if (p.autor.usuario != yo) {
+            if (p.autor.usuario != yo && !io.github.fogonapps.social.ui.esCalificacion(p)) {
                 val estadoUtil = stringResource(if (p.yoUtil) R.string.resena_util_activo else R.string.resena_util_inactivo)
                 Text(stringResource(R.string.resena_util, p.utiles), style = MaterialTheme.typography.labelLarge,
                     color = if (p.yoUtil) f.acentoTexto else f.texto,
@@ -670,6 +670,12 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
                         .then(if (d.texto("spoiler") == "true") Modifier.blur(20.dp) else Modifier), contentScale = ContentScale.Crop)
                     else Text(d.texto("titulo").ifBlank { d.texto("texto") }, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 5,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(8.dp))
+                    if (io.github.fogonapps.social.ui.esCalificacion(p)) Column(Modifier.align(Alignment.TopStart)
+                        .fillMaxWidth().background(f.fondo).padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.red_califico, d.texto("titulo")), style = MaterialTheme.typography.labelSmall,
+                            color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        (d["nota"] as? JsonPrimitive)?.intOrNull?.let { Estrellas(it, 12.sp) }
+                    }
                     if (video.isNotBlank()) Box(Modifier.align(Alignment.Center).size(40.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.75f)),
                         contentAlignment = Alignment.Center) { IconoRiso(Iconos.Reproducir, stringResource(R.string.video_play), tamano = 22.dp, tinta = f.texto) }
                     Row(Modifier.align(Alignment.BottomStart).padding(6.dp).clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(horizontal = 6.dp, vertical = 2.dp),

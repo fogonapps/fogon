@@ -106,19 +106,19 @@ class PerfilVistaTest {
     }
 
     @Test fun `resenas propias excluyen borradas conservan privadas y ordenan por fecha`() {
-        val antigua = Resena("a", "obra", fecha = "2025-01-01", visibilidad = Visibilidad.PUBLICA)
-        val privada = Resena("p", "obra", fecha = "2026-11-07", visibilidad = Visibilidad.PRIVADA)
+        val antigua = Resena("a", "obra", texto = "Antigua", fecha = "2025-01-01", visibilidad = Visibilidad.PUBLICA)
+        val privada = Resena("p", "obra", texto = "Privada", fecha = "2026-11-07", visibilidad = Visibilidad.PRIVADA)
         val borrada = Resena("b", "obra", fecha = "2026-11-08", borrada = true)
-        assertEquals(listOf(privada, antigua), Estado(resenas = listOf(antigua, borrada, privada)).resenasDelPerfil())
+        assertEquals(listOf(privada, antigua), Estado(resenas = listOf(antigua, borrada, privada, Resena("solo-nota", "obra", nota = 8))).resenasDelPerfil())
         assertTrue(Estado().resenasDelPerfil().isEmpty())
     }
 
     @Test fun `perfil ajeno selecciona solo publicaciones de tipo resena`() {
         fun publicacion(id: Long, tipo: String) = PublicacionSocial(id, PersonaSocial("persona"), tipo, id,
             Visibilidad.PUBLICA, kotlinx.serialization.json.JsonObject(emptyMap()))
-        val resena = publicacion(2, "resena")
+        val resena = publicacion(2, "resena").copy(datos = kotlinx.serialization.json.buildJsonObject { put("texto", kotlinx.serialization.json.JsonPrimitive("Opinión")) })
         val perfil = PerfilSocial(PersonaSocial("persona"), publicaciones = listOf(
-            publicacion(1, "diario"), resena, publicacion(3, "lista"), publicacion(4, "publicacion")))
+            publicacion(1, "diario"), publicacion(5, "resena"), resena, publicacion(3, "lista"), publicacion(4, "publicacion")))
         assertEquals(listOf(resena), perfil.resenasDelPerfil())
         assertTrue(perfil.copy(publicaciones = emptyList()).resenasDelPerfil().isEmpty())
     }

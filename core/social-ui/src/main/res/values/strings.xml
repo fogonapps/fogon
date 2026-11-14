@@ -354,10 +354,10 @@
     <string name="apelacion_tu_texto">Your explanation</string>
     <string name="apelacion_enviar">Send the appeal</string>
     <string name="historia_tu">You</string>
-    <string name="historia_nota_pon">Note</string>
+    <string name="historia_nota_pon">Status</string>
     <string name="historia_ver_tuya">See your story</string>
     <string name="historia_nueva">New story</string>
-    <string name="historia_tu_nota">Your note</string>
+    <string name="historia_tu_nota">Your status</string>
     <string name="historia_apple_music">Listen on Apple Music</string>
     <string name="historia_ver_escena">Watch the scene</string>
     <string name="historia_abrir">Open</string>
@@ -380,11 +380,11 @@
     <string name="historia_sin_canciones">We couldn\'t find that song.</string>
     <string name="historia_canciones_apple">30-second previews from Apple Music.</string>
     <string name="historia_de_la_app">From this app</string>
-    <string name="historia_nota_explica">Your note lasts 24 hours and your people see it. You can add a song or something from the app.</string>
+    <string name="historia_nota_explica">Your status lasts 24 hours and your people see it. You can add a song or something from the app.</string>
     <string name="historia_nota_pista">What\'s on your mind?</string>
     <string name="historia_quitar_adjunto">Remove the attachment</string>
-    <string name="historia_nota_poner">Post the note</string>
-    <string name="historia_nota_quitar">Remove the note</string>
+    <string name="historia_nota_poner">Post the status</string>
+    <string name="historia_nota_quitar">Remove the status</string>
     <string name="historia_ver_perfil">See profile</string>
     <string name="historia_no_se_pudo">That photo couldn\'t be used</string>
     <string name="historia_cerrar">Close</string>
@@ -603,4 +603,5 @@
     <string name="social_mod_reporte_propio">You reported this, so someone else on the team decides.</string>
     <string name="social_chat_enviar_voz">Send the voice note</string>
     <string name="social_te_sigue">follows you</string>
+    <string name="social_tipo_calificacion">Rating</string>
 </resources>
