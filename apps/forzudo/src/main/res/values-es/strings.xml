@@ -536,4 +536,5 @@
     <string name="guia_perfil_texto">Tu perfil está aquí, y en su engranaje, los ajustes y este recorrido otra vez.</string>
     <string name="historia_ejercicios_min">%1$d ejercicios · %2$d min</string>
     <string name="historia_buscar_app">Busca una canción o un ejercicio</string>
+    <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
 </resources>

@@ -412,4 +412,5 @@
     <string name="red_corregir_no">Solo quien creó el lugar puede corregirlo, o no hay conexión.</string>
     <string name="red_guardar_lugar">Guardar</string>
     <string name="historia_buscar_app">Busca una canción, receta o alimento</string>
+    <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
 </resources>

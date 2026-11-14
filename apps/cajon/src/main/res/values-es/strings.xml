@@ -1746,4 +1746,5 @@
     <string name="parte_reto">Tu reto del año</string>
     <string name="parte_por_ver">Lo que tienes por ver</string>
     <string name="aj_avanzado">Avanzado: conectar Spotify</string>
+    <string name="red_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
 </resources>

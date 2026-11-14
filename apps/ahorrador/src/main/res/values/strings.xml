@@ -634,4 +634,5 @@
     <string name="anotar_sin_cuentas">You need at least one active account to log something (all of them are archived). Create one or reactivate one in Accounts.</string>
     <string name="color_n">Color %1$d</string>
     <string name="anotar_elige_categoria">Pick a category (otherwise it stays “To review”)</string>
+    <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
 </resources>

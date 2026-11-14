@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.fogonapps"
-version = "0.35"
+version = "0.38"
 
 kotlin { jvmToolchain(21) }
 

@@ -6,7 +6,7 @@ import kotlinx.serialization.json.*
 import kotlin.test.*
 
 class HistoriasTest {
-    private val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) + ByteArray(100)
+    private val jpeg = jpegDePrueba()
 
     @Test fun historiasPorAppVistasYVencimiento() {
         val dir = Files.createTempDirectory("historias").toFile()

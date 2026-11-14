@@ -525,4 +525,5 @@
     <string name="guia_perfil_texto">Your profile is here, and in its gear: settings and this tour again.</string>
     <string name="historia_ejercicios_min">%1$d exercises · %2$d min</string>
     <string name="historia_buscar_app">Search for a song or an exercise</string>
+    <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
 </resources>

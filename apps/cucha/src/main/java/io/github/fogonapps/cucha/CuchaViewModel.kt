@@ -89,7 +89,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     private val sesion = io.github.fogonapps.social.SesionApp(app, cuchaApp.perfiles, idPerfil, "cucha")
     /** La cuenta y «Tu gente» (sin chat, D-030). */
     val red = io.github.fogonapps.social.RedApp(cuchaApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
-        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
+        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil, R.string.cuenta_muchas_cuentas),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.cucha.datos.cabePublicacionCucha(it) }, "publicaciones-cucha.json",
         listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES))
     /** D-033: el diario se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */

@@ -61,7 +61,11 @@ open class RedApp(
         sesion.intentar(marca, trabajo) { x ->
             error.value = x.message
             if (x is ErrorSocial && x.codigo == 401) olvidarCuenta()
-            if (avisar) mensaje(if (x is ErrorSocial && x.error == "perfil_revision") textos.perfilCambio else textos.error)
+            if (avisar) mensaje(when {
+                x is ErrorSocial && x.error == "perfil_revision" -> textos.perfilCambio
+                x is ErrorSocial && x.error == "muchas_cuentas" -> textos.muchasCuentas
+                else -> textos.error
+            })
             if (x is ErrorSocial && x.error == "perfil_revision") cargarIdentidad()
         }
     override fun avisar(evento: EventoSocial) { mensaje(textos.operacionLista) }
@@ -358,4 +362,4 @@ open class RedApp(
 }
 
 /** Los avisos de la red en los textos de la app (core/social no tiene recursos propios). */
-data class TextosRed(val error: Int, val perfilCambio: Int, val operacionLista: Int, val otroPerfil: Int)
+data class TextosRed(val error: Int, val perfilCambio: Int, val operacionLista: Int, val otroPerfil: Int, val muchasCuentas: Int = error)

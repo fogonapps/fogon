@@ -1,3 +1,0 @@
-• The GitHub copy is gone: your notebook is kept encrypted in your Fogón account.
-• Safer backups: a damaged one no longer erases what you have.
-• Updated privacy policy.

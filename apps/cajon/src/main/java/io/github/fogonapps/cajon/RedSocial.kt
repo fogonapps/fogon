@@ -231,6 +231,7 @@ class RedSocial(
                     "por_borrar" -> R.string.red_por_borrar
                     "correo_tomado" -> R.string.red_correo_tomado
                     "despacio" -> R.string.red_despacio
+                    "muchas_cuentas" -> R.string.red_muchas_cuentas
                     "clave_mala" -> R.string.red_clave_mala
                     "clave_comun" -> R.string.red_clave_comun
                     "sin_correo" -> R.string.red_codigo_no_disponible

@@ -413,4 +413,5 @@
     <string name="red_corregir_no">Only whoever created the place can correct it, or there’s no connection.</string>
     <string name="red_guardar_lugar">Save</string>
     <string name="historia_buscar_app">Search for a song, recipe or food</string>
+    <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
 </resources>

@@ -64,6 +64,17 @@ fun main(args: Array<String>) {
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
 }
 
+/** Cuántas cuentas nuevas por día deja crear desde una misma dirección (contra bots; una casa o un colegio caben). */
+internal class LimiteDiario(private val porDia: Int) {
+    private val cuentas = ConcurrentHashMap<String, Pair<Long, Int>>()
+    fun pasa(clave: String, ahora: Long = System.currentTimeMillis()): Boolean {
+        val dia = ahora / 86_400_000
+        val (d, n) = cuentas.compute(clave) { _, v -> if (v == null || v.first != dia) dia to 1 else v.first to v.second + 1 }!!
+        if (cuentas.size > 50_000) cuentas.entries.removeIf { it.value.first != dia }
+        return d == dia && n <= porDia
+    }
+}
+
 /** Cuántas peticiones por minuto deja hacer a cada quien (por token o, sin él, por dirección). */
 private class Limite(private val porMinuto: Int) {
     private val cuentas = ConcurrentHashMap<String, Pair<Long, Int>>()
@@ -75,7 +86,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.37"
+const val VERSION = "0.38"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -113,6 +124,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val general = Limite(120)
     val imagenes = Limite(900)
     val registros = Limite(5)
+    val cuentasNuevas = LimiteDiario(10)
     val pedidosCine = Limite(240)
     val pedidosLastfm = Limite(60)
     install(createApplicationPlugin("Limite") {
@@ -178,7 +190,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
-                call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()))
+                val ip = call.ip()
+                call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()) { cuentasNuevas.pasa("nueva:$ip") })
             }
             get("/lastfm") {
                 if (!pedidosLastfm.pasa("lastfm:${call.ip()}")) throw Problema(429, "despacio")

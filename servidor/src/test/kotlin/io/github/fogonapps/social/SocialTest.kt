@@ -20,6 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 class SocialTest {
     private fun nuevo(): Social {
@@ -457,8 +458,13 @@ class SocialTest {
         val s = nuevo()
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!
         assertFailsWith<Problema> { s.subirImagen(yo, "no es imagen".toByteArray()) }
-        val img = s.subirImagen(yo, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 9, 9))
-        assertEquals(4, s.imagen(img.nombre).size)
+        // Solo con la cabecera de JPEG no alcanza: tiene que ser una imagen de verdad.
+        assertFailsWith<Problema> { s.subirImagen(yo, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 9, 9)) }
+        val img = s.subirImagen(yo, jpegDePrueba(conMetadatos = true))
+        // Se guarda dibujada de nuevo: sin los metadatos (como la ubicación) que traía el archivo.
+        val guardada = s.imagen(img.nombre)
+        assertTrue(javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(guardada)) != null)
+        assertFalse(String(guardada, Charsets.ISO_8859_1).contains("GPS-PRUEBA-UBICACION"))
         assertFailsWith<Problema> { s.imagen("../../etc/passwd") }
         s.borrarCuenta(yo)
         assertFailsWith<Problema> { s.imagen(img.nombre) }
@@ -469,8 +475,8 @@ class SocialTest {
         val yo = s.cuentaDe(s.crearCuenta(NuevaCuenta("dani")).token)!!
         assertFailsWith<Problema> { s.subirFoto(yo, "no es imagen".toByteArray()) }
         assertFailsWith<Problema> { s.subirFoto(yo, ByteArray(500_000) { 0xFF.toByte() }) }
-        s.subirFoto(yo, byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 1, 2, 3))
-        assertEquals(5, s.foto(null, "dani").size)
+        s.subirFoto(yo, jpegDePrueba(conMetadatos = true))
+        assertFalse(String(s.foto(null, "dani"), Charsets.ISO_8859_1).contains("GPS-PRUEBA-UBICACION"))
         assertTrue(s.verPerfil(null, "dani").persona.foto)
     }
 
@@ -527,5 +533,14 @@ class SocialTest {
         assertEquals(40, s.actividad(yo, null).size)
         assertEquals(1, s.actividad(yo, null).first().megusta)
         assertTrue(ms < 300, "la actividad tardó $ms ms")
+    }
+
+    @Test fun pocasCuentasNuevasPorDiaDesdeLaMismaDireccion() {
+        val l = LimiteDiario(10)
+        val hoy = 1_000L * 86_400_000
+        repeat(10) { assertTrue(l.pasa("nueva:1.2.3.4", hoy)) }
+        assertFalse(l.pasa("nueva:1.2.3.4", hoy))                       // la undécima del día, no
+        assertTrue(l.pasa("nueva:5.6.7.8", hoy))                        // otra dirección, sí
+        assertTrue(l.pasa("nueva:1.2.3.4", hoy + 86_400_000))           // al día siguiente, de nuevo
     }
 }

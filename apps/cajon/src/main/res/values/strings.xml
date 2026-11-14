@@ -1744,4 +1744,5 @@
     <string name="parte_reto">Your yearly challenge</string>
     <string name="parte_por_ver">What you want to watch</string>
     <string name="aj_avanzado">Advanced: connect Spotify</string>
+    <string name="red_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
 </resources>

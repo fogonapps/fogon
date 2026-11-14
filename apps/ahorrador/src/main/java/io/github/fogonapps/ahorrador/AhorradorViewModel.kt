@@ -93,7 +93,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     private val sesion = io.github.fogonapps.social.SesionApp(app, ahorradorApp.perfiles, idPerfil, "alcancia")
     /** La cuenta y «Tu gente»: solo logros y metas en porcentaje (D-032), sin chat. */
     val red = io.github.fogonapps.social.RedApp(ahorradorApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
-        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil),
+        io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil, R.string.cuenta_muchas_cuentas),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.ahorrador.datos.cabeLogro(it) }, "logros-publicados.json",
         listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS))
     /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */

@@ -115,7 +115,7 @@ class CuentasGraciaTest {
         val a = e.alta(); val b = e.alta("beto"); val c = e.alta("clara")
         val yo = e.id(a); val otro = e.id(b)
         e.s.guardarCajon(yo, CajonCifrado("cifrado"), 0)
-        val jpeg = byteArrayOf(0xff.toByte(), 0xd8.toByte(), 1, 2)
+        val jpeg = jpegDePrueba()
         e.s.subirFoto(yo, jpeg)
         val imagen = e.s.subirImagen(yo, jpeg)
         e.s.programarBorrado(yo, a.token)

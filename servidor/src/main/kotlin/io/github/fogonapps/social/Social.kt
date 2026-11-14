@@ -282,7 +282,7 @@ class Social(
      * "cuenta_nueva" sin gastar el código (la app pregunta y vuelve a llamar).
      */
     @Synchronized
-    fun entrar(e: Entrada, dispositivo: String = ""): Acceso {
+    fun entrar(e: Entrada, dispositivo: String = "", puedeCrear: () -> Boolean = { true }): Acceso {
         e.app?.let(AppsSocial::validar)
         if (e.clave.isNotEmpty()) Claves.validar(e.clave)
         val correo = e.correo.trim().lowercase()
@@ -296,6 +296,8 @@ class Social(
             val u = e.usuario.trim().lowercase()
             if (!USUARIO.matches(u)) throw Problema(400, "usuario")
             if (!usuarioLibre(u)) throw Problema(409, "usuario_tomado")
+            // Contra bots: pocas cuentas nuevas por día desde la misma dirección (lo cuenta quien llama).
+            if (!puedeCrear()) throw Problema(429, "muchas_cuentas")
             val nuevo = b.usar {
                 insertar("INSERT INTO cuentas(id, usuario, token, nombre, creada, cambio, correo, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?,?,?)",
                     insertar("INSERT INTO secuencia_cuentas DEFAULT VALUES"), u, "retirado:" + Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
@@ -883,9 +885,9 @@ class Social(
 
     /** La foto: un JPEG de hasta 400 KB (la app la achica antes). */
     fun subirFoto(yo: Long, bytes: ByteArray) {
-        esJpeg(bytes, 400_000)
+        val limpia = jpegLimpio(bytes, 400_000)
         dirFotos.mkdirs()
-        java.io.File(dirFotos, "$yo.jpg").writeBytes(bytes)
+        java.io.File(dirFotos, "$yo.jpg").writeBytes(limpia)
         b.usar { cambiar("UPDATE cuentas SET foto = 1, cambio = cambio + 1 WHERE id = ?", yo) }
     }
 
@@ -940,12 +942,12 @@ class Social(
 
     /** Guarda una imagen (JPEG de hasta 900 KB; la app la achica antes) y devuelve su nombre, para ponerlo en la publicación. */
     fun subirImagen(yo: Long, bytes: ByteArray): ImagenSubida {
-        esJpeg(bytes, 900_000)
+        val limpia = jpegLimpio(bytes, 900_000)
         val cuantas = b.usar { leer("SELECT COUNT(*) FROM imagenes WHERE cuenta = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() }
         if (cuantas >= 100) throw Problema(429, "despacio")
         val nombre = Base.tokenNuevo().take(22)
         dirImagenes.mkdirs()
-        java.io.File(dirImagenes, "$nombre.jpg").writeBytes(bytes)
+        java.io.File(dirImagenes, "$nombre.jpg").writeBytes(limpia)
         b.usar { cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES(?,?,?)", nombre, yo, ahora()) }
         return ImagenSubida(nombre)
     }
@@ -2475,6 +2477,29 @@ class Social(
     private fun esJpeg(bytes: ByteArray, max: Int) {
         if (bytes.size > max) throw Problema(413, "muy_grande")
         if (bytes.size < 4 || bytes[0] != 0xFF.toByte() || bytes[1] != 0xD8.toByte()) throw Problema(415, "no_es_jpeg")
+    }
+
+    /**
+     * La foto que se guarda: el servidor la vuelve a dibujar y la guarda él (JPEG limpio). Así no queda nada de lo que
+     * traía el archivo aparte de la imagen (ubicación, modelo del teléfono u otros datos), aunque una app no la
+     * limpiara. Si no se puede leer como imagen, no se acepta.
+     */
+    internal fun jpegLimpio(bytes: ByteArray, max: Int): ByteArray {
+        esJpeg(bytes, max)
+        val img = runCatching { javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(bytes)) }.getOrNull() ?: throw Problema(415, "no_es_jpeg")
+        if (img.width < 1 || img.height < 1 || img.width.toLong() * img.height > 40_000_000) throw Problema(415, "no_es_jpeg")
+        // Sin canal alfa ni paleta rara: RGB plano, como lo pide el codificador JPEG.
+        val rgb = java.awt.image.BufferedImage(img.width, img.height, java.awt.image.BufferedImage.TYPE_INT_RGB)
+        rgb.createGraphics().apply { drawImage(img, 0, 0, java.awt.Color.WHITE, null); dispose() }
+        val escritor = javax.imageio.ImageIO.getImageWritersByFormatName("jpeg").next()
+        val salida = java.io.ByteArrayOutputStream()
+        javax.imageio.ImageIO.createImageOutputStream(salida).use { o ->
+            escritor.output = o
+            val p = escritor.defaultWriteParam.apply { compressionMode = javax.imageio.ImageWriteParam.MODE_EXPLICIT; compressionQuality = 0.9f }
+            escritor.write(null, javax.imageio.IIOImage(rgb, null, null), p)
+            escritor.dispose()
+        }
+        return salida.toByteArray()
     }
 
     companion object {
