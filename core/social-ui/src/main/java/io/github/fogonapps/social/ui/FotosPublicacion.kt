@@ -60,7 +60,7 @@ fun VisorFotos(fotos: List<String>, inicial: Int, cerrar: () -> Unit) {
                     escala = (escala * zoom).coerceIn(1f, 5f)
                     desplazamiento = if (escala > 1f) desplazamiento + mover else Offset.Zero
                 }
-                AsyncImage(ClienteSocial.imagen(fotos[i]), stringResource(R.string.social_publicacion_foto, i + 1, fotos.size),
+                AsyncImage(if (fotos[i].startsWith("https://")) fotos[i] else ClienteSocial.imagen(fotos[i]), stringResource(R.string.social_publicacion_foto, i + 1, fotos.size),
                     Modifier.fillMaxSize()
                         .pointerInput(i, paginas.currentPage) { detectTapGestures(onDoubleTap = {
                             escala = if (escala > 1f) 1f else 2.5f

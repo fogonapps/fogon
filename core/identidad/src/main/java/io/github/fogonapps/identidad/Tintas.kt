@@ -60,19 +60,6 @@ data class Paleta(
             nombreTema = R.string.fogon_tema_gimnasio,
         )
 
-        /** Brasa: coral y amarillo sobre casi negro rojizo (La Minga). */
-        val Minga = Paleta(
-            tinta = Color(0xFFFF5A4F),
-            sobreTinta = Color(0xFF120A08),
-            textoEnPapel = Color(0xFFC92118),
-            textoEnTinta = Color(0xFFFF5A4F),
-            segunda = Tintas.Amarillo,
-            luz2 = Tintas.Rojo,
-            fondo = Color(0xFF120A08),
-            brillo = Color(0xFFB0301F),
-            nombreTema = R.string.fogon_tema_brasa,
-        )
-
         /** Billete: verde con ámbar sobre casi negro verdoso (El Ahorrador). */
         val Ahorrador = Paleta(
             tinta = Color(0xFF1FB45A),

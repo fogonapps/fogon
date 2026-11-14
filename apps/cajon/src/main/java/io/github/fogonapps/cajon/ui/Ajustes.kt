@@ -103,13 +103,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
     }
     // Las portadas de lo que llegó sin fuente se buscan solas; aquí solo se ve cómo va.
-    val completando by vm.completando.collectAsStateWithLifecycle()
-    completando?.let { k ->
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            LinearProgressIndicator({ k.hechas / k.total.toFloat() }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
-            Text(stringResource(R.string.portadas_avance, k.hechas, k.total, k.encontradas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        }
-    }
+    AvanceEnlace(vm)
 
     SeccionAjustes(stringResource(R.string.aj_apariencia_idioma))
     FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }

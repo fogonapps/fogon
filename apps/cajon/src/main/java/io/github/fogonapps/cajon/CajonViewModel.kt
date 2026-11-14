@@ -20,6 +20,7 @@ import io.github.fogonapps.cajon.datos.permiteReemplazarCajon
 import io.github.fogonapps.cajon.datos.sincronizarCajonCifrado
 import io.github.fogonapps.cajon.datos.ArtistaEncontrado
 import io.github.fogonapps.cajon.datos.ClaveMala
+import io.github.fogonapps.cajon.datos.EnlaceMasivo
 import io.github.fogonapps.cajon.datos.Encontrado
 import io.github.fogonapps.cajon.datos.Encuadre
 import io.github.fogonapps.cajon.datos.Estado
@@ -1160,6 +1161,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val r = io.github.fogonapps.cajon.datos.Encontrado(o.tipo, o.titulo, o.anio, o.creador, o.portada, o.fuente, o.paginas?.let { "$it p." } ?: o.formato)
                 val d = detalles(r)
+                kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                 cambiarObra(id) { v ->
                     // Las etiquetas (géneros) y la sinopsis que ya tenía se respetan: la persona pudo haberlas ajustado; la
                     // portada también, si la eligió ella.
@@ -1209,17 +1211,15 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      * Lo que llegó enlazado pero sin los datos de afuera (un respaldo armado afuera, otra app, una sincronización):
      * `fuente` puesta y `traida` = 0. Se traen en segundo plano, de a una (sinopsis, temporadas, páginas…).
      */
-    private var trabajoDatos: Job? = null
-
-    private fun completarDatos() {
-        if (trabajoDatos?.isActive == true) return
-        val clave = claveCine
-        val faltan = _estado.value?.vivas.orEmpty().filter { it.fuente.isNotEmpty() && it.traida <= 0L && (clave != null || !it.fuente.startsWith("tmdb:")) }
-        if (faltan.isEmpty()) return
-        trabajoDatos = viewModelScope.launch {
-            for (o in faltan) {
-                try { traerDatos(o.id, callado = true) } catch (x: kotlinx.coroutines.CancellationException) { throw x } catch (_: Exception) { break }
-            }
+    private suspend fun completarDatos(faltan: List<Obra>, total: Int) {
+        faltan.forEachIndexed { i, o ->
+            try { traerDatos(o.id, callado = true) }
+            catch (x: kotlinx.coroutines.CancellationException) { throw x }
+            catch (x: ClaveMala) { throw x }
+            // Una obra defectuosa o un corte suelto no impiden completar las siguientes; sin internet, `comprobar` corta.
+            catch (_: Exception) { }
+            kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
+            _completando.value = Completando(i + 1, total, 0)
         }
     }
 
@@ -1243,9 +1243,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      */
     private fun libroIdeal(o: Obra, r: Encontrado) = L.esLaMisma(o, r) && L.tituloLimpio(o.titulo) == L.tituloLimpio(r.titulo) && r.portada.isNotBlank()
 
+    fun detenerEnlace() { trabajoPortadas?.cancel() }
+
     fun buscarPortadas() {
         // Al abrir, al importar o al poner la clave: también los datos de lo que llegó enlazado sin ellos.
-        completarDatos()
         if (trabajoPortadas?.isActive == true) return
         val clave = claveCine
         val revisadas = caja.portadasRevisadas.toMutableSet()
@@ -1256,17 +1257,21 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         // Escritores (Open Library) y directores (TMDB, con clave) guardados sin fuente: así tienen foto, biografía y obras.
         val personas = _estado.value?.artistasVivos.orEmpty().filter { !Personas.esMusico(it) && it.fuente.isEmpty() && it.id !in revisadas &&
             (it.tipo == Personas.AUTOR || clave != null) }
-        if (pendientes.isEmpty() && artistas.isEmpty() && personas.isEmpty()) return
-        trabajoPortadas = viewModelScope.launch {
-            val total = pendientes.size + artistas.size + personas.size
+        val faltan = _estado.value?.vivas.orEmpty().filter { it.fuente.isNotEmpty() && it.traida <= 0L && (clave != null || !it.fuente.startsWith("tmdb:")) }
+        if (pendientes.isEmpty() && artistas.isEmpty() && personas.isEmpty() && faltan.isEmpty()) return
+        trabajoPortadas = viewModelScope.launch(EnlaceMasivo()) {
+            val total = faltan.size + pendientes.size + artistas.size + personas.size
             var encontradas = 0
-            // Un fallo suelto (MusicBrainz "ocupado", Open Library con un error 500 o lenta) no detiene todo ni se da por
-            // revisado: se salta y se reintenta la próxima vez; si fallan 5 seguidas, no hay internet y se para.
-            var fallos = 0
-            fun fallo(x: Throwable): Boolean { if (x is ClaveMala || x is kotlinx.coroutines.CancellationException) throw x; if (++fallos >= 5) throw SinRed(); return true }
+            fun fallo(x: Throwable): Boolean {
+                // Un corte suelto se salta (se reintenta la próxima vez); sin internet, `comprobar` detiene el trabajo.
+                if (x is ClaveMala || x is kotlinx.coroutines.CancellationException) throw x
+                return true
+            }
             _completando.value = Completando(0, total, 0)
             try {
+                completarDatos(faltan, total)
                 pendientes.forEachIndexed { i, o ->
+                    kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     val candidatos = runCatching {
                         if (o.tipo == Tipos.ALBUM) MusicBrainz.buscarAlbum(o.titulo, o.creador)
                         else if (o.tipo == Tipos.LIBRO) {
@@ -1320,14 +1325,14 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                             }
                             todos
                         }
-                    }.getOrElse { if (fallo(it)) { _completando.value = Completando(i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
-                    fallos = 0
+                    }.getOrElse { if (fallo(it)) { _completando.value = Completando(faltan.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
                     // En libros, Open Library tiene obras repetidas de una sola edición y sin portada: primero la del mismo
                     // título y con portada (el orden de la búsqueda ya pone arriba la de más ediciones).
                     val r = candidatos.filter { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
                         .let { l -> if (o.tipo == Tipos.LIBRO) l.sortedByDescending { (if (libroIdeal(o, it)) 2 else 0) + (if (it.portada.isNotBlank()) 1 else 0) }
                             else l.sortedByDescending { L.puntaje(o, it) } }
                         .firstOrNull()
+                    kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     revisadas += o.id
                     if ((i + 1) % 10 == 0) caja.portadasRevisadas = revisadas
                     if (r != null) {
@@ -1335,24 +1340,25 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
                         cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
                         // Y el resto de los datos de afuera (sinopsis, páginas, temporadas, canciones…), sin tocar lo de la persona.
-                        actualizarDatos(o.id, callado = true)
+                        try { traerDatos(o.id, callado = true) }
+                        catch (x: Exception) { fallo(x) }
                     }
-                    _completando.value = Completando(i + 1, total, encontradas)
+                    _completando.value = Completando(faltan.size + i + 1, total, encontradas)
                 }
                 artistas.forEachIndexed { i, a ->
                     val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }
-                        .getOrElse { if (fallo(it)) { _completando.value = Completando(pendientes.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
-                        .also { fallos = 0 }
+                        .getOrElse { if (fallo(it)) { _completando.value = Completando(faltan.size + pendientes.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
                         .firstOrNull { L.mismoArtista(a.nombre, it) && _estado.value!!.artistasVivos.none { x -> x.fuente == it.fuente } }
+                    kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     revisadas += a.id
                     if (r != null) {
                         encontradas++
                         cambiarArtista(a.id) { it.copy(fuente = r.fuente, tipo = it.tipo.ifBlank { r.tipo }, pais = it.pais.ifBlank { r.pais }, desde = it.desde ?: r.desde) }
                     }
-                    _completando.value = Completando(pendientes.size + i + 1, total, encontradas)
+                    _completando.value = Completando(faltan.size + pendientes.size + i + 1, total, encontradas)
                 }
                 personas.forEachIndexed { i, a ->
-                    val base = pendientes.size + artistas.size
+                    val base = faltan.size + pendientes.size + artistas.size
                     val nombre = a.nombre.trimEnd('.')
                     val r = runCatching {
                         if (a.tipo == Personas.AUTOR) {
@@ -1367,8 +1373,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                             l.filter { L.mismoArtista(nombre, it) }.ifEmpty { l.take(1).filter { L.otroAlfabeto(it.nombre) } }
                         }
                     }.getOrElse { if (fallo(it)) { _completando.value = Completando(base + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
-                        .also { fallos = 0 }
                         .firstOrNull { _estado.value!!.artistasVivos.none { x -> x.fuente == it.fuente } }
+                    kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     revisadas += a.id
                     if (r != null) {
                         encontradas++
@@ -2391,6 +2397,24 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         red.votarPortada(o.fuente, url?.let(Imagenes::clave)) { cargarImagenesObra(id).join() }
     }
 
+    /** Solo en memoria: también comparte la consulta si ficha y previa coinciden. */
+    private val galerias = mutableMapOf<String, kotlinx.coroutines.Deferred<List<Pair<String, String>>>>()
+
+    suspend fun galeria(fuente: String): List<Pair<String, String>> {
+        if (!Tmdb.esFuenteGaleria(fuente)) return emptyList()
+        return galerias.getOrPut(fuente) {
+            viewModelScope.async {
+                try {
+                    Tmdb(claveCine ?: "").galeria(fuente, idioma())
+                } catch (cancelada: CancellationException) {
+                    throw cancelada
+                } catch (_: Exception) {
+                    emptyList()
+                }
+            }
+        }.await()
+    }
+
     /** Portadas para elegir de una obra ("Cambiar portada"): null mientras llegan. */
     val candidatas: StateFlow<Pair<String, List<String>?>?> = _candidatas
 
@@ -2868,7 +2892,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora(), perfilNetflix)
             ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
-        if (r == null || r.obras.isEmpty()) { avisar(tx(R.string.aviso_no_es_de_otra_app)); return }
+        if (r == null || r.obras.isEmpty()) {
+            // Una copia de El Cajón ("Descargar una copia de tus datos"): se junta con lo que hay, como un respaldo.
+            leerRespaldoCajon(bytes.decodeToString())?.let { importar(it); return }
+            avisar(tx(R.string.aviso_no_es_de_otra_app)); return
+        }
         var nuevas = 0
         cambiar { e -> val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n; x }
         avisar(txPlural(R.plurals.aviso_importadas, r.obras.size, r.obras.size, r.deDonde, nuevas))

@@ -1,0 +1,3 @@
+Imágenes de cada película y serie en su ficha, a pantalla completa.
+Lo que traes de Letterboxd, Goodreads o Netflix se enlaza solo con su portada y sus datos, y se ve el avance.
+«Traer de otras apps» también acepta una copia de El Cajón.

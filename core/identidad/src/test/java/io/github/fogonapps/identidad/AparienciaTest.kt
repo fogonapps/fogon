@@ -8,7 +8,7 @@ import org.junit.Test
 
 /** Que ningún tema venga con letras que no se leen, en ninguna app. */
 class AparienciaTest {
-    private val paletas = mapOf("Forzudo" to Paleta.Forzudo, "Ahorrador" to Paleta.Ahorrador, "Minga" to Paleta.Minga)
+    private val paletas = mapOf("Forzudo" to Paleta.Forzudo, "Ahorrador" to Paleta.Ahorrador)
 
     /** El vidrio es transparente: lo que importa es cómo queda sobre el papel. */
     private fun Fogon.tarjeta() = superficie.compositeOver(fondo)

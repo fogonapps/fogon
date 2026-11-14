@@ -52,6 +52,7 @@ import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.Orden
 import io.github.fogonapps.cajon.datos.Tipos
 import io.github.fogonapps.cajon.datos.normal
+import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
@@ -77,6 +78,7 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     var orden by rememberSaveable(seccion) { mutableStateOf(Orden.RECIENTES) }
     LaunchedEffect(seccion) { vm.completarFotos() }
 
+    AvanceEnlace(vm)
     Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp))
 
     // Las cifras del apartado: lo terminado este año en grande, y lo demás al lado.
@@ -332,6 +334,20 @@ private fun EscuchadoHacePoco(vm: CajonViewModel) {
                 Pildora(stringResource(R.string.agregar), Iconos.Mas, acento = true) { vm.agregarOido(a.clave) }
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.descartar)) { vm.descartarOido(a.clave) }
             }
+        }
+    }
+}
+
+/** Avance compartido por el cajón y Ajustes. */
+@Composable
+fun AvanceEnlace(vm: CajonViewModel) {
+    val completando by vm.completando.collectAsStateWithLifecycle()
+    val f = FogonTema.actual
+    completando?.let { k ->
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            androidx.compose.material3.LinearProgressIndicator({ k.hechas / k.total.toFloat() }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            Text(stringResource(R.string.portadas_avance, k.hechas, k.total, k.encontradas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            BotonSecundario(stringResource(R.string.detener_enlace), vm::detenerEnlace)
         }
     }
 }

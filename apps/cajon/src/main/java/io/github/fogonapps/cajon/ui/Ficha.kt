@@ -214,6 +214,7 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
     }
     QuienLaHizo(vm, o, personas)
     Sinopsis(o.sinopsis)
+    Galeria(vm, o)
     if (o.canciones.isNotEmpty()) {
         Seccion(stringResource(R.string.canciones))
         // Cada canción con su avance (si Apple la tiene) y, al mantenerla, sus acciones.
@@ -226,6 +227,32 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
         }
     }
     Pista(stringResource(fuenteDe(o.tipo)), Modifier.padding(top = 12.dp))
+}
+
+@Composable
+private fun Galeria(vm: CajonViewModel, o: Obra) {
+    if (!io.github.fogonapps.cajon.datos.Tmdb.esFuenteGaleria(o.fuente)) return
+    val f = FogonTema.actual
+    var fotos by remember(vm, o.fuente) { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var abierta by rememberSaveable(o.fuente) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(vm, o.fuente) { fotos = vm.galeria(o.fuente) }
+    if (fotos.isEmpty()) return
+    Seccion(stringResource(R.string.imagenes))
+    androidx.compose.foundation.lazy.LazyRow(
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(fotos.size) { indice ->
+            coil3.compose.AsyncImage(
+                model = fotos[indice].first,
+                contentDescription = stringResource(R.string.imagen_de_obra, indice + 1, o.titulo),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.width(200.dp).aspectRatio(16f / 9f).clip(forma(18.dp))
+                    .background(f.superficie).clickable { abierta = indice },
+            )
+        }
+    }
+    abierta?.let { indice -> VisorFotos(fotos.map { it.second }, indice) { abierta = null } }
 }
 
 @Composable
@@ -334,6 +361,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     }
 
     Sinopsis(o.sinopsis)
+    Galeria(vm, o)
 
     // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
     Seccion(stringResource(R.string.resenas))

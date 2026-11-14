@@ -1,1 +1,0 @@
-Clear message when the daily limit for new accounts from the same connection is reached.

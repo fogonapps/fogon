@@ -74,7 +74,7 @@ data class Enlace(val nombre: String, val url: String)
 class SinRed : IOException()
 class ClaveMala : IOException()
 /** El servicio pidió esperar (503 o 429): se reintenta. */
-class Ocupado : IOException()
+class Ocupado(val segundos: Long? = null) : IOException()
 
 private const val AGENTE = "ElCajon-Fogon/1.0 (fogonapps@gmail.com)"
 private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
@@ -91,14 +91,22 @@ suspend fun bajarImagen(url: String, tope: Int = 4_000_000): ByteArray? = withCo
 private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emptyMap()): JsonElement = withContext(Dispatchers.IO) {
     val req = Request.Builder().url(url).header("User-Agent", AGENTE).header("Accept", "application/json")
         .apply { cabeceras.forEach { (k, v) -> header(k, v) } }.build()
-    try {
-        http.newCall(req).execute().use { r ->
-            if (r.code == 401) throw ClaveMala()
-            if (r.code == 503 || r.code == 429) throw Ocupado()
-            if (!r.isSuccessful) throw IllegalStateException("HTTP ${r.code}")
-            JsonCajon.parseToJsonElement(r.body.string())
-        }
-    } catch (e: ClaveMala) { throw e } catch (e: Ocupado) { throw e } catch (e: IOException) { throw SinRed() }
+    val masivo = kotlin.coroutines.coroutineContext[EnlaceMasivo]
+    suspend fun pedir(): JsonElement {
+        masivo?.comprobar()
+        if (url.encodedPath.startsWith("/v1/tmdb/")) masivo?.pausarTmdb()
+        try {
+            return http.newCall(req).execute().use { r ->
+                if (r.code == 401) throw ClaveMala()
+                if (r.code == 503 || r.code == 429) throw Ocupado(segundosDeEspera(r.header("Retry-After")))
+                if (!r.isSuccessful) throw IllegalStateException("HTTP ${r.code}")
+                JsonCajon.parseToJsonElement(r.body.string()).also { masivo?.respondio() }
+            }
+        } catch (e: ClaveMala) { masivo?.fallar(e); throw e }
+        catch (e: Ocupado) { throw e }
+        catch (e: IOException) { val fallo = SinRed(); masivo?.corte(fallo); throw fallo }
+    }
+    if (masivo != null) reintentarOcupado { pedir() } else pedir()
 }
 
 private fun JsonElement?.texto(): String = (this as? JsonPrimitive)?.contentOrNull ?: ""
@@ -404,11 +412,14 @@ class Tmdb(private val clave: String = "") {
      */
     private suspend fun imagenes(fuente: String, cuales: String, idioma: String, tamano: String): List<String> {
         val (_, clase, id) = fuente.split(":")
-        val mio = if (idioma == "en") "en" else "es"
-        fun orden(l: String) = when (l) { mio -> 0; "" -> if (cuales == "backdrops") -1 else 1; "en" -> 2; else -> 3 }
-        return pedir("$clase/$id/images").arr(cuales).map { it.jsonObject }
-            .sortedWith(compareBy<JsonObject> { orden(it["iso_639_1"].texto()) }.thenByDescending { it["vote_average"].decimal() ?: 0.0 })
-            .mapNotNull { it["file_path"].texto().takeIf { r -> r.isNotBlank() } }.take(60).map { imagen(it, tamano) }
+        return rutasImagenes(pedir("$clase/$id/images"), cuales, idioma).take(60).map { imagen(it, tamano) }
+    }
+
+    /** Fotogramas para la ficha; conserva los tamaños propios de los fondos de TMDB. */
+    suspend fun galeria(fuente: String, idioma: String): List<Pair<String, String>> {
+        if (!esFuenteGaleria(fuente)) return emptyList()
+        val (_, clase, id) = fuente.split(":")
+        return galeriaDe(pedir("$clase/$id/images"), idioma)
     }
 
     /** Los episodios de una temporada (número y nombre), para elegir los favoritos. */
@@ -423,6 +434,21 @@ class Tmdb(private val clave: String = "") {
     private fun publica(o: JsonObject) = o["vote_average"].decimal()?.takeIf { votos(o) > 0 && it > 0 }
 
     companion object {
+        fun esFuenteGaleria(fuente: String) = Regex("tmdb:(movie|tv):[0-9]+").matches(fuente)
+
+        private fun rutasImagenes(datos: JsonObject, cuales: String, idioma: String): List<String> {
+            val mio = if (idioma == "en") "en" else "es"
+            fun orden(l: String) = when (l) { mio -> 0; "" -> if (cuales == "backdrops") -1 else 1; "en" -> 2; else -> 3 }
+            return datos.arr(cuales).mapNotNull { it as? JsonObject }
+                .sortedWith(compareBy<JsonObject> { orden(it["iso_639_1"].texto()) }.thenByDescending { it["vote_average"].decimal() ?: 0.0 })
+                .mapNotNull { it["file_path"].texto().takeIf(String::isNotBlank) }
+        }
+
+        internal fun galeriaDe(datos: JsonObject, idioma: String): List<Pair<String, String>> =
+            rutasImagenes(datos, "backdrops", idioma).distinct().take(30).map {
+                "https://image.tmdb.org/t/p/w300$it" to "https://image.tmdb.org/t/p/w1280$it"
+            }
+
         /** Los nombres de géneros ya pedidos, por idioma (no cambian: una vez por sesión). */
         private val GENEROS = java.util.concurrent.ConcurrentHashMap<String, Map<Int, String>>()
         const val LATINO = "es-MX"

@@ -168,7 +168,7 @@
   <string name="idioma">Idioma</string>
   <string name="idioma_telefono">El del teléfono</string>
   <string name="traer_de_otras">Traer de otras apps</string>
-  <string name="traer_de_otras_pista">Elige el archivo que exporta Netflix (tu historial de actividad, el CSV), Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Desde Netflix, Spotify y otras apps también puedes compartir algo directo a El Cajón.</string>
+  <string name="traer_de_otras_pista">Elige una copia de El Cajón o el archivo que exporta Netflix (tu historial de actividad, el CSV), Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Desde Netflix, Spotify y otras apps también puedes compartir algo directo a El Cajón.</string>
   <string name="elegir_archivo">Elegir el archivo</string>
   <string name="respaldo">Respaldo</string>
   <string name="respaldo_pista">Guarda todo en un archivo cuando quieras (las claves no van).</string>
@@ -204,7 +204,7 @@
   <string name="aviso_datos_al_dia">Datos al día</string>
   <string name="aviso_registrado">Anotado en tu diario</string>
   <string name="aviso_favoritas_cuatro">Son cuatro favoritas: salió la más vieja</string>
-  <string name="aviso_no_es_de_otra_app">Ese archivo no parece de Letterboxd ni de Goodreads.</string>
+  <string name="aviso_no_es_de_otra_app">Ese archivo no parece una copia de El Cajón ni de Letterboxd, Goodreads, Netflix o Spotify.</string>
   <string name="aviso_importado">Respaldo recuperado</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
@@ -248,8 +248,8 @@
     <item quantity="other">Tienes %d pendientes en tu cajón.</item>
   </plurals>
   <plurals name="aviso_importadas">
-    <item quantity="one">%1$d de %2$s (%3$d nueva)</item>
-    <item quantity="other">%1$d de %2$s (%3$d nuevas)</item>
+    <item quantity="one">%1$d de %2$s (%3$d nueva) · Buscaremos portadas y datos.</item>
+    <item quantity="other">%1$d de %2$s (%3$d nuevas) · Buscaremos portadas y datos.</item>
   </plurals>
   <string-array name="creditos">
     <item>Personaje y diseño: Fogón (GPL-3.0-or-later).</item>
@@ -320,7 +320,7 @@
   <string name="sus_libros">Sus libros</string>
   <string name="filmografia">Filmografía</string>
   <string name="personas_vacio">Todavía no guardas a nadie. Búscalo y guárdalo para ver su obra.</string>
-  <string name="portadas_avance">Buscando portadas: %1$d de %2$d revisadas · %3$d encontradas</string>
+  <string name="portadas_avance">Buscando portadas y datos: %1$d de %2$d revisadas · %3$d encontradas</string>
   <string name="anotar_visto">Anotar cuándo lo vi</string>
   <string name="anotar_leido">Anotar cuándo lo leí</string>
   <string name="anotar_escuchado">Anotar cuándo lo escuché</string>
@@ -1747,4 +1747,7 @@
     <string name="parte_por_ver">Lo que tienes por ver</string>
     <string name="aj_avanzado">Avanzado: conectar Spotify</string>
     <string name="red_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
+    <string name="imagenes">Imágenes</string>
+    <string name="imagen_de_obra">Imagen %1$d de %2$s</string>
+  <string name="detener_enlace">Detener</string>
 </resources>

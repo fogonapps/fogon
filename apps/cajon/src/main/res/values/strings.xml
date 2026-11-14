@@ -169,7 +169,7 @@
   <string name="idioma">Language</string>
   <string name="idioma_telefono">Phone’s</string>
   <string name="traer_de_otras">Bring from other apps</string>
-  <string name="traer_de_otras_pista">Pick the file Netflix exports (your viewing activity CSV), Letterboxd (the ZIP or a CSV), Goodreads (the CSV) or Spotify (your history ZIP). From Netflix, Spotify and other apps you can also share something straight to El Cajón.</string>
+  <string name="traer_de_otras_pista">Pick an El Cajón copy or the file Netflix exports (your viewing activity CSV), Letterboxd (the ZIP or a CSV), Goodreads (the CSV) or Spotify (your history ZIP). From Netflix, Spotify and other apps you can also share something straight to El Cajón.</string>
   <string name="elegir_archivo">Choose file</string>
   <string name="respaldo">Backup</string>
   <string name="respaldo_pista">Save everything to a file whenever you like (keys aren’t included).</string>
@@ -205,7 +205,7 @@
   <string name="aviso_datos_al_dia">Details refreshed</string>
   <string name="aviso_registrado">Logged in your diary</string>
   <string name="aviso_favoritas_cuatro">Top four only: the oldest one left</string>
-  <string name="aviso_no_es_de_otra_app">That file doesn’t look like it’s from Letterboxd or Goodreads.</string>
+  <string name="aviso_no_es_de_otra_app">That file doesn’t look like an El Cajón copy or a Letterboxd, Goodreads, Netflix or Spotify export.</string>
   <string name="aviso_importado">Backup restored</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
   <string name="aviso_no_exportado">Couldn’t save the file</string>
@@ -249,8 +249,8 @@
     <item quantity="other">You have %d titles up next.</item>
   </plurals>
   <plurals name="aviso_importadas">
-    <item quantity="one">%1$d from %2$s (%3$d new)</item>
-    <item quantity="other">%1$d from %2$s (%3$d new)</item>
+    <item quantity="one">%1$d from %2$s (%3$d new) · We will find covers and details.</item>
+    <item quantity="other">%1$d from %2$s (%3$d new) · We will find covers and details.</item>
   </plurals>
   <string-array name="creditos">
     <item>Character and design: Fogón (GPL-3.0-or-later).</item>
@@ -320,7 +320,7 @@
   <string name="sus_libros">Books</string>
   <string name="filmografia">Filmography</string>
   <string name="personas_vacio">No one saved yet. Search for them and save them to see their work.</string>
-  <string name="portadas_avance">Finding covers: %1$d of %2$d checked · %3$d found</string>
+  <string name="portadas_avance">Finding covers and details: %1$d of %2$d checked · %3$d found</string>
   <string name="anotar_visto">Log when I watched it</string>
   <string name="anotar_leido">Log when I read it</string>
   <string name="anotar_escuchado">Log when I listened</string>
@@ -1745,4 +1745,7 @@
     <string name="parte_por_ver">What you want to watch</string>
     <string name="aj_avanzado">Advanced: connect Spotify</string>
     <string name="red_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
+    <string name="imagenes">Images</string>
+    <string name="imagen_de_obra">Image %1$d of %2$s</string>
+  <string name="detener_enlace">Stop</string>
 </resources>
