@@ -424,7 +424,7 @@
     <string name="banco_permitir_avisos">Allow confirmation notifications</string>
     <string name="banco_elegir">Your banks</string>
     <string name="banco_sms">Only SMS starting with Bancolombia:</string>
-    <string name="banco_app">What you send and receive in the Nu app. The time comes from the alert.</string>
+    <string name="banco_app">What you send, receive and buy with debit or credit in the Nu app. The time comes from the alert.</string>
     <string name="banco_solo">Record automatically</string>
     <string name="banco_solo_pista">Without asking. Review and undo below.</string>
     <string name="banco_generico">Its app or texts that name it. It reads the amount and whether it\'s an expense or income, and always asks before saving.</string>

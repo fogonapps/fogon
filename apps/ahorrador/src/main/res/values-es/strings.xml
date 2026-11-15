@@ -425,7 +425,7 @@
     <string name="banco_permitir_avisos">Permitir avisos para confirmar</string>
     <string name="banco_elegir">Tus bancos</string>
     <string name="banco_sms">Solo SMS que empiezan por Bancolombia:</string>
-    <string name="banco_app">Lo que envías y lo que recibes en la app de Nu. La hora se toma de la alerta.</string>
+    <string name="banco_app">Lo que envías, lo que recibes y tus compras con débito o crédito en la app de Nu. La hora se toma de la alerta.</string>
     <string name="banco_solo">Anotar solo</string>
     <string name="banco_solo_pista">Sin preguntar. Puedes revisar y deshacer abajo.</string>
     <string name="banco_generico">Su app o los SMS que lo nombran. Lee el monto y si es gasto o ingreso, y siempre te pregunta antes de anotar.</string>
