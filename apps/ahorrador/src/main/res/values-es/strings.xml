@@ -636,4 +636,6 @@
     <string name="color_n">Color %1$d</string>
     <string name="anotar_elige_categoria">Elige una categoría (si no, queda «Por revisar»)</string>
     <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
+    <string name="banco_tarjeta_nombre">Tarjeta de crédito %1$s</string>
+    <string name="banco_crear_tarjeta">Crear la tarjeta de crédito de %1$s</string>
 </resources>

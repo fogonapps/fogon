@@ -25,6 +25,7 @@ data class AvisoBanco(
     val cuenta: String,
     val contraparte: String,
     val texto: String,
+    val credito: Boolean = false,
 ) {
     val huella: String get() = MessageDigest.getInstance("SHA-256").digest(
         "$banco|$tipo|$monto|$momento|${cuenta.filter(Char::isDigit)}".toByteArray(Charsets.UTF_8)
@@ -166,17 +167,14 @@ fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<Strin
     return null
 }
 
-/**
- * Compra con la tarjeta débito de Nu («Compra aprobada por $4.950,00» / «Compra en COMERCIO con tu tarjeta débito
- * terminada en 1234.»): sale de la cuenta de Nu, así que es un gasto de esa cuenta (sin número, igual que las
- * transferencias, para usar el mismo enlace). Las de crédito no se leen: son deuda, no plata de la cuenta.
- */
+/** Las compras débito usan el enlace de la cuenta Nu; las de crédito, la terminación de la tarjeta. */
 private fun compraNu(titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
     val todo = "$titulo $texto"
     val m = Regex("Compra aprobada por \\$ ?([0-9][0-9.,]*[0-9])").find(todo) ?: return null
-    val comercio = Regex("Compra en (.+?) con tu tarjeta d[eé]bito\\b").find(todo)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val tarjeta = Regex("Compra en (.+?) con tu tarjeta (?:de )?cr[eé]dito terminada en ([0-9]{3,6})\\b").find(todo)
+    val comercio = tarjeta?.groupValues?.get(1)?.trim() ?: Regex("Compra en (.+?) con tu tarjeta d[eé]bito\\b").find(todo)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     val monto = montoFlexible(m.groupValues[1]) ?: return null
-    return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(), "", comercio.take(80), comercio.take(60))
+    return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(), tarjeta?.groupValues?.get(2)?.let { "*$it" }.orEmpty(), comercio.take(80), comercio.take(60), credito = tarjeta != null)
 }
 
 /** Reglas cerradas por banco. Nu usa la hora de la alerta, redondeada al minuto. */
@@ -223,17 +221,18 @@ fun reconocerAviso(banco: Banco, tituloOriginal: String, textoOriginal: String, 
 }
 
 fun cuentasPosibles(e: Estado, aviso: AvisoBanco): List<Cuenta> = e.cuentas.filter {
-    !it.archivada && it.tipo in setOf(TipoCuenta.BANCO, TipoCuenta.BILLETERA) && (it.banco == null || it.banco == aviso.banco)
+    !it.archivada && (if (aviso.credito) it.tipo == TipoCuenta.CREDITO else it.tipo in setOf(TipoCuenta.BANCO, TipoCuenta.BILLETERA)) && (it.banco == null || it.banco == aviso.banco)
 }
 
 fun Estado.cuentaEnlazada(a: AvisoBanco): String? = notificaciones.enlaces[a.enlace]?.takeIf { id ->
-    cuentas.any { it.id == id && !it.archivada && it.banco == a.banco && it.tipo in setOf(TipoCuenta.BANCO, TipoCuenta.BILLETERA) }
+    cuentas.any { it.id == id && !it.archivada && it.banco == a.banco && (if (a.credito) it.tipo == TipoCuenta.CREDITO else it.tipo in setOf(TipoCuenta.BANCO, TipoCuenta.BILLETERA)) }
 }
 
 fun Estado.parejaBanco(r: RegistroBanco): RegistroBanco? {
+    if (r.aviso.credito) return null
     val cuenta = cuentaEnlazada(r.aviso) ?: return null
     return notificaciones.registros.firstOrNull { otro ->
-        !otro.descartado && otro.aviso.huella != r.aviso.huella && otro.aviso.tipo != r.aviso.tipo &&
+        !otro.aviso.credito && !otro.descartado && otro.aviso.huella != r.aviso.huella && otro.aviso.tipo != r.aviso.tipo &&
             otro.aviso.monto == r.aviso.monto && cuentaEnlazada(otro.aviso)?.let { it != cuenta } == true &&
             runCatching { Duration.between(LocalDateTime.parse(otro.aviso.momento), LocalDateTime.parse(r.aviso.momento)).abs() < Duration.ofMinutes(5) }.getOrDefault(false) &&
             // Una alerta ya agrupada no se vuelve a usar para otro movimiento.
@@ -300,8 +299,15 @@ fun coincideExtracto(m: Movimiento, fecha: String, monto: Long, cuenta: String):
         else -> (m.cuenta == cuenta && m.tipo == TipoMovimiento.INGRESO) || (m.aCuenta == cuenta && m.tipo == TipoMovimiento.TRASPASO)
     }
 
-fun recibirBanco(e: Estado, a: AvisoBanco): Estado {
+fun recibirBanco(inicial: Estado, a: AvisoBanco): Estado {
+    var e = inicial
     if (a.banco !in e.notificaciones.elegidos || e.notificaciones.registros.any { it.aviso.huella == a.huella }) return e
+    if (a.credito && e.cuentaEnlazada(a) == null) {
+        val posibles = cuentasPosibles(e, a)
+        val delBanco = posibles.filter { it.banco == a.banco }
+        val unica = if (delBanco.isNotEmpty()) delBanco.singleOrNull() else posibles.singleOrNull()
+        if (unica != null) e = enlazarBanco(e, a, unica.id)
+    }
     val cuenta = e.cuentaEnlazada(a)
     val usados = e.notificaciones.registros.mapNotNull { it.movimiento }.toSet()
     val duplicado = cuenta?.let { c -> e.movimientos.firstOrNull { it.importado && it.id !in usados && coincideExtracto(it, a.momento.substringBefore('T'), if (a.tipo == TipoMovimiento.GASTO) -a.monto else a.monto, c) } }

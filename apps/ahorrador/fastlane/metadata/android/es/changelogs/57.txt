@@ -1,0 +1,2 @@
+Las compras con la tarjeta de crédito de Nu ahora también se leen y se anotan: suben la deuda de tu tarjeta.
+Si tienes una sola tarjeta de crédito en La Alcancía, se enlaza sola; si tienes varias, eliges cuál. Si no tienes ninguna, la puedes crear desde el aviso.

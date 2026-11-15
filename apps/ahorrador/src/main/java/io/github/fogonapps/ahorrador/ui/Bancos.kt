@@ -123,7 +123,7 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
                     cuentasPosibles(e, a).forEach { cuenta ->
                         BotonSecundario(stringResource(R.string.banco_usar_cuenta, cuenta.nombre), { vm.enlazarAviso(a.huella, cuenta.id) }, Modifier.fillMaxWidth())
                     }
-                    BotonRiso(stringResource(R.string.banco_crear, stringResource(a.banco.nombreBanco)), { vm.enlazarAviso(a.huella, null) }, Modifier.fillMaxWidth())
+                    BotonRiso(stringResource(if (a.credito) R.string.banco_crear_tarjeta else R.string.banco_crear, stringResource(a.banco.nombreBanco)), { vm.enlazarAviso(a.huella, null) }, Modifier.fillMaxWidth())
                 } else {
                     if (propuesta.tipo == TipoMovimiento.TRASPASO) {
                         val origen = e.cuentas.first { it.id == propuesta.cuenta }.nombre

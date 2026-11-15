@@ -635,4 +635,6 @@
     <string name="color_n">Color %1$d</string>
     <string name="anotar_elige_categoria">Pick a category (otherwise it stays “To review”)</string>
     <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
+    <string name="banco_tarjeta_nombre">%1$s credit card</string>
+    <string name="banco_crear_tarjeta">Create the %1$s credit card</string>
 </resources>

@@ -269,9 +269,88 @@ class NotificacionesTest {
         // El mismo enlace que las transferencias de Nu: va a la cuenta de Nu ya enlazada.
         assertEquals(nu().enlace, a.enlace)
         assertEquals("b" + a.huella, estado().copy(notificaciones = estado().notificaciones.let { it.copy(registros = it.registros + RegistroBanco(a)) }).propuestaBanco(a.huella)?.id)
-        // Sin título (solo el texto largo) también se entiende; con crédito o rechazada, no.
+        // Sin título (solo el texto largo) también se entiende; una compra rechazada no.
         assertEquals(4950L, reconocerAviso(Banco.NU, "", "Compra aprobada por \$4.950 Compra en LOS HORNITOS con tu tarjeta débito terminada en 4828.", recibido)?.monto)
-        assertNull(reconocerAviso(Banco.NU, "Compra aprobada por \$4.950,00", "Compra en TIENDA con tu tarjeta de crédito terminada en 1111.", recibido))
+        assertTrue(reconocerAviso(Banco.NU, "Compra aprobada por \$4.950,00", "Compra en TIENDA con tu tarjeta de crédito terminada en 1111.", recibido)!!.credito)
         assertNull(reconocerAviso(Banco.NU, "Compra rechazada por \$4.950,00", texto, recibido))
+    }
+
+    private fun creditoNu() = reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00",
+        "Compra en ÉXITO con tu tarjeta de crédito terminada en 1111.", recibido)!!
+
+    @Test fun compraCreditoNuSeEnlazaYSubeLaDeuda() {
+        val a = creditoNu()
+        assertEquals(TipoMovimiento.GASTO, a.tipo)
+        assertEquals(120000L, a.monto)
+        assertTrue(a.credito)
+        assertEquals("NU|1111", a.enlace)
+        assertEquals("ÉXITO", a.contraparte)
+        assertEquals(a, reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00",
+            "Compra en ÉXITO con tu tarjeta credito terminada en 1111.", recibido))
+        assertNull(reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00", "Compra en ÉXITO con tu tarjeta terminada en 1111.", recibido))
+        val inicial = estado().copy(cuentas = estado().cuentas + Cuenta("tc", "Tarjeta", TipoCuenta.CREDITO),
+            notificaciones = estado().notificaciones.copy(solos = setOf(Banco.NU)))
+        val e = recibirBanco(inicial, a)
+        assertEquals("tc", e.cuentaEnlazada(a))
+        assertEquals(Banco.NU, e.cuentas.last().banco)
+        assertEquals(TipoMovimiento.GASTO, e.propuestaBanco(a.huella)!!.tipo)
+        assertEquals("tc", e.propuestaBanco(a.huella)!!.cuenta)
+        assertEquals(0L, Logica().deuda(e, "tc"))
+        val anotado = confirmarBanco(e, a.huella, automatico = true)
+        assertEquals(120000L, Logica().deuda(anotado, "tc"))
+        assertTrue(anotado.notificaciones.registros.single().automatico)
+    }
+
+    @Test fun creditoAmbiguoQuedaPendienteYDebitoConservaSuCuenta() {
+        val a = creditoNu()
+        val tarjetas = listOf(Cuenta("t1", "Una", TipoCuenta.CREDITO), Cuenta("t2", "Otra", TipoCuenta.CREDITO))
+        val inicial = estado().copy(cuentas = estado().cuentas + tarjetas)
+        val e = recibirBanco(inicial, a)
+        assertNull(e.cuentaEnlazada(a))
+        assertEquals(tarjetas, cuentasPosibles(e, a))
+        assertNull(e.propuestaBanco(a.huella))
+        val debito = reconocerAviso(Banco.NU, "Compra aprobada por \$4.950,00",
+            "Compra en TIENDA con tu tarjeta débito terminada en 4828.", recibido)!!
+        assertFalse(debito.credito)
+        assertEquals("nu", e.cuentaEnlazada(debito))
+        assertEquals(listOf("nu"), cuentasPosibles(e, debito).map { it.id })
+        val preferida = inicial.copy(cuentas = inicial.cuentas.map { if (it.id == "t2") it.copy(banco = Banco.NU) else it })
+        assertEquals("t2", recibirBanco(preferida, a).cuentaEnlazada(a))
+        val variasNu = inicial.copy(cuentas = inicial.cuentas.map { if (it.tipo == TipoCuenta.CREDITO) it.copy(banco = Banco.NU) else it })
+        assertNull(recibirBanco(variasNu, a).cuentaEnlazada(a))
+        val incompatible = e.copy(notificaciones = e.notificaciones.copy(enlaces = e.notificaciones.enlaces + (a.enlace to "nu")))
+        assertNull(incompatible.cuentaEnlazada(a))
+    }
+
+    @Test fun creditoNoFormaTraspasoEnNingunOrden() {
+        val a = creditoNu()
+        val ingreso = leer(entrada)!!.copy(monto = a.monto)
+        for (orden in listOf(listOf(a, ingreso), listOf(ingreso, a))) {
+            var e = estado().copy(cuentas = estado().cuentas + Cuenta("tc", "Tarjeta", TipoCuenta.CREDITO))
+            for (aviso in orden) e = recibirBanco(e, aviso)
+            for (registro in e.notificaciones.registros) assertNull(e.parejaBanco(registro))
+            e = confirmarBanco(confirmarBanco(e, a.huella), ingreso.huella)
+            assertEquals(setOf(TipoMovimiento.GASTO, TipoMovimiento.INGRESO), e.movimientos.map { it.tipo }.toSet())
+        }
+    }
+
+    @Test fun enlaceCreditoPrecedeLaBusquedaDeDuplicadosCsv() {
+        val a = creditoNu()
+        val csv = Movimiento("csv", a.momento.substringBefore('T'), TipoMovimiento.GASTO, a.monto, "tc", importado = true)
+        val inicial = estado().copy(cuentas = estado().cuentas + Cuenta("tc", "Tarjeta", TipoCuenta.CREDITO), movimientos = listOf(csv))
+        val e = recibirBanco(inicial, a)
+        assertEquals("tc", e.cuentaEnlazada(a))
+        assertEquals("csv", e.notificaciones.registros.single().movimiento)
+        assertEquals(listOf(csv), confirmarBanco(e, a.huella).movimientos)
+    }
+
+    @Test fun avisoAntiguoSinCreditoSigueLeyendose() {
+        val a = JsonAhorrador.decodeFromString(AvisoBanco.serializer(),
+            """{"banco":"NU","tipo":"GASTO","monto":4950,"momento":"2026-11-09T00:02","cuenta":"","contraparte":"TIENDA","texto":"TIENDA"}""")
+        assertFalse(a.credito)
+        assertEquals(nu().enlace, a.enlace)
+        val credito = creditoNu()
+        assertEquals(credito, JsonAhorrador.decodeFromString(AvisoBanco.serializer(), JsonAhorrador.encodeToString(AvisoBanco.serializer(), credito)))
+        assertEquals(a.huella, a.copy(credito = true).huella)
     }
 }
