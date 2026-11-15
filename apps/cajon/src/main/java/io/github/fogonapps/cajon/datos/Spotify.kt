@@ -4,6 +4,8 @@ import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -87,7 +89,7 @@ class Spotify(private val cliente: String) {
     private suspend fun token(cuerpo: FormBody, anterior: String = ""): Pair<String, String> = withContext(Dispatchers.IO) {
         http.newCall(Request.Builder().url("https://accounts.spotify.com/api/token").post(cuerpo).build()).execute().use { r ->
             if (r.code == 400 || r.code == 401) throw ClaveMala()
-            if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+            if (!r.isSuccessful) throw Fallo(r.code)
             val j = JsonCajon.parseToJsonElement(r.body.string()).jsonObject
             j.getValue("access_token").jsonPrimitive.content to (j["refresh_token"]?.jsonPrimitive?.content ?: anterior)
         }
@@ -95,6 +97,9 @@ class Spotify(private val cliente: String) {
 
     /** Spotify no deja usar su API a esta cuenta (sin Premium, o no es la dueña de la app). */
     class SinPermiso : IOException()
+
+    /** Spotify respondió con un error suyo (no es la conexión). */
+    class Fallo(val codigo: Int) : IOException("HTTP $codigo")
 
     /** Comprueba que la cuenta puede usar la API (la primera lectura después de conectar). */
     suspend fun probar(acceso: String) { pedir(acceso, "https://api.spotify.com/v1/me") }
@@ -104,12 +109,13 @@ class Spotify(private val cliente: String) {
             if (r.code == 401) throw ClaveMala()
             if (r.code == 403) throw SinPermiso()
             if (r.code == 429) throw Ocupado()
-            if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+            if (!r.isSuccessful) throw Fallo(r.code)
             JsonCajon.parseToJsonElement(r.body.string()).jsonObject
         }
     }
 
-    private fun JsonObject.texto(k: String) = this[k]?.let { runCatching { it.jsonPrimitive.content }.getOrNull() }.orEmpty()
+    /** El texto de [k], o vacío si falta o es `null` (JsonNull.content sería la palabra "null"). */
+    private fun JsonObject.texto(k: String) = (this[k] as? JsonPrimitive)?.contentOrNull.orEmpty()
     private fun artistas(o: JsonObject) = o["artists"]?.jsonArray?.joinToString(", ") { it.jsonObject.texto("name") }.orEmpty()
 
     /** Lo escuchado hace poco (las últimas 50 canciones, después de [desde]). */
@@ -135,7 +141,7 @@ class Spotify(private val cliente: String) {
                 val al = e.jsonObject["album"]?.jsonObject ?: return@forEach
                 r += Guardado(al.texto("name"), artistas(al).substringBefore(","), al.texto("release_date").take(4).toIntOrNull())
             }
-            url = j.texto("next").ifBlank { null }
+            url = siguiente(j)
         }
         return r
     }
@@ -146,12 +152,16 @@ class Spotify(private val cliente: String) {
         while (url != null && r.size < 2000) {
             val a = pedir(acceso, url)["artists"]?.jsonObject ?: break
             a["items"]?.jsonArray.orEmpty().forEach { r += it.jsonObject.texto("name") }
-            url = a.texto("next").ifBlank { null }
+            url = siguiente(a)
         }
         return r.filter { it.isNotBlank() }
     }
 
     companion object {
+        /** La página siguiente, solo si es de la API de Spotify (en la última, `next` llega como `null`). */
+        fun siguiente(pagina: JsonObject): String? =
+            (pagina["next"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.startsWith("https://api.spotify.com/") }
+
         /** La dirección de autorización con PKCE y `state`. */
         fun urlAutorizar(cliente: String, redireccion: String, reto: String, estado: String): String {
             fun c(s: String) = URLEncoder.encode(s, "UTF-8")

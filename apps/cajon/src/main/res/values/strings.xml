@@ -424,6 +424,7 @@
   <string name="spotify_limites">Since 2026 Spotify requires the app owner to have Premium, allows up to 5 accounts per app (add them under “User Management” in the dashboard) and one Client ID per person.</string>
   <string name="aviso_spotify_permiso">Spotify won’t let your app read: check in its dashboard that the owner has Premium and your account is in “User Management”.</string>
   <string name="aviso_spotify_ocupado">Spotify asks to wait a bit. Try later.</string>
+  <string name="aviso_spotify_fallo">Couldn’t bring from Spotify: it answered something unexpected. Try again in a moment.</string>
   <string name="spotify_privacidad">The Client ID and the permission are stored encrypted only on this phone. El Cajón only reads: it never changes anything in your Spotify. You can disconnect it in Settings.</string>
   <string name="spotify_historial_pista">Further back? Ask Spotify for your “extended streaming history” (Account → Privacy) and pick the ZIP in “Bring from other apps”.</string>
   <string name="escuchado_poco">Recently heard</string>

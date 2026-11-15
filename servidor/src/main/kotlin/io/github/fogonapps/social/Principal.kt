@@ -86,7 +86,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.38"
+const val VERSION = "0.39"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que

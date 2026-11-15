@@ -259,4 +259,19 @@ class NotificacionesTest {
         assertEquals(TipoMovimiento.INGRESO, corregido.propuestaBanco(ingreso.huella)!!.tipo)
     }
 
+
+    @Test fun compraConDebitoDeNuEsGastoDeLaCuentaNu() {
+        val texto = "Compra en LOS HORNITOS CITYU UNI con tu tarjeta débito terminada en 4828."
+        val a = reconocerExtrasBanco(Banco.NU, listOf("", "Compra aprobada por \$4.950,00"), listOf("", texto), recibido)!!
+        assertEquals(TipoMovimiento.GASTO, a.tipo)
+        assertEquals(4950L, a.monto)
+        assertEquals("LOS HORNITOS CITYU UNI", a.contraparte)
+        // El mismo enlace que las transferencias de Nu: va a la cuenta de Nu ya enlazada.
+        assertEquals(nu().enlace, a.enlace)
+        assertEquals("b" + a.huella, estado().copy(notificaciones = estado().notificaciones.let { it.copy(registros = it.registros + RegistroBanco(a)) }).propuestaBanco(a.huella)?.id)
+        // Sin título (solo el texto largo) también se entiende; con crédito o rechazada, no.
+        assertEquals(4950L, reconocerAviso(Banco.NU, "", "Compra aprobada por \$4.950 Compra en LOS HORNITOS con tu tarjeta débito terminada en 4828.", recibido)?.monto)
+        assertNull(reconocerAviso(Banco.NU, "Compra aprobada por \$4.950,00", "Compra en TIENDA con tu tarjeta de crédito terminada en 1111.", recibido))
+        assertNull(reconocerAviso(Banco.NU, "Compra rechazada por \$4.950,00", texto, recibido))
+    }
 }

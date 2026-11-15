@@ -1,7 +1,10 @@
 package io.github.fogonapps.cajon
 
 import io.github.fogonapps.cajon.datos.Spotify
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -19,5 +22,14 @@ class SpotifyTest {
         assertEquals(Spotify.Vuelta.Ajena, Spotify.leerVuelta("GET /favicon.ico HTTP/1.1", "e1"))
         assertEquals(Spotify.Vuelta.Cancelada, Spotify.leerVuelta("GET /callback?error=access_denied&state=e1 HTTP/1.1", "e1"))
         assertEquals(Spotify.Vuelta.Error("invalid_scope"), Spotify.leerVuelta("GET /callback?error=invalid_scope&state=e1 HTTP/1.1", "e1"))
+    }
+
+    @Test fun laUltimaPaginaTerminaSinPedirLaDireccionNull() {
+        fun pagina(t: String) = Json.parseToJsonElement(t).jsonObject
+        assertNull(Spotify.siguiente(pagina("""{"items":[],"next":null}""")))
+        assertNull(Spotify.siguiente(pagina("""{"items":[]}""")))
+        assertNull(Spotify.siguiente(pagina("""{"next":"https://otro.example/v1/me/albums?offset=50"}""")))
+        assertEquals("https://api.spotify.com/v1/me/albums?offset=50&limit=50",
+            Spotify.siguiente(pagina("""{"next":"https://api.spotify.com/v1/me/albums?offset=50&limit=50"}""")))
     }
 }

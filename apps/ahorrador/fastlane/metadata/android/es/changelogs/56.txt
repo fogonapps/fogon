@@ -1,0 +1,2 @@
+Las compras con la tarjeta débito de Nu ahora se leen de la notificación y se descuentan de tu cuenta de Nu, igual que las transferencias.
+Las compras con tarjeta de crédito no se descuentan: son deuda, no plata de la cuenta.

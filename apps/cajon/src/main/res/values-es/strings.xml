@@ -424,6 +424,7 @@
   <string name="spotify_limites">Desde 2026 Spotify pide que la dueña o el dueño de la app tenga Premium, permite hasta 5 cuentas por app (agrégalas en “User Management” del panel) y un solo Client ID por persona.</string>
   <string name="aviso_spotify_permiso">Spotify no deja leer con tu app: revisa en su panel que la dueña o el dueño tenga Premium y que tu cuenta esté en “User Management”.</string>
   <string name="aviso_spotify_ocupado">Spotify pide esperar un poco. Prueba más tarde.</string>
+  <string name="aviso_spotify_fallo">No se pudo traer de Spotify: respondió algo inesperado. Prueba de nuevo en un momento.</string>
   <string name="spotify_privacidad">El Client ID y el permiso se guardan cifrados solo en este teléfono. El Cajón solo lee: nunca cambia nada en tu Spotify. Lo puedes desconectar en Ajustes.</string>
   <string name="spotify_historial_pista">¿Más atrás? Pide a Spotify tu "historial de reproducción ampliado" (Cuenta → Privacidad) y elige el ZIP en "Traer de otras apps".</string>
   <string name="escuchado_poco">Escuchado hace poco</string>

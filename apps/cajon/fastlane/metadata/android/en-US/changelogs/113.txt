@@ -1,0 +1,3 @@
+“Bring from Spotify” works again: it no longer says “No internet” when your connection is fine.
+If Spotify fails on its side, it now tells you so.
+Searching for your profile song finds more songs: add the artist too (for example, “No me quiero casar Bad Bunny”).

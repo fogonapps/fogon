@@ -5,7 +5,9 @@ import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.text.Normalizer
 import java.time.Duration
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -22,6 +24,27 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
                 private val pedir: (String) -> String? = ::pedirApple) {
     private val guardadas = ConcurrentHashMap<String, Pair<Long, List<Cancion>>>()
 
+    private val catalogos = ConcurrentHashMap<String, Pair<Long, List<Resultado>>>()
+
+    private data class Resultado(val artistaId: Long?, val cancion: Cancion) {
+        fun coincide(palabras: List<String>): Boolean =
+            listOf(cancion.titulo, cancion.album).any { texto ->
+                val normalizado = " ${normalizar(texto)} "
+                palabras.all { " $it " in normalizado }
+            }
+    }
+
+    private fun catalogo(artistaId: Long, pais: String): List<Resultado> {
+        val llave = "$pais:$artistaId"
+        catalogos[llave]?.let { (cuando, lista) -> if (ahora() - cuando < DIA) return lista }
+        val cuerpo = pedir("https://itunes.apple.com/lookup?id=$artistaId&entity=song&limit=200&country=$pais")
+            ?: return emptyList()
+        val lista = leerCrudo(cuerpo)
+        if (catalogos.size > 5000) catalogos.clear()
+        catalogos[llave] = ahora() to lista
+        return lista
+    }
+
     fun buscar(consulta: String, pais: String = "CO"): List<Cancion> {
         val q = consulta.trim().take(80)
         if (q.length < 2) return emptyList()
@@ -30,7 +53,33 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
         guardadas[llave]?.let { (cuando, l) -> if (ahora() - cuando < DIA) return l }
         val url = "https://itunes.apple.com/search?media=music&entity=song&limit=15&country=$p&term=" + URLEncoder.encode(q, "UTF-8")
         val cuerpo = pedir(url) ?: return emptyList()
-        val lista = leer(cuerpo)
+        val resultados = leerCrudo(cuerpo)
+        val normalizada = " ${normalizar(q)} "
+        var respaldo = emptyList<Resultado>()
+        for (resultado in resultados.distinctBy { it.artistaId }) {
+            val artistaId = resultado.artistaId ?: continue
+            val artista = normalizar(resultado.cancion.artista)
+            if (artista.isEmpty() || " $artista " !in normalizada) continue
+            val resto = normalizada.replace(" $artista ", " ").trim()
+            if (resto.isEmpty()) continue
+            val palabras = resto.split(Regex("\\s+"))
+            if (resultados.any { it.artistaId == artistaId && it.coincide(palabras) }) continue
+            respaldo = catalogo(artistaId, p).filter { it.coincide(palabras) }
+            break
+        }
+        val enlaces = mutableSetOf<String>()
+        val titulos = mutableSetOf<Pair<String, String>>()
+        val lista = (respaldo + resultados).map { it.cancion }.filter { c ->
+            val titulo = normalizar(c.titulo) to normalizar(c.artista)
+            if (c.titulo.isBlank() || !Adjuntos.audioSeguro(c.audio) ||
+                !Adjuntos.enlaceSeguro(c.enlace) || !Adjuntos.imagenApple(c.portada) ||
+                c.enlace in enlaces || titulo in titulos) false
+            else {
+                enlaces.add(c.enlace)
+                titulos.add(titulo)
+                true
+            }
+        }.take(15)
         if (guardadas.size > 5000) guardadas.clear()
         guardadas[llave] = ahora() to lista
         return lista
@@ -45,13 +94,24 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
             r.body().takeIf { r.statusCode() == 200 }
         }.getOrNull()
 
+        private fun normalizar(texto: String): String =
+            Normalizer.normalize(texto.lowercase(Locale.ROOT), Normalizer.Form.NFD)
+                .replace(Regex("\\p{M}+"), "")
+                .replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
+
         /** Solo canciones con avance, de los dominios de Apple (los mismos que acepta [Adjuntos]). */
-        fun leer(cuerpo: String): List<Cancion> = runCatching {
+        fun leer(cuerpo: String): List<Cancion> = leerCrudo(cuerpo).map { it.cancion }.filter {
+            it.titulo.isNotBlank() && Adjuntos.audioSeguro(it.audio) &&
+                Adjuntos.enlaceSeguro(it.enlace) && Adjuntos.imagenApple(it.portada)
+        }
+
+        private fun leerCrudo(cuerpo: String): List<Resultado> = runCatching {
             (JsonSocial.parseToJsonElement(cuerpo).jsonObject["results"] as? JsonArray).orEmpty().mapNotNull { e ->
                 val o = e as? JsonObject ?: return@mapNotNull null
                 fun t(k: String) = (o[k] as? JsonPrimitive)?.contentOrNull.orEmpty()
+                if (t("wrapperType") == "artist") return@mapNotNull null
                 val c = Cancion(t("trackName").take(120), t("artistName").take(120), t("artworkUrl100").replace("100x100bb", "300x300bb"), t("previewUrl"), t("trackViewUrl"), t("collectionName").take(120))
-                c.takeIf { it.titulo.isNotBlank() && Adjuntos.audioSeguro(it.audio) && Adjuntos.enlaceSeguro(it.enlace) && Adjuntos.imagenApple(it.portada) }
+                Resultado(t("artistId").toLongOrNull()?.takeIf { it > 0 }, c)
             }
         }.getOrDefault(emptyList())
     }

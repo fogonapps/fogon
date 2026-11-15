@@ -1,0 +1,2 @@
+Purchases with your Nu debit card are now read from the notification and taken from your Nu account, just like transfers.
+Credit card purchases aren’t taken: they’re debt, not money in the account.

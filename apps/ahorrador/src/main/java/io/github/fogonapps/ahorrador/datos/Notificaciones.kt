@@ -166,12 +166,26 @@ fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<Strin
     return null
 }
 
+/**
+ * Compra con la tarjeta débito de Nu («Compra aprobada por $4.950,00» / «Compra en COMERCIO con tu tarjeta débito
+ * terminada en 1234.»): sale de la cuenta de Nu, así que es un gasto de esa cuenta (sin número, igual que las
+ * transferencias, para usar el mismo enlace). Las de crédito no se leen: son deuda, no plata de la cuenta.
+ */
+private fun compraNu(titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
+    val todo = "$titulo $texto"
+    val m = Regex("Compra aprobada por \\$ ?([0-9][0-9.,]*[0-9])").find(todo) ?: return null
+    val comercio = Regex("Compra en (.+?) con tu tarjeta d[eé]bito\\b").find(todo)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val monto = montoFlexible(m.groupValues[1]) ?: return null
+    return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(), "", comercio.take(80), comercio.take(60))
+}
+
 /** Reglas cerradas por banco. Nu usa la hora de la alerta, redondeada al minuto. */
 fun reconocerAviso(banco: Banco, tituloOriginal: String, textoOriginal: String, recibido: LocalDateTime): AvisoBanco? {
     if (banco in GENERICOS) return reconocerGenerico(banco, tituloOriginal, textoOriginal, recibido)
     val titulo = normalizarAlerta(tituloOriginal)
     val texto = normalizarAlerta(textoOriginal)
     if (banco == Banco.NU) {
+        compraNu(titulo, texto, recibido)?.let { return it }
         val encabezado = titulo.ifBlank { Regex("(?:Enviaste|Recibiste) .+").find(texto)?.value.orEmpty() }
         val m = Regex("^(Enviaste|Recibiste) \\$?([0-9.,]+)(?= |$)(?: .*)?$").matchEntire(encabezado) ?: return null
         val ingreso = m.groupValues[1] == "Recibiste"

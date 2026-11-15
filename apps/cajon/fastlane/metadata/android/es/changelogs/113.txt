@@ -1,0 +1,3 @@
+«Traer de Spotify» vuelve a funcionar: ya no dice «Sin internet» cuando la conexión está bien.
+Si Spotify falla por su lado, ahora te lo dice tal cual.
+Buscar la canción del perfil encuentra más canciones: escribe también el artista (por ejemplo, «No me quiero casar Bad Bunny»).

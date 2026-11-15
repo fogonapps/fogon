@@ -1934,7 +1934,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (!_spotifyRevisar.value || todo) avisar(tx(R.string.aviso_spotify_permiso))
                 _spotifyRevisar.value = true
             } catch (_: io.github.fogonapps.cajon.datos.Ocupado) { if (todo) avisar(tx(R.string.aviso_spotify_ocupado))
-            } catch (x: kotlinx.coroutines.CancellationException) { throw x } catch (_: Exception) { if (todo) avisar(tx(R.string.buscar_sin_red)) }
+            } catch (x: kotlinx.coroutines.CancellationException) { throw x
+            } catch (x: Exception) {
+                // "Sin internet" solo si falló la conexión; un error de Spotify o una respuesta rara se dice aparte.
+                android.util.Log.w("Cajon", "Traer de Spotify falló", x)
+                if (todo) avisar(tx(if (x is java.io.IOException && x !is io.github.fogonapps.cajon.datos.Spotify.Fallo) R.string.buscar_sin_red else R.string.aviso_spotify_fallo))
+            }
         }
     }
 
