@@ -277,3 +277,8 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 @Serializable data class DetalleListaComunSocial(val lista: ListaComunSocial, val obras: List<ObraListaComunSocial>)
 
 @Serializable data class RegaloSocial(val item: String, val para: String)
+
+/** Contrato aditivo X-12, separado del perfil heredado. */
+@kotlinx.serialization.Serializable data class EscaparateSocial(val tipo: String, val datos: kotlinx.serialization.json.JsonObject)
+@kotlinx.serialization.Serializable data class CupoEscaparates(val nivel: Int = 0, val gratis: Int = 2, val comprados: Int = 0, val total: Int = 2, val insignias: List<String> = emptyList())
+@kotlinx.serialization.Serializable data class FotoEscaparate(val publicacion: Long, val nombre: String)

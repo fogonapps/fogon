@@ -81,6 +81,11 @@ open class ClienteSocial(
     suspend fun frasesPendientes() = leer(kotlinx.serialization.builtins.ListSerializer(FraseComunidad.serializer()), pedir("/admin/frases"))
     suspend fun decidirFrase(clave: String, aprobar: Boolean) { pedir("/admin/frases", "POST", json(DecisionFrase.serializer(), DecisionFrase(clave, aprobar))) }
 
+    suspend fun escaparates(usuario: String) = leer(ListSerializer(EscaparateSocial.serializer()), pedir("/perfil/${cod(usuario)}/escaparates"))
+    suspend fun cupoEscaparates() = leer(CupoEscaparates.serializer(), pedir("/cuenta/escaparates/cupo"))
+    suspend fun fotosEscaparates() = leer(ListSerializer(FotoEscaparate.serializer()), pedir("/cuenta/escaparates/fotos"))
+    suspend fun guardarEscaparates(lista: List<EscaparateSocial>) { pedir("/cuenta/escaparates", "PUT", json(ListSerializer(EscaparateSocial.serializer()), lista)) }
+
     /* Cuenta */
     suspend fun info(): InfoServidor = leer(InfoServidor.serializer(), pedir("/estado"))
     suspend fun usuarioLibre(usuario: String): Boolean =

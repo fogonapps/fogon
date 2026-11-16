@@ -233,6 +233,7 @@ private fun PerfilRed(vm: CuchaViewModel, interfaz: InterfazSocial, usuario: Str
             // Escribirle (el chat cifrado, igual en las cuatro apps).
             if (yo != null && perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_chat_mensaje), { vm.abrir(Pantalla.Social("chat", usuario = perfil.persona.usuario)) }, Modifier.weight(1f))
         }, despuesAcciones = {
+            io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfaz, perfil.persona.usuario)
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
             // Su canción, sonando sola al entrar (si el ajuste lo deja).
             (perfil.partes["cancion"] as? kotlinx.serialization.json.JsonObject)?.let {

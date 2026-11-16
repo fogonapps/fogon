@@ -376,6 +376,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
+            vm.red.usuario.collectAsStateWithLifecycle().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazSocial(vm), it) }
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
             CrearClaveAviso(vm)
@@ -457,6 +458,7 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
+    EditorEscaparatesApp(vm, e)
 
     Seccion(stringResource(R.string.foto_y_portada))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

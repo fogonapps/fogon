@@ -384,6 +384,15 @@ abstract class ControladorSocial(
             _cumplesHoy.value = cliente().cumplesAmigos().filter { it.fecha == hoy }.map { it.persona.usuario }.toSet()
         } }
     }
+    /** Se solicita al abrir el perfil; una sesión antigua nunca actualiza otra cuenta. */
+    private val _revisionEscaparates = MutableStateFlow(0)
+    val revisionEscaparates: StateFlow<Int> = _revisionEscaparates
+    fun avisarCambioEscaparates() { _revisionEscaparates.value++ }
+    suspend fun leerEscaparates(usuario: String): List<EscaparateSocial> = cliente().escaparates(usuario)
+    suspend fun cupoEscaparates(): CupoEscaparates = cliente().cupoEscaparates()
+    suspend fun fotosEscaparates(): List<FotoEscaparate> = cliente().fotosEscaparates()
+    suspend fun guardarEscaparates(lista: List<EscaparateSocial>) = cliente().guardarEscaparates(lista)
+
     /** Los temas de perfil (tienda): los reclamados y el puesto. */
     protected val _temas = MutableStateFlow(TemasCuentaSocial())
     val temas: StateFlow<TemasCuentaSocial> = _temas

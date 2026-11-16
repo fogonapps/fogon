@@ -182,9 +182,11 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
  * ganan con la bienvenida y aportes verificados y solo sirven aquí: no se cambian por dinero ni se pasan a otros.
  */
 object TemasPerfil {
+    val EXTRAS = (1..3).map { "escaparate:extra$it" }
+
     val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
     val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
-    fun precio(item: String): Int? = BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    fun precio(item: String): Int? = if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
     const val BIENVENIDA = 1500
     const val PESOS_POR_CHISPA = 10
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
@@ -217,6 +219,8 @@ class Social(
     principal: String? = null,
     mensajero: Mensajero? = null,
 ) {
+
+    val escaparates = Escaparates(this, b, ahora)
 
     val empujes = Empujes(b, ahora, mensajero)
 
@@ -1698,6 +1702,7 @@ class Social(
 
     /** Ponerse un fondo o un marco que se tiene ("" quita el fondo; "marco:" quita el marco). */
     fun ponerTema(yo: Long, tema: String): Unit = b.transaccion {
+        if (tema.startsWith("escaparate:")) throw Problema(400, "item")
         if (tema.startsWith("banner:")) {
             val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single() }
             if (!bannerPermitido(yo, tema)) throw Problema(400, "banner_no_permitido")

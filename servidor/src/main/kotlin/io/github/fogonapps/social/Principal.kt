@@ -404,6 +404,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/amigos/cumples") { call.respond(social.cumplesAmigos(call.yo())) }
             get("/cuenta/cumple") { call.respond(Cumple(social.miCumple(call.yo()))) }
             post("/tienda/regalar") { social.regalar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/perfil/{usuario}/escaparates") { call.respond(social.escaparates.ver(call.lector(), call.usuario())) }
+            get("/cuenta/escaparates/fotos") { call.respond(social.escaparates.fotos(call.yo())) }
+            get("/cuenta/escaparates/cupo") { call.respond(social.escaparates.cupo(call.yo())) }
+            put("/cuenta/escaparates") { social.escaparates.guardar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/tienda/temas") { call.respond(social.temas(call.yo())) }
             post("/tienda/diario") { social.cobrarDiario(call.yo()); call.respond(social.temas(call.yo())) }
             post("/tienda/temas/{tema}") { social.reclamarTema(call.yo(), call.parameters["tema"].orEmpty()); call.respond(HttpStatusCode.NoContent) }

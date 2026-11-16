@@ -9,11 +9,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
+        buildConfigField("boolean", "TIENDA_PLAY", (providers.gradleProperty("tienda").orNull == "play").toString())
         applicationId = "io.github.fogonapps.forzudo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 68
-        versionName = "1.54"
+        versionCode = 69
+        versionName = "1.55"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).

@@ -117,7 +117,10 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
     val paquetes by vm.red.paquetesWompi.collectAsStateWithLifecycle()
     var comprando by remember { mutableStateOf(false) }
     var errorPago by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { vm.red.cargarPaquetesWompi() }
+    val pagosExternos = ofrecePagosExternos(BuildConfig.TIENDA_PLAY)
+    LaunchedEffect(pagosExternos) {
+        if (pagosExternos) vm.red.cargarPaquetesWompi()
+    }
     DisposableEffect(ciclo) {
         val observador = androidx.lifecycle.LifecycleEventObserver { _, evento ->
             if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vm.red.cargarTemas()
@@ -167,7 +170,7 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
                         Text(stringResource(R.string.social_chispas_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }
                 }
-                if (paquetes.isNotEmpty()) {
+                if (pagosExternos && paquetes.isNotEmpty()) {
                     Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
                     paquetes.forEach { paquete ->
                         BotonRiso(stringResource(R.string.social_wompi_paquete, formatoColombiano(paquete), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
@@ -185,6 +188,15 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
                     }
                     Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
+                }
+                Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_titulo), color = f.texto, style = MaterialTheme.typography.titleMedium)
+                TemasPerfil.EXTRAS.forEachIndexed { indice, item ->
+                    val tiene = item in temas.reclamados
+                    Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_extra, indice + 1), color = f.texto)
+                    val precio = TemasPerfil.PRECIOS.getValue(item)
+                    Text(stringResource(R.string.social_precio_pesos, formatoColombiano(precio), formatoColombiano(precio * TemasPerfil.PESOS_POR_CHISPA)), color = f.textoSuave)
+                    BotonSecundario(stringResource(if (tiene) io.github.fogonapps.perfil.R.string.escaparates_comprado else R.string.social_tienda_comprar, precio),
+                        { vm.red.reclamarTema(item) }, habilitado = !tiene && temas.chispas >= precio)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pildora(stringResource(R.string.social_tienda_fondos), acento = pestana == 0) { pestana = 0 }
@@ -237,3 +249,6 @@ fun cifrasSociales(p: io.github.fogonapps.social.PerfilSocial): List<io.github.f
 )
 
 internal fun formatoColombiano(valor: Int): String = java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("es-CO")).format(valor)
+
+/** En Google Play no se ofrecen pagos fuera de la tienda. */
+internal fun ofrecePagosExternos(tiendaPlay: Boolean): Boolean = !tiendaPlay

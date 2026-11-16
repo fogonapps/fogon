@@ -90,6 +90,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
         }, despuesAcciones = {
+            vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it) }
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) } },
     )
     Espacio(40.dp)
@@ -156,6 +157,7 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     val r = remoto
     if (r == null) { Text(stringResource(R.string.cuenta_edicion_pendiente), Modifier.padding(16.dp), color = FogonTema.actual.texto); return }
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
+    EditorEscaparatesApp(vm, vm.estado.collectAsStateWithLifecycle().value ?: return)
     var nombre by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarNombrePerfil(r.persona.nombre)) }
     var bio by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarBioPerfil(r.bio)) }
     var foto by remember(fotoRemota) { mutableStateOf(fotoRemota) }

@@ -20,7 +20,8 @@ class TraduccionMultimediaTest {
             val comunes = recursos(File(raiz, "core/social-ui/src/main/res/$idioma/strings.xml"))
             val cajon = recursos(File(raiz, "apps/cajon/src/main/res/$idioma/strings.xml"))
             assertTrue(comunes.isNotEmpty())
-            comunes.forEach { (clave, texto) -> assertEquals(clave, cajon[clave.removePrefix("social_")], texto) }
+            // Los textos que El Cajón también tiene deben decir lo mismo; los nuevos solo viven en lo común.
+            comunes.forEach { (clave, texto) -> cajon[clave.removePrefix("social_")]?.let { assertEquals(clave, it, texto) } }
             nombres += comunes.keys
         }
         assertEquals(nombres[0], nombres[1])

@@ -22,6 +22,26 @@ class ClienteSocialTest {
             .code(codigo).message("prueba").body(texto.toResponseBody()).build()
     }.build(), { "Marca Modelo" })
 
+    @Test fun escaparatesUsanRutasGlobalesYListaOrdenada() = runBlocking {
+        val peticiones = mutableListOf<Request>()
+        val c = cliente { p ->
+            peticiones += p
+            200 to when (p.url.encodedPath) {
+                "/v1/cuenta/escaparates/cupo" -> """{"nivel":1,"gratis":3,"comprados":2,"total":5}"""
+                "/v1/cuenta/escaparates/fotos" -> """[{"publicacion":42,"nombre":"foto"}]"""
+                else -> """[{"tipo":"texto","datos":{"texto":"segundo"}},{"tipo":"texto","datos":{"texto":"primero"}}]"""
+            }
+        }
+        val lista = c.escaparates("ana")
+        assertEquals(5, c.cupoEscaparates().total)
+        assertEquals(42L, c.fotosEscaparates().single().publicacion)
+        c.guardarEscaparates(lista)
+        assertEquals("/v1/perfil/ana/escaparates", peticiones.first().url.encodedPath)
+        assertEquals("PUT", peticiones.last().method)
+        assertEquals("/v1/cuenta/escaparates", peticiones.last().url.encodedPath)
+        assertEquals(lista, JsonSocial.decodeFromString(kotlinx.serialization.builtins.ListSerializer(EscaparateSocial.serializer()), Buffer().also { peticiones.last().body!!.writeTo(it) }.readUtf8()))
+    }
+
     @Test fun pagosWompiUsanSesionYPropaganApagado() = runBlocking {
         val peticiones = mutableListOf<Request>()
         val c = cliente { peticion ->
