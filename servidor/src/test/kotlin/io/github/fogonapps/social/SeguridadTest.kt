@@ -81,6 +81,7 @@ class SeguridadTest {
         assertEquals("https://image.tmdb.org/t/p/w780/b.jpg", datos.getValue("fondo").jsonPrimitive.content)
         e.s.subirPerfil(yo, PerfilSubido(nombre = "ana", portada = "https://rastreo.example/banner.jpg"))
         assertEquals("", e.s.verPerfil(null, "ana").portada)
+        assertEquals("", e.s.verPerfil(null, "ana").portada)
     }
 
     @Test fun verificacionEnDosPasosOpcional() = Entorno().use { e ->

@@ -36,11 +36,24 @@ import kotlin.math.sin
 data class EstiloPerfil(val base: Color, val panel: Color, val texto: Color, val textoSuave: Color, val acento: Color, val sobreAcento: Color, val linea: Color)
 
 object TemasPerfil {
+    const val PESOS_POR_CHISPA = 10
+    val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800)
+    /** Referencias directas (no por nombre) para que la versión publicada no descarte las imágenes. */
+    val RECURSOS_BANNER = mapOf(
+        "papel" to R.drawable.banner_papel, "riso-rosa" to R.drawable.banner_riso_rosa, "riso-azul" to R.drawable.banner_riso_azul,
+        "riso-amarillo" to R.drawable.banner_riso_amarillo, "puntos" to R.drawable.banner_puntos, "chispas" to R.drawable.banner_chispas,
+        "ranita" to R.drawable.banner_ranita, "forzudo" to R.drawable.banner_forzudo, "nube" to R.drawable.banner_nube,
+        "cajita" to R.drawable.banner_cajita, "noche" to R.drawable.banner_noche, "pasto" to R.drawable.banner_pasto,
+        "neon" to R.drawable.banner_neon, "videoclub" to R.drawable.banner_videoclub, "arcade" to R.drawable.banner_arcade,
+        "plastilina" to R.drawable.banner_plastilina, "aero" to R.drawable.banner_aero, "pizzeria" to R.drawable.banner_pizzeria,
+    )
+
     val FONDOS = listOf("nieve", "carmesi", "niebla", "ojos", "atardecer", "ciudad", "selva", "cosmos")
     val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna")
     /** Los precios en chispas (los mismos del servidor, que es el que cobra). */
     val PRECIOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
-        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600)
+        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" }
 
     fun estilo(tema: String): EstiloPerfil? = when (tema) {
         "nieve" -> EstiloPerfil(Color(0xFF0E1A27), Color(0xA61A2B3D), Color(0xFFE8F1FA), Color(0xFF9DB4CC), Color(0xFF7FC4FF), Color(0xFF0E1A27), Color(0x557FA8D0))
@@ -264,3 +277,49 @@ fun MuestraMarco(marco: String, modifier: Modifier = Modifier) {
         MarcoFoto(marco, 56.dp)
     }
 }
+
+/** El arte del banner; si el id no existe, papel con puntos de la identidad. */
+@Composable
+fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
+    val recurso = TemasPerfil.RECURSOS_BANNER[id] ?: 0
+    val f = FogonTema.actual
+    if (recurso != 0) androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(recurso), null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+    else Box(modifier.background(f.fondo).haloPuntos(f.textoSuave.copy(alpha = 0.3f)))
+}
+
+/** Selección de los banners gratuitos; los adquiridos se eligen también desde la tienda. */
+@Composable
+fun BannersGratis(onElegir: (String) -> Unit) {
+    TemasPerfil.BANNERS.filterValues { it == 0 }.keys.chunked(3).forEach { fila ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            fila.forEach { id ->
+                androidx.compose.material3.TextButton(onClick = { onElegir("banner:$id") }, modifier = Modifier.weight(1f)) {
+                    Column { BannerPerfil(id, Modifier.fillMaxWidth().height(40.dp)); Text(nombreBanner(id), color = FogonTema.actual.texto) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun nombreBanner(id: String): String = stringResource(when (id) {
+    "papel" -> R.string.banner_papel
+    "riso-rosa" -> R.string.banner_riso_rosa
+    "riso-azul" -> R.string.banner_riso_azul
+    "riso-amarillo" -> R.string.banner_riso_amarillo
+    "puntos" -> R.string.banner_puntos
+    "chispas" -> R.string.banner_chispas
+    "ranita" -> R.string.banner_ranita
+    "forzudo" -> R.string.banner_forzudo
+    "nube" -> R.string.banner_nube
+    "cajita" -> R.string.banner_cajita
+    "noche" -> R.string.banner_noche
+    "pasto" -> R.string.banner_pasto
+    "neon" -> R.string.banner_neon
+    "videoclub" -> R.string.banner_videoclub
+    "arcade" -> R.string.banner_arcade
+    "plastilina" -> R.string.banner_plastilina
+    "aero" -> R.string.banner_aero
+    "pizzeria" -> R.string.banner_pizzeria
+    else -> R.string.tema_clasico
+})

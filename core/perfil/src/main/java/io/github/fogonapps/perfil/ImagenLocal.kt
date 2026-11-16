@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
 /** Imágenes pequeñas incorporadas al respaldo, sin permisos persistentes ni rutas externas. */
 @Composable
 fun ImagenLocal(imagen: String, modifier: Modifier) {
+    if (imagen.startsWith("banner:")) { BannerPerfil(imagen.removePrefix("banner:"), modifier); return }
     val mapa by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, imagen) {
         value = null
         value = withContext(Dispatchers.Default) {

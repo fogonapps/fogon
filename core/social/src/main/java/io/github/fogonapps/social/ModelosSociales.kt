@@ -181,7 +181,11 @@ data class CambiosPublicaciones(val lista: List<PublicacionSubida> = emptyList()
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.LlavesPublicas")
 data class LlavesPublicas(val cifrar: String, val firmar: String)
 /** Los temas de perfil de la cuenta: los reclamados en la tienda y el puesto. */
-@Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "", val marco: String = "", val chispas: Int = 0, val diario: Boolean = false)
+@Serializable data class PedidoPagoWompi(val paquete: Int)
+@Serializable data class CheckoutWompi(val referencia: String, val url: String)
+@Serializable data class OfertaWompi(val paquetes: List<Int>)
+
+@Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "", val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "")
 @Serializable internal data class TemaElegidoSocial(val tema: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.SobreNuevo")
@@ -271,3 +275,5 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 /** Una obra de una lista en común: quién la agregó, sus datos (título, tipo, portada, fuente) y los votos. */
 @Serializable data class ObraListaComunSocial(val id: Long, val quien: PersonaSocial? = null, val datos: kotlinx.serialization.json.JsonObject, val votos: Int, val yoVoto: Boolean, val cuando: Long)
 @Serializable data class DetalleListaComunSocial(val lista: ListaComunSocial, val obras: List<ObraListaComunSocial>)
+
+@Serializable data class RegaloSocial(val item: String, val para: String)

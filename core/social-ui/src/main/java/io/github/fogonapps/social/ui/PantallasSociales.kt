@@ -285,7 +285,7 @@ fun AvisosRed(vm: InterfazSocial) {
         }.forEach { (grupo, avisosDelGrupo) ->
           Seccion(stringResource(grupo))
           avisosDelGrupo.forEach { a ->
-            val que = stringResource(when (a.tipo) {
+            val que = if (a.tipo == "regalo") stringResource(R.string.social_aviso_regalo, a.de.usuario, a.objeto) else stringResource(when (a.tipo) {
                 "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta; "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
                 "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "historia_voto" -> R.string.social_red_aviso_voto; "historia_mencion" -> R.string.social_red_aviso_mencion; "historia_respuesta" -> R.string.social_red_aviso_respuesta; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
             })

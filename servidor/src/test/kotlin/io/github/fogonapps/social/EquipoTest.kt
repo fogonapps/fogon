@@ -664,4 +664,22 @@ class EquipoTest {
     }
 
     private fun Base.useBase(f: (Base) -> Unit) { try { f(this) } finally { cerrar() } }
+    @Test fun reportesConfirmadosPremianConTopeSemanal() = Entorno().use { e ->
+        val m = e.alta("modera"); val u = e.alta("usuaria"); val r = e.alta("reportante")
+        e.rol(m, "administrador"); val secreto = e.inscribir(m).first; e.elevar(m, secreto)
+        repeat(6) { i ->
+            val pub = e.pub(u, "reporte$i")
+            e.s.reportar(r.id, NuevoReporte("publicacion", "$pub", "spam"))
+            e.s.decidir(m.id, Decision("publicacion", "$pub", if (i == 0) "sin_falta" else "advertencia", "spam"), m.token)
+            assertEquals(1500 + minOf(i, 4) * 50, e.s.chispas(r.id))
+            assertEquals(409, assertFailsWith<Problema> { e.s.decidir(m.id, Decision("publicacion", "$pub", "advertencia", "spam"), m.token) }.codigo)
+        }
+        e.reloj += 7 * 86400000L
+        e.elevar(m, secreto)
+        val pub = e.pub(u, "semana")
+        e.s.reportar(r.id, NuevoReporte("publicacion", "$pub", "spam"))
+        e.s.decidir(m.id, Decision("publicacion", "$pub", "advertencia", "spam"), m.token)
+        assertEquals(1750, e.s.chispas(r.id))
+    }
+
 }

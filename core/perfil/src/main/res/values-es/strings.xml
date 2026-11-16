@@ -28,4 +28,22 @@
     <string name="marco_estrellas">Estrellas</string>
     <string name="marco_espinas">Espinas</string>
     <string name="marco_luna">Luna</string>
+    <string name="banner_papel">papel</string>
+    <string name="banner_riso_rosa">riso rosa</string>
+    <string name="banner_riso_azul">riso azul</string>
+    <string name="banner_riso_amarillo">riso amarillo</string>
+    <string name="banner_puntos">puntos</string>
+    <string name="banner_chispas">chispas</string>
+    <string name="banner_ranita">ranita</string>
+    <string name="banner_forzudo">forzudo</string>
+    <string name="banner_nube">nube</string>
+    <string name="banner_cajita">cajita</string>
+    <string name="banner_noche">noche</string>
+    <string name="banner_pasto">pasto</string>
+    <string name="banner_neon">neón</string>
+    <string name="banner_videoclub">videoclub</string>
+    <string name="banner_arcade">arcade</string>
+    <string name="banner_plastilina">plastilina</string>
+    <string name="banner_aero">aero</string>
+    <string name="banner_pizzeria">pizzería</string>
 </resources>

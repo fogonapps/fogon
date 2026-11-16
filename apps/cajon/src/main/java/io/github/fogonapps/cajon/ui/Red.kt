@@ -576,7 +576,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
     val uri = LocalUriHandler.current
     PerfilComun(vistaBase, pestana, { pestana = it },
         navegacion = navegacion,
-        portada = { if (p.portada.isNotBlank()) coil3.compose.AsyncImage(p.portada, null, Modifier.matchParentSize(), contentScale = ContentScale.Crop) },
+        portada = { if (p.portada.isNotBlank()) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize()) },
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, FogonTema.actual.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
         bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), usuario) },
         enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },

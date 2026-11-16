@@ -134,7 +134,7 @@ fun EditarPerfil(vm: AhorradorViewModel, e: Estado) {
     val girar_selector5 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector5(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector5(listOf(r)) else manejar_selector5(null) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
-    EditorPerfilLocal(nombre, bio, foto, portada,
+    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = ""; vm.imagenPerfil(false, "") },
@@ -180,7 +180,7 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     // Antes de usarla(s), el paso para girarlas.
     val girar_selector6 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector6(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector6(listOf(r)) else manejar_selector6(null) }
-    EditorPerfilLocal(nombre, bio, foto, portada,
+    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

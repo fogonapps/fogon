@@ -259,7 +259,10 @@ open class ClienteSocial(
     suspend fun archivoHistorias() = leer(ListSerializer(HistoriaSocial.serializer()), pedir("/historias/archivo?app=${cod(configuracion.idApp)}"))
     suspend fun portadaDestacada(id: Long) { pedir("/historias/$id/portada", "PUT") }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
+    suspend fun paquetesWompi() = leer(OfertaWompi.serializer(), pedir("/pagos/wompi/paquetes")).paquetes
+    suspend fun ordenWompi(paquete: Int) = leer(CheckoutWompi.serializer(), pedir("/pagos/wompi/orden", "POST", json(PedidoPagoWompi.serializer(), PedidoPagoWompi(paquete)))).url
     suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas"))
+    suspend fun regalar(item: String, para: String) { pedir("/tienda/regalar", "POST", json(RegaloSocial.serializer(), RegaloSocial(item, para))) }
     suspend fun cobrarDiario() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/diario", "POST"))
     suspend fun reclamarTema(tema: String) { pedir("/tienda/temas/${cod(tema)}", "POST") }
     suspend fun ponerTema(tema: String) { pedir("/cuenta/tema", "PUT", json(TemaElegidoSocial.serializer(), TemaElegidoSocial(tema))) }

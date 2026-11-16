@@ -128,6 +128,7 @@ private data class EscalaEncuadre(val zoom: Float) : ContentScale {
  */
 @Composable
 private fun ImagenEncuadrada(url: String, encuadre: Encuadre, modifier: Modifier, onTamano: ((Size) -> Unit)? = null) {
+    if (url.startsWith("banner:")) { io.github.fogonapps.perfil.BannerPerfil(url.removePrefix("banner:"), modifier); return }
     val en = encuadre.limpio()
     val escala = remember(en.zoom) { EscalaEncuadre(en.zoom) }
     coil3.compose.AsyncImage(url, null, modifier, contentScale = escala, alignment = BiasAlignment(en.x, en.y),
@@ -473,11 +474,9 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
         Box(Modifier.fillMaxWidth().height(110.dp).clip(forma(24.dp)).vidrio(forma(24.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
             if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize())
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BotonSecundario(stringResource(R.string.portada_del_cajon), { vm.abrir(Pantalla.PortadaPerfil) }, Modifier.weight(1f))
-            if (acciones != null) BotonSecundario(stringResource(R.string.subir_imagen), { acciones.elegirImagen { vm.subirImagenPerfil(true, it) } }, Modifier.weight(1f))
-        }
-        if (p.portada.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+        if (cuenta == null) io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil)
+        if (p.portada.isNotBlank() && !p.portada.startsWith("banner:")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BotonSecundario(stringResource(R.string.ajustar_portada), { vm.abrir(Pantalla.AjustarImagenPerfil(true)) }, Modifier.weight(1f))
             BotonSecundario(stringResource(R.string.quitar_portada), { vm.quitarImagenPerfil(true) }, Modifier.weight(1f))
         }
@@ -615,21 +614,14 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
     Espacio(40.dp)
 }
 
-/** Elegir la portada del perfil entre los fondos de las películas, series y animes del cajón. */
+/** La portada del perfil procede del catálogo compartido. */
 @Composable
 fun PortadaPerfil(vm: CajonViewModel, e: Estado) {
-    Cabecera(stringResource(R.string.portada_del_cajon), vm::cerrar)
-    val fondos = e.vivas.filter { it.fondo.isNotBlank() }.sortedWith(compareByDescending<Obra> { it.nota }.thenByDescending { it.meGusta }).take(40)
-    if (fondos.isEmpty()) { Pista(stringResource(R.string.sin_fondos)); return }
-    Pista(stringResource(R.string.portada_del_cajon_pista))
+    Cabecera(stringResource(R.string.foto_y_portada), vm::cerrar)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        fondos.forEach { o ->
-            Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(forma(16.dp)).vidrio(forma(16.dp)).clickable { vm.ponerPortadaPerfil(o.fondo) }) {
-                coil3.compose.AsyncImage(o.fondo, o.titulo, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
-            }
-        }
+        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil)
+        io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
     }
-    Espacio(40.dp)
 }
 
 /**

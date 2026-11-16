@@ -160,6 +160,7 @@ object Avisos {
 
     /** Un aviso en palabras, con el nombre de la persona (no su @): «Pedro empezó a seguirte». */
     internal fun frase(c: Context, a: io.github.fogonapps.social.AvisoSocial): String {
+        if (a.tipo == "regalo") return c.getString(R.string.social_aviso_regalo, a.de.usuario, a.objeto)
         if (a.tipo == "sancion") return c.getString(R.string.social_red_aviso_sancion)
         val que = c.getString(when (a.tipo) {
             "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta

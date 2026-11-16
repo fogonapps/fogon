@@ -1,3 +1,0 @@
-«Escuchado hace poco» ahora muestra las portadas de los álbumes en una fila que se desliza.
-Agrega o descarta cada álbum desde su portada, y con «Ver más» ves todo lo que escuchaste.
-Al agregar un álbum al cajón, llega con su portada.

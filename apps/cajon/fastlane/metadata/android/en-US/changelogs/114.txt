@@ -1,3 +1,0 @@
-“Recently heard” now shows album covers in a row you can swipe.
-Add or dismiss each album right from its cover, and “See more” shows everything you listened to.
-Albums you add to your drawer come with their cover.

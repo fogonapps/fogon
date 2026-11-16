@@ -22,6 +22,24 @@ class ClienteSocialTest {
             .code(codigo).message("prueba").body(texto.toResponseBody()).build()
     }.build(), { "Marca Modelo" })
 
+    @Test fun pagosWompiUsanSesionYPropaganApagado() = runBlocking {
+        val peticiones = mutableListOf<Request>()
+        val c = cliente { peticion ->
+            peticiones += peticion
+            200 to if (peticion.method == "GET") """{"paquetes":[1000,2000,5000]}"""
+                else """{"referencia":"inventada","url":"https://checkout.wompi.co/p/?prueba"}"""
+        }
+        assertEquals(listOf(1000,2000,5000), c.paquetesWompi())
+        assertEquals("https://checkout.wompi.co/p/?prueba", c.ordenWompi(2000))
+        assertEquals("/v1/pagos/wompi/orden", peticiones[1].url.encodedPath)
+        assertEquals("Bearer credencial-de-prueba", peticiones[1].header("Authorization"))
+        assertEquals("""{"paquete":2000}""", Buffer().also { peticiones[1].body!!.writeTo(it) }.readUtf8())
+        try {
+            cliente { 503 to """{"error":"pagos_apagados"}""" }.paquetesWompi()
+            fail("Debe propagar pagos apagados")
+        } catch (e: ErrorSocial) { assertEquals(503, e.codigo); assertEquals("pagos_apagados", e.error) }
+    }
+
     @Test fun conservaRutasCabecerasYCuerposDeAccesoYRespuestas() = runBlocking {
         val peticiones = mutableListOf<Request>()
         val cliente = cliente { peticion ->

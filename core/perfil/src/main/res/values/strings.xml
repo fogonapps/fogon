@@ -28,4 +28,22 @@
     <string name="marco_estrellas">Stars</string>
     <string name="marco_espinas">Thorns</string>
     <string name="marco_luna">Moon</string>
+    <string name="banner_papel">paper</string>
+    <string name="banner_riso_rosa">pink riso</string>
+    <string name="banner_riso_azul">blue riso</string>
+    <string name="banner_riso_amarillo">yellow riso</string>
+    <string name="banner_puntos">dots</string>
+    <string name="banner_chispas">sparks</string>
+    <string name="banner_ranita">little frog</string>
+    <string name="banner_forzudo">strong one</string>
+    <string name="banner_nube">cloud</string>
+    <string name="banner_cajita">little box</string>
+    <string name="banner_noche">night</string>
+    <string name="banner_pasto">grass</string>
+    <string name="banner_neon">neon</string>
+    <string name="banner_videoclub">video club</string>
+    <string name="banner_arcade">arcade</string>
+    <string name="banner_plastilina">clay</string>
+    <string name="banner_aero">aero</string>
+    <string name="banner_pizzeria">pizzeria</string>
 </resources>

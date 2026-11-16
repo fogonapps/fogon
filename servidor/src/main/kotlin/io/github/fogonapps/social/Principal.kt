@@ -102,7 +102,9 @@ var correoListo = false
 data class ErrorConFecha(val error: String, val desde: Long)
 
 fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), canciones: Canciones = Canciones(), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY")),
-    portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas"))) {
+    portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas")),
+    pagos: PagosWompi = PagosWompi(social.b, delEquipo = { social.equipo.rol(it).isNotEmpty() })) {
+    runCatching { social.quitarPortadasAjenas() }.onFailure { environment.log.error("No se pudieron quitar las portadas ajenas") }
     launch {
         while (isActive) {
             try { social.revisarInsignias() } catch (_: Exception) {
@@ -144,7 +146,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             val quien = social.cuentaDe(token)?.let { "c:$it" } ?: ("ip:" + call.ipReal())
             // Las portadas tienen su propio cupo (una lista carga muchas a la vez).
             if (ruta == "/v1/portada") { if (!imagenes.pasa("p:" + call.ipReal())) throw Problema(429, "despacio") }
-            else if (!general.pasa(quien)) throw Problema(429, "despacio")
+            else if (ruta != "/v1/pagos/wompi/eventos" && !general.pasa(quien)) throw Problema(429, "despacio")
         }
     })
 
@@ -168,6 +170,16 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
 
     routing {
         route("/v1") {
+            get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(PaquetesWompi()) }
+            post("/pagos/wompi/orden") {
+                pagos.comprobar()
+                call.respond(pagos.orden(call.yo(), call.receive<PedidoWompi>().paquete))
+            }
+            post("/pagos/wompi/eventos") {
+                pagos.comprobar()
+                pagos.evento(call.receive<kotlinx.serialization.json.JsonObject>())
+                call.respond(HttpStatusCode.OK)
+            }
             // Portadas de Open Library y Cover Art Archive desde la caché del servidor (ver Portadas).
             get("/portada") {
                 val u = call.request.queryParameters["u"].orEmpty()
@@ -391,6 +403,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/amigos") { call.respond(social.amigos(call.yo())) }
             get("/amigos/cumples") { call.respond(social.cumplesAmigos(call.yo())) }
             get("/cuenta/cumple") { call.respond(Cumple(social.miCumple(call.yo()))) }
+            post("/tienda/regalar") { social.regalar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/tienda/temas") { call.respond(social.temas(call.yo())) }
             post("/tienda/diario") { social.cobrarDiario(call.yo()); call.respond(social.temas(call.yo())) }
             post("/tienda/temas/{tema}") { social.reclamarTema(call.yo(), call.parameters["tema"].orEmpty()); call.respond(HttpStatusCode.NoContent) }

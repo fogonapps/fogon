@@ -173,19 +173,22 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
 @Serializable data class Cumple(val fecha: String)
 /** Lo de la tienda de la cuenta: lo que tiene, lo puesto (fondo y marco) y sus chispas. */
-@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false)
+@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "")
+@Serializable data class Regalo(val item: String, val para: String)
 @Serializable data class TemaElegido(val tema: String)
 
 /**
  * La tienda del perfil: fondos (escenas con su paleta) y marcos de foto, que se compran con chispas. Las chispas se
- * ganan usando las apps (bienvenida y una por día) y solo sirven aquí: no se cambian por dinero ni se pasan a otros.
+ * ganan con la bienvenida y aportes verificados y solo sirven aquí: no se cambian por dinero ni se pasan a otros.
  */
 object TemasPerfil {
     val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
     val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
-    fun precio(item: String): Int? = FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    fun precio(item: String): Int? = BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
     const val BIENVENIDA = 1500
-    const val DIARIO = 50
+    const val PESOS_POR_CHISPA = 10
+    val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800)
 }
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 /** Una lista en común: quién la armó, quiénes están y cuántas obras tiene. */
@@ -207,7 +210,7 @@ class Problema(val codigo: Int, val mensaje: String, val desde: Long = 0) : Exce
 
 /** Todo lo que hace el servidor, sin HTTP (así se prueba directo). [ahora] se puede cambiar en las pruebas. */
 class Social(
-    private val b: Base,
+    internal val b: Base,
     private val dirFotos: java.io.File,
     private val ahora: () -> Long = System::currentTimeMillis,
     private val cartero: Cartero = Cartero { _, _, _ -> throw Problema(503, "sin_correo") },
@@ -844,8 +847,9 @@ class Social(
         val anterior = miCuenta(yo).nombre
         val nombre = p.nombre.trim().take(40)
         val cambia = nombre != anterior && apodoDesde(yo) <= ahora()
+        // Las apps viejas mandan la portada de antes (una URL): se borra en silencio en vez de rechazar el perfil.
         val limpio = p.copy(
-            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.takeIf(::portadaSegura) ?: "",
+            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.takeIf { bannerPermitido(yo, it) }.orEmpty(),
             enlaces = p.enlaces.filter { it.startsWith("https://") || it.startsWith("http://") }.map { it.take(200) }.take(5),
             partes = p.partes.filterValues { it.visibilidad in Vis.SUBIBLES }.entries.take(20).associate { it.key.take(30) to it.value },
         )
@@ -1205,7 +1209,9 @@ class Social(
         val p = publicacion(yo, pub) ?: throw Problema(404, "no_existe")
         if (p.tipo !in setOf("resena", "resena_restaurante")) throw Problema(400, "no_es_resena")
         if (idDe(p.autor.usuario) == yo) throw Problema(400, "propia")
-        b.usar { if (si) cambiar("INSERT OR IGNORE INTO utiles(pub, cuenta, cuando) VALUES(?,?,?)", pub, yo, ahora()) else cambiar("DELETE FROM utiles WHERE pub = ? AND cuenta = ?", pub, yo) }
+        b.transaccion { if (si) cambiar("INSERT OR IGNORE INTO utiles(pub, cuenta, cuando) VALUES(?,?,?)", pub, yo, ahora()) else cambiar("DELETE FROM utiles WHERE pub = ? AND cuenta = ?", pub, yo)
+            if (si) premiar(idDe(p.autor.usuario), "util:$pub", 20, "util:", diaDe(ahora()) * 86400000L, 100)
+        }
     }
 
 
@@ -1628,19 +1634,53 @@ class Social(
         leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", yo) { it.getInt(1) }.first()
     }
     private fun diaDe(t: Long) = t / (24 * 3600_000L)
-    private fun diarioCobrado(yo: Long) = b.usar { leer("SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = ?", yo, "diario:${diaDe(ahora())}") { 1 }.isNotEmpty() }
-
     fun temas(yo: Long): TemasCuenta {
         val saldo = chispas(yo)
         val (tema, marco) = b.usar { leer("SELECT tema, marco FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
-        return TemasCuenta(b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } }, tema, marco, saldo, !diarioCobrado(yo))
+        return TemasCuenta(b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } }, tema, marco, saldo, false, b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)).portada }.single() })
     }
 
-    /** Las chispas del día (una vez por día). */
-    fun cobrarDiario(yo: Long) {
+    /** Quita de todos los perfiles las portadas que no son banners de Fogón. Se corre al arrancar; no hace nada la segunda vez. */
+    fun quitarPortadasAjenas(): Int = b.transaccion {
+        val ajenas = leer("SELECT id, perfil FROM cuentas WHERE perfil LIKE '%\"portada\":\"%'") { it.getLong(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2)) }
+            .filter { (_, p) -> p.portada.isNotEmpty() && !p.portada.startsWith("banner:") }
+        ajenas.forEach { (id, p) -> cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), p.copy(portada = "")), id) }
+        ajenas.size
+    }
+
+    /** Compatibilidad con clientes publicados: ya no concede chispas. */
+    fun cobrarDiario(yo: Long) { chispas(yo) }
+
+    /** Solo banners del catálogo: gratis, o comprados por esta cuenta. Ninguna otra imagen. */
+    private fun bannerPermitido(yo: Long, valor: String): Boolean =
+        valor.isEmpty() || (valor.startsWith("banner:") &&
+            TemasPerfil.BANNERS[valor.removePrefix("banner:")]?.let { precio -> precio == 0 || b.usar {
+                leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, valor) { 1 }.isNotEmpty()
+            } } == true)
+
+    /** Recompensa única, con el tope calculado dentro de la misma transacción. */
+    private fun premiar(yo: Long, motivo: String, cantidad: Int, prefijo: String, desde: Long, tope: Int) = b.transaccion {
+        if (leer("SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = ?", yo, motivo) { 1 }.isEmpty()) {
+            val ganado = leer("SELECT COALESCE(SUM(cantidad),0) FROM chispas WHERE cuenta = ? AND motivo LIKE ? AND cuando >= ?", yo, "$prefijo%", desde) { it.getInt(1) }.single()
+            val premio = minOf(cantidad, tope - ganado).coerceAtLeast(0)
+            cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, premio, motivo, ahora())
+        }
+    }
+
+    fun regalar(yo: Long, regalo: Regalo) {
+        val precio = TemasPerfil.precio(regalo.item)?.takeIf { it > 0 } ?: throw Problema(400, "item")
+        val para = idDe(regalo.para.trim().removePrefix("@"))
+        if (para == yo) throw Problema(400, "a_si_mismo")
         chispas(yo)
-        b.usar { cambiar("INSERT OR IGNORE INTO chispas(cuenta, cantidad, motivo, cuando) SELECT ?, ?, ?, ? WHERE NOT EXISTS(SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = ?)",
-            yo, TemasPerfil.DIARIO, "diario:${diaDe(ahora())}", ahora(), yo, "diario:${diaDe(ahora())}") }
+        b.transaccion {
+            if (bloqueado(yo, para) || bloqueado(para, yo)) throw Problema(403, "bloqueado")
+            if (leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", para, regalo.item) { 1 }.isNotEmpty()) throw Problema(409, "ya_lo_tiene")
+            if (leer("SELECT COUNT(*) FROM chispas WHERE cuenta = ? AND motivo LIKE 'regalo:%' AND cuando >= ?", yo, diaDe(ahora()) * 86400000L) { it.getInt(1) }.single() >= 10) throw Problema(429, "tope_regalos")
+            if (chispas(yo) < precio) throw Problema(402, "sin_chispas")
+            cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, -precio, "regalo:${regalo.item}:${persona(para).usuario}", ahora())
+            cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", para, regalo.item, ahora())
+            avisar(para, yo, "regalo", regalo.item)
+        }
     }
 
     /** Comprar algo de la tienda con chispas (si alcanzan y no lo tiene ya). */
@@ -1657,7 +1697,13 @@ class Social(
     }
 
     /** Ponerse un fondo o un marco que se tiene ("" quita el fondo; "marco:" quita el marco). */
-    fun ponerTema(yo: Long, tema: String) {
+    fun ponerTema(yo: Long, tema: String): Unit = b.transaccion {
+        if (tema.startsWith("banner:")) {
+            val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single() }
+            if (!bannerPermitido(yo, tema)) throw Problema(400, "banner_no_permitido")
+            b.usar { cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(portada = tema)), ahora(), yo) }
+            return@transaccion
+        }
         val esMarco = tema.startsWith("marco:")
         if (tema.isNotEmpty() && tema != "marco:" && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
         b.usar { cambiar(if (esMarco) "UPDATE cuentas SET marco = ? WHERE id = ?" else "UPDATE cuentas SET tema = ? WHERE id = ?", if (esMarco) tema.removePrefix("marco:") else tema, yo) }
@@ -2162,10 +2208,15 @@ class Social(
         val (_, autor, _) = verReportado(d.que, d.objeto, emptyList())
         if (autor != null) equipo.inferior(yo, autor)
         if (b.usar { leer("SELECT 1 FROM reportes WHERE que = ? AND objeto = ? AND de = ?", d.que, d.objeto, yo) { 1 }.isNotEmpty() }) throw Problema(403, "reporte_propio")
+        val reportantes = b.usar { leer("SELECT DISTINCT de FROM reportes WHERE que = ? AND objeto = ? AND estado = 'abierto' AND de IS NOT NULL", d.que, d.objeto) { it.getLong(1) } }
         val consumidos = b.usar {
             cambiar("UPDATE reportes SET estado = ? WHERE que = ? AND objeto = ? AND estado = 'abierto'", if (d.decision == "sin_falta") "sin_falta" else "confirmado", d.que, d.objeto)
         }
         if (consumidos == 0) throw Problema(409, "ya_resuelto")
+        if (d.decision != "sin_falta") {
+            val lunes = java.time.Instant.ofEpochMilli(ahora()).atZone(java.time.ZoneOffset.UTC).toLocalDate().with(java.time.DayOfWeek.MONDAY).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+            reportantes.filter { it != autor }.forEach { premiar(it, "reporte:${d.que}:${d.objeto}", 50, "reporte:", lunes, 200) }
+        }
         if (d.decision == "falta_grave") equipo.requiere(yo, "sancion_grave", token)
         if (d.decision !in setOf("sin_falta", "advertencia") && (d.decision == "cerrar" || d.regla in Moderacion.CIERRE_DIRECTO || (autor != null && puntosVigentes(autor) + (if (d.decision == "falta_grave") 2 else 1) >= 4))) equipo.requiere(yo, "cerrar_cuentas", token)
         equipo.registrar(yo.toString(), "reporte_decidir", d.que + ":" + d.objeto, d.decision + ":" + d.regla, token)

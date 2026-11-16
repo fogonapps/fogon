@@ -159,6 +159,7 @@ class RedSocial(
     protected override fun permitirRed(permitir: Boolean) { caja.redPermitida = permitir }
     protected override fun guardarPolitica(version: String) { almacenSesion.politicaAceptada = version }
     protected override fun pausarPublicaciones() { subida?.cancel(); sincronizacionesCajon.cancelar() }
+    override fun alCambiarBanner() { caja.perfilRedPendiente = true; scope.launch { intentar { traerPerfilPropio() } } }
     protected override fun reanudarPublicaciones() { recuperarCajon(); sincronizarYa(); cargarFeed(avisar = false) }
 
     /** Si el servidor puede mandar códigos por correo (null mientras no se sabe), y la versión de la política. */
@@ -583,6 +584,7 @@ class RedSocial(
     private suspend fun portadaEnLaRed(portada: String, encuadre: io.github.fogonapps.cajon.datos.Encuadre = io.github.fogonapps.cajon.datos.Encuadre()): String {
         val marca = sesion.actual()
         val cliente = cliente()
+        if (portada.startsWith("banner:")) return portada
         if (portada.isBlank() || portada.startsWith("https://")) return portada.takeIf { it.startsWith("https://") }.orEmpty()
         // Se sube ya recortada como se ve en tu perfil (con tu encuadre): así la ven igual los demás.
         val en = encuadre.limpio()

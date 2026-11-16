@@ -387,13 +387,49 @@ abstract class ControladorSocial(
     /** Los temas de perfil (tienda): los reclamados y el puesto. */
     protected val _temas = MutableStateFlow(TemasCuentaSocial())
     val temas: StateFlow<TemasCuentaSocial> = _temas
+    private val _paquetesWompi = MutableStateFlow<List<Int>>(emptyList())
+    val paquetesWompi: StateFlow<List<Int>> = _paquetesWompi
+    fun cargarPaquetesWompi() {
+        _paquetesWompi.value = emptyList()
+        scope.launch { intentar(avisar = false) {
+            try { _paquetesWompi.value = cliente().paquetesWompi() }
+            catch (e: ErrorSocial) { if (e.codigo != 503 || e.error != "pagos_apagados") throw e }
+        } }
+    }
+    fun comprarChispas(paquete: Int, resultado: (String?) -> Unit) = scope.launch {
+        var url: String? = null
+        intentar {
+            try { url = cliente().ordenWompi(paquete) }
+            catch (e: ErrorSocial) {
+                if (e.codigo == 503 && e.error == "pagos_apagados") _paquetesWompi.value = emptyList()
+                throw e
+            }
+        }
+        resultado(url)
+    }
     fun cargarTemas() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _temas.value = cliente().temas() } } }
+    fun regalar(item: String, para: String, resultado: (String?) -> Unit) = lanzar {
+        try {
+            cliente().regalar(item, para)
+        } catch (x: ErrorSocial) {
+            resultado(x.error)
+            if (x.codigo == 401) throw x
+            return@lanzar
+        } catch (x: java.io.IOException) {
+            resultado("conexion")
+            return@lanzar
+        }
+        resultado(null)
+        _temas.value = cliente().temas()
+    }
     fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
+    protected open fun alCambiarBanner() {}
     fun ponerTema(tema: String) = lanzar {
         cliente().ponerTema(tema)
+        if (tema.startsWith("banner:")) { _temas.value = _temas.value.copy(banner = tema); alCambiarBanner(); return@lanzar }
         _temas.value = if (tema.startsWith("marco:")) _temas.value.copy(marco = tema.removePrefix("marco:")) else _temas.value.copy(puesto = tema)
     }
-    /** Las chispas del día. */
+    /** Compatibilidad de transporte para clientes antiguos. */
     fun cobrarDiario() = lanzar { _temas.value = cliente().cobrarDiario() }
     fun ponerCumple(fecha: String) = lanzar { cliente().ponerCumple(fecha); _cumple.value = fecha }
     suspend fun mejoresAmigos(): List<String> = runCatching { cliente().mejoresAmigos() }.getOrDefault(emptyList())

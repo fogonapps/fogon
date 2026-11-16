@@ -21,7 +21,7 @@ fun EditorPerfilLocal(
     onNombre: (String) -> Unit, onBio: (String) -> Unit,
     onElegirFoto: () -> Unit, onQuitarFoto: () -> Unit,
     onElegirPortada: () -> Unit, onQuitarPortada: () -> Unit,
-    onGuardar: () -> Unit, habilitado: Boolean = true,
+    onGuardar: () -> Unit, habilitado: Boolean = true, onPortada: (String) -> Unit = {},
 ) {
     val f = FogonTema.actual
     TituloEditor(stringResource(R.string.perfil_local_foto_portada))
@@ -37,7 +37,7 @@ fun EditorPerfilLocal(
             .tarjetaFogon(forma(24.dp), sombra = false).haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
             ImagenLocal(portada, Modifier.matchParentSize())
         }
-        BotonSecundario(stringResource(R.string.perfil_local_subir_imagen), onElegirPortada, Modifier.fillMaxWidth(), habilitado)
+        BannersGratis(onPortada)
         if (portada.isNotBlank()) BotonSecundario(stringResource(R.string.perfil_local_quitar_portada), onQuitarPortada, Modifier.fillMaxWidth(), habilitado)
     }
     TituloEditor(stringResource(R.string.perfil_local_quien_eres))

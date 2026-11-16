@@ -132,7 +132,7 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector9(listOf(r)) else manejar_selector9(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
-    EditorPerfilLocal(nombre, bio, foto, portada,
+    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

@@ -21,6 +21,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.identidad.*
 import io.github.fogonapps.identidad.PildoraSocial as Pildora
+import io.github.fogonapps.perfil.BannerPerfil
+import io.github.fogonapps.perfil.nombreBanner
 import io.github.fogonapps.perfil.MuestraTema
 import io.github.fogonapps.perfil.MuestraMarco
 import io.github.fogonapps.perfil.TemasPerfil
@@ -51,7 +53,7 @@ private fun IconoChispa(tamano: androidx.compose.ui.unit.Dp) = IconoRiso(Chispa,
 
 /**
  * La tienda en la barra de arriba, al lado de tu foto (como la moneda de los juegos): un botón redondo con la chispa,
- * sin el número (tus chispas se ven al abrirla). Un puntito avisa que puedes reclamar las del día. Solo con cuenta.
+ * sin el número (tus chispas se ven al abrirla). Solo con cuenta.
  */
 @Composable
 fun ChispasArriba(vm: InterfazSocial, modifier: Modifier = Modifier) {
@@ -65,7 +67,6 @@ fun ChispasArriba(vm: InterfazSocial, modifier: Modifier = Modifier) {
     Box(modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie).border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape)
         .clickable { abierta = true }.semantics { contentDescription = texto }, contentAlignment = Alignment.Center) {
         IconoChispa(24.dp)
-        if (temas.diario) Box(Modifier.align(Alignment.TopEnd).padding(9.dp).size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1))
     }
     if (abierta) TiendaTemas(vm) { abierta = false }
 }
@@ -99,7 +100,6 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
             Text(stringResource(R.string.social_temas_tienda), style = MaterialTheme.typography.titleSmall, color = f.texto)
             Text(stringResource(R.string.social_chispas_n, temas.chispas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        if (temas.diario) Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.tinta1))
         IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
     if (abierta) TiendaTemas(vm) { abierta = false }
@@ -107,49 +107,110 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
 
 /**
  * La tienda del perfil: fondos (escenas con su paleta, como los de Steam) y marcos de foto, que se compran con chispas.
- * Las chispas se ganan usando las apps (la bienvenida y las del día) y solo sirven aquí.
+ * Las chispas se ganan usando las apps (bienvenida y aportes verificados) y solo sirven aquí.
  */
 @Composable
 fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
     val f = FogonTema.actual
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val paquetes by vm.red.paquetesWompi.collectAsStateWithLifecycle()
+    var comprando by remember { mutableStateOf(false) }
+    var errorPago by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { vm.red.cargarPaquetesWompi() }
+    DisposableEffect(ciclo) {
+        val observador = androidx.lifecycle.LifecycleEventObserver { _, evento ->
+            if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vm.red.cargarTemas()
+        }
+        ciclo.lifecycle.addObserver(observador)
+        onDispose { ciclo.lifecycle.removeObserver(observador) }
+    }
     val temas by vm.red.temas.collectAsStateWithLifecycle()
+    var regalo by remember { mutableStateOf<String?>(null) }
+    var regalando by remember { mutableStateOf(false) }
+    var errorRegalo by remember { mutableStateOf<String?>(null) }
+    var destinatario by remember { mutableStateOf("") }
     var pestana by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) { vm.red.cargarTemas() }
+    if (regalo != null) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { regalo = null },
+        title = { Text(stringResource(R.string.social_regalar)) },
+        text = { Column {
+            androidx.compose.material3.OutlinedTextField(destinatario, { destinatario = it }, label = { Text(stringResource(R.string.social_regalo_para)) }, singleLine = true, enabled = !regalando)
+            errorRegalo?.let { error -> Text(stringResource(when (error) {
+                "ya_lo_tiene" -> R.string.social_regalo_ya_tiene
+                "tope_regalos" -> R.string.social_regalo_tope
+                "bloqueado" -> R.string.social_regalo_bloqueado
+                "a_si_mismo" -> R.string.social_regalo_propio
+                "no_existe" -> R.string.social_regalo_no_existe
+                "sin_chispas" -> R.string.social_regalo_sin_chispas
+                else -> R.string.social_regalo_error
+            }), color = f.texto) }
+        } },
+        confirmButton = { BotonRiso(stringResource(R.string.social_regalar), { regalo?.let { item ->
+            regalando = true; errorRegalo = null
+            vm.red.regalar(item, destinatario) { error ->
+                regalando = false; errorRegalo = error
+                if (error == null) { regalo = null; destinatario = "" }
+            }
+        } }, habilitado = destinatario.isNotBlank() && !regalando) },
+        dismissButton = { BotonSecundario(stringResource(R.string.social_regalo_cancelar), { regalo = null }) })
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(R.string.social_temas_tienda), onCerrar)
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                // Tus chispas y las del día.
+                // Saldo de la cuenta.
                 Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.social_chispas_n, temas.chispas), style = MaterialTheme.typography.titleMedium, color = f.texto)
                         Text(stringResource(R.string.social_chispas_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }
-                    if (temas.diario) BotonRiso(stringResource(R.string.social_chispas_diario), { vm.red.cobrarDiario() })
+                }
+                if (paquetes.isNotEmpty()) {
+                    Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                    paquetes.forEach { paquete ->
+                        BotonRiso(stringResource(R.string.social_wompi_paquete, formatoColombiano(paquete), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
+                            comprando = true
+                            errorPago = false
+                            vm.red.comprarChispas(paquete) { url ->
+                                comprando = false
+                                errorPago = url == null || runCatching {
+                                    val uri = android.net.Uri.parse(url)
+                                    require(uri.scheme == "https" && uri.host == "checkout.wompi.co")
+                                    contexto.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))
+                                }.isFailure
+                            }
+                        }, Modifier.fillMaxWidth(), habilitado = !comprando)
+                    }
+                    Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pildora(stringResource(R.string.social_tienda_fondos), acento = pestana == 0) { pestana = 0 }
                     Pildora(stringResource(R.string.social_tienda_marcos), acento = pestana == 1) { pestana = 1 }
+                    Pildora(stringResource(R.string.social_tienda_banners), acento = pestana == 2) { pestana = 2 }
                 }
-                val lista = if (pestana == 0) listOf("") + TemasPerfil.FONDOS else listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }
+                val lista = when (pestana) { 0 -> listOf("") + TemasPerfil.FONDOS; 1 -> listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }; else -> TemasPerfil.BANNERS.keys.map { "banner:$it" } }
                 lista.chunked(2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         fila.forEach { item ->
                             val quitar = item.isEmpty() || item == "marco:"
-                            val id = item.removePrefix("marco:")
-                            val tiene = quitar || item in temas.reclamados
-                            val puesto = if (pestana == 0) temas.puesto == item else temas.marco == id
+                            val id = item.removePrefix("marco:").removePrefix("banner:")
+                            val tiene = quitar || item in temas.reclamados || TemasPerfil.PRECIOS[item] == 0
+                            val puesto = if (pestana == 0) temas.puesto == item else if (pestana == 1) temas.marco == id else temas.banner == item
                             val precio = TemasPerfil.PRECIOS[item] ?: 0
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                if (pestana == 0) MuestraTema(item, Modifier.fillMaxWidth()) else MuestraMarco(id, Modifier.fillMaxWidth())
-                                Text(if (quitar) stringResource(if (pestana == 0) R.string.social_tienda_sin_fondo else R.string.social_tienda_sin_marco) else TemasPerfil.nombre(id),
+                                if (pestana == 0) MuestraTema(item, Modifier.fillMaxWidth()) else if (pestana == 1) MuestraMarco(id, Modifier.fillMaxWidth()) else BannerPerfil(id, Modifier.fillMaxWidth().height(100.dp))
+                                Text(if (quitar) stringResource(if (pestana == 0) R.string.social_tienda_sin_fondo else R.string.social_tienda_sin_marco) else if (pestana == 2) nombreBanner(id) else TemasPerfil.nombre(id),
                                     style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1)
+                                if (!quitar) Text(stringResource(R.string.social_precio_pesos, formatoColombiano(precio), formatoColombiano(precio * TemasPerfil.PESOS_POR_CHISPA)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                                 when {
                                     puesto -> BotonSecundario(stringResource(R.string.social_temas_en_uso), {}, Modifier.fillMaxWidth(), habilitado = false)
                                     tiene -> BotonSecundario(stringResource(R.string.social_temas_usar), { vm.red.ponerTema(item) }, Modifier.fillMaxWidth())
                                     else -> BotonRiso(stringResource(R.string.social_tienda_comprar, precio), { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                                 }
+                                if (precio > 0) BotonSecundario(stringResource(R.string.social_regalar), { regalo = item; errorRegalo = null }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                             }
                         }
                         if (fila.size == 1) Spacer(Modifier.weight(1f))
@@ -164,6 +225,7 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
 /** La portada (banner) de un perfil ajeno, llenando su marco (para las apps sin cargador de imágenes propio). */
 @Composable
 fun PortadaPerfilRed(url: String, modifier: Modifier = Modifier) {
+    if (url.startsWith("banner:")) { BannerPerfil(url.removePrefix("banner:"), modifier); return }
     if (url.isNotBlank()) coil3.compose.AsyncImage(url, null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
 }
 
@@ -173,3 +235,5 @@ fun cifrasSociales(p: io.github.fogonapps.social.PerfilSocial): List<io.github.f
     io.github.fogonapps.perfil.ContadorPerfil("${p.seguidores}", stringResource(R.string.social_cifra_seguidores)),
     io.github.fogonapps.perfil.ContadorPerfil("${p.siguiendo}", stringResource(R.string.social_cifra_siguiendo)),
 )
+
+internal fun formatoColombiano(valor: Int): String = java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("es-CO")).format(valor)
