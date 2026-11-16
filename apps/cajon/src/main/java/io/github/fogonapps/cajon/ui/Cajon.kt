@@ -1,5 +1,21 @@
 package io.github.fogonapps.cajon.ui
 
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.combinedClickable
@@ -320,20 +336,63 @@ private fun EscuchadoHacePoco(vm: CajonViewModel) {
         }
         return
     }
-    Seccion(stringResource(R.string.escuchado_poco))
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        lista.take(8).forEach { a ->
-            Row(Modifier.fillMaxWidth().vidrio().padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                IconoRiso(Iconos.Disco, null, tamano = 28.dp, tinta = f.acentoTexto)
-                Column(Modifier.weight(1f)) {
-                    Text(a.album, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(a.artista + " · " + androidx.compose.ui.res.pluralStringResource(R.plurals.canciones_app, a.canciones.size, a.canciones.size, a.app), style = MaterialTheme.typography.bodySmall,
-                        color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Pildora(stringResource(R.string.agregar), Iconos.Mas, acento = true) { vm.agregarOido(a.clave) }
-                BotonIcono(Iconos.Cerrar, stringResource(R.string.descartar)) { vm.descartarOido(a.clave) }
-            }
+    Seccion(stringResource(R.string.escuchado_poco), derecha = {
+        if (lista.size > 8) TextButton({ vm.abrir(Pantalla.OidosPendientes) }) {
+            Text(stringResource(R.string.ver_mas), color = f.acentoTexto)
+        }
+    })
+    val estado = rememberLazyListState()
+    val muestra = lista.take(8)
+    LaunchedEffect(muestra, estado) {
+        snapshotFlow { estado.layoutInfo.visibleItemsInfo.mapNotNull { muestra.getOrNull(it.index)?.clave } }
+            .collect { vm.completarPortadasOidas(it) }
+    }
+    LazyRow(state = estado, contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(muestra, key = { it.clave }) { a -> TarjetaAlbumOido(a, vm, Modifier.width(136.dp)) }
+    }
+}
+
+/** Todos los álbumes pendientes, con desplazamiento propio y columnas adaptables. */
+@Composable
+fun OidosPendientes(vm: CajonViewModel) {
+    val oidos by vm.oidos.collectAsStateWithLifecycle()
+    val lista = vm.oidosPendientes(oidos)
+    val estado = rememberLazyGridState()
+    Cabecera(stringResource(R.string.escuchado_poco), vm::cerrar)
+    LaunchedEffect(lista, estado) {
+        snapshotFlow { estado.layoutInfo.visibleItemsInfo.mapNotNull { lista.getOrNull(it.index)?.clave } }
+            .collect { vm.completarPortadasOidas(it) }
+    }
+    LazyVerticalGrid(columns = GridCells.Adaptive(136.dp), state = estado,
+        contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        items(lista, key = { it.clave }) { a -> TarjetaAlbumOido(a, vm) }
+    }
+}
+
+@Composable
+private fun TarjetaAlbumOido(a: io.github.fogonapps.cajon.datos.AlbumOido, vm: CajonViewModel, modifier: Modifier = Modifier) {
+    val f = FogonTema.actual
+    val descripcion = stringResource(R.string.album_oido_descripcion, a.album, a.artista)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
+            Portada(a.portada, Tipos.ALBUM, a.album, Modifier.matchParentSize().clearAndSetSemantics { contentDescription = descripcion }, conTitulo = false)
+            AccionAlbumOido(Iconos.Cerrar, stringResource(R.string.descartar_album_oido, a.album), Modifier.align(Alignment.TopEnd)) { vm.descartarOido(a.clave) }
+            AccionAlbumOido(Iconos.Mas, stringResource(R.string.agregar_album_oido, a.album), Modifier.align(Alignment.BottomEnd)) { vm.agregarOido(a.clave) }
+        }
+        Text(a.album, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(a.artista + " · " + pluralStringResource(R.plurals.canciones, a.canciones.size, a.canciones.size),
+            style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun AccionAlbumOido(icono: io.github.fogonapps.identidad.Dibujo, descripcion: String, modifier: Modifier, accion: () -> Unit) {
+    val f = FogonTema.actual
+    // El área táctil es de 48 dp; el círculo visible, más chico, tapa menos la portada.
+    Box(modifier.size(48.dp).clickable(role = Role.Button, onClickLabel = descripcion, onClick = accion)
+        .semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(32.dp).background(f.fondo, CircleShape).vidrio(CircleShape), contentAlignment = Alignment.Center) {
+            IconoRiso(icono, null, tamano = 16.dp, tinta = f.texto)
         }
     }
 }

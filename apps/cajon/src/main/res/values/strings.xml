@@ -1754,4 +1754,7 @@
     <string name="resena_filtro_buenas">Good</string>
     <string name="resena_filtro_malas">Bad</string>
     <string name="destacado_desde_favoritas">First give it the star on its page: these highlights come from your top 4.</string>
+  <string name="album_oido_descripcion">%1$s, %2$s</string>
+  <string name="agregar_album_oido">Add %1$s</string>
+  <string name="descartar_album_oido">Dismiss %1$s</string>
 </resources>

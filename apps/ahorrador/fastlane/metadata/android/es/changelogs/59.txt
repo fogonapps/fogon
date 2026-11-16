@@ -1,0 +1,2 @@
+Las compras con tarjeta débito de Nu vuelven a anotarse: Nu cambió el texto de su aviso («Tu compra en … por $…») y la app decía «No entendí un mensaje de Nu».
+Si un banco vuelve a cambiar su aviso, La Alcancía intenta entenderlo igual y te pregunta antes de anotarlo.

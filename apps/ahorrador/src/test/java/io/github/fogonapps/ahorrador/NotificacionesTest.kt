@@ -91,7 +91,8 @@ class NotificacionesTest {
     }
     @Test fun montosFechasYLimites() {
         assertEquals(80001L, leer(salida.replace("80,000.00", "80,000.50"))!!.monto)
-        for (monto in listOf("80.000,00", "8,00.00", "0.00", "999999999999999999999999.00")) assertNull(leer(salida.replace("80,000.00", monto)))
+        for (monto in listOf("8,00.00", "0.00", "999999999999999999999999.00")) assertNull(leer(salida.replace("80,000.00", monto)))
+        assertTrue(leer(salida.replace("80,000.00", "80.000,00"))!!.general)
         for (fecha in listOf("31/02/26", "00/11/26", "04/13/26")) assertNull(leer(salida.replace("04/11/26", fecha)))
         assertNull(leer(salida.replace("15:49", "24:00")))
         assertNull(leer(salida.replace("15:49", "15:49:99")))
@@ -275,6 +276,41 @@ class NotificacionesTest {
         assertNull(reconocerAviso(Banco.NU, "Compra rechazada por \$4.950,00", texto, recibido))
     }
 
+    @Test fun compraRealNuYVariantes() {
+        val texto = "Tu compra en TIENDAS ARA por $16.838,00 con tu tarjeta débito terminada en 4828. Nu Plus:+ 2 puntos."
+        for (titulo in listOf("Compra aprobada por $16.838,00", "")) {
+            val a = reconocerAviso(Banco.NU, titulo, texto, recibido)!!
+            assertEquals(TipoMovimiento.GASTO, a.tipo)
+            assertEquals(16838L, a.monto)
+            assertEquals("TIENDAS ARA", a.contraparte)
+            assertEquals("", a.cuenta)
+            assertEquals("NU|", a.enlace)
+            assertFalse(a.credito)
+            assertFalse(a.general)
+        }
+        val mayusculas = reconocerAviso(Banco.NU, "COMPRA APROBADA POR $16.838,00", texto.uppercase().replace("DÉBITO", "DE DEBITO"), recibido)!!
+        assertEquals("TIENDAS ARA", mayusculas.contraparte)
+        assertFalse(mayusculas.general)
+        assertEquals(20000L, reconocerAviso(Banco.NU, "Compra aprobada por $20.000,00", texto, recibido)!!.monto)
+        val credito = reconocerAviso(Banco.NU, "", texto.replace("débito", "DE CREDITO"), recibido)!!
+        assertTrue(credito.credito)
+        assertEquals("*4828", credito.cuenta)
+        assertEquals("TIENDAS ARA", credito.contraparte)
+    }
+
+    @Test fun respaldoNuSiempreNecesitaConfirmacion() {
+        val a = reconocerAviso(Banco.NU, "Nu", "Pagaste $16.838 en TIENDAS ARA. Nu Plus:+ 2 puntos.", recibido)!!
+        assertTrue(a.general)
+        assertEquals("TIENDAS ARA", a.contraparte)
+        val e = recibirBanco(estado().copy(notificaciones = estado().notificaciones.copy(solos = setOf(Banco.NU))), a)
+        assertNotNull(e.propuestaBanco(a.huella))
+        assertEquals(e, confirmarBanco(e, a.huella, automatico = true))
+        assertEquals(1, confirmarBanco(e, a.huella).movimientos.size)
+        assertEquals(a.huella, a.copy(general = false).huella)
+        assertEquals(a.enlace, a.copy(general = false).enlace)
+        assertEquals(a, JsonAhorrador.decodeFromString(AvisoBanco.serializer(), JsonAhorrador.encodeToString(AvisoBanco.serializer(), a)))
+    }
+
     private fun creditoNu() = reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00",
         "Compra en ÉXITO con tu tarjeta de crédito terminada en 1111.", recibido)!!
 
@@ -348,6 +384,7 @@ class NotificacionesTest {
         val a = JsonAhorrador.decodeFromString(AvisoBanco.serializer(),
             """{"banco":"NU","tipo":"GASTO","monto":4950,"momento":"2026-11-09T00:02","cuenta":"","contraparte":"TIENDA","texto":"TIENDA"}""")
         assertFalse(a.credito)
+        assertFalse(a.general)
         assertEquals(nu().enlace, a.enlace)
         val credito = creditoNu()
         assertEquals(credito, JsonAhorrador.decodeFromString(AvisoBanco.serializer(), JsonAhorrador.encodeToString(AvisoBanco.serializer(), credito)))

@@ -72,7 +72,7 @@ class EscuchaBanco : NotificationListenerService() {
                     if (BancoAvisos.desde(this@EscuchaBanco) != desde) anterior else {
                         val recibido = recibirBanco(anterior, a)
                         nuevo = recibido != anterior
-                        val resultado = if (nuevo && a.banco in recibido.notificaciones.solos && a.banco !in GENERICOS) confirmarBanco(recibido, a.huella, automatico = true) else recibido
+                        val resultado = if (nuevo && a.banco in recibido.notificaciones.solos && !a.general) confirmarBanco(recibido, a.huella, automatico = true) else recibido
                         if (resultado != anterior) resultado.copy(updatedAt = System.currentTimeMillis()) else anterior
                     }
                 }

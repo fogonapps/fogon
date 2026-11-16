@@ -178,7 +178,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             PilaAnimada(pila.lastOrNull(), pila.size) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     // Las que tienen lista propia (buscar, el cajón de una lista larga) manejan su scroll.
-                    val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion
+                    val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion && p != Pantalla.OidosPendientes
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         AvisoPolitica(vm)
                         when (p) {
@@ -193,6 +193,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             is Pantalla.VerLista -> VerLista(vm, estado, p.id)
                             is Pantalla.EditarLista -> EditarLista(vm, estado, p.id)
                             is Pantalla.AgregarALista -> AgregarALista(vm, estado, p.obra)
+                            Pantalla.OidosPendientes -> OidosPendientes(vm)
                             Pantalla.Diario -> Diario(vm, estado)
                             Pantalla.Listas -> Listas(vm, estado)
                             Pantalla.ListasComunes -> ListasComunes(vm)

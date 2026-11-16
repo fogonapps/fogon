@@ -1756,4 +1756,7 @@
     <string name="resena_filtro_buenas">Buenas</string>
     <string name="resena_filtro_malas">Malas</string>
     <string name="destacado_desde_favoritas">Primero ponle la estrella en su ficha: estos destacados salen de tus 4 favoritas.</string>
+  <string name="album_oido_descripcion">%1$s, %2$s</string>
+  <string name="agregar_album_oido">Agregar %1$s</string>
+  <string name="descartar_album_oido">Descartar %1$s</string>
 </resources>

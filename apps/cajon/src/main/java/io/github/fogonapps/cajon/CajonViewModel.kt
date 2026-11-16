@@ -102,6 +102,7 @@ internal suspend fun buscarEnFuente(
 
 /** Las pantallas que se abren encima de las pestañas. */
 sealed interface Pantalla {
+    data object OidosPendientes : Pantalla
     /** Buscar algo para agregar, empezando en la [seccion] (ver [Secciones]). */
     /** [elegirPara]: "destacado:<hueco>" o "favorita" si se busca para ponerlo en el perfil (no para ver la previa). */
     data class Buscar(val seccion: String, val elegirPara: String? = null) : Pantalla
@@ -1769,7 +1770,38 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     val oidos: StateFlow<io.github.fogonapps.cajon.datos.Oidos> get() = escuchas.oidos
 
     /** Escuchado hace poco y todavía no en el cajón (ni descartado), lo más reciente primero. */
-    fun oidosPendientes(o: io.github.fogonapps.cajon.datos.Oidos) = o.albumes.filter { it.obra == null && !it.descartado }.sortedByDescending { it.ultima }
+    fun oidosPendientes(o: io.github.fogonapps.cajon.datos.Oidos) = RegistroEscuchas.pendientes(o)
+
+    private val portadasOidasIntentadas = mutableSetOf<String>()
+    private val portadasOidasMutex = kotlinx.coroutines.sync.Mutex()
+
+    /** Completa solo tarjetas visibles; cada álbum se consulta una vez por sesión con red. */
+    fun completarPortadasOidas(claves: List<String>) {
+        viewModelScope.launch {
+            portadasOidasMutex.lock()
+            try {
+                val red = getApplication<Application>().getSystemService(android.net.ConnectivityManager::class.java)
+                val capacidades = red.getNetworkCapabilities(red.activeNetwork)
+                if (capacidades?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) != true) return@launch
+                val pendientes = oidosPendientes(escuchas.oidos.value)
+                    .filter { it.clave in claves && it.portada.isBlank() && it.clave !in portadasOidasIntentadas }.take(20)
+                for (a in pendientes) {
+                    portadasOidasIntentadas.add(a.clave)
+                    try {
+                        val portada = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            MusicBrainz.buscarAlbum(a.album, a.artista).firstOrNull {
+                                RegistroEscuchas.clave(it.creador, it.titulo) == a.clave
+                            }?.portada?.takeIf { it.startsWith("https://") }
+                        } ?: continue
+                        escuchas.cambiar { o -> o.copy(albumes = o.albumes.map {
+                            if (it.clave == a.clave && it.portada.isBlank()) it.copy(portada = portada) else it
+                        }) }
+                    } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                    catch (_: Exception) { }
+                }
+            } finally { portadasOidasMutex.unlock() }
+        }
+    }
 
     /**
      * Une lo escuchado con el cajón: lo que ya está queda marcado (y, con 5 canciones o más, pasa a escuchado); con
@@ -1801,7 +1833,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val id = nuevoId("o")
         val dia = java.time.Instant.ofEpochMilli(a.ultima).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
         val entero = a.canciones.size >= CANCIONES_ESCUCHADO
-        val obra = Obra(id, Tipos.ALBUM, a.album, creador = a.artista, estado = if (entero) Estados.TERMINADO else Estados.EN_CURSO,
+        val obra = Obra(id, Tipos.ALBUM, a.album, creador = a.artista, portada = a.portada, estado = if (entero) Estados.TERMINADO else Estados.EN_CURSO,
             agregada = ahora(), cambio = ahora(), registros = if (entero) listOf(io.github.fogonapps.cajon.datos.Registro(nuevoId("g"), dia)) else emptyList())
         cambiar { e -> e.copy(obras = e.obras + obra) }
         if (!callado) avisar(tx(R.string.aviso_agregado_cajon, a.album))

@@ -87,7 +87,9 @@ class EscuchaMusica : NotificationListenerService() {
         // Sin álbum (un video, un podcast mal etiquetado) no se anota.
         if (artista.isBlank() || album.isBlank() || cancion.isBlank()) return
         val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(paquete, 0)).toString() }.getOrDefault(paquete)
-        (application as CajonApp).escuchas.sumar(listOf(Escucha(artista, album, cancion, System.currentTimeMillis(), app, paquete)))
+        val portada = listOf(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, MediaMetadata.METADATA_KEY_ART_URI)
+            .mapNotNull { m.getString(it) }.firstOrNull { it.startsWith("https://") }.orEmpty()
+        (application as CajonApp).escuchas.sumar(listOf(Escucha(artista, album, cancion, System.currentTimeMillis(), app, paquete, portada)))
     }
 
     companion object {

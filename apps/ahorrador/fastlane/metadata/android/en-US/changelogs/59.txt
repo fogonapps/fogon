@@ -1,0 +1,2 @@
+Nu debit card purchases are logged again: Nu changed the wording of its alert (“Tu compra en … por $…”) and the app said it couldn’t understand a message from Nu.
+If a bank changes its alert again, La Alcancía still tries to understand it and asks you before logging it.

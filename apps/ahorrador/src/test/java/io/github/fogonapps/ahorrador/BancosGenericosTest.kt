@@ -24,6 +24,19 @@ class BancosGenericosTest {
         leer(Banco.BBVA, "BBVA", "Retiro de COP 200.000 en cajero ATM CENTRO")!!.let { assertEquals(TipoMovimiento.GASTO, it.tipo); assertEquals(200_000, it.monto) }
     }
 
+    @Test fun respaldoConservaComercioYNoLeePuntosComoDinero() {
+        val a = leer(Banco.NU, "Compra aprobada por $16.838,00",
+            "Tu compra en TIENDAS ARA por $16.838,00 con tu tarjeta débito terminada en 4828. Nu Plus:+ 2 puntos.")!!
+        assertEquals(16838L, a.monto)
+        assertEquals("TIENDAS ARA", a.contraparte)
+        assertTrue(a.general)
+        assertFalse(a.texto.contains("Nu Plus"))
+        assertNull(leer(Banco.NU, "Nu Plus", "Ganaste 2 puntos"))
+        val bc = reconocerAviso(Banco.BANCOLOMBIA, "", "Bancolombia: Pagaste $25.000 en TIENDA con tu cuenta *1234", hora)!!
+        assertTrue(bc.general)
+        assertEquals(25000L, bc.monto)
+    }
+
     @Test fun loQueNoEsUnMovimientoNoSeAnota() {
         assertNull(leer(Banco.NEQUI, "Nequi", "Tu código de verificación es 123456. No lo compartas."))
         assertNull(leer(Banco.DAVIVIENDA, "Davivienda", "Gana hasta $1.000.000 con tu crédito preaprobado"))

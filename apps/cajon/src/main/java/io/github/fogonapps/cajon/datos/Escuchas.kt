@@ -28,6 +28,7 @@ data class AlbumOido(
     /** Ya está en el cajón (su id) o la persona lo descartó: no se vuelve a ofrecer. */
     val obra: String? = null,
     val descartado: Boolean = false,
+    val portada: String = "",
 )
 
 @Serializable
@@ -44,7 +45,7 @@ data class Oidos(
 )
 
 /** Una canción escuchada (de cualquier fuente), antes de sumarla a su álbum. */
-data class Escucha(val artista: String, val album: String, val cancion: String, val cuando: Long, val app: String, val paquete: String = "")
+data class Escucha(val artista: String, val album: String, val cancion: String, val cuando: Long, val app: String, val paquete: String = "", val portada: String = "")
 
 /** El registro de escuchas: uno por proceso (lo usan la app y el servicio que escucha). */
 class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
@@ -71,22 +72,7 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
      */
     fun unir(otro: Oidos?) {
         if (otro == null) return
-        cambiar { o ->
-            val m = o.albumes.associateBy { it.clave }.toMutableMap()
-            for (b in otro.albumes) {
-                val a = m[b.clave]
-                m[b.clave] = if (a == null) b else a.copy(
-                    canciones = (a.canciones + b.canciones).distinct().takeLast(200),
-                    primera = listOf(a.primera, b.primera).filter { it > 0 }.minOrNull() ?: 0,
-                    ultima = maxOf(a.ultima, b.ultima), veces = maxOf(a.veces, b.veces),
-                    app = if (b.ultima > a.ultima) b.app.ifBlank { a.app } else a.app,
-                    obra = a.obra ?: b.obra, descartado = a.descartado || b.descartado,
-                )
-            }
-            o.copy(albumes = m.values.sortedByDescending { it.ultima }.take(2000), spotifyHasta = maxOf(o.spotifyHasta, otro.spotifyHasta),
-                huellas = o.huellas + otro.huellas,
-                sinAnotar = (o.sinAnotar + otro.sinAnotar).distinct(), apps = otro.apps + o.apps)
-        }
+        cambiar { unirA(it, otro) }
     }
 
     /** Suma escuchas a sus álbumes (sin repetir la misma canción del mismo álbum en el mismo minuto). */
@@ -98,6 +84,26 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
     }
 
     companion object {
+        fun pendientes(o: Oidos) = o.albumes.filter { it.obra == null && !it.descartado }.sortedByDescending { it.ultima }
+
+        fun unirA(o: Oidos, otro: Oidos): Oidos {
+            val m = o.albumes.associateBy { it.clave }.toMutableMap()
+            for (b in otro.albumes) {
+                val a = m[b.clave]
+                m[b.clave] = if (a == null) b else a.copy(
+                    canciones = (a.canciones + b.canciones).distinct().takeLast(200),
+                    primera = listOf(a.primera, b.primera).filter { it > 0 }.minOrNull() ?: 0,
+                    ultima = maxOf(a.ultima, b.ultima), veces = maxOf(a.veces, b.veces),
+                    app = if (b.ultima > a.ultima) b.app.ifBlank { a.app } else a.app,
+                    portada = a.portada.ifBlank { b.portada },
+                    obra = a.obra ?: b.obra, descartado = a.descartado || b.descartado,
+                )
+            }
+            return o.copy(albumes = m.values.sortedByDescending { it.ultima }.take(2000), spotifyHasta = maxOf(o.spotifyHasta, otro.spotifyHasta),
+                huellas = o.huellas + otro.huellas,
+                sinAnotar = (o.sinAnotar + otro.sinAnotar).distinct(), apps = otro.apps + o.apps)
+        }
+
         fun sumarA(o: Oidos, lista: List<Escucha>): Oidos {
             val huellas = o.huellas.toMutableSet()
             val porClave = o.albumes.associateBy { it.clave }.toMutableMap()
@@ -115,6 +121,7 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                 val viejo = porClave[clave] ?: AlbumOido(clave, artista, album, primera = x.cuando)
                 val cancion = Logica.tituloLimpio(x.cancion)
                 porClave[clave] = viejo.copy(
+                    portada = viejo.portada.ifBlank { x.portada.takeIf { it.startsWith("https://") }.orEmpty() },
                     canciones = if (cancion.isEmpty() || cancion in viejo.canciones) viejo.canciones else (viejo.canciones + cancion).takeLast(200),
                     primera = minOf(viejo.primera.takeIf { it > 0 } ?: x.cuando, x.cuando),
                     ultima = maxOf(viejo.ultima, x.cuando), veces = viejo.veces + 1, app = x.app.ifBlank { viejo.app },

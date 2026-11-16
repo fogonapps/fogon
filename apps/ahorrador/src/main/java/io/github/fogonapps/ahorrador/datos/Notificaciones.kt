@@ -26,6 +26,7 @@ data class AvisoBanco(
     val contraparte: String,
     val texto: String,
     val credito: Boolean = false,
+    val general: Boolean = false,
 ) {
     val huella: String get() = MessageDigest.getInstance("SHA-256").digest(
         "$banco|$tipo|$monto|$momento|${cuenta.filter(Char::isDigit)}".toByteArray(Charsets.UTF_8)
@@ -117,7 +118,24 @@ internal fun montoFlexible(s: String): Long? = runCatching {
 fun reconocerGenerico(banco: Banco, titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
     val original = normalizarAlerta(listOf(titulo, texto).filter(String::isNotBlank).joinToString(". "))
     val t = sinTildes(original)
+    if (Regex("\\b(rechazada|rechazado|declinada|declinado)\\b").containsMatchIn(t)) return null
+    // Sin el tipo de tarjeta no se puede proponer una cuenta compatible de Nu.
+    if (banco == Banco.NU && "tarjeta" in t &&
+        !Regex("tarjeta (?:de )?(?:debito|credito)\\b").containsMatchIn(t)) return null
     if (NO_ES_MOVIMIENTO.containsMatchIn(t)) return null
+    // Las transferencias Nu conocidas conservan sus validaciones cerradas.
+    if (banco == Banco.NU && Regex("^(?:enviaste|recibiste) ").containsMatchIn(t)) return null
+    val fechaExplicita = Regex(" el ([0-9]{2}/[0-9]{2}/(?:[0-9]{4}|[0-9]{2}))(?: a las | )([0-9]{2}:[0-9]{2}(?::[0-9]{2})?)").find(t)
+    if (fechaExplicita != null) {
+        val f = fechaExplicita.groupValues[1].split('/')
+        val ano = if (f[2].length == 2) "20${f[2]}" else f[2]
+        val hora = fechaExplicita.groupValues[2]
+        if (runCatching {
+            LocalDateTime.parse("$ano-${f[1]}-${f[0]}T$hora", DateTimeFormatter.ofPattern(
+                if (hora.length == 8) "uuuu-MM-dd'T'HH:mm:ss" else "uuuu-MM-dd'T'HH:mm"
+            ).withResolverStyle(ResolverStyle.STRICT))
+        }.isFailure) return null
+    }
     val m = MONTO.find(t) ?: return null
     if (MONTO.findAll(t).map { it.groupValues[1] }.distinct().count() > 2) return null
     val monto = montoFlexible(m.groupValues[1]) ?: return null
@@ -133,9 +151,9 @@ fun reconocerGenerico(banco: Banco, titulo: String, texto: String, recibido: Loc
     val conector = Regex("\\b(?:en|a|de|desde|para)\\s+([\\p{L}0-9&'*][\\p{L}0-9&'*. -]{1,40}?)(?=\\s+(?:el|por|con|desde|hoy|ref|referencia|a las|en tu|a tu|de tu|tu|su)\\b|[.,;:!]|$)")
     val contraparte = (conector.findAll(original, desde).toList() + conector.findAll(original).toList())
         .map { it.groupValues[1].trim() }
-        .firstOrNull { c -> val l = sinTildes(c); !l.startsWith("tu ") && !l.startsWith("su ") && !l.startsWith("las ") && !l.startsWith("los ") && !l.startsWith("la llave") && !l.startsWith("la cuenta") && !l.startsWith("cuenta") && l.any(Char::isLetter) && !MONTO.containsMatchIn(l) }
+        .firstOrNull { c -> val l = sinTildes(c); !l.startsWith("nu plus") && !l.contains("puntos") && !l.startsWith("tu ") && !l.startsWith("su ") && !l.startsWith("las ") && !l.startsWith("los ") && !l.startsWith("la llave") && !l.startsWith("la cuenta") && !l.startsWith("cuenta") && l.any(Char::isLetter) && !MONTO.containsMatchIn(l) }
         .orEmpty()
-    return AvisoBanco(banco, tipo, monto, recibido.withSecond(0).withNano(0).toString(), cuenta, contraparte.take(80), contraparte.take(60))
+    return AvisoBanco(banco, tipo, monto, recibido.withSecond(0).withNano(0).toString(), cuenta, contraparte.take(80), contraparte.take(60), general = true)
 }
 
 private fun montoBanco(s: String, colombiano: Boolean): Long? = runCatching {
@@ -163,23 +181,37 @@ fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<Strin
     val encabezados = titulos.map(::normalizarAlerta).filter(String::isNotBlank).distinct().ifEmpty {
         cuerpos.mapNotNull { Regex("(?:Enviaste|Recibiste) .+").find(it)?.value }.ifEmpty { listOf("") }
     }
+    // Agota las reglas exactas antes de recurrir a un extra corto con menos contexto.
+    for (texto in cuerpos) for (titulo in encabezados) reconocerExacto(banco, titulo, texto, recibido)?.let { return it }
     for (texto in cuerpos) for (titulo in encabezados) reconocerAviso(banco, titulo, texto, recibido)?.let { return it }
     return null
 }
 
 /** Las compras débito usan el enlace de la cuenta Nu; las de crédito, la terminación de la tarjeta. */
 private fun compraNu(titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
-    val todo = "$titulo $texto"
-    val m = Regex("Compra aprobada por \\$ ?([0-9][0-9.,]*[0-9])").find(todo) ?: return null
-    val tarjeta = Regex("Compra en (.+?) con tu tarjeta (?:de )?cr[eé]dito terminada en ([0-9]{3,6})\\b").find(todo)
-    val comercio = tarjeta?.groupValues?.get(1)?.trim() ?: Regex("Compra en (.+?) con tu tarjeta d[eé]bito\\b").find(todo)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    val monto = montoFlexible(m.groupValues[1]) ?: return null
-    return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(), tarjeta?.groupValues?.get(2)?.let { "*$it" }.orEmpty(), comercio.take(80), comercio.take(60), credito = tarjeta != null)
+    val todo = sinTildes("$titulo $texto")
+    if (Regex("\\b(rechazada|rechazado|declinada|declinado)\\b").containsMatchIn(todo)) return null
+    val compra = Regex("(?:tu )?compra en (.+?)(?: por \\$ ?([0-9][0-9.,]*[0-9]))? con tu tarjeta (?:de )?(debito|credito) terminada en ([0-9]{3,6})\\b")
+        .find(todo) ?: return null
+    val m = Regex("compra aprobada por \\$ ?([0-9][0-9.,]*[0-9])").find(todo)
+    val monto = montoFlexible(m?.groupValues?.get(1) ?: compra.groupValues[2]) ?: return null
+    // Recupera las mayúsculas y tildes originales del comercio.
+    val original = "$titulo $texto"
+    val comercio = (if (original.length == todo.length) original.substring(compra.groups[1]!!.range) else compra.groupValues[1]).trim()
+    val credito = compra.groupValues[3] == "credito"
+    return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(),
+        if (credito) "*${compra.groupValues[4]}" else "", comercio.take(80), comercio.take(60), credito = credito)
 }
 
 /** Reglas cerradas por banco. Nu usa la hora de la alerta, redondeada al minuto. */
 fun reconocerAviso(banco: Banco, tituloOriginal: String, textoOriginal: String, recibido: LocalDateTime): AvisoBanco? {
-    if (banco in GENERICOS) return reconocerGenerico(banco, tituloOriginal, textoOriginal, recibido)
+    if (banco !in GENERICOS && banco != Banco.NU && banco != Banco.BANCOLOMBIA) return null
+    if (banco == Banco.BANCOLOMBIA && !normalizarAlerta(textoOriginal).startsWith("Bancolombia:")) return null
+    return reconocerExacto(banco, tituloOriginal, textoOriginal, recibido)
+        ?: reconocerGenerico(banco, tituloOriginal, textoOriginal, recibido)
+}
+
+private fun reconocerExacto(banco: Banco, tituloOriginal: String, textoOriginal: String, recibido: LocalDateTime): AvisoBanco? {
     val titulo = normalizarAlerta(tituloOriginal)
     val texto = normalizarAlerta(textoOriginal)
     if (banco == Banco.NU) {
@@ -261,10 +293,12 @@ fun Estado.propuestaBanco(huella: String): Movimiento? {
 
 /** Atómico e idempotente: al llegar la segunda mitad sustituye la primera por un traspaso. */
 fun confirmarBanco(e: Estado, huella: String, editado: Movimiento? = null, automatico: Boolean = false): Estado {
+    if (automatico && e.notificaciones.registros.any { it.aviso.huella == huella && it.aviso.general }) return e
     val base = e.propuestaBanco(huella) ?: return e
     if (editado != null && editado.tipo != base.tipo) return e
     val r = e.notificaciones.registros.first { it.aviso.huella == huella }
     val pareja = e.parejaBanco(r)
+    if (automatico && pareja?.aviso?.general == true) return e
     if (pareja == null) {
         val usados = e.notificaciones.registros.mapNotNull { it.movimiento }.toSet()
         val csv = e.movimientos.firstOrNull { it.importado && it.id !in usados && coincideExtracto(it, base.fecha, if (base.tipo == TipoMovimiento.GASTO) -base.monto else base.monto, base.cuenta) }
