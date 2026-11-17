@@ -107,4 +107,8 @@
     <string name="escaparate_app_cucha">la cucha</string>
     <string name="escaparate_app_alcancia">la alcancía</string>
     <string name="escaparate_firma">fogón · %1$s</string>
+    <string name="portada_propia">Portada con tu foto</string>
+    <string name="perfil_nivel_sin_insignias">Aún no hay insignias que sumen nivel.</string>
+    <string name="perfil_articulo_comprado">Comprado</string>
+    <string name="perfil_banner_comprado">Portada comprada</string>
 </resources>

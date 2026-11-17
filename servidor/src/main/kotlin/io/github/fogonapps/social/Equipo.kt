@@ -71,7 +71,7 @@ object Totp {
 class Equipo(private val b: Base, datos: File, private val ahora: () -> Long, private val cartero: Cartero, principal: String?, configurarPrincipal: Boolean = true) {
     companion object {
         const val DURACION = 30L * 86400_000
-        val TODOS = setOf("ver_reportes", "sancionar", "sancion_grave", "cerrar_cuentas", "moderar_comentarios", "gestionar_publicaciones", "gestionar_frases", "gestionar_usuarios", "asignar_equipo", "ver_registro")
+        val TODOS = setOf("ver_reportes", "sancionar", "sancion_grave", "cerrar_cuentas", "moderar_comentarios", "gestionar_publicaciones", "gestionar_frases", "gestionar_usuarios", "asignar_equipo", "ver_registro", "revisar_mercado")
         val MODERADOR = setOf("ver_reportes", "sancionar", "sancion_grave", "moderar_comentarios", "gestionar_publicaciones")
     }
     private val llave: ByteArray

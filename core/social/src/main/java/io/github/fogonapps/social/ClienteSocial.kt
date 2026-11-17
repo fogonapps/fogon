@@ -173,7 +173,8 @@ open class ClienteSocial(
             r.body.bytes()
         }
     }
-    suspend fun descargarImagenPerfil(url: String): ByteArray = withContext(Dispatchers.IO) {
+    suspend fun descargarImagenPerfil(valor: String): ByteArray = withContext(Dispatchers.IO) {
+        val url = if (Regex("[A-Za-z0-9_-]{22}").matches(valor)) imagen(valor) else valor
         if (!permiteRed()) throw java.io.IOException("politica_pendiente")
         require(url.startsWith("https://"))
         val solicitud = Request.Builder().url(url).apply {
@@ -264,9 +265,15 @@ open class ClienteSocial(
     suspend fun archivoHistorias() = leer(ListSerializer(HistoriaSocial.serializer()), pedir("/historias/archivo?app=${cod(configuracion.idApp)}"))
     suspend fun portadaDestacada(id: Long) { pedir("/historias/$id/portada", "PUT") }
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
-    suspend fun paquetesWompi() = leer(OfertaWompi.serializer(), pedir("/pagos/wompi/paquetes")).paquetes
+    suspend fun paquetesWompi() = leer(OfertaWompi.serializer(), pedir("/pagos/wompi/paquetes"))
     suspend fun ordenWompi(paquete: Int) = leer(CheckoutWompi.serializer(), pedir("/pagos/wompi/orden", "POST", json(PedidoPagoWompi.serializer(), PedidoPagoWompi(paquete)))).url
     suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas"))
+    suspend fun articuloMercado(id: Long) = leer(ArticuloMercado.serializer(), pedir("/mercado/$id"))
+    suspend fun mercado(tipo: String, orden: String, oficial: Boolean, pagina: Int, modo: String = "") = leer(PaginaMercado.serializer(),
+        pedir(when (modo) { "adquiridos" -> "/mercado/adquiridos?pagina=$pagina"; "mios" -> "/mercado/mios?pagina=$pagina"; "revision" -> "/admin/mercado?pagina=$pagina"; else -> "/mercado?tipo=${cod(tipo)}&orden=${cod(orden)}&oficial=$oficial&pagina=$pagina" }))
+    suspend fun publicarMercado(d: PublicarMercado) = leer(ArticuloMercado.serializer(), pedir("/mercado", "POST", json(PublicarMercado.serializer(), d)))
+    suspend fun comprarMercado(id: Long, clave: String) { pedir("/mercado/$id/comprar", "POST", json(CompraMercado.serializer(), CompraMercado(clave))) }
+    suspend fun decidirMercado(id: Long, accion: String, motivo: String) { pedir("/admin/mercado/$id", "POST", json(DecisionMercado.serializer(), DecisionMercado(accion, motivo))) }
     suspend fun regalar(item: String, para: String) { pedir("/tienda/regalar", "POST", json(RegaloSocial.serializer(), RegaloSocial(item, para))) }
     suspend fun cobrarDiario() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/diario", "POST"))
     suspend fun reclamarTema(tema: String) { pedir("/tienda/temas/${cod(tema)}", "POST") }
@@ -294,7 +301,7 @@ open class ClienteSocial(
     suspend fun canciones(q: String, pais: String = "CO") = leer(ListSerializer(CancionSocial.serializer()), pedir("/canciones?q=${cod(q)}&pais=${cod(pais)}"))
 
     suspend fun subirImagen(jpeg: ByteArray): String =
-        JsonSocial.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content
+        JsonSocial.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(if (jpeg.firstOrNull() == (-119).toByte()) "image/png".toMediaType() else JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content
 
     suspend fun subirVideo(archivo: java.io.File): String =
         withContext(Dispatchers.IO) {

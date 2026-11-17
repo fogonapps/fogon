@@ -11,14 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.fogonapps.identidad.*
 
 /** La app proporciona los nombres ya traducidos para el modo propio o ajeno. */
@@ -37,6 +35,7 @@ data class PerfilVista(
     /** El marco de la foto (ver [MarcoFoto]); "" = sin marco. */
     val marco: String = "",
     val nivel: Int = 0,
+    val insigniasNivel: List<String> = emptyList(),
     val abrirNivel: (() -> Unit)? = null,
 )
 
@@ -50,7 +49,6 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
     bajoNombre: @Composable ColumnScope.() -> Unit = {},
 ) {
     val f = FogonTema.actual
-    val descripcionNivel = androidx.compose.ui.res.stringResource(R.string.perfil_nivel, vista.nivel)
     Column(modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth()) {
             Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(96.dp).clip(forma(18.dp))
@@ -73,17 +71,10 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 InsigniaCuenta(vista.insignia, tamano = 16.dp)
-                Box(Modifier.sizeIn(minWidth = 40.dp, minHeight = 40.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .border(1.dp, f.tinta1, androidx.compose.foundation.shape.CircleShape)
-                    .then(if (vista.abrirNivel != null) Modifier.clickable(onClick = vista.abrirNivel) else Modifier)
-                    .padding(6.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Text(vista.nivel.toString(), fontFamily = Puntos, fontSize = 22.sp, color = f.tinta1,
-                        modifier = Modifier.semantics { contentDescription = descripcionNivel })
-                }
             }
             bajoNombre()
         }
+        BloqueNivel(vista)
     }
 }
 

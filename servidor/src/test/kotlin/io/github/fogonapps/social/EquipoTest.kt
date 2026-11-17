@@ -220,6 +220,8 @@ class EquipoTest {
     private data class Ruta(val metodo: HttpMethod, val ruta: String, val permiso: String, val cuerpo: (String) -> String = { "" })
     private val rutas = listOf(
         Ruta(HttpMethod.Get, "casos", "ver_reportes"),
+        Ruta(HttpMethod.Get, "mercado", "revisar_mercado"),
+        Ruta(HttpMethod.Post, "mercado/123", "revisar_mercado", { """{"accion":"aprobar"}""" }),
         Ruta(HttpMethod.Post, "decidir", "sancionar", { """{"que":"cuenta","objeto":"destino","decision":"sin_falta"}""" }),
         Ruta(HttpMethod.Get, "frases", "gestionar_frases"),
         Ruta(HttpMethod.Put, "frases", "gestionar_frases", { """{"texto":"Una frase de prueba","idioma":"es"}""" }),
@@ -246,7 +248,10 @@ class EquipoTest {
         for (rol in listOf("principal", "administrador", "moderador", "equipo", "")) Entorno().use { e ->
             val a = e.alta("actora"); val destino = e.alta("destino"); e.rol(a, rol)
             val pub = e.pub(destino)
+            val arte = e.s.subirImagen(destino.id, jpegDePrueba()).nombre
+            val articulo = e.s.mercado.publicar(destino.id, PublicarMercado("publicar_prueba", arte, "arte", "banner", 600))
             e.b.usar {
+                cambiar("UPDATE mercado SET id=123 WHERE id=?", articulo.id)
                 cambiar("UPDATE publicaciones SET id = 123 WHERE id = ?", pub)
                 cambiar("INSERT INTO comentarios(id, pub, cuenta, texto, cuando) VALUES(123,123,?, 'Texto', ?)", destino.id, e.reloj)
             }
@@ -278,7 +283,7 @@ class EquipoTest {
                 }
                 // La matriz no debe olvidar rutas al crecer la API.
                 val fuente = File("src/main/kotlin/io/github/fogonapps/social/Principal.kt").readText()
-                val declaradas = Regex("(get|put|post|delete)\\(\"/admin/([^\"]+)\"").findAll(fuente).map { it.groupValues[1].uppercase() to it.groupValues[2].replace("{clave}", "prueba") }.toSet()
+                val declaradas = Regex("(get|put|post|delete)\\(\"/admin/([^\"]+)\"").findAll(fuente).map { it.groupValues[1].uppercase() to it.groupValues[2].replace("{clave}", "prueba").replace("{id}", "123") }.toSet()
                 assertEquals(declaradas, rutas.map { it.metodo.value to it.ruta }.toSet())
             }
         }

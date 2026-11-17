@@ -105,8 +105,8 @@ private fun CampoEquipo(valor: String, cambiar: (String) -> Unit, etiqueta: Int)
         label = { Text(stringResource(etiqueta)) }, shape = forma(18.dp))
 }
 
-private val permisosEquipo = listOf("ver_reportes", "sancionar", "sancion_grave", "cerrar_cuentas", "moderar_comentarios", "gestionar_publicaciones", "gestionar_frases", "gestionar_usuarios", "asignar_equipo", "ver_registro")
-private val nombresPermisos = listOf(R.string.social_equipo_p_reportes, R.string.social_equipo_p_sancionar, R.string.social_equipo_p_grave, R.string.social_equipo_p_cerrar, R.string.social_equipo_p_comentarios, R.string.social_equipo_p_publicaciones, R.string.social_equipo_p_frases, R.string.social_equipo_p_usuarios, R.string.social_equipo_p_equipo, R.string.social_equipo_p_registro)
+private val permisosEquipo = listOf("ver_reportes", "sancionar", "sancion_grave", "cerrar_cuentas", "moderar_comentarios", "gestionar_publicaciones", "gestionar_frases", "gestionar_usuarios", "asignar_equipo", "ver_registro", "revisar_mercado")
+private val nombresPermisos = listOf(R.string.social_equipo_p_reportes, R.string.social_equipo_p_sancionar, R.string.social_equipo_p_grave, R.string.social_equipo_p_cerrar, R.string.social_equipo_p_comentarios, R.string.social_equipo_p_publicaciones, R.string.social_equipo_p_frases, R.string.social_equipo_p_usuarios, R.string.social_equipo_p_equipo, R.string.social_equipo_p_registro, R.string.social_mercado_revisar)
 @Composable
 private fun nombrePermiso(permiso: String): String = permisosEquipo.indexOf(permiso).takeIf { it >= 0 }?.let { stringResource(nombresPermisos[it]) } ?: permiso
 @Composable

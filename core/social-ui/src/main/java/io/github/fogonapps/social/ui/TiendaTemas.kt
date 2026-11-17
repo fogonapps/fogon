@@ -1,5 +1,7 @@
 package io.github.fogonapps.social.ui
 
+import coil3.network.httpHeaders
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
@@ -96,6 +98,7 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
     LaunchedEffect(usuario) { vm.red.cargarTemas() }
     val f = FogonTema.actual
     var abierta by remember { mutableStateOf(false) }
+    var mercado by remember { mutableStateOf(false) }
     Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(20.dp)).background(f.superficie).clickable { abierta = true }.padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         IconoChispa(28.dp)
@@ -105,6 +108,9 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
         }
         IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
+    BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.padding(horizontal = 16.dp))
+    EquiparComprados(vm)
+    if (mercado) Mercado(vm) { mercado = false }
     if (abierta) TiendaTemas(vm) { abierta = false }
 }
 
@@ -118,6 +124,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val paquetes by vm.red.paquetesWompi.collectAsStateWithLifecycle()
+    val chispasDeRegalo by vm.red.regaloWompi.collectAsStateWithLifecycle()
     val desplazamiento = rememberScrollState()
     var posicionEscaparates by remember { mutableIntStateOf(-1) }
     var alinearEntrada by remember(escaparatesExtra, paquetes) { mutableStateOf(escaparatesExtra) }
@@ -148,6 +155,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
     var errorRegalo by remember { mutableStateOf<String?>(null) }
     var destinatario by remember { mutableStateOf("") }
     var pestana by remember { mutableStateOf(0) }
+    var mercado by remember { mutableStateOf(false) }
+    if (mercado) Mercado(vm) { mercado = false }
     LaunchedEffect(Unit) { vm.red.cargarTemas() }
     if (regalo != null) androidx.compose.material3.AlertDialog(
         onDismissRequest = { regalo = null },
@@ -178,6 +187,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
             // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi).
             io.github.fogonapps.identidad.DeslizarParaRecargar({ vm.red.cargarTemas(); if (pagosExternos) vm.red.cargarPaquetesWompi() }, Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.fillMaxWidth())
                 // Saldo de la cuenta.
                 Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
@@ -189,7 +199,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                 if (pagosExternos && paquetes.isNotEmpty()) {
                     Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
                     paquetes.forEach { paquete ->
-                        BotonRiso(stringResource(R.string.social_wompi_paquete, formatoColombiano(paquete), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
+                        BotonRiso(chispasDeRegalo[paquete]?.let { extra -> stringResource(R.string.social_wompi_paquete_regalo, formatoColombiano(paquete), formatoColombiano(extra), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)) }
+                            ?: stringResource(R.string.social_wompi_paquete, formatoColombiano(paquete), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
                             comprando = true
                             errorPago = false
                             vm.red.comprarChispas(paquete) { url ->
@@ -218,6 +229,13 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                     Pildora(stringResource(R.string.social_tienda_fondos), acento = pestana == 0) { pestana = 0 }
                     Pildora(stringResource(R.string.social_tienda_marcos), acento = pestana == 1) { pestana = 1 }
                     Pildora(stringResource(R.string.social_tienda_banners), acento = pestana == 2) { pestana = 2 }
+                }
+                if (pestana == 2) {
+                    val item = "portada:propia"
+                    Text(TemasPerfil.nombre(item), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.social_precio_pesos, formatoColombiano(10000), formatoColombiano(100000)))
+                    if (item in temas.reclamados) PortadaPropia(vm)
+                    else BotonRiso(stringResource(R.string.social_tienda_comprar, 10000), { vm.red.reclamarTema(item) }, habilitado = temas.chispas >= 10000)
                 }
                 val lista = when (pestana) { 0 -> listOf("") + TemasPerfil.FONDOS; 1 -> listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }; else -> TemasPerfil.BANNERS.keys.map { "banner:$it" } }
                 lista.chunked(2).forEach { fila ->
@@ -253,9 +271,19 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
 
 /** La portada (banner) de un perfil ajeno, llenando su marco (para las apps sin cargador de imágenes propio). */
 @Composable
-fun PortadaPerfilRed(url: String, modifier: Modifier = Modifier) {
+fun PortadaPerfilRed(url: String, modifier: Modifier = Modifier, vm: InterfazSocial? = null) {
     if (url.startsWith("banner:")) { BannerPerfil(url.removePrefix("banner:"), modifier); return }
-    if (url.isNotBlank()) coil3.compose.AsyncImage(url, null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+    if (url.isBlank()) return
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val propia = Regex("[A-Za-z0-9_-]{22}").matches(url)
+    val cabeceras = if (propia) vm?.cabeceras().orEmpty() else emptyMap()
+    val solicitud = remember(url, cabeceras) {
+        coil3.request.ImageRequest.Builder(contexto)
+            .data(if (propia) io.github.fogonapps.social.ClienteSocial.imagen(url) else url)
+            .httpHeaders(coil3.network.NetworkHeaders.Builder().apply { cabeceras.forEach { (k, v) -> set(k, v) } }.build())
+            .memoryCachePolicy(coil3.request.CachePolicy.DISABLED).diskCachePolicy(coil3.request.CachePolicy.DISABLED).build()
+    }
+    coil3.compose.AsyncImage(solicitud, null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
 }
 
 /** Las cifras sociales de un perfil ajeno (seguidores y seguidos), las mismas en las cuatro apps. */
@@ -269,3 +297,34 @@ internal fun formatoColombiano(valor: Int): String = java.text.NumberFormat.getI
 
 /** En Google Play no se ofrecen pagos fuera de la tienda. */
 internal fun ofrecePagosExternos(tiendaPlay: Boolean): Boolean = !tiendaPlay
+
+/** Accesos a lo adquirido, junto a la tienda en todos los editores. */
+@Composable
+private fun EquiparComprados(vm: InterfazSocial) {
+    val temas by vm.red.temas.collectAsStateWithLifecycle()
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            R.string.social_tienda_fondos to (listOf("") + temas.reclamados.filter { it in TemasPerfil.FONDOS }),
+            R.string.social_tienda_marcos to (listOf("marco:") + temas.reclamados.filter { it.startsWith("marco:") }),
+        ).forEach { (titulo, items) ->
+            Text(stringResource(titulo), style = MaterialTheme.typography.titleSmall)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items.forEach { item ->
+                    val id = item.removePrefix("banner:").removePrefix("marco:")
+                    val puesto = item == temas.banner || (!item.startsWith("banner:") && !item.startsWith("marco:") && item == temas.puesto) || (item.startsWith("marco:") && id == temas.marco)
+                    Column(Modifier.width(128.dp)) {
+                        when {
+                            item.startsWith("banner:") -> BannerPerfil(id, Modifier.fillMaxWidth().height(48.dp))
+                            item.startsWith("marco:") -> MuestraMarco(id, Modifier.fillMaxWidth())
+                            else -> MuestraTema(id, Modifier.fillMaxWidth())
+                        }
+                        val nombre = if (item.startsWith("banner:")) nombreBanner(id) else TemasPerfil.nombre(id)
+                        if (item in temas.reclamados) IconoRiso(IconosFogon.Chulo, stringResource(io.github.fogonapps.perfil.R.string.perfil_articulo_comprado), tamano = 16.dp)
+                        BotonSecundario(nombre, { vm.red.ponerTema(item) }, habilitado = !puesto)
+                    }
+                }
+            }
+        }
+        if ("portada:propia" in temas.reclamados) PortadaPropia(vm)
+    }
+}

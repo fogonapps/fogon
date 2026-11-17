@@ -1,5 +1,8 @@
 package io.github.fogonapps.perfil
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -54,7 +57,7 @@ object TemasPerfil {
     val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna")
     /** Los precios en chispas (los mismos del servidor, que es el que cobra). */
     val PRECIOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
-        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 }
+        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 10000)
 
     fun estilo(tema: String): EstiloPerfil? = when (tema) {
         "nieve" -> EstiloPerfil(Color(0xFF0E1A27), Color(0xA61A2B3D), Color(0xFFE8F1FA), Color(0xFF9DB4CC), Color(0xFF7FC4FF), Color(0xFF0E1A27), Color(0x557FA8D0))
@@ -70,7 +73,7 @@ object TemasPerfil {
 
     @Composable
     fun nombre(tema: String): String = stringResource(when (tema) {
-        "nieve" -> R.string.tema_nieve; "carmesi" -> R.string.tema_carmesi; "niebla" -> R.string.tema_niebla; "ojos" -> R.string.tema_ojos
+        "portada:propia" -> R.string.portada_propia; "nieve" -> R.string.tema_nieve; "carmesi" -> R.string.tema_carmesi; "niebla" -> R.string.tema_niebla; "ojos" -> R.string.tema_ojos
         "atardecer" -> R.string.tema_atardecer; "ciudad" -> R.string.tema_ciudad; "selva" -> R.string.tema_selva; "cosmos" -> R.string.tema_cosmos
         "doble" -> R.string.marco_doble; "llamas" -> R.string.marco_llamas; "pixel" -> R.string.marco_pixel; "estrellas" -> R.string.marco_estrellas
         "espinas" -> R.string.marco_espinas; "luna" -> R.string.marco_luna
@@ -202,6 +205,10 @@ private fun DrawScope.escena(tema: String, e: EstiloPerfil, t: Float) {
 /** El marco de la foto de perfil, dibujado alrededor de una foto de [tamano] (va encima, centrado). */
 @Composable
 fun MarcoFoto(marco: String, tamano: Dp, modifier: Modifier = Modifier) {
+    if (Regex("m[1-9][0-9]*").matches(marco)) {
+        ArteMercado(marco.drop(1), modifier.size(tamano + 22.dp), androidx.compose.ui.layout.ContentScale.Fit)
+        return
+    }
     if (marco !in TemasPerfil.MARCOS) return
     val f = FogonTema.actual
     val acento = f.tinta1; val texto = f.texto
@@ -282,20 +289,25 @@ fun MuestraMarco(marco: String, modifier: Modifier = Modifier) {
 /** El arte del banner; si el id no existe, papel con puntos de la identidad. */
 @Composable
 fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
+    if (Regex("m[1-9][0-9]*").matches(id)) { ArteMercado(id.drop(1), modifier); return }
     val recurso = TemasPerfil.RECURSOS_BANNER[id] ?: 0
     val f = FogonTema.actual
     if (recurso != 0) androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(recurso), null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
     else Box(modifier.background(f.fondo).haloPuntos(f.textoSuave.copy(alpha = 0.3f)))
 }
 
-/** Selección de los banners gratuitos; los adquiridos se eligen también desde la tienda. */
+/** Banners gratis y adquiridos, con una marca en los comprados. */
 @Composable
-fun BannersGratis(onElegir: (String) -> Unit) {
-    TemasPerfil.BANNERS.filterValues { it == 0 }.keys.chunked(3).forEach { fila ->
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            fila.forEach { id ->
-                androidx.compose.material3.TextButton(onClick = { onElegir("banner:$id") }, modifier = Modifier.weight(1f)) {
-                    Column { BannerPerfil(id, Modifier.fillMaxWidth().height(40.dp)); Text(nombreBanner(id), color = FogonTema.actual.texto) }
+fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyList()) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        (TemasPerfil.BANNERS.filter { (id, precio) -> precio == 0 || "banner:$id" in reclamados }.keys + reclamados.filter { Regex("banner:m[1-9][0-9]*").matches(it) }.map { it.removePrefix("banner:") }).forEach { id ->
+            androidx.compose.material3.TextButton(onClick = { onElegir("banner:$id") }, modifier = Modifier.width(128.dp)) {
+                Column {
+                    BannerPerfil(id, Modifier.fillMaxWidth().height(40.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if ("banner:$id" in reclamados) IconoRiso(IconosFogon.Chulo, stringResource(R.string.perfil_articulo_comprado), tamano = 16.dp)
+                        Text(if (id.startsWith("m") && id.drop(1).toLongOrNull() != null) stringResource(R.string.perfil_banner_comprado) else nombreBanner(id), color = FogonTema.actual.texto)
+                    }
                 }
             }
         }
@@ -324,3 +336,13 @@ fun nombreBanner(id: String): String = stringResource(when (id) {
     "pizzeria" -> R.string.banner_pizzeria
     else -> R.string.tema_clasico
 })
+
+/** Solo el servidor de Fogón entrega el arte aprobado; sin caché para respetar retiros por derechos. */
+@Composable
+private fun ArteMercado(id: String, modifier: Modifier, escala: androidx.compose.ui.layout.ContentScale = androidx.compose.ui.layout.ContentScale.Crop) {
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val solicitud = androidx.compose.runtime.remember(id) { coil3.request.ImageRequest.Builder(contexto)
+        .data("https://fogonapps.duckdns.org/v1/mercado/$id/imagen")
+        .memoryCachePolicy(coil3.request.CachePolicy.DISABLED).diskCachePolicy(coil3.request.CachePolicy.DISABLED).build() }
+    coil3.compose.AsyncImage(solicitud, null, modifier, contentScale = escala)
+}

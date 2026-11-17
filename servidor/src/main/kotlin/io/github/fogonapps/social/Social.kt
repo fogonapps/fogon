@@ -74,6 +74,7 @@ data class Comentario(val id: Long, val autor: Persona, val texto: String, val c
 @Serializable
 data class PerfilVisto(
     val nivel: Int,
+    val insigniasNivel: List<String>,
     val persona: Persona, val bio: String, val portada: String, val enlaces: List<String>,
     /** Solo las partes que este lector puede ver (nada si la cuenta es privada y no la sigue). */
     val partes: Map<String, JsonElement>,
@@ -187,7 +188,7 @@ object TemasPerfil {
 
     val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
     val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
-    fun precio(item: String): Int? = if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    fun precio(item: String): Int? = if (item == "portada:propia") 10000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
     const val BIENVENIDA = 1500
     const val PESOS_POR_CHISPA = 10
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
@@ -222,6 +223,7 @@ class Social(
 ) {
 
     val escaparates = Escaparates(this, b, ahora)
+    val mercado = Mercado(b, this, ahora)
 
     val empujes = Empujes(b, ahora, mensajero)
 
@@ -430,8 +432,11 @@ class Social(
             cambiar("DELETE FROM publicaciones WHERE estado = 'retirado' AND retirado_hasta <= ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", ahora())
             imagenesVencidas.forEach { nombre ->
                 if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
-                    leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+                    leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
+                    leer("SELECT 1 FROM mercado WHERE imagen=?", nombre) { 1 }.isEmpty() &&
+                    leer("SELECT 1 FROM cuentas WHERE instr(perfil, ?) > 0", nombre) { 1 }.isEmpty()) {
                     java.io.File(dirImagenes, "$nombre.jpg").delete()
+                    java.io.File(dirImagenes, "$nombre.png").delete()
                     cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
                 }
             }
@@ -811,7 +816,7 @@ class Social(
             cambiar("DELETE FROM cuentas WHERE id = ?", yo)
         }
         java.io.File(dirFotos, "$yo.jpg").delete()
-        imagenes.forEach { java.io.File(dirImagenes, "$it.jpg").delete() }
+        imagenes.forEach { java.io.File(dirImagenes, "$it.jpg").delete(); java.io.File(dirImagenes, "$it.png").delete() }
         videos.forEach { java.io.File(dirVideos, "$it.mp4").delete() }
     }
 
@@ -849,6 +854,7 @@ class Social(
 
     @Synchronized
     fun subirPerfil(yo: Long, p: PerfilSubido, app: String = "cajon") {
+        val portadaAnterior = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)).portada }.single() }
         AppsSocial.validar(app)
         val anterior = miCuenta(yo).nombre
         val nombre = p.nombre.trim().take(40)
@@ -867,6 +873,12 @@ class Social(
             if (cambia) cambiar("INSERT INTO apodo_cambios VALUES(?,?)", yo, ahora())
             cambiar("UPDATE cuentas SET nombre = ?, perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", limpio.nombre, json, ahora(), yo)
         }
+        limpiarPortada(yo, portadaAnterior)
+        if (p.portada != limpio.portada) limpiarPortada(yo, p.portada)
+    }
+
+    private fun limpiarPortada(yo: Long, nombre: String) {
+        if (Regex("[A-Za-z0-9_-]{22}").matches(nombre) && b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", nombre, yo) { 1 }.isNotEmpty() }) borrarImagenSuelta(nombre)
     }
 
     fun revisionPerfil(yo: Long): Long = b.usar { leer("SELECT cambio FROM cuentas WHERE id = ?", yo) { it.getLong(1) }.single() }
@@ -937,7 +949,7 @@ class Social(
         val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ? AND p.app = ?", id, app) { it.getInt(1) }.first() }
         val guardadas = relacion == "yo" || p.partes["guardadas"]?.let { ve(it.visibilidad) } == true
         return PerfilVisto(
-            escaparates.cupo(id).nivel, persona(id), p.bio, p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
+            escaparates.cupo(id).nivel, escaparates.cupo(id).insignias, persona(id), p.bio, if (cerrada && !p.portada.startsWith("banner:")) "" else p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
             pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
         )
     }
@@ -950,14 +962,14 @@ class Social(
 
     /* ----- Imágenes de las publicaciones ----- */
 
-    /** Guarda una imagen (JPEG de hasta 900 KB; la app la achica antes) y devuelve su nombre, para ponerlo en la publicación. */
+    /** Guarda una imagen (JPEG o PNG de hasta 900 KB; PNG conserva alfa y admite hasta 2.048 px por lado) y devuelve su nombre, para ponerlo en la publicación. */
     fun subirImagen(yo: Long, bytes: ByteArray): ImagenSubida {
-        val limpia = jpegLimpio(bytes, 900_000)
+        val limpia = if (esPng(bytes)) pngLimpio(bytes) else jpegLimpio(bytes, 900_000)
         val cuantas = b.usar { leer("SELECT COUNT(*) FROM imagenes WHERE cuenta = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() }
         if (cuantas >= 100) throw Problema(429, "despacio")
         val nombre = Base.tokenNuevo().take(22)
         dirImagenes.mkdirs()
-        java.io.File(dirImagenes, "$nombre.jpg").writeBytes(limpia)
+        java.io.File(dirImagenes, "$nombre.${if (esPng(limpia)) "png" else "jpg"}").writeBytes(limpia)
         b.usar { cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES(?,?,?)", nombre, yo, ahora()) }
         return ImagenSubida(nombre)
     }
@@ -965,6 +977,7 @@ class Social(
     /** Una imagen por su nombre (que no se adivina: solo la tiene quien vio la publicación). */
     fun imagen(nombre: String, lector: Long? = null, token: String? = null): ByteArray {
         if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
+        if (b.usar { leer("SELECT 1 FROM mercado WHERE imagen=? AND estado='derechos'", nombre) { 1 }.isNotEmpty() }) throw Problema(404, "no_existe")
         val estados = b.usar { leer("SELECT estado FROM publicaciones WHERE estado != 'visible' AND cuenta = (SELECT cuenta FROM imagenes WHERE nombre = ?) AND instr(datos, ?) > 0", nombre, nombre) { it.getString(1) } +
             leer("SELECT estado FROM historias WHERE estado != 'visible' AND cuenta = (SELECT cuenta FROM imagenes WHERE nombre = ?) AND instr(datos, ?) > 0", nombre, nombre) { it.getString(1) } }
         if ("preservado" in estados) throw Problema(404, "no_existe")
@@ -977,11 +990,15 @@ class Social(
         val autor = b.usar { leer("SELECT cuenta FROM imagenes WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }
         // Las fotos subidas solo para un escaparate se ven con las mismas reglas que el perfil; las demás, como siempre.
         val enEscaparate = b.usar { leer("SELECT 1 FROM escaparates WHERE tipo = 'galeria' AND instr(datos, ?) > 0", nombre) { 1 }.isNotEmpty() }
-        if (enEscaparate && lector != autor && !escaparates.permiteImagen(nombre, lector)) {
+        val portadaDe = b.usar { leer("SELECT usuario, perfil FROM cuentas WHERE id = ?", autor) {
+            it.getString(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2)).portada
+        }.firstOrNull() }?.takeIf { it.second == nombre }?.first
+        val permitePortada = portadaDe != null && try { !verPerfil(lector, portadaDe).cerrada } catch (_: Problema) { false }
+        if ((enEscaparate || portadaDe != null) && lector != autor && !permitePortada && !escaparates.permiteImagen(nombre, lector)) {
             val publicadas = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND instr(datos, ?) > 0", autor, nombre) { it.getLong(1) } }
             if (publicadas.none { publicacion(lector, it) != null }) throw Problema(404, "no_existe")
         }
-        return java.io.File(dirImagenes, "$nombre.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "no_existe")
+        return (java.io.File(dirImagenes, "$nombre.png").takeIf { it.exists() } ?: java.io.File(dirImagenes, "$nombre.jpg")).takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "no_existe")
     }
 
     @Synchronized
@@ -1656,7 +1673,7 @@ class Social(
     /** Quita de todos los perfiles las portadas que no son banners de Fogón. Se corre al arrancar; no hace nada la segunda vez. */
     fun quitarPortadasAjenas(): Int = b.transaccion {
         val ajenas = leer("SELECT id, perfil FROM cuentas WHERE perfil LIKE '%\"portada\":\"%'") { it.getLong(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2)) }
-            .filter { (_, p) -> p.portada.isNotEmpty() && !p.portada.startsWith("banner:") }
+            .filter { (id, p) -> p.portada.isNotEmpty() && !bannerPermitido(id, p.portada) }
         ajenas.forEach { (id, p) -> cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), p.copy(portada = "")), id) }
         ajenas.size
     }
@@ -1664,8 +1681,12 @@ class Social(
     /** Compatibilidad con clientes publicados: ya no concede chispas. */
     fun cobrarDiario(yo: Long) { chispas(yo) }
 
-    /** Solo banners del catálogo: gratis, o comprados por esta cuenta. Ninguna otra imagen. */
+    /** Banners del catálogo o del mercado que esta cuenta compró o creó. */
     private fun bannerPermitido(yo: Long, valor: String): Boolean =
+        mercado.permitido(yo, valor) ||
+        (Regex("[A-Za-z0-9_-]{22}").matches(valor) && b.usar {
+            leer("SELECT 1 FROM imagenes i JOIN temas t ON t.cuenta = i.cuenta WHERE i.nombre = ? AND i.cuenta = ? AND t.tema = 'portada:propia'", valor, yo) { 1 }.isNotEmpty()
+        }) ||
         valor.isEmpty() || (valor.startsWith("banner:") &&
             TemasPerfil.BANNERS[valor.removePrefix("banner:")]?.let { precio -> precio == 0 || b.usar {
                 leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, valor) { 1 }.isNotEmpty()
@@ -1681,6 +1702,15 @@ class Social(
     }
 
     fun regalar(yo: Long, regalo: Regalo) {
+        mercado.idItem(regalo.item)?.let { id ->
+            val para = idDe(regalo.para.trim().removePrefix("@"))
+            if (para == yo) throw Problema(400, "a_si_mismo")
+            b.transaccion {
+                val entregado = mercado.comprar(yo, id, CompraMercado("regalo_" + Base.huella("${regalo.item}:$para")), para, bloqueado(yo, para) || bloqueado(para, yo))
+                if (entregado) avisar(para, yo, "regalo", regalo.item)
+            }
+            return
+        }
         val precio = TemasPerfil.precio(regalo.item)?.takeIf { it > 0 } ?: throw Problema(400, "item")
         val para = idDe(regalo.para.trim().removePrefix("@"))
         if (para == yo) throw Problema(400, "a_si_mismo")
@@ -1698,6 +1728,7 @@ class Social(
 
     /** Comprar algo de la tienda con chispas (si alcanzan y no lo tiene ya). */
     fun reclamarTema(yo: Long, tema: String) {
+        mercado.idItem(tema)?.let { mercado.comprar(yo, it, CompraMercado("compra_" + Base.huella(tema))); return }
         val precio = TemasPerfil.precio(tema) ?: throw Problema(404, "no_existe")
         chispas(yo)
         b.transaccion {
@@ -1710,17 +1741,27 @@ class Social(
     }
 
     /** Ponerse un fondo o un marco que se tiene ("" quita el fondo; "marco:" quita el marco). */
-    fun ponerTema(yo: Long, tema: String): Unit = b.transaccion {
-        if (tema.startsWith("escaparate:")) throw Problema(400, "item")
-        if (tema.startsWith("banner:")) {
-            val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single() }
-            if (!bannerPermitido(yo, tema)) throw Problema(400, "banner_no_permitido")
-            b.usar { cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(portada = tema)), ahora(), yo) }
-            return@transaccion
+    @Synchronized
+    fun ponerTema(yo: Long, tema: String) {
+        val esPortada = tema.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(tema)
+        if (esPortada && !bannerPermitido(yo, tema)) {
+            limpiarPortada(yo, tema)
+            throw Problema(400, "banner_no_permitido")
         }
-        val esMarco = tema.startsWith("marco:")
-        if (tema.isNotEmpty() && tema != "marco:" && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
-        b.usar { cambiar(if (esMarco) "UPDATE cuentas SET marco = ? WHERE id = ?" else "UPDATE cuentas SET tema = ? WHERE id = ?", if (esMarco) tema.removePrefix("marco:") else tema, yo) }
+        b.transaccion {
+            if (tema.startsWith("escaparate:")) throw Problema(400, "item")
+            if (tema.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(tema)) {
+                val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single() }
+                b.usar { cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(portada = tema)), ahora(), yo) }
+                limpiarPortada(yo, perfil.portada)
+                return@transaccion
+            }
+            if (tema == "portada:propia") throw Problema(400, "item")
+            if (mercado.idItem(tema) != null && !mercado.permitido(yo, tema)) throw Problema(403, "sin_tema")
+            val esMarco = tema.startsWith("marco:")
+            if (tema.isNotEmpty() && tema != "marco:" && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
+            b.usar { cambiar(if (esMarco) "UPDATE cuentas SET marco = ? WHERE id = ?" else "UPDATE cuentas SET tema = ? WHERE id = ?", if (esMarco) tema.removePrefix("marco:") else tema, yo) }
+        }
     }
 
     /** Pone (o quita, con "") el cumpleaños: solo día y mes ("MM-DD"). */
@@ -1906,12 +1947,15 @@ class Social(
         imagen?.let(::borrarImagenSuelta)
     }
 
-    /** Borra una imagen que ya no usa ninguna publicación ni historia. */
+    /** Borra una imagen que ya no usan publicaciones, historias, escaparates ni mercado. */
     internal fun borrarImagenSuelta(nombre: String) = b.usar {
         if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
             leer("SELECT 1 FROM historias WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
-            leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+            leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
+            leer("SELECT 1 FROM mercado WHERE imagen=?", nombre) { 1 }.isEmpty() &&
+            leer("SELECT 1 FROM cuentas WHERE instr(perfil, ?) > 0", nombre) { 1 }.isEmpty()) {
             java.io.File(dirImagenes, "$nombre.jpg").delete()
+            java.io.File(dirImagenes, "$nombre.png").delete()
             cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
         }
     }
@@ -2131,7 +2175,8 @@ class Social(
      * se oculta mientras se revisa (su autor lo sigue viendo).
      */
     fun reportar(yo: Long?, r: NuevoReporte) {
-        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen", "lugar", "historia")) throw Problema(400, "que")
+        if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen", "lugar", "historia", "mercado")) throw Problema(400, "que")
+        if (r.que == "mercado" && mercado.detalle(yo, r.objeto.toLongOrNull() ?: throw Problema(400, "objeto")).estado != "aprobado") throw Problema(404, "no_existe")
         if (r.que == "lugar" && verLugar(r.objeto.toLongOrNull() ?: throw Problema(400, "objeto")) == null) throw Problema(404, "no_existe")
         if (r.que == "imagen" && !urlImagenValida(r.objeto)) throw Problema(400, "url")
         if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= 10)
@@ -2197,6 +2242,7 @@ class Social(
     private fun verReportado(que: String, objeto: String, motivos: List<String>): Triple<String, Long?, Boolean> = b.usar {
         val id = objeto.toLongOrNull()
         when (que) {
+            "mercado" -> leer("SELECT nombre || ' · ' || tipo,cuenta,estado FROM mercado WHERE id=?", id) { Triple(it.getString(1), it.getLong(2), it.getString(3) != "aprobado") }.firstOrNull()
             "publicacion" -> leer("SELECT datos, cuenta, oculta FROM publicaciones WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "historia" -> leer("SELECT datos, cuenta, oculta FROM historias WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
             "comentario" -> leer("SELECT texto, cuenta, oculto FROM comentarios WHERE id = ? AND estado != 'preservado'", id) { Triple(it.getString(1), it.getLong(2), it.getInt(3) == 1) }.firstOrNull()
@@ -2543,6 +2589,31 @@ class Social(
     private fun esJpeg(bytes: ByteArray, max: Int) {
         if (bytes.size > max) throw Problema(413, "muy_grande")
         if (bytes.size < 4 || bytes[0] != 0xFF.toByte() || bytes[1] != 0xD8.toByte()) throw Problema(415, "no_es_jpeg")
+    }
+
+    internal fun esPng(bytes: ByteArray) = bytes.size >= 8 && bytes.take(8).toByteArray().contentEquals(byteArrayOf(-119,80,78,71,13,10,26,10))
+
+    private fun pngLimpio(bytes: ByteArray): ByteArray {
+        if (bytes.size > 900_000) throw Problema(413, "muy_grande")
+        // Lee dimensiones antes de descomprimir para evitar imágenes bomba.
+        if (bytes.size < 24) throw Problema(415, "imagen")
+        val cabecera = java.nio.ByteBuffer.wrap(bytes)
+        val ancho = cabecera.getInt(16); val alto = cabecera.getInt(20)
+        if (ancho !in 1..2048 || alto !in 1..2048) throw Problema(415, "dimensiones")
+        val img = runCatching { javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(bytes)) }.getOrNull() ?: throw Problema(415, "imagen")
+        val limpia = java.awt.image.BufferedImage(ancho, alto, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        limpia.createGraphics().apply { drawImage(img, 0, 0, null); dispose() }
+        return java.io.ByteArrayOutputStream().also { javax.imageio.ImageIO.write(limpia, "png", it) }.toByteArray().also {
+            if (it.size > 900_000) throw Problema(413, "muy_grande")
+        }
+    }
+    internal fun validarImagenMercado(nombre: String, tipo: String) {
+        val png = java.io.File(dirImagenes, "$nombre.png")
+        val archivo = if (png.exists()) png else java.io.File(dirImagenes, "$nombre.jpg")
+        val img = runCatching { javax.imageio.ImageIO.read(archivo) }.getOrNull() ?: throw Problema(400, "imagen")
+        if (img.width !in 1..2048 || img.height !in 1..2048) throw Problema(400, "dimensiones")
+        if (tipo == "marco" && (!png.exists() || img.width != img.height || !img.colorModel.hasAlpha() ||
+                (0 until img.height).none { y -> (0 until img.width).any { x -> img.getRGB(x,y).ushr(24) < 255 } })) throw Problema(400, "marco_sin_alfa")
     }
 
     /**

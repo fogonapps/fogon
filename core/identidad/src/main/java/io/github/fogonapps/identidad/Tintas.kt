@@ -19,6 +19,9 @@ object Tintas {
     val Lima = Color(0xFFC8F560)
     val Cian = Color(0xFF00A0E9)
 
+    /** Acentos del aro de nivel. */
+    val Cafe = Color(0xFF926445)
+    val Dorado = Color(0xFFC49A32)
     /** La chispa: firma de Fogón en logros y récords. */
     val Chispa = Rojo
 }

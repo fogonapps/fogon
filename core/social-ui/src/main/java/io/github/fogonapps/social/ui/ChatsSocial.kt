@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,10 +64,11 @@ data class NavegacionChat(val conversacion: (String) -> Unit, val info: (String)
 @Composable
 fun rememberChat(vm: InterfazSocial): ChatSocial? {
     val ctx = LocalContext.current
+    val recursos by rememberUpdatedState(LocalResources.current)
     val red = vm.red as? RedApp ?: return null
     return remember(red) {
         red.chat(ctx) { codigo ->
-            val texto = ctx.getString(when (codigo) {
+            val texto = recursos.getString(when (codigo) {
                 "sin_llaves" -> R.string.social_chat_sin_llaves; "no_se_puede" -> R.string.social_chat_no_se_puede
                 "muy_grande" -> R.string.social_chat_muy_grande; "sticker_guardado" -> R.string.social_chat_sticker_guardado
                 "abre_cajon" -> R.string.social_chat_abre_cajon; else -> R.string.social_red_error

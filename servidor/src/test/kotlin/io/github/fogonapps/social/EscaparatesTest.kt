@@ -183,10 +183,14 @@ class EscaparatesTest {
         testApplication {
             application { fogonSocial(e.s) }
             fun nivel(cuerpo: String) = JsonSocial.parseToJsonElement(cuerpo).jsonObject.getValue("nivel").jsonPrimitive.int
-            assertEquals(0, nivel(client.get("/v1/perfiles/ana").bodyAsText()))
+            val sinInsignias = client.get("/v1/perfiles/ana").bodyAsText()
+            assertEquals(0, nivel(sinInsignias))
+            assertEquals(JsonArray(emptyList()), JsonSocial.parseToJsonElement(sinInsignias).jsonObject.getValue("insigniasNivel"))
             e.s.subirPerfil(e.yo, PerfilSubido(partes = mapOf("insignias" to Parte(Vis.PUBLICA,
                 JsonArray(listOf("cine", "series", "anime").map(::JsonPrimitive))))))
-            assertEquals(3, nivel(client.get("/v1/perfiles/ana").bodyAsText()))
+            val conInsignias = client.get("/v1/perfiles/ana").bodyAsText()
+            assertEquals(3, nivel(conInsignias))
+            assertEquals(setOf("cine", "series", "anime"), JsonSocial.parseToJsonElement(conInsignias).jsonObject.getValue("insigniasNivel").jsonArray.map { it.jsonPrimitive.content }.toSet())
         }
     }
 

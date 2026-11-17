@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.LinearProgressIndicator
@@ -336,7 +337,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
     val vistaBase = e.aPerfilVista(secciones = secciones, contadores = contadores, cuenta = cuenta).copy(nombre = e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) })
     PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vistaBase, interfazSocial(vm)).copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
         navegacion = navegacion,
-        portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
+        portada = { if (p.portada.isNotBlank()) if (Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize(), interfazSocial(vm)) else ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             Box {
@@ -473,12 +474,12 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
         }
         // La misma franja que en el perfil (110 dp de alto), para que lo que se ve aquí sea lo que se ve allá.
         Box(Modifier.fillMaxWidth().height(110.dp).clip(forma(24.dp)).vidrio(forma(24.dp)).haloPuntos(f.tinta2.copy(alpha = 0.35f))) {
-            if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize())
+            if (p.portada.isNotBlank()) if (Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize(), interfazSocial(vm)) else ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize())
         }
 
-        if (cuenta == null) io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil)
+        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados)
         if (p.portada.isNotBlank() && !p.portada.startsWith("banner:")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BotonSecundario(stringResource(R.string.ajustar_portada), { vm.abrir(Pantalla.AjustarImagenPerfil(true)) }, Modifier.weight(1f))
+            if (!Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) BotonSecundario(stringResource(R.string.ajustar_portada), { vm.abrir(Pantalla.AjustarImagenPerfil(true)) }, Modifier.weight(1f))
             BotonSecundario(stringResource(R.string.quitar_portada), { vm.quitarImagenPerfil(true) }, Modifier.weight(1f))
         }
     }
@@ -620,7 +621,7 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
 fun PortadaPerfil(vm: CajonViewModel, e: Estado) {
     Cabecera(stringResource(R.string.foto_y_portada), vm::cerrar)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil)
+        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados)
         io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
     }
 }

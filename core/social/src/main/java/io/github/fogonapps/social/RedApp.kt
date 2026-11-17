@@ -238,7 +238,7 @@ open class RedApp(
             portada.isBlank() -> ""
             portada.startsWith("banner:") -> portada
             portada.startsWith("https://") -> portada
-            else -> ClienteSocial.imagen(cliente.subirImagen(android.util.Base64.decode(portada, android.util.Base64.DEFAULT)))
+            else -> cliente.subirImagen(android.util.Base64.decode(portada, android.util.Base64.DEFAULT))
         }
         if (!sesion.vigente(marca)) return@intentar
         val nueva = cliente.subirPerfilApp(CambioPerfilApp(r, IdentidadPerfil(nombre, bio, urlPortada)))

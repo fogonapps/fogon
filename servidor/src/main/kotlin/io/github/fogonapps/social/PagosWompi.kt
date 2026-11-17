@@ -15,8 +15,17 @@ import java.security.MessageDigest
 @Serializable data class PedidoWompi(val paquete: Int)
 @Serializable data class OrdenWompi(val referencia: String, val url: String)
 /** Paquetes de chispas a la venta. Sin valor por defecto: JsonSocial omite los valores por defecto y la app recibiría `{}`. */
-@Serializable data class PaquetesWompi(val paquetes: List<Int>)
-val PAQUETES_WOMPI = listOf(1000, 2000, 5000)
+/** Sin valores por defecto: JsonSocial los omitiría y la app recibiría `{}`. [regalo]: chispas extra por paquete. */
+@Serializable data class PaquetesWompi(val paquetes: List<Int>, val regalo: Map<String, Int>)
+/**
+ * Paquetes a la venta. La comisión de la pasarela tiene un cobro fijo por pago, que en paquetes chicos pesa mucho:
+ * el más chico es de 2.000 y los grandes traen chispas de regalo para que convenga comprar una sola vez.
+ */
+val PAQUETES_WOMPI = listOf(2000, 5000, 10000)
+val REGALO_WOMPI = mapOf(5000 to 500, 10000 to 1500)
+/** Lo que se acredita: también los paquetes que ya no se venden (órdenes viejas pendientes). */
+val PAQUETES_VALIDOS = PAQUETES_WOMPI + 1000
+fun ofertaWompi() = PaquetesWompi(PAQUETES_WOMPI, REGALO_WOMPI.mapKeys { it.key.toString() })
 
 class ConfiguracionWompi(val publica: String, val integridad: String, val eventos: String, val privada: String = "") {
     val ambiente = if (publica.startsWith("pub_prod_")) "prod" else "test"
@@ -160,13 +169,13 @@ class PagosWompi(private val base: Base, private val configuracion: Configuracio
             val (compra, registro) = orden
             val (acreditada, transaccion) = registro
             val (cuenta, paquete, guardado) = compra
-            if (paquete !in PAQUETES_WOMPI || guardado != paquete.toLong() * TemasPerfil.PESOS_POR_CHISPA * 100 || monto != guardado) return@transaccion rechazar("monto distinto")
+            if (paquete !in PAQUETES_VALIDOS || guardado != paquete.toLong() * TemasPerfil.PESOS_POR_CHISPA * 100 || monto != guardado) return@transaccion rechazar("monto distinto")
             if (acreditada && transaccion != id) return@transaccion rechazar("transacción distinta")
             if (leer("SELECT referencia FROM ordenes_pago WHERE transaccion=? AND referencia<>?", id, referencia) { it.getString(1) }.isNotEmpty()) return@transaccion rechazar("transacción ya utilizada")
             cambiar("UPDATE ordenes_pago SET estado=?,transaccion=?,acreditada=? WHERE referencia=?",
                 estado, id, if (acreditada || estado == "APPROVED") 1 else 0, referencia)
             if (estado == "APPROVED" && !acreditada) cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)",
-                cuenta, paquete, "wompi:$id", System.currentTimeMillis())
+                cuenta, paquete + (REGALO_WOMPI[paquete] ?: 0), "wompi:$id", System.currentTimeMillis())
             estado == "APPROVED" && !acreditada
         }
     }

@@ -107,4 +107,8 @@
     <string name="escaparate_app_cucha">la cucha</string>
     <string name="escaparate_app_alcancia">la alcancía</string>
     <string name="escaparate_firma">fogón · %1$s</string>
+    <string name="portada_propia">Cover with your photo</string>
+    <string name="perfil_nivel_sin_insignias">No badges contributing to this level yet.</string>
+    <string name="perfil_articulo_comprado">Purchased</string>
+    <string name="perfil_banner_comprado">Purchased cover</string>
 </resources>

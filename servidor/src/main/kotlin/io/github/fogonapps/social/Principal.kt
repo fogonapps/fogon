@@ -170,7 +170,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
 
     routing {
         route("/v1") {
-            get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(PaquetesWompi(PAQUETES_WOMPI)) }
+            get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(ofertaWompi()) }
             post("/pagos/wompi/orden") {
                 pagos.comprobar()
                 call.respond(pagos.orden(call.yo(), call.receive<PedidoWompi>().paquete))
@@ -330,7 +330,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             get("/imagenes/{nombre}") {
                 call.response.header("Cache-Control", "no-store")
-                call.respondBytes(social.imagen(call.parameters["nombre"] ?: "", call.lector(), call.token()), ContentType.Image.JPEG)
+                val bytes = social.imagen(call.parameters["nombre"] ?: "", call.lector(), call.token())
+                call.respondBytes(bytes, if (social.esPng(bytes)) ContentType.Image.PNG else ContentType.Image.JPEG)
             }
             get("/publicaciones/{id}") { call.respond(social.publicacion(call.lector(), call.id()) ?: throw Problema(404, "no_existe")) }
             delete("/publicaciones/{id}") { social.borrarPublicacion(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
@@ -407,6 +408,25 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/amigos") { call.respond(social.amigos(call.yo())) }
             get("/amigos/cumples") { call.respond(social.cumplesAmigos(call.yo())) }
             get("/cuenta/cumple") { call.respond(Cumple(social.miCumple(call.yo()))) }
+            get("/mercado") {
+                val q = call.request.queryParameters
+                call.respond(social.mercado.listar(call.lector(), q["tipo"].orEmpty(), q["orden"] ?: "nuevo", q["oficial"] == "true", q["pagina"]?.toIntOrNull() ?: 0))
+            }
+            get("/mercado/adquiridos") { call.respond(social.mercado.listar(call.yo(), pagina = call.request.queryParameters["pagina"]?.toIntOrNull() ?: 0, adquiridos = true)) }
+            get("/mercado/mios") { call.respond(social.mercado.listar(call.yo(), pagina = call.request.queryParameters["pagina"]?.toIntOrNull() ?: 0, mios = true)) }
+            post("/mercado") { call.respond(HttpStatusCode.Created, social.mercado.publicar(call.yo(), call.receive())) }
+            get("/mercado/{id}") { call.respond(social.mercado.detalle(call.lector(), call.id())) }
+            get("/mercado/{id}/imagen") {
+                call.response.header("Cache-Control", "no-store")
+                val bytes = social.mercado.imagen(call.id(), call.lector(), call.token())
+                call.respondBytes(bytes, if (social.esPng(bytes)) ContentType.Image.PNG else ContentType.Image.JPEG)
+            }
+            post("/mercado/{id}/comprar") { social.mercado.comprar(call.yo(), call.id(), call.receive()); call.respond(HttpStatusCode.NoContent) }
+            get("/admin/mercado") {
+                val yo = call.requiere("revisar_mercado")
+                call.respond(social.mercado.listar(yo, pagina = call.request.queryParameters["pagina"]?.toIntOrNull() ?: 0, revision = true))
+            }
+            post("/admin/mercado/{id}") { social.mercado.decidir(call.requiere("revisar_mercado"), call.id(), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             post("/tienda/regalar") { social.regalar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/perfil/{usuario}/escaparates") { call.respond(social.escaparates.ver(call.lector(), call.usuario())) }
             get("/cuenta/escaparates/fotos") { call.respond(social.escaparates.fotos(call.yo())) }

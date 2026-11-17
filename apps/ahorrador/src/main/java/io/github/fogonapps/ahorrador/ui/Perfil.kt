@@ -76,7 +76,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
                 io.github.fogonapps.identidad.BotonIconoSocial(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
             }
         },
-        portada = { ImagenLocal(portada, Modifier.matchParentSize()) },
+        portada = { if (Regex("[A-Za-z0-9_-]{22}").matches(portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(portada, Modifier.matchParentSize(), interfazCuenta(vm)) else ImagenLocal(portada, Modifier.matchParentSize()) },
         foto = {
             Box {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfaz) { FotoPerfilLocal(foto) }
@@ -135,7 +135,7 @@ fun EditarPerfil(vm: AhorradorViewModel, e: Estado) {
     val girar_selector5 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector5(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector5(listOf(r)) else manejar_selector5(null) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
-    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = ""; vm.imagenPerfil(false, "") },
@@ -181,7 +181,7 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     // Antes de usarla(s), el paso para girarlas.
     val girar_selector6 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector6(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector6(listOf(r)) else manejar_selector6(null) }
-    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

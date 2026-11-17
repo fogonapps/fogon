@@ -1,2 +1,0 @@
-Your showcases are now cards with your own data, added from the + box. Upload your own photos to the gallery and see your level on your profile. Pull down to refresh the shop, and you can now get sparks with Wompi.
-Nu purchases that don't say the card type are now read. «You have» shows your available money, with card debt shown apart, and you can adjust an account balance.

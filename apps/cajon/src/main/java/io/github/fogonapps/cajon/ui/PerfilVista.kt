@@ -26,7 +26,7 @@ internal fun PerfilSocial.aPerfilVista(
         if (!bloqueado && persona.foto) ClienteSocial.foto(persona.usuario, persona.fotoV) else "",
         if (bloqueado) "" else portada, if (bloqueado) "" else bio, if (bloqueado) emptyList() else enlaces,
         persona.privada, relacion, if (bloqueado) emptyList() else contadores, if (cerrada || bloqueado) emptyList() else secciones,
-        nivel = nivel, insignia = if (bloqueado) "" else persona.insignia, tema = if (bloqueado) "" else persona.tema, marco = if (bloqueado) "" else persona.marco)
+        nivel = nivel, insigniasNivel = if (bloqueado) emptyList() else insigniasNivel, insignia = if (bloqueado) "" else persona.insignia, tema = if (bloqueado) "" else persona.tema, marco = if (bloqueado) "" else persona.marco)
 }
 
 /**

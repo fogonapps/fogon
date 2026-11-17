@@ -125,22 +125,27 @@ fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).decoracion(f)
  */
 fun Modifier.haloPuntos(color: Color, paso: Dp = 10.dp, centro: Offset = Offset(0.35f, 0.45f)): Modifier = drawWithCache {
     val p = paso.toPx(); val r = p * 0.15f
-    val ancho = size.width; val alto = size.height
+    val puntos = puntosHalo(size.width, size.height, p, centro)
+    onDrawBehind { puntos.forEach { (o, t) -> drawCircle(color.copy(alpha = color.alpha * 0.55f * t), r, o) } }
+}
+
+/** Geometría compartida con la exportación del editor; alfa relativo del halo riso. */
+fun puntosHalo(ancho: Float, alto: Float, paso: Float, centro: Offset = Offset(0.35f, 0.45f)): List<Pair<Offset, Float>> {
+    require(paso > 0f)
     val c = Offset(ancho * centro.x, alto * centro.y)
     val alcance = maxOf(ancho, alto) * 0.6f
-    val puntos = buildList {
-        var y = p / 2
+    return buildList {
+        var y = paso / 2
         while (y < alto) {
-            var x = p / 2
+            var x = paso / 2
             while (x < ancho) {
                 val t = 1f - (Offset(x, y) - c).getDistance() / alcance
                 if (t > 0f) add(Offset(x, y) to t)
-                x += p
+                x += paso
             }
-            y += p
+            y += paso
         }
     }
-    onDrawBehind { puntos.forEach { (o, t) -> drawCircle(color.copy(alpha = color.alpha * 0.55f * t), r, o) } }
 }
 
 /** Un número o palabra grande, hecho de puntos (Doto), con las cifras que ruedan al cambiar. [fantasma] queda por compatibilidad. */

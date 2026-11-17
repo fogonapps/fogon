@@ -75,7 +75,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                 io.github.fogonapps.identidad.BotonIconoSocial(IconoAjustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
             }
         },
-        portada = { ImagenLocal(identidad.portada, Modifier.matchParentSize()) },
+        portada = { if (Regex("[A-Za-z0-9_-]{22}").matches(identidad.portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(identidad.portada, Modifier.matchParentSize(), interfazCuenta(vm)) else ImagenLocal(identidad.portada, Modifier.matchParentSize()) },
         foto = {
             Box {
                 io.github.fogonapps.social.ui.AroHistoriasPropias(interfazCuenta(vm)) { FotoPerfilLocal(identidad.foto, tamano = 96.dp) }
@@ -133,7 +133,7 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector9(listOf(r)) else manejar_selector9(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
-    EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

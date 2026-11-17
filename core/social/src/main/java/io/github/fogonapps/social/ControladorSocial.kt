@@ -399,10 +399,17 @@ abstract class ControladorSocial(
     val temas: StateFlow<TemasCuentaSocial> = _temas
     private val _paquetesWompi = MutableStateFlow<List<Int>>(emptyList())
     val paquetesWompi: StateFlow<List<Int>> = _paquetesWompi
+    /** Chispas de regalo por paquete (los grandes traen extra). */
+    private val _regaloWompi = MutableStateFlow<Map<Int, Int>>(emptyMap())
+    val regaloWompi: StateFlow<Map<Int, Int>> = _regaloWompi
     fun cargarPaquetesWompi() {
         _paquetesWompi.value = emptyList()
         scope.launch { intentar(avisar = false) {
-            try { _paquetesWompi.value = cliente().paquetesWompi() }
+            try {
+                val oferta = cliente().paquetesWompi()
+                _regaloWompi.value = oferta.regalo.mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap()
+                _paquetesWompi.value = oferta.paquetes
+            }
             catch (e: ErrorSocial) { if (e.codigo != 503 || e.error != "pagos_apagados") throw e }
         } }
     }
@@ -417,6 +424,17 @@ abstract class ControladorSocial(
         }
         resultado(url)
     }
+    suspend fun articuloMercado(id: Long) = cliente().articuloMercado(id)
+    suspend fun ponerArticuloMercado(item: String) {
+        cliente().ponerTema(item)
+        _temas.value = cliente().temas()
+        if (item.startsWith("banner:")) alCambiarBanner()
+    }
+    suspend fun reportarArticuloMercado(id: Long, motivo: String) = cliente().reportar("mercado", id.toString(), "otro: $motivo")
+    suspend fun mercado(tipo: String, orden: String, oficial: Boolean, pagina: Int, modo: String) = cliente().mercado(tipo, orden, oficial, pagina, modo)
+    suspend fun publicarMercado(d: PublicarMercado): ArticuloMercado = cliente().publicarMercado(d).also { cargarTemas() }
+    suspend fun comprarMercado(id: Long, clave: String) { cliente().comprarMercado(id, clave); cargarTemas() }
+    suspend fun decidirMercado(id: Long, accion: String, motivo: String) = cliente().decidirMercado(id, accion, motivo)
     fun cargarTemas() { if (_usuario.value != null) scope.launch { intentar(avisar = false) { _temas.value = cliente().temas() } } }
     fun regalar(item: String, para: String, resultado: (String?) -> Unit) = lanzar {
         try {
@@ -434,6 +452,12 @@ abstract class ControladorSocial(
     }
     fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
     protected open fun alCambiarBanner() {}
+    suspend fun equiparPortadaPropia(jpeg: ByteArray) {
+        val nombre = cliente().subirImagen(jpeg)
+        cliente().ponerTema(nombre)
+        _temas.value = _temas.value.copy(banner = nombre)
+        alCambiarBanner()
+    }
     fun ponerTema(tema: String) = lanzar {
         cliente().ponerTema(tema)
         if (tema.startsWith("banner:")) { _temas.value = _temas.value.copy(banner = tema); alCambiarBanner(); return@lanzar }

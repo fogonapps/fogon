@@ -732,6 +732,7 @@ fun Moderacion(vm: InterfazSocial) {
         l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
         l.isEmpty() -> Pista(stringResource(R.string.social_mod_vacio), Modifier.padding(16.dp))
         else -> l.forEach { c ->
+            if (c.que == "mercado") { ReporteMercado(vm, c); return@forEach }
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val tipo = stringResource(when (c.que) {
                     "cuenta" -> R.string.social_mod_tipo_cuenta

@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    testOptions { unitTests.isIncludeAndroidResources = true }
     namespace = "io.github.fogonapps.social.ui"
     compileSdk = 37
 
@@ -39,4 +40,5 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
+    testImplementation(project(":core:revision"))
 }

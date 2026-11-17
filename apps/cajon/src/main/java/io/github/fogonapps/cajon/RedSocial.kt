@@ -584,7 +584,7 @@ class RedSocial(
     private suspend fun portadaEnLaRed(portada: String, encuadre: io.github.fogonapps.cajon.datos.Encuadre = io.github.fogonapps.cajon.datos.Encuadre()): String {
         val marca = sesion.actual()
         val cliente = cliente()
-        if (portada.startsWith("banner:")) return portada
+        if (portada.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(portada)) return portada
         if (portada.isBlank() || portada.startsWith("https://")) return portada.takeIf { it.startsWith("https://") }.orEmpty()
         // Se sube ya recortada como se ve en tu perfil (con tu encuadre): así la ven igual los demás.
         val en = encuadre.limpio()
@@ -592,7 +592,7 @@ class RedSocial(
         caja.portadaSubida?.split('|')?.takeIf { it.size == 2 && it[0] == clave }?.let { return it[1] }
         val jpg = jpeg(portada, 1600, 900_000, recorte = en) ?: return ""
         if (!sesion.vigente(marca)) return ""
-        val url = ClienteSocial.imagen(cliente.subirImagen(jpg))
+        val url = cliente.subirImagen(jpg)
         if (sesion.vigente(marca)) caja.portadaSubida = "$clave|$url"
         return url
     }
@@ -1086,7 +1086,7 @@ class RedSocial(
                     if (c.enlace.startsWith("https://music.apple.com/")) put("enlace", c.enlace)
                 })
             }) + partesDeLoTuyo(e)
-            return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), https(p.portada), p.enlaces.filter { it.startsWith("http") }.take(5), partes)
+            return PerfilSubido(e.ajustes.nombre.take(40), p.bio.take(200), p.portada.takeIf { it.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(it) }.orEmpty(), p.enlaces.filter { it.startsWith("http") }.take(5), partes)
         }
 
         /**

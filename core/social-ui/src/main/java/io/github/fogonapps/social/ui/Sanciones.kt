@@ -103,8 +103,7 @@ internal fun ImagenesReporte(c: CasoModeracion, vm: InterfazSocial? = null) {
             val portada = (datos?.get("portada") as? JsonPrimitive)?.content.orEmpty()
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 c.autor?.let { AvatarRed(it, 72.dp) }
-                if (portada.startsWith("https://")) coil3.compose.AsyncImage(portada, null,
-                    Modifier.height(72.dp).weight(1f).clip(forma(14.dp)), contentScale = ContentScale.Crop)
+                if (portada.isNotBlank()) PortadaPerfilRed(portada, Modifier.height(72.dp).weight(1f).clip(forma(14.dp)), vm)
             }
             val bio = (datos?.get("bio") as? JsonPrimitive)?.content.orEmpty()
             if (bio.isNotBlank()) Text(bio.take(600), style = MaterialTheme.typography.bodyMedium, color = FogonTema.actual.texto)

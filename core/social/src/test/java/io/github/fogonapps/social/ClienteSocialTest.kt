@@ -55,10 +55,12 @@ class ClienteSocialTest {
         val peticiones = mutableListOf<Request>()
         val c = cliente { peticion ->
             peticiones += peticion
-            200 to if (peticion.method == "GET") """{"paquetes":[1000,2000,5000]}"""
+            200 to if (peticion.method == "GET") """{"paquetes":[2000,5000,10000],"regalo":{"5000":500,"10000":1500}}"""
                 else """{"referencia":"inventada","url":"https://checkout.wompi.co/p/?prueba"}"""
         }
-        assertEquals(listOf(1000,2000,5000), c.paquetesWompi())
+        val oferta = c.paquetesWompi()
+        assertEquals(listOf(2000,5000,10000), oferta.paquetes)
+        assertEquals(500, oferta.regalo["5000"])
         assertEquals("https://checkout.wompi.co/p/?prueba", c.ordenWompi(2000))
         assertEquals("/v1/pagos/wompi/orden", peticiones[1].url.encodedPath)
         assertEquals("Bearer credencial-de-prueba", peticiones[1].header("Authorization"))

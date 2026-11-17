@@ -44,6 +44,63 @@ class TiendaNuevaTest {
         assertFalse(e.s.temas(yo).diario)
     }
 
+    @Test fun portadaPropiaCompraAutorAccesoYLimpieza() = Entorno().use { e ->
+        val yo = e.alta("anabel"); val otra = e.alta("beatriz")
+        fun foto(cuenta: Long): String {
+            val imagen = java.awt.image.BufferedImage(34, 10, java.awt.image.BufferedImage.TYPE_INT_RGB)
+            val bytes = java.io.ByteArrayOutputStream().also { javax.imageio.ImageIO.write(imagen, "jpg", it) }.toByteArray()
+            return e.s.subirImagen(cuenta, bytes).nombre
+        }
+        val sinCompra = foto(yo)
+        e.s.subirPerfil(yo, PerfilSubido(portada = sinCompra))
+        assertEquals("", e.s.verPerfil(yo, "anabel").portada)
+        assertFailsWith<Problema> { e.s.imagen(sinCompra, yo) }
+        e.b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,10000,'prueba',?)", yo, e.reloj) }
+        e.s.reclamarTema(yo, "portada:propia")
+        assertEquals(1500, e.s.chispas(yo))
+        val propia = foto(yo)
+        e.s.subirPerfil(yo, PerfilSubido(portada = propia))
+        assertEquals(propia, e.s.verPerfil(otra, "anabel").portada)
+        assertTrue(e.s.imagen(propia, otra).isNotEmpty())
+        assertEquals(0, e.s.quitarPortadasAjenas())
+        e.s.ajustar(yo, Ajustes(true))
+        assertEquals("", e.s.verPerfil(otra, "anabel").portada)
+        assertFailsWith<Problema> { e.s.imagen(propia, otra) }
+        assertTrue(e.s.imagen(propia, yo).isNotEmpty())
+        e.s.ajustar(yo, Ajustes(false))
+        e.s.bloquear(yo, "beatriz", true)
+        assertFailsWith<Problema> { e.s.imagen(propia, otra) }
+        val ajena = foto(otra)
+        e.s.subirPerfil(yo, PerfilSubido(portada = ajena))
+        assertEquals("", e.s.verPerfil(yo, "anabel").portada)
+        assertTrue(e.s.imagen(ajena, otra).isNotEmpty())
+        assertFailsWith<Problema> { e.s.imagen(propia, yo) }
+    }
+
+    @Test fun equiparRechazaYLimpiaYConservaFotosEnUso() = Entorno().use { e ->
+        val yo = e.alta("anabel")
+        fun foto(): String {
+            val imagen = java.awt.image.BufferedImage(34, 10, java.awt.image.BufferedImage.TYPE_INT_RGB)
+            return e.s.subirImagen(yo, java.io.ByteArrayOutputStream().also { javax.imageio.ImageIO.write(imagen, "jpg", it) }.toByteArray()).nombre
+        }
+        val rechazada = foto()
+        assertFailsWith<Problema> { e.s.ponerTema(yo, rechazada) }
+        assertEquals(0, e.b.usar { leer("SELECT COUNT(*) FROM imagenes WHERE nombre = ?", rechazada) { it.getInt(1) }.single() })
+        e.b.usar { cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,'portada:propia',?)", yo, e.reloj) }
+        val compartida = foto()
+        e.s.escaparates.guardar(yo, listOf(Escaparate("galeria", kotlinx.serialization.json.buildJsonObject {
+            put("fotos", kotlinx.serialization.json.buildJsonArray { add(kotlinx.serialization.json.buildJsonObject { put("nombre", kotlinx.serialization.json.JsonPrimitive(compartida)) }) })
+        })))
+        e.s.ponerTema(yo, compartida)
+        e.s.ponerTema(yo, "banner:papel")
+        assertTrue(e.s.imagen(compartida, yo).isNotEmpty())
+        e.s.ponerTema(yo, compartida)
+        e.s.escaparates.guardar(yo, emptyList())
+        assertTrue(e.s.imagen(compartida, yo).isNotEmpty())
+        e.s.ponerTema(yo, "banner:puntos")
+        assertFailsWith<Problema> { e.s.imagen(compartida, yo) }
+    }
+
     @Test fun regaloAtomicoConLimitesYBloqueos() = Entorno().use { e ->
         val yo = e.alta("anabel"); val otra = e.alta("beatriz")
         e.s.regalar(yo, Regalo("marco:doble", "@beatriz"))
