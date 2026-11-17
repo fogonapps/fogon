@@ -65,7 +65,7 @@ class EscaparatesTest {
         falla("escaparates_cupo") { x.guardar(e.yo, List(3) { texto() }) }
         e.s.subirPerfil(e.yo, PerfilSubido(partes = mapOf("insignias" to Parte(Vis.PUBLICA,
             JsonArray(listOf("cine", "series", "anime", "cine", "inventada").map(::JsonPrimitive))))))
-        assertEquals(1, x.cupo(e.yo).nivel)
+        assertEquals(3, x.cupo(e.yo).nivel)
         x.guardar(e.yo, List(3) { texto() })
         e.b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,10000,'prueba',1)", e.yo) }
         val saldo = e.s.chispas(e.yo)
@@ -142,4 +142,52 @@ class EscaparatesTest {
         falla("escaparate_datos") { e.s.escaparates.guardar(e.yo, listOf(Escaparate("galeria", buildJsonObject { put("fotos", "no es lista") }))) }
         assertEquals(7, e.s.escaparates.fotos(e.yo).size)
     }
+    @Test fun fotosPropiasExigenDuenoYAccesoAlPerfil() = Entorno().use { e ->
+        val nombre = e.s.subirImagen(e.yo, jpegDePrueba()).nombre
+        fun propia(n: String) = Escaparate("galeria", buildJsonObject {
+            put("fotos", buildJsonArray { add(buildJsonObject { put("nombre", n) }) })
+        })
+        val ajena = e.s.subirImagen(e.otra, jpegDePrueba()).nombre
+        falla("escaparate_foto") { e.s.escaparates.guardar(e.yo, listOf(propia(ajena))) }
+        e.s.escaparates.guardar(e.yo, listOf(propia(nombre)))
+        assertEquals(listOf(propia(nombre)), e.s.escaparates.ver(null, "ana"))
+        assertTrue(e.s.imagen(nombre, null).isNotEmpty())
+        assertTrue(e.s.imagen(nombre, e.otra).isNotEmpty())
+        e.s.ajustar(e.yo, Ajustes(true))
+        assertEquals(404, assertFailsWith<Problema> { e.s.imagen(nombre, null) }.codigo)
+        assertEquals(404, assertFailsWith<Problema> { e.s.imagen(nombre, e.otra) }.codigo)
+        assertTrue(e.s.imagen(nombre, e.yo).isNotEmpty())
+        e.s.seguir(e.otra, "ana")
+        e.s.aceptar(e.yo, "beto")
+        assertTrue(e.s.imagen(nombre, e.otra).isNotEmpty())
+        e.s.ajustar(e.yo, Ajustes(false))
+        e.s.bloquear(e.yo, "beto", true)
+        assertEquals(404, assertFailsWith<Problema> { e.s.imagen(nombre, e.otra) }.codigo)
+    }
+
+    @Test fun limpiarHistoriaConservaFotoUsadaEnEscaparate() = Entorno().use { e ->
+        val nombre = e.s.subirImagen(e.yo, jpegDePrueba()).nombre
+        val historia = e.s.subirHistoria(e.yo, "cajon", HistoriaNueva(buildJsonObject { put("imagen", nombre) }))
+        val galeria = Escaparate("galeria", buildJsonObject {
+            put("fotos", buildJsonArray { add(buildJsonObject { put("nombre", nombre) }) })
+        })
+        e.s.escaparates.guardar(e.yo, listOf(galeria))
+        e.s.borrarHistoria(e.yo, historia.id)
+        assertTrue(e.s.imagen(nombre).isNotEmpty())
+        e.s.escaparates.guardar(e.yo, emptyList())
+        e.s.ajustar(e.yo, Ajustes(true))
+        assertEquals(404, assertFailsWith<Problema> { e.s.imagen(nombre) }.codigo)
+    }
+
+    @Test fun perfilPublicoSerializaNivelInclusoCero() = Entorno().use { e ->
+        testApplication {
+            application { fogonSocial(e.s) }
+            fun nivel(cuerpo: String) = JsonSocial.parseToJsonElement(cuerpo).jsonObject.getValue("nivel").jsonPrimitive.int
+            assertEquals(0, nivel(client.get("/v1/perfiles/ana").bodyAsText()))
+            e.s.subirPerfil(e.yo, PerfilSubido(partes = mapOf("insignias" to Parte(Vis.PUBLICA,
+                JsonArray(listOf("cine", "series", "anime").map(::JsonPrimitive))))))
+            assertEquals(3, nivel(client.get("/v1/perfiles/ana").bodyAsText()))
+        }
+    }
+
 }

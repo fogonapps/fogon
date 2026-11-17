@@ -28,11 +28,17 @@ class WidgetPlata : GlanceAppWidget() {
         val f = coloresWidget(context, Paleta.Ahorrador)
         val anotar = Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_ANOTAR, true)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        val deuda = app.logica.debesTarjetas(e)
+        val abrir = Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_CUENTAS, true)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         provideContent {
             TarjetaWidget(
-                f, c.getString(R.string.tienes), Formato.pesos(app.logica.patrimonio(e)),
-                c.getString(R.string.widget_salio, Formato.pesos(app.logica.gastos(e, mes))),
-                io.github.fogonapps.identidad.Quien.AHORRADOR, actionStartActivity<MainActivity>(),
+                f, c.getString(R.string.tienes), Formato.pesos(app.logica.tienes(e)),
+                listOfNotNull(
+                    c.getString(R.string.debes_tarjetas, Formato.pesos(deuda)).takeIf { deuda > 0 },
+                    c.getString(R.string.widget_salio, Formato.pesos(app.logica.gastos(e, mes))),
+                ).joinToString("\n"),
+                io.github.fogonapps.identidad.Quien.AHORRADOR, actionStartActivity(abrir),
                 boton = c.getString(R.string.anotar) to actionStartActivity(anotar),
             )
         }

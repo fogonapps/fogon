@@ -32,6 +32,50 @@ import java.time.YearMonth
 
 /** Las cuentas de la plata: si algo de aquí falla, la app le muestra a la persona un número equivocado. */
 class LogicaTest {
+    @Test fun tienesExcluyeCreditoYDeudaSumaSoloTarjetasActivas() {
+        val e = Estado(cuentas = listOf(
+            Cuenta("b", "Banco", TipoCuenta.BANCO, 1000),
+            Cuenta("t", "Tarjeta", TipoCuenta.CREDITO, -400),
+            Cuenta("t2", "Tarjeta 2", TipoCuenta.CREDITO, -300),
+            Cuenta("favor", "A favor", TipoCuenta.CREDITO, 100),
+            Cuenta("a", "Archivada", TipoCuenta.CREDITO, -900, archivada = true)))
+        assertEquals(1000L, L.tienes(e))
+        assertEquals(700L, L.debesTarjetas(e))
+        assertEquals(400L, L.patrimonio(e))
+    }
+
+    @Test fun ajusteExactoConservaMovimientosYSeRespalda() {
+        val e = Estado(cuentas = listOf(Cuenta("b", "Banco", TipoCuenta.BANCO, saldoPendiente = true)),
+            movimientos = listOf(Movimiento("g", "2026-10-21", GASTO, 200, "b")))
+        assertEquals(listOf("b"), L.porAjustar(e).map { it.id })
+        val ajustado = L.ajustarSaldo(e, "b", 500, "Ajuste de saldo")
+        assertEquals(500L, L.saldo(ajustado, "b"))
+        assertEquals(e.movimientos, ajustado.movimientos)
+        assertTrue(L.porAjustar(ajustado).isEmpty())
+        assertEquals("Ajuste de saldo", ajustado.cuentas.single().notaSaldo)
+        assertEquals(ajustado, JsonAhorrador.decodeFromString<Estado>(JsonAhorrador.encodeToString(Estado.serializer(), ajustado)))
+        assertEquals(0L, L.saldo(L.ajustarSaldo(ajustado, "b", 0, "Ajuste de saldo"), "b"))
+    }
+
+    @Test fun saldoNegativoSolicitaAjusteSinAfectarTarjetasNiArchivadas() {
+        val e = Estado(cuentas = listOf(
+            Cuenta("b", "Banco", TipoCuenta.BANCO, -100),
+            Cuenta("a", "Archivada", TipoCuenta.BANCO, -200, archivada = true),
+            Cuenta("t", "Tarjeta", TipoCuenta.CREDITO, -300)))
+        assertEquals(-100L, L.tienes(e))
+        assertEquals(listOf("b"), L.porAjustar(e).map { it.id })
+    }
+
+    @Test fun cuentaDesdeAvisoSolicitaSaldoSoloEnDebito() {
+        val debito = L.cuentaDesdeAviso("b", "Banco", io.github.fogonapps.ahorrador.datos.Banco.NU, false)
+        val credito = L.cuentaDesdeAviso("t", "Tarjeta", io.github.fogonapps.ahorrador.datos.Banco.NU, true)
+        assertTrue(debito.saldoPendiente)
+        assertFalse(credito.saldoPendiente)
+        assertEquals(listOf(debito), L.porAjustar(Estado(cuentas = listOf(debito, credito))))
+        val antigua = JsonAhorrador.decodeFromString<Cuenta>("""{"id":"b","nombre":"Banco","tipo":"BANCO"}""")
+        assertFalse(antigua.saldoPendiente)
+    }
+
     private val L = Logica()
     private val hoy = LocalDate.parse("2026-10-21")
 

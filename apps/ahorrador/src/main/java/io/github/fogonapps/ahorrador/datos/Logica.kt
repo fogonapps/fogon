@@ -112,8 +112,25 @@ class Logica {
             .filter { it.pagadas < it.total }
             .sortedBy { it.movimiento.fecha }
 
-    /** Plata real que tiene la persona: todas las cuentas menos lo que debe en tarjetas. */
+    /** Patrimonio neto: cuentas activas, incluidas las tarjetas. */
     fun patrimonio(e: Estado): Long = e.cuentas.filter { !it.archivada }.sumOf { saldo(e, it.id) }
+
+    fun cuentaDesdeAviso(id: String, nombre: String, banco: Banco, credito: Boolean): Cuenta =
+        Cuenta(id, nombre, if (credito) TipoCuenta.CREDITO else TipoCuenta.BANCO, banco = banco, saldoPendiente = !credito)
+
+    /** Disponible en cuentas activas, sin incluir tarjetas. */
+    fun tienes(e: Estado): Long = e.cuentas.filter { !it.archivada && it.tipo != TipoCuenta.CREDITO }.sumOf { saldo(e, it.id) }
+
+    fun debesTarjetas(e: Estado): Long = e.cuentas.filter { !it.archivada && it.tipo == TipoCuenta.CREDITO }.sumOf { deuda(e, it.id) }
+
+    fun porAjustar(e: Estado): List<Cuenta> = e.cuentas.filter {
+        !it.archivada && it.tipo != TipoCuenta.CREDITO && (it.saldoPendiente || saldo(e, it.id) < 0)
+    }
+
+    /** Conserva los movimientos y compensa su efecto sobre el saldo inicial. */
+    fun ajustarSaldo(e: Estado, id: String, deseado: Long, nota: String): Estado = e.copy(cuentas = e.cuentas.map {
+        if (it.id == id) it.copy(saldoInicial = it.saldoInicial + deseado - saldo(e, id), saldoPendiente = false, notaSaldo = nota) else it
+    })
 
     /* ----- El mes ----- */
 

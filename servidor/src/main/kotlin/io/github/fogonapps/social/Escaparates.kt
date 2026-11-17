@@ -15,8 +15,8 @@ class Escaparates(private val social: Social, private val b: Base, private val a
         // Solo identificadores existentes, distintos: ni la insignia de verificación ni las compradas dan nivel.
         val INSIGNIAS = setOf("cine", "series", "anime", "lector", "discos", "constancia", "critico", "explorador", "reto")
         fun calcularCupo(insignias: Int, extras: Int): CupoEscaparates {
-            val nivel = insignias.coerceAtLeast(0) / 3
-            val gratis = minOf(6, 2 + nivel)
+            val nivel = insignias.coerceAtLeast(0)
+            val gratis = minOf(6, 2 + nivel / 3)
             val comprados = extras.coerceIn(0, 3)
             return CupoEscaparates(nivel, gratis, comprados, gratis + comprados)
         }
@@ -40,12 +40,24 @@ class Escaparates(private val social: Social, private val b: Base, private val a
         nombres.map { FotoEscaparate(id, it) }
     }.filter { fotoValida(yo, yo, buildJsonObject { put("publicacion", it.publicacion); put("nombre", it.nombre) }) }
 
-    fun guardar(yo: Long, lista: List<Escaparate>) = b.transaccion {
-        if (lista.size > cupo(yo).total) throw Problema(400, "escaparates_cupo")
-        lista.forEach { validar(yo, it) }
-        cambiar("DELETE FROM escaparates WHERE cuenta = ?", yo)
-        lista.forEachIndexed { posicion, e -> cambiar("INSERT INTO escaparates VALUES(?,?,?,?,?)", yo, posicion, e.tipo, e.datos.toString(), ahora()) }
+    fun guardar(yo: Long, lista: List<Escaparate>) {
+        val antes = fotosPropias(b.usar { leer("SELECT datos FROM escaparates WHERE cuenta = ? AND tipo = 'galeria'", yo) { it.getString(1) } })
+        b.transaccion {
+            if (lista.size > cupo(yo).total) throw Problema(400, "escaparates_cupo")
+            lista.forEach { validar(yo, it) }
+            cambiar("DELETE FROM escaparates WHERE cuenta = ?", yo)
+            lista.forEachIndexed { posicion, e -> cambiar("INSERT INTO escaparates VALUES(?,?,?,?,?)", yo, posicion, e.tipo, e.datos.toString(), ahora()) }
+        }
+        // Una foto subida para el escaparate que ya no está en él (ni en nada más) se borra.
+        val ahoraFotos = fotosPropias(lista.filter { it.tipo == "galeria" }.map { it.datos.toString() })
+        (antes - ahoraFotos).forEach { social.borrarImagenSuelta(it) }
     }
+
+    private fun fotosPropias(datos: List<String>): Set<String> = datos.flatMap { texto ->
+        (Json.parseToJsonElement(texto).jsonObject["fotos"] as? JsonArray).orEmpty().mapNotNull { f ->
+            (f as? JsonObject)?.takeIf { "publicacion" !in it }?.get("nombre")?.jsonPrimitive?.content
+        }
+    }.toSet()
 
     fun ver(lector: Long?, usuario: String): List<Escaparate> {
         val perfil = social.verPerfil(lector, usuario)
@@ -62,14 +74,27 @@ class Escaparates(private val social: Social, private val b: Base, private val a
 
     /** Revalida origen, moderación y visibilidad al guardar y en cada lectura. */
     private fun fotoValida(yo: Long, lector: Long?, foto: JsonObject): Boolean {
-        val id = (foto["publicacion"] as? JsonPrimitive)?.longOrNull ?: return false
+        val id = (foto["publicacion"] as? JsonPrimitive)?.longOrNull
+        if (id == null && "publicacion" in foto) return false
         val nombre = (foto["nombre"] as? JsonPrimitive)?.content ?: return false
+        if (id == null) return b.usar { leer("SELECT 1 FROM imagenes WHERE nombre = ? AND cuenta = ?", nombre, yo) { 1 }.isNotEmpty() }
         val vigente = b.usar { leer("SELECT 1 FROM publicaciones p JOIN imagenes i ON i.cuenta = p.cuenta WHERE p.id = ? AND p.cuenta = ? AND p.estado = 'visible' AND p.oculta = 0 AND i.nombre = ?", id, yo, nombre) { 1 }.isNotEmpty() }
         if (!vigente) return false
         val p = social.publicacion(lector, id) ?: return false
         val d = p.datos
         val fotos = (d["imagenes"] ?: d["fotos"]) as? JsonArray
         return if (fotos != null) fotos.any { (it as? JsonPrimitive)?.content == nombre } else (d["imagen"] as? JsonPrimitive)?.content == nombre
+    }
+
+    /** Solo las fotos propias explícitas heredan el acceso al perfil. */
+    fun permiteImagen(nombre: String, lector: Long?): Boolean {
+        val usuarios = b.usar { leer("SELECT DISTINCT c.usuario FROM escaparates e JOIN cuentas c ON c.id = e.cuenta JOIN imagenes i ON i.cuenta = e.cuenta WHERE e.tipo = 'galeria' AND i.nombre = ?", nombre) { it.getString(1) } }
+        return usuarios.any { usuario ->
+            try { ver(lector, usuario).any { e -> e.tipo == "galeria" && e.datos["fotos"]!!.jsonArray.any {
+                val f = it.jsonObject
+                "publicacion" !in f && f["nombre"]?.jsonPrimitive?.content == nombre
+            } } } catch (_: Problema) { false }
+        }
     }
 
     private fun validar(yo: Long, e: Escaparate) {
@@ -88,7 +113,7 @@ class Escaparates(private val social: Social, private val b: Base, private val a
                 exige(fotos != null && fotos.size <= 6 && fotos.distinct().size == fotos.size)
                 fotos!!.forEach { f ->
                     val foto = f as? JsonObject
-                    exige(foto != null && foto.keys == setOf("publicacion", "nombre"))
+                    exige(foto != null && (foto.keys == setOf("publicacion", "nombre") || foto.keys == setOf("nombre")))
                     if (!fotoValida(yo, yo, foto!!)) throw Problema(400, "escaparate_foto")
                 }
             }

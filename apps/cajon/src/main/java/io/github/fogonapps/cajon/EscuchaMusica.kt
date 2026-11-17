@@ -87,8 +87,22 @@ class EscuchaMusica : NotificationListenerService() {
         // Sin álbum (un video, un podcast mal etiquetado) no se anota.
         if (artista.isBlank() || album.isBlank() || cancion.isBlank()) return
         val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(paquete, 0)).toString() }.getOrDefault(paquete)
-        val portada = listOf(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, MediaMetadata.METADATA_KEY_ART_URI)
-            .mapNotNull { m.getString(it) }.firstOrNull { it.startsWith("https://") }.orEmpty()
+        val registro = (application as CajonApp).escuchas
+        if (paquete in registro.oidos.value.sinAnotar) return
+        val bitmap = m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) ?: m.getBitmap(MediaMetadata.METADATA_KEY_ART)
+        val local = bitmap?.let { registro.guardarPortada(io.github.fogonapps.cajon.datos.RegistroEscuchas.clave(artista, album), it) }.orEmpty()
+        val uris = listOf(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, MediaMetadata.METADATA_KEY_ART_URI).mapNotNull { m.getString(it) }
+        val desdeContenido = if (local.isBlank()) uris.firstOrNull { it.startsWith("content://") }?.let { uri ->
+            runCatching {
+                contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { entrada ->
+                    android.graphics.BitmapFactory.decodeStream(entrada)?.let {
+                        try { registro.guardarPortada(io.github.fogonapps.cajon.datos.RegistroEscuchas.clave(artista, album), it) } finally { it.recycle() }
+                    }
+                }
+            }.getOrNull()
+        }.orEmpty() else ""
+        val portada = local.ifBlank { desdeContenido }.ifBlank { listOf(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, MediaMetadata.METADATA_KEY_ART_URI)
+            .mapNotNull { m.getString(it) }.firstOrNull { it.startsWith("https://") }.orEmpty() }
         (application as CajonApp).escuchas.sumar(listOf(Escucha(artista, album, cancion, System.currentTimeMillis(), app, paquete, portada)))
     }
 

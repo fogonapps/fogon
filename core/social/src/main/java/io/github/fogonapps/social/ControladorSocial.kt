@@ -390,6 +390,7 @@ abstract class ControladorSocial(
     fun avisarCambioEscaparates() { _revisionEscaparates.value++ }
     suspend fun leerEscaparates(usuario: String): List<EscaparateSocial> = cliente().escaparates(usuario)
     suspend fun cupoEscaparates(): CupoEscaparates = cliente().cupoEscaparates()
+    suspend fun subirImagenEscaparate(jpeg: ByteArray): String = cliente().subirImagen(jpeg)
     suspend fun fotosEscaparates(): List<FotoEscaparate> = cliente().fotosEscaparates()
     suspend fun guardarEscaparates(lista: List<EscaparateSocial>) = cliente().guardarEscaparates(lista)
 

@@ -49,6 +49,8 @@ data class Cuenta(
     val credito: Credito? = null,
     val archivada: Boolean = false,
     val banco: Banco? = null,
+    val saldoPendiente: Boolean = false,
+    val notaSaldo: String = "",
 )
 
 @Serializable

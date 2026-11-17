@@ -334,7 +334,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         } else contadoresPerfil(vm, e, anio).forEach { c -> add(ContadorPerfil("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir)) }
     }
     val vistaBase = e.aPerfilVista(secciones = secciones, contadores = contadores, cuenta = cuenta).copy(nombre = e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) })
-    PerfilComun(vistaBase.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
+    PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vistaBase, interfazSocial(vm)).copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
@@ -376,7 +376,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         }, Modifier.weight(1f))
         },
         despuesAcciones = {
-            vm.red.usuario.collectAsStateWithLifecycle().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazSocial(vm), it) }
+            vm.red.usuario.collectAsStateWithLifecycle().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazSocial(vm), it); EditorEscaparatesApp(vm, e) }
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             vm.red.usuario.collectAsStateWithLifecycle().value?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), u) } }
             CrearClaveAviso(vm)
@@ -458,7 +458,6 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
-    EditorEscaparatesApp(vm, e)
 
     Seccion(stringResource(R.string.foto_y_portada))
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

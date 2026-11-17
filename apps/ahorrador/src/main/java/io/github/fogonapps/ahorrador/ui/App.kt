@@ -94,6 +94,13 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
         return
     }
 
+    var saldosPospuestos by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(emptyList<String>()) }
+    // Se pide después de anotar el aviso para que ese gasto no vuelva a restarse al saldo real.
+    estado.cuentas.firstOrNull { c -> !c.archivada && c.saldoPendiente && c.id !in saldosPospuestos &&
+        estado.movimientos.any { it.cuenta == c.id || it.aCuenta == c.id } }?.let { c ->
+        DialogoSaldo(vm, c) { saldosPospuestos = saldosPospuestos + c.id }
+    }
+
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
         if (estado.listo) PoliticaCuenta(vm)
         val guia = io.github.fogonapps.identidad.rememberGuia("alcancia")

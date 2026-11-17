@@ -309,7 +309,7 @@
   <string name="te_pagaron">¡Te pagaron todo!</string>
   <string name="te_pasaste">Te pasaste</string>
   <string name="tienes">Tienes</string>
-  <string name="tienes_pista">La plata de todas tus cuentas, menos lo que debes en tarjetas.</string>
+  <string name="tienes_pista">La plata de tus cuentas, sin incluir tarjetas de crédito.</string>
   <string name="tipo_banco">Cuenta de banco</string>
   <string name="tipo_billetera">Billetera digital</string>
   <string name="tipo_credito">Tarjeta de crédito</string>
@@ -638,4 +638,9 @@
     <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
     <string name="banco_tarjeta_nombre">Tarjeta de crédito %1$s</string>
     <string name="banco_crear_tarjeta">Crear la tarjeta de crédito de %1$s</string>
+  <string name="debes_tarjetas">Debes %1$s en tarjetas</string>
+  <string name="cuanto_hoy">¿Cuánto tienes hoy en %1$s?</string>
+  <string name="ajustar">Ajustar</string>
+  <string name="ajustar_saldo">Ajustar saldo</string>
+  <string name="ajuste_saldo">Ajuste de saldo</string>
 </resources>

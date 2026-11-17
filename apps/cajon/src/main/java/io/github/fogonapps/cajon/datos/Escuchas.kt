@@ -42,6 +42,7 @@ data class Oidos(
     val sinAnotar: List<String> = emptyList(),
     /** Apps de las que llegó algo (paquete → nombre), para poder excluirlas. */
     val apps: Map<String, String> = emptyMap(),
+    val intentosPortada: Map<String, Long> = emptyMap(),
 )
 
 /** Una canción escuchada (de cualquier fuente), antes de sumarla a su álbum. */
@@ -49,6 +50,7 @@ data class Escucha(val artista: String, val album: String, val cancion: String, 
 
 /** El registro de escuchas: uno por proceso (lo usan la app y el servicio que escucha). */
 class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
+    private val portadas = File(directorio, "oidos")
     private val archivo = File(directorio, "escuchas.json")
     private val _oidos = MutableStateFlow(leer())
     val oidos: StateFlow<Oidos> = _oidos
@@ -83,7 +85,53 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
         }
     }
 
+    /** Copia privada de la sesión musical, sin descargar ni subir imágenes. */
+    @Synchronized
+    fun guardarPortada(clave: String, bitmap: android.graphics.Bitmap): String = runCatching {
+        portadas.mkdirs()
+        val nombre = java.security.MessageDigest.getInstance("SHA-256").digest(clave.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        val destino = File(portadas, "$nombre.jpg")
+        if (!destino.exists()) {
+            val escala = minOf(1.0, 300.0 / maxOf(bitmap.width, bitmap.height))
+            val pequena = android.graphics.Bitmap.createScaledBitmap(bitmap,
+                maxOf(1, (bitmap.width * escala).toInt()), maxOf(1, (bitmap.height * escala).toInt()), true)
+            val tmp = File(portadas, "$nombre.tmp")
+            try {
+                tmp.outputStream().use { check(pequena.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it)) }
+                check(tmp.renameTo(destino))
+            } finally { tmp.delete(); if (pequena !== bitmap) pequena.recycle() }
+        }
+        android.net.Uri.fromFile(destino).toString()
+    }.getOrDefault("")
+
     companion object {
+        fun portadaDisponible(url: String) = url.startsWith("https://") ||
+            (url.startsWith("file://") && runCatching { File(java.net.URI(url)).isFile }.getOrDefault(false))
+
+        fun preferirPortada(actual: String, nueva: String): String = when {
+            nueva.startsWith("file://") && portadaDisponible(nueva) -> nueva
+            portadaDisponible(actual) -> actual
+            nueva.startsWith("https://") -> nueva
+            else -> ""
+        }
+
+        fun debeIntentar(o: Oidos, clave: String, ahora: Long): Boolean =
+            o.intentosPortada[clave]?.let { ahora - it >= 86_400_000L } ?: true
+
+        fun paraExportar(o: Oidos) = o.copy(albumes = o.albumes.map {
+            it.copy(portada = it.portada.takeIf { p -> p.startsWith("https://") }.orEmpty())
+        }, intentosPortada = emptyMap())
+
+        private val edicion = Regex("(?i)\\b(deluxe|remaster(?:ed)?|edition|edición|expanded|anniversary|single|ep|live|en vivo|version|versión)\\b")
+        fun artistaTolerante(s: String) = s.split(Regex("(?i)\\s+(?:feat\\.?|ft\\.?|con)\\s+")).first().trim()
+        fun albumTolerante(s: String): String {
+            val sinGrupos = s.replace(Regex("\\s*[（(\\[][^)\\]）]*[)\\]）]")) { if (edicion.containsMatchIn(it.value)) "" else it.value }
+            return sinGrupos.replace(Regex("\\s+[-–—]\\s+(.+)$")) { if (edicion.containsMatchIn(it.groupValues[1])) "" else it.value }.trim()
+        }
+        fun claveTolerante(artista: String, album: String) =
+            "${Logica.tituloLimpio(artistaTolerante(artista))}|${Logica.tituloLimpio(albumTolerante(album))}"
+
         fun pendientes(o: Oidos) = o.albumes.filter { it.obra == null && !it.descartado }.sortedByDescending { it.ultima }
 
         fun unirA(o: Oidos, otro: Oidos): Oidos {
@@ -95,7 +143,7 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                     primera = listOf(a.primera, b.primera).filter { it > 0 }.minOrNull() ?: 0,
                     ultima = maxOf(a.ultima, b.ultima), veces = maxOf(a.veces, b.veces),
                     app = if (b.ultima > a.ultima) b.app.ifBlank { a.app } else a.app,
-                    portada = a.portada.ifBlank { b.portada },
+                    portada = preferirPortada(a.portada, b.portada),
                     obra = a.obra ?: b.obra, descartado = a.descartado || b.descartado,
                 )
             }
@@ -117,11 +165,14 @@ class RegistroEscuchas(context: Context, directorio: File = context.filesDir) {
                 val huella = java.security.MessageDigest.getInstance("SHA-256").digest(
                     kotlinx.serialization.json.JsonArray(listOf(clave, Logica.tituloLimpio(x.cancion), (x.cuando / 60_000).toString()).map { kotlinx.serialization.json.JsonPrimitive(it) }).toString().toByteArray()
                 ).joinToString("") { "%02x".format(it) }
-                if (!huellas.add(huella)) continue
+                if (!huellas.add(huella)) {
+                    porClave[clave]?.let { porClave[clave] = it.copy(portada = preferirPortada(it.portada, x.portada)) }
+                    continue
+                }
                 val viejo = porClave[clave] ?: AlbumOido(clave, artista, album, primera = x.cuando)
                 val cancion = Logica.tituloLimpio(x.cancion)
                 porClave[clave] = viejo.copy(
-                    portada = viejo.portada.ifBlank { x.portada.takeIf { it.startsWith("https://") }.orEmpty() },
+                    portada = preferirPortada(viejo.portada, x.portada),
                     canciones = if (cancion.isEmpty() || cancion in viejo.canciones) viejo.canciones else (viejo.canciones + cancion).takeLast(200),
                     primera = minOf(viejo.primera.takeIf { it > 0 } ?: x.cuando, x.cuando),
                     ultima = maxOf(viejo.ultima, x.cuando), veces = viejo.veces + 1, app = x.app.ifBlank { viejo.app },

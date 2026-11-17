@@ -189,6 +189,7 @@ class MainActivity : ComponentActivity() {
         private const val MAX_RESPALDO = 10 * 1024 * 1024
         /** El widget abre la app directo en Anotar. */
         const val EXTRA_ANOTAR = "anotar"
+        const val EXTRA_CUENTAS = "cuentas"
     }
 
     /** Si la app se abrió desde el botón Anotar del widget, va directo a anotar un gasto. */
@@ -199,6 +200,10 @@ class MainActivity : ComponentActivity() {
             i.removeExtra(BancoAvisos.EXTRA_BANCO)
             vm.abrir(Pantalla.Bancos)
             if (editar && huella != null) vm.abrir(Pantalla.Anotar(banco = huella))
+        }
+        if (i?.getBooleanExtra(EXTRA_CUENTAS, false) == true) {
+            i.removeExtra(EXTRA_CUENTAS)
+            vm.abrir(Pantalla.Cuentas)
         }
         if (i?.getBooleanExtra(EXTRA_ANOTAR, false) == true) {
             i.removeExtra(EXTRA_ANOTAR)

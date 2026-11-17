@@ -69,7 +69,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
             ContadorPerfil(vm.L.racha(e, vm.L.dias(e), vm.hoy()).actual.toString(), stringResource(R.string.perfil_racha)),
             ContadorPerfil(e.sessions.flatMap { it.entries.keys }.distinct().count { vm.L.maxKg(e, it) != null || vm.L.maxReps(e, it) != null }.toString(), stringResource(R.string.records)),
         ), secciones, insignia = miInsignia)
-    io.github.fogonapps.perfil.Perfil(vista.copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazCuenta(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazCuenta(vm))), elegida, { elegida = it }, nombreSuave = identidad.nombre.isNullOrBlank(), interlineado = true,
+    io.github.fogonapps.perfil.Perfil(io.github.fogonapps.social.ui.conNivelPropio(vista, interfazCuenta(vm)).copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazCuenta(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazCuenta(vm))), elegida, { elegida = it }, nombreSuave = identidad.nombre.isNullOrBlank(), interlineado = true,
         navegacion = {
             io.github.fogonapps.social.ui.CabeceraPerfil(usuario?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
                 io.github.fogonapps.identidad.BotonIconoSocial(IconoAjustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
@@ -88,7 +88,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
         }, despuesAcciones = {
-            vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it) }
+            vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it); EditorEscaparatesApp(vm, e) }
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazCuenta(vm), u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfazCuenta(vm)) } })
 }
 
@@ -133,7 +133,6 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector9(listOf(r)) else manejar_selector9(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
-    EditorEscaparatesApp(vm, estado)
     EditorPerfilLocal(nombre, bio, foto, portada, onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },

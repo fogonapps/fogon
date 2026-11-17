@@ -75,25 +75,8 @@ private fun fondoHistoria(i: Int): Pair<Color, Color> {
 }
 
 /** Una foto del teléfono achicada para subirla (lado mayor 1440 px, JPEG de menos de 900 KB). */
-internal suspend fun jpegHistoria(ctx: android.content.Context, uri: android.net.Uri): ByteArray? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-    runCatching {
-        val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
-        val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, medidas)
-        var muestra = 1
-        while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= 1440) muestra *= 2
-        val original = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, android.graphics.BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return@runCatching null
-        val escala = minOf(1f, 1440f / maxOf(original.width, original.height))
-        val chica = android.graphics.Bitmap.createScaledBitmap(original, (original.width * escala).toInt().coerceAtLeast(1), (original.height * escala).toInt().coerceAtLeast(1), true)
-        var calidad = 88
-        var salida: ByteArray
-        do {
-            salida = java.io.ByteArrayOutputStream().also { chica.compress(android.graphics.Bitmap.CompressFormat.JPEG, calidad, it) }.toByteArray()
-            calidad -= 12
-        } while (salida.size > 900_000 && calidad > 30)
-        salida.takeIf { it.size <= 900_000 }
-    }.getOrNull()
-}
+internal suspend fun jpegHistoria(ctx: android.content.Context, uri: android.net.Uri): ByteArray? =
+    io.github.fogonapps.social.prepararImagen(ctx, uri, lado = 1440)
 
 /** Un avatar con el aro de historias: lleno si hay sin ver, fino si ya se vieron todas. */
 @Composable

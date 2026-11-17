@@ -73,6 +73,7 @@ data class Comentario(val id: Long, val autor: Persona, val texto: String, val c
 
 @Serializable
 data class PerfilVisto(
+    val nivel: Int,
     val persona: Persona, val bio: String, val portada: String, val enlaces: List<String>,
     /** Solo las partes que este lector puede ver (nada si la cuenta es privada y no la sigue). */
     val partes: Map<String, JsonElement>,
@@ -428,7 +429,8 @@ class Social(
             cambiar("DELETE FROM comentarios WHERE estado = 'retirado' AND retirado_hasta <= ?", ahora())
             cambiar("DELETE FROM publicaciones WHERE estado = 'retirado' AND retirado_hasta <= ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", ahora())
             imagenesVencidas.forEach { nombre ->
-                if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+                if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
+                    leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
                     java.io.File(dirImagenes, "$nombre.jpg").delete()
                     cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
                 }
@@ -935,7 +937,7 @@ class Social(
         val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ? AND p.app = ?", id, app) { it.getInt(1) }.first() }
         val guardadas = relacion == "yo" || p.partes["guardadas"]?.let { ve(it.visibilidad) } == true
         return PerfilVisto(
-            persona(id), p.bio, p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
+            escaparates.cupo(id).nivel, persona(id), p.bio, p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
             pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
         )
     }
@@ -972,6 +974,13 @@ class Social(
         }
         if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
         if (b.usar { leer("SELECT cuenta FROM imagenes WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }?.let(::visible) != true) throw Problema(404, "no_existe")
+        val autor = b.usar { leer("SELECT cuenta FROM imagenes WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }
+        // Las fotos subidas solo para un escaparate se ven con las mismas reglas que el perfil; las demás, como siempre.
+        val enEscaparate = b.usar { leer("SELECT 1 FROM escaparates WHERE tipo = 'galeria' AND instr(datos, ?) > 0", nombre) { 1 }.isNotEmpty() }
+        if (enEscaparate && lector != autor && !escaparates.permiteImagen(nombre, lector)) {
+            val publicadas = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND instr(datos, ?) > 0", autor, nombre) { it.getLong(1) } }
+            if (publicadas.none { publicacion(lector, it) != null }) throw Problema(404, "no_existe")
+        }
         return java.io.File(dirImagenes, "$nombre.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "no_existe")
     }
 
@@ -1898,9 +1907,10 @@ class Social(
     }
 
     /** Borra una imagen que ya no usa ninguna publicación ni historia. */
-    private fun borrarImagenSuelta(nombre: String) = b.usar {
+    internal fun borrarImagenSuelta(nombre: String) = b.usar {
         if (leer("SELECT 1 FROM publicaciones WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
-            leer("SELECT 1 FROM historias WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
+            leer("SELECT 1 FROM historias WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty() &&
+            leer("SELECT 1 FROM escaparates WHERE instr(datos, ?) > 0", nombre) { 1 }.isEmpty()) {
             java.io.File(dirImagenes, "$nombre.jpg").delete()
             cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
         }

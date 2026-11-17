@@ -27,6 +27,87 @@ class PagosWompiTest {
             "data":{"transaction":{"id":"$id","reference":"$ref","status":"$estado","amount_in_cents":$monto,"currency":"COP"}},
             "signature":{"properties":["transaction.amount_in_cents","transaction.id","transaction.status"],"checksum":"$suma"}}""").jsonObject
     }
+    @Test fun conciliaAprobacionYWebhookEnAmbosOrdenes() = escenario { b, _, cuenta, webhook ->
+        for (webhookPrimero in listOf(false, true)) {
+            val orden = webhook.orden(cuenta, 5000)
+            val id = "tx_$webhookPrimero"
+            val p = PagosWompi(b, configuracion, consultar = { ref ->
+                listOf(TransaccionWompi(ref, id, "APPROVED", 5000000, "COP"))
+            })
+            if (webhookPrimero) webhook.evento(evento(orden.referencia, 5000000, id = id))
+            p.conciliar(cuenta)
+            assertEquals(listOf(5000), b.usar { leer("SELECT cantidad FROM chispas WHERE motivo=?", "wompi:$id") { it.getInt(1) } })
+            webhook.evento(evento(orden.referencia, 5000000, id = id))
+            assertEquals(listOf(5000), b.usar { leer("SELECT cantidad FROM chispas WHERE motivo=?", "wompi:$id") { it.getInt(1) } })
+        }
+    }
+
+    @Test fun conciliacionValidaMontoMonedaYEstados() = escenario { b, _, cuenta, webhook ->
+        for ((estado, monto, moneda) in listOf(Triple("APPROVED", 999L, "COP"), Triple("APPROVED", 1000000L, "USD"),
+            Triple("ERROR", 1000000L, "COP"), Triple("DECLINED", 1000000L, "COP"), Triple("VOIDED", 1000000L, "COP"))) {
+            val orden = webhook.orden(cuenta, 1000)
+            PagosWompi(b, configuracion, consultar = { ref ->
+                if (ref == orden.referencia) listOf(TransaccionWompi(ref, "tx_$estado", estado, monto, moneda)) else emptyList()
+            }).conciliar(cuenta)
+            assertEquals(if (estado == "APPROVED") "pendiente" else estado,
+                b.usar { leer("SELECT estado FROM ordenes_pago WHERE referencia=?", orden.referencia) { it.getString(1) }.single() })
+        }
+        assertTrue(b.usar { leer("SELECT cantidad FROM chispas WHERE motivo LIKE 'wompi:%'") { it.getInt(1) } }.isEmpty())
+    }
+
+    @Test fun conciliacionFiltraCuentaAntiguedadReferenciaYLimitaIntentos() = escenario { b, social, cuenta, webhook ->
+        val otra = social.cuentaDe(social.crearCuenta(NuevaCuenta("otra")).token)!!
+        webhook.orden(otra, 1000)
+        val vieja = webhook.orden(cuenta, 1000)
+        b.usar { cambiar("UPDATE ordenes_pago SET cuando=0 WHERE referencia=?", vieja.referencia) }
+        val nueva = webhook.orden(cuenta, 1000)
+        val consultas = mutableListOf<String>()
+        val p = PagosWompi(b, configuracion, consultar = { ref ->
+            consultas.add(ref)
+            listOf(TransaccionWompi(vieja.referencia, "ajena", "APPROVED", 1000000, "COP"))
+        })
+        repeat(2) { p.conciliar(cuenta) }
+        assertEquals(listOf(nueva.referencia), consultas)
+        assertTrue(b.usar { leer("SELECT cantidad FROM chispas WHERE motivo LIKE 'wompi:%'") { it.getInt(1) } }.isEmpty())
+        PagosWompi(b, configuracion, consultar = { throw java.io.IOException("sin conexión") }).conciliar(cuenta)
+    }
+
+    @Test fun ambientesDeWebhookYConfiguracion() = escenario { b, _, cuenta, _ ->
+        for (ambiente in listOf("test", "prod")) {
+            val c = ConfiguracionWompi.entorno(mapOf("WOMPI_AMBIENTE" to ambiente, "WOMPI_LLAVE_PUBLICA" to "pub_${ambiente}_x",
+                "WOMPI_SECRETO_INTEGRIDAD" to "i", "WOMPI_SECRETO_EVENTOS" to "eventos_inventados", "WOMPI_LLAVE_PRIVADA" to "prv_${ambiente}_x")::get)!!
+            assertEquals(ambiente, c.ambiente)
+            assertTrue(c.api.contains(if (ambiente == "test") "sandbox" else "production"))
+            val p = PagosWompi(b, c)
+            val orden = p.orden(cuenta, 1000)
+            val e = evento(orden.referencia, id = "tx_$ambiente")
+            p.evento(JsonObject(e + ("environment" to JsonPrimitive(if (ambiente == "test") "prod" else "test"))))
+            assertEquals(0, b.usar { leer("SELECT acreditada FROM ordenes_pago WHERE referencia=?", orden.referencia) { it.getInt(1) }.single() })
+            p.evento(JsonObject(e + ("environment" to JsonPrimitive(ambiente))))
+            assertEquals(1, b.usar { leer("SELECT acreditada FROM ordenes_pago WHERE referencia=?", orden.referencia) { it.getInt(1) }.single() })
+        }
+    }
+
+    @Test fun tiendaConciliaAntesDeResponderYToleraFalloDeRed() = escenario { b, social, _, _ ->
+        val sesion = social.crearCuenta(NuevaCuenta("compradora"))
+        val cuenta = social.cuentaDe(sesion.token)!!
+        val pagos = PagosWompi(b, configuracion, consultar = { ref ->
+            listOf(TransaccionWompi(ref, "tx_tienda", "APPROVED", 5000000, "COP"))
+        })
+        pagos.orden(cuenta, 5000)
+        testApplication {
+            application { fogonSocial(social, pagos = pagos) }
+            assertEquals(HttpStatusCode.OK, client.get("/v1/tienda/temas") { bearerAuth(sesion.token) }.status)
+            assertEquals(listOf(5000), b.usar { leer("SELECT cantidad FROM chispas WHERE motivo='wompi:tx_tienda'") { it.getInt(1) } })
+        }
+        val sinRed = PagosWompi(b, configuracion, consultar = { throw java.io.IOException("sin conexión") })
+        sinRed.orden(cuenta, 1000)
+        testApplication {
+            application { fogonSocial(social, pagos = sinRed) }
+            assertEquals(HttpStatusCode.OK, client.get("/v1/tienda/temas") { bearerAuth(sesion.token) }.status)
+        }
+    }
+
     @Test fun vectorIntegridad() {
         // Vector fijado mediante printf 'referencia1000000COPinventado' | sha256sum.
         assertEquals("e35e373d78b68ee50369834ed4ce224d3372fc0611b416e5c20d72ce5d552120", firmaWompi("referencia", 1000000, "inventado"))
@@ -72,6 +153,17 @@ class PagosWompiTest {
             assertEquals(paquete.toLong()*1000, b.usar { leer("SELECT monto FROM ordenes_pago WHERE referencia=?", orden.referencia) { it.getLong(1) }.single() })
         }
         assertEquals(400, assertFailsWith<Problema> { p.orden(cuenta, 999) }.codigo)
+    }
+    /** JsonSocial omite valores por defecto: la oferta debe llevar la lista o las apps fallan al leerla (cierre de la tienda, 2026-11-16). */
+    @Test fun ofertaSiempreLlevaPaquetes() {
+        val texto = JsonSocial.encodeToString(PaquetesWompi.serializer(), PaquetesWompi(PAQUETES_WOMPI))
+        assertEquals(listOf(1000, 2000, 5000), Json.parseToJsonElement(texto).jsonObject.getValue("paquetes").jsonArray.map { it.jsonPrimitive.int })
+    }
+    @Test fun soloElEquipoEnPruebasYTodosEnProduccion() = escenario { b, _, cuenta, _ ->
+        val pruebas = PagosWompi(b, ConfiguracionWompi("pub_test_x", "i", "e", "prv_test_x"), delEquipo = { false })
+        assertEquals(503, assertFailsWith<Problema> { pruebas.comprobar(cuenta) }.codigo)
+        val produccion = PagosWompi(b, ConfiguracionWompi("pub_prod_x", "i", "e", "prv_prod_x"), delEquipo = { false })
+        assertEquals("prod", produccion.comprobar(cuenta).ambiente)
     }
     @Test fun sinVariables() = escenario { b, _, _, _ ->
         assertNull(ConfiguracionWompi.entorno { null })

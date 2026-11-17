@@ -181,7 +181,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                 }
                 val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
                     "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
-                    secciones = secciones, insignia = perfil.persona.insignia)
+                    secciones = secciones, insignia = perfil.persona.insignia, nivel = perfil.nivel)
                 io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco, contadores = io.github.fogonapps.social.ui.cifrasSociales(perfil) + vista.contadores), 0, {}, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize()) },
                     foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
                     bajoNombre = { if (perfil.meSigue && perfil.persona.usuario != yo) Text(stringResource(io.github.fogonapps.social.ui.R.string.social_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave) },

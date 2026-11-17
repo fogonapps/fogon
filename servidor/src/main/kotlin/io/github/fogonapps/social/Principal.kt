@@ -170,14 +170,18 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
 
     routing {
         route("/v1") {
-            get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(PaquetesWompi()) }
+            get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(PaquetesWompi(PAQUETES_WOMPI)) }
             post("/pagos/wompi/orden") {
                 pagos.comprobar()
                 call.respond(pagos.orden(call.yo(), call.receive<PedidoWompi>().paquete))
             }
             post("/pagos/wompi/eventos") {
-                pagos.comprobar()
-                pagos.evento(call.receive<kotlinx.serialization.json.JsonObject>())
+                val evento = try { call.receive<kotlinx.serialization.json.JsonObject>() }
+                catch (e: io.ktor.server.plugins.BadRequestException) {
+                    System.err.println("[wompi] evento rechazado: JSON inválido")
+                    throw e
+                }
+                pagos.evento(evento)
                 call.respond(HttpStatusCode.OK)
             }
             // Portadas de Open Library y Cover Art Archive desde la caché del servidor (ver Portadas).
@@ -408,7 +412,11 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/cuenta/escaparates/fotos") { call.respond(social.escaparates.fotos(call.yo())) }
             get("/cuenta/escaparates/cupo") { call.respond(social.escaparates.cupo(call.yo())) }
             put("/cuenta/escaparates") { social.escaparates.guardar(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
-            get("/tienda/temas") { call.respond(social.temas(call.yo())) }
+            get("/tienda/temas") {
+                val yo = call.yo()
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { pagos.conciliar(yo) } }
+                call.respond(social.temas(yo))
+            }
             post("/tienda/diario") { social.cobrarDiario(call.yo()); call.respond(social.temas(call.yo())) }
             post("/tienda/temas/{tema}") { social.reclamarTema(call.yo(), call.parameters["tema"].orEmpty()); call.respond(HttpStatusCode.NoContent) }
             put("/cuenta/tema") { social.ponerTema(call.yo(), call.receive<TemaElegido>().tema); call.respond(HttpStatusCode.NoContent) }

@@ -21,7 +21,7 @@ class DatosCajon : ProveedorDatosFogon() {
 
     override suspend fun leer(): String {
         val perfil = app.recursos()
-        return JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(perfil.almacen.data.first().copy(escuchas = perfil.escuchas.oidos.value)))
+        return JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(perfil.almacen.data.first().copy(escuchas = io.github.fogonapps.cajon.datos.RegistroEscuchas.paraExportar(perfil.escuchas.oidos.value))))
     }
 
     override suspend fun restaurar(texto: String): Boolean {

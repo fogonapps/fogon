@@ -45,7 +45,8 @@ fun Cuentas(vm: AhorradorViewModel, e: Estado) {
     Cabecera(stringResource(R.string.cuentas), vm::cerrar)
     Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(R.string.tienes), style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
-        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(L.patrimonio(e)), tamanoGrande(Formato.pesos(L.patrimonio(e))), color = FogonTema.actual.sobreDestacada)
+        io.github.fogonapps.identidad.NumeroRiso(Formato.pesos(L.tienes(e)), tamanoGrande(Formato.pesos(L.tienes(e))), color = FogonTema.actual.sobreDestacada)
+        if (L.debesTarjetas(e) > 0) Text(stringResource(R.string.debes_tarjetas, Formato.pesos(L.debesTarjetas(e))), color = f.sobreDestacada)
         val enMetas = e.metas.sumOf { L.ahorradoEn(e, it.id) }
         if (enMetas > 0) Text(stringResource(R.string.mas_en_metas, Formato.pesos(enMetas)), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.9f))
         Text(stringResource(R.string.tienes_pista), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.sobreDestacada.copy(alpha = 0.85f))
@@ -77,6 +78,8 @@ fun CuentaPantalla(vm: AhorradorViewModel, e: Estado, id: String) {
     Cabecera(c.nombre, vm::cerrar) {
         IconButton({ vm.abrir(Pantalla.EditarCuenta(c.id)) }) { io.github.fogonapps.identidad.IconoRiso(Iconos.Lapiz, stringResource(R.string.editar)) }
     }
+    var ajustando by rememberSaveable(id) { mutableStateOf(false) }
+    if (ajustando) DialogoSaldo(vm, c) { ajustando = false }
     val t = L.tarjeta(e, id, hoy)
     if (c.tipo == TipoCuenta.CREDITO && t != null) {
         Column(Modifier.fillMaxWidth().padding(16.dp).destacada().padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -121,6 +124,8 @@ fun CuentaPantalla(vm: AhorradorViewModel, e: Estado, id: String) {
             Pesos(L.saldo(e, id), 42.sp, FogonTema.actual.sobreDestacada)
         }
     }
+    BotonSecundario(stringResource(R.string.ajustar_saldo), { ajustando = true }, Modifier.fillMaxWidth().padding(16.dp))
+    if (c.notaSaldo.isNotBlank()) Pista(c.notaSaldo)
     Seccion(stringResource(R.string.movimientos))
     val lista = recientes(e.movimientos.filter { it.cuenta == id || it.aCuenta == id })
     if (lista.isEmpty()) Pista(stringResource(R.string.cuenta_sin_movimientos))
@@ -182,6 +187,7 @@ fun EditarCuenta(vm: AhorradorViewModel, e: Estado, id: String?) {
             vm.guardarCuenta(Cuenta(
                 id = c?.id.orEmpty(), nombre = nombre.trim(), tipo = tipo, saldoInicial = inicial,
                 banco = banco, archivada = c?.archivada ?: false,
+                notaSaldo = c?.notaSaldo.orEmpty(),
                 credito = if (credito) Credito(cupo.toLongOrNull() ?: 0, dia(corte, 15), dia(pago, 30), num(tasa, 2.0), num(minimo, 5.0)) else null,
             ))
             vm.cerrar()
@@ -191,4 +197,25 @@ fun EditarCuenta(vm: AhorradorViewModel, e: Estado, id: String?) {
         }, Modifier.fillMaxWidth(), peligro = true)
     }
     Espacio(40.dp)
+}
+
+/** El mismo formulario para corregir una cuenta y completar su saldo inicial. */
+@Composable
+fun FormularioSaldo(vm: AhorradorViewModel, c: Cuenta, alAjustar: () -> Unit = {}) {
+    var monto by rememberSaveable(c.id) { mutableStateOf("") }
+    CampoPesos(monto, { monto = it }, stringResource(if (c.tipo == TipoCuenta.CREDITO) R.string.deuda_hoy else R.string.saldo_hoy))
+    BotonRiso(stringResource(R.string.ajustar), {
+        monto.toLongOrNull()?.let { vm.ajustarSaldo(c.id, if (c.tipo == TipoCuenta.CREDITO) -it else it); alAjustar() }
+    }, habilitado = monto.toLongOrNull() != null)
+}
+
+@Composable
+fun DialogoSaldo(vm: AhorradorViewModel, c: Cuenta, cerrar: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = cerrar,
+        title = { Text(stringResource(R.string.cuanto_hoy, c.nombre)) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { FormularioSaldo(vm, c, cerrar) } },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(cerrar) { Text(stringResource(R.string.volver)) } },
+    )
 }

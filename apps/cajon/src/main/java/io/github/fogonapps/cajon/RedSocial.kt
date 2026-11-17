@@ -809,6 +809,7 @@ class RedSocial(
 
     /** Una foto (de un archivo o del selector) achicada a [lado] px y en JPEG de menos de [max] bytes. */
     private suspend fun jpeg(uri: String, lado: Int, max: Int, recorte: io.github.fogonapps.cajon.datos.Encuadre? = null, aspecto: Float = 3.2f): ByteArray? = withContext(Dispatchers.IO) {
+        if (recorte == null) return@withContext io.github.fogonapps.social.prepararImagen(app, android.net.Uri.parse(uri), lado, max)
         runCatching {
             val bytes = app.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { it.readBytes() } ?: return@runCatching null
             val medidas = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }

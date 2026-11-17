@@ -323,7 +323,8 @@ class NotificacionesTest {
         assertEquals("ÉXITO", a.contraparte)
         assertEquals(a, reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00",
             "Compra en ÉXITO con tu tarjeta credito terminada en 1111.", recibido))
-        assertNull(reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00", "Compra en ÉXITO con tu tarjeta terminada en 1111.", recibido))
+        // Nu a veces no dice el tipo de tarjeta en la compra con crédito.
+        assertEquals(a, reconocerAviso(Banco.NU, "Compra aprobada por \$120.000,00", "Compra en ÉXITO con tu tarjeta terminada en 1111.", recibido))
         val inicial = estado().copy(cuentas = estado().cuentas + Cuenta("tc", "Tarjeta", TipoCuenta.CREDITO),
             notificaciones = estado().notificaciones.copy(solos = setOf(Banco.NU)))
         val e = recibirBanco(inicial, a)
@@ -389,5 +390,15 @@ class NotificacionesTest {
         val credito = creditoNu()
         assertEquals(credito, JsonAhorrador.decodeFromString(AvisoBanco.serializer(), JsonAhorrador.encodeToString(AvisoBanco.serializer(), credito)))
         assertEquals(a.huella, a.copy(credito = true).huella)
+    }
+
+    @Test fun nuCompraSinDecirElTipoDeTarjeta() {
+        val recibido = java.time.LocalDateTime.of(2026, 11, 16, 22, 49, 30)
+        val a = reconocerAviso(Banco.NU, "Compra aprobada por \$10.000,00",
+            "Tu compra en WOMPI*Fogon por \$10.000,00 con tu tarjeta terminada en 7236 ha sido APROBADA.", recibido)!!
+        assertEquals(10000L, a.monto)
+        assertEquals("WOMPI*Fogon", a.contraparte)
+        assertTrue(a.credito)
+        assertEquals("*7236", a.cuenta)
     }
 }

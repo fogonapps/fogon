@@ -90,4 +90,21 @@
     <string name="escaparate_ins_explorador">Explorador</string>
     <string name="escaparate_ins_reto">Reto cumplido</string>
     <string name="escaparates_compartir">Al guardar, estos bloques se comparten con quienes pueden ver tu perfil. Puedes revisarlos antes de publicarlos.</string>
+    <string name="escaparates_subir_telefono">Subir desde el teléfono</string>
+    <string name="escaparates_subiendo">Subiendo foto…</string>
+    <string name="escaparates_error_subida">No se pudo subir la foto. Inténtalo de nuevo.</string>
+    <string name="perfil_nivel">Nivel %1$d</string>
+    <string name="perfil_nivel_explica">Subes de nivel al compartir las insignias que ganas usando las apps. El nivel nunca se compra. Cada 3 insignias ganas un escaparate, hasta 6 gratis.</string>
+    <string name="perfil_nivel_faltan">Te faltan %1$d insignias para tu próximo escaparate</string>
+    <string name="perfil_nivel_maximo">Ya tienes el máximo de escaparates gratis.</string>
+    <string name="escaparate_mis_marcas">mis marcas</string>
+    <string name="escaparate_mi_meta">mi meta</string>
+    <string name="escaparate_mi_racha">mi racha</string>
+    <string name="escaparate_comilla_abre">“</string>
+    <string name="escaparate_comilla_cierra">”</string>
+    <string name="escaparate_app_cajon">el cajón</string>
+    <string name="escaparate_app_forzudo">el forzudo</string>
+    <string name="escaparate_app_cucha">la cucha</string>
+    <string name="escaparate_app_alcancia">la alcancía</string>
+    <string name="escaparate_firma">fogón · %1$s</string>
 </resources>

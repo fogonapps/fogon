@@ -191,14 +191,16 @@ fun reconocerExtrasBanco(banco: Banco, titulos: List<String>, textos: List<Strin
 private fun compraNu(titulo: String, texto: String, recibido: LocalDateTime): AvisoBanco? {
     val todo = sinTildes("$titulo $texto")
     if (Regex("\\b(rechazada|rechazado|declinada|declinado)\\b").containsMatchIn(todo)) return null
-    val compra = Regex("(?:tu )?compra en (.+?)(?: por \\$ ?([0-9][0-9.,]*[0-9]))? con tu tarjeta (?:de )?(debito|credito) terminada en ([0-9]{3,6})\\b")
+    // «con tu tarjeta terminada en 7236» (sin decir si es débito o crédito) también es una compra: Nu lo escribe así en
+    // algunas compras con la tarjeta de crédito.
+    val compra = Regex("(?:tu )?compra en (.+?)(?: por \\$ ?([0-9][0-9.,]*[0-9]))? con tu tarjeta (?:de )?(?:(debito|credito) )?terminada en ([0-9]{3,6})\\b")
         .find(todo) ?: return null
     val m = Regex("compra aprobada por \\$ ?([0-9][0-9.,]*[0-9])").find(todo)
     val monto = montoFlexible(m?.groupValues?.get(1) ?: compra.groupValues[2]) ?: return null
     // Recupera las mayúsculas y tildes originales del comercio.
     val original = "$titulo $texto"
     val comercio = (if (original.length == todo.length) original.substring(compra.groups[1]!!.range) else compra.groupValues[1]).trim()
-    val credito = compra.groupValues[3] == "credito"
+    val credito = compra.groupValues[3] != "debito"
     return AvisoBanco(Banco.NU, TipoMovimiento.GASTO, monto, recibido.withSecond(0).withNano(0).toString(),
         if (credito) "*${compra.groupValues[4]}" else "", comercio.take(80), comercio.take(60), credito = credito)
 }

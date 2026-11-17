@@ -171,8 +171,11 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida)
     io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.AHORRADOR, cara, Modifier.padding(top = 14.dp, bottom = 4.dp).aparecer(1), personaje = false) {
         Text(stringResource(R.string.tienes), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-        val total = Formato.pesos(L.patrimonio(e))
+        val total = Formato.pesos(L.tienes(e))
         NumeroRiso(total, (if (total.length <= 9) 40 else if (total.length <= 12) 32 else 26).sp, color = f.texto)
+        if (L.debesTarjetas(e) > 0) TextButton({ vm.abrir(Pantalla.Cuentas) }) {
+            Text(stringResource(R.string.debes_tarjetas, Formato.pesos(L.debesTarjetas(e))))
+        }
         Text(stringResource(R.string.inicio_mes, Formato.mes(mes), Formato.pesos(entro), Formato.pesos(salio)),
             style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         if (e.sistema == Sistema.SOBRES && L.porAsignar(e, mes) > 0) {
@@ -180,6 +183,15 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
                 color = f.sobreTinta1,
                 modifier = Modifier.padding(top = 6.dp).clip(FormaPildora).background(f.tinta1).clickable { vm.irA(io.github.fogonapps.ahorrador.Pestana.SOBRES) }
                     .padding(horizontal = 14.dp, vertical = 6.dp))
+        }
+    }
+
+    L.porAjustar(e).forEach { c ->
+        androidx.compose.runtime.key(c.id) {
+            Column(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.cuanto_hoy, c.nombre), color = f.texto)
+                FormularioSaldo(vm, c)
+            }
         }
     }
 

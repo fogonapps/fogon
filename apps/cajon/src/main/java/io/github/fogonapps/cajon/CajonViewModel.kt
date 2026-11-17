@@ -1772,29 +1772,34 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Escuchado hace poco y todavía no en el cajón (ni descartado), lo más reciente primero. */
     fun oidosPendientes(o: io.github.fogonapps.cajon.datos.Oidos) = RegistroEscuchas.pendientes(o)
 
-    private val portadasOidasIntentadas = mutableSetOf<String>()
+    private var portadasOidasVisibles = emptyList<String>()
     private val portadasOidasMutex = kotlinx.coroutines.sync.Mutex()
 
-    /** Completa solo tarjetas visibles; cada álbum se consulta una vez por sesión con red. */
+    /** Completa solo tarjetas visibles; los fallos se reintentan a las 24 horas con red. */
     fun completarPortadasOidas(claves: List<String>) {
+        portadasOidasVisibles = claves
         viewModelScope.launch {
             portadasOidasMutex.lock()
             try {
                 val red = getApplication<Application>().getSystemService(android.net.ConnectivityManager::class.java)
                 val capacidades = red.getNetworkCapabilities(red.activeNetwork)
                 if (capacidades?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) != true) return@launch
-                val pendientes = oidosPendientes(escuchas.oidos.value)
-                    .filter { it.clave in claves && it.portada.isBlank() && it.clave !in portadasOidasIntentadas }.take(20)
-                for (a in pendientes) {
-                    portadasOidasIntentadas.add(a.clave)
+                while (true) {
+                    val o = escuchas.oidos.value
+                    val a = portadasOidasVisibles.asSequence().mapNotNull { clave -> o.albumes.find { it.clave == clave } }
+                        .firstOrNull { !RegistroEscuchas.portadaDisponible(it.portada) && RegistroEscuchas.debeIntentar(o, it.clave, System.currentTimeMillis()) } ?: break
+                    escuchas.cambiar { it.copy(intentosPortada = it.intentosPortada + (a.clave to System.currentTimeMillis())) }
                     try {
                         val portada = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            MusicBrainz.buscarAlbum(a.album, a.artista).firstOrNull {
-                                RegistroEscuchas.clave(it.creador, it.titulo) == a.clave
-                            }?.portada?.takeIf { it.startsWith("https://") }
+                            val candidatos = MusicBrainz.buscarAlbum(a.album, a.artista)
+                            val tolerante = RegistroEscuchas.claveTolerante(a.artista, a.album)
+                            (candidatos.firstOrNull { RegistroEscuchas.clave(it.creador, it.titulo) == a.clave }
+                                ?: candidatos.firstOrNull { RegistroEscuchas.claveTolerante(it.creador, it.titulo) == tolerante }
+                                ?: MusicBrainz.buscarAlbum(RegistroEscuchas.albumTolerante(a.album), RegistroEscuchas.artistaTolerante(a.artista))
+                                    .firstOrNull { RegistroEscuchas.claveTolerante(it.creador, it.titulo) == tolerante })?.portada?.takeIf { it.startsWith("https://") }
                         } ?: continue
                         escuchas.cambiar { o -> o.copy(albumes = o.albumes.map {
-                            if (it.clave == a.clave && it.portada.isBlank()) it.copy(portada = portada) else it
+                            if (it.clave == a.clave && !RegistroEscuchas.portadaDisponible(it.portada)) it.copy(portada = portada) else it
                         }) }
                     } catch (e: kotlinx.coroutines.CancellationException) { throw e }
                     catch (_: Exception) { }
@@ -1833,7 +1838,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val id = nuevoId("o")
         val dia = java.time.Instant.ofEpochMilli(a.ultima).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
         val entero = a.canciones.size >= CANCIONES_ESCUCHADO
-        val obra = Obra(id, Tipos.ALBUM, a.album, creador = a.artista, portada = a.portada, estado = if (entero) Estados.TERMINADO else Estados.EN_CURSO,
+        val obra = Obra(id, Tipos.ALBUM, a.album, creador = a.artista, portada = a.portada.takeIf { it.startsWith("https://") }.orEmpty(), estado = if (entero) Estados.TERMINADO else Estados.EN_CURSO,
             agregada = ahora(), cambio = ahora(), registros = if (entero) listOf(io.github.fogonapps.cajon.datos.Registro(nuevoId("g"), dia)) else emptyList())
         cambiar { e -> e.copy(obras = e.obras + obra) }
         if (!callado) avisar(tx(R.string.aviso_agregado_cajon, a.album))
@@ -3032,7 +3037,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun exportarJson(): String = JsonCajon.encodeToString(Estado.serializer(), io.github.fogonapps.cajon.datos.Resenas.paraGuardar(paraAfuera(_estado.value ?: Estado())))
 
     /** El estado para sacarlo del teléfono (Gist, respaldo): con lo escuchado, que en el teléfono vive aparte. */
-    private fun paraAfuera(e: Estado) = e.copy(escuchas = escuchas.oidos.value.takeIf { it.albumes.isNotEmpty() || it.spotifyHasta > 0 })
+    private fun paraAfuera(e: Estado) = e.copy(escuchas = RegistroEscuchas.paraExportar(escuchas.oidos.value).takeIf { it.albumes.isNotEmpty() || it.spotifyHasta > 0 })
     fun leerRespaldo(texto: String): Estado? = leerRespaldoCajon(texto)
 
     fun importar(e: Estado) {

@@ -14,6 +14,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -110,11 +113,22 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
  * Las chispas se ganan usando las apps (bienvenida y aportes verificados) y solo sirven aquí.
  */
 @Composable
-fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
+fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar: () -> Unit) {
     val f = FogonTema.actual
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val paquetes by vm.red.paquetesWompi.collectAsStateWithLifecycle()
+    val desplazamiento = rememberScrollState()
+    var posicionEscaparates by remember { mutableIntStateOf(-1) }
+    var alinearEntrada by remember(escaparatesExtra, paquetes) { mutableStateOf(escaparatesExtra) }
+    LaunchedEffect(alinearEntrada, posicionEscaparates, desplazamiento.maxValue) {
+        if (alinearEntrada && posicionEscaparates >= 0 && desplazamiento.maxValue > 0) {
+            // Espera la medida; si llegan los paquetes, vuelve a alinear la sección una vez.
+            withFrameNanos { }
+            desplazamiento.scrollTo(posicionEscaparates)
+            alinearEntrada = false
+        }
+    }
     var comprando by remember { mutableStateOf(false) }
     var errorPago by remember { mutableStateOf(false) }
     val pagosExternos = ofrecePagosExternos(BuildConfig.TIENDA_PLAY)
@@ -161,7 +175,9 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(R.string.social_temas_tienda), onCerrar)
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi).
+            io.github.fogonapps.identidad.DeslizarParaRecargar({ vm.red.cargarTemas(); if (pagosExternos) vm.red.cargarPaquetesWompi() }, Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 // Saldo de la cuenta.
                 Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
@@ -189,7 +205,7 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
                     Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
                 }
-                Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_titulo), color = f.texto, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_titulo), Modifier.onGloballyPositioned { posicionEscaparates = it.positionInParent().y.roundToInt() }, color = f.texto, style = MaterialTheme.typography.titleMedium)
                 TemasPerfil.EXTRAS.forEachIndexed { indice, item ->
                     val tiene = item in temas.reclamados
                     Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_extra, indice + 1), color = f.texto)
@@ -229,6 +245,7 @@ fun TiendaTemas(vm: InterfazSocial, onCerrar: () -> Unit) {
                     }
                 }
                 PistaSocial(stringResource(R.string.social_chispas_reglas))
+            }
             }
         }
     }

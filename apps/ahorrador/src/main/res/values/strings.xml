@@ -310,7 +310,7 @@
   <string name="te_pagaron">Paid in full!</string>
   <string name="te_pasaste">Over by</string>
   <string name="tienes">You have</string>
-  <string name="tienes_pista">Money in all your accounts, minus what you owe on cards.</string>
+  <string name="tienes_pista">Money in your accounts, excluding credit cards.</string>
   <string name="tipo_banco">Bank account</string>
   <string name="tipo_billetera">Digital wallet</string>
   <string name="tipo_credito">Credit card</string>
@@ -637,4 +637,9 @@
     <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
     <string name="banco_tarjeta_nombre">%1$s credit card</string>
     <string name="banco_crear_tarjeta">Create the %1$s credit card</string>
+  <string name="debes_tarjetas">You owe %1$s on cards</string>
+  <string name="cuanto_hoy">How much do you have in %1$s today?</string>
+  <string name="ajustar">Adjust</string>
+  <string name="ajustar_saldo">Adjust balance</string>
+  <string name="ajuste_saldo">Balance adjustment</string>
 </resources>

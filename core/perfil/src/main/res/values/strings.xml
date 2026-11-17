@@ -90,4 +90,21 @@
     <string name="escaparate_ins_explorador">Explorer</string>
     <string name="escaparate_ins_reto">Challenge completed</string>
     <string name="escaparates_compartir">Saving shares these blocks with people who can view your profile. Review them before publishing.</string>
+    <string name="escaparates_subir_telefono">Upload from phone</string>
+    <string name="escaparates_subiendo">Uploading photo…</string>
+    <string name="escaparates_error_subida">Could not upload the photo. Try again.</string>
+    <string name="perfil_nivel">Level %1$d</string>
+    <string name="perfil_nivel_explica">Level up by sharing badges earned using the apps. Levels cannot be bought. Every 3 badges earn a showcase, up to 6 free.</string>
+    <string name="perfil_nivel_faltan">You need %1$d more badges for your next showcase</string>
+    <string name="perfil_nivel_maximo">You have the maximum number of free showcases.</string>
+    <string name="escaparate_mis_marcas">my records</string>
+    <string name="escaparate_mi_meta">my goal</string>
+    <string name="escaparate_mi_racha">my streak</string>
+    <string name="escaparate_comilla_abre">“</string>
+    <string name="escaparate_comilla_cierra">”</string>
+    <string name="escaparate_app_cajon">el cajón</string>
+    <string name="escaparate_app_forzudo">el forzudo</string>
+    <string name="escaparate_app_cucha">la cucha</string>
+    <string name="escaparate_app_alcancia">la alcancía</string>
+    <string name="escaparate_firma">fogón · %1$s</string>
 </resources>

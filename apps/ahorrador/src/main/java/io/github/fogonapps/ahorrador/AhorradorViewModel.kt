@@ -189,9 +189,9 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         cambiar { e ->
             val a = e.notificaciones.registros.firstOrNull { it.aviso.huella == huella && !it.descartado && it.movimiento == null }?.aviso ?: return@cambiar e
             if (e.cuentaEnlazada(a) != null) return@cambiar e
-            val nueva = Cuenta(nuevoId("c"),
+            val nueva = L.cuentaDesdeAviso(nuevoId("c"),
                 if (a.credito) tx(R.string.banco_tarjeta_nombre, tx(a.banco.nombreBanco)) else tx(a.banco.nombreBanco),
-                if (a.credito) TipoCuenta.CREDITO else TipoCuenta.BANCO, banco = a.banco)
+                a.banco, a.credito)
             val conCuenta = if (cuenta == null) e.copy(cuentas = e.cuentas + nueva) else e
             val enlazado = enlazarBanco(conCuenta, a, cuenta ?: nueva.id)
             if (a.banco in enlazado.notificaciones.solos) confirmarBanco(enlazado, huella, automatico = true) else enlazado
@@ -344,6 +344,10 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     fun ultimoGasto(): Movimiento? = _estado.value?.movimientos?.lastOrNull { it.tipo == TipoMovimiento.GASTO && it.fijo == null && it.nota != "4×1000" }
 
     /* ----- Cuentas ----- */
+
+    fun ajustarSaldo(id: String, monto: Long) {
+        cambiar { L.ajustarSaldo(it, id, monto, tx(R.string.ajuste_saldo)) }
+    }
 
     fun guardarCuenta(c: Cuenta) {
         cambiar { e ->

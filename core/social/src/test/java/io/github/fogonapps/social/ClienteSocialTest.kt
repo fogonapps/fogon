@@ -42,6 +42,15 @@ class ClienteSocialTest {
         assertEquals(lista, JsonSocial.decodeFromString(kotlinx.serialization.builtins.ListSerializer(EscaparateSocial.serializer()), Buffer().also { peticiones.last().body!!.writeTo(it) }.readUtf8()))
     }
 
+    @Test fun fotoPropiaSinPublicacionYNivelPublicoSonAditivos() {
+        val foto = JsonSocial.decodeFromString(FotoEscaparate.serializer(), """{"nombre":"propia"}""")
+        assertNull(foto.publicacion)
+        val antiguo = """{"persona":{"usuario":"ana","nombre":"Ana"}}"""
+        assertEquals(0, JsonSocial.decodeFromString(PerfilSocial.serializer(), antiguo).nivel)
+        val actual = antiguo.dropLast(1) + ",\"nivel\":5}"
+        assertEquals(5, JsonSocial.decodeFromString(PerfilSocial.serializer(), actual).nivel)
+    }
+
     @Test fun pagosWompiUsanSesionYPropaganApagado() = runBlocking {
         val peticiones = mutableListOf<Request>()
         val c = cliente { peticion ->
