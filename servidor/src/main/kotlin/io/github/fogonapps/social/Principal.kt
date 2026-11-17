@@ -40,6 +40,10 @@ import java.util.concurrent.ConcurrentHashMap
  * entorno: `PUERTO` (8080), `DATOS` (la carpeta de la base y las fotos, ./datos).
  */
 fun main(args: Array<String>) {
+    if (args.firstOrNull() == "semilla") {
+        sembrarSocialLocal(File(requireNotNull(System.getenv("DATOS")) { "semilla exige DATOS de pruebas" }))
+        return
+    }
     val datos = File(System.getenv("DATOS") ?: "datos").apply { mkdirs() }
     val usuario = System.getenv("SMTP_USUARIO").orEmpty()
     val clave = System.getenv("SMTP_CLAVE").orEmpty()

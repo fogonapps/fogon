@@ -577,13 +577,13 @@
     <string name="social_temas_reclamar">Reclamar gratis</string>
     <string name="cancion_silenciar">Silenciar la música de los perfiles</string>
     <string name="cancion_activar">Activar la música de los perfiles</string>
-    <string name="social_chispas_n">%1$d chispas</string>
+    <string name="social_chispas_n">%1$s chispas</string>
     <string name="social_chispas_explica">Gratis: bienvenida, reportes confirmados, reseñas útiles y pronto la ruta de temporada.</string>
-    <string name="social_tienda_fondos">Fondos</string>
-    <string name="social_tienda_marcos">Marcos</string>
+    <string name="social_tienda_fondos">fondos</string>
+    <string name="social_tienda_marcos">marcos</string>
     <string name="social_tienda_sin_fondo">Sin fondo</string>
     <string name="social_tienda_sin_marco">Sin marco</string>
-    <string name="social_tienda_comprar">%1$d chispas</string>
+    <string name="social_tienda_comprar">%1$s chispas</string>
     <string name="social_chispas_reglas">Las chispas no se transfieren ni se cambian por dinero. Puedes regalar artículos de la tienda.</string>
     <string name="social_chat_sin_llaves_aqui">Esta app todavía no tiene las llaves para tus mensajes cifrados. Abre El Cajón una vez (ahí están, y las comparte con tu contraseña) o empieza con llaves nuevas aquí.</string>
     <string name="social_chat_llaves_nuevas">Usar llaves nuevas aquí</string>
@@ -623,7 +623,7 @@
     <string name="social_wompi_explica">Pago seguro con Wompi: Nequi, PSE o tarjeta. Las chispas solo sirven para la apariencia; todo lo demás es gratis</string>
     <string name="social_wompi_error">No se pudo abrir el pago. Inténtalo de nuevo.</string>
     <string name="social_wompi_paquete_regalo">%1$s chispas + %2$s de regalo · %3$s COP</string>
-    <string name="social_mercado">mercado</string>
+    <string name="social_mercado">Mercado</string>
     <string name="social_mercado_oficial">oficial</string>
     <string name="social_mercado_nuevo">nuevo</string>
     <string name="social_mercado_vendidos">más vendidos</string>
@@ -633,7 +633,7 @@
     <string name="social_mercado_reintentar">reintentar</string>
     <string name="social_mercado_vacio">No hay artículos aquí todavía.</string>
     <string name="social_mercado_por">por @%1$s</string>
-    <string name="social_mercado_ventas">%1$d ventas totales</string>
+    <string name="social_mercado_ventas">%1$s ventas totales</string>
     <string name="social_mercado_cargando">cargando…</string>
     <string name="social_mercado_mas">ver más</string>
     <string name="social_mercado_revision">en revisión</string>
@@ -655,7 +655,7 @@
     <string name="social_mercado_limites">Hasta 900 KB y 2.048 px por lado. Marcos: PNG cuadrado con transparencia. Usa solo arte propio o con permiso para vender.</string>
     <string name="social_mercado_nombre">nombre (hasta 40 caracteres)</string>
     <string name="social_mercado_rango">entre 100 y 2.000 chispas</string>
-    <string name="social_mercado_reparto">%1$d para ti · %2$d salen de circulación. Tus chispas se gastan en todo Fogón; no se canjean por dinero.</string>
+    <string name="social_mercado_reparto">%1$s para ti · %2$s salen de circulación. Tus chispas se gastan en todo Fogón; no se canjean por dinero.</string>
     <string name="social_mercado_publicacion_oficial">Publicación oficial: sin cobro ni cola de revisión.</string>
     <string name="social_mercado_aviso">500 chispas por publicar. Antes de salir a la venta lo revisa el equipo. Si se rechaza, no se devuelve el cobro.</string>
     <string name="social_mercado_pagar">publicar por 500 chispas</string>
@@ -746,4 +746,5 @@
     <string name="social_portada_encuadrar">Encuadrar portada</string>
     <string name="social_portada_arrastrar">Arrastra para encuadrar la foto</string>
     <string name="social_portada_error">No se pudo subir la portada. Inténtalo de nuevo.</string>
+    <string name="social_mercado_catalogo">catálogo</string>
 </resources>

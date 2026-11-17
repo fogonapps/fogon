@@ -143,7 +143,7 @@ private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: 
     }
     Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().fondoFogon(FogonTema.actual).systemBarsPadding()) {
-            Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(RP.string.escaparates_titulo), Modifier.weight(1f), color = FogonTema.actual.texto)
                 TextButton(cerrar, enabled = !ocupado) { Text(stringResource(RP.string.escaparates_cancelar)) }
             }

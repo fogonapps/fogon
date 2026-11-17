@@ -375,7 +375,7 @@ open class ClienteSocial(
     companion object {
         val cuentasPorBorrar = kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, Long>>(extraBufferCapacity = 16)
         /** El servidor de Fogón (uno solo para todas las apps). */
-        const val SERVIDOR = "https://fogonapps.duckdns.org"
+        const val SERVIDOR = BuildConfig.SERVIDOR_SOCIAL
         fun enlacePerfil(usuario: String) = "$SERVIDOR/@$usuario"
         fun enlacePublicacion(id: Long) = "$SERVIDOR/p/$id"
         fun foto(usuario: String, version: Long = 0) = "$SERVIDOR/v1/fotos/$usuario" + if (version > 0) "?v=$version" else ""

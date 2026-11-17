@@ -36,8 +36,7 @@ fun RowScope.CifraPerfil(valor: String, etiqueta: String, onClick: (() -> Unit)?
     Column(Modifier.weight(1f).clip(forma(12.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Text(valor, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = f.texto)
-        Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        Text(etiqueta, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelMedium, color = f.textoSuave, textAlign = TextAlign.Center)
     }
 }
 

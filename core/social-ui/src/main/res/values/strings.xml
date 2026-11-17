@@ -575,13 +575,13 @@
     <string name="social_temas_reclamar">Claim for free</string>
     <string name="cancion_silenciar">Mute profile music</string>
     <string name="cancion_activar">Unmute profile music</string>
-    <string name="social_chispas_n">%1$d sparks</string>
+    <string name="social_chispas_n">%1$s sparks</string>
     <string name="social_chispas_explica">Free sparks: welcome, confirmed reports, helpful reviews and soon the seasonal route.</string>
-    <string name="social_tienda_fondos">Backgrounds</string>
-    <string name="social_tienda_marcos">Frames</string>
+    <string name="social_tienda_fondos">backgrounds</string>
+    <string name="social_tienda_marcos">frames</string>
     <string name="social_tienda_sin_fondo">No background</string>
     <string name="social_tienda_sin_marco">No frame</string>
-    <string name="social_tienda_comprar">%1$d sparks</string>
+    <string name="social_tienda_comprar">%1$s sparks</string>
     <string name="social_chispas_reglas">Sparks cannot be transferred or exchanged for money. You can gift store items.</string>
     <string name="social_chat_sin_llaves_aqui">This app doesn’t have the keys for your encrypted messages yet. Open El Cajón once (they’re there, and it shares them using your password) or start with new keys here.</string>
     <string name="social_chat_llaves_nuevas">Use new keys here</string>
@@ -621,7 +621,7 @@
     <string name="social_wompi_explica">Secure payment with Wompi: Nequi, PSE or card. Sparks are only for appearance; everything else is free</string>
     <string name="social_wompi_error">Could not open payment. Try again.</string>
     <string name="social_wompi_paquete_regalo">%1$s sparks + %2$s free · %3$s COP</string>
-    <string name="social_mercado">market</string>
+    <string name="social_mercado">Market</string>
     <string name="social_mercado_oficial">official</string>
     <string name="social_mercado_nuevo">new</string>
     <string name="social_mercado_vendidos">best sellers</string>
@@ -631,7 +631,7 @@
     <string name="social_mercado_reintentar">retry</string>
     <string name="social_mercado_vacio">No items here yet.</string>
     <string name="social_mercado_por">by @%1$s</string>
-    <string name="social_mercado_ventas">%1$d total sales</string>
+    <string name="social_mercado_ventas">%1$s total sales</string>
     <string name="social_mercado_cargando">loading…</string>
     <string name="social_mercado_mas">load more</string>
     <string name="social_mercado_revision">under review</string>
@@ -653,7 +653,7 @@
     <string name="social_mercado_limites">Up to 900 KB and 2,048 px per side. Frames: square PNG with transparency. Use only your own art or art you have permission to sell.</string>
     <string name="social_mercado_nombre">name (up to 40 characters)</string>
     <string name="social_mercado_rango">between 100 and 2,000 sparks</string>
-    <string name="social_mercado_reparto">%1$d for you · %2$d leave circulation. Your sparks can be spent across Fogón; they cannot be exchanged for money.</string>
+    <string name="social_mercado_reparto">%1$s for you · %2$s leave circulation. Your sparks can be spent across Fogón; they cannot be exchanged for money.</string>
     <string name="social_mercado_publicacion_oficial">Official listing: no fee or review queue.</string>
     <string name="social_mercado_aviso">Publishing costs 500 sparks. The team reviews it before it goes on sale. If rejected, the fee is not refunded.</string>
     <string name="social_mercado_pagar">publish for 500 sparks</string>
@@ -744,4 +744,5 @@
     <string name="social_portada_encuadrar">Frame your cover</string>
     <string name="social_portada_arrastrar">Drag to frame the photo</string>
     <string name="social_portada_error">Could not upload the cover. Try again.</string>
+    <string name="social_mercado_catalogo">catalog</string>
 </resources>

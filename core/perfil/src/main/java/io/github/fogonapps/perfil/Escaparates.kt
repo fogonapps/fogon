@@ -1,7 +1,6 @@
 package io.github.fogonapps.perfil
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
@@ -14,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -75,8 +76,7 @@ fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, ima
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.widthIn(min = 140.dp, max = 420.dp).weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 Text(e.texto.ifBlank { titulo }, color = f.texto, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                                Box(Modifier.fillMaxWidth().height(22.dp).clip(forma(50.dp)).background(f.fondo)
-                                    .border(2.dp, f.texto, forma(50.dp))
+                                Box(Modifier.fillMaxWidth().height(22.dp).clip(forma(50.dp)).background(f.superficie)
                                     .semantics { progressBarRangeInfo = ProgressBarRangeInfo(porcentaje / 100f, 0f..1f) }) {
                                     Box(Modifier.fillMaxHeight().fillMaxWidth(porcentaje / 100f).background(f.acentoTexto))
                                 }
@@ -85,7 +85,7 @@ fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, ima
                         }
                     }
                     e.tipo == "galeria" -> Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        e.fotos.forEach { foto -> imagen(foto, Modifier.size(112.dp).clip(forma(12.dp)).border(2.dp, f.texto, forma(12.dp))) }
+                        e.fotos.forEach { foto -> imagen(foto, Modifier.size(112.dp).clip(forma(12.dp))) }
                     }
                     e.tipo == "insignias" -> FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         e.insignias.forEach { id -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -93,19 +93,21 @@ fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, ima
                             Text(nombreInsigniaEscaparate(id), color = f.texto, fontWeight = FontWeight.Bold)
                         } }
                     }
-                    e.tipo.startsWith("cajon:") -> {
-                        Column {
-                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                e.elementos.forEach { elemento -> Column(Modifier.width(112.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Box(Modifier.size(112.dp).clip(forma(8.dp)).background(f.fondo).border(2.dp, f.texto, forma(8.dp))) {
+                    e.tipo == "cajon:albumes" || e.tipo == "cajon:favoritas" -> {
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            e.elementos.forEach { elemento ->
+                                Column(Modifier.width(112.dp).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Box(Modifier.fillMaxWidth().aspectRatio(if (e.tipo == "cajon:albumes") 1f else 2f / 3f)
+                                        .clip(forma(12.dp)).background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.14f)).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+                                        IconoRiso(IconosFogon.Imagen, null, tamano = 32.dp, tinta = f.textoSuave)
                                         if (elemento.portada.isNotBlank()) imagen(elemento.portada, Modifier.fillMaxSize())
-                                        Text(elemento.titulo, Modifier.align(Alignment.BottomStart).fillMaxWidth().background(f.fondo).padding(6.dp),
-                                            color = f.texto, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                                     }
-                                    if (elemento.texto.isNotBlank()) Text(elemento.texto, color = f.textoSuave, style = MaterialTheme.typography.bodySmall)
-                                } }
+                                    Text(elemento.titulo, color = f.texto, fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    if (elemento.texto.isNotBlank()) Text(elemento.texto, color = f.textoSuave,
+                                        style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
                             }
-                            Box(Modifier.fillMaxWidth().height(10.dp).background(f.acentoTexto, forma(3.dp)).border(2.dp, f.texto, forma(3.dp)))
                         }
                         if (e.texto.isNotBlank()) Text(e.texto, color = f.texto)
                     }

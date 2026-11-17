@@ -46,8 +46,46 @@ class EscaparatesPantallaTest {
                     nivel = 5, abrirNivel = { abierto = true }), portada = {}, foto = {})
             }
         }
-        regla.onNodeWithContentDescription("Nivel 5").assertExists().performClick()
+        val pildora = regla.onNodeWithContentDescription("Nivel 5").assertExists()
+        val limites = pildora.fetchSemanticsNode().boundsInRoot
+        assertTrue(limites.width >= with(regla.density) { 48.dp.toPx() })
+        assertTrue(limites.height >= with(regla.density) { 48.dp.toPx() })
+        pildora.performClick()
         regla.runOnIdle { assertTrue(abierto) }
+    }
+
+    @Test fun cabeceraOcultaNivelCero() {
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia()) {
+                PerfilCabecera(PerfilVista("Ana", "ana", "", "", "", emptyList(), false, "yo",
+                    nivel = 0), portada = {}, foto = {})
+            }
+        }
+        regla.onNodeWithContentDescription("Nivel 0").assertDoesNotExist()
+        regla.onNodeWithText("Nivel 0").assertDoesNotExist()
+    }
+
+    @Test fun nivelAjenoAbreDetalleSinProgreso() {
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia()) {
+                PerfilCabecera(PerfilVista("Ana", "ana", "", "", "", emptyList(), false, "",
+                    nivel = 5, insigniasNivel = listOf("cine")), portada = {}, foto = {})
+            }
+        }
+        regla.onNodeWithContentDescription("Nivel 5").performClick()
+        regla.onNodeWithText("Cómo subir").assertExists()
+        regla.onNodeWithText("Cinéfilo").assertExists()
+        regla.onNodeWithText("Te falta 1 insignia para tu próxima repisa").assertDoesNotExist()
+    }
+
+    @Test fun detallePropioUsaSingularYExplicaCupo() {
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia()) {
+                NivelDetalle(5, listOf("cine"), propio = true, gratis = 3)
+            }
+        }
+        regla.onNodeWithText("Te falta 1 insignia para tu próxima repisa").assertExists()
+        regla.onNodeWithText("Repisas gratis: 3 de 6").assertExists()
     }
 
     @Test fun escaparatePropioPermiteAbrirEditor() {
@@ -74,7 +112,7 @@ class EscaparatesPantallaTest {
         }
         fun comprobarSeccion() {
             regla.waitForIdle()
-            val seccion = regla.onNodeWithText("Escaparates").assertIsDisplayed().fetchSemanticsNode()
+            val seccion = regla.onNodeWithText("Más repisas").assertIsDisplayed().fetchSemanticsNode()
             assertTrue("La sección debe quedar junto a la cabecera", seccion.boundsInRoot.top < with(regla.density) { 120.dp.toPx() })
         }
         comprobarSeccion()

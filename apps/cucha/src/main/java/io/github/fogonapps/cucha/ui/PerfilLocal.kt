@@ -69,7 +69,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
     val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto, portada,
         bio, emptyList(), true, "yo", contadores = contadores, secciones = secciones, insignia = miInsignia)
-    PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vista, interfaz).copy(tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
+    PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vista, interfaz).copy(abrirNivel = { vm.abrir(Pantalla.EditarPerfil) }, tema = io.github.fogonapps.social.ui.temaPropio(interfaz), marco = io.github.fogonapps.social.ui.marcoPropio(interfaz)), parte, { parte = it }, nombreSuave = nombre.isBlank(), interlineado = true,
         navegacion = {
             io.github.fogonapps.social.ui.CabeceraPerfil(usuario?.let { "@$it" } ?: stringResource(R.string.tu_perfil), vm::cerrar) {
                 io.github.fogonapps.identidad.BotonIconoSocial(Iconos.Ajustes, stringResource(R.string.ajustes)) { vm.abrir(Pantalla.Ajustes) }
@@ -158,6 +158,7 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     val r = remoto
     if (r == null) { Text(stringResource(R.string.cuenta_edicion_pendiente), Modifier.padding(16.dp), color = FogonTema.actual.texto); return }
+    io.github.fogonapps.social.ui.NivelEnEditarPerfil(interfazCuenta(vm))
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
     var nombre by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarNombrePerfil(r.persona.nombre)) }
     var bio by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarBioPerfil(r.bio)) }

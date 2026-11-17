@@ -12,6 +12,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,6 +40,7 @@ import java.io.File
 import java.util.UUID
 
 /** Editor local: ninguna capa ni borrador se sube hasta confirmar en Publicar. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: () -> Unit, publicar: (String, ByteArray) -> Unit) {
     val ctx = LocalContext.current
@@ -103,7 +106,7 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(if (tipoInicial == "marco") R.string.social_editor_marco else R.string.social_editor_banner), { salir() })
             Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(lienzo.ancho.toFloat()/lienzo.alto)
-                .background(f.superficie).semantics { contentDescription = descripcionLienzo }
+                .background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.14f)).border(1.dp, f.textoSuave).semantics { contentDescription = descripcionLienzo }
                 .pointerInput(cargado,ocupado) {
                     if (!cargado || ocupado) return@pointerInput
                     awaitEachGesture {
@@ -134,10 +137,10 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                 capa?.let { c -> BoxWithConstraints(Modifier.fillMaxSize()) {
                     val r = dibujante.limites(c,lienzo)
                     Box(Modifier.offset(maxWidth*(r.left/lienzo.ancho),maxHeight*(r.top/lienzo.alto))
-                        .size(maxWidth*(r.width()/lienzo.ancho),maxHeight*(r.height()/lienzo.alto)).border(2.dp,f.texto))
+                        .size(maxWidth*(r.width()/lienzo.ancho),maxHeight*(r.height()/lienzo.alto)).border(2.dp,f.tinta1))
                 } }
             }
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.social_editor_gestos), color=f.textoSuave)
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     listOf("fondo" to R.string.social_editor_fondo,"trama" to R.string.social_editor_trama,"texto" to R.string.social_editor_texto,
@@ -145,15 +148,12 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                         PildoraSocial(stringResource(t),acento=herramienta==id) { herramienta=id }
                     }
                 }
-                Row(verticalAlignment=Alignment.CenterVertically) {
-                    IconoRiso(IconosFogon.Imagen, stringResource(R.string.social_editor_imagen), Modifier.size(24.dp), tinta = f.tinta1)
-                    BotonSecundario(stringResource(R.string.social_editor_imagen), { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, habilitado=cargado && !ocupado && lienzo.capas.size<40)
-                }
+                BotonSecundario(stringResource(R.string.social_editor_imagen), { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, Modifier.fillMaxWidth(), habilitado=cargado && !ocupado && lienzo.capas.size<40)
                 Text(stringResource(R.string.social_editor_colores),color=f.texto)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     colores.forEachIndexed { i,tinta ->
                         val nombre = stringResource(R.string.social_editor_color,i+1)
-                        Box(Modifier.size(48.dp).clip(CircleShape).background(tinta).border(if(color==i) 4.dp else 1.dp,f.texto,CircleShape)
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(tinta).border(if(color==i) 2.dp else 1.dp,if(color==i) f.tinta1 else f.linea,CircleShape)
                             .semantics { contentDescription=nombre; selected=color==i }.clickable {
                                 color=i
                                 if (herramienta=="fondo") cambiar(lienzo.copy(fondo=i))
@@ -163,8 +163,12 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                 }
                 when(herramienta) {
                     "fondo" -> {
-                        Row(verticalAlignment=Alignment.CenterVertically) { Switch(lienzo.degradado,{ cambiar(lienzo.copy(degradado=it)) },modifier=Modifier.semantics { contentDescription=recursos.getString(R.string.social_editor_degradado) }); Text(stringResource(R.string.social_editor_degradado),color=f.texto) }
-                        BotonSecundario(stringResource(R.string.social_editor_segundo),{ cambiar(lienzo.copy(segundo=color)) })
+                        Row(Modifier.fillMaxWidth().toggleable(value = lienzo.degradado, role = Role.Switch, onValueChange = { cambiar(lienzo.copy(degradado=it)) }),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(stringResource(R.string.social_editor_degradado), Modifier.weight(1f), color=f.texto)
+                            Switch(lienzo.degradado, onCheckedChange = null)
+                        }
+                        BotonSecundario(stringResource(R.string.social_editor_segundo),{ cambiar(lienzo.copy(segundo=color)) }, Modifier.fillMaxWidth())
                     }
                     "trama" -> {
                         Text(stringResource(R.string.social_editor_opacidad),color=f.texto)
@@ -172,10 +176,10 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                         Text(stringResource(R.string.social_editor_tamano),color=f.texto)
                         Slider(lienzo.paso,{ cambiar(lienzo.copy(paso=it)) },valueRange=8f..64f,modifier=Modifier.semantics { contentDescription=recursos.getString(R.string.social_editor_tamano) })
                     }
-                    "texto" -> BotonSecundario(stringResource(R.string.social_editor_anadir_texto),{ agregar("texto",recursos.getString(R.string.social_editor_texto_inicial)) },habilitado=lienzo.capas.count { it.clase=="texto" }<3)
+                    "texto" -> BotonSecundario(stringResource(R.string.social_editor_anadir_texto),{ agregar("texto",recursos.getString(R.string.social_editor_texto_inicial)) },Modifier.fillMaxWidth(),habilitado=lienzo.capas.count { it.clase=="texto" }<3)
                     "personaje" -> {
                         // Recursos explícitos: todas las caras, celebraciones y la chispa, sin reflexión.
-                        piezasMercado.entries.chunked(4).forEach { fila -> Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+                        piezasMercado.entries.chunked(4).forEach { fila -> Row(horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                             fila.forEach { (nombre,recurso) ->
                                 val descripcion=stringResource(R.string.social_editor_pieza,stringResource(nombresPiezasMercado.getValue(nombre)))
                                 androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(recurso),descripcion,
@@ -183,20 +187,24 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                             }
                         } }
                     }
-                    "formas" -> Row(Modifier.horizontalScroll(rememberScrollState())) {
-                        listOf("circulo" to R.string.social_editor_circulo,"pildora" to R.string.social_editor_pildora,"estrella" to R.string.social_editor_estrella).forEach { (id,t) -> BotonSecundario(stringResource(t),{ agregar(id) }) }
+                    "formas" -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        listOf("circulo" to R.string.social_editor_circulo,"pildora" to R.string.social_editor_pildora,"estrella" to R.string.social_editor_estrella).forEach { (id,t) -> BotonSecundario(stringResource(t),{ agregar(id) }, Modifier.weight(1f)) }
                     }
                     "plantillas" -> {
-                        listOf(R.string.social_editor_cancha,R.string.social_editor_noche,R.string.social_editor_riso,R.string.social_editor_grande).forEachIndexed { i,t ->
-                            BotonSecundario(stringResource(t), {
-                                val base=LienzoMercado(tipoInicial,fondo=if(i==1) 0 else 2,segundo=1,degradado=i<2,trama=if(i==2) 1f else .35f)
-                                cambiar(when(i) {
-                                    0 -> base.agregar("circulo",color=3).agregar("texto",recursos.getString(t),3).let { it.cambiar(it.capas.last().copy(x=.7f)) }
-                                    1 -> base.agregar("estrella",color=1).agregar("texto",recursos.getString(t),3)
-                                    2 -> base.agregar("pildora",color=1).agregar("texto",recursos.getString(t),0)
-                                    else -> base.agregar("personaje","personaje_cajon_feliz").let { it.cambiar(it.capas.last().copy(tamano=1.2f)) }
-                                }); seleccion=null
-                            })
+                        listOf(R.string.social_editor_cancha,R.string.social_editor_noche,R.string.social_editor_riso,R.string.social_editor_grande).withIndex().chunked(2).forEach { fila ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                fila.forEach { (i,t) ->
+                                    BotonSecundario(stringResource(t), {
+                                        val base=LienzoMercado(tipoInicial,fondo=if(i==1) 0 else 2,segundo=1,degradado=i<2,trama=if(i==2) 1f else .35f)
+                                        cambiar(when(i) {
+                                            0 -> base.agregar("circulo",color=3).agregar("texto",recursos.getString(t),3).let { it.cambiar(it.capas.last().copy(x=.7f)) }
+                                            1 -> base.agregar("estrella",color=1).agregar("texto",recursos.getString(t),3)
+                                            2 -> base.agregar("pildora",color=1).agregar("texto",recursos.getString(t),0)
+                                            else -> base.agregar("personaje","personaje_cajon_feliz").let { it.cambiar(it.capas.last().copy(tamano=1.2f)) }
+                                        }); seleccion=null
+                                    }, Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -209,24 +217,28 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                     Slider(c.x,{ cambiar(lienzo.cambiar(c.copy(x=it))) },modifier=Modifier.semantics { contentDescription=recursos.getString(R.string.social_editor_horizontal) })
                     Text(stringResource(R.string.social_editor_vertical),color=f.texto)
                     Slider(c.y,{ cambiar(lienzo.cambiar(c.copy(y=it))) },modifier=Modifier.semantics { contentDescription=recursos.getString(R.string.social_editor_vertical) })
-                    Row(Modifier.horizontalScroll(rememberScrollState())) {
-                        BotonSecundario(stringResource(R.string.social_editor_atras),{ cambiar(lienzo.ordenar(c.id,false)) })
-                        BotonSecundario(stringResource(R.string.social_editor_adelante),{ cambiar(lienzo.ordenar(c.id,true)) })
-                        BotonSecundario(stringResource(R.string.social_editor_borrar),{ cambiar(lienzo.borrar(c.id)); seleccion=null })
+                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BotonSecundario(stringResource(R.string.social_editor_atras),{ cambiar(lienzo.ordenar(c.id,false)) }, Modifier)
+                        BotonSecundario(stringResource(R.string.social_editor_adelante),{ cambiar(lienzo.ordenar(c.id,true)) }, Modifier)
+                        BotonSecundario(stringResource(R.string.social_editor_borrar),{ cambiar(lienzo.borrar(c.id)); seleccion=null }, Modifier, peligro = true)
                     }
                 }
                 // Lista accesible: permite recuperar capas tapadas por otras y ordenar sin gestos.
-                lienzo.capas.asReversed().forEach { c -> PildoraSocial(stringResource(R.string.social_editor_capa,c.id),acento=seleccion==c.id) { seleccion=c.id } }
-                BotonSecundario(stringResource(R.string.social_editor_deshacer),{ lienzo=historial.deshacer(); seleccion=null },habilitado=puedeDeshacer)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    lienzo.capas.asReversed().forEach { c -> PildoraSocial(stringResource(R.string.social_editor_capa,c.id),acento=seleccion==c.id) { seleccion=c.id } }
+                }
                 if(error) Text(stringResource(R.string.social_editor_error),color=f.texto)
             }
-            BotonRiso(stringResource(R.string.social_editor_siguiente),{
-                scope.launch { ocupado=true; error=false
-                    try { check(guardarAhora()); val bytes=dibujante.exportar(lienzo,tintas); publicar(lienzo.tipo,bytes) }
-                    catch(e: CancellationException) { throw e } catch(_: Exception) { error=true }
-                    finally { ocupado=false }
-                }
-            },modifier=Modifier.padding(16.dp),habilitado=cargado && !ocupado && vista!=null)
+            Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BotonSecundario(stringResource(R.string.social_editor_deshacer),{ lienzo=historial.deshacer(); seleccion=null }, Modifier.weight(1f), habilitado=cargado && !ocupado && puedeDeshacer)
+                BotonRiso(stringResource(R.string.social_editor_siguiente),{
+                    scope.launch { ocupado=true; error=false
+                        try { check(guardarAhora()); val bytes=dibujante.exportar(lienzo,tintas); publicar(lienzo.tipo,bytes) }
+                        catch(e: CancellationException) { throw e } catch(_: Exception) { error=true }
+                        finally { ocupado=false }
+                    }
+                },modifier=Modifier.weight(1f),habilitado=cargado && !ocupado && vista!=null)
+            }
         }
     }
 }

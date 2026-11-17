@@ -20,6 +20,12 @@ class EscaparatesTest {
         }).paraVista()
         assertEquals(listOf("foto-servidor"), galeria.fotos)
     }
+    @Test fun portadasPrivadasNuncaSalenEnLaInstantanea() {
+        val portadas = listOf("file:///data/user/0/cajon/oidos/disco.jpg", "/data/portada.jpg", "content://album/1", "id_de_imagen", "https://ejemplo.invalid/disco.jpg", "")
+        val elementos = escaparateElementos("cajon:albumes", portadas.map { ElementoEscaparate("Disco", portada = it) }).paraVista().elementos
+        assertEquals(listOf("", "", "", "", portadas[4], ""), elementos.map { it.portada })
+    }
+
     @Test fun metaSoloContienePorcentajeYEtiqueta() {
         val d = escaparateNumero("alcancia:meta", 75, "%").datos
         assertEquals(setOf("numero", "etiqueta"), d.keys)

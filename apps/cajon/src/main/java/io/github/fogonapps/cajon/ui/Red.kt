@@ -662,27 +662,28 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
                 if (reproducir) ReproductorVideo(vm, video) { reproducir = false }
                 val imagen = (if (video.isNotBlank()) d.texto("poster") else d.texto("imagen")).takeIf { it.isNotBlank() }?.let { ClienteSocial.imagen(it) }
                     ?: d.texto("portada").ifBlank { (d["portadas"] as? JsonArray)?.firstOrNull()?.let { (it as? JsonPrimitive)?.content }.orEmpty() }
-                Box(Modifier.weight(1f).aspectRatio(0.75f).clip(forma(10.dp)).background(f.superficie)
-                    .clickable {
-                        if (video.isNotBlank() && d.texto("spoiler") != "true") reproducir = true
-                        else vm.abrir(Pantalla.PublicacionRed(p.id))
-                    }.semantics { if (video.isNotBlank()) contentDescription = descripcionVideo }) {
-                    if (imagen.isNotBlank()) coil3.compose.AsyncImage(imagen, null, Modifier.matchParentSize()
-                        .then(if (d.texto("spoiler") == "true") Modifier.blur(20.dp) else Modifier), contentScale = ContentScale.Crop)
-                    else Text(d.texto("titulo").ifBlank { d.texto("texto") }, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 5,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(8.dp))
-                    if (io.github.fogonapps.social.ui.esCalificacion(p)) Column(Modifier.align(Alignment.TopStart)
-                        .fillMaxWidth().background(f.fondo).padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Box(Modifier.fillMaxWidth().aspectRatio(0.75f).clip(forma(10.dp)).background(f.superficie)
+                        .clickable {
+                            if (video.isNotBlank() && d.texto("spoiler") != "true") reproducir = true
+                            else vm.abrir(Pantalla.PublicacionRed(p.id))
+                        }.semantics { if (video.isNotBlank()) contentDescription = descripcionVideo }) {
+                        if (imagen.isNotBlank()) coil3.compose.AsyncImage(imagen, null, Modifier.matchParentSize()
+                            .then(if (d.texto("spoiler") == "true") Modifier.blur(20.dp) else Modifier), contentScale = ContentScale.Crop)
+                        else Text(d.texto("titulo").ifBlank { d.texto("texto") }, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 5,
+                            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(8.dp))
+                        if (video.isNotBlank()) Box(Modifier.align(Alignment.Center).size(40.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.75f)),
+                            contentAlignment = Alignment.Center) { IconoRiso(Iconos.Reproducir, stringResource(R.string.video_play), tamano = 22.dp, tinta = f.texto) }
+                        Row(Modifier.align(Alignment.BottomStart).padding(6.dp).clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            IconoRiso(Iconos.Anime, null, tamano = 12.dp, tinta = f.texto)
+                            Text(cifraCorta(p.vistas), style = MaterialTheme.typography.labelSmall, color = f.texto)
+                        }
+                    }
+                    if (io.github.fogonapps.social.ui.esCalificacion(p)) Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(stringResource(R.string.red_califico, d.texto("titulo")), style = MaterialTheme.typography.labelSmall,
                             color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         (d["nota"] as? JsonPrimitive)?.intOrNull?.let { Estrellas(it, 12.sp) }
-                    }
-                    if (video.isNotBlank()) Box(Modifier.align(Alignment.Center).size(40.dp).clip(CircleShape).background(f.fondo.copy(alpha = 0.75f)),
-                        contentAlignment = Alignment.Center) { IconoRiso(Iconos.Reproducir, stringResource(R.string.video_play), tamano = 22.dp, tinta = f.texto) }
-                    Row(Modifier.align(Alignment.BottomStart).padding(6.dp).clip(FormaPildora).background(f.fondo.copy(alpha = 0.7f)).padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        IconoRiso(Iconos.Anime, null, tamano = 12.dp, tinta = f.texto)
-                        Text(cifraCorta(p.vistas), style = MaterialTheme.typography.labelSmall, color = f.texto)
                     }
                 }
             }

@@ -288,9 +288,9 @@ fun Portada(url0: String, tipo: String, titulo: String, modifier: Modifier = Mod
     val url = io.github.fogonapps.cajon.datos.Imagenes.url(url0, lugar, ahorro)
     val forma = RoundedCornerShape(esquina)
     val cuadrada = tipo == "album"
-    Box(modifier.aspectRatio(if (cuadrada) 1f else 2f / 3f).clip(forma).background(f.superficie)
+    Box(modifier.aspectRatio(if (cuadrada) 1f else 2f / 3f).clip(forma).background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.14f))
         .haloPuntos(f.tinta2.copy(alpha = 0.28f), paso = 8.dp, centro = androidx.compose.ui.geometry.Offset(0.5f, 0.4f))
-        .border(f.borde, f.linea, forma).semantics { contentDescription = titulo }, contentAlignment = Alignment.Center) {
+        .then(if (url.isBlank()) Modifier.border(f.borde, f.linea, forma) else Modifier).semantics { contentDescription = titulo }, contentAlignment = Alignment.Center) {
         // Sin portada (o mientras carga): el ícono del tipo y el título, en la letra de los títulos.
         Column(Modifier.padding(8.dp).clearAndSetSemantics {}, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             IconoRiso(Iconos.de(tipo), null, tamano = 28.dp, tinta = f.acentoTexto)

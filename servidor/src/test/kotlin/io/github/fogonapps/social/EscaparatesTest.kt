@@ -58,6 +58,22 @@ class EscaparatesTest {
         }
     }
 
+    @Test fun albumesConPortadaHttpsOSinPortadaSePuedenVolverAGuardar() = Entorno().use { e ->
+        fun album(portada: String) = Escaparate("cajon:albumes", buildJsonObject {
+            put("elementos", buildJsonArray {
+                add(buildJsonObject { put("titulo", "Disco"); put("texto", "Artista"); put("portada", portada) })
+            })
+        })
+        val repisas = listOf(album("https://ejemplo.invalid/disco.jpg"), album(""))
+        e.s.escaparates.guardar(e.yo, repisas)
+        e.s.escaparates.guardar(e.yo, e.s.escaparates.ver(e.yo, "ana"))
+        assertEquals(repisas, e.s.escaparates.ver(null, "ana"))
+        for (portada in listOf("id_suelto", "file:///privado.jpg", "content://album/1")) {
+            falla("escaparate_datos") { e.s.escaparates.guardar(e.yo, listOf(album(portada))) }
+            assertEquals(repisas, e.s.escaparates.ver(e.yo, "ana"))
+        }
+    }
+
     @Test fun cupoGratisNivelComprasYTope() = Entorno().use { e ->
         val x = e.s.escaparates
         assertEquals(CupoEscaparates(0, 2, 0, 2), x.cupo(e.yo))

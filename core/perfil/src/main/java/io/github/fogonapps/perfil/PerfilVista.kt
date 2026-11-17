@@ -41,7 +41,7 @@ data class PerfilVista(
 
 /**
  * La cabecera del perfil, compacta como en las redes de fotos: la portada arriba, la foto montada sobre su borde con
- * las cifras a la derecha, y debajo el nombre (una línea, sin letra gigante) y lo que va bajo el nombre.
+ * las cifras en una fila de ancho completo, y debajo el nombre y su información.
  */
 @Composable
 fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuave: Boolean = false, interlineado: Boolean = false,
@@ -61,9 +61,10 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                         foto(); MarcoFoto(vista.marco, 96.dp)
                     }
                 }
-                // Las cifras un poco más abajo, lejos del borde de la portada.
-                Row(Modifier.weight(1f).offset(y = 12.dp)) { vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) } }
             }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp), verticalAlignment = androidx.compose.ui.Alignment.Top) {
+            vista.contadores.forEach { CifraPerfil(it.valor, it.etiqueta, it.abrir) }
         }
         Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -71,10 +72,10 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 InsigniaCuenta(vista.insignia, tamano = 16.dp)
+                NivelChico(vista)
             }
             bajoNombre()
         }
-        BloqueNivel(vista)
     }
 }
 

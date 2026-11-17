@@ -7,6 +7,18 @@ android {
     namespace = "io.github.fogonapps.social"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
+    buildFeatures { buildConfig = true }
+    val produccion = "https://fogonapps.duckdns.org"
+    buildTypes {
+        debug {
+            val servidor = providers.gradleProperty("servidorSocial").orElse(produccion).get().trimEnd('/')
+            require(servidor == produccion || servidor == "http://localhost:8080") {
+                "servidorSocial solo admite producción o http://localhost:8080"
+            }
+            buildConfigField("String", "SERVIDOR_SOCIAL", "\"$servidor\"")
+        }
+        release { buildConfigField("String", "SERVIDOR_SOCIAL", "\"$produccion\"") }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

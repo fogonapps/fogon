@@ -335,7 +335,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         } else contadoresPerfil(vm, e, anio).forEach { c -> add(ContadorPerfil("${c.valor}", pluralStringResource(c.etiqueta, c.valor, c.valor, anio), c.abrir)) }
     }
     val vistaBase = e.aPerfilVista(secciones = secciones, contadores = contadores, cuenta = cuenta).copy(nombre = e.ajustes.nombre.ifBlank { stringResource(R.string.tu_nombre) })
-    PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vistaBase, interfazSocial(vm)).copy(tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
+    PerfilComun(io.github.fogonapps.social.ui.conNivelPropio(vistaBase, interfazSocial(vm)).copy(abrirNivel = { vm.abrir(Pantalla.EditarPerfil) }, tema = io.github.fogonapps.social.ui.temaPropio(interfazSocial(vm)), marco = io.github.fogonapps.social.ui.marcoPropio(interfazSocial(vm))), pestana, { pestana = it }, Modifier.aparecer(0), nombreSuave = e.ajustes.nombre.isBlank(), interlineado = true,
         navegacion = navegacion,
         portada = { if (p.portada.isNotBlank()) if (Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize(), interfazSocial(vm)) else ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize()) },
         foto = {
@@ -458,6 +458,7 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
     var bio by rememberSaveable { mutableStateOf(p.bio) }
     var enlaces by rememberSaveable { mutableStateOf(p.enlaces.joinToString("\n")) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
+    io.github.fogonapps.social.ui.NivelEnEditarPerfil(interfazSocial(vm))
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
 
     Seccion(stringResource(R.string.foto_y_portada))

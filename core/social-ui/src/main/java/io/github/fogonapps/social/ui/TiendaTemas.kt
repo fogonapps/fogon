@@ -26,6 +26,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.identidad.*
 import io.github.fogonapps.identidad.PildoraSocial as Pildora
+import io.github.fogonapps.perfil.R as PerfilR
+import io.github.fogonapps.perfil.Escaparates
+import io.github.fogonapps.perfil.EscaparateVista
+import io.github.fogonapps.perfil.ElementoEscaparate
 import io.github.fogonapps.perfil.BannerPerfil
 import io.github.fogonapps.perfil.nombreBanner
 import io.github.fogonapps.perfil.MuestraTema
@@ -99,17 +103,24 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     var abierta by remember { mutableStateOf(false) }
     var mercado by remember { mutableStateOf(false) }
-    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(forma(20.dp)).background(f.superficie).clickable { abierta = true }.padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        IconoChispa(28.dp)
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.social_temas_tienda), style = MaterialTheme.typography.titleSmall, color = f.texto)
-            Text(stringResource(R.string.social_chispas_n, temas.chispas), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).rebote().clickable { abierta = true }.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconoChispa(28.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.social_temas_tienda), style = MaterialTheme.typography.titleSmall, color = f.texto)
+                Text(stringResource(R.string.social_chispas_n, numeroSocial(temas.chispas)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+            }
+            IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
         }
-        IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).rebote().clickable { mercado = true }.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconoRiso(IconosFogon.Moneda, null, tamano = 28.dp)
+            Text(stringResource(R.string.social_mercado), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = f.texto)
+            IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+        }
     }
-    BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.padding(horizontal = 16.dp))
-    EquiparComprados(vm)
+    EquiparComprados(vm, Modifier.padding(top = 12.dp))
     if (mercado) Mercado(vm) { mercado = false }
     if (abierta) TiendaTemas(vm) { abierta = false }
 }
@@ -192,15 +203,15 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                 Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.social_chispas_n, temas.chispas), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                        Text(stringResource(R.string.social_chispas_n, numeroSocial(temas.chispas)), style = MaterialTheme.typography.titleMedium, color = f.texto)
                         Text(stringResource(R.string.social_chispas_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }
                 }
                 if (pagosExternos && paquetes.isNotEmpty()) {
                     Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
                     paquetes.forEach { paquete ->
-                        BotonRiso(chispasDeRegalo[paquete]?.let { extra -> stringResource(R.string.social_wompi_paquete_regalo, formatoColombiano(paquete), formatoColombiano(extra), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)) }
-                            ?: stringResource(R.string.social_wompi_paquete, formatoColombiano(paquete), formatoColombiano(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
+                        BotonRiso(chispasDeRegalo[paquete]?.let { extra -> stringResource(R.string.social_wompi_paquete_regalo, numeroSocial(paquete), numeroSocial(extra), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)) }
+                            ?: stringResource(R.string.social_wompi_paquete, numeroSocial(paquete), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
                             comprando = true
                             errorPago = false
                             vm.red.comprarChispas(paquete) { url ->
@@ -216,14 +227,22 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                     Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
                 }
-                Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_titulo), Modifier.onGloballyPositioned { posicionEscaparates = it.positionInParent().y.roundToInt() }, color = f.texto, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(PerfilR.string.tienda_repisas_titulo), Modifier.onGloballyPositioned { posicionEscaparates = it.positionInParent().y.roundToInt() }, color = f.texto, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(PerfilR.string.tienda_repisas_intro), color = f.textoSuave)
                 TemasPerfil.EXTRAS.forEachIndexed { indice, item ->
                     val tiene = item in temas.reclamados
-                    Text(stringResource(io.github.fogonapps.perfil.R.string.escaparates_extra, indice + 1), color = f.texto)
-                    val precio = TemasPerfil.PRECIOS.getValue(item)
-                    Text(stringResource(R.string.social_precio_pesos, formatoColombiano(precio), formatoColombiano(precio * TemasPerfil.PESOS_POR_CHISPA)), color = f.textoSuave)
-                    BotonSecundario(stringResource(if (tiene) io.github.fogonapps.perfil.R.string.escaparates_comprado else R.string.social_tienda_comprar, precio),
-                        { vm.red.reclamarTema(item) }, habilitado = !tiene && temas.chispas >= precio)
+                    val nombres = listOf(PerfilR.string.tienda_repisa_discos, PerfilR.string.tienda_repisa_frase, PerfilR.string.tienda_repisa_numero)
+                    val lineas = listOf(PerfilR.string.tienda_repisa_discos_linea, PerfilR.string.tienda_repisa_frase_linea, PerfilR.string.tienda_repisa_numero_linea)
+                    Column(Modifier.fillMaxWidth().tarjetaFogon().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(stringResource(nombres[indice]), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                        Text(stringResource(lineas[indice]), color = f.textoSuave)
+                        MuestraRepisa(indice)
+                        Text(stringResource(PerfilR.string.tienda_repisa_aclara), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                        val precio = TemasPerfil.PRECIOS.getValue(item)
+                        Text(stringResource(R.string.social_precio_pesos, numeroSocial(precio), numeroSocial(precio * TemasPerfil.PESOS_POR_CHISPA)), color = f.textoSuave)
+                        BotonSecundario(stringResource(if (tiene) PerfilR.string.escaparates_comprado else R.string.social_tienda_comprar, numeroSocial(precio)),
+                            { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = !tiene && temas.chispas >= precio)
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pildora(stringResource(R.string.social_tienda_fondos), acento = pestana == 0) { pestana = 0 }
@@ -233,9 +252,9 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                 if (pestana == 2) {
                     val item = "portada:propia"
                     Text(TemasPerfil.nombre(item), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.social_precio_pesos, formatoColombiano(10000), formatoColombiano(100000)))
+                    Text(stringResource(R.string.social_precio_pesos, numeroSocial(10000), numeroSocial(100000)))
                     if (item in temas.reclamados) PortadaPropia(vm)
-                    else BotonRiso(stringResource(R.string.social_tienda_comprar, 10000), { vm.red.reclamarTema(item) }, habilitado = temas.chispas >= 10000)
+                    else BotonRiso(stringResource(R.string.social_tienda_comprar, numeroSocial(10000)), { vm.red.reclamarTema(item) }, habilitado = temas.chispas >= 10000)
                 }
                 val lista = when (pestana) { 0 -> listOf("") + TemasPerfil.FONDOS; 1 -> listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }; else -> TemasPerfil.BANNERS.keys.map { "banner:$it" } }
                 lista.chunked(2).forEach { fila ->
@@ -250,11 +269,11 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                                 if (pestana == 0) MuestraTema(item, Modifier.fillMaxWidth()) else if (pestana == 1) MuestraMarco(id, Modifier.fillMaxWidth()) else BannerPerfil(id, Modifier.fillMaxWidth().height(100.dp))
                                 Text(if (quitar) stringResource(if (pestana == 0) R.string.social_tienda_sin_fondo else R.string.social_tienda_sin_marco) else if (pestana == 2) nombreBanner(id) else TemasPerfil.nombre(id),
                                     style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1)
-                                if (!quitar) Text(stringResource(R.string.social_precio_pesos, formatoColombiano(precio), formatoColombiano(precio * TemasPerfil.PESOS_POR_CHISPA)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                                if (!quitar) Text(stringResource(R.string.social_precio_pesos, numeroSocial(precio), numeroSocial(precio * TemasPerfil.PESOS_POR_CHISPA)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                                 when {
                                     puesto -> BotonSecundario(stringResource(R.string.social_temas_en_uso), {}, Modifier.fillMaxWidth(), habilitado = false)
                                     tiene -> BotonSecundario(stringResource(R.string.social_temas_usar), { vm.red.ponerTema(item) }, Modifier.fillMaxWidth())
-                                    else -> BotonRiso(stringResource(R.string.social_tienda_comprar, precio), { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
+                                    else -> BotonRiso(stringResource(R.string.social_tienda_comprar, numeroSocial(precio)), { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                                 }
                                 if (precio > 0) BotonSecundario(stringResource(R.string.social_regalar), { regalo = item; errorRegalo = null }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                             }
@@ -293,38 +312,64 @@ fun cifrasSociales(p: io.github.fogonapps.social.PerfilSocial): List<io.github.f
     io.github.fogonapps.perfil.ContadorPerfil("${p.siguiendo}", stringResource(R.string.social_cifra_siguiendo)),
 )
 
-internal fun formatoColombiano(valor: Int): String = java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("es-CO")).format(valor)
+internal fun formatearMiles(valor: Int, idioma: java.util.Locale): String =
+    java.text.NumberFormat.getIntegerInstance(if (idioma.language == "en") java.util.Locale.US else java.util.Locale.forLanguageTag("es-CO")).format(valor)
+
+@Composable
+internal fun numeroSocial(valor: Int): String = formatearMiles(valor,
+    androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
 
 /** En Google Play no se ofrecen pagos fuera de la tienda. */
 internal fun ofrecePagosExternos(tiendaPlay: Boolean): Boolean = !tiendaPlay
 
 /** Accesos a lo adquirido, junto a la tienda en todos los editores. */
 @Composable
-private fun EquiparComprados(vm: InterfazSocial) {
+private fun EquiparComprados(vm: InterfazSocial, modifier: Modifier = Modifier) {
     val temas by vm.red.temas.collectAsStateWithLifecycle()
-    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
             R.string.social_tienda_fondos to (listOf("") + temas.reclamados.filter { it in TemasPerfil.FONDOS }),
             R.string.social_tienda_marcos to (listOf("marco:") + temas.reclamados.filter { it.startsWith("marco:") }),
         ).forEach { (titulo, items) ->
-            Text(stringResource(titulo), style = MaterialTheme.typography.titleSmall)
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(titulo), style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.texto)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items.forEach { item ->
                     val id = item.removePrefix("banner:").removePrefix("marco:")
                     val puesto = item == temas.banner || (!item.startsWith("banner:") && !item.startsWith("marco:") && item == temas.puesto) || (item.startsWith("marco:") && id == temas.marco)
-                    Column(Modifier.width(128.dp)) {
-                        when {
-                            item.startsWith("banner:") -> BannerPerfil(id, Modifier.fillMaxWidth().height(48.dp))
-                            item.startsWith("marco:") -> MuestraMarco(id, Modifier.fillMaxWidth())
-                            else -> MuestraTema(id, Modifier.fillMaxWidth())
+                    Column(Modifier.width(128.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box {
+                            when {
+                                item.startsWith("banner:") -> BannerPerfil(id, Modifier.fillMaxWidth().height(48.dp))
+                                item.startsWith("marco:") -> MuestraMarco(id, Modifier.fillMaxWidth())
+                                else -> MuestraTema(id, Modifier.fillMaxWidth())
+                            }
+                            if (item in temas.reclamados) Box(Modifier.align(Alignment.TopEnd).padding(4.dp).clip(forma(10.dp)).background(FogonTema.actual.fondo).padding(4.dp)) {
+                                IconoRiso(IconosFogon.Chulo, stringResource(PerfilR.string.perfil_articulo_comprado), tamano = 16.dp)
+                            }
                         }
                         val nombre = if (item.startsWith("banner:")) nombreBanner(id) else TemasPerfil.nombre(id)
-                        if (item in temas.reclamados) IconoRiso(IconosFogon.Chulo, stringResource(io.github.fogonapps.perfil.R.string.perfil_articulo_comprado), tamano = 16.dp)
-                        BotonSecundario(nombre, { vm.red.ponerTema(item) }, habilitado = !puesto)
+                        BotonSecundario(nombre, { vm.red.ponerTema(item) }, Modifier.fillMaxWidth(), habilitado = !puesto)
                     }
                 }
             }
         }
         if ("portada:propia" in temas.reclamados) PortadaPropia(vm)
+    }
+}
+
+/** Ejemplos locales: no consultan catálogos ni representan contenido de la cuenta. */
+@Composable
+internal fun MuestraRepisa(indice: Int) {
+    val f = FogonTema.actual
+    val muestra = when (indice) {
+        0 -> EscaparateVista("cajon:albumes", elementos = listOf(
+            ElementoEscaparate(stringResource(PerfilR.string.muestra_disco_1), portada = "0"),
+            ElementoEscaparate(stringResource(PerfilR.string.muestra_disco_2), portada = "1"),
+            ElementoEscaparate(stringResource(PerfilR.string.muestra_disco_3), portada = "2")))
+        1 -> EscaparateVista("texto", texto = stringResource(PerfilR.string.muestra_frase))
+        else -> EscaparateVista("numero", numero = "128", etiqueta = stringResource(PerfilR.string.muestra_numero))
+    }
+    Escaparates(listOf(muestra)) { id, modifier ->
+        Box(modifier.background(listOf(f.tinta1, f.tinta2, f.superficie)[id.toInt()]))
     }
 }
