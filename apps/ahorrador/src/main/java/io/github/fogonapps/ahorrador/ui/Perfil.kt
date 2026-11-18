@@ -90,6 +90,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, io.github.fogonapps.social.ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
         }, despuesAcciones = {
+            io.github.fogonapps.social.ui.PreguntaLenaEnPerfil(interfazCuenta(vm))
             vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it); EditorEscaparatesApp(vm, e) }
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) } },
     )
@@ -135,7 +136,8 @@ fun EditarPerfil(vm: AhorradorViewModel, e: Estado) {
     val girar_selector5 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector5(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector5(listOf(r)) else manejar_selector5(null) }
     Cabecera(stringResource(R.string.editar_perfil), vm::cerrar)
-    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
+        insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = ""; vm.imagenPerfil(false, "") },
@@ -157,6 +159,7 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     val r = remoto
     if (r == null) { Text(stringResource(R.string.cuenta_edicion_pendiente), Modifier.padding(16.dp), color = FogonTema.actual.texto); return }
     io.github.fogonapps.social.ui.NivelEnEditarPerfil(interfazCuenta(vm))
+    io.github.fogonapps.social.ui.LenaEnEditarPerfil(interfazCuenta(vm))
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
     var nombre by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarNombrePerfil(r.persona.nombre)) }
     var bio by rememberSaveable(r.persona.nombre, r.bio) { mutableStateOf(recortarBioPerfil(r.bio)) }
@@ -182,7 +185,8 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     // Antes de usarla(s), el paso para girarlas.
     val girar_selector6 = io.github.fogonapps.social.ui.conGiro { l -> manejar_selector6(l.firstOrNull()) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector6(listOf(r)) else manejar_selector6(null) }
-    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
+        insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

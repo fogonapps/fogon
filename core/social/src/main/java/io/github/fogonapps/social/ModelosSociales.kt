@@ -41,6 +41,7 @@ data class PerfilSocial(
     val relacion: String = "nada", val meSigue: Boolean = false,
     val seguidores: Int = 0, val siguiendo: Int = 0, val cuantas: Int = 0, val cerrada: Boolean = false,
     val megusta: Int = 0, val guardadasVisibles: Boolean = false, val nivel: Int = 0, val insigniasNivel: List<String> = emptyList(),
+    val nivelLena: String = "",
 )
 
 @Serializable
@@ -83,7 +84,14 @@ data class Acceso(val usuario: String, val token: String, val nueva: Boolean = f
 data class MiCuenta(val usuario: String, val nombre: String = "", val correo: String = "", val privada: Boolean = false,
     val conClave: Boolean = false, val apodoDesde: Long = 0, val usuarioDesde: Long = 0, val admin: Boolean = false, val borrarEl: Long = 0,
     val rol: String = "", val permisos: Set<String> = emptySet(), val mfa: Boolean = false, val elevadaHasta: Long = 0, val idCuenta: String = "", val politica: String = "",
-    val insignia: String = "", val dosPasos: Boolean = false)
+    val insignia: String = "", val dosPasos: Boolean = false,
+    val nivelLena: String = "",
+    @kotlinx.serialization.SerialName("lena_visible") val lenaVisible: Boolean = false,
+    @kotlinx.serialization.SerialName("lena_preguntada") val lenaPreguntada: Boolean = false,
+)
+
+@Serializable internal data class VisibilidadLena(val visible: Boolean)
+@Serializable internal data class AporteLena(val usuario: String, val monto: Int, val referencia: String, val nota: String? = null)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.CasoModeracion")
 data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,

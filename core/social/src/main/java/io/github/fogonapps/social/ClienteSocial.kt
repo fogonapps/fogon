@@ -110,6 +110,18 @@ open class ClienteSocial(
     suspend fun retirarPublicacion(objeto: String, motivo: String = "") { pedir("/admin/publicaciones/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("publicacion", objeto, motivo))) }
     suspend fun retirarComentario(objeto: String, motivo: String = "") { pedir("/admin/comentarios/retirar", "POST", json(ContenidoEquipo.serializer(), ContenidoEquipo("comentario", objeto, motivo))) }
     /** X-08: da o quita la insignia ("verificada", "fogon", "no" o "auto"). */
+    suspend fun cambiarVisibilidadLena(visible: Boolean) {
+        pedir("/cuenta/lena", "PUT", json(VisibilidadLena.serializer(), VisibilidadLena(visible)))
+    }
+
+    suspend fun registrarAporte(usuario: String, monto: Int, referencia: String, nota: String?) {
+        pedir("/admin/aportes", "POST", json(AporteLena.serializer(), AporteLena(usuario, monto, referencia, nota)))
+    }
+
+    suspend fun anularAporte(referencia: String) {
+        pedir("/admin/aportes/${cod(referencia).replace("+", "%20")}/anular", "POST")
+    }
+
     suspend fun cambiarInsignia(usuario: String, insignia: String, motivo: String) { pedir("/admin/insignias", "POST", json(CambioInsignia.serializer(), CambioInsignia(usuario, insignia, motivo))) }
     suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))

@@ -59,6 +59,46 @@ abstract class ControladorCuentaSocial(
         if (sesion.vigente(marca)) { olvidarCuenta(); avisar(EventoSocial.CUENTA_BORRADA) }
     }
 
+    private val _guardandoLena = MutableStateFlow(false)
+    val guardandoLena: StateFlow<Boolean> = _guardandoLena
+    private var revisionLena = 0L
+
+    fun cargarPreferenciaLena() = scope.launch {
+        if (_usuario.value == null || _guardandoLena.value) return@launch
+        val marca = sesion.actual()
+        val revision = revisionLena
+        intentar(avisar = false, marca = marca) {
+            val actual = cliente().miCuenta()
+            if (sesion.vigente(marca) && revision == revisionLena) ponerCuenta(actual)
+        }
+    }
+
+    fun cambiarVisibilidadLena(visible: Boolean) {
+        val inicial = _cuenta.value ?: return
+        if (inicial.nivelLena.isBlank() || !_guardandoLena.compareAndSet(false, true)) return
+        val marca = sesion.actual()
+        revisionLena++
+        scope.launch {
+            try {
+                if (!sesion.vigente(marca)) return@launch
+                intentar(marca = marca) {
+                    cliente().cambiarVisibilidadLena(visible)
+                    if (sesion.vigente(marca)) {
+                        val actual = _cuenta.value ?: return@intentar
+                        _cuenta.value = actual.copy(lenaVisible = visible, lenaPreguntada = true)
+                        _perfiles.value[actual.usuario]?.let { perfil ->
+                            _perfiles.value = _perfiles.value + (actual.usuario to perfil.copy(nivelLena = if (visible) actual.nivelLena else ""))
+                        }
+                        verPerfil(actual.usuario)
+                    }
+                }
+            } finally {
+                revisionLena++
+                _guardandoLena.value = false
+            }
+        }
+    }
+
     fun cambiarPrivada(si: Boolean) = lanzar { cliente().privada(si); _privada.value = si }
     protected abstract fun clienteAcceso(): ClienteSocial
     protected abstract suspend fun entro(a: io.github.fogonapps.social.Acceso, nombreNuevo: String = ""): Boolean

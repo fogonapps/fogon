@@ -35,6 +35,18 @@ class ClientePorAppTest {
         assertEquals("""{"correo":"a@example.invalid"}""", cuerpo(peticiones.first()))
         assertTrue(peticiones.all { it.url.encodedPath.startsWith("/v1/") && it.header("X-Fogon-App") == null })
     }
+    @Test fun lenaYLosAportesUsanRutasGlobalesDesdeOtraApp() = runBlocking {
+        val peticiones = mutableListOf<Request>()
+        val c = cliente("forzudo", peticiones)
+        c.cambiarVisibilidadLena(false)
+        c.registrarAporte("ana", 1200, "recibo A/B+", nota = null)
+        c.anularAporte("recibo A/B+")
+        assertEquals(listOf("PUT /v1/cuenta/lena", "POST /v1/admin/aportes", "POST /v1/admin/aportes/recibo%20A%2FB%2B/anular"),
+            peticiones.map { "${it.method} ${it.url.encodedPath}" })
+        assertEquals("""{"visible":false}""", cuerpo(peticiones[0]))
+        assertEquals("""{"usuario":"ana","monto":1200,"referencia":"recibo A/B+"}""", cuerpo(peticiones[1]))
+        assertEquals("", cuerpo(peticiones[2]))
+    }
     @Test fun partesNoEnvianIdentidadLocalYEdicionExigeRevision() = runBlocking {
         val peticiones = mutableListOf<Request>(); val c = cliente("forzudo", peticiones)
         c.subirPerfilApp(CambioPerfilApp(partes = emptyMap()))

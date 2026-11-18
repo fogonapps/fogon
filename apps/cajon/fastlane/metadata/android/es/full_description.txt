@@ -16,7 +16,7 @@
 <li><b>Tus cifras:</b> lo terminado en el año, horas de cine y de series, páginas, canciones, tus notas, meses, géneros y creadores. Y retos del año.</li>
 <li><b>Comparte</b> una reseña o una lista como imagen.</li>
 <li><b>Trae lo que tenías:</b> importa tu historial de Letterboxd (ZIP o CSV) y tu biblioteca de Goodreads (CSV).</li>
-<li><b>Teléfono y PC:</b> si quieres, se sincroniza con un archivo secreto de tu cuenta de GitHub.</li>
+<li><b>Copia cifrada:</b> si usas una cuenta de Fogón, puedes guardar una copia cifrada de tu cajón.</li>
 <li><b>En español e inglés.</b></li>
 </ul>
 

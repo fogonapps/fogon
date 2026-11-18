@@ -784,7 +784,7 @@ fun Preguntas(vm: GymViewModel) {
 /* =================== Reportar un fallo o sugerir algo =================== */
 
 /**
- * La app no tiene servidor: el mensaje sale por GitHub (un reporte público en el repo) o por el
+ * El mensaje sale como reporte público en el repositorio o por el
  * correo de Fogón, con la versión de la app y de Android agregadas. Nada más del teléfono.
  */
 @Composable

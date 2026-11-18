@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.BuildConfig
 import io.github.fogonapps.cajon.CajonViewModel
-import io.github.fogonapps.cajon.EstadoSync
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.WidgetCursoReceptor
@@ -155,7 +154,7 @@ fun FilaAjuste(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pist
 fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, contenido: @Composable () -> Unit) =
     io.github.fogonapps.identidad.Desplegable(icono, titulo, pista, contenido)
 
-/** Reportar un fallo, algo que falta o una idea: por GitHub o por correo, con la versión de la app. */
+/** Reportar un fallo, algo que falta o una idea: en el repositorio o por correo, con la versión de la app. */
 @Composable
 fun Reporte(vm: CajonViewModel) {
     Column {

@@ -748,4 +748,21 @@
     <string name="social_portada_arrastrar">Drag to frame the photo</string>
     <string name="social_portada_error">Could not upload the cover. Try again.</string>
     <string name="social_mercado_catalogo">catalog</string>
+    <string name="lena_visibilidad">Show my Leña</string>
+    <string name="aportes_titulo">Contributions</string>
+    <string name="aporte_monto">Amount in Colombian pesos</string>
+    <string name="aporte_referencia">Reference</string>
+    <string name="aporte_nota">Note (optional)</string>
+    <string name="aporte_registrar">Record contribution</string>
+    <string name="aporte_anular">Void contribution</string>
+    <string name="aporte_confirmar_registro">Record %1$d pesos for @%2$s with reference %3$s?</string>
+    <string name="aporte_confirmar_anulacion">Void the contribution with reference %1$s?</string>
+    <string name="aporte_registrado">Contribution recorded.</string>
+    <string name="aporte_anulado">Contribution voided.</string>
+    <string name="aporte_duplicado">A contribution with that reference already exists.</string>
+    <string name="aporte_usuario_inexistente">No active account was found for that username.</string>
+    <string name="aporte_inexistente">No contribution was found with that reference.</string>
+    <string name="aporte_solo_principal">Only the primary account can manage contributions.</string>
+    <string name="aporte_mfa">Set up two-step verification to manage contributions.</string>
+    <string name="aporte_elevacion">Verify your identity again in Moderation and try again.</string>
 </resources>

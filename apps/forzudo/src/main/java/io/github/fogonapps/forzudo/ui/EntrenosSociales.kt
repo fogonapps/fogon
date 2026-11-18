@@ -181,7 +181,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
                 }
                 val vista = io.github.fogonapps.perfil.PerfilVista(perfil.persona.nombre, perfil.persona.usuario,
                     "", perfil.portada, perfil.bio, perfil.enlaces, perfil.persona.privada, perfil.relacion,
-                    secciones = secciones, insignia = perfil.persona.insignia, nivel = perfil.nivel, insigniasNivel = perfil.insigniasNivel)
+                    secciones = secciones, insignia = perfil.persona.insignia, nivel = perfil.nivel, insigniasNivel = perfil.insigniasNivel, nivelLena = perfil.nivelLena)
                 io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco, contadores = io.github.fogonapps.social.ui.cifrasSociales(perfil) + vista.contadores), 0, {}, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize(), interfazCuenta(vm)) },
                     foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
                     bajoNombre = { if (perfil.meSigue && perfil.persona.usuario != yo) Text(stringResource(io.github.fogonapps.social.ui.R.string.social_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave) },
@@ -193,6 +193,7 @@ fun RedEntrenos(vm: GymViewModel, destino: Pantalla.Social) {
             // Escribirle (el chat cifrado, igual en las cuatro apps).
             if (yo != null && perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(io.github.fogonapps.social.ui.R.string.social_chat_mensaje), { vm.abrir(Pantalla.Social("chat", usuario = perfil.persona.usuario)) }, Modifier.weight(1f))
                     }, despuesAcciones = {
+            if (perfil.persona.usuario == yo) io.github.fogonapps.social.ui.PreguntaLenaEnPerfil(interfaz)
             io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfaz, perfil.persona.usuario)
             Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, perfil.persona.usuario) }
             // Su canción, sonando sola al entrar (si el ajuste lo deja).

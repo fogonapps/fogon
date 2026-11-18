@@ -26,7 +26,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine y de series, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).
 - **Traer de otras apps:** el historial de Letterboxd (ZIP o CSV) y la biblioteca de Goodreads (CSV), sin repetir lo que ya está.
-- **Teléfono y PC:** sincronización opcional con un Gist secreto de la cuenta de GitHub de la persona. La versión de PC leerá el mismo archivo.
+- **Copia cifrada:** con una cuenta de Fogón puedes guardar una copia cifrada de tu cajón.
 - **Widget:** lo terminado este año y lo que está en curso.
 - **Respaldo** en JSON y el respaldo de todo Fogón. **Apariencia** como en todas las apps (Grafito, Vinilo, Claro y Contraste). **En español e inglés.**
 
@@ -45,13 +45,13 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, Wikidata y Wikimedia Commons) y, si se activa, sincronizar con GitHub. |
+| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. |
 | Acceso a notificaciones (opcional) | Solo si se activa "Anotar lo que escucho": Android lo pide para dejar ver qué canción suena en otras apps (Spotify, YouTube Music…). El Cajón no lee las notificaciones: solo artista, álbum y canción de lo que suena, y lo guarda en el teléfono. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de El Cajón en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
-- **Lo que sale del teléfono:** el texto que se busca (a la fuente elegida) y, con la sincronización, el cajón entero a un Gist secreto de la propia cuenta. Nada más.
-- **Lo que escuchas** (con "Anotar lo que escucho", Spotify o su historial) se guarda en el teléfono (`files/escuchas.json`) y, desde la 1.12, viaja con el respaldo y con la sincronización al Gist propio, donde se une con lo del otro equipo.
-- **Las claves** (TMDB, el token de GitHub y el acceso a Spotify) quedan cifradas con el Keystore de Android y no van en el respaldo ni en el Gist.
+- **Lo que sale del teléfono:** el texto que buscas va a la fuente elegida. Si usas Fogón Social, se envía lo que compartes y, si activas la copia, el cajón se guarda cifrado en tu cuenta.
+- **Lo que escuchas** (con "Anotar lo que escucho", Spotify o su historial) se guarda en el teléfono (`files/escuchas.json`) y se incluye en el respaldo a archivo y en la copia cifrada de la cuenta.
+- **Las claves** (TMDB y el acceso a Spotify) se cifran con el Keystore de Android y quedan fuera de los respaldos.
 - **Sin copias automáticas a la nube de Google.**
 
 ## Créditos

@@ -132,6 +132,14 @@ class Base(ruta: String) {
                     referencia TEXT PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     paquete INTEGER NOT NULL, monto INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'pendiente',
                     cuando INTEGER NOT NULL, transaccion TEXT UNIQUE, acreditada INTEGER NOT NULL DEFAULT 0)""")
+                columna(s, "cuentas", "lena_visible INTEGER NOT NULL DEFAULT 0")
+                columna(s, "cuentas", "lena_preguntada INTEGER NOT NULL DEFAULT 0")
+                s.execute("""CREATE TABLE IF NOT EXISTS aportes(
+                    referencia TEXT NOT NULL PRIMARY KEY, cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL,
+                    monto INTEGER NOT NULL CHECK(monto > 0), nota TEXT, cuando INTEGER NOT NULL,
+                    anulado INTEGER NOT NULL DEFAULT 0)""")
+                s.execute("CREATE INDEX IF NOT EXISTS aportes_cuenta ON aportes(cuenta, anulado)")
+                s.execute("CREATE INDEX IF NOT EXISTS ordenes_pago_cuenta_estado ON ordenes_pago(cuenta, estado)")
                 // Las chispas: cada movimiento (bienvenida, aportes, compras y regalos); el saldo es la suma.
                 s.execute("CREATE TABLE IF NOT EXISTS chispas(id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cantidad INTEGER NOT NULL, motivo TEXT NOT NULL, cuando INTEGER NOT NULL)")
                 s.execute("CREATE INDEX IF NOT EXISTS chispas_cuenta ON chispas(cuenta, motivo)")
@@ -470,4 +478,8 @@ fun Connection.insertar(sql: String, vararg p: Any?): Long = prepareStatement(sq
     p.forEachIndexed { i, v -> s.setObject(i + 1, v) }
     s.executeUpdate()
     s.generatedKeys.use { if (it.next()) it.getLong(1) else -1 }
+}
+
+internal fun Connection.registrarChispas(cuenta: Long, cantidad: Long, motivo: String, cuando: Long) {
+    cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", cuenta, cantidad, motivo, cuando)
 }

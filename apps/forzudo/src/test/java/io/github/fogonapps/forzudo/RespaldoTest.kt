@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo
 
+import android.content.Context
 import io.github.fogonapps.forzudo.datos.*
 import io.github.fogonapps.identidad.RespaldoFogon
 import kotlinx.coroutines.runBlocking
@@ -16,6 +17,33 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], application = ForzudoApp::class)
 class RespaldoTest {
     private val original = Estado(nombre = "Ángel Muñoz", sessions = listOf(Sesion("s1", "2024-02-03", title = "Pierna, fuerza\nMañana", entries = mapOf("sentadilla" to listOf(Serie(42.5, 8.0, true))))), body = listOf(PesoCorporal("2024-02-03", 70.5)))
+
+    @Test fun limpiarClavesRetiradasConservaLasPreferenciasActuales() {
+        val contexto = RuntimeEnvironment.getApplication()
+        val antiguas = contexto.getSharedPreferences("sincronizacion", Context.MODE_PRIVATE)
+        val perfil = contexto.getSharedPreferences("sincronizacion-p1", Context.MODE_PRIVATE)
+        val otroPerfil = contexto.getSharedPreferences("sincronizacion-p2", Context.MODE_PRIVATE)
+        val social = contexto.getSharedPreferences("sincronizacion-psocial-1", Context.MODE_PRIVATE)
+        for (prefs in listOf(antiguas, perfil)) {
+            prefs.edit()
+                .putString("token", "cifrado de prueba")
+                .putString("iv", "iv de prueba")
+                .putString("gist", "copia anterior")
+                .putString("usuario", "cuenta anterior")
+                .putLong("ultima", 123L)
+                .putBoolean("ajuste", true)
+                .apply()
+        }
+        otroPerfil.edit().putString("gist", "copia sin token").apply()
+        social.edit().putString("token", "sesión de prueba").apply()
+
+        limpiarClavesRetiradas(contexto, listOf("1", "2"))
+
+        assertEquals(mapOf("ajuste" to true), antiguas.all)
+        assertEquals(mapOf("ajuste" to true), perfil.all)
+        assertTrue(otroPerfil.all.isEmpty())
+        assertEquals(mapOf("token" to "sesión de prueba"), social.all)
+    }
 
     @Test fun idaYVueltaConDatosYCamposDesconocidos() {
         val texto = JsonGym.encodeToString(Estado.serializer(), original)

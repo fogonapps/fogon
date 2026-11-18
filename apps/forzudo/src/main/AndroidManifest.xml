@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Solo para la sincronización opcional con el Gist de la persona. Sin ella, la app no usa internet. -->
+    <!-- Para las funciones opcionales de Fogón Social. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Aviso de "descanso terminado". -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

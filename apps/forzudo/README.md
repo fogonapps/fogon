@@ -31,24 +31,23 @@ Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. S
 - **Tus datos son tuyos:**
   - se guardan en el teléfono;
   - exportar e importar en JSON;
-  - sincronización opcional con un Gist secreto de tu propia cuenta de GitHub;
+  - copia opcional en la cuenta de Fogón, cifrada con tu contraseña;
   - el respaldo de todas las apps de Fogón en un solo archivo.
 - **Apariencia:** vidrio sobre una luz suave, una sola letra y el número grande de puntos. Viene en Grafito y al final del tutorial ("¡Dale vida!") se elige otro tema: el de la app, Claro o Contraste; en cada uno se eligen el papel y las dos tintas (las letras se ajustan solas para que se lean), el vidrio y la luz. El personaje de la app cambia de cara según el momento. Además, tamaño de letra, menos movimiento y más contraste.
 - **En español e inglés:** sigue el idioma del teléfono, y se puede cambiar en Perfil → Idioma.
-- **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
+- **Reportar un fallo o sugerir algo** desde Perfil: abre el formulario de incidencias o el correo con el mensaje listo.
 
 ## Permisos (y por qué)
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Para Fogón Social, si entras con tu cuenta (Tu gente, lo que compartes y la copia de tu cuaderno, cifrada con tu contraseña), y para la sincronización con tu Gist, si la activas. Sin las dos, la app no se conecta a nada. |
+| Internet | Para Fogón Social, si entras con tu cuenta (Tu gente, lo que compartes y la copia de tu cuaderno, cifrada con tu contraseña). |
 | Notificaciones | El aviso de "descanso terminado". Se pide al empezar el primer entreno. |
 | Alarmas exactas | Que ese aviso llegue a tiempo. Si lo niegas, se usa una alarma aproximada. |
 | Vibración | Al marcar una serie y al terminar el descanso. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Sin copias automáticas a la nube de Google:** solo se copian los entrenos al pasar los datos a un teléfono nuevo.
-- **El token de GitHub va cifrado** con una llave del Keystore de Android y nunca sale del teléfono.
 
 ## Preguntas frecuentes
 
@@ -71,14 +70,14 @@ Las fotos que usaba la app venían de un banco que se presentaba como libre, per
 De una tabla propia de Fogón, calibrada con resultados reales de competencias de powerlifting (OpenPowerlifting, de dominio público). Están explicados en [`ESTANDARES.md`](ESTANDARES.md).
 
 **¿Mis datos salen del teléfono?**
-No. Todo se guarda en el teléfono. Solo si conectas tu propio GitHub, los entrenos se copian a un archivo privado de tu cuenta.
+Tu cuaderno se guarda en el teléfono. Si usas Fogón Social, se envía lo que compartes y la copia de tu cuaderno se guarda en tu cuenta cifrada con tu contraseña.
 
 **¿Por qué antes se llamaba Mi Gym?**
 Hasta la versión 1.2.1 se llamó así. Desde la 1.3 se llama El Forzudo.
 
 ## Contacto
 
-Fallos o ideas: desde la app (Perfil → Reportar un fallo o sugerir algo), en [GitHub](https://github.com/fogonapps/fogon/issues) o a **fogonapps@gmail.com**.
+Fallos o ideas: desde la app (Perfil → Reportar un fallo o sugerir algo), en el [repositorio](https://github.com/fogonapps/fogon/issues) o a **fogonapps@gmail.com**.
 
 ## Créditos
 

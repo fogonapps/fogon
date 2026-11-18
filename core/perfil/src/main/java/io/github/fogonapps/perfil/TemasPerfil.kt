@@ -45,6 +45,7 @@ object TemasPerfil {
         mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800)
     /** Referencias directas (no por nombre) para que la versión publicada no descarte las imágenes. */
     val RECURSOS_BANNER = mapOf(
+        "oficial" to R.drawable.banner_oficial,
         "papel" to R.drawable.banner_papel, "riso-rosa" to R.drawable.banner_riso_rosa, "riso-azul" to R.drawable.banner_riso_azul,
         "riso-amarillo" to R.drawable.banner_riso_amarillo, "puntos" to R.drawable.banner_puntos, "chispas" to R.drawable.banner_chispas,
         "ranita" to R.drawable.banner_ranita, "forzudo" to R.drawable.banner_forzudo, "nube" to R.drawable.banner_nube,
@@ -295,14 +296,22 @@ fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
     else Box(modifier.background(f.fondo).haloPuntos(f.textoSuave.copy(alpha = 0.3f)))
 }
 
+internal fun bannersDisponibles(reclamados: List<String>, insignia: String): List<String> = buildList {
+    addAll(TemasPerfil.BANNERS.filter { (id, precio) -> precio == 0 || "banner:$id" in reclamados }.keys)
+    addAll(reclamados.filter { Regex("banner:m[1-9][0-9]*").matches(it) }.map { it.removePrefix("banner:") })
+    if (insignia == "fogon") add("oficial")
+}
+
 /** Banners gratis y adquiridos, con una marca en los comprados. */
 @Composable
-fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyList()) {
+fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyList(), insignia: String = "") {
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        (TemasPerfil.BANNERS.filter { (id, precio) -> precio == 0 || "banner:$id" in reclamados }.keys + reclamados.filter { Regex("banner:m[1-9][0-9]*").matches(it) }.map { it.removePrefix("banner:") }).forEach { id ->
+        bannersDisponibles(reclamados, insignia).forEach { id ->
             androidx.compose.material3.TextButton(onClick = { onElegir("banner:$id") }, modifier = Modifier.width(128.dp)) {
                 Column {
-                    BannerPerfil(id, Modifier.fillMaxWidth().height(40.dp))
+                    val miniatura = Modifier.fillMaxWidth().height(40.dp)
+                    val f = FogonTema.actual
+                    BannerPerfil(id, if (id == "oficial") miniatura.border(f.borde, f.textoSuave.copy(alpha = 0.35f)) else miniatura)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if ("banner:$id" in reclamados) IconoRiso(IconosFogon.Chulo, stringResource(R.string.perfil_articulo_comprado), tamano = 16.dp)
                         Text(if (id.startsWith("m") && id.drop(1).toLongOrNull() != null) stringResource(R.string.perfil_banner_comprado) else nombreBanner(id), color = FogonTema.actual.texto)
@@ -315,6 +324,7 @@ fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyLi
 
 @Composable
 fun nombreBanner(id: String): String = stringResource(when (id) {
+    "oficial" -> R.string.banner_oficial
     "papel" -> R.string.banner_papel
     "riso-rosa" -> R.string.banner_riso_rosa
     "riso-azul" -> R.string.banner_riso_azul

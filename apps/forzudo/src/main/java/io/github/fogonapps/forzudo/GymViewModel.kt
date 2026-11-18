@@ -85,7 +85,6 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val L get() = gymApp.logica
     val idPerfil = gymApp.perfiles.lista.activo
     private val almacen = gymApp.almacenPerfil(idPerfil)
-    private val caja = io.github.fogonapps.forzudo.datos.CajaFuerte(app, idPerfil)
 
     private val _estado = MutableStateFlow<Estado?>(null)
     val estado: StateFlow<Estado?> = _estado.asStateFlow()
@@ -235,9 +234,6 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
             copia.sincronizar()
             gymApp.confirmarCuaderno()
             WidgetRacha.actualizar(getApplication())
-            // La copia en un Gist de GitHub ya no está (la cuenta de Fogón la reemplaza): se desconecta una vez. El Gist
-            // queda en la cuenta de GitHub de la persona; no se borra nada.
-            if (caja.token != null) { caja.token = null; caja.gist = null; caja.usuario = null }
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d ->
                 if (d != ultimoGuardado && d != _estado.value) _estado.value = L.normalizar(d).copy(active = _estado.value?.active)
@@ -624,7 +620,5 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         cambiar { L.normalizar(d).copy(active = activo, nombre = d.nombre ?: nombre) }
         avisar(tx(R.string.aviso_importado))
     }
-
-    /* ----- Sincronización con GitHub ----- */
 
 }

@@ -133,4 +133,15 @@
         <item quantity="one">1 more badge to your next shelf</item>
         <item quantity="other">%d more badges to your next shelf</item>
     </plurals>
+    <string name="lena_chispa">Spark</string>
+    <string name="lena_brasa">Ember</string>
+    <string name="lena_fogata">Bonfire</string>
+    <string name="lena_fogon">Fogón</string>
+    <string name="lena_descripcion">Leña: %1$s</string>
+    <string name="lena_detalle">Leña · %1$s</string>
+    <string name="lena_gracias">Thank you for supporting Fogón.</string>
+    <string name="lena_pregunta">Would you like to show your Leña on your profile?</string>
+    <string name="lena_mostrar">Show</string>
+    <string name="lena_ocultar">Keep hidden</string>
+    <string name="banner_oficial">Official</string>
 </resources>

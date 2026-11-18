@@ -3,10 +3,10 @@ package io.github.fogonapps.forzudo
 import android.app.Application
 import androidx.datastore.core.DataStore
 import io.github.fogonapps.forzudo.datos.Biblioteca
-import io.github.fogonapps.forzudo.datos.CajaFuerte
 import io.github.fogonapps.forzudo.datos.Estado
 import io.github.fogonapps.forzudo.datos.Logica
 import io.github.fogonapps.forzudo.datos.crearAlmacen
+import io.github.fogonapps.forzudo.datos.limpiarClavesRetiradas
 import io.github.fogonapps.identidad.Idioma
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
@@ -38,7 +38,6 @@ class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
         almacenes.remove(id)
     }
     val almacen get() = almacenPerfil(perfiles.lista.activo)
-    val caja get() = CajaFuerte(this, perfiles.lista.activo)
     fun activarPerfil(id: String) { perfiles.cambiar(id); perfilActivo.value = id }
 
 
@@ -59,6 +58,7 @@ class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
     override fun onCreate() {
         super.onCreate()
         confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").takeIf { it.exists() }?.readText() == "terminada"
+        limpiarClavesRetiradas(this)
         io.github.fogonapps.forzudo.datos.migracionPerfiles(this).ejecutar()
         perfiles = io.github.fogonapps.social.Perfiles(filesDir)
         perfiles.limpiarPendientes { id ->
@@ -66,6 +66,7 @@ class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
                 check(getSharedPreferences(it, MODE_PRIVATE).edit().clear().commit())
             }
         }
+        limpiarClavesRetiradas(this, perfiles.lista.perfiles.map { it.id })
         perfilActivo.value = perfiles.lista.activo
         aplicarIdioma()
     }

@@ -14,7 +14,7 @@ fun leerRespaldoCajon(texto: String): Estado? =
 /**
  * Los datos de El Cajón para las otras apps de Fogón (respaldo de todo Fogón).
  * Solo los ve una app firmada con la misma llave (permiso de firma, ver RespaldoFogon.kt en core).
- * Las claves (GitHub, TMDB) no van: quedan cifradas en este teléfono.
+ * Las claves de los servicios externos no van: quedan cifradas en este teléfono.
  */
 class DatosCajon : ProveedorDatosFogon() {
     private val app get() = context!!.applicationContext as CajonApp

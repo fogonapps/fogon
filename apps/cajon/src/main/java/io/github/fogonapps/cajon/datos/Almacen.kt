@@ -52,11 +52,7 @@ internal fun crearAlmacenPerfil(directorio: File, scope: kotlinx.coroutines.Coro
     produceFile = { File(directorio, "datastore/estado.json") },
 )
 
-/**
- * Las claves de la persona (el token de GitHub y la clave de TMDB), cifradas con una llave del Keystore de
- * Android (AES-GCM). La llave nunca sale del hardware seguro del teléfono; en el disco solo queda el texto
- * cifrado. No van en el respaldo ni en el Gist.
- */
+/** Las claves de la persona se guardan cifradas con el Keystore de Android. */
 class CajaFuerte(context: Context, val perfilId: String) {
     private val _permisoRed = kotlinx.coroutines.flow.MutableStateFlow(false)
     val permisoRed: kotlinx.coroutines.flow.StateFlow<Boolean> = _permisoRed
@@ -105,10 +101,6 @@ class CajaFuerte(context: Context, val perfilId: String) {
             extras()
         }
     }
-
-    var tokenGithub: String?
-        get() = leer("github")
-        set(v) = escribir("github", v)
 
     var claveTmdb: String?
         get() = leer("tmdb")
@@ -209,16 +201,9 @@ class CajaFuerte(context: Context, val perfilId: String) {
         get() = prefs.getString(prefijo + "politica_social", null)
         set(v) = prefs.edit { if (v == null) remove(prefijo + "politica_social") else putString(prefijo + "politica_social", v) }
 
-    /** Lo de la sincronización que no es secreto: el usuario, el Gist y la última vez. */
-    var usuario: String?
-        get() = prefs.getString(prefijo + "usuario", null)
-        set(v) = prefs.edit { if (v == null) remove(prefijo + "usuario") else putString(prefijo + "usuario", v) }
-    var gist: String?
-        get() = prefs.getString(prefijo + "gist", null)
-        set(v) = prefs.edit { if (v == null) remove(prefijo + "gist") else putString(prefijo + "gist", v) }
-    var ultima: Long
-        get() = prefs.getLong(prefijo + "ultima", 0)
-        set(v) = prefs.edit { putLong(prefijo + "ultima", v) }
+    var ultimaCopia: Long
+        get() = prefs.getLong(prefijo + "ultima_copia", 0)
+        set(v) = prefs.edit { putLong(prefijo + "ultima_copia", v) }
 
     /**
      * Las obras que "Buscar portadas" ya revisó sin encontrar (para no repetir cientos de consultas cada vez que se
@@ -244,5 +229,12 @@ class CajaFuerte(context: Context, val perfilId: String) {
         get() = prefs.getInt(prefijo + "version_enlace", 0)
         set(v) = prefs.edit { putInt(prefijo + "version_enlace", v) }
 
-    fun desconectarGithub() { tokenGithub = null; usuario = null; gist = null; ultima = 0 }
+}
+
+internal fun limpiarClavesRetiradas(contexto: Context) {
+    val prefs = contexto.getSharedPreferences("claves", Context.MODE_PRIVATE)
+    val retiradas = setOf("github", "github.iv", "gist", "usuario", "ultima")
+    val prefijoPerfil = Regex("^p[0-9]+\\.")
+    val claves = prefs.all.keys.filter { prefijoPerfil.replaceFirst(it, "") in retiradas }
+    if (claves.isNotEmpty()) prefs.edit { claves.forEach { remove(it) } }
 }

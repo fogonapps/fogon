@@ -12,6 +12,7 @@ import coil3.request.crossfade
 import io.github.fogonapps.cajon.datos.CajaFuerte
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.crearAlmacen
+import io.github.fogonapps.cajon.datos.limpiarClavesRetiradas
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
 class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapps.social.ui.AppConAvisos, io.github.fogonapps.social.ui.AppConTrabajador {
@@ -40,7 +41,9 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
     override fun onCreate() {
         super.onCreate()
         confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").let { it.exists() && it.readText() == "terminada" }
+        limpiarClavesRetiradas(this)
         migracion.ejecutar()
+        limpiarClavesRetiradas(this)
         perfiles = io.github.fogonapps.cajon.datos.Perfiles(filesDir)
         perfiles.limpiarPendientes { id ->
             io.github.fogonapps.cajon.datos.borrarClavesPerfil(this, id)

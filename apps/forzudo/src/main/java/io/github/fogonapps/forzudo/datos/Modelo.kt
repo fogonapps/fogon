@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 
 /*
  * Modelo de datos de El Forzudo. Es el mismo formato JSON (v2) de la versión web,
- * así el Gist y los respaldos viejos se pueden leer sin conversión.
+ * así los respaldos viejos se pueden leer sin conversión.
  * Regla: nunca renombrar ni borrar ids de ejercicios; las migraciones son solo aditivas.
  */
 

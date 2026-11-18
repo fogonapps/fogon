@@ -48,7 +48,7 @@ object Logica {
     /* ----- Sincronizar: unir dos estados ----- */
 
     /**
-     * Une lo de este aparato con lo del Gist (u otro aparato): por cada obra, artista y lista gana la versión
+     * Une lo de este aparato con lo de la copia de la cuenta o un respaldo: por cada obra, artista y lista gana la versión
      * con el [Obra.cambio] más reciente; lo borrado sigue borrado si su borrado es lo más reciente.
      */
     fun unir(a: Estado, b: Estado): Estado = unirMigrados(

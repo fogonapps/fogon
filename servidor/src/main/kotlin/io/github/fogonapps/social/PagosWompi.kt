@@ -174,8 +174,8 @@ class PagosWompi(private val base: Base, private val configuracion: Configuracio
             if (leer("SELECT referencia FROM ordenes_pago WHERE transaccion=? AND referencia<>?", id, referencia) { it.getString(1) }.isNotEmpty()) return@transaccion rechazar("transacción ya utilizada")
             cambiar("UPDATE ordenes_pago SET estado=?,transaccion=?,acreditada=? WHERE referencia=?",
                 estado, id, if (acreditada || estado == "APPROVED") 1 else 0, referencia)
-            if (estado == "APPROVED" && !acreditada) cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)",
-                cuenta, paquete + (REGALO_WOMPI[paquete] ?: 0), "wompi:$id", System.currentTimeMillis())
+            if (estado == "APPROVED" && !acreditada) registrarChispas(
+                cuenta, (paquete + (REGALO_WOMPI[paquete] ?: 0)).toLong(), "wompi:$id", System.currentTimeMillis())
             estado == "APPROVED" && !acreditada
         }
     }

@@ -80,6 +80,43 @@ class EquipoTest {
         assertEquals("fogon", insignia(v))
     }
 
+    @Test fun bannerOficialReservadoYRetiradoAlPerderInsignia() = Entorno().use { e ->
+        val oficial = e.alta("oficial")
+        val normal = e.alta("normal")
+        e.rol(oficial, "principal")
+        e.s.revisarInsignias()
+        val banner = "banner:oficial"
+        assertNull(TemasPerfil.precio(banner))
+        assertFalse("oficial" in TemasPerfil.BANNERS)
+        testApplication {
+            application { fogonSocial(e.s) }
+            suspend fun poner(cuenta: Entorno.Cuenta) = client.put("/v1/cuenta/tema") {
+                bearerAuth(cuenta.token)
+                contentType(ContentType.Application.Json)
+                setBody("""{"tema":"$banner"}""")
+            }
+            assertEquals(HttpStatusCode.BadRequest, poner(normal).status)
+            assertEquals(HttpStatusCode.BadRequest, client.put("/v1/perfil") {
+                bearerAuth(normal.token)
+                contentType(ContentType.Application.Json)
+                setBody("""{"portada":"$banner"}""")
+            }.status)
+            assertEquals(HttpStatusCode.NoContent, poner(oficial).status)
+            assertEquals(banner, e.s.verPerfil(null, oficial.usuario).portada)
+            assertEquals(HttpStatusCode.NotFound, client.post("/v1/tienda/temas/$banner") { bearerAuth(oficial.token) }.status)
+            assertEquals(HttpStatusCode.BadRequest, client.post("/v1/tienda/regalar") {
+                bearerAuth(oficial.token)
+                contentType(ContentType.Application.Json)
+                setBody("""{"item":"$banner","para":"normal"}""")
+            }.status)
+            val revision = e.s.revisionPerfil(oficial.id)
+            e.rol(oficial, "administrador")
+            e.s.revisarInsignias()
+            assertEquals("", e.s.verPerfil(null, oficial.usuario).portada)
+            assertTrue(e.s.revisionPerfil(oficial.id) > revision)
+        }
+    }
+
     @Test fun registroLegiblePorUsuarioYGrupo() = Entorno().use { e ->
         val a = e.alta("lideresa"); e.rol(a, "administrador"); val d = e.alta("destino")
         val sa = e.inscribir(a).first; e.elevar(a, sa)
@@ -217,7 +254,7 @@ class EquipoTest {
         }
     }
 
-    private data class Ruta(val metodo: HttpMethod, val ruta: String, val permiso: String, val cuerpo: (String) -> String = { "" })
+    private data class Ruta(val metodo: HttpMethod, val ruta: String, val permiso: String, val cuerpo: (String) -> String = { "" }, val soloPrincipal: Boolean = false)
     private val rutas = listOf(
         Ruta(HttpMethod.Get, "casos", "ver_reportes"),
         Ruta(HttpMethod.Get, "mercado", "revisar_mercado"),
@@ -227,6 +264,9 @@ class EquipoTest {
         Ruta(HttpMethod.Put, "frases", "gestionar_frases", { """{"texto":"Una frase de prueba","idioma":"es"}""" }),
         Ruta(HttpMethod.Post, "frases", "gestionar_frases", { """{"clave":"c1","aprobar":true}""" }),
         Ruta(HttpMethod.Delete, "frases/prueba", "gestionar_frases"),
+        Ruta(HttpMethod.Post, "aportes", "asignar_equipo",
+            { """{"usuario":"destino","monto":100,"referencia":"prueba"}""" }, soloPrincipal = true),
+        Ruta(HttpMethod.Post, "aportes/prueba/anular", "asignar_equipo", soloPrincipal = true),
         Ruta(HttpMethod.Get, "equipo", "asignar_equipo"),
         Ruta(HttpMethod.Put, "equipo", "asignar_equipo", { """{"usuario":"destino","rol":"equipo","codigo":"$it"}""" }),
         Ruta(HttpMethod.Delete, "equipo", "asignar_equipo", { """{"usuario":"destino","rol":"equipo","codigo":"$it"}""" }),
@@ -273,17 +313,18 @@ class EquipoTest {
                             method = r.metodo; header(HttpHeaders.Authorization, "Bearer ${a.token}")
                             contentType(ContentType.Application.Json); setBody(r.cuerpo(codigo))
                         }
-                        val permitido = r.permiso in e.s.equipo.permisos(a.id) && estado == "elevada"
+                        val autorizado = r.permiso in e.s.equipo.permisos(a.id) && (!r.soloPrincipal || rol == "principal")
+                        val permitido = autorizado && estado == "elevada"
                         if (permitido) assertTrue(respuesta.status.value in 200..299, "$rol $estado ${r.ruta}: ${respuesta.status} ${respuesta.bodyAsText()}")
                         else {
                             assertEquals(HttpStatusCode.Forbidden, respuesta.status, "$rol $estado ${r.ruta}: ${respuesta.bodyAsText()}")
-                            if (estado == "sin_mfa" && r.permiso in e.s.equipo.permisos(a.id)) assertTrue(respuesta.bodyAsText().contains("mfa_requerida"))
+                            if (estado == "sin_mfa" && autorizado) assertTrue(respuesta.bodyAsText().contains("mfa_requerida"))
                         }
                     }
                 }
                 // La matriz no debe olvidar rutas al crecer la API.
                 val fuente = File("src/main/kotlin/io/github/fogonapps/social/Principal.kt").readText()
-                val declaradas = Regex("(get|put|post|delete)\\(\"/admin/([^\"]+)\"").findAll(fuente).map { it.groupValues[1].uppercase() to it.groupValues[2].replace("{clave}", "prueba").replace("{id}", "123") }.toSet()
+                val declaradas = Regex("(get|put|post|delete)\\(\"/admin/([^\"]+)\"").findAll(fuente).map { it.groupValues[1].uppercase() to it.groupValues[2].replace("{clave}", "prueba").replace("{id}", "123").replace("{referencia}", "prueba") }.toSet()
                 assertEquals(declaradas, rutas.map { it.metodo.value to it.ruta }.toSet())
             }
         }

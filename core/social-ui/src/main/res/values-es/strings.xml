@@ -750,4 +750,21 @@
     <string name="social_portada_arrastrar">Arrastra para encuadrar la foto</string>
     <string name="social_portada_error">No se pudo subir la portada. Inténtalo de nuevo.</string>
     <string name="social_mercado_catalogo">catálogo</string>
+    <string name="lena_visibilidad">Mostrar mi Leña</string>
+    <string name="aportes_titulo">Aportes</string>
+    <string name="aporte_monto">Monto en pesos colombianos</string>
+    <string name="aporte_referencia">Referencia</string>
+    <string name="aporte_nota">Nota (opcional)</string>
+    <string name="aporte_registrar">Registrar aporte</string>
+    <string name="aporte_anular">Anular aporte</string>
+    <string name="aporte_confirmar_registro">¿Registrar %1$d pesos para @%2$s con la referencia %3$s?</string>
+    <string name="aporte_confirmar_anulacion">¿Anular el aporte con la referencia %1$s?</string>
+    <string name="aporte_registrado">Aporte registrado.</string>
+    <string name="aporte_anulado">Aporte anulado.</string>
+    <string name="aporte_duplicado">Ya existe un aporte con esa referencia.</string>
+    <string name="aporte_usuario_inexistente">No se encontró una cuenta activa con ese usuario.</string>
+    <string name="aporte_inexistente">No se encontró un aporte con esa referencia.</string>
+    <string name="aporte_solo_principal">Solo la cuenta principal puede gestionar aportes.</string>
+    <string name="aporte_mfa">Activa la verificación en dos pasos para gestionar aportes.</string>
+    <string name="aporte_elevacion">Vuelve a verificar tu identidad en Moderación e inténtalo de nuevo.</string>
 </resources>

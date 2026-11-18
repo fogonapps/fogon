@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
@@ -37,6 +41,7 @@ data class PerfilVista(
     val nivel: Int = 0,
     val insigniasNivel: List<String> = emptyList(),
     val abrirNivel: (() -> Unit)? = null,
+    val nivelLena: String = "",
 )
 
 /**
@@ -49,6 +54,8 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
     bajoNombre: @Composable ColumnScope.() -> Unit = {},
 ) {
     val f = FogonTema.actual
+    val lena = nivelLena(vista.nivelLena)
+    var lenaAbierta by remember(vista.usuario, lena) { mutableStateOf(false) }
     Column(modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth()) {
             Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(96.dp).clip(forma(18.dp))
@@ -72,8 +79,10 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 InsigniaCuenta(vista.insignia, tamano = 16.dp)
+                if (lena != null) InsigniaLena(lena, lenaAbierta) { lenaAbierta = !lenaAbierta }
                 NivelChico(vista)
             }
+            if (lenaAbierta && lena != null) TarjetaDetalleLena(lena)
             bajoNombre()
         }
     }

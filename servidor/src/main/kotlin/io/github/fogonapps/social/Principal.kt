@@ -263,6 +263,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/mensajes/sin-leer") { call.respond(mapOf("n" to social.mensajesSinLeer(call.yo(), Base.huella(call.token().orEmpty())))) }
             post("/cuenta/correo") { social.vincularCorreo(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/salir") { social.salir(call.token()); call.respond(HttpStatusCode.NoContent) }
+            put("/cuenta/lena") {
+                social.lena.ponerVisibilidad(call.yo(), call.receive<VisibilidadLena>().visible)
+                call.respond(HttpStatusCode.NoContent)
+            }
             get("/cuenta") { call.respond(social.miCuenta(call.yo(), call.token())) }
             post("/cuenta/politica") { social.aceptarPolitica(call.yo(), call.receive<Aceptacion>().politica); call.respond(HttpStatusCode.NoContent) }
             delete("/cuenta") { call.yo(); throw Problema(403, "actualiza_app") }
@@ -480,6 +484,17 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/mfa/elevar") { call.respond(social.equipo.elevar(call.yo(), call.receive(), call.token())) }
             post("/mfa/desactivar") { social.equipo.desactivar(call.yo(), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             post("/mfa/recuperacion") { call.respond(social.equipo.regenerar(call.yo(), call.receive(), call.token())) }
+            post("/admin/aportes") {
+                val yo = call.yo()
+                val token = call.token()
+                social.lena.requierePrincipal(yo, token)
+                social.lena.registrar(yo, token, call.receive())
+                call.respond(HttpStatusCode.Created)
+            }
+            post("/admin/aportes/{referencia}/anular") {
+                social.lena.anular(call.yo(), call.token(), call.parameters["referencia"].orEmpty())
+                call.respond(HttpStatusCode.NoContent)
+            }
             get("/admin/equipo") { call.respond(social.equipo.listar(call.requiere("asignar_equipo"), call.token())) }
             put("/admin/equipo") { social.equipo.cambiarEquipo(call.requiere("asignar_equipo"), call.receive(), false, call.token()); call.respond(HttpStatusCode.NoContent) }
             delete("/admin/equipo") { social.equipo.cambiarEquipo(call.requiere("asignar_equipo"), call.receive(), true, call.token()); call.respond(HttpStatusCode.NoContent) }

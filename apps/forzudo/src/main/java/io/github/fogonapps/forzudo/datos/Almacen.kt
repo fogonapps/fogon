@@ -1,9 +1,6 @@
 package io.github.fogonapps.forzudo.datos
 
 import android.content.Context
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import android.util.Base64
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
@@ -13,11 +10,6 @@ import kotlinx.serialization.SerializationException
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
-import java.security.KeyStore
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
 
 /** Guarda el estado completo en un archivo JSON con escrituras atómicas (DataStore). */
 object SerializadorEstado : Serializer<Estado> {
@@ -48,59 +40,13 @@ fun crearAlmacen(context: Context, directorio: File = context.filesDir, scope: k
     produceFile = { File(directorio, "datastore/estado.json") },
 )
 
-/**
- * Guarda el token de GitHub cifrado con una llave del Keystore de Android (AES-GCM).
- * La llave nunca sale del hardware seguro del teléfono; en el disco solo queda el texto cifrado.
- */
-class CajaFuerte(context: Context, perfil: String = "1") {
-    private val prefs = context.getSharedPreferences("sincronizacion-p$perfil", Context.MODE_PRIVATE)
-    private val alias = "forzudo-token"
-
-    private fun llave(): SecretKey {
-        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (ks.getEntry(alias, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
-        val gen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-        gen.init(
-            KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setKeySize(256)
-                .build(),
-        )
-        return gen.generateKey()
+internal fun limpiarClavesRetiradas(contexto: Context, perfiles: List<String> = emptyList()) {
+    val retiradas = listOf("token", "iv", "gist", "usuario", "ultima")
+    for (nombre in listOf("sincronizacion") + perfiles.map { "sincronizacion-p$it" }) {
+        val prefs = contexto.getSharedPreferences(nombre, Context.MODE_PRIVATE)
+        if (retiradas.none { prefs.contains(it) }) continue
+        val editor = prefs.edit()
+        retiradas.forEach { editor.remove(it) }
+        editor.apply()
     }
-
-    var token: String?
-        get() {
-            val datos = prefs.getString("token", null) ?: return null
-            val iv = prefs.getString("iv", null) ?: return null
-            return runCatching {
-                val c = Cipher.getInstance("AES/GCM/NoPadding")
-                c.init(Cipher.DECRYPT_MODE, llave(), GCMParameterSpec(128, Base64.decode(iv, Base64.NO_WRAP)))
-                c.doFinal(Base64.decode(datos, Base64.NO_WRAP)).decodeToString()
-            }.getOrNull()
-        }
-        set(v) {
-            if (v == null) { prefs.edit().remove("token").remove("iv").apply(); return }
-            val c = Cipher.getInstance("AES/GCM/NoPadding")
-            c.init(Cipher.ENCRYPT_MODE, llave())
-            prefs.edit()
-                .putString("token", Base64.encodeToString(c.doFinal(v.encodeToByteArray()), Base64.NO_WRAP))
-                .putString("iv", Base64.encodeToString(c.iv, Base64.NO_WRAP))
-                .apply()
-        }
-
-    var gist: String?
-        get() = prefs.getString("gist", null)
-        set(v) = prefs.edit().putString("gist", v).apply()
-
-    var usuario: String?
-        get() = prefs.getString("usuario", null)
-        set(v) = prefs.edit().putString("usuario", v).apply()
-
-    var ultima: Long
-        get() = prefs.getLong("ultima", 0)
-        set(v) = prefs.edit().putLong("ultima", v).apply()
-
-    fun borrarTodo() = prefs.edit().clear().apply()
 }

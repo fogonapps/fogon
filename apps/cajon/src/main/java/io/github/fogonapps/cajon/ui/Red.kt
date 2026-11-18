@@ -596,6 +596,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             }
         },
         despuesAcciones = {
+            if (propio) io.github.fogonapps.social.ui.PreguntaLenaEnPerfil(interfazSocial(vm))
             io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazSocial(vm), usuario)
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.

@@ -106,7 +106,7 @@ class EditorMercadoTest {
         } }
         regla.onNodeWithText("Lluvia en la terraza").assertExists()
         regla.onNodeWithText("Siempre alcanza para uno más.").assertExists()
-        regla.onNodeWithContentDescription("128").assertExists()
+        regla.onNodeWithText("128").assertExists()
         regla.onNodeWithText("películas y series este año").assertExists()
         val bitmap = regla.onRoot().captureToImage().asAndroidBitmap()
         java.io.File("build/reports/repisas-muestras.png").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }

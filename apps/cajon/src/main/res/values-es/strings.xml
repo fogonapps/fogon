@@ -85,7 +85,7 @@
   <string name="actualizar_datos">Actualizar los datos de afuera</string>
   <string name="borrar">Borrar</string>
   <string name="borrar_obra_pregunta">¿Borrar «%1$s»?</string>
-  <string name="borrar_obra_texto">Se borra con tu nota, tu reseña y su diario. Si sincronizas, también se borra en el PC.</string>
+  <string name="borrar_obra_texto">Se borra con tu nota, tu reseña y su diario. Si tienes una copia en tu cuenta de Fogón, el borrado se reflejará cuando se actualice esa copia.</string>
   <string name="tu_lectura">Tu lectura</string>
   <string name="pagina_de">Página %1$d de %2$d</string>
   <string name="voy_en_pagina">Voy en la página…</string>
@@ -161,8 +161,6 @@
   <string name="borrar_artista_pregunta">¿Borrar a %1$s?</string>
   <string name="borrar_artista_texto">Sus álbumes siguen en tu cajón.</string>
   <string name="tu_nombre">Tu nombre</string>
-  <string name="sync_apagada">Apagada</string>
-  <string name="sync_para_pc">Tu cajón en el teléfono y en el PC, igual en los dos.</string>
   <string name="opciones">Opciones</string>
   <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
   <string name="idioma">Idioma</string>
@@ -365,7 +363,7 @@
   <string name="cambiar_estado">Cambiar estado</string>
   <string name="a_una_lista">A una lista</string>
   <string name="borrar_n_pregunta">¿Borrar %1$d?</string>
-  <string name="borrar_n_texto">Se borran con tus notas, reseñas y diario. Si sincronizas, también en el PC.</string>
+  <string name="borrar_n_texto">Se borran con tus notas, reseñas y diario. Si tienes una copia en tu cuenta de Fogón, el borrado se reflejará cuando se actualice esa copia.</string>
   <string name="elegir_varios_pista">Mantén presionado para elegir varios.</string>
   <string name="subir_foto_pista">Una foto que te guste, del teléfono. Se queda en este teléfono.</string>
   <string name="seccion_peliculas">Películas</string>

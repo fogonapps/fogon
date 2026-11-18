@@ -336,7 +336,7 @@ class Logica(val b: Biblioteca) {
 
     /* Carga, migraciones y unión con la nube */
 
-    /** Arregla un estado recién leído (disco, Gist o respaldo). Solo agrega, nunca borra datos. */
+    /** Arregla un estado recién leído (disco o respaldo). Solo agrega, nunca borra datos. */
     fun normalizar(e0: Estado): Estado {
         var e = e0
         if (e.active != null && e.active.start == 0L) e = e.copy(active = null)

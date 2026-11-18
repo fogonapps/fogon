@@ -261,8 +261,8 @@ data class Busqueda(
         personas.isEmpty() && artistas.isEmpty() && autores.isEmpty() && directores.isEmpty() && obras.values.all { it.isEmpty() }
 }
 
-enum class EstadoSync { APAGADA, EN_NUBE, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
-data class Sync(val estado: EstadoSync, val usuario: String? = null, val ultima: Long = 0, val mensaje: String? = null)
+enum class EstadoSync { APAGADA, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
+data class Sync(val estado: EstadoSync, val ultima: Long = 0, val mensaje: String? = null)
 
 class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val cajonApp = app as CajonApp
@@ -371,7 +371,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (!vigenciaPerfil.vigente()) return true
         val estado = _estado.value
         val vacio = io.github.fogonapps.cajon.datos.perfilProvisionalVacio(estado, escuchas.oidos.value) &&
-            caja.tokenGithub == null && caja.claveTmdb == null && caja.spotifyCliente == null && caja.spotifyRenovar == null && caja.chatLlaves == null
+            caja.claveTmdb == null && caja.spotifyCliente == null && caja.spotifyRenovar == null && caja.chatLlaves == null
         alCambiarPerfil?.invoke(otro.id, vacio && cajonApp.perfiles.lista.perfiles.first { it.id == recursos.id }.provisional)
         return true
     }
@@ -404,7 +404,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _trayendo = MutableStateFlow<String?>(null)
     val trayendo: StateFlow<String?> = _trayendo
 
-    private val _sync = MutableStateFlow(Sync(if (caja.tokenGithub != null) EstadoSync.EN_NUBE else EstadoSync.APAGADA, caja.usuario, caja.ultima))
+    private val _sync = MutableStateFlow(Sync(EstadoSync.APAGADA, ultima = caja.ultimaCopia))
     val sync: StateFlow<Sync> = _sync
 
     /**
@@ -627,9 +627,6 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             sincronizar()
-            // La sincronización con el PC (por un Gist de GitHub) ya no está: la cuenta de la red la reemplaza. Se
-            // desconecta una vez (el Gist queda en la cuenta de GitHub de la persona; no se borra nada).
-            if (caja.tokenGithub != null) { caja.tokenGithub = null; caja.gist = null; _sync.value = Sync(EstadoSync.APAGADA) }
             io.github.fogonapps.cajon.AvisosRed.programar(getApplication())
             red.revisarServidor()
             red.revisarSinLeer()
@@ -755,7 +752,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private fun nuevoId(prefijo: String) = prefijo + System.currentTimeMillis().toString(36) + Random.nextInt(46656).toString(36)
     private fun ahora() = System.currentTimeMillis()
 
-    /** Todo cambio pasa por aquí: memoria, pantalla, 300 ms después el disco y 4 s después el Gist. */
+    /** Todo cambio pasa por aquí: memoria, pantalla, 300 ms después el disco y 4 s después la copia de la cuenta, si está habilitada. */
     private fun cambiar(f: (Estado) -> Estado) {
         if (!vigenciaPerfil.vigente()) return
         val e = _estado.value ?: return
@@ -2910,8 +2907,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 },
             )
             if (!lista) return false
-            caja.ultima = ahora()
-            _sync.value = Sync(EstadoSync.LISTA, usuario = caja.usuarioSocial, ultima = caja.ultima)
+            caja.ultimaCopia = ahora()
+            _sync.value = Sync(EstadoSync.LISTA, ultima = caja.ultimaCopia)
             true
         } catch (e: CajonIlegible) {
             if (mismaSesion()) _sync.value = _sync.value.copy(estado = EstadoSync.ERROR, mensaje = tx(R.string.nube_no_se_pudo_abrir))
@@ -3036,7 +3033,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun exportarJson(): String = JsonCajon.encodeToString(Estado.serializer(), io.github.fogonapps.cajon.datos.Resenas.paraGuardar(paraAfuera(_estado.value ?: Estado())))
 
-    /** El estado para sacarlo del teléfono (Gist, respaldo): con lo escuchado, que en el teléfono vive aparte. */
+    /** El estado para sacarlo del teléfono (copia de la cuenta o respaldo a archivo): con lo escuchado, que en el teléfono vive aparte. */
     private fun paraAfuera(e: Estado) = e.copy(escuchas = RegistroEscuchas.paraExportar(escuchas.oidos.value).takeIf { it.albumes.isNotEmpty() || it.spotifyHasta > 0 })
     fun leerRespaldo(texto: String): Estado? = leerRespaldoCajon(texto)
 

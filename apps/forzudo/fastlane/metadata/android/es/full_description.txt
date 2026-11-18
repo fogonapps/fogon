@@ -10,7 +10,7 @@
 <li><b>En español e inglés.</b></li>
 </ul>
 
-<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono y puedes exportar un respaldo cuando quieras. Si lo prefieres, también puedes guardarlo en tu propia nube: conectando tu cuenta de GitHub (opcional), los entrenos se copian a un Gist privado tuyo. Sin conectarla, la app no usa internet.</p>
+<p><b>Tus datos son tuyos.</b> Tu cuaderno se guarda en el teléfono y puedes exportar un respaldo cuando quieras. Si usas una cuenta de Fogón, también puedes guardar una copia cifrada en tu cuenta.</p>
 
 <p>La app no reemplaza a un médico ni a un entrenador. Si tienes una lesión o una condición de salud, consulta a un profesional antes de empezar.</p>
 

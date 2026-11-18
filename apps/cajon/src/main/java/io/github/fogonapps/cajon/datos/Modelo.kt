@@ -4,8 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /*
- * Modelo de datos de El Cajón. Todo se guarda en un JSON (datastore/estado.json) y es el mismo que va al
- * Gist para sincronizar con el PC.
+ * Modelo de datos de El Cajón. Todo se guarda en un JSON (datastore/estado.json) con el mismo formato que los respaldos.
  * Reglas:
  *  - Las migraciones son solo aditivas (campos nuevos con valor por defecto).
  *  - Cada obra, artista y lista lleva [cambio] (milisegundos): al sincronizar gana el más reciente.
@@ -410,8 +409,7 @@ data class Estado(
     val artistas: List<Artista> = emptyList(),
     val listas: List<Lista> = emptyList(),
     /**
-     * Lo escuchado (ver `RegistroEscuchas`), solo cuando el estado sale del teléfono (Gist, respaldo, respaldo de
-     * todo Fogón): en el teléfono vive en su propio archivo y aquí va null. Al llegar se une con lo local.
+     * Lo escuchado (ver `RegistroEscuchas`), solo cuando el estado sale del teléfono (copia de la cuenta o respaldo a archivo): en el teléfono vive en su propio archivo y aquí va null. Al llegar se une con lo local.
      */
     val escuchas: Oidos? = null,
     /** Lo que dijo de sus gustos, ver [Gusto]. */

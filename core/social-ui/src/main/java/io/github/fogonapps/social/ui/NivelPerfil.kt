@@ -23,7 +23,9 @@ private fun cupoPropio(vm: InterfazSocial): io.github.fogonapps.social.CupoEscap
 @Composable
 fun conNivelPropio(vista: PerfilVista, vm: InterfazSocial): PerfilVista {
     val cupo = cupoPropio(vm)
-    return vista.copy(nivel = cupo.nivel, insigniasNivel = cupo.insignias)
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val nivelLena = cuenta?.takeIf { it.usuario == vista.usuario && it.lenaVisible }?.nivelLena.orEmpty()
+    return vista.copy(nivel = cupo.nivel, insigniasNivel = cupo.insignias, nivelLena = nivelLena)
 }
 
 @Composable

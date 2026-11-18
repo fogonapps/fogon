@@ -16,7 +16,7 @@
 <li><b>Your stats:</b> what you finished this year, hours of film and series, pages, tracks, your ratings, months, genres and creators. Plus yearly challenges.</li>
 <li><b>Share</b> a review or a list as an image.</li>
 <li><b>Bring what you had:</b> import your Letterboxd history (ZIP or CSV) and your Goodreads library (CSV).</li>
-<li><b>Phone and PC:</b> if you like, it syncs through a secret file in your GitHub account.</li>
+<li><b>Encrypted copy:</b> if you use a Fogón account, you can keep an encrypted copy of your collection.</li>
 <li><b>In Spanish and English.</b></li>
 </ul>
 

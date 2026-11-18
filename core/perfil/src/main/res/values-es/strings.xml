@@ -133,4 +133,15 @@
         <item quantity="one">Te falta 1 insignia para tu próxima repisa</item>
         <item quantity="other">Te faltan %d insignias para tu próxima repisa</item>
     </plurals>
+    <string name="lena_chispa">Chispa</string>
+    <string name="lena_brasa">Brasa</string>
+    <string name="lena_fogata">Fogata</string>
+    <string name="lena_fogon">Fogón</string>
+    <string name="lena_descripcion">Leña: %1$s</string>
+    <string name="lena_detalle">Leña · %1$s</string>
+    <string name="lena_gracias">Gracias por apoyar a Fogón.</string>
+    <string name="lena_pregunta">¿Quieres mostrar tu Leña en el perfil?</string>
+    <string name="lena_mostrar">Mostrar</string>
+    <string name="lena_ocultar">Mantener oculta</string>
+    <string name="banner_oficial">Oficial</string>
 </resources>

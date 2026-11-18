@@ -719,7 +719,9 @@ fun Moderacion(vm: InterfazSocial) {
         if ("sancionar" in permisos) Pildora(stringResource(R.string.sancion_titulo), acento = seccion == 5) { seccion = 5 }
         if ("sancionar" in permisos) Pildora(stringResource(R.string.apelacion_titulo), acento = seccion == 6) { seccion = 6 }
         if ("gestionar_usuarios" in permisos) Pildora(stringResource(R.string.insignias_titulo), acento = seccion == 4) { seccion = 4 }
+        if (cuenta?.rol == "principal") Pildora(stringResource(R.string.aportes_titulo), acento = seccion == 7) { seccion = 7 }
     }
+    if (seccion == 7 && cuenta?.rol == "principal") { AportesEquipo(vm); return }
     if (seccion == 5 && "sancionar" in permisos) { SancionesEquipo(vm, permisos); return }
     if (seccion == 6 && "sancionar" in permisos) { ApelacionesEquipo(vm, permisos); return }
     if (seccion == 4 && "gestionar_usuarios" in permisos) { InsigniasEquipo(vm); return }

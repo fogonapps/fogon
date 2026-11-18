@@ -88,6 +88,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
                     .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, ClienteSocial.enlacePerfil(usuario!!)), null))
             }, Modifier.weight(1f))
         }, despuesAcciones = {
+            io.github.fogonapps.social.ui.PreguntaLenaEnPerfil(interfazCuenta(vm))
             vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it); EditorEscaparatesApp(vm, e) }
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfazCuenta(vm), u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfazCuenta(vm)) } })
 }
@@ -133,8 +134,10 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector9(listOf(r)) else manejar_selector9(null) }
     Cabecera(stringResource(R.string.perfil_editar), vm::cerrar)
     io.github.fogonapps.social.ui.NivelEnEditarPerfil(interfazCuenta(vm))
+    io.github.fogonapps.social.ui.LenaEnEditarPerfil(interfazCuenta(vm))
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
-    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados, onPortada = { portada = it },
+    EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
+        insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },
