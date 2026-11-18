@@ -80,6 +80,16 @@ internal val guardaFotos = Saver<List<FotoEscaparate>, String>(
     restore = { texto -> runCatching { Json.decodeFromString(listaFotos, texto) }.getOrNull() },
 )
 
+/** Las repisas que se escriben a mano y por eso se pueden editar (las demás se cambian por otra). */
+internal val TIPOS_EDITABLES = setOf("texto", "numero", "galeria")
+
+/** Las fotos guardadas en una repisa de galería, para volver a editarlas. */
+internal fun fotosDe(e: EscaparateSocial): List<FotoEscaparate> = (e.datos["fotos"] as? JsonArray).orEmpty().mapNotNull { f ->
+    val o = f as? JsonObject ?: return@mapNotNull null
+    val nombre = (o["nombre"] as? JsonPrimitive)?.content ?: return@mapNotNull null
+    FotoEscaparate((o["publicacion"] as? JsonPrimitive)?.content?.toLongOrNull(), nombre)
+}
+
 internal fun List<EscaparateSocial>.moverRepisa(de: Int, a: Int) =
     toMutableList().apply { add(a, removeAt(de)) }
 
@@ -109,6 +119,7 @@ fun EscaparatesEnPerfil(
     var listaVigente by remember(usuario, yo, revision) { mutableStateOf(false) }
     var editar by rememberSaveable(usuario, yo) { mutableStateOf(false) }
     var cambiar by rememberSaveable(usuario, yo, revision) { mutableStateOf<Int?>(null) }
+    var editarRepisa by rememberSaveable(usuario, yo, revision) { mutableStateOf(false) }
     var ocupado by remember(usuario, yo) { mutableStateOf(false) }
     var error by remember(usuario, yo) { mutableStateOf(false) }
     val alcance = rememberCoroutineScope()
@@ -138,6 +149,7 @@ fun EscaparatesEnPerfil(
     val subir = stringResource(RP.string.escaparates_subir)
     val bajar = stringResource(RP.string.escaparates_bajar)
     val reemplazar = stringResource(RP.string.escaparates_cambiar)
+    val editarTexto = stringResource(RP.string.escaparates_editar)
     val mostradas = lista
     Escaparates(
         mostradas.map { it.paraVista() },
@@ -145,10 +157,11 @@ fun EscaparatesEnPerfil(
         acciones = { i ->
             if (!propio || candidatos == null || ocupado || !listaVigente) emptyList()
             else buildList {
+                if (mostradas[i].tipo in TIPOS_EDITABLES) add(CustomAccessibilityAction(editarTexto) { editarRepisa = true; cambiar = i; true })
                 add(CustomAccessibilityAction(quitar) { guardar(mostradas.quitarRepisa(i)); true })
                 if (i > 0) add(CustomAccessibilityAction(subir) { guardar(mostradas.moverRepisa(i, i - 1)); true })
                 if (i < mostradas.lastIndex) add(CustomAccessibilityAction(bajar) { guardar(mostradas.moverRepisa(i, i + 1)); true })
-                add(CustomAccessibilityAction(reemplazar) { cambiar = i; true })
+                add(CustomAccessibilityAction(reemplazar) { editarRepisa = false; cambiar = i; true })
             }
         },
     ) { url, m -> ImagenEscaparate(vm, url, m) }
@@ -173,7 +186,7 @@ fun EscaparatesEnPerfil(
             SelectorEscaparate(vm, conInsignias(candidatos.orEmpty(), datos.first), datos.second, { nueva ->
                 cambiar = null
                 guardar(lista.cambiarRepisa(indice, nueva))
-            }) { cambiar = null }
+            }, inicial = if (editarRepisa) lista[indice] else null) { cambiar = null }
         } else {
             AlertDialog(
                 onDismissRequest = { cambiar = null },
@@ -301,12 +314,15 @@ internal fun limpiarNumeroRepisa(texto: String): String? {
 }
 
 @Composable
-private fun SelectorEscaparate(vm: InterfazSocial, candidatos: List<EscaparateSocial>, fotos: List<FotoEscaparate>, agregar: (EscaparateSocial) -> Unit, cerrar: () -> Unit) {
-    var tipo by rememberSaveable { mutableStateOf("") }
-    var texto by rememberSaveable { mutableStateOf("") }
-    var numero by rememberSaveable { mutableStateOf("") }
-    var etiqueta by rememberSaveable { mutableStateOf("") }
-    var elegidas by rememberSaveable(stateSaver = guardaFotos) { mutableStateOf(emptyList<FotoEscaparate>()) }
+private fun SelectorEscaparate(vm: InterfazSocial, candidatos: List<EscaparateSocial>, fotos: List<FotoEscaparate>, agregar: (EscaparateSocial) -> Unit, inicial: EscaparateSocial? = null, cerrar: () -> Unit) {
+    // Con «inicial», se edita esa repisa: abre directo en su tipo con lo que ya tiene.
+    val editable = inicial?.takeIf { it.tipo in TIPOS_EDITABLES }
+    val inicialVista = editable?.paraVista()
+    var tipo by rememberSaveable { mutableStateOf(editable?.tipo.orEmpty()) }
+    var texto by rememberSaveable { mutableStateOf(inicialVista?.texto.orEmpty()) }
+    var numero by rememberSaveable { mutableStateOf(inicialVista?.numero.orEmpty()) }
+    var etiqueta by rememberSaveable { mutableStateOf(inicialVista?.etiqueta.orEmpty()) }
+    var elegidas by rememberSaveable(stateSaver = guardaFotos) { mutableStateOf(editable?.let(::fotosDe).orEmpty()) }
     var subiendo by remember { mutableStateOf(false) }
     var errorSubida by remember { mutableStateOf(false) }
     var subidas by rememberSaveable(stateSaver = guardaFotos) { mutableStateOf(emptyList<FotoEscaparate>()) }

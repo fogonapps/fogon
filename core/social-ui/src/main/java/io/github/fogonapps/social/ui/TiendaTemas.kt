@@ -240,7 +240,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                         MuestraRepisa(indice)
                         Text(stringResource(PerfilR.string.tienda_repisa_aclara), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         val precio = TemasPerfil.PRECIOS.getValue(item)
-                        Text(stringResource(R.string.social_precio_pesos, numeroSocial(precio), numeroSocial(precio * TemasPerfil.PESOS_POR_CHISPA)), color = f.textoSuave)
+                        Text(stringResource(R.string.social_precio_chispas, numeroSocial(precio)), color = f.textoSuave)
                         BotonSecundario(stringResource(if (tiene) PerfilR.string.escaparates_comprado else R.string.social_tienda_comprar, numeroSocial(precio)),
                             { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = !tiene && temas.chispas >= precio)
                     }
@@ -250,13 +250,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                     Pildora(stringResource(R.string.social_tienda_marcos), acento = pestana == 1) { pestana = 1 }
                     Pildora(stringResource(R.string.social_tienda_banners), acento = pestana == 2) { pestana = 2 }
                 }
-                if (pestana == 2) {
-                    val item = "portada:propia"
-                    Text(TemasPerfil.nombre(item), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.social_precio_pesos, numeroSocial(10000), numeroSocial(100000)))
-                    if (item in temas.reclamados) PortadaPropia(vm)
-                    else BotonRiso(stringResource(R.string.social_tienda_comprar, numeroSocial(10000)), { vm.red.reclamarTema(item) }, habilitado = temas.chispas >= 10000)
-                }
+                if (pestana == 2) PortadasPropias(vm)
                 val lista = when (pestana) { 0 -> listOf("") + TemasPerfil.FONDOS; 1 -> listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }; else -> TemasPerfil.BANNERS.keys.map { "banner:$it" } }
                 lista.chunked(2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -264,13 +258,13 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                             val quitar = item.isEmpty() || item == "marco:"
                             val id = item.removePrefix("marco:").removePrefix("banner:")
                             val tiene = quitar || item in temas.reclamados || TemasPerfil.PRECIOS[item] == 0
-                            val puesto = if (pestana == 0) temas.puesto == item else if (pestana == 1) temas.marco == id else temas.banner == item
+                            val puesto = if (pestana == 0) temas.puesto == item else if (pestana == 1) temas.marco == id else temas.banner.substringBefore('~') == item
                             val precio = TemasPerfil.PRECIOS[item] ?: 0
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 if (pestana == 0) MuestraTema(item, Modifier.fillMaxWidth()) else if (pestana == 1) MuestraMarco(id, Modifier.fillMaxWidth()) else BannerPerfil(id, Modifier.fillMaxWidth().height(100.dp))
                                 Text(if (quitar) stringResource(if (pestana == 0) R.string.social_tienda_sin_fondo else R.string.social_tienda_sin_marco) else if (pestana == 2) nombreBanner(id) else TemasPerfil.nombre(id),
                                     style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 1)
-                                if (!quitar) Text(stringResource(R.string.social_precio_pesos, numeroSocial(precio), numeroSocial(precio * TemasPerfil.PESOS_POR_CHISPA)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                                if (!quitar) Text(stringResource(R.string.social_precio_chispas, numeroSocial(precio)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                                 when {
                                     puesto -> BotonSecundario(stringResource(R.string.social_temas_en_uso), {}, Modifier.fillMaxWidth(), habilitado = false)
                                     tiene -> BotonSecundario(stringResource(R.string.social_temas_usar), { vm.red.ponerTema(item) }, Modifier.fillMaxWidth())
@@ -296,7 +290,11 @@ fun PortadaPerfilRed(url: String, modifier: Modifier = Modifier, vm: InterfazSoc
     if (url.isBlank()) return
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val propia = Regex("[A-Za-z0-9_-]{22}").matches(url)
-    val cabeceras = if (propia) vm?.cabeceras().orEmpty() else emptyMap()
+    if (propia && vm != null) {
+        PortadaSubida(url, modifier, vm)
+        return
+    }
+    val cabeceras = emptyMap<String, String>()
     val solicitud = remember(url, cabeceras) {
         coil3.request.ImageRequest.Builder(contexto)
             .data(if (propia) io.github.fogonapps.social.ClienteSocial.imagen(url) else url)
@@ -354,7 +352,7 @@ private fun EquiparComprados(vm: InterfazSocial, modifier: Modifier = Modifier) 
                 }
             }
         }
-        if ("portada:propia" in temas.reclamados) PortadaPropia(vm)
+        PortadasPropias(vm, soloCompradas = true)
     }
 }
 

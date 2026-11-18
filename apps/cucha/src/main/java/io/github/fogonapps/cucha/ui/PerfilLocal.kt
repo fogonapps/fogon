@@ -189,6 +189,11 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector8(listOf(r)) else manejar_selector8(null) }
     EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
         insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
+        portadasPropias = { io.github.fogonapps.social.ui.PortadasPropias(interfazCuenta(vm)) },
+        mostrarPortada = { valor, modifier ->
+            if (Regex("[A-Za-z0-9_-]{22}").matches(valor)) io.github.fogonapps.social.ui.PortadaPerfilRed(valor, modifier, interfazCuenta(vm))
+            else ImagenLocal(valor, modifier)
+        },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

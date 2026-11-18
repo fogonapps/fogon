@@ -1,6 +1,11 @@
 package io.github.fogonapps.identidad
 import io.github.fogonapps.identidad.*
 object IconosSociales {
+    val Pelicula = dibujo("pelicula", relleno("M3.6 9.6h16.8v10H3.6z"), trazo("M3.8 9.4 3.2 6l16.4-2.6.6 3.4", 2.4f), huecoTrazo("M8.4 5.2l2 3.4M13.4 4.4l2 3.4", 1.8f))
+    val Serie = dibujo("serie", relleno("M3.4 7.4h17.2v11.4H3.4z"), trazo("M8.6 3.6 12 7.2l3.4-3.6", 2.4f))
+    val Libro = dibujo("libro", relleno("M5 4.4h11.6a2 2 0 0 1 2 2v13.2H7a2 2 0 0 1-2-2z"), huecoTrazo("M5 17.6a2 2 0 0 1 2-2h11.6", 1.8f))
+    val Disco = dibujo("disco", relleno("M12 3.6a8.4 8.4 0 1 1 0 16.8 8.4 8.4 0 0 1 0-16.8z"), hueco("M12 9.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8z"), huecoTrazo("M7.4 9.4a5.4 5.4 0 0 1 2.4-2.6", 1.6f))
+    val Trofeo = dibujo("trofeo", relleno("M7.2 4.4h9.6v4.8a4.8 4.8 0 0 1-9.6 0z"), trazo("M7.2 6.2H4.4a2.6 2.6 0 0 0 3 3.6M16.8 6.2h2.8a2.6 2.6 0 0 1-3 3.6M12 14v3.4M8.4 19.8h7.2", 2.2f))
     val Anime = dibujo("anime", relleno("M3 12c2.8-5 15.2-5 18 0-2.8 5-15.2 5-18 0z"), hueco("M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"), relleno("M13 10.2a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8z"))
     val Corazon = dibujo("corazon", relleno("M12 20s-7.6-4.6-7.6-10a4.2 4.2 0 0 1 7.6-2.6A4.2 4.2 0 0 1 19.6 10c0 5.4-7.6 10-7.6 10z"))
     val Enlace = dibujo("enlace", trazo("M10.4 4.6H5.2v14.2h14.2v-5.2", 2.4f), trazo("M14 4.4h5.6V10M19.4 4.6l-8.2 8.2", 2.4f))

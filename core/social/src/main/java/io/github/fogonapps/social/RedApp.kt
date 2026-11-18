@@ -216,7 +216,7 @@ open class RedApp(
             val r = cliente.revisionPerfil()
             val perfil = cliente.perfil(u)
             val imagen = if (perfil.persona.foto) android.util.Base64.encodeToString(cliente.descargarFoto(u), android.util.Base64.NO_WRAP) else ""
-            val portada = if (perfil.portada.startsWith("banner:")) perfil.portada else if (perfil.portada.isNotBlank()) runCatching { android.util.Base64.encodeToString(cliente.descargarImagenPerfil(perfil.portada), android.util.Base64.NO_WRAP) }.getOrDefault("") else ""
+            val portada = if (perfil.portada.startsWith("banner:") || perfil.portadaAnimada) perfil.portada else if (perfil.portada.isNotBlank()) runCatching { android.util.Base64.encodeToString(cliente.descargarImagenPerfil(perfil.portada), android.util.Base64.NO_WRAP) }.getOrDefault("") else ""
             if (sesion.vigente(marca) && lectura == lecturaIdentidad) {
                 revision = r; identidad.value = perfil; foto.value = imagen; portadaImagen.value = portada
                 escribirAtomico(cache, JsonSocial.encodeToString(PerfilSocial.serializer(), perfil).encodeToByteArray())
@@ -237,7 +237,7 @@ open class RedApp(
             portada == portadaImagen.value -> identidad.value?.portada.orEmpty()
             portada.isBlank() -> ""
             portada.startsWith("banner:") -> portada
-            portada.startsWith("https://") -> portada
+            portada.startsWith("https://") || Regex("[A-Za-z0-9_-]{22}").matches(portada) -> portada
             else -> cliente.subirImagen(android.util.Base64.decode(portada, android.util.Base64.DEFAULT))
         }
         if (!sesion.vigente(marca)) return@intentar

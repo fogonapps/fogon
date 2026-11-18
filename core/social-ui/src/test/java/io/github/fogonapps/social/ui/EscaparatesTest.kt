@@ -51,4 +51,15 @@ class EscaparatesTest {
         assertEquals(75, d["numero"]!!.jsonPrimitive.int)
         assertEquals("%", d["etiqueta"]!!.jsonPrimitive.content)
     }
+
+    @Test fun galeriaGuardadaVuelveComoFotosParaEditarla() {
+        val galeria = EscaparateSocial("galeria", buildJsonObject {
+            put("fotos", JsonArray(listOf(
+                buildJsonObject { put("publicacion", 7L); put("nombre", "a") },
+                buildJsonObject { put("nombre", "b") },
+            )))
+        })
+        assertEquals(listOf(io.github.fogonapps.social.FotoEscaparate(7L, "a"), io.github.fogonapps.social.FotoEscaparate(null, "b")), fotosDe(galeria))
+        assertTrue("galeria" in TIPOS_EDITABLES && "insignias" !in TIPOS_EDITABLES)
+    }
 }

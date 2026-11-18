@@ -14,3 +14,18 @@ subprojects {
         }
     }
 }
+
+// Las pruebas visuales usan la tarea habitual, con su propio filtro y salida recuperable de la caché.
+subprojects {
+    if (path.startsWith(":apps:")) {
+        val soloCapturas = providers.gradleProperty("soloCapturas").isPresent
+        val directorioCapturas = layout.buildDirectory.dir("reports/capturas-pantallas")
+        val homePruebas = gradle.gradleUserHomeDir
+        tasks.withType<Test>().configureEach {
+            if (soloCapturas) outputs.dir(directorioCapturas)
+            // Robolectric necesita un bloqueo de escritura junto al directorio de usuario.
+            systemProperty("user.home", homePruebas)
+            systemProperty("maven.repo.local", file("${System.getProperty("user.home")}/.m2/repository"))
+        }
+    }
+}

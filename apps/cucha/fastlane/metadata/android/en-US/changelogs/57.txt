@@ -1,0 +1,1 @@
+A nicer profile: badges are now round medals; shelves look cleaner and, with a long press, can be edited, moved, changed or removed. New banners: pick a color for the free banners, try animated banners, use your own photo (500 sparks) or your own animated banner (5000 sparks). Shop prices now show in sparks.

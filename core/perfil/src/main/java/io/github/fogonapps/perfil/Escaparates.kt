@@ -50,15 +50,6 @@ fun nombreEscaparate(tipo: String): String = stringResource(when (tipo) {
     "alcancia:meta" -> R.string.escaparate_meta; else -> R.string.escaparates_titulo
 })
 
-@Composable
-private fun nombreInsigniaEscaparate(id: String) = stringResource(when (id) {
-    "cine" -> R.string.escaparate_ins_cine; "series" -> R.string.escaparate_ins_series
-    "anime" -> R.string.escaparate_ins_anime; "lector" -> R.string.escaparate_ins_lector
-    "discos" -> R.string.escaparate_ins_discos; "constancia" -> R.string.escaparate_ins_constancia
-    "critico" -> R.string.escaparate_ins_critico; "explorador" -> R.string.escaparate_ins_explorador
-    else -> R.string.escaparate_ins_reto
-})
-
 /** Render independiente del transporte y del cargador de imágenes de la app. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -91,16 +82,17 @@ fun Escaparates(
             }
             val altoMinimo = if (maxWidth >= 600.dp) maxWidth / 3.4f else 0.dp
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = 0.18f), centro = Offset(1f, 0.5f)))
-            Column(Modifier.fillMaxWidth().heightIn(min = altoMinimo).padding(20.dp),
+            // Las repisas van limpias: un título discreto y el contenido; la galería, solo las fotos.
+            val limpia = e.tipo == "galeria"
+            Column(Modifier.fillMaxWidth().heightIn(min = altoMinimo).padding(if (limpia) 8.dp else 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val titulo = when (e.tipo) {
                     "forzudo:records" -> stringResource(R.string.escaparate_mis_marcas)
                     "alcancia:meta" -> stringResource(R.string.escaparate_mi_meta)
                     "forzudo:racha", "cucha:racha" -> stringResource(R.string.escaparate_mi_racha)
-                    else -> nombreEscaparate(e.tipo).lowercase(java.util.Locale.getDefault())
+                    else -> nombreEscaparate(e.tipo).lowercase(androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
                 }
-                Text(titulo, color = f.texto, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Box(Modifier.fillMaxWidth().height(1.dp).background(f.linea))
+                if (!limpia) Text(titulo, color = f.textoSuave, style = MaterialTheme.typography.labelLarge)
                 when {
                     e.tipo == "alcancia:meta" -> {
                         val porcentaje = e.numero.toFloatOrNull()?.takeIf { it.isFinite() }?.coerceIn(0f, 100f) ?: 0f
@@ -123,15 +115,18 @@ fun Escaparates(
                         ) {
                             e.fotos.forEach { foto ->
                                 val tamano = if (deslizable) Modifier.size(112.dp) else Modifier.weight(1f).aspectRatio(4f / 3f)
-                                imagen(foto, tamano.clip(forma(12.dp)))
+                                imagen(foto, tamano.clip(forma(16.dp)))
                             }
                         }
                     }
-                    e.tipo == "insignias" -> FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        e.insignias.forEach { id -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconoRiso(IconosFogon.Estrella, null, modifier = Modifier.size(40.dp))
-                            Text(nombreInsigniaEscaparate(id), color = f.texto, fontWeight = FontWeight.Bold)
-                        } }
+                    e.tipo == "insignias" -> FlowRow(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        e.insignias.forEach { id ->
+                            MedallaInsignia(iconoInsignia(id), nombreInsigniaPerfil(id), ganada = true)
+                        }
                     }
                     e.tipo == "cajon:albumes" || e.tipo == "cajon:favoritas" -> {
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -183,19 +178,6 @@ fun Escaparates(
                         }
                     }
                 }
-                val app = when (e.tipo.substringBefore(":")) {
-                    "cajon" -> R.string.escaparate_app_cajon
-                    "forzudo" -> R.string.escaparate_app_forzudo
-                    "cucha" -> R.string.escaparate_app_cucha
-                    "alcancia" -> R.string.escaparate_app_alcancia
-                    else -> when (f.paleta) {
-                        Paleta.Forzudo -> R.string.escaparate_app_forzudo
-                        Paleta.Ahorrador -> R.string.escaparate_app_alcancia
-                        Paleta.Cucha -> R.string.escaparate_app_cucha
-                        else -> R.string.escaparate_app_cajon
-                    }
-                }
-                Text(stringResource(R.string.escaparate_firma, stringResource(app)), Modifier.align(Alignment.End), color = f.textoSuave, style = MaterialTheme.typography.labelSmall)
             }
         }
     }

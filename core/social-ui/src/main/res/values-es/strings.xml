@@ -609,7 +609,7 @@
     <string name="social_te_sigue">te sigue</string>
     <string name="social_tipo_calificacion">Calificación</string>
     <string name="social_tienda_banners">banners</string>
-    <string name="social_precio_pesos">%1$s chispas · %2$s COP</string>
+    <string name="social_precio_chispas">%1$s chispas</string>
     <string name="social_regalar">regalar</string>
     <string name="social_regalo_para">@usuario</string>
     <string name="social_regalo_cancelar">cancelar</string>
@@ -767,4 +767,8 @@
     <string name="aporte_solo_principal">Solo la cuenta principal puede gestionar aportes.</string>
     <string name="aporte_mfa">Activa la verificación en dos pasos para gestionar aportes.</string>
     <string name="aporte_elevacion">Vuelve a verificar tu identidad en Moderación e inténtalo de nuevo.</string>
+    <string name="social_portada_opcion">%1$s · %2$s</string>
+    <string name="social_portada_confirmar">¿Comprar por %1$s?</string>
+    <string name="social_portada_elegir_animada">Elegir GIF o WebP animado</string>
+    <string name="social_portada_animada_error">Elige un GIF o WebP animado de hasta 3 MB y 2048 píxeles por lado.</string>
 </resources>

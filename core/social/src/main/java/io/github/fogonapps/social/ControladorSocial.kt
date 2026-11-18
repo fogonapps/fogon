@@ -452,6 +452,14 @@ abstract class ControladorSocial(
     }
     fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
     protected open fun alCambiarBanner() {}
+    suspend fun imagenPortada(nombre: String): ByteArray = cliente().descargarImagenPerfil(nombre)
+
+    suspend fun equiparPortadaAnimada(bytes: ByteArray) {
+        val nombre = cliente().subirPortadaAnimada(bytes)
+        _temas.value = _temas.value.copy(banner = nombre, colorBanner = "")
+        alCambiarBanner()
+    }
+
     suspend fun equiparPortadaPropia(jpeg: ByteArray) {
         val nombre = cliente().subirImagen(jpeg)
         cliente().ponerTema(nombre)

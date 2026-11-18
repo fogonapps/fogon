@@ -93,7 +93,7 @@ class EscaparatesPantallaTest {
                 }
             }
         }
-        val nivel = regla.onNodeWithText("Cinéfilo").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val nivel = regla.onNodeWithContentDescription("cinéfilo, ganada").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val tienda = regla.onNodeWithText("Tienda del perfil").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         assertTrue(nivel.bottom < tienda.top)
     }
@@ -118,7 +118,7 @@ class EscaparatesPantallaTest {
         }
         regla.onNodeWithContentDescription("Nivel 5").performClick()
         regla.onNodeWithText("Cómo subir").assertExists()
-        regla.onNodeWithText("Cinéfilo").assertExists()
+        regla.onNodeWithContentDescription("cinéfilo, ganada").assertExists()
         regla.onNodeWithText("Te falta 1 insignia para tu próxima repisa").assertDoesNotExist()
     }
 
@@ -164,9 +164,9 @@ class EscaparatesPantallaTest {
         regla.runOnIdle { assertTrue(quitada) }
     }
 
-    @Test fun galeriaDeUnaFotoUsaTodoElAncho() = comprobarGaleria(1, 288.dp)
+    @Test fun galeriaDeUnaFotoUsaTodoElAncho() = comprobarGaleria(1, 312.dp)
 
-    @Test fun galeriaDeDosFotosReparteElAncho() = comprobarGaleria(2, 139.dp)
+    @Test fun galeriaDeDosFotosReparteElAncho() = comprobarGaleria(2, 151.dp)
 
     @Test fun galeriaDeTresFotosMantieneLasMiniaturas() = comprobarGaleria(3, 112.dp)
 

@@ -2,6 +2,7 @@ package io.github.fogonapps.cajon.ui
 
 import io.github.fogonapps.identidad.Dibujo
 import io.github.fogonapps.identidad.IconosFogon
+import io.github.fogonapps.identidad.IconosSociales
 import io.github.fogonapps.identidad.dibujo
 import io.github.fogonapps.identidad.hueco
 import io.github.fogonapps.identidad.huecoTrazo
@@ -16,15 +17,15 @@ object Iconos {
     /** El cajón de madera: la biblioteca. */
     val Cajon = dibujo("cajon", relleno("M3.6 10.4h16.8v9.2H3.6z"), trazo("M4.6 10.4 6.6 5h10.8l2 5.4", 2.4f), huecoTrazo("M9.4 14.4h5.2", 2f))
     /** Una claqueta: películas. */
-    val Pelicula = dibujo("pelicula", relleno("M3.6 9.6h16.8v10H3.6z"), trazo("M3.8 9.4 3.2 6l16.4-2.6.6 3.4", 2.4f), huecoTrazo("M8.4 5.2l2 3.4M13.4 4.4l2 3.4", 1.8f))
+    val Pelicula = IconosSociales.Pelicula
     /** Un televisor: series. */
-    val Serie = dibujo("serie", relleno("M3.4 7.4h17.2v11.4H3.4z"), trazo("M8.6 3.6 12 7.2l3.4-3.6", 2.4f))
+    val Serie = IconosSociales.Serie
     /** Un ojo grande con brillo: animes. */
     val Anime = dibujo("anime", relleno("M3 12c2.8-5 15.2-5 18 0-2.8 5-15.2 5-18 0z"), hueco("M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"), relleno("M13 10.2a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8z"))
     /** Un libro: libros. */
-    val Libro = dibujo("libro", relleno("M5 4.4h11.6a2 2 0 0 1 2 2v13.2H7a2 2 0 0 1-2-2z"), huecoTrazo("M5 17.6a2 2 0 0 1 2-2h11.6", 1.8f))
+    val Libro = IconosSociales.Libro
     /** Un disco de vinilo: álbumes. */
-    val Disco = dibujo("disco", relleno("M12 3.6a8.4 8.4 0 1 1 0 16.8 8.4 8.4 0 0 1 0-16.8z"), hueco("M12 9.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8z"), huecoTrazo("M7.4 9.4a5.4 5.4 0 0 1 2.4-2.6", 1.6f))
+    val Disco = IconosSociales.Disco
     /** Un micrófono: artistas. */
     val Artista = dibujo("artista", relleno("M9.4 4.6a2.6 2.6 0 0 1 5.2 0v6a2.6 2.6 0 0 1-5.2 0z"), trazo("M6.4 10.6a5.6 5.6 0 0 0 11.2 0M12 16.2v3.8M8.8 20h6.4", 2.2f))
     /** Renglones con viñeta: las listas. */
@@ -45,7 +46,7 @@ object Iconos {
     /** Una gráfica que sube: tus cifras. */
     val Cifras = dibujo("cifras", trazo("M4 17.6l5-5.2 3.6 3.2L20 7.6", 3f), trazo("M15.4 7.6H20v4.6", 3f))
     /** Una copa: los retos del año. */
-    val Trofeo = dibujo("trofeo", relleno("M7.2 4.4h9.6v4.8a4.8 4.8 0 0 1-9.6 0z"), trazo("M7.2 6.2H4.4a2.6 2.6 0 0 0 3 3.6M16.8 6.2h2.8a2.6 2.6 0 0 1-3 3.6M12 14v3.4M8.4 19.8h7.2", 2.2f))
+    val Trofeo = IconosSociales.Trofeo
     /** Flechas de ordenar. */
     val Ordenar = dibujo("ordenar", trazo("M7 5v14M4.4 16.4 7 19l2.6-2.6M13.6 7h6.4M13.6 12h4.6M13.6 17h2.8", 2.4f))
     /** Una tuerca: los ajustes. */

@@ -13,8 +13,6 @@
   <string name="inicio_hoy_toca">Up next</string>
   <string name="inicio_volumen">Volume</string>
   <string name="medalla_entrenos">%1$d workouts</string>
-  <string name="medalla_falta">not yet</string>
-  <string name="medalla_lograda">earned</string>
   <plurals name="medalla_nueva">
     <item quantity="one">New medal!</item>
     <item quantity="other">New medals!</item>
@@ -222,7 +220,7 @@
   <string name="respaldo_titulo">Back up your data</string>
   <string name="exportar">Export</string>
   <string name="importar">Import</string>
-  <string name="pista_respaldo">An extra manual copy. Export a file and keep it wherever you like; if you ever need it, import it.</string>
+  <string name="pista_respaldo">Export a backup and import it when needed.</string>
   <string name="ejercicios">Exercises</string>
   <string name="record_kg">Record: %1$s kg</string>
   <string name="record">Record: %1$s %2$s</string>

@@ -10,16 +10,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.*
 import io.github.fogonapps.identidad.*
+import io.github.fogonapps.perfil.MedallaInsignia
+import io.github.fogonapps.perfil.iconoInsignia
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -72,18 +72,12 @@ private fun nombreInsignia(id: String) = stringResource(when (id) {
     "explorador" -> R.string.insignia_explorador; else -> R.string.insignia_reto
 })
 
-private fun iconoInsignia(id: String) = when (id) {
-    "cine" -> Iconos.Pelicula; "series" -> Iconos.Serie; "anime" -> Iconos.Anime; "lector" -> Iconos.Libro; "discos" -> Iconos.Disco
-    "constancia" -> Iconos.Racha; "critico" -> Iconos.Lapiz; "explorador" -> Iconos.Estrella; else -> Iconos.Trofeo
-}
-
 /**
  * Las insignias: las ganadas a color; en tu perfil también las que faltan, apagadas y con cuánto llevas. No dan
  * chispas: son solo para mostrar (ver [Insignias]).
  */
 @Composable
 internal fun FilaInsignias(insignias: List<Insignia>, propias: Boolean) {
-    val f = FogonTema.actual
     val lista = if (propias) insignias else insignias.filter { it.ganada }
     if (lista.isEmpty()) return
     Seccion(stringResource(R.string.insignias_titulo))
@@ -91,14 +85,7 @@ internal fun FilaInsignias(insignias: List<Insignia>, propias: Boolean) {
     LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         items(lista.size) { i ->
             val ins = lista[i]
-            Column(Modifier.width(84.dp).alpha(if (ins.ganada) 1f else 0.45f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.size(60.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (ins.ganada) f.tinta1 else f.superficie)
-                    .border(f.borde, if (ins.ganada) f.tinta1 else f.linea, androidx.compose.foundation.shape.CircleShape), contentAlignment = Alignment.Center) {
-                    IconoRiso(iconoInsignia(ins.id), null, tamano = 26.dp, tinta = if (ins.ganada) f.sobreTinta1 else f.textoSuave)
-                }
-                Text(nombreInsignia(ins.id), style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis)
-                if (!ins.ganada) Text("${ins.lleva} / ${ins.meta}", style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
-            }
+            MedallaInsignia(iconoInsignia(ins.id), nombreInsignia(ins.id), ins.ganada, ins.lleva, ins.meta)
         }
     }
 }

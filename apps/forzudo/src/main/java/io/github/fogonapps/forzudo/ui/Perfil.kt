@@ -138,6 +138,11 @@ fun EditarPerfilLocal(vm: GymViewModel, estado: Estado) {
     io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazCuenta(vm))
     EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
         insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
+        portadasPropias = { io.github.fogonapps.social.ui.PortadasPropias(interfazCuenta(vm)) },
+        mostrarPortada = { valor, modifier ->
+            if (Regex("[A-Za-z0-9_-]{22}").matches(valor)) io.github.fogonapps.social.ui.PortadaPerfilRed(valor, modifier, interfazCuenta(vm))
+            else ImagenLocal(valor, modifier)
+        },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

@@ -208,7 +208,9 @@ open class ClienteSocial(
         }
     }
     suspend fun quitarFoto() { pedir("/foto", "DELETE") }
-    suspend fun perfil(usuario: String): PerfilSocial = leer(PerfilSocial.serializer(), pedir("/perfiles/${cod(usuario)}"))
+    suspend fun perfil(usuario: String): PerfilSocial = leer(PerfilSocial.serializer(), pedir("/perfiles/${cod(usuario)}")).let {
+        it.copy(portada = unirColorBanner(it.portada, it.colorBanner))
+    }
     suspend fun buscar(q: String): List<PersonaSocial> = leer(ListSerializer(PersonaSocial.serializer()), pedir("/buscar?q=${cod(q)}"))
 
     /* Seguir */
@@ -279,7 +281,12 @@ open class ClienteSocial(
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
     suspend fun paquetesWompi() = leer(OfertaWompi.serializer(), pedir("/pagos/wompi/paquetes"))
     suspend fun ordenWompi(paquete: Int) = leer(CheckoutWompi.serializer(), pedir("/pagos/wompi/orden", "POST", json(PedidoPagoWompi.serializer(), PedidoPagoWompi(paquete)))).url
-    suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas"))
+    private fun unirColorBanner(banner: String, color: String): String =
+        if (banner.startsWith("banner:") && color.isNotEmpty()) "$banner~$color" else banner
+
+    suspend fun temas() = leer(TemasCuentaSocial.serializer(), pedir("/tienda/temas")).let {
+        it.copy(banner = unirColorBanner(it.banner, it.colorBanner))
+    }
     suspend fun articuloMercado(id: Long) = leer(ArticuloMercado.serializer(), pedir("/mercado/$id"))
     suspend fun mercado(tipo: String, orden: String, oficial: Boolean, pagina: Int, modo: String = "") = leer(PaginaMercado.serializer(),
         pedir(when (modo) { "adquiridos" -> "/mercado/adquiridos?pagina=$pagina"; "mios" -> "/mercado/mios?pagina=$pagina"; "revision" -> "/admin/mercado?pagina=$pagina"; else -> "/mercado?tipo=${cod(tipo)}&orden=${cod(orden)}&oficial=$oficial&pagina=$pagina" }))
@@ -311,6 +318,9 @@ open class ClienteSocial(
     suspend fun ponerNotaGente(texto: String, datos: kotlinx.serialization.json.JsonObject) { pedir("/nota", "PUT", json(NotaNuevaGente.serializer(), NotaNuevaGente(texto, datos))) }
     /** Buscar canciones (por el servidor de Fogón, que pregunta a Apple). */
     suspend fun canciones(q: String, pais: String = "CO") = leer(ListSerializer(CancionSocial.serializer()), pedir("/canciones?q=${cod(q)}&pais=${cod(pais)}"))
+
+    suspend fun subirPortadaAnimada(bytes: ByteArray): String =
+        JsonSocial.parseToJsonElement(pedir("/portada-animada", "PUT", bytes.toRequestBody("application/octet-stream".toMediaType()))!!).jsonObject["nombre"]!!.jsonPrimitive.content
 
     suspend fun subirImagen(jpeg: ByteArray): String =
         JsonSocial.parseToJsonElement(pedir("/imagenes", "PUT", jpeg.toRequestBody(if (jpeg.firstOrNull() == (-119).toByte()) "image/png".toMediaType() else JPEG))!!).jsonObject["nombre"]!!.jsonPrimitive.content

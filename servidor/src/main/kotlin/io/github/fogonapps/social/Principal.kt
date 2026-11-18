@@ -90,7 +90,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.40"
+const val VERSION = "0.41"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -304,6 +304,11 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 val yo = call.yo()
                 call.respond(HttpStatusCode.Created, social.subirImagen(yo, call.receiveChannel().readRemaining(900_001).readByteArray()))
             }
+            put("/portada-animada") {
+                val yo = call.yo()
+                val bytes = call.receiveChannel().readRemaining((MAX_PORTADA_ANIMADA + 1).toLong()).readByteArray()
+                call.respond(HttpStatusCode.Created, social.subirPortadaAnimada(yo, bytes))
+            }
             put("/videos") {
                 val yo = call.yo()
                 call.respond(HttpStatusCode.Created, social.subirVideo(yo, call.receiveChannel().readRemaining((MAX_VIDEO + 1).toLong()).readByteArray()))
@@ -339,7 +344,11 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/imagenes/{nombre}") {
                 call.response.header("Cache-Control", "no-store")
                 val bytes = social.imagen(call.parameters["nombre"] ?: "", call.lector(), call.token())
-                call.respondBytes(bytes, if (social.esPng(bytes)) ContentType.Image.PNG else ContentType.Image.JPEG)
+                call.respondBytes(bytes, when (formatoPortadaAnimada(bytes)) {
+                    "gif" -> ContentType.Image.GIF
+                    "webp" -> ContentType.parse("image/webp")
+                    else -> if (social.esPng(bytes)) ContentType.Image.PNG else ContentType.Image.JPEG
+                })
             }
             get("/publicaciones/{id}") { call.respond(social.publicacion(call.lector(), call.id()) ?: throw Problema(404, "no_existe")) }
             delete("/publicaciones/{id}") { social.borrarPublicacion(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }

@@ -21,6 +21,7 @@ import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /** Perfil exclusivamente local: las cifras y el contenido no presentan montos. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
     var pestana by rememberSaveable { mutableIntStateOf(0) }
@@ -52,10 +53,21 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
             }
         },
         SeccionPerfil(1, Iconos.Estrella, stringResource(R.string.perfil_logros)) {
-            if (dias == 0 && cumplidas == 0 && e.cierres.isEmpty()) PerfilVacio(Iconos.Estrella, stringResource(R.string.perfil_logros_vacios))
-            if (dias > 0) Logro(stringResource(R.string.perfil_primera_anotacion))
-            if (cumplidas > 0) Logro(stringResource(R.string.perfil_primera_meta))
-            if (e.cierres.isNotEmpty()) Logro(stringResource(R.string.perfil_cierres, e.cierres.size))
+            if (dias == 0 && cumplidas == 0 && e.cierres.isEmpty()) {
+                PerfilVacio(Iconos.Estrella, stringResource(R.string.perfil_logros_vacios))
+            } else {
+                FlowRow(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (dias > 0) MedallaInsignia(Iconos.Lista, stringResource(R.string.perfil_primera_anotacion), ganada = true, tamano = 48.dp)
+                    if (cumplidas > 0) MedallaInsignia(Iconos.Moneda, stringResource(R.string.perfil_primera_meta), ganada = true, tamano = 48.dp)
+                    if (e.cierres.isNotEmpty()) {
+                        MedallaInsignia(IconosFogon.Reloj, stringResource(R.string.perfil_cierres, e.cierres.size), ganada = true, tamano = 48.dp)
+                    }
+                }
+            }
             if (usuario != null) {
                 BotonSecundario(stringResource(R.string.red_compartir), { vm.abrir(Pantalla.CompartirLogro()) }, Modifier.fillMaxWidth().padding(16.dp))
                 if (publicados.isNotEmpty()) Seccion(stringResource(R.string.red_publicados))
@@ -95,15 +107,6 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) } },
     )
     Espacio(40.dp)
-}
-
-@Composable
-private fun Logro(texto: String) {
-    Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().tarjetaFogon().padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        IconoRiso(Iconos.Estrella, null)
-        Text(texto, color = FogonTema.actual.texto)
-    }
 }
 
 @Composable
@@ -187,6 +190,11 @@ private fun EditarPerfilRed(vm: AhorradorViewModel) {
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { r -> if (r != null) girar_selector6(listOf(r)) else manejar_selector6(null) }
     EditorPerfilLocal(nombre, bio, foto, portada, reclamados = vm.red.temas.collectAsState().value.reclamados,
         insignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty(), onPortada = { portada = it },
+        portadasPropias = { io.github.fogonapps.social.ui.PortadasPropias(interfazCuenta(vm)) },
+        mostrarPortada = { valor, modifier ->
+            if (Regex("[A-Za-z0-9_-]{22}").matches(valor)) io.github.fogonapps.social.ui.PortadaPerfilRed(valor, modifier, interfazCuenta(vm))
+            else ImagenLocal(valor, modifier)
+        },
         onNombre = { nombre = it }, onBio = { bio = it },
         onElegirFoto = { eligiendoPortada = false; selector.launch("image/*") },
         onQuitarFoto = { foto = "" },

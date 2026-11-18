@@ -12,8 +12,6 @@
   <string name="inicio_hoy_toca">Lo que toca</string>
   <string name="inicio_volumen">Volumen</string>
   <string name="medalla_entrenos">%1$d entrenos</string>
-  <string name="medalla_falta">falta</string>
-  <string name="medalla_lograda">ganada</string>
   <plurals name="medalla_nueva">
     <item quantity="one">¡Medalla nueva!</item>
     <item quantity="other">¡Medallas nuevas!</item>
@@ -223,7 +221,7 @@
   <string name="respaldo_titulo">Respaldo de tus datos</string>
   <string name="exportar">Exportar</string>
   <string name="importar">Importar</string>
-  <string name="pista_respaldo">Copia manual extra. Exporta un archivo y guárdalo donde quieras; si algún día lo necesitas, lo importas.</string>
+  <string name="pista_respaldo">Exporta una copia e impórtala cuando la necesites.</string>
   <string name="ejercicios">Ejercicios</string>
   <string name="record_kg">Récord: %1$s kg</string>
   <string name="record">Récord: %1$s %2$s</string>

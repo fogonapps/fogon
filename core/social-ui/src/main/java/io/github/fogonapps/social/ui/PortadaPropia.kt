@@ -24,6 +24,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** Accesos a las portadas subidas desde el editor y desde la tienda. */
+@Composable
+fun PortadasPropias(vm: InterfazSocial, soloCompradas: Boolean = false) {
+    val usuario by vm.red.usuario.collectAsState()
+    if (usuario == null) return
+    val temas by vm.red.temas.collectAsState()
+    LaunchedEffect(vm.red, usuario) { vm.red.cargarTemas() }
+    for (item in listOf("portada:propia", "portada:animada")) {
+        val comprado = item in temas.reclamados
+        if (soloCompradas && !comprado) continue
+        val titulo = io.github.fogonapps.perfil.TemasPerfil.nombre(item)
+        val precio = io.github.fogonapps.perfil.TemasPerfil.PRECIOS.getValue(item)
+        val chispas = stringResource(R.string.social_precio_chispas, numeroSocial(precio))
+        val etiqueta = stringResource(R.string.social_portada_opcion, titulo, chispas)
+        if (comprado) {
+            Text(titulo, color = io.github.fogonapps.identidad.FogonTema.actual.texto)
+            if (item == "portada:propia") PortadaPropia(vm) else ElegirPortadaAnimada(vm)
+        } else {
+            val mensaje = stringResource(R.string.social_portada_confirmar, chispas)
+            BotonSecundario(etiqueta, { vm.confirmar(titulo, mensaje) { vm.red.reclamarTema(item) } },
+                Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
+        }
+    }
+}
+
 /** Selección sin permisos y encuadre en la misma proporción que la portada. */
 @Composable
 internal fun PortadaPropia(vm: InterfazSocial) {

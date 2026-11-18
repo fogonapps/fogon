@@ -30,6 +30,7 @@ data class PerfilSubido(
     val portada: String = "",
     val enlaces: List<String> = emptyList(),
     val partes: Map<String, Parte> = emptyMap(),
+    val colorBanner: String = "",
 )
 
 /** Una publicación: una entrada del diario, una reseña, una lista o una publicación con foto. */
@@ -95,6 +96,8 @@ data class PerfilVisto(
     /** Si quien mira puede ver sus guardadas (lo decide la persona en su perfil, parte "guardadas"). */
     val guardadasVisibles: Boolean = false,
     val nivelLena: String = "",
+    val colorBanner: String = "",
+    val portadaAnimada: Boolean = false,
 )
 
 @Serializable
@@ -181,7 +184,7 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
 @Serializable data class Cumple(val fecha: String)
 /** Lo de la tienda de la cuenta: lo que tiene, lo puesto (fondo y marco) y sus chispas. */
-@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "")
+@Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "", val colorBanner: String = "")
 @Serializable data class Regalo(val item: String, val para: String)
 @Serializable data class TemaElegido(val tema: String)
 
@@ -194,11 +197,13 @@ object TemasPerfil {
 
     val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
     val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
-    fun precio(item: String): Int? = if (item == "portada:propia") 10000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    fun precio(item: String): Int? = if (item == "portada:propia") 500 else if (item == "portada:animada") 5000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
     const val BIENVENIDA = 1500
     const val PESOS_POR_CHISPA = 10
+    val COLORES_BANNER = setOf("rojo", "amarillo", "rosa", "azul", "verde", "violeta", "naranja", "cian")
+    val BANNERS_ANIMADOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia")
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
-        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800)
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) + BANNERS_ANIMADOS.associateWith { 600 }
 }
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 /** Una lista en común: quién la armó, quiénes están y cuántas obras tiene. */
@@ -444,6 +449,7 @@ class Social(
                     leer("SELECT 1 FROM cuentas WHERE instr(perfil, ?) > 0", nombre) { 1 }.isEmpty()) {
                     java.io.File(dirImagenes, "$nombre.jpg").delete()
                     java.io.File(dirImagenes, "$nombre.png").delete()
+                    archivoAnimado(nombre)?.delete()
                     cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
                 }
             }
@@ -862,14 +868,18 @@ class Social(
 
     @Synchronized
     fun subirPerfil(yo: Long, p: PerfilSubido, app: String = "cajon") {
-        val portadaAnterior = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)).portada }.single() }
+        val perfilAnterior = perfilGuardado(yo)
+        val portadaAnterior = perfilAnterior.portada
+        val (portada, color) = separarBanner(p.portada, perfilAnterior)
         AppsSocial.validar(app)
         val anterior = miCuenta(yo).nombre
         val nombre = p.nombre.trim().take(40)
         val cambia = nombre != anterior && apodoDesde(yo) <= ahora()
         // Las apps viejas mandan la portada de antes (una URL): se borra en silencio en vez de rechazar el perfil.
+        if (p.portada != portada && !bannerPermitido(yo, portada)) throw Problema(400, "banner_no_permitido")
         val limpio = p.copy(
-            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = p.portada.takeIf { it == BANNER_OFICIAL || bannerPermitido(yo, it) }.orEmpty(),
+            nombre = if (cambia) nombre else anterior, bio = p.bio.trim().take(200), portada = portada.takeIf { it == BANNER_OFICIAL || bannerPermitido(yo, it) }.orEmpty(),
+            colorBanner = color,
             enlaces = p.enlaces.filter { it.startsWith("https://") || it.startsWith("http://") }.map { it.take(200) }.take(5),
             partes = p.partes.filterValues { it.visibilidad in Vis.SUBIBLES }.entries.take(20).associate { it.key.take(30) to it.value },
         )
@@ -960,7 +970,8 @@ class Social(
         return PerfilVisto(
             escaparates.cupo(id).nivel, escaparates.cupo(id).insignias, persona(id), p.bio, if (cerrada && !p.portada.startsWith("banner:")) "" else p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
             pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
-            nivelLena = lena.nivelVisible(id),
+            nivelLena = lena.nivelVisible(id), colorBanner = p.colorBanner,
+            portadaAnimada = !cerrada && Regex("[A-Za-z0-9_-]{22}").matches(p.portada) && archivoAnimado(p.portada) != null,
         )
     }
 
@@ -984,6 +995,40 @@ class Social(
         return ImagenSubida(nombre)
     }
 
+    @Synchronized
+    fun subirPortadaAnimada(yo: Long, bytes: ByteArray): ImagenSubida {
+        if (!tieneTema(yo, "portada:animada")) throw Problema(403, "sin_tema")
+        val (formato, limpia) = revisarPortadaAnimada(bytes)
+        val nombre = Base.tokenNuevo().take(22)
+        val anterior = perfilGuardado(yo).portada
+        dirImagenes.mkdirs()
+        val archivo = java.io.File(dirImagenes, "$nombre.$formato")
+        try {
+            archivo.writeBytes(limpia)
+            b.transaccion {
+                val hoy = leer("SELECT COUNT(*) FROM imagenes WHERE cuenta = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first()
+                if (hoy >= 100) throw Problema(429, "despacio")
+                cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES(?,?,?)", nombre, yo, ahora())
+                cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?",
+                    JsonSocial.encodeToString(PerfilSubido.serializer(), perfilGuardado(yo).copy(portada = nombre, colorBanner = "")), ahora(), yo)
+            }
+        } catch (e: Exception) {
+            archivo.delete()
+            throw e
+        }
+        limpiarPortada(yo, anterior)
+        return ImagenSubida(nombre)
+    }
+
+    private fun archivoAnimado(nombre: String): java.io.File? =
+        listOf("gif", "webp").firstNotNullOfOrNull { extension ->
+            java.io.File(dirImagenes, "$nombre.$extension").takeIf { it.isFile }
+        }
+
+    private fun tieneTema(yo: Long, tema: String): Boolean = b.usar {
+        leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isNotEmpty()
+    }
+
     /** Una imagen por su nombre (que no se adivina: solo la tiene quien vio la publicación). */
     fun imagen(nombre: String, lector: Long? = null, token: String? = null): ByteArray {
         if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
@@ -1004,6 +1049,11 @@ class Social(
             it.getString(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2)).portada
         }.firstOrNull() }?.takeIf { it.second == nombre }?.first
         val permitePortada = portadaDe != null && try { !verPerfil(lector, portadaDe).cerrada } catch (_: Problema) { false }
+        val animada = archivoAnimado(nombre)
+        if (animada != null) {
+            if (portadaDe == null || (lector != autor && !permitePortada)) throw Problema(404, "no_existe")
+            return animada.readBytes()
+        }
         if ((enEscaparate || portadaDe != null) && lector != autor && !permitePortada && !escaparates.permiteImagen(nombre, lector)) {
             val publicadas = b.usar { leer("SELECT id FROM publicaciones WHERE cuenta = ? AND instr(datos, ?) > 0", autor, nombre) { it.getLong(1) } }
             if (publicadas.none { publicacion(lector, it) != null }) throw Problema(404, "no_existe")
@@ -1677,19 +1727,35 @@ class Social(
     fun temas(yo: Long): TemasCuenta {
         val saldo = chispas(yo)
         val (tema, marco) = b.usar { leer("SELECT tema, marco FROM cuentas WHERE id = ?", yo) { it.getString(1) to it.getString(2) }.first() }
-        return TemasCuenta(b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } }, tema, marco, saldo, false, b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)).portada }.single() })
+        val perfil = perfilGuardado(yo)
+        return TemasCuenta(b.usar { leer("SELECT tema FROM temas WHERE cuenta = ? ORDER BY cuando", yo) { it.getString(1) } }, tema, marco, saldo, false, perfil.portada, perfil.colorBanner)
     }
 
     /** Quita de todos los perfiles las portadas que no son banners de Fogón. Se corre al arrancar; no hace nada la segunda vez. */
     fun quitarPortadasAjenas(): Int = b.transaccion {
         val ajenas = leer("SELECT id, perfil FROM cuentas WHERE perfil LIKE '%\"portada\":\"%'") { it.getLong(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2)) }
             .filter { (id, p) -> p.portada.isNotEmpty() && !bannerPermitido(id, p.portada) }
-        ajenas.forEach { (id, p) -> cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), p.copy(portada = "")), id) }
+        ajenas.forEach { (id, p) -> cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), p.copy(portada = "", colorBanner = "")), id) }
         ajenas.size
     }
 
     /** Compatibilidad con clientes publicados: ya no concede chispas. */
     fun cobrarDiario(yo: Long) { chispas(yo) }
+
+    private fun perfilGuardado(yo: Long): PerfilSubido = b.usar {
+        leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single()
+    }
+
+    private fun separarBanner(valor: String, anterior: PerfilSubido): Pair<String, String> {
+        val base = valor.substringBefore('~')
+        if (base == valor) return base to anterior.colorBanner.takeIf { base == anterior.portada }.orEmpty()
+        val color = valor.substringAfter('~')
+        val id = base.removePrefix("banner:")
+        val admiteColor = TemasPerfil.BANNERS[id] == 0 || id in TemasPerfil.BANNERS_ANIMADOS
+        if (!admiteColor || !base.startsWith("banner:") ||
+            (color != "original" && color !in TemasPerfil.COLORES_BANNER)) throw Problema(400, "banner_no_permitido")
+        return base to color.takeUnless { it == "original" }.orEmpty()
+    }
 
     /** Banners del catálogo o del mercado que esta cuenta compró o creó. */
     private fun bannerPermitido(yo: Long, valor: String): Boolean {
@@ -1698,7 +1764,7 @@ class Social(
         }
         return mercado.permitido(yo, valor) ||
         (Regex("[A-Za-z0-9_-]{22}").matches(valor) && b.usar {
-            leer("SELECT 1 FROM imagenes i JOIN temas t ON t.cuenta = i.cuenta WHERE i.nombre = ? AND i.cuenta = ? AND t.tema = 'portada:propia'", valor, yo) { 1 }.isNotEmpty()
+            leer("SELECT 1 FROM imagenes i JOIN temas t ON t.cuenta = i.cuenta WHERE i.nombre = ? AND i.cuenta = ? AND t.tema = ?", valor, yo, if (archivoAnimado(valor) == null) "portada:propia" else "portada:animada") { 1 }.isNotEmpty()
         }) ||
         valor.isEmpty() || (valor.startsWith("banner:") &&
             TemasPerfil.BANNERS[valor.removePrefix("banner:")]?.let { precio -> precio == 0 || b.usar {
@@ -1756,7 +1822,9 @@ class Social(
 
     /** Ponerse un fondo o un marco que se tiene ("" quita el fondo; "marco:" quita el marco). */
     @Synchronized
-    fun ponerTema(yo: Long, tema: String) {
+    fun ponerTema(yo: Long, valor: String) {
+        val perfilActual = perfilGuardado(yo)
+        val (tema, color) = separarBanner(valor, perfilActual)
         val esPortada = tema.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(tema)
         if (esPortada && tema != BANNER_OFICIAL && !bannerPermitido(yo, tema)) {
             limpiarPortada(yo, tema)
@@ -1767,11 +1835,11 @@ class Social(
             if (tema.startsWith("escaparate:")) throw Problema(400, "item")
             if (tema.startsWith("banner:") || Regex("[A-Za-z0-9_-]{22}").matches(tema)) {
                 val perfil = b.usar { leer("SELECT perfil FROM cuentas WHERE id = ?", yo) { JsonSocial.decodeFromString<PerfilSubido>(it.getString(1)) }.single() }
-                b.usar { cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(portada = tema)), ahora(), yo) }
+                b.usar { cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfil.copy(portada = tema, colorBanner = color)), ahora(), yo) }
                 limpiarPortada(yo, perfil.portada)
                 return@transaccion
             }
-            if (tema == "portada:propia") throw Problema(400, "item")
+            if (tema == "portada:propia" || tema == "portada:animada") throw Problema(400, "item")
             if (mercado.idItem(tema) != null && !mercado.permitido(yo, tema)) throw Problema(403, "sin_tema")
             val esMarco = tema.startsWith("marco:")
             if (tema.isNotEmpty() && tema != "marco:" && b.usar { leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isEmpty() }) throw Problema(403, "sin_tema")
@@ -1971,6 +2039,7 @@ class Social(
             leer("SELECT 1 FROM cuentas WHERE instr(perfil, ?) > 0", nombre) { 1 }.isEmpty()) {
             java.io.File(dirImagenes, "$nombre.jpg").delete()
             java.io.File(dirImagenes, "$nombre.png").delete()
+            archivoAnimado(nombre)?.delete()
             cambiar("DELETE FROM imagenes WHERE nombre = ?", nombre)
         }
     }
@@ -2496,7 +2565,7 @@ class Social(
             it.getLong(1) to JsonSocial.decodeFromString<PerfilSubido>(it.getString(2))
         }.filter { (_, perfil) -> perfil.portada == BANNER_OFICIAL }.forEach { (id, perfil) ->
             cambiar("UPDATE cuentas SET perfil = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?",
-                JsonSocial.encodeToString(perfil.copy(portada = "")), t, id)
+                JsonSocial.encodeToString(perfil.copy(portada = "", colorBanner = "")), t, id)
         }
     }
 

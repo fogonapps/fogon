@@ -79,6 +79,7 @@ internal fun NivelChico(vista: PerfilVista) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NivelDetalle(nivel: Int, insignias: List<String>, propio: Boolean, gratis: Int? = null, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
@@ -110,29 +111,19 @@ fun NivelDetalle(nivel: Int, insignias: List<String>, propio: Boolean, gratis: I
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.perfil_nivel_suman), style = MaterialTheme.typography.titleSmall, color = f.texto)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                insignias.forEach { id ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconoRiso(iconoInsigniaNivel(id), null, tamano = 24.dp)
-                        Text(nombreInsigniaNivel(id), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+            if (insignias.isEmpty()) {
+                Text(stringResource(R.string.perfil_nivel_sin_insignias), color = f.textoSuave)
+            } else {
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    insignias.forEach { id ->
+                        MedallaInsignia(iconoInsignia(id), nombreInsigniaPerfil(id), ganada = true, tamano = 48.dp)
                     }
                 }
-                if (insignias.isEmpty()) Text(stringResource(R.string.perfil_nivel_sin_insignias), color = f.textoSuave)
             }
         }
     }
 }
-
-private fun iconoInsigniaNivel(id: String): Dibujo = when (id) {
-    "constancia" -> IconosFogon.Racha
-    else -> IconosFogon.Estrella
-}
-
-@Composable
-private fun nombreInsigniaNivel(id: String) = stringResource(when (id) {
-    "cine" -> R.string.escaparate_ins_cine; "series" -> R.string.escaparate_ins_series
-    "anime" -> R.string.escaparate_ins_anime; "lector" -> R.string.escaparate_ins_lector
-    "discos" -> R.string.escaparate_ins_discos; "constancia" -> R.string.escaparate_ins_constancia
-    "critico" -> R.string.escaparate_ins_critico; "explorador" -> R.string.escaparate_ins_explorador
-    else -> R.string.escaparate_ins_reto
-})

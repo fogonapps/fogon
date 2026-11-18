@@ -42,6 +42,8 @@ data class PerfilSocial(
     val seguidores: Int = 0, val siguiendo: Int = 0, val cuantas: Int = 0, val cerrada: Boolean = false,
     val megusta: Int = 0, val guardadasVisibles: Boolean = false, val nivel: Int = 0, val insigniasNivel: List<String> = emptyList(),
     val nivelLena: String = "",
+    val colorBanner: String = "",
+    val portadaAnimada: Boolean = false,
 )
 
 @Serializable
@@ -193,7 +195,7 @@ data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class CheckoutWompi(val referencia: String, val url: String)
 @Serializable data class OfertaWompi(val paquetes: List<Int> = emptyList(), val regalo: Map<String, Int> = emptyMap())
 
-@Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "", val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "")
+@Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "", val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "", val colorBanner: String = "")
 @Serializable internal data class TemaElegidoSocial(val tema: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.SobreNuevo")

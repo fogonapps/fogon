@@ -607,7 +607,7 @@
     <string name="social_te_sigue">follows you</string>
     <string name="social_tipo_calificacion">Rating</string>
     <string name="social_tienda_banners">banners</string>
-    <string name="social_precio_pesos">%1$s sparks · %2$s COP</string>
+    <string name="social_precio_chispas">%1$s sparks</string>
     <string name="social_regalar">gift</string>
     <string name="social_regalo_para">@username</string>
     <string name="social_regalo_cancelar">cancel</string>
@@ -765,4 +765,8 @@
     <string name="aporte_solo_principal">Only the primary account can manage contributions.</string>
     <string name="aporte_mfa">Set up two-step verification to manage contributions.</string>
     <string name="aporte_elevacion">Verify your identity again in Moderation and try again.</string>
+    <string name="social_portada_opcion">%1$s · %2$s</string>
+    <string name="social_portada_confirmar">Buy for %1$s?</string>
+    <string name="social_portada_elegir_animada">Choose an animated GIF or WebP</string>
+    <string name="social_portada_animada_error">Choose an animated GIF or WebP up to 3 MB and 2048 pixels per side.</string>
 </resources>

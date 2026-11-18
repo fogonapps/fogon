@@ -1,5 +1,8 @@
 package io.github.fogonapps.perfil
 
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 
@@ -41,8 +44,9 @@ data class EstiloPerfil(val base: Color, val panel: Color, val texto: Color, val
 object TemasPerfil {
     val EXTRAS = (1..3).map { "escaparate:extra$it" }
     const val PESOS_POR_CHISPA = 10
+    val BANNERS_ANIMADOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia")
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
-        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800)
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) + BANNERS_ANIMADOS.associateWith { 600 }
     /** Referencias directas (no por nombre) para que la versión publicada no descarte las imágenes. */
     val RECURSOS_BANNER = mapOf(
         "oficial" to R.drawable.banner_oficial,
@@ -58,7 +62,7 @@ object TemasPerfil {
     val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna")
     /** Los precios en chispas (los mismos del servidor, que es el que cobra). */
     val PRECIOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
-        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 10000)
+        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 500, "portada:animada" to 5000)
 
     fun estilo(tema: String): EstiloPerfil? = when (tema) {
         "nieve" -> EstiloPerfil(Color(0xFF0E1A27), Color(0xA61A2B3D), Color(0xFFE8F1FA), Color(0xFF9DB4CC), Color(0xFF7FC4FF), Color(0xFF0E1A27), Color(0x557FA8D0))
@@ -74,7 +78,7 @@ object TemasPerfil {
 
     @Composable
     fun nombre(tema: String): String = stringResource(when (tema) {
-        "portada:propia" -> R.string.portada_propia; "nieve" -> R.string.tema_nieve; "carmesi" -> R.string.tema_carmesi; "niebla" -> R.string.tema_niebla; "ojos" -> R.string.tema_ojos
+        "portada:animada" -> R.string.portada_animada; "portada:propia" -> R.string.portada_propia; "nieve" -> R.string.tema_nieve; "carmesi" -> R.string.tema_carmesi; "niebla" -> R.string.tema_niebla; "ojos" -> R.string.tema_ojos
         "atardecer" -> R.string.tema_atardecer; "ciudad" -> R.string.tema_ciudad; "selva" -> R.string.tema_selva; "cosmos" -> R.string.tema_cosmos
         "doble" -> R.string.marco_doble; "llamas" -> R.string.marco_llamas; "pixel" -> R.string.marco_pixel; "estrellas" -> R.string.marco_estrellas
         "espinas" -> R.string.marco_espinas; "luna" -> R.string.marco_luna
@@ -290,9 +294,20 @@ fun MuestraMarco(marco: String, modifier: Modifier = Modifier) {
 @Composable
 fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
     if (Regex("m[1-9][0-9]*").matches(id)) { ArteMercado(id.drop(1), modifier); return }
-    val recurso = TemasPerfil.RECURSOS_BANNER[id] ?: 0
+    val base = id.substringBefore('~')
+    val tinta = tintasBanner[id.substringAfter('~', "")]?.first
+    if (base in TemasPerfil.BANNERS_ANIMADOS) {
+        BannerAnimado(base, tinta, modifier)
+        return
+    }
+    val recurso = TemasPerfil.RECURSOS_BANNER[base] ?: 0
     val f = FogonTema.actual
-    if (recurso != 0) androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(recurso), null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+    if (base == "puntos" && tinta != null) Box(modifier.background(f.fondo).haloPuntos(tinta))
+    else if (recurso != 0) androidx.compose.foundation.Image(
+        androidx.compose.ui.res.painterResource(recurso), null, modifier,
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+        colorFilter = tinta?.let { androidx.compose.ui.graphics.ColorFilter.tint(it, androidx.compose.ui.graphics.BlendMode.Color) },
+    )
     else Box(modifier.background(f.fondo).haloPuntos(f.textoSuave.copy(alpha = 0.3f)))
 }
 
@@ -304,14 +319,24 @@ internal fun bannersDisponibles(reclamados: List<String>, insignia: String): Lis
 
 /** Banners gratis y adquiridos, con una marca en los comprados. */
 @Composable
-fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyList(), insignia: String = "") {
+fun BannersGratis(
+    onElegir: (String) -> Unit, reclamados: List<String> = emptyList(), insignia: String = "",
+    portada: String = "", guardarAlElegir: Boolean = true,
+) {
+    var seleccion by androidx.compose.runtime.saveable.rememberSaveable(portada) { mutableStateOf(portada) }
+    val idActivo = seleccion.substringBefore('~').removePrefix("banner:")
+    val admiteColor = TemasPerfil.BANNERS[idActivo] == 0 || idActivo in TemasPerfil.BANNERS_ANIMADOS
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         bannersDisponibles(reclamados, insignia).forEach { id ->
-            androidx.compose.material3.TextButton(onClick = { onElegir("banner:$id") }, modifier = Modifier.width(128.dp)) {
+            androidx.compose.material3.TextButton(onClick = {
+                val valor = if (id == idActivo) seleccion else "banner:$id"
+                seleccion = valor
+                if (!guardarAlElegir || (TemasPerfil.BANNERS[id] != 0 && id !in TemasPerfil.BANNERS_ANIMADOS)) onElegir(valor)
+            }, modifier = Modifier.width(128.dp)) {
                 Column {
                     val miniatura = Modifier.fillMaxWidth().height(40.dp)
                     val f = FogonTema.actual
-                    BannerPerfil(id, if (id == "oficial") miniatura.border(f.borde, f.textoSuave.copy(alpha = 0.35f)) else miniatura)
+                    BannerPerfil(if (id == idActivo) seleccion.removePrefix("banner:") else id, if (id == "oficial") miniatura.border(f.borde, f.textoSuave.copy(alpha = 0.35f)) else miniatura)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if ("banner:$id" in reclamados) IconoRiso(IconosFogon.Chulo, stringResource(R.string.perfil_articulo_comprado), tamano = 16.dp)
                         Text(if (id.startsWith("m") && id.drop(1).toLongOrNull() != null) stringResource(R.string.perfil_banner_comprado) else nombreBanner(id), color = FogonTema.actual.texto)
@@ -320,10 +345,37 @@ fun BannersGratis(onElegir: (String) -> Unit, reclamados: List<String> = emptyLi
             }
         }
     }
+    if (admiteColor) {
+        val f = FogonTema.actual
+        val elegido = seleccion.substringAfter('~', "original")
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+            (listOf("original") + tintasBanner.keys).forEach { color ->
+                val muestra = tintasBanner[color]
+                val nombre = stringResource(muestra?.second ?: R.string.banner_color_original)
+                val elegir = {
+                    seleccion = "banner:$idActivo~$color"
+                    if (!guardarAlElegir) onElegir(seleccion)
+                }
+                if (muestra == null) androidx.compose.material3.TextButton(onClick = elegir) { Text(nombre, color = f.texto) }
+                else Box(Modifier.size(48.dp)
+                    .selectable(elegido == color, onClick = elegir)
+                    .semantics { contentDescription = nombre }, contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(28.dp).background(muestra.first, CircleShape).border(f.borde, f.textoSuave, CircleShape))
+                    if (elegido == color) IconoRiso(IconosFogon.Chulo, null, tamano = 16.dp, tinta = Tintas.Tinta)
+                }
+            }
+        }
+        if (guardarAlElegir) BotonSecundario(stringResource(R.string.banner_usar), { onElegir(seleccion) })
+    }
 }
 
 @Composable
 fun nombreBanner(id: String): String = stringResource(when (id) {
+    "deriva" -> R.string.banner_deriva
+    "ascenso" -> R.string.banner_ascenso
+    "estelar" -> R.string.banner_estelar
+    "olas" -> R.string.banner_olas
+    "lluvia" -> R.string.banner_lluvia
     "oficial" -> R.string.banner_oficial
     "papel" -> R.string.banner_papel
     "riso-rosa" -> R.string.banner_riso_rosa

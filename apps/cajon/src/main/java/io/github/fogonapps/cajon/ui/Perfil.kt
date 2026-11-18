@@ -243,7 +243,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                                         IconoRiso(Iconos.Mas, null, tamano = 22.dp, tinta = f.textoSuave)
                                     }
                                 }
-                                Text(nombreHueco(h), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
+                                Text(nombreHueco(h), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                                 Text(a?.nombre ?: o?.titulo ?: "", style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             }
@@ -469,7 +469,8 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
             if (p.portada.isNotBlank()) if (Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize(), interfazSocial(vm)) else ImagenEncuadrada(p.portada, p.encuadrePortada, Modifier.matchParentSize())
         }
 
-        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados, vm.red.cuenta.collectAsStateWithLifecycle().value?.insignia.orEmpty())
+        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados, vm.red.cuenta.collectAsStateWithLifecycle().value?.insignia.orEmpty(), p.portada)
+        io.github.fogonapps.social.ui.PortadasPropias(interfazSocial(vm))
         if (p.portada.isNotBlank() && !p.portada.startsWith("banner:")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!Regex("[A-Za-z0-9_-]{22}").matches(p.portada)) BotonSecundario(stringResource(R.string.ajustar_portada), { vm.abrir(Pantalla.AjustarImagenPerfil(true)) }, Modifier.weight(1f))
             BotonSecundario(stringResource(R.string.quitar_portada), { vm.quitarImagenPerfil(true) }, Modifier.weight(1f))
@@ -619,7 +620,8 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
 fun PortadaPerfil(vm: CajonViewModel, e: Estado) {
     Cabecera(stringResource(R.string.foto_y_portada), vm::cerrar)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados, vm.red.cuenta.collectAsStateWithLifecycle().value?.insignia.orEmpty())
+        io.github.fogonapps.perfil.BannersGratis(vm::ponerPortadaPerfil, vm.red.temas.collectAsState().value.reclamados, vm.red.cuenta.collectAsStateWithLifecycle().value?.insignia.orEmpty(), e.perfil.portada)
+        io.github.fogonapps.social.ui.PortadasPropias(interfazSocial(vm))
         io.github.fogonapps.social.ui.TiendaEnEditarPerfil(interfazSocial(vm))
     }
 }

@@ -63,6 +63,32 @@ internal fun sembrarSocialLocal(carpeta: File): String {
                     VALUES(?,?,?,?,?,100,0,'aprobado','',?)""", vecinos[0], "semilla_$tipo", nombre, "Muestra local $tipo", tipo, ahora) }
             }
         }
+        // Dos perfiles públicos de muestra, para probar el perfil ajeno: repisas de fotos (una y dos), texto,
+        // número e insignias. Las fotos son colores lisos generados aquí.
+        fun fotoLisa(cuenta: Long, rgb: Int): String {
+            val imagen = BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB)
+            imagen.createGraphics().apply { color = Color(rgb); fillRect(0, 0, 640, 480); dispose() }
+            val bytes = ByteArrayOutputStream().also { ImageIO.write(imagen, "jpg", it) }.toByteArray()
+            return social.subirImagen(cuenta, bytes).nombre
+        }
+        fun galeria(vararg nombres: String) = Escaparate("galeria", buildJsonObject {
+            put("fotos", JsonArray(nombres.map { n -> buildJsonObject { put("nombre", n) } }))
+        })
+        fun insignias(vararg ids: String) = Parte(Vis.PUBLICA, JsonArray(ids.map(::JsonPrimitive)))
+        listOf(
+            Triple(vecinos[0], "Muestra uno", "Lectora de domingo y series de misterio."),
+            Triple(vecinos[1], "Muestra dos", "Cine, discos y una libreta de recetas."),
+        ).forEachIndexed { i, (id, nombre, bio) ->
+            social.subirPerfil(id, PerfilSubido(nombre = nombre, bio = bio,
+                partes = mapOf("insignias" to if (i == 0) insignias("lector", "series", "constancia") else insignias("cine", "discos", "critico", "explorador"))))
+            if (b.usar { leer("SELECT 1 FROM escaparates WHERE cuenta=?", id) { 1 }.isEmpty() }) {
+                val repisas = if (i == 0) listOf(galeria(fotoLisa(id, 0x3A7CA5)),
+                    Escaparate("texto", buildJsonObject { put("texto", "Un capítulo más y me duermo.") }))
+                else listOf(galeria(fotoLisa(id, 0xD9822B), fotoLisa(id, 0x5B8E55)),
+                    Escaparate("numero", buildJsonObject { put("numero", 42); put("etiqueta", "películas este año") }))
+                social.escaparates.guardar(id, repisas)
+            }
+        }
         // Como el adaptador Android: una portada solo local se publica sin imagen.
         val portada = ""
         val albumes = buildJsonObject {

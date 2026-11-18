@@ -58,7 +58,7 @@ private fun BotonPerfilBase(texto: String, onClick: () -> Unit, modifier: Modifi
         .clickable(enabled = habilitado, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
         .padding(horizontal = 12.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
         Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
-            color = if (destacado) f.sobreTinta1 else f.texto, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            color = if (destacado) f.sobreTinta1 else f.texto, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
