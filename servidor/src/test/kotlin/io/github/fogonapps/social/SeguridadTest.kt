@@ -32,14 +32,14 @@ class SeguridadTest {
             // Un token distinto (inventado) en cada petición ya no estrena cupo: cuenta la dirección.
             var rechazadas = 0
             repeat(130) { i ->
-                val r = client.get("/v1/estado") { header("Authorization", "Bearer inventado$i"); header("X-Forwarded-For", "203.0.113.7") }
+                val r = client.get("/v1/usuarios/nadie_aqui/libre") { header("Authorization", "Bearer inventado$i"); header("X-Forwarded-For", "203.0.113.7") }
                 if (r.status == HttpStatusCode.TooManyRequests) rechazadas++
             }
             assertEquals(10, rechazadas)
             // Otra dirección no paga por la primera.
-            assertEquals(HttpStatusCode.OK, client.get("/v1/estado") { header("X-Forwarded-For", "203.0.113.8") }.status)
+            assertEquals(HttpStatusCode.OK, client.get("/v1/usuarios/nadie_aqui/libre") { header("X-Forwarded-For", "203.0.113.8") }.status)
             // Quien manda su propio X-Forwarded-For delante no engaña: vale la última dirección (la que pone el proxy).
-            assertEquals(HttpStatusCode.TooManyRequests, client.get("/v1/estado") { header("X-Forwarded-For", "198.51.100.1, 203.0.113.7") }.status)
+            assertEquals(HttpStatusCode.TooManyRequests, client.get("/v1/usuarios/nadie_aqui/libre") { header("X-Forwarded-For", "198.51.100.1, 203.0.113.7") }.status)
         }
     }
 

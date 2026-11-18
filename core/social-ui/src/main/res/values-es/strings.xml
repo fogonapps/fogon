@@ -657,11 +657,11 @@
     <string name="social_mercado_elegir">elegir imagen del teléfono</string>
     <string name="social_mercado_limites">Hasta 900 KB y 2.048 px por lado. Marcos: PNG cuadrado con transparencia. Usa solo arte propio o con permiso para vender.</string>
     <string name="social_mercado_nombre">nombre (hasta 40 caracteres)</string>
-    <string name="social_mercado_rango">entre 100 y 2.000 chispas</string>
-    <string name="social_mercado_reparto">%1$s para ti · %2$s salen de circulación. Tus chispas se gastan en todo Fogón; no se canjean por dinero.</string>
+    <string name="social_mercado_rango">entre 300 y 2.000 chispas</string>
+    <string name="social_mercado_reparto">30 %% para ti (%1$s chispas) · %2$s salen de circulación. Tus chispas se gastan en todo Fogón y no se canjean por dinero.</string>
     <string name="social_mercado_publicacion_oficial">Publicación oficial: sin cobro ni cola de revisión.</string>
-    <string name="social_mercado_aviso">500 chispas por publicar. Antes de salir a la venta lo revisa el equipo. Si se rechaza, no se devuelve el cobro.</string>
-    <string name="social_mercado_pagar">publicar por 500 chispas</string>
+    <string name="social_mercado_aviso">Publicar cuesta 1.000 chispas. Si se rechaza, te devolvemos el cobro.</string>
+    <string name="social_mercado_pagar">publicar por 1.000 chispas</string>
     <string name="social_mercado_adquiridos">mis artículos</string>
     <string name="social_editor_crear">crear</string>
     <string name="social_editor_banner">Crear banner</string>
@@ -773,4 +773,16 @@
     <string name="social_portada_animada_error">Elige un GIF o WebP animado (hasta 3 MB) o un video MP4 de hasta 8 segundos y 6 MB.</string>
     <string name="social_portada_recortar_titulo">Elige hasta 8 segundos</string>
     <string name="social_portada_recortar_desde">Desde el segundo %1$s</string>
+    <string name="social_mercado_destacados">Destacados</string>
+    <string name="social_mercado_todos">todos</string>
+    <string name="social_mercado_ver_banner">Banner de @%1$s · ver</string>
+    <string name="social_mercado_ver_marco">Marco de @%1$s · ver</string>
+    <string name="social_mercado_faltan">Te faltan %1$s chispas</string>
+    <string name="social_aviso_regalo_nombre">@%1$s te regaló \"%2$s\"</string>
+    <string name="social_aviso_mercado_venta">@%1$s compró \"%2$s\" · +%3$s chispas</string>
+    <string name="social_aviso_mercado_aprobado">\"%1$s\" ya está a la venta</string>
+    <string name="social_aviso_mercado_rechazado">\"%1$s\" no se aprobó: %2$s · te devolvimos lo que pagaste por publicarlo</string>
+    <string name="social_aviso_mercado_rechazado_sin_motivo">\"%1$s\" no se aprobó · te devolvimos lo que pagaste por publicarlo</string>
+    <string name="social_mercado_solo_arte">Solo se acepta arte, sin fotos personales ni de otras personas. Recibes tu ejemplar al aprobarse el artículo.</string>
+    <string name="social_aviso_mercado_venta_sin_monto">@%1$s compró \"%2$s\"</string>
 </resources>

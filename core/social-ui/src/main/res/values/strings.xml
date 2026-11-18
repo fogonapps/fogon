@@ -655,11 +655,11 @@
     <string name="social_mercado_elegir">choose image from phone</string>
     <string name="social_mercado_limites">Up to 900 KB and 2,048 px per side. Frames: square PNG with transparency. Use only your own art or art you have permission to sell.</string>
     <string name="social_mercado_nombre">name (up to 40 characters)</string>
-    <string name="social_mercado_rango">between 100 and 2,000 sparks</string>
-    <string name="social_mercado_reparto">%1$s for you · %2$s leave circulation. Your sparks can be spent across Fogón; they cannot be exchanged for money.</string>
+    <string name="social_mercado_rango">between 300 and 2,000 sparks</string>
+    <string name="social_mercado_reparto">30%% for you (%1$s sparks) · %2$s leave circulation. Spend your sparks across Fogón. They cannot be exchanged for money.</string>
     <string name="social_mercado_publicacion_oficial">Official listing: no fee or review queue.</string>
-    <string name="social_mercado_aviso">Publishing costs 500 sparks. The team reviews it before it goes on sale. If rejected, the fee is not refunded.</string>
-    <string name="social_mercado_pagar">publish for 500 sparks</string>
+    <string name="social_mercado_aviso">Publishing costs 1,000 sparks. If rejected, we refund the fee.</string>
+    <string name="social_mercado_pagar">publish for 1,000 sparks</string>
     <string name="social_mercado_adquiridos">my items</string>
     <string name="social_editor_crear">create</string>
     <string name="social_editor_banner">Create banner</string>
@@ -771,4 +771,16 @@
     <string name="social_portada_animada_error">Choose an animated GIF or WebP (up to 3 MB) or an MP4 video up to 8 seconds and 6 MB.</string>
     <string name="social_portada_recortar_titulo">Pick up to 8 seconds</string>
     <string name="social_portada_recortar_desde">From second %1$s</string>
+    <string name="social_mercado_destacados">Featured</string>
+    <string name="social_mercado_todos">all</string>
+    <string name="social_mercado_ver_banner">Banner by @%1$s · view</string>
+    <string name="social_mercado_ver_marco">Frame by @%1$s · view</string>
+    <string name="social_mercado_faltan">You need %1$s more sparks</string>
+    <string name="social_aviso_regalo_nombre">@%1$s gifted you \"%2$s\"</string>
+    <string name="social_aviso_mercado_venta">@%1$s bought \"%2$s\" · +%3$s sparks</string>
+    <string name="social_aviso_mercado_aprobado">\"%1$s\" is now on sale</string>
+    <string name="social_aviso_mercado_rechazado">\"%1$s\" was not approved: %2$s · we refunded what you paid to publish it</string>
+    <string name="social_aviso_mercado_rechazado_sin_motivo">\"%1$s\" was not approved · we refunded what you paid to publish it</string>
+    <string name="social_mercado_solo_arte">Only artwork is accepted. Personal photos and photos of other people are prohibited. You get your copy when the item is approved.</string>
+    <string name="social_aviso_mercado_venta_sin_monto">@%1$s bought \"%2$s\"</string>
 </resources>

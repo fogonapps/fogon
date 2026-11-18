@@ -509,7 +509,9 @@ class SocialTest {
 
     @Test fun limiteDePeticiones() = testApplication {
         application { fogonSocial(nuevo()) }
-        val estados = (1..125).map { client.get("/v1/estado") { header("Authorization", "Bearer x") }.status }
+        val estados = (1..125).map { client.get("/v1/usuarios/nadie_aqui/libre") { header("Authorization", "Bearer x") }.status }
+        // El estado (el vigilante de alertas) nunca se limita.
+        assertTrue((1..130).all { client.get("/v1/estado").status == HttpStatusCode.OK })
         assertEquals(120, estados.count { it == HttpStatusCode.OK })
         assertEquals(HttpStatusCode.TooManyRequests, estados.last())
     }

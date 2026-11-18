@@ -18,7 +18,7 @@ class BannersTest {
     }
 
     @Test fun preciosDeLaFotoYDelAnimadoPropio() {
-        assertEquals(500, TemasPerfil.precio("portada:propia"))
+        assertEquals(2500, TemasPerfil.precio("portada:propia"))
         assertEquals(5000, TemasPerfil.precio("portada:animada"))
         TemasPerfil.BANNERS_ANIMADOS.forEach { assertEquals(600, TemasPerfil.precio("banner:$it")) }
     }

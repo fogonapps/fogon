@@ -62,7 +62,7 @@ object TemasPerfil {
     val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna")
     /** Los precios en chispas (los mismos del servidor, que es el que cobra). */
     val PRECIOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
-        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 500, "portada:animada" to 5000)
+        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 2500, "portada:animada" to 5000)
 
     fun estilo(tema: String): EstiloPerfil? = when (tema) {
         "nieve" -> EstiloPerfil(Color(0xFF0E1A27), Color(0xA61A2B3D), Color(0xFFE8F1FA), Color(0xFF9DB4CC), Color(0xFF7FC4FF), Color(0xFF0E1A27), Color(0x557FA8D0))

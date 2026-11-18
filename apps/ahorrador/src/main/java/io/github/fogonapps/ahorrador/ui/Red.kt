@@ -234,6 +234,7 @@ private fun PerfilRed(vm: AhorradorViewModel, interfaz: InterfazSocial, usuario:
     io.github.fogonapps.perfil.Perfil(vista.copy(tema = perfil.persona.tema, marco = perfil.persona.marco, contadores = io.github.fogonapps.social.ui.cifrasSociales(perfil) + vista.contadores), 0, {}, portada = { io.github.fogonapps.social.ui.PortadaPerfilRed(perfil.portada, Modifier.matchParentSize(), interfazCuenta(vm)) },
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfaz, perfil.persona) },
         bajoNombre = { if (perfil.meSigue && perfil.persona.usuario != yo) Text(stringResource(io.github.fogonapps.social.ui.R.string.social_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave) },
+        antesBio = { io.github.fogonapps.social.ui.MercadoEnPerfil(interfaz, perfil) },
         enlace = {}, acciones = {
             if (perfil.persona.usuario != yo) io.github.fogonapps.perfil.BotonPerfil(stringResource(
                 if (perfil.relacion == "sigo" && perfil.meSigue) io.github.fogonapps.social.ui.R.string.amigos_dejar else if (perfil.relacion == "sigo") R.string.red_dejar_seguir else R.string.red_seguir), {

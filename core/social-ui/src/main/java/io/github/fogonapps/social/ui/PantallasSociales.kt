@@ -255,6 +255,9 @@ fun AvisosRed(vm: InterfazSocial) {
     val avisos by vm.red.avisos.collectAsStateWithLifecycle()
     val solicitudes by vm.red.solicitudes.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.red.cargarAvisos() }
+    val contexto = LocalContext.current
+    var articuloAbierto by remember { mutableStateOf<Long?>(null) }
+    articuloAbierto?.let { id -> AbrirFichaMercado(vm, id) { articuloAbierto = null } }
     var borrarTodos by remember { mutableStateOf(false) }
     Cabecera(stringResource(R.string.social_red_avisos), vm.navegacion.volver) {
         if (!avisos.isNullOrEmpty()) BotonIcono(Iconos.Borrar, stringResource(R.string.social_red_borrar_avisos)) { borrarTodos = !borrarTodos }
@@ -284,8 +287,27 @@ fun AvisosRed(vm: InterfazSocial) {
             when { h < 24 -> R.string.social_red_hoy; h < 24 * 7 -> R.string.social_red_ultimos_7; else -> R.string.social_red_antes }
         }.forEach { (grupo, avisosDelGrupo) ->
           Seccion(stringResource(grupo))
-          avisosDelGrupo.forEach { a ->
-            val que = if (a.tipo == "regalo") stringResource(R.string.social_aviso_regalo, a.de.usuario, a.objeto) else stringResource(when (a.tipo) {
+          avisosDelGrupo.forEach aviso@ { a ->
+            val idArticulo = articuloDelAviso(a)
+            val textoMercado = textoAvisoMercado(contexto, a)
+            if (textoMercado != null && (idArticulo != null || a.tipo != "regalo")) {
+                Row(
+                    Modifier.fillMaxWidth().clip(forma(18.dp)).clickable {
+                        if (idArticulo != null) articuloAbierto = idArticulo else vm.navegacion.perfil(a.de.usuario)
+                    }.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    AvatarRed(a.de)
+                    Column(Modifier.weight(1f)) {
+                        Text(textoMercado, color = if (a.leido) f.textoSuave else f.acentoTexto)
+                        Text(haceCuanto(a.cuando), color = f.textoSuave, style = MaterialTheme.typography.bodySmall)
+                    }
+                    BotonIcono(Iconos.Cerrar, stringResource(R.string.social_red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
+                }
+                return@aviso
+            }
+            val que = textoMercado ?: stringResource(when (a.tipo) {
                 "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta; "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
                 "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "historia_voto" -> R.string.social_red_aviso_voto; "historia_mencion" -> R.string.social_red_aviso_mencion; "historia_respuesta" -> R.string.social_red_aviso_respuesta; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
             })

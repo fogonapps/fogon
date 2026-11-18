@@ -579,6 +579,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         portada = { if (p.portada.isNotBlank()) io.github.fogonapps.social.ui.PortadaPerfilRed(p.portada, Modifier.matchParentSize(), interfazSocial(vm)) },
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, FogonTema.actual.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
         bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave); io.github.fogonapps.social.ui.DestacadasPerfil(interfazSocial(vm), usuario) },
+        antesBio = { io.github.fogonapps.social.ui.MercadoEnPerfil(interfazSocial(vm), p) },
         enlace = { u -> Pildora(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u), Iconos.Enlace) { runCatching { uri.openUri(u) } } },
         acciones = {
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app

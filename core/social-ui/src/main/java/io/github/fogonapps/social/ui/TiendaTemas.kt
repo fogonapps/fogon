@@ -131,7 +131,7 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
  * Las chispas se ganan usando las apps (bienvenida y aportes verificados) y solo sirven aquí.
  */
 @Composable
-fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar: () -> Unit) {
+fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChispas: Boolean = false, onCerrar: () -> Unit) {
     val f = FogonTema.actual
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -195,11 +195,11 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
         dismissButton = { BotonSecundario(stringResource(R.string.social_regalo_cancelar), { regalo = null }) })
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
-            Cabecera(stringResource(R.string.social_temas_tienda), onCerrar)
+            Cabecera(stringResource(if (soloChispas) R.string.social_wompi_titulo else R.string.social_temas_tienda), onCerrar)
             // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi).
             io.github.fogonapps.identidad.DeslizarParaRecargar({ vm.red.cargarTemas(); if (pagosExternos) vm.red.cargarPaquetesWompi() }, Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.fillMaxWidth())
+                if (!soloChispas) BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.fillMaxWidth())
                 // Saldo de la cuenta.
                 Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
@@ -208,8 +208,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                         Text(stringResource(R.string.social_chispas_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     }
                 }
-                if (pagosExternos && paquetes.isNotEmpty()) {
-                    Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                if (pagosExternos) {
+                    if (!soloChispas && paquetes.isNotEmpty()) Text(stringResource(R.string.social_wompi_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
                     paquetes.forEach { paquete ->
                         BotonRiso(chispasDeRegalo[paquete]?.let { extra -> stringResource(R.string.social_wompi_paquete_regalo, numeroSocial(paquete), numeroSocial(extra), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)) }
                             ?: stringResource(R.string.social_wompi_paquete, numeroSocial(paquete), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
@@ -225,9 +225,13 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, onCerrar:
                             }
                         }, Modifier.fillMaxWidth(), habilitado = !comprando)
                     }
-                    Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    if (soloChispas && paquetes.isEmpty()) {
+                        BotonSecundario(stringResource(R.string.social_mercado_reintentar), { vm.red.cargarPaquetesWompi() })
+                    }
+                    if (paquetes.isNotEmpty()) Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
                 }
+                if (soloChispas) return@Column
                 Text(stringResource(PerfilR.string.tienda_repisas_titulo), Modifier.onGloballyPositioned { posicionEscaparates = it.positionInParent().y.roundToInt() }, color = f.texto, style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(PerfilR.string.tienda_repisas_intro), color = f.textoSuave)
                 TemasPerfil.EXTRAS.forEachIndexed { indice, item ->

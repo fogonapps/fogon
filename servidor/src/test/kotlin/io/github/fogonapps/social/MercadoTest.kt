@@ -15,7 +15,7 @@ class MercadoTest {
         val b = Base(File(dir,"social.db").path)
         var reloj = 2_000_000_000_000L
         val s = Social(b,File(dir,"fotos"), { reloj })
-        val creador = alta("creadora")
+        val creador = alta("creadora").also { c -> b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,20000,'prueba',1)", c.first) } }
         val comprador = alta("compradora")
         val equipo = alta("revisora")
         fun alta(nombre: String): Pair<Long,String> { val t=s.crearCuenta(NuevaCuenta(nombre)).token; return s.cuentaDe(t)!! to t }
@@ -43,15 +43,19 @@ class MercadoTest {
         val antes=e.s.chispas(e.creador.first)
         val d=PublicarMercado("publicar_prueba",e.imagen(),"obra","banner",600)
         val a=e.s.mercado.publicar(e.creador.first,d)
-        assertEquals("revision",a.estado); assertEquals(antes-500,e.s.chispas(e.creador.first))
+        assertEquals("revision",a.estado); assertEquals(antes-TARIFA_PUBLICAR,e.s.chispas(e.creador.first))
         assertEquals(a,e.s.mercado.publicar(e.creador.first,d))
         assertEquals(409,assertFailsWith<Problema>{ e.s.mercado.publicar(e.creador.first,d.copy(precio=700)) }.codigo)
         assertTrue(e.s.mercado.listar(null).articulos.isEmpty())
-        e.decidir(a,"rechazar","arte ajeno")
-        assertEquals(antes-500,e.s.chispas(e.creador.first))
+        e.decidir(a,"rechazar","arte ajeno"); e.decidir(a,"rechazar","arte ajeno")
+        // Rechazado: se devuelve la tarifa una sola vez y el creador no recibe ejemplar.
+        assertEquals(antes,e.s.chispas(e.creador.first))
+        assertFalse("banner:m${a.id}" in e.s.temas(e.creador.first).reclamados)
         assertEquals("arte ajeno",e.s.mercado.listar(e.creador.first,mios=true).articulos.single().motivo)
         val b=e.publicar(clave="otra_publicacion")
+        assertFalse("banner:m${b.id}" in e.s.temas(e.creador.first).reclamados)
         e.decidir(b,"aprobar"); e.decidir(b,"aprobar")
+        assertTrue("banner:m${b.id}" in e.s.temas(e.creador.first).reclamados)
         assertEquals(b.id,e.s.mercado.listar(null,tipo="banner").articulos.single().id)
         assertTrue(e.s.mercado.listar(null,tipo="marco").articulos.isEmpty())
         assertTrue(e.s.equipo.verificarCadena())
@@ -67,7 +71,7 @@ class MercadoTest {
             e.s.mercado.comprar(e.comprador.first,a.id,d)
             repeat(3) {e.s.mercado.comprar(e.comprador.first,a.id,d)}
             e.s.mercado.comprar(e.comprador.first,a.id,CompraMercado("otra_clave_$i"))
-            assertEquals(antes+precio/2,e.s.chispas(e.creador.first)); assertEquals(saldo-precio,e.s.chispas(e.comprador.first))
+            assertEquals(antes+precio*PARTE_CREADOR/100,e.s.chispas(e.creador.first)); assertEquals(saldo-precio,e.s.chispas(e.comprador.first))
             val item="${a.tipo}:m${a.id}"
             assertTrue(item in e.s.temas(e.comprador.first).reclamados)
             e.s.ponerTema(e.comprador.first,item)
@@ -77,12 +81,12 @@ class MercadoTest {
             e.s.regalar(e.comprador.first,Regalo(item,"otra$i"))
             assertTrue(item in e.s.temas(otra.first).reclamados)
             assertEquals(2,e.s.mercado.detalle(null,a.id).ventas)
-            assertEquals(antes+2*(precio/2),e.s.chispas(e.creador.first))
+            assertEquals(antes+2*(precio*PARTE_CREADOR/100),e.s.chispas(e.creador.first))
             // La siguiente iteración necesita saldo para probar otro artículo.
             e.b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,3000,'prueba',?)",e.comprador.first,e.reloj) }
         }
         val movimientos=e.b.usar { leer("SELECT cantidad FROM chispas WHERE cuenta=? AND motivo LIKE 'mercado:venta:%'",e.creador.first) { it.getInt(1) } }
-        assertEquals(listOf(300,300,300,300),movimientos)
+        assertEquals(listOf(180,180,180,180),movimientos)
     }
     @Test fun oficialGratisTopeYPermiso() = Entorno().use { e ->
         e.b.usar { cambiar("INSERT INTO roles VALUES(?,'principal','servidor',?)",e.creador.first,e.reloj) }
@@ -99,7 +103,7 @@ class MercadoTest {
     @Test fun retiroConservaYDerechosRevocaTambienEquipados() = Entorno().use { e ->
         e.elevar()
         for (marco in listOf(false,true)) {
-            val a=e.publicar(100,marco,clave="publicar_$marco");e.decidir(a,"aprobar")
+            val a=e.publicar(300,marco,clave="publicar_$marco");e.decidir(a,"aprobar")
             val item="${a.tipo}:m${a.id}"
             e.s.mercado.comprar(e.comprador.first,a.id,CompraMercado("comprar_$marco"))
             e.s.ponerTema(e.comprador.first,item);e.s.ponerTema(e.creador.first,item)
@@ -118,8 +122,8 @@ class MercadoTest {
     }
     @Test fun validacionesSaldoImagenAjenaYAlfa() = Entorno().use { e ->
         val img=e.imagen()
-        fun d()=PublicarMercado("publicar_prueba",img,"obra","banner",100)
-        for (precio in listOf(99,2001)) assertFailsWith<Problema>{e.s.mercado.publicar(e.creador.first,d().copy(precio=precio))}
+        fun d()=PublicarMercado("publicar_prueba",img,"obra","banner",300)
+        for (precio in listOf(299,2001)) assertFailsWith<Problema>{e.s.mercado.publicar(e.creador.first,d().copy(precio=precio))}
         assertFailsWith<Problema>{e.s.mercado.publicar(e.comprador.first,d())}
         assertEquals("marco_sin_alfa",assertFailsWith<Problema>{e.s.mercado.publicar(e.creador.first,d().copy(tipo="marco"))}.mensaje)
         assertFailsWith<Problema>{e.s.mercado.publicar(e.creador.first,d().copy(nombre="x".repeat(41)))}
@@ -137,7 +141,7 @@ class MercadoTest {
             val tareas=(1..16).map { ejecutor.submit<Boolean> { e.s.mercado.comprar(e.comprador.first,a.id,CompraMercado("compra_concurrente")) } }
             assertEquals(1,tareas.count { it.get() })
         } finally { ejecutor.shutdownNow() }
-        assertEquals(899,e.s.chispas(e.comprador.first));assertEquals(saldo+300,e.s.chispas(e.creador.first))
+        assertEquals(899,e.s.chispas(e.comprador.first));assertEquals(saldo+601*PARTE_CREADOR/100,e.s.chispas(e.creador.first))
         assertEquals(1,e.s.mercado.detalle(null,a.id).ventas)
         val caro=e.publicar(2000,clave="publicar_caro");e.decidir(caro,"aprobar")
         val antes=e.s.chispas(e.creador.first)
@@ -148,7 +152,7 @@ class MercadoTest {
     @Test fun imagenesSeConservanAlLimpiarYRevocanPorAmbasRutas() = Entorno().use { e ->
         e.elevar()
         val imagen=e.imagen(marco=true)
-        val a=e.s.mercado.publicar(e.creador.first,PublicarMercado("publicar_png",imagen,"marco","marco",100))
+        val a=e.s.mercado.publicar(e.creador.first,PublicarMercado("publicar_png",imagen,"marco","marco",300))
         e.s.borrarImagenSuelta(imagen)
         assertTrue(e.s.esPng(e.s.imagen(imagen)))
         val png=javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(e.s.imagen(imagen)))

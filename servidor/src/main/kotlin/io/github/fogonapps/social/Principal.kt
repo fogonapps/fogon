@@ -90,7 +90,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.44"
+const val VERSION = "0.45"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -150,7 +150,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             val quien = social.cuentaDe(token)?.let { "c:$it" } ?: ("ip:" + call.ipReal())
             // Las portadas tienen su propio cupo (una lista carga muchas a la vez).
             if (ruta == "/v1/portada") { if (!imagenes.pasa("p:" + call.ipReal())) throw Problema(429, "despacio") }
-            else if (ruta != "/v1/pagos/wompi/eventos" && !general.pasa(quien)) throw Problema(429, "despacio")
+            // El estado (lo consulta el vigilante de alertas) no cuenta: es barato y no debe dar falsas caídas.
+            else if (ruta != "/v1/pagos/wompi/eventos" && ruta != "/v1/estado" && !general.pasa(quien)) throw Problema(429, "despacio")
         }
     })
 

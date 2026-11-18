@@ -13,9 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -25,12 +22,12 @@ import androidx.compose.ui.unit.dp
 import io.github.fogonapps.identidad.*
 
 internal enum class FormaLena {
-    CHISPA, TRONCO, FOGATA, FOGON,
+    CHISPA, BRASA, FOGATA, FOGON,
 }
 
 internal enum class NivelLena(val codigo: String, val nombre: Int, val forma: FormaLena) {
     CHISPA("chispa", R.string.lena_chispa, FormaLena.CHISPA),
-    BRASA("brasa", R.string.lena_brasa, FormaLena.TRONCO),
+    BRASA("brasa", R.string.lena_brasa, FormaLena.BRASA),
     FOGATA("fogata", R.string.lena_fogata, FormaLena.FOGATA),
     FOGON("fogon", R.string.lena_fogon, FormaLena.FOGON),
 }
@@ -64,17 +61,6 @@ internal fun MedallaLena(nivel: NivelLena, tamano: androidx.compose.ui.unit.Dp) 
         Box(Modifier.size(tamano * 0.8f).border(1.dp, f.linea, CircleShape))
         Canvas(Modifier.size(tamano * 0.58f)) {
             val escala = size.width / 24f
-            if (nivel.forma == FormaLena.TRONCO) {
-                val leno = Path().apply {
-                    moveTo(17f * escala, 10f * escala)
-                    lineTo(5f * escala, 10f * escala)
-                    cubicTo(0f, 10f * escala, 0f, 21f * escala, 5f * escala, 21f * escala)
-                    lineTo(17f * escala, 21f * escala)
-                    addOval(Rect(12f * escala, 10f * escala, 22f * escala, 21f * escala))
-                    addOval(Rect(15.6f * escala, 13.6f * escala, 18.4f * escala, 17.4f * escala))
-                }
-                drawPath(leno, tinta, style = Stroke(1.7f * escala, cap = StrokeCap.Round, join = StrokeJoin.Round))
-            }
             drawPath(siluetaLena(nivel.forma, escala), tinta)
         }
     }
@@ -98,7 +84,18 @@ private fun siluetaLena(forma: FormaLena, escala: Float) = Path().apply {
     }
     when (forma) {
         FormaLena.CHISPA -> poligono(12, 3, 14, 10, 21, 12, 14, 14, 12, 21, 10, 14, 3, 12, 10, 10)
-        FormaLena.TRONCO -> poligono(10, 2, 13, 5, 13, 7, 9, 8, 7, 6, 8, 4)
+        FormaLena.BRASA -> {
+            // Una brasa sólida con dos chispitas encima, en el mismo trazo lleno que la chispa.
+            addOval(Rect(4f * escala, 12f * escala, 20f * escala, 21.5f * escala))
+            fun chispita(x: Float, y: Float, r: Float) {
+                moveTo(x * escala, (y - r) * escala); lineTo((x + r * 0.3f) * escala, (y - r * 0.3f) * escala)
+                lineTo((x + r) * escala, y * escala); lineTo((x + r * 0.3f) * escala, (y + r * 0.3f) * escala)
+                lineTo(x * escala, (y + r) * escala); lineTo((x - r * 0.3f) * escala, (y + r * 0.3f) * escala)
+                lineTo((x - r) * escala, y * escala); lineTo((x - r * 0.3f) * escala, (y - r * 0.3f) * escala); close()
+            }
+            chispita(9f, 6.5f, 4f)
+            chispita(16.5f, 4f, 2.6f)
+        }
         FormaLena.FOGATA -> {
             poligono(12, 3, 15, 7, 16, 10, 18, 8, 19, 12, 16, 15, 8, 15, 6, 12, 7, 9, 9, 10)
             poligono(3, 18, 5, 15, 21, 20, 20, 23)

@@ -197,7 +197,7 @@ object TemasPerfil {
 
     val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
     val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
-    fun precio(item: String): Int? = if (item == "portada:propia") 500 else if (item == "portada:animada") 5000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
+    fun precio(item: String): Int? = if (item == "portada:propia") 2500 else if (item == "portada:animada") 5000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
     const val BIENVENIDA = 1500
     const val PESOS_POR_CHISPA = 10
     val COLORES_BANNER = setOf("rojo", "amarillo", "rosa", "azul", "verde", "violeta", "naranja", "cian")
@@ -1790,7 +1790,7 @@ class Social(
             if (para == yo) throw Problema(400, "a_si_mismo")
             b.transaccion {
                 val entregado = mercado.comprar(yo, id, CompraMercado("regalo_" + Base.huella("${regalo.item}:$para")), para, bloqueado(yo, para) || bloqueado(para, yo))
-                if (entregado) avisar(para, yo, "regalo", regalo.item)
+                if (entregado) avisar(para, yo, "regalo", "${regalo.item}|${mercado.detalle(yo, id).nombre}|")
             }
             return
         }
@@ -2220,6 +2220,9 @@ class Social(
 
     /* ----- Avisos ----- */
 
+    /** Avisos del mercado al creador (venta, aprobado, rechazado). */
+    internal fun avisoMercado(para: Long, de: Long, tipo: String, objeto: String) = avisar(para, de, tipo, objeto)
+
     private fun avisar(para: Long, de: Long, tipo: String, objeto: String = "") {
         if (para == de) return
         val app = b.usar {
@@ -2234,8 +2237,8 @@ class Social(
         leer("SELECT id, de, tipo, objeto, cuando, leido, app FROM avisos WHERE para = ? AND (app IS NULL OR app = ?) AND cuando < ? ORDER BY cuando DESC LIMIT 60", yo, AppsSocial.validar(app), antes ?: Long.MAX_VALUE) {
             arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1, it.getString(7))
         }
-    }.filter { it[2] == "sancion" || (!bloqueado(yo, it[1] as Long) && visible(it[1] as Long)) }
-        .map { Aviso(it[0] as Long, it[2] as String, if (it[2] == "sancion") personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean, it[6] as String?) }
+    }.filter { it[2] in AVISOS_DE_FOGON || (!bloqueado(yo, it[1] as Long) && visible(it[1] as Long)) }
+        .map { Aviso(it[0] as Long, it[2] as String, if (it[2] in AVISOS_DE_FOGON) personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean, it[6] as String?) }
 
     /**
      * Las sanciones llegan a nombre de Fogón (la cuenta principal), nunca de quien moderó: así nadie del equipo
@@ -2776,3 +2779,6 @@ internal fun resenaValida(datos: Map<String, kotlinx.serialization.json.JsonElem
     val fotos = (datos["fotos"] as? kotlinx.serialization.json.JsonArray)?.map { (it as? JsonPrimitive)?.content.orEmpty() } ?: emptyList()
     return fotos.size <= 4 && fotos.all { it in imagenesPropias }
 }
+
+/** Avisos que firma Fogón y no la persona del equipo que decidió. */
+private val AVISOS_DE_FOGON = setOf("sancion", "mercado_aprobado", "mercado_rechazado")

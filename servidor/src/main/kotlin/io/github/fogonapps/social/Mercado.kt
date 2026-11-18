@@ -51,17 +51,17 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
             if (anterior.drop(1) != listOf(d.imagen, d.nombre.trim(), d.tipo, d.precio.toString())) throw Problema(409, "clave_reutilizada")
             return@transaccion detalle(yo, anterior[0].toLong())
         }
-        if (d.nombre.trim().length !in 1..40 || d.tipo !in setOf("banner", "marco") || d.precio !in 100..2000) throw Problema(400, "articulo")
+        if (d.nombre.trim().length !in 1..40 || d.tipo !in setOf("banner", "marco") || d.precio !in PRECIO_MINIMO..PRECIO_MAXIMO) throw Problema(400, "articulo")
         if (leer("SELECT 1 FROM imagenes WHERE nombre=? AND cuenta=?", d.imagen, yo) { 1 }.isEmpty()) throw Problema(400, "imagen")
         s.validarImagenMercado(d.imagen, d.tipo)
         if (leer("SELECT COUNT(*) FROM mercado WHERE cuenta=? AND cuando>=?", yo, ahora() / 86400000L * 86400000L) { it.getInt(1) }.single() >= 5) throw Problema(429, "tope_publicaciones")
         val oficial = s.equipo.rol(yo) == "principal"
-        if (!oficial && s.chispas(yo) < 500) throw Problema(402, "sin_chispas")
+        if (!oficial && s.chispas(yo) < TARIFA_PUBLICAR) throw Problema(402, "sin_chispas")
         val id = insertar("INSERT INTO mercado(cuenta,clave,imagen,nombre,tipo,precio,oficial,estado,motivo,cuando) VALUES(?,?,?,?,?,?,?,?,?,?)",
             yo, d.clave, d.imagen, d.nombre.trim(), d.tipo, d.precio, if (oficial) 1 else 0, if (oficial) "aprobado" else "revision", "", ahora())
-        if (!oficial) cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,-500,?,?)", yo, "mercado:publicar:$id", ahora())
-        // El creador conserva su ejemplar incluso si se retira de la venta.
-        cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", yo, "${d.tipo}:m$id", ahora())
+        if (!oficial) cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, -TARIFA_PUBLICAR, "mercado:publicar:$id", ahora())
+        // El creador recibe su ejemplar al aprobarse (lo oficial, que no pasa revisión, de una vez); lo conserva aunque se retire.
+        if (oficial) cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", yo, "${d.tipo}:m$id", ahora())
         detalle(yo, id)
     }
     fun permitido(yo: Long, item: String): Boolean = b.usar {
@@ -92,8 +92,10 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
         if (s.chispas(yo) < a.precio) throw Problema(402, "sin_chispas")
         insertar("INSERT INTO mercado_compras(articulo,comprador,destino,clave,precio,cuando) VALUES(?,?,?,?,?,?)", id, yo, destino, d.clave, a.precio, ahora())
         cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, -a.precio, "mercado:compra:$id", ahora())
-        cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", autor, a.precio / 2, "mercado:venta:$id", ahora())
+        val ganancia = a.precio * PARTE_CREADOR / 100
+        cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", autor, ganancia, "mercado:venta:$id", ahora())
         cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", destino, item, ahora())
+        s.avisoMercado(autor, yo, "mercado_venta", "$item|${a.nombre}|$ganancia")
         true
     }
     fun decidir(yo: Long, id: Long, d: DecisionMercado, token: String?): Unit = b.transaccion {
@@ -105,6 +107,19 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
         if (a.estado == estado) return@transaccion
         if ((estado in setOf("aprobado", "rechazado") && a.estado != "revision") || (estado in setOf("retirado", "derechos") && a.estado !in setOf("aprobado", "retirado"))) throw Problema(409, "estado")
         cambiar("UPDATE mercado SET estado=?,motivo=? WHERE id=?", estado, d.motivo.trim(), id)
+        val autor = leer("SELECT cuenta FROM mercado WHERE id=?", id) { it.getLong(1) }.single()
+        val item = "${a.tipo}:m$id"
+        if (estado == "aprobado") {
+            cambiar("INSERT OR IGNORE INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", autor, item, ahora())
+            s.avisoMercado(autor, yo, "mercado_aprobado", "$item|${a.nombre}|")
+        }
+        if (estado == "rechazado") {
+            // Se devuelve lo que se pagó por publicar (una sola vez).
+            val pagado = -(leer("SELECT SUM(cantidad) FROM chispas WHERE cuenta=? AND motivo=?", autor, "mercado:publicar:$id") { it.getInt(1) }.firstOrNull() ?: 0)
+            val devuelto = leer("SELECT 1 FROM chispas WHERE cuenta=? AND motivo=?", autor, "mercado:devolucion:$id") { 1 }.isNotEmpty()
+            if (pagado > 0 && !devuelto) cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", autor, pagado, "mercado:devolucion:$id", ahora())
+            s.avisoMercado(autor, yo, "mercado_rechazado", "$item|${a.nombre}|${d.motivo.trim().replace("|", " ").take(300)}")
+        }
         if (estado == "derechos") {
             val item = "${a.tipo}:m$id"
             cambiar("DELETE FROM temas WHERE tema=?", item)
@@ -125,3 +140,9 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
         s.imagen(estado.third, lector, token)
     }
 }
+
+/** Reglas de precio del mercado: el creador gana el 30 % de cada venta. */
+const val PRECIO_MINIMO = 300
+const val PRECIO_MAXIMO = 2000
+const val TARIFA_PUBLICAR = 1000
+const val PARTE_CREADOR = 30
