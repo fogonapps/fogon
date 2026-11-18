@@ -80,8 +80,9 @@ fun PerfilCabecera(vista: PerfilVista, modifier: Modifier = Modifier, nombreSuav
                     color = if (nombreSuave) f.textoSuave else f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 InsigniaCuenta(vista.insignia, tamano = 16.dp)
                 if (lena != null) InsigniaLena(lena, lenaAbierta) { lenaAbierta = !lenaAbierta }
+                // El nombre se acorta con «…» antes de empujar el nivel: siempre queda a su lado y sin montarse.
+                NivelChico(vista)
             }
-            NivelChico(vista)
             if (lenaAbierta && lena != null) TarjetaDetalleLena(lena)
             bajoNombre()
         }

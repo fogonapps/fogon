@@ -1,6 +1,10 @@
 package io.github.fogonapps.perfil
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -37,27 +41,42 @@ fun debePreguntarLena(codigo: String, preguntada: Boolean) = nivelLena(codigo) !
 
 @Composable
 internal fun InsigniaLena(nivel: NivelLena, abierta: Boolean, alternar: () -> Unit) {
-    val tinta = FogonTema.actual.texto
     val nombre = stringResource(nivel.nombre)
     val descripcion = stringResource(R.string.lena_descripcion, nombre)
-    Canvas(Modifier.size(18.dp).clickable(role = Role.Button, onClick = alternar)
+    Box(Modifier.minimumInteractiveComponentSize().clickable(role = Role.Button, onClick = alternar)
         .semantics {
             contentDescription = descripcion
             selected = abierta
-        }) {
-        val escala = size.width / 24f
-        if (nivel.forma == FormaLena.TRONCO) {
-            val leno = Path().apply {
-                moveTo(17f * escala, 10f * escala)
-                lineTo(5f * escala, 10f * escala)
-                cubicTo(0f, 10f * escala, 0f, 21f * escala, 5f * escala, 21f * escala)
-                lineTo(17f * escala, 21f * escala)
-                addOval(Rect(12f * escala, 10f * escala, 22f * escala, 21f * escala))
-                addOval(Rect(15.6f * escala, 13.6f * escala, 18.4f * escala, 17.4f * escala))
+        }, contentAlignment = Alignment.Center) { MedallaLena(nivel, 26.dp) }
+}
+
+/** La medalla de Leña por su código (chispa, brasa, fogata, fogón); nada si el código no existe. */
+@Composable
+fun MedallaLena(codigo: String, tamano: androidx.compose.ui.unit.Dp) { nivelLena(codigo)?.let { MedallaLena(it, tamano) } }
+
+/** La insignia de Leña en su medalla: doble aro y la figura del nivel, siempre en el color del texto. */
+@Composable
+internal fun MedallaLena(nivel: NivelLena, tamano: androidx.compose.ui.unit.Dp) {
+    val f = FogonTema.actual
+    val tinta = f.texto
+    Box(Modifier.size(tamano).background(f.superficie, CircleShape).border(tamano / 17, tinta, CircleShape),
+        contentAlignment = Alignment.Center) {
+        Box(Modifier.size(tamano * 0.8f).border(1.dp, f.linea, CircleShape))
+        Canvas(Modifier.size(tamano * 0.58f)) {
+            val escala = size.width / 24f
+            if (nivel.forma == FormaLena.TRONCO) {
+                val leno = Path().apply {
+                    moveTo(17f * escala, 10f * escala)
+                    lineTo(5f * escala, 10f * escala)
+                    cubicTo(0f, 10f * escala, 0f, 21f * escala, 5f * escala, 21f * escala)
+                    lineTo(17f * escala, 21f * escala)
+                    addOval(Rect(12f * escala, 10f * escala, 22f * escala, 21f * escala))
+                    addOval(Rect(15.6f * escala, 13.6f * escala, 18.4f * escala, 17.4f * escala))
+                }
+                drawPath(leno, tinta, style = Stroke(1.7f * escala, cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
-            drawPath(leno, tinta, style = Stroke(1.7f * escala, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(siluetaLena(nivel.forma, escala), tinta)
         }
-        drawPath(siluetaLena(nivel.forma, escala), tinta)
     }
 }
 
@@ -65,6 +84,7 @@ internal fun InsigniaLena(nivel: NivelLena, abierta: Boolean, alternar: () -> Un
 internal fun TarjetaDetalleLena(nivel: NivelLena) {
     val f = FogonTema.actual
     TarjetaLena(Modifier.padding(vertical = 6.dp).background(f.fondo.copy(alpha = 1f), forma(18.dp))) {
+        MedallaLena(nivel, 52.dp)
         Text(stringResource(R.string.lena_detalle, stringResource(nivel.nombre)), color = f.texto)
         Text(stringResource(R.string.lena_gracias), color = f.texto)
     }

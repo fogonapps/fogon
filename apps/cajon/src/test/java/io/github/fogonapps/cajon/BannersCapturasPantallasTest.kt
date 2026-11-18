@@ -37,6 +37,10 @@ class BannersCapturasPantallasTest {
             FogonTema(Paleta.Cajon, Apariencia(estilo = estilo)) {
                 val f = FogonTema.actual
                 Column(Modifier.fillMaxSize().background(f.fondo).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        listOf("chispa", "brasa", "fogata", "fogon").forEach { io.github.fogonapps.perfil.MedallaLena(it, 26.dp) }
+                        listOf("chispa", "fogon").forEach { io.github.fogonapps.perfil.MedallaLena(it, 52.dp) }
+                    }
                     BannersGratis({}, TemasPerfil.BANNERS_ANIMADOS.map { "banner:$it" }, portada = "banner:papel~azul")
                     listOf("papel~azul", "riso-rosa~verde", "puntos~naranja").forEach { id ->
                         BannerPerfil(id, Modifier.fillMaxWidth().height(90.dp))

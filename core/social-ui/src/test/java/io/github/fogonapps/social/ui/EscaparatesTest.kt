@@ -62,4 +62,12 @@ class EscaparatesTest {
         assertEquals(listOf(io.github.fogonapps.social.FotoEscaparate(7L, "a"), io.github.fogonapps.social.FotoEscaparate(null, "b")), fotosDe(galeria))
         assertTrue("galeria" in TIPOS_EDITABLES && "insignias" !in TIPOS_EDITABLES)
     }
+
+    @Test fun repisasVivasSePonenAlDiaYLasDemasNo() {
+        val vieja = escaparateElementos("cajon:albumes", listOf(ElementoEscaparate("Disco", "Artista", "")))
+        val nueva = escaparateElementos("cajon:albumes", listOf(ElementoEscaparate("Disco", "Artista", "https://x/y.jpg")))
+        val texto = EscaparateSocial("texto", buildJsonObject { put("texto", "hola") })
+        assertEquals(listOf(texto, nueva), actualizarRepisasVivas(listOf(texto, vieja), listOf(nueva)))
+        assertEquals(listOf(texto, vieja), actualizarRepisasVivas(listOf(texto, vieja), emptyList()))
+    }
 }

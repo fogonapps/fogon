@@ -90,6 +90,12 @@ internal fun fotosDe(e: EscaparateSocial): List<FotoEscaparate> = (e.datos["foto
     FotoEscaparate((o["publicacion"] as? JsonPrimitive)?.content?.toLongOrNull(), nombre)
 }
 
+/** Las repisas que reflejan datos que cambian solos; las demás son lo que la persona eligió y no se tocan. */
+internal val REPISAS_VIVAS = setOf("cajon:albumes", "forzudo:records", "forzudo:racha", "cucha:racha")
+
+internal fun actualizarRepisasVivas(lista: List<EscaparateSocial>, candidatos: List<EscaparateSocial>): List<EscaparateSocial> =
+    lista.map { r -> if (r.tipo in REPISAS_VIVAS) candidatos.firstOrNull { it.tipo == r.tipo } ?: r else r }
+
 internal fun List<EscaparateSocial>.moverRepisa(de: Int, a: Int) =
     toMutableList().apply { add(a, removeAt(de)) }
 
@@ -143,6 +149,13 @@ fun EscaparatesEnPerfil(
             } catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
             finally { ocupado = false }
         }
+    }
+
+    // Las repisas «vivas» (lo que escuchas, la racha, las marcas, la meta) se ponen al día solas en tu perfil.
+    LaunchedEffect(lista, listaVigente, candidatos) {
+        if (!propio || !listaVigente || candidatos == null) return@LaunchedEffect
+        val nueva = actualizarRepisasVivas(lista, candidatos)
+        if (nueva != lista) guardar(nueva)
     }
 
     val quitar = stringResource(RP.string.escaparates_quitar)

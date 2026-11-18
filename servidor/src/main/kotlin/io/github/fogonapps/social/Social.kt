@@ -1020,6 +1020,9 @@ class Social(
         return ImagenSubida(nombre)
     }
 
+    /** Si la portada subida con este nombre es un video (para la página web pública). */
+    fun esVideoPortada(nombre: String): Boolean = archivoAnimado(nombre)?.extension == "mp4"
+
     private fun archivoAnimado(nombre: String): java.io.File? =
         listOf("gif", "webp", "mp4").firstNotNullOfOrNull { extension ->
             java.io.File(dirImagenes, "$nombre.$extension").takeIf { it.isFile }

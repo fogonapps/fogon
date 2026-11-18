@@ -148,8 +148,11 @@ class Base(ruta: String) {
                 // Los temas que ya no están en la tienda (los de la primera versión) se quitan: el puesto vuelve al de siempre.
                 val vigentes = (TemasPerfil.FONDOS.keys + TemasPerfil.MARCOS.keys.map { "marco:$it" } + TemasPerfil.EXTRAS).joinToString(",") { "'$it'" }
                 s.execute("UPDATE cuentas SET tema = '' WHERE tema != '' AND tema NOT IN ($vigentes)")
-                s.execute("UPDATE cuentas SET marco = '' WHERE marco != '' AND 'marco:' || marco NOT IN ($vigentes)")
-                s.execute("DELETE FROM temas WHERE tema NOT IN ($vigentes)")
+                // Solo se limpian los fondos y marcos viejos del catálogo: las portadas propias, los banners (del catálogo,
+                // con movimiento o del mercado) y los marcos del mercado son compras vigentes y nunca se borran al arrancar.
+                val conservar = "tema LIKE 'banner:%' OR tema LIKE 'marco:m%' OR tema IN ('portada:propia', 'portada:animada')"
+                s.execute("UPDATE cuentas SET marco = '' WHERE marco != '' AND marco NOT GLOB 'm[0-9]*' AND 'marco:' || marco NOT IN ($vigentes)")
+                s.execute("DELETE FROM temas WHERE tema NOT IN ($vigentes) AND NOT ($conservar)")
                 // Historias solo para amigos, respuestas a la pregunta de una historia y la publicación fijada del perfil.
                 columna(s, "historias", "amigos INTEGER NOT NULL DEFAULT 0")
                 s.execute("""CREATE TABLE IF NOT EXISTS historia_respuestas(id INTEGER PRIMARY KEY, historia INTEGER NOT NULL REFERENCES historias(id) ON DELETE CASCADE,

@@ -136,10 +136,16 @@ private fun validarAnimada(bytes: ByteArray) {
 @Composable
 internal fun PortadaSubida(nombre: String, modifier: Modifier, vm: InterfazSocial) {
     val cuenta by vm.red.usuario.collectAsState()
+    val contexto = LocalContext.current
     val bytes by produceState<ByteArray?>(null, nombre, cuenta) {
-        value = null
+        // El nombre de una portada subida nunca cambia de contenido: se guarda en la caché y se muestra al instante.
+        val guardada = java.io.File(contexto.cacheDir, "portadas/$nombre")
+        value = withContext(Dispatchers.IO) { guardada.takeIf { it.isFile }?.readBytes() }
+        if (value != null) return@produceState
         try {
-            value = vm.red.imagenPortada(nombre)
+            value = vm.red.imagenPortada(nombre).also { datos ->
+                withContext(Dispatchers.IO) { runCatching { guardada.parentFile?.mkdirs(); guardada.writeBytes(datos) } }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -202,7 +208,7 @@ private fun VideoPortada(bytes: ByteArray, quieta: Boolean, modifier: Modifier) 
     val archivo by produceState<java.io.File?>(null, bytes) {
         value = withContext(Dispatchers.IO) {
             java.io.File(contexto.cacheDir, "portadas").apply { mkdirs() }
-                .resolve("portada-${bytes.contentHashCode()}.mp4").also { if (!it.exists()) it.writeBytes(bytes) }
+                .resolve("video-${bytes.contentHashCode()}.mp4").also { if (!it.exists()) it.writeBytes(bytes) }
         }
     }
     val reproductor = remember(archivo) {
@@ -220,16 +226,41 @@ private fun VideoPortada(bytes: ByteArray, quieta: Boolean, modifier: Modifier) 
     val ciclo by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
     val reproducir = !quieta && visible && ciclo.isAtLeast(Lifecycle.State.RESUMED)
     LaunchedEffect(reproductor, reproducir) { reproductor?.playWhenReady = reproducir }
+    VideoRecortado(reproductor, modifier.visibilidadBanner { visible = it })
+}
+
+/**
+ * Dibuja el video en un TextureView (respeta el recorte redondeado y el desplazamiento de Compose, a diferencia
+ * del SurfaceView de PlayerView) y lo amplía para llenar el marco sin deformarlo.
+ */
+@Composable
+private fun VideoRecortado(reproductor: androidx.media3.exoplayer.ExoPlayer?, modifier: Modifier) {
     AndroidView(
-        factory = {
-            androidx.media3.ui.PlayerView(it).apply {
-                useController = false; isFocusable = false
-                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+        factory = { android.view.TextureView(it) },
+        modifier = modifier,
+        update = { vista ->
+            val anterior = vista.tag as? Pair<*, *>
+            if (anterior?.first === reproductor) return@AndroidView
+            (anterior?.first as? androidx.media3.exoplayer.ExoPlayer)?.let { viejo ->
+                viejo.clearVideoTextureView(vista)
+                (anterior.second as? androidx.media3.common.Player.Listener)?.let(viejo::removeListener)
             }
+            if (reproductor == null) { vista.tag = null; return@AndroidView }
+            fun ajustar(anchoVideo: Int, altoVideo: Int) {
+                if (anchoVideo <= 0 || altoVideo <= 0 || vista.width == 0 || vista.height == 0) return
+                val escala = maxOf(vista.width / anchoVideo.toFloat(), vista.height / altoVideo.toFloat())
+                val sx = anchoVideo * escala / vista.width
+                val sy = altoVideo * escala / vista.height
+                vista.setTransform(android.graphics.Matrix().apply { setScale(sx, sy, vista.width / 2f, vista.height / 2f) })
+            }
+            val oyente = object : androidx.media3.common.Player.Listener {
+                override fun onVideoSizeChanged(tamano: androidx.media3.common.VideoSize) = ajustar(tamano.width, tamano.height)
+            }
+            reproductor.addListener(oyente)
+            reproductor.setVideoTextureView(vista)
+            vista.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> ajustar(reproductor.videoSize.width, reproductor.videoSize.height) }
+            vista.tag = reproductor to oyente
         },
-        modifier = modifier.visibilidadBanner { visible = it },
-        update = { it.player = reproductor },
     )
 }
 
@@ -271,13 +302,7 @@ private fun RecortarVideoPortada(uri: android.net.Uri, cerrar: () -> Unit, listo
         title = { Text(stringResource(R.string.social_portada_recortar_titulo)) },
         text = {
             androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                AndroidView(
-                    factory = { androidx.media3.ui.PlayerView(it).apply {
-                        useController = false; isFocusable = false; player = reproductor
-                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    } },
-                    modifier = Modifier.fillMaxWidth().aspectRatio(3.4f),
-                )
+                VideoRecortado(reproductor, Modifier.fillMaxWidth().aspectRatio(3.4f))
                 if (maximo > 0f) {
                     Text(stringResource(R.string.social_portada_recortar_desde, "%.1f".format(inicio / 1000f)))
                     androidx.compose.material3.Slider(inicio, { inicio = it }, valueRange = 0f..maximo, enabled = progreso == null)
