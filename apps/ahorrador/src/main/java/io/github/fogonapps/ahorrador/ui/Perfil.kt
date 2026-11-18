@@ -91,7 +91,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
             }, Modifier.weight(1f))
         }, despuesAcciones = {
             io.github.fogonapps.social.ui.PreguntaLenaEnPerfil(interfazCuenta(vm))
-            vm.red.usuario.collectAsState().value?.let { io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazCuenta(vm), it); EditorEscaparatesApp(vm, e) }
+            vm.red.usuario.collectAsState().value?.let { EscaparatesPerfilPropio(vm, e, it) }
             usuario?.let { u -> Box(Modifier.padding(horizontal = 16.dp)) { io.github.fogonapps.social.ui.DestacadasPerfil(interfaz, u) }; io.github.fogonapps.social.ui.CancionPerfilPropia(interfaz) } },
     )
     Espacio(40.dp)

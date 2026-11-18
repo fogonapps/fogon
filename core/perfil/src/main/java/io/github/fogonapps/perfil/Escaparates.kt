@@ -1,13 +1,18 @@
 package io.github.fogonapps.perfil
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.*
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,12 +62,33 @@ private fun nombreInsigniaEscaparate(id: String) = stringResource(when (id) {
 /** Render independiente del transporte y del cargador de imágenes de la app. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, imagen: @Composable (String, Modifier) -> Unit) {
+fun Escaparates(
+    lista: List<EscaparateVista>,
+    alTocar: (() -> Unit)? = null,
+    acciones: (Int) -> List<CustomAccessibilityAction> = { emptyList() },
+    imagen: @Composable (String, Modifier) -> Unit,
+) {
     val f = FogonTema.actual
-    lista.forEach { e ->
+    lista.forEachIndexed { indice, e ->
+        val opciones = acciones(indice)
+        var menu by remember(e) { mutableStateOf(false) }
+        val interaccion = if (alTocar != null) Modifier.combinedClickable(
+            onClick = alTocar,
+            onLongClick = if (opciones.isNotEmpty()) ({ menu = true }) else null,
+        ).semantics { if (opciones.isNotEmpty()) customActions = opciones } else Modifier
         BoxWithConstraints(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth()
-            .background(f.fondo, forma(24.dp)).tarjetaFogon()
-            .then(if (alTocar != null) Modifier.clickable(onClick = alTocar) else Modifier)) {
+            .background(f.fondo, forma(24.dp)).tarjetaFogon().then(interaccion)) {
+            if (opciones.isNotEmpty()) DropdownMenu(
+                menu, { menu = false }, shape = forma(24.dp), containerColor = f.fondo,
+                border = BorderStroke(f.borde, f.linea),
+            ) {
+                opciones.forEach { opcion ->
+                    DropdownMenuItem(text = { Text(opcion.label, color = f.texto) }, onClick = {
+                        menu = false
+                        opcion.action()
+                    })
+                }
+            }
             val altoMinimo = if (maxWidth >= 600.dp) maxWidth / 3.4f else 0.dp
             Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = 0.18f), centro = Offset(1f, 0.5f)))
             Column(Modifier.fillMaxWidth().heightIn(min = altoMinimo).padding(20.dp),
@@ -89,8 +115,17 @@ fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, ima
                             CifraEscaparate(porcentaje.toInt().toString(), "%")
                         }
                     }
-                    e.tipo == "galeria" -> Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        e.fotos.forEach { foto -> imagen(foto, Modifier.size(112.dp).clip(forma(12.dp))) }
+                    e.tipo == "galeria" -> {
+                        val deslizable = e.fotos.size >= 3
+                        Row(
+                            Modifier.fillMaxWidth().then(if (deslizable) Modifier.horizontalScroll(rememberScrollState()) else Modifier),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            e.fotos.forEach { foto ->
+                                val tamano = if (deslizable) Modifier.size(112.dp) else Modifier.weight(1f).aspectRatio(4f / 3f)
+                                imagen(foto, tamano.clip(forma(12.dp)))
+                            }
+                        }
                     }
                     e.tipo == "insignias" -> FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         e.insignias.forEach { id -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -213,13 +248,13 @@ private fun CifraNumeroEscaparate(numero: String) {
 /** La lista es un borrador: la integración guarda el orden completo solo al confirmar. */
 @Composable
 fun EditorEscaparates(
-    lista: List<EscaparateVista>, cupo: Int, ocupado: Boolean,
+    lista: List<EscaparateVista>, cupo: Int?, ocupado: Boolean,
     mover: (Int, Int) -> Unit, quitar: (Int) -> Unit, agregar: () -> Unit,
     guardar: () -> Unit, tienda: () -> Unit, contenido: @Composable () -> Unit,
     imagen: @Composable (String, Modifier) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-    Text(stringResource(R.string.escaparates_cupo, lista.size, cupo), color = FogonTema.actual.texto)
+    if (cupo != null) Text(stringResource(R.string.escaparates_cupo, lista.size, cupo), color = FogonTema.actual.texto)
     Text(stringResource(R.string.escaparates_compartir), color = FogonTema.actual.textoSuave)
     Text(stringResource(R.string.escaparates_nivel), color = FogonTema.actual.textoSuave)
     lista.forEachIndexed { i, e ->
@@ -230,7 +265,7 @@ fun EditorEscaparates(
             androidx.compose.material3.TextButton({ quitar(i) }, enabled = !ocupado) { Text(stringResource(R.string.escaparates_quitar)) }
         }
     }
-    BotonSecundario(stringResource(R.string.escaparates_agregar), agregar, habilitado = !ocupado && lista.size < cupo)
+    BotonSecundario(stringResource(R.string.escaparates_agregar), agregar, habilitado = !ocupado && cupo != null && lista.size < cupo)
     contenido()
     BotonSecundario(stringResource(R.string.escaparates_tienda), tienda, habilitado = !ocupado)
     BotonRiso(stringResource(R.string.escaparates_guardar), guardar, habilitado = !ocupado)

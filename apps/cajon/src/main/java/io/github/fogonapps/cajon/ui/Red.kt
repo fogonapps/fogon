@@ -694,7 +694,7 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
 }
 
 /**
- * «Lo tuyo» de otra persona, en orden: la maratón de los dos, lo que está viendo, su reto, sus destacados y favoritas, sus
+ * «Lo tuyo» de otra persona, en orden: la maratón de los dos, lo que está viendo, su reto, sus destacados, sus
  * artistas en una fila y sus géneros separados en música y en cine, series y libros. De lo largo se ve una parte y
  * «Ver todos» muestra el resto.
  */
@@ -702,7 +702,6 @@ fun CuadriculaPublicaciones(vm: CajonViewModel, lista: List<PublicacionSocial>) 
 internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.datos.PerfilSocial, propio: Boolean) {
     val f = FogonTema.actual
     val destacados = (p.partes["destacados"] as? JsonObject)?.entries?.mapNotNull { (h, v) -> (v as? JsonObject)?.let { h to it } }.orEmpty()
-    val favoritas = (p.partes["favoritas"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
     val generos = (p.partes["gustos"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
     val artistas = (p.partes["musica"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
     val e = vm.estado.collectAsStateWithLifecycle().value
@@ -711,7 +710,7 @@ internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.da
         ?.map { io.github.fogonapps.cajon.datos.Insignia(it, 1, 1) }.orEmpty()
     val viendo = p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.VIENDO]
     val porVer = p.partes[io.github.fogonapps.cajon.datos.PartesPerfil.POR_VER]
-    if (destacados.isEmpty() && favoritas.isEmpty() && generos.isEmpty() && artistas.isEmpty() && reto.isEmpty() && insignias.isEmpty() && viendo == null && porVer == null) { NadaAqui(); return }
+    if (destacados.isEmpty() && generos.isEmpty() && artistas.isEmpty() && reto.isEmpty() && insignias.isEmpty() && viendo == null && porVer == null) { NadaAqui(); return }
     fun abrir(o: JsonObject) = vm.abrirObraDePerfil(o.texto("titulo"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("portada"), o.texto("fuente"),
         o.texto("anio").toIntOrNull(), o.texto("creador"))
     if (!propio) MaratonDeLosDos(vm, porVer, e, p.persona.usuario)
@@ -731,15 +730,6 @@ internal fun GustosDelPerfil(vm: CajonViewModel, p: io.github.fogonapps.cajon.da
                 }
                 repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
             }
-        }
-    }
-    if (favoritas.isNotEmpty()) {
-        Seccion(stringResource(R.string.red_sus_favoritas))
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            favoritas.take(4).forEach { o ->
-                Box(Modifier.weight(1f).clip(forma(10.dp)).clickable { abrir(o) }) { Portada(o.texto("portada"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("titulo"), Modifier.fillMaxWidth()) }
-            }
-            repeat(4 - favoritas.take(4).size) { Box(Modifier.weight(1f)) }
         }
     }
     if (artistas.isNotEmpty()) FilaArtistasPerfil(artistas.map { it.texto("nombre") to it.texto("foto") }) { i ->

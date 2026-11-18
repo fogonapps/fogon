@@ -95,7 +95,10 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     SeccionAjustes(stringResource(R.string.aj_tu_cajon))
     Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
     // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
-    if (acciones != null) FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista)) { acciones.exportar() }
+    if (acciones != null) {
+        FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista), acciones.exportar)
+        FilaAjuste(Iconos.Repetir, stringResource(R.string.importar_respaldo), null, acciones.importar)
+    }
     Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
         ImportacionLastfm(vm)
         Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
@@ -115,6 +118,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     val guia = io.github.fogonapps.identidad.LocalGuia.current
     FilaAjuste(Iconos.Estrella, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.privacidad_grupo))
+    FilaAjuste(Iconos.Candado, stringResource(R.string.quien_lo_ve), null) { vm.abrir(Pantalla.PrivacidadPerfil) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }
     FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaTerminos) }

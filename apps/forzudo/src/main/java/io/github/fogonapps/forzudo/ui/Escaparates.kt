@@ -9,7 +9,7 @@ import io.github.fogonapps.perfil.ElementoEscaparate
 import io.github.fogonapps.social.ui.*
 
 @Composable
-internal fun EditorEscaparatesApp(vm: GymViewModel, e: Estado) {
+internal fun EscaparatesPerfilPropio(vm: GymViewModel, e: Estado, usuario: String) {
     val dias = vm.L.dias(e)
     val records = e.sessions.flatMap { it.entries.keys }.distinct().mapNotNull { id ->
         val kg = vm.L.maxKg(e, id)
@@ -21,5 +21,5 @@ internal fun EditorEscaparatesApp(vm: GymViewModel, e: Estado) {
     }.distinct()
     val candidatos = entrenos + escaparateNumero("forzudo:racha", vm.L.racha(e, dias, vm.hoy()).actual, stringResource(R.string.perfil_racha)) +
         if (records.isEmpty()) emptyList() else listOf(escaparateElementos("forzudo:records", records))
-    BotonEditorEscaparates(interfazCuenta(vm), candidatos)
+    EscaparatesEnPerfil(interfazCuenta(vm), usuario, candidatos, mostrarAgregar = true)
 }

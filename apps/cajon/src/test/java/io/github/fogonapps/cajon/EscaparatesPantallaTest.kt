@@ -5,6 +5,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import org.junit.Assert.assertEquals
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
@@ -17,6 +27,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import io.github.fogonapps.identidad.*
 import io.github.fogonapps.perfil.*
 import io.github.fogonapps.revision.revisar
+import io.github.fogonapps.cajon.datos.CajaFuerte
+import io.github.fogonapps.cajon.ui.interfazSocial
+import io.github.fogonapps.social.ui.InterfazSocial
+import io.github.fogonapps.social.ui.TiendaEnEditarPerfil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +69,33 @@ class EscaparatesPantallaTest {
         assertTrue(limites.height >= with(regla.density) { 48.dp.toPx() })
         pildora.performClick()
         regla.runOnIdle { assertTrue(abierto) }
+    }
+
+    @Test fun nivelYBotonDeTiendaQuedanSeparadosConLetraGrande() {
+        val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<CajonApp>()
+        androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(app)
+        val vm = CajonViewModel(app)
+        val sinTareasDeRed = CoroutineScope(Job().apply { cancel() })
+        val cuentaDePrueba = RedSocial(app, sinTareasDeRed, CajaFuerte(app, "nivel-prueba"), { null }, {}, {})
+        (cuentaDePrueba.usuario as MutableStateFlow<String?>).value = "ana"
+        regla.setContent {
+            val densidad = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(densidad.density, 1.3f)) {
+                FogonTema(Paleta.Cajon, Apariencia()) {
+                    Column {
+                        val adaptador = interfazSocial(vm)
+                        val interfaz = object : InterfazSocial by adaptador {
+                            override val red = cuentaDePrueba
+                        }
+                        NivelDetalle(5, listOf("cine"), propio = true)
+                        TiendaEnEditarPerfil(interfaz)
+                    }
+                }
+            }
+        }
+        val nivel = regla.onNodeWithText("Cinéfilo").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val tienda = regla.onNodeWithText("Tienda del perfil").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue(nivel.bottom < tienda.top)
     }
 
     @Test fun cabeceraOcultaNivelCero() {
@@ -97,6 +141,50 @@ class EscaparatesPantallaTest {
         }
         regla.onNodeWithText("Mi escaparate").performClick()
         regla.runOnIdle { assertTrue(abierto) }
+    }
+
+    @Test fun mantenerApretadaRepisaPropiaMuestraAccionesYAjenaNo() {
+        var quitada = false
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia()) {
+                Column {
+                    Escaparates(listOf(EscaparateVista("texto", texto = "Repisa propia")),
+                        alTocar = {}, acciones = { listOf(CustomAccessibilityAction("Quitar") { quitada = true; true }) }) { _, _ -> }
+                    Escaparates(listOf(EscaparateVista("texto", texto = "Repisa ajena"))) { _, _ -> }
+                }
+            }
+        }
+        val propia = regla.onNodeWithText("Repisa propia")
+        val ajena = regla.onNodeWithText("Repisa ajena")
+        ajena.performTouchInput { longClick() }
+        regla.onNodeWithText("Quitar").assertDoesNotExist()
+        assertEquals(listOf("Quitar"), propia.fetchSemanticsNode().config[SemanticsActions.CustomActions].map { it.label })
+        propia.performTouchInput { longClick() }
+        regla.onNodeWithText("Quitar").assertIsDisplayed().performClick()
+        regla.runOnIdle { assertTrue(quitada) }
+    }
+
+    @Test fun galeriaDeUnaFotoUsaTodoElAncho() = comprobarGaleria(1, 288.dp)
+
+    @Test fun galeriaDeDosFotosReparteElAncho() = comprobarGaleria(2, 139.dp)
+
+    @Test fun galeriaDeTresFotosMantieneLasMiniaturas() = comprobarGaleria(3, 112.dp)
+
+    private fun comprobarGaleria(cantidad: Int, anchoFoto: androidx.compose.ui.unit.Dp) {
+        val fotos = List(cantidad) { "foto-$it" }
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia()) {
+                Box(Modifier.width(360.dp)) {
+                    Escaparates(listOf(EscaparateVista("galeria", fotos = fotos))) { foto, modifier ->
+                        Box(modifier.testTag(foto))
+                    }
+                }
+            }
+        }
+        fotos.take(2).forEach { foto ->
+            val ancho = regla.onNodeWithTag(foto).fetchSemanticsNode().boundsInRoot.width
+            assertEquals(with(regla.density) { anchoFoto.toPx() }, ancho, 1f)
+        }
     }
 
     @Test

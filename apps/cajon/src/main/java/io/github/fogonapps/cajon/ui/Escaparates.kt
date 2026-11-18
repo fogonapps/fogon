@@ -10,7 +10,7 @@ import io.github.fogonapps.perfil.ElementoEscaparate
 import io.github.fogonapps.social.ui.*
 
 @Composable
-internal fun EditorEscaparatesApp(vm: CajonViewModel, e: Estado) {
+internal fun EscaparatesPerfilPropio(vm: CajonViewModel, e: Estado, usuario: String) {
     val oidos by vm.oidos.collectAsState()
     val obras = e.vivas.associateBy { it.id }
     val resenas = e.resenas.filter { !it.borrada }.mapNotNull { r -> obras[r.obra]?.let { o -> escaparateElementos("cajon:resena", listOf(ElementoEscaparate(o.titulo, r.texto, o.portada))) } }
@@ -21,5 +21,5 @@ internal fun EditorEscaparatesApp(vm: CajonViewModel, e: Estado) {
         albumes.takeIf { it.isNotEmpty() }?.let { escaparateElementos("cajon:albumes", it) },
         insignias.takeIf { it.isNotEmpty() }?.let { escaparateInsignias(it) },
     )
-    BotonEditorEscaparates(interfazSocial(vm), candidatos)
+    EscaparatesEnPerfil(interfazSocial(vm), usuario, candidatos, mostrarAgregar = true)
 }

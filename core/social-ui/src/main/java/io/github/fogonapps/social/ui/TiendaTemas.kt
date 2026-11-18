@@ -104,7 +104,7 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     var abierta by remember { mutableStateOf(false) }
     var mercado by remember { mutableStateOf(false) }
-    Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).rebote().clickable { abierta = true }.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconoChispa(28.dp)

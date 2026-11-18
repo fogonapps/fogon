@@ -132,7 +132,7 @@
   <string name="borrar_lista_pregunta">Delete the list “%1$s”?</string>
   <string name="borrar_lista_texto">What’s in it stays in your cajón.</string>
   <string name="diario_vacio">Your diary is empty. On any title, tap “Log it”.</string>
-  <string name="tus_favoritas_titulo">Your top four</string>
+  <string name="parte_cuatro_favoritas">Top four favorites</string>
   <string name="favoritas_pista">On any title, tap the star at the top to put it here.</string>
   <string name="siempre">All time</string>
   <string name="en_el_anio">In %1$d</string>
@@ -195,6 +195,7 @@
   <string name="tut_tengo_respaldo">I already have an account</string>
   <string name="tut_nombre">What should I call you?</string>
   <string name="tut_privado">Everything is saved on your phone. If you create an account, it is also kept in it, encrypted so only you can open it.</string>
+  <string name="importar_respaldo">Import backup</string>
   <string name="importar_titulo">Restore this backup?</string>
   <string name="importar_texto">It’s merged with what you have; if something is in both, the newest wins.</string>
   <string name="importar_si">Restore</string>
@@ -583,8 +584,7 @@
   <string name="bio">A few words about you</string>
   <string name="enlaces">Links</string>
   <string name="enlaces_pista">One per line, up to 5 (your Letterboxd, your blog…).</string>
-  <string name="quien_lo_ve">Who would see it</string>
-  <string name="quien_lo_ve_pista">There are no public profiles yet: this is ready for when they exist. Each list and each diary entry has its own too.</string>
+  <string name="quien_lo_ve">Who can see each part of your profile</string>
   <string name="cifras_a_mostrar">Numbers shown</string>
   <string name="perfil_guardado">Profile saved.</string>
   <string name="por_que">Why</string>
@@ -625,11 +625,10 @@
     <item quantity="other">artists</item>
   </plurals>
   <string name="compartir_perfil">Share profile</string>
-  <string name="chip_ahora">now: %1$s</string>
+  <string name="chip_ahora">Now: %1$s</string>
   <string name="chip_descubrimiento">my discovery: %1$s</string>
   <string name="chip_pagina">p. %1$d of %2$d</string>
   <string name="poner_foto">Add photo</string>
-  <string name="cambiar_foto_perfil">Change photo</string>
   <string name="ajustar_foto">Adjust photo</string>
   <string name="ajustar_portada">Adjust cover</string>
   <string name="ajustar_pista">Pinch to zoom in or out and drag to move it. Nothing changes until you save.</string>
@@ -852,7 +851,7 @@
   <string name="aj_tu_cuenta">Your account</string>
   <string name="aj_cuenta_red">Your network account</string>
   <string name="aj_cuenta_red_pista">@%1$s · email, password, username, privacy</string>
-  <string name="aj_editar_perfil_pista">Photo, bio, favorites and who sees each part</string>
+  <string name="aj_editar_perfil_pista">Photo, bio and links</string>
   <string name="aj_como_usas">How you use El Cajón</string>
   <string name="aj_notificaciones">Notifications</string>
   <string name="aj_notificaciones_pista">Notifications and messages with the app closed</string>
@@ -1105,7 +1104,6 @@
   <string name="red_solo_seguidores">Only for my followers</string>
   <string name="red_spoiler_tocar">Has spoilers · tap to see</string>
   <string name="red_tiene_spoilers">Has spoilers</string>
-  <string name="red_sus_favoritas">Their favorites</string>
   <string name="red_te_sigue">follows you</string>
   <string name="red_tipo_diario">in their diary</string>
   <string name="red_tipo_lista">a list</string>

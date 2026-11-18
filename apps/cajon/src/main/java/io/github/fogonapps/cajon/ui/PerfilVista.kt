@@ -31,7 +31,7 @@ internal fun PerfilSocial.aPerfilVista(
 
 /**
  * Un único catálogo de pestañas evita volver a anunciar «Lo tuyo» en perfiles ajenos (H-CJ-07). Solo cuatro, para
- * que el perfil se vea limpio: publicaciones (con las listas), lo tuyo (destacados, favoritas y artistas), reseñas y
+ * que el perfil se vea limpio: publicaciones (con las listas), lo tuyo (destacados y artistas), reseñas y
  * cifras. Las guardadas están en Ajustes.
  */
 internal fun catalogoSeccionesPerfil(propio: Boolean) = listOf(

@@ -7,6 +7,25 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class EscaparatesTest {
+    @Test fun mueveEnAmbasDireccionesSinMutarElOrdenOriginal() {
+        val lista = listOf("a", "b", "c").map { escaparateNumero(it, 1, "") }
+        val (primera, segunda, tercera) = lista
+        assertEquals(listOf(segunda, primera, tercera), lista.moverRepisa(1, 0))
+        assertEquals(listOf(primera, tercera, segunda), lista.moverRepisa(1, 2))
+        assertEquals(listOf(primera, segunda, tercera), lista)
+    }
+
+    @Test fun quitaUnaRepisaYConservaElOrdenDeLasDemas() {
+        val lista = listOf("a", "b", "c").map { escaparateNumero(it, 1, "") }
+        assertEquals(listOf(lista[0], lista[2]), lista.quitarRepisa(1))
+    }
+
+    @Test fun cambiaUnaRepisaEnLaMismaPosicion() {
+        val lista = listOf("a", "b", "c").map { escaparateNumero(it, 1, "") }
+        val nueva = escaparateNumero("numero", 42, "")
+        assertEquals(listOf(lista[0], nueva, lista[2]), lista.cambiarRepisa(1, nueva))
+    }
+
     @Test fun adaptadorPreservaOrdenPortadasYFotoSinInventarUnaSubida() {
         val e = escaparateElementos("cajon:albumes", listOf(
             ElementoEscaparate("Segundo", "Artista", "https://ejemplo.invalid/portada.jpg"),

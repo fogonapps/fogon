@@ -149,6 +149,7 @@ sealed interface Pantalla {
     data object TusGustos : Pantalla
     /** El perfil como biografía cultural, editarlo, elegir un destacado y la portada. */
     data object Perfil : Pantalla
+    data object PrivacidadPerfil : Pantalla
     data object EditarPerfil : Pantalla
     data class ElegirDestacado(val hueco: String) : Pantalla
     data object PortadaPerfil : Pantalla

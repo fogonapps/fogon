@@ -285,7 +285,8 @@ fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false,
                             if (numerada) Text("${n + 1}", fontFamily = f.cifras, fontSize = 15.sp, color = f.sobrePildora,
                                 modifier = Modifier.align(Alignment.TopStart).padding(6.dp).clip(FormaPildora).background(f.pildora).padding(horizontal = 8.dp, vertical = 2.dp))
                         }
-                        Text(o.titulo, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(o.titulo, Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelMedium, color = f.texto,
+                            textAlign = TextAlign.Start, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Estrellas(o.nota, 12.sp)
                             if (o.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 12.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)

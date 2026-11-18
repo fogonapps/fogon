@@ -90,7 +90,7 @@ class RecorridoPantallasTest {
             Pantalla.VerArtista("ar1"), Pantalla.VerLista("li1"), Pantalla.EditarLista("li1"), Pantalla.EditarLista(null), Pantalla.AgregarALista("p1"),
             Pantalla.Diario, Pantalla.Listas, Pantalla.Cifras, Pantalla.Artistas, Pantalla.Retos, Pantalla.Ajustes, Pantalla.CajonEnCuenta,
             Pantalla.AcercaDe, Pantalla.Reporte, Pantalla.ElegirGustos, Pantalla.TusGustos, Pantalla.Perfil, Pantalla.EditarPerfil,
-            Pantalla.PortadaPerfil, Pantalla.Manifiesto, Pantalla.MusicaEscuchada, Pantalla.Privacidad, Pantalla.CuentaRed, Pantalla.Red,
+            Pantalla.PortadaPerfil, Pantalla.Manifiesto, Pantalla.MusicaEscuchada, Pantalla.Privacidad, Pantalla.PrivacidadPerfil, Pantalla.CuentaRed, Pantalla.Red,
             Pantalla.Resenar("p1"), Pantalla.ElegirCancion, Pantalla.AjustesAvisos, Pantalla.PalabrasOcultas, Pantalla.Apariencia, Pantalla.Licencias,
             Pantalla.CifrasDe(Secciones.CINE),
         )

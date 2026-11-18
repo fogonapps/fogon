@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -79,22 +80,117 @@ internal val guardaFotos = Saver<List<FotoEscaparate>, String>(
     restore = { texto -> runCatching { Json.decodeFromString(listaFotos, texto) }.getOrNull() },
 )
 
-@Composable
-fun EscaparatesEnPerfil(vm: InterfazSocial, usuario: String) {
-    val yo by vm.red.usuario.collectAsStateWithLifecycle()
-    val revision by vm.red.revisionEscaparates.collectAsStateWithLifecycle()
-    var lista by remember(usuario, yo) { mutableStateOf(emptyList<EscaparateSocial>()) }
-    LaunchedEffect(usuario, yo, revision) {
-        lista = emptyList()
-        try { lista = vm.red.leerEscaparates(usuario) } catch (e: CancellationException) { throw e } catch (_: Exception) { /* Compatible con servidores anteriores; no modifica el perfil existente. */ }
-    }
-    var editar by rememberSaveable(usuario) { mutableStateOf(false) }
-    Escaparates(lista.map { it.paraVista() }, alTocar = if (usuario == yo) ({ editar = true }) else null) { url, m -> ImagenEscaparate(vm, url, m) }
-    if (editar) EdicionEscaparates(vm, usuario, emptyList()) { editar = false }
+internal fun List<EscaparateSocial>.moverRepisa(de: Int, a: Int) =
+    toMutableList().apply { add(a, removeAt(de)) }
+
+internal fun List<EscaparateSocial>.quitarRepisa(indice: Int) =
+    toMutableList().apply { removeAt(indice) }
+
+internal fun List<EscaparateSocial>.cambiarRepisa(indice: Int, repisa: EscaparateSocial) =
+    toMutableList().apply { this[indice] = repisa }
+
+private fun conInsignias(candidatos: List<EscaparateSocial>, cupo: CupoEscaparates?): List<EscaparateSocial> {
+    val insignias = cupo?.insignias.orEmpty()
+    return if (insignias.isNotEmpty() && candidatos.none { it.tipo == "insignias" }) candidatos + escaparateInsignias(insignias)
+    else candidatos
 }
 
 @Composable
-fun BotonEditorEscaparates(vm: InterfazSocial, candidatos: List<EscaparateSocial> = emptyList()) {
+fun EscaparatesEnPerfil(
+    vm: InterfazSocial,
+    usuario: String,
+    candidatos: List<EscaparateSocial>? = null,
+    mostrarAgregar: Boolean = false,
+) {
+    val yo by vm.red.usuario.collectAsStateWithLifecycle()
+    val revision by vm.red.revisionEscaparates.collectAsStateWithLifecycle()
+    val propio = usuario == yo
+    var lista by remember(usuario, yo) { mutableStateOf(emptyList<EscaparateSocial>()) }
+    var listaVigente by remember(usuario, yo, revision) { mutableStateOf(false) }
+    var editar by rememberSaveable(usuario, yo) { mutableStateOf(false) }
+    var cambiar by rememberSaveable(usuario, yo, revision) { mutableStateOf<Int?>(null) }
+    var ocupado by remember(usuario, yo) { mutableStateOf(false) }
+    var error by remember(usuario, yo) { mutableStateOf(false) }
+    val alcance = rememberCoroutineScope()
+    LaunchedEffect(usuario, yo, revision) {
+        try {
+            lista = vm.red.leerEscaparates(usuario)
+            listaVigente = true
+        } catch (e: CancellationException) { throw e } catch (_: Exception) { /* Compatible con servidores anteriores. */ }
+    }
+
+    fun guardar(nueva: List<EscaparateSocial>) {
+        if (!propio || !listaVigente || ocupado) return
+        ocupado = true
+        error = false
+        alcance.launch {
+            try {
+                vm.red.guardarEscaparates(nueva)
+                lista = nueva
+                listaVigente = false
+                vm.red.avisarCambioEscaparates()
+            } catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
+            finally { ocupado = false }
+        }
+    }
+
+    val quitar = stringResource(RP.string.escaparates_quitar)
+    val subir = stringResource(RP.string.escaparates_subir)
+    val bajar = stringResource(RP.string.escaparates_bajar)
+    val reemplazar = stringResource(RP.string.escaparates_cambiar)
+    val mostradas = lista
+    Escaparates(
+        mostradas.map { it.paraVista() },
+        alTocar = if (propio && !ocupado && listaVigente) ({ editar = true }) else null,
+        acciones = { i ->
+            if (!propio || candidatos == null || ocupado || !listaVigente) emptyList()
+            else buildList {
+                add(CustomAccessibilityAction(quitar) { guardar(mostradas.quitarRepisa(i)); true })
+                if (i > 0) add(CustomAccessibilityAction(subir) { guardar(mostradas.moverRepisa(i, i - 1)); true })
+                if (i < mostradas.lastIndex) add(CustomAccessibilityAction(bajar) { guardar(mostradas.moverRepisa(i, i + 1)); true })
+                add(CustomAccessibilityAction(reemplazar) { cambiar = i; true })
+            }
+        },
+    ) { url, m -> ImagenEscaparate(vm, url, m) }
+    if (propio && error) Text(
+        stringResource(RP.string.escaparates_error), Modifier.padding(horizontal = 16.dp), color = FogonTema.actual.texto,
+    )
+    if (propio && mostrarAgregar) BotonEditorEscaparates(
+        vm, candidatos.orEmpty(), habilitado = !ocupado,
+        alGuardar = { ocupado = it },
+    )
+    if (propio && editar) EdicionEscaparates(vm, candidatos.orEmpty(), lista) { editar = false }
+    cambiar?.takeIf { propio && listaVigente && it in lista.indices }?.let { indice ->
+        var opciones by remember(indice) { mutableStateOf<Pair<CupoEscaparates, List<FotoEscaparate>>?>(null) }
+        var fallo by remember(indice) { mutableStateOf(false) }
+        LaunchedEffect(indice) {
+            try {
+                opciones = vm.red.cupoEscaparates() to vm.red.fotosEscaparates()
+            } catch (e: CancellationException) { throw e } catch (_: Exception) { fallo = true }
+        }
+        val datos = opciones
+        if (datos != null) {
+            SelectorEscaparate(vm, conInsignias(candidatos.orEmpty(), datos.first), datos.second, { nueva ->
+                cambiar = null
+                guardar(lista.cambiarRepisa(indice, nueva))
+            }) { cambiar = null }
+        } else {
+            AlertDialog(
+                onDismissRequest = { cambiar = null },
+                text = { Text(stringResource(if (fallo) RP.string.escaparates_error else RP.string.escaparates_cargando)) },
+                confirmButton = {
+                    TextButton({ cambiar = null }) { Text(stringResource(RP.string.escaparates_cancelar)) }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+fun BotonEditorEscaparates(
+    vm: InterfazSocial, candidatos: List<EscaparateSocial> = emptyList(),
+    habilitado: Boolean = true, alGuardar: (Boolean) -> Unit = {},
+) {
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
     if (yo == null) return
     var lista by remember(yo) { mutableStateOf<List<EscaparateSocial>?>(null) }
@@ -116,7 +212,7 @@ fun BotonEditorEscaparates(vm: InterfazSocial, candidatos: List<EscaparateSocial
         } catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
     }
     Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth().tarjetaFogon()
-        .clickable(enabled = !ocupado) {
+        .clickable(enabled = habilitado && !ocupado) {
             if (error) recarga++
             else if (lista != null && cupo != null) {
                 if (lista!!.size < cupo!!.total) selector = true else tienda = true
@@ -128,20 +224,23 @@ fun BotonEditorEscaparates(vm: InterfazSocial, candidatos: List<EscaparateSocial
         if (error) Text(stringResource(RP.string.escaparates_error), color = FogonTema.actual.texto)
     }
     if (tienda) TiendaTemas(vm, escaparatesExtra = true) { tienda = false; recarga++ }
-    if (selector) SelectorEscaparate(vm, candidatos + listOfNotNull(cupo?.insignias?.takeIf { it.isNotEmpty() }?.let(::escaparateInsignias)).filter { extra -> candidatos.none { it.tipo == extra.tipo } }, fotos, { e ->
+    if (selector) SelectorEscaparate(vm, conInsignias(candidatos, cupo), fotos, { e ->
         selector = false; ocupado = true; error = false
+        alGuardar(true)
         alcance.launch {
             try { vm.red.guardarEscaparates(lista.orEmpty() + e); vm.red.avisarCambioEscaparates() }
             catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
-            finally { ocupado = false }
+            finally { ocupado = false; alGuardar(false) }
         }
     }) { selector = false }
 }
 
 @Composable
-private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: List<EscaparateSocial>, cerrar: () -> Unit) {
-    var lista by rememberSaveable(stateSaver = guardaEscaparates) { mutableStateOf<List<EscaparateSocial>?>(null) }
-    var cupo by remember { mutableStateOf(CupoEscaparates()) }
+private fun EdicionEscaparates(
+    vm: InterfazSocial, candidatos: List<EscaparateSocial>, inicial: List<EscaparateSocial>, cerrar: () -> Unit,
+) {
+    var lista by rememberSaveable(stateSaver = guardaEscaparates) { mutableStateOf<List<EscaparateSocial>?>(inicial) }
+    var cupo by remember { mutableStateOf<CupoEscaparates?>(null) }
     var fotos by remember { mutableStateOf(emptyList<FotoEscaparate>()) }
     var error by remember { mutableStateOf(false) }
     var ocupado by remember { mutableStateOf(false) }
@@ -152,28 +251,26 @@ private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: 
     LaunchedEffect(recarga) {
         error = false
         try {
-            val bloques = vm.red.leerEscaparates(usuario)
-            cupo = vm.red.cupoEscaparates()
+            val nuevoCupo = vm.red.cupoEscaparates()
             fotos = vm.red.fotosEscaparates()
-            if (lista == null) lista = bloques
+            cupo = nuevoCupo
         } catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
     }
-    Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog({ if (!ocupado) cerrar() }, DialogProperties(usePlatformDefaultWidth = false)) {
         Column(Modifier.fillMaxSize().fondoFogon(FogonTema.actual).systemBarsPadding()) {
             Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(RP.string.escaparates_titulo), Modifier.weight(1f), color = FogonTema.actual.texto)
                 TextButton(cerrar, enabled = !ocupado) { Text(stringResource(RP.string.escaparates_cancelar)) }
             }
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (error) {
                     Text(stringResource(RP.string.escaparates_error), color = FogonTema.actual.texto)
                     TextButton({ recarga++ }) { Text(stringResource(RP.string.escaparates_reintentar)) }
                 }
-                val actual = lista
-                if (actual == null) Text(stringResource(RP.string.escaparates_cargando), color = FogonTema.actual.texto)
-                else EditorEscaparates(actual.map { it.paraVista() }, cupo.total, ocupado,
-                    mover = { de, a -> lista = actual.toMutableList().apply { add(a, removeAt(de)) } },
-                    quitar = { i -> lista = actual.filterIndexed { indice, _ -> indice != i } },
+                val actual = lista.orEmpty()
+                EditorEscaparates(actual.map { it.paraVista() }, cupo?.total, ocupado,
+                    mover = { de, a -> lista = actual.moverRepisa(de, a) },
+                    quitar = { i -> lista = actual.quitarRepisa(i) },
                     agregar = { agregar = true },
                     guardar = {
                         ocupado = true; error = false
@@ -187,8 +284,8 @@ private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: 
         }
     }
     if (tienda) TiendaTemas(vm, escaparatesExtra = true) { tienda = false; recarga++ }
-    if (agregar) SelectorEscaparate(vm, candidatos + listOfNotNull(cupo.insignias.takeIf { it.isNotEmpty() }?.let(::escaparateInsignias)).filter { extra -> candidatos.none { it.tipo == extra.tipo } }, fotos, { e ->
-        if (lista.orEmpty().size < cupo.total) lista = lista.orEmpty() + e
+    if (agregar && cupo != null) SelectorEscaparate(vm, conInsignias(candidatos, cupo), fotos, { e ->
+        if (lista.orEmpty().size < (cupo?.total ?: 0)) lista = lista.orEmpty() + e
         agregar = false
     }) { agregar = false }
 }

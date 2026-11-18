@@ -1,0 +1,1 @@
+A tidier profile: long-press a shelf to remove, change or move it; a single photo fills its shelf; what you're watching or listening to shows next to your song; "Who sees it" moved to Settings → Privacy. Your level no longer overlaps the shop, the photo "+" no longer covers frames, and the repeated favorites row is gone. New button to import a backup.

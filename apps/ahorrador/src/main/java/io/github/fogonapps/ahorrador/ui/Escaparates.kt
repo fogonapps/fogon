@@ -3,7 +3,7 @@ package io.github.fogonapps.ahorrador.ui
 import androidx.compose.runtime.Composable
 import io.github.fogonapps.ahorrador.AhorradorViewModel
 import io.github.fogonapps.ahorrador.datos.Estado
-import io.github.fogonapps.social.ui.BotonEditorEscaparates
+import io.github.fogonapps.social.ui.EscaparatesEnPerfil
 import io.github.fogonapps.social.ui.escaparateNumero
 import kotlin.math.roundToInt
 
@@ -13,6 +13,6 @@ internal fun escaparatesMetas(e: Estado, progreso: (io.github.fogonapps.ahorrado
 }.distinct()
 
 @Composable
-internal fun EditorEscaparatesApp(vm: AhorradorViewModel, e: Estado) {
-    BotonEditorEscaparates(interfazCuenta(vm), escaparatesMetas(e) { vm.L.progreso(e, it) })
+internal fun EscaparatesPerfilPropio(vm: AhorradorViewModel, e: Estado, usuario: String) {
+    EscaparatesEnPerfil(interfazCuenta(vm), usuario, escaparatesMetas(e) { vm.L.progreso(e, it) }, mostrarAgregar = true)
 }

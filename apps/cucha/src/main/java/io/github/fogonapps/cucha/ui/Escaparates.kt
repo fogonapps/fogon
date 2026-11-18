@@ -9,7 +9,7 @@ import io.github.fogonapps.perfil.ElementoEscaparate
 import io.github.fogonapps.social.ui.*
 
 @Composable
-internal fun EditorEscaparatesApp(vm: CuchaViewModel, e: Estado) {
+internal fun EscaparatesPerfilPropio(vm: CuchaViewModel, e: Estado, usuario: String) {
     val recetas = e.recetas.map { escaparateElementos("cucha:receta", listOf(ElementoEscaparate(it.nombre(vm.idioma()), it.pasos(vm.idioma()).joinToString("\n")))) }
-    BotonEditorEscaparates(interfazCuenta(vm), recetas + escaparateNumero("cucha:racha", vm.L.racha(e, vm.hoy()), stringResource(R.string.perfil_dias)))
+    EscaparatesEnPerfil(interfazCuenta(vm), usuario, recetas + escaparateNumero("cucha:racha", vm.L.racha(e, vm.hoy()), stringResource(R.string.perfil_dias)), mostrarAgregar = true)
 }

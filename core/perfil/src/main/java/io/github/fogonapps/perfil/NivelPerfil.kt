@@ -67,7 +67,7 @@ internal fun NivelChico(vista: PerfilVista) {
         if (vista.relacion == "yo" && vista.abrirNivel != null) vista.abrirNivel.invoke()
         else abierto = true
     }.minimumInteractiveComponentSize().semantics(mergeDescendants = true) { contentDescription = descripcion; role = Role.Button }, contentAlignment = Alignment.Center) {
-        Row(Modifier.height(20.dp).clip(forma(10.dp)).background(f.superficie).padding(horizontal = 6.dp).clearAndSetSemantics {},
+        Row(Modifier.heightIn(min = 20.dp).clip(FormaPildora).background(f.superficie).padding(horizontal = 6.dp).clearAndSetSemantics {},
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             ContornoNivel(vista.nivel, Modifier.size(12.dp), 1.5.dp)
             Text(vista.nivel.toString(), style = MaterialTheme.typography.labelMedium, color = f.texto)
@@ -85,7 +85,7 @@ fun NivelDetalle(nivel: Int, insignias: List<String>, propio: Boolean, gratis: I
     Column(modifier.fillMaxWidth().tarjetaFogon().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             DistintivoNivel(nivel, 56.dp)
-            Text(stringResource(R.string.perfil_nivel, nivel), style = MaterialTheme.typography.titleMedium, color = f.texto)
+            Text(stringResource(R.string.perfil_nivel, nivel), style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.weight(1f))
         }
         if (propio) {
             if (nivel < 12) {

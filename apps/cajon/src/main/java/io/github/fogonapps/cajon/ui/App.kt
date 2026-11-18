@@ -210,6 +210,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Retos -> Retos(vm, estado)
                             Pantalla.MusicaEscuchada -> { Cabecera(stringResource(R.string.musica_que_escuchas), vm::cerrar); MusicaQueEscuchas(vm) }
                             Pantalla.Privacidad -> Transparencia(vm)
+                            Pantalla.PrivacidadPerfil -> PrivacidadPerfil(vm, estado)
                             Pantalla.BorrarCuenta -> FormularioBorrado(vm, vm::cerrar)
                             Pantalla.Ajustes -> Ajustes(vm, estado)
                             Pantalla.ConectarSpotify -> ConectarSpotify(vm)
