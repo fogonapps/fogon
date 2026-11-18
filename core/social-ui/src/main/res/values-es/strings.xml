@@ -769,6 +769,8 @@
     <string name="aporte_elevacion">Vuelve a verificar tu identidad en Moderación e inténtalo de nuevo.</string>
     <string name="social_portada_opcion">%1$s · %2$s</string>
     <string name="social_portada_confirmar">¿Comprar por %1$s?</string>
-    <string name="social_portada_elegir_animada">Elegir GIF o WebP animado</string>
-    <string name="social_portada_animada_error">Elige un GIF o WebP animado de hasta 3 MB y 2048 píxeles por lado.</string>
+    <string name="social_portada_elegir_animada">Elegir GIF, WebP animado o video</string>
+    <string name="social_portada_animada_error">Elige un GIF o WebP animado (hasta 3 MB) o un video MP4 de hasta 8 segundos y 6 MB.</string>
+    <string name="social_portada_recortar_titulo">Elige hasta 8 segundos</string>
+    <string name="social_portada_recortar_desde">Desde el segundo %1$s</string>
 </resources>

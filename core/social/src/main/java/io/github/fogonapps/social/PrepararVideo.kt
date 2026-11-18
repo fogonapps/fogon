@@ -20,7 +20,7 @@ data class VideoPreparado(val archivo: File, val poster: ByteArray, val segundos
 
 /** Solo archivos temporales privados; cancelar también detiene los codificadores. */
 @OptIn(UnstableApi::class)
-suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit, recorte: () -> Unit, maximoMs: Long = 30_000): VideoPreparado = withContext(Dispatchers.Main.immediate) {
+suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit, recorte: () -> Unit, maximoMs: Long = 30_000, inicioMs: Long = 0, sinAudio: Boolean = false): VideoPreparado = withContext(Dispatchers.Main.immediate) {
     val metadatos = withContext(Dispatchers.IO) {
         conMetadatos { lector ->
             lector.setDataSource(contexto, uri)
@@ -28,7 +28,9 @@ suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit
             val ancho = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: error("video_formato")
             val alto = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: error("video_formato")
             val rotacion = lector.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
-            if (rotacion % 180 == 0) Triple(tramoVideo(duracion, maximoMs), ancho, alto) else Triple(tramoVideo(duracion, maximoMs), alto, ancho)
+            val inicio = inicioMs.coerceIn(0, (duracion - 1).coerceAtLeast(0))
+            val t = tramoVideo(duracion - inicio, maximoMs).let { it.copy(finMs = it.finMs + inicio) }
+            if (rotacion % 180 == 0) Triple(t, ancho, alto) else Triple(t, alto, ancho)
         }
     }
     val (tramo, ancho, alto) = metadatos
@@ -42,8 +44,8 @@ suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit
         val w = (ancho * escala).toInt().coerceAtLeast(2) / 2 * 2
         val h = (alto * escala).toInt().coerceAtLeast(2) / 2 * 2
         val item = MediaItem.Builder().setUri(uri).setClippingConfiguration(
-            MediaItem.ClippingConfiguration.Builder().setEndPositionMs(tramo.finMs).build()).build()
-        val editado = EditedMediaItem.Builder(item).setEffects(Effects(emptyList(),
+            MediaItem.ClippingConfiguration.Builder().setStartPositionMs(inicioMs.coerceIn(0, tramo.finMs - 1)).setEndPositionMs(tramo.finMs).build()).build()
+        val editado = EditedMediaItem.Builder(item).setRemoveAudio(sinAudio).setEffects(Effects(emptyList(),
             listOf(Presentation.createForWidthAndHeight(w, h, Presentation.LAYOUT_SCALE_TO_FIT)))).build()
         val codificador = DefaultEncoderFactory.Builder(contexto)
             .setRequestedVideoEncoderSettings(VideoEncoderSettings.Builder().setBitrate(2_500_000).build())
@@ -101,7 +103,7 @@ suspend fun prepararVideo(contexto: Context, uri: Uri, progreso: (Float) -> Unit
             }
         }
         progreso(1f)
-        VideoPreparado(archivo, poster, ((tramo.finMs + 999) / 1000).toInt())
+        VideoPreparado(archivo, poster, ((tramo.finMs - inicioMs.coerceAtLeast(0) + 999) / 1000).toInt())
     } catch (x: Throwable) { archivo.delete(); throw x }
 }
 

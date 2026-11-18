@@ -10,12 +10,12 @@ import java.nio.file.Files
 import kotlin.test.*
 
 class VideosTest {
-    private fun caja(tipo: String, vararg partes: ByteArray): ByteArray {
+    internal fun caja(tipo: String, vararg partes: ByteArray): ByteArray {
         val datos = partes.fold(byteArrayOf()) { a, b -> a + b }
         return ByteBuffer.allocate(8).putInt(datos.size + 8).put(tipo.toByteArray()).array() + datos
     }
-    private fun entero(n: Int) = ByteBuffer.allocate(4).putInt(n).array()
-    private fun mp4(segundos: Int = 30, ancho: Int = 1280, codec: String = "avc1", audio: String? = "mp4a", version: Int = 0): ByteArray {
+    internal fun entero(n: Int) = ByteBuffer.allocate(4).putInt(n).array()
+    internal fun mp4(segundos: Int = 30, ancho: Int = 1280, codec: String = "avc1", audio: String? = "mp4a", version: Int = 0): ByteArray {
         val mvhd = if (version == 0) ByteArray(12) + entero(1000) + entero(segundos * 1000)
             else byteArrayOf(1,0,0,0) + ByteArray(16) + entero(1000) + ByteBuffer.allocate(8).putLong(segundos * 1000L).array()
         fun pista(tipo: String, cod: String): ByteArray {

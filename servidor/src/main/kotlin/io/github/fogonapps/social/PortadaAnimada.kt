@@ -4,17 +4,26 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 internal const val MAX_PORTADA_ANIMADA = 3_000_000
+internal const val MAX_PORTADA_VIDEO = 6_000_000
+private const val MAX_SEGUNDOS_PORTADA = 8.5
 private const val MAX_LADO = 2048
 private const val MAX_CUADROS = 300
 
 internal fun formatoPortadaAnimada(bytes: ByteArray): String? = when {
     bytes.size >= 6 && (bytes.ascii(0, "GIF89a") || bytes.ascii(0, "GIF87a")) -> "gif"
     bytes.size >= 12 && bytes.ascii(0, "RIFF") && bytes.ascii(8, "WEBP") -> "webp"
+    bytes.size >= 12 && bytes.ascii(4, "ftyp") -> "mp4"
     else -> null
 }
 
 /** Verifica el contenedor y retira metadatos que no hacen falta para reproducir la animación. */
 internal fun revisarPortadaAnimada(bytes: ByteArray): Pair<String, ByteArray> {
+    if (bytes.size > MAX_PORTADA_VIDEO) throw Problema(413, "muy_grande")
+    if (formatoPortadaAnimada(bytes) == "mp4") {
+        // Video corto: el mismo control que los videos de las publicaciones, con su propio límite de duración.
+        if (revisarVideo(bytes).duracion > MAX_SEGUNDOS_PORTADA) throw Problema(400, "video_duracion")
+        return "mp4" to bytes
+    }
     if (bytes.size > MAX_PORTADA_ANIMADA) throw Problema(413, "muy_grande")
     val formato = formatoPortadaAnimada(bytes) ?: throw Problema(400, "imagen")
     return try {

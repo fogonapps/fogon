@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -35,6 +36,11 @@ import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 
 private const val MAX_PORTADA_ANIMADA = 3_000_000
+private const val MAX_PORTADA_VIDEO = 6_000_000
+
+/** Un MP4 lleva «ftyp» a partir del cuarto byte. */
+internal fun esVideoPortada(bytes: ByteArray): Boolean =
+    bytes.size > 12 && String(bytes, 4, 4, Charsets.US_ASCII) == "ftyp"
 
 @Composable
 internal fun ElegirPortadaAnimada(vm: InterfazSocial) {
@@ -43,8 +49,11 @@ internal fun ElegirPortadaAnimada(vm: InterfazSocial) {
     var pendiente by remember { mutableStateOf<ByteArray?>(null) }
     var ocupado by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
+    var video by remember { mutableStateOf<android.net.Uri?>(null) }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) alcance.launch {
+        // Un video se recorta antes de subirlo; GIF y WebP van tal cual.
+        if (uri != null && contexto.contentResolver.getType(uri)?.startsWith("video/") == true) { error = false; video = uri }
+        else if (uri != null) alcance.launch {
             ocupado = true
             error = false
             try {
@@ -55,10 +64,16 @@ internal fun ElegirPortadaAnimada(vm: InterfazSocial) {
                         while (true) {
                             val leidos = entrada.read(bloque)
                             if (leidos < 0) break
-                            check(salida.size() + leidos <= MAX_PORTADA_ANIMADA)
+                            check(salida.size() + leidos <= MAX_PORTADA_VIDEO)
                             salida.write(bloque, 0, leidos)
                         }
-                        salida.toByteArray().also { if (Build.VERSION.SDK_INT >= 28) validarAnimada(it) }
+                        salida.toByteArray().also {
+                            if (esVideoPortada(it)) Unit
+                            else {
+                                check(it.size <= MAX_PORTADA_ANIMADA)
+                                if (Build.VERSION.SDK_INT >= 28) validarAnimada(it)
+                            }
+                        }
                     } ?: error("imagen")
                 }
             } catch (e: CancellationException) {
@@ -71,8 +86,9 @@ internal fun ElegirPortadaAnimada(vm: InterfazSocial) {
         }
     }
     BotonSecundario(stringResource(R.string.social_portada_elegir_animada),
-        { selector.launch(arrayOf("image/gif", "image/webp")) }, habilitado = !ocupado)
+        { selector.launch(arrayOf("image/gif", "image/webp", "video/mp4")) }, habilitado = !ocupado)
     if (error) Text(stringResource(R.string.social_portada_animada_error))
+    video?.let { uri -> RecortarVideoPortada(uri, { video = null }) { bytes -> video = null; pendiente = bytes } }
     pendiente?.let { bytes ->
         AlertDialog(
             onDismissRequest = { if (!ocupado) pendiente = null },
@@ -137,7 +153,8 @@ internal fun PortadaSubida(nombre: String, modifier: Modifier, vm: InterfazSocia
 @Composable
 private fun DibujarPortadaSubida(bytes: ByteArray, modifier: Modifier) {
     val quieta = menosMovimientoBanner()
-    if (Build.VERSION.SDK_INT >= 28) DibujarPortadaAndroid(bytes, quieta, modifier)
+    if (esVideoPortada(bytes)) VideoPortada(bytes, quieta, modifier)
+    else if (Build.VERSION.SDK_INT >= 28) DibujarPortadaAndroid(bytes, quieta, modifier)
     else {
         val mapa by produceState<Bitmap?>(null, bytes) {
             value = withContext(Dispatchers.Default) { BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
@@ -176,3 +193,116 @@ private fun DibujarPortadaAndroid(bytes: ByteArray, quieta: Boolean, modifier: M
         onDispose { animacion?.stop() }
     }
 }
+
+/** Video corto como portada: sin sonido, en bucle, solo mientras se ve; con «reducir movimiento», quieto. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@Composable
+private fun VideoPortada(bytes: ByteArray, quieta: Boolean, modifier: Modifier) {
+    val contexto = LocalContext.current
+    val archivo by produceState<java.io.File?>(null, bytes) {
+        value = withContext(Dispatchers.IO) {
+            java.io.File(contexto.cacheDir, "portadas").apply { mkdirs() }
+                .resolve("portada-${bytes.contentHashCode()}.mp4").also { if (!it.exists()) it.writeBytes(bytes) }
+        }
+    }
+    val reproductor = remember(archivo) {
+        archivo?.let { a ->
+            androidx.media3.exoplayer.ExoPlayer.Builder(contexto).build().apply {
+                setMediaItem(androidx.media3.common.MediaItem.fromUri(android.net.Uri.fromFile(a)))
+                volume = 0f
+                repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+                prepare()
+            }
+        }
+    }
+    DisposableEffect(reproductor) { onDispose { reproductor?.release() } }
+    var visible by remember { mutableStateOf(false) }
+    val ciclo by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    val reproducir = !quieta && visible && ciclo.isAtLeast(Lifecycle.State.RESUMED)
+    LaunchedEffect(reproductor, reproducir) { reproductor?.playWhenReady = reproducir }
+    AndroidView(
+        factory = {
+            androidx.media3.ui.PlayerView(it).apply {
+                useController = false; isFocusable = false
+                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
+        },
+        modifier = modifier.visibilidadBanner { visible = it },
+        update = { it.player = reproductor },
+    )
+}
+
+/** Elegir el tramo de 8 segundos de un video y dejarlo listo (sin sonido, reducido) para la portada. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@Composable
+private fun RecortarVideoPortada(uri: android.net.Uri, cerrar: () -> Unit, listo: (ByteArray) -> Unit) {
+    val contexto = LocalContext.current
+    val alcance = rememberCoroutineScope()
+    val duracion by produceState(0L, uri) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val lector = android.media.MediaMetadataRetriever()
+                try { lector.setDataSource(contexto, uri); lector.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L }
+                finally { lector.release() }
+            }.getOrDefault(0L)
+        }
+    }
+    var inicio by remember { mutableFloatStateOf(0f) }
+    var progreso by remember { mutableStateOf<Float?>(null) }
+    var fallo by remember { mutableStateOf(false) }
+    val maximo = (duracion - SEGUNDOS_PORTADA_MS).coerceAtLeast(0L).toFloat()
+    val reproductor = remember(uri) {
+        androidx.media3.exoplayer.ExoPlayer.Builder(contexto).build().apply {
+            volume = 0f; repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE; playWhenReady = true
+        }
+    }
+    DisposableEffect(reproductor) { onDispose { reproductor.release() } }
+    // La vista previa repite solo el tramo elegido.
+    LaunchedEffect(uri, inicio.toLong() / 250) {
+        val desde = inicio.toLong()
+        reproductor.setMediaItem(androidx.media3.common.MediaItem.Builder().setUri(uri).setClippingConfiguration(
+            androidx.media3.common.MediaItem.ClippingConfiguration.Builder().setStartPositionMs(desde)
+                .setEndPositionMs(desde + SEGUNDOS_PORTADA_MS).build()).build())
+        reproductor.prepare()
+    }
+    AlertDialog(
+        onDismissRequest = { if (progreso == null) cerrar() },
+        title = { Text(stringResource(R.string.social_portada_recortar_titulo)) },
+        text = {
+            androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                AndroidView(
+                    factory = { androidx.media3.ui.PlayerView(it).apply {
+                        useController = false; isFocusable = false; player = reproductor
+                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    } },
+                    modifier = Modifier.fillMaxWidth().aspectRatio(3.4f),
+                )
+                if (maximo > 0f) {
+                    Text(stringResource(R.string.social_portada_recortar_desde, "%.1f".format(inicio / 1000f)))
+                    androidx.compose.material3.Slider(inicio, { inicio = it }, valueRange = 0f..maximo, enabled = progreso == null)
+                }
+                progreso?.let { androidx.compose.material3.LinearProgressIndicator({ it }, Modifier.fillMaxWidth()) }
+                if (fallo) Text(stringResource(R.string.social_portada_animada_error))
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = progreso == null && duracion > 0, onClick = {
+                progreso = 0f; fallo = false
+                alcance.launch {
+                    try {
+                        val hecho = io.github.fogonapps.social.prepararVideo(contexto, uri, { progreso = it }, {},
+                            maximoMs = SEGUNDOS_PORTADA_MS, inicioMs = inicio.toLong(), sinAudio = true)
+                        val bytes = withContext(Dispatchers.IO) { hecho.archivo.readBytes().also { hecho.archivo.delete() } }
+                        check(bytes.size <= MAX_PORTADA_VIDEO)
+                        listo(bytes)
+                    } catch (e: CancellationException) { throw e } catch (_: Exception) { fallo = true }
+                    finally { progreso = null }
+                }
+            }) { Text(stringResource(R.string.social_temas_usar)) }
+        },
+        dismissButton = { TextButton(enabled = progreso == null, onClick = cerrar) { Text(stringResource(R.string.social_cancelar)) } },
+    )
+}
+
+private const val SEGUNDOS_PORTADA_MS = 8_000L

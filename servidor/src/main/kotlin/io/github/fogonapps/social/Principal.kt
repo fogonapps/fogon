@@ -90,7 +90,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.41"
+const val VERSION = "0.42"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -306,7 +306,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             }
             put("/portada-animada") {
                 val yo = call.yo()
-                val bytes = call.receiveChannel().readRemaining((MAX_PORTADA_ANIMADA + 1).toLong()).readByteArray()
+                val bytes = call.receiveChannel().readRemaining((MAX_PORTADA_VIDEO + 1).toLong()).readByteArray()
                 call.respond(HttpStatusCode.Created, social.subirPortadaAnimada(yo, bytes))
             }
             put("/videos") {
@@ -347,6 +347,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 call.respondBytes(bytes, when (formatoPortadaAnimada(bytes)) {
                     "gif" -> ContentType.Image.GIF
                     "webp" -> ContentType.parse("image/webp")
+                    "mp4" -> ContentType.Video.MP4
                     else -> if (social.esPng(bytes)) ContentType.Image.PNG else ContentType.Image.JPEG
                 })
             }

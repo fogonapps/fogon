@@ -1021,7 +1021,7 @@ class Social(
     }
 
     private fun archivoAnimado(nombre: String): java.io.File? =
-        listOf("gif", "webp").firstNotNullOfOrNull { extension ->
+        listOf("gif", "webp", "mp4").firstNotNullOfOrNull { extension ->
             java.io.File(dirImagenes, "$nombre.$extension").takeIf { it.isFile }
         }
 

@@ -58,4 +58,12 @@ class BannersTest {
         assertEquals(400, assertFailsWith<Problema> { s.subirPortadaAnimada(yo, byteArrayOf(-1, -40, -1, -32) + ByteArray(40)) }.codigo)
         assertEquals(413, assertFailsWith<Problema> { s.subirPortadaAnimada(yo, ByteArray(MAX_PORTADA_ANIMADA + 1)) }.codigo)
     }
+
+    @Test fun videoCortoComoBannerAnimado() = conSocial { s, _, yo ->
+        s.reclamarTema(yo, "portada:animada")
+        val corto = VideosTest().mp4(segundos = 6, audio = null)
+        val nombre = s.subirPortadaAnimada(yo, corto).nombre
+        assertEquals(nombre, s.temas(yo).banner)
+        assertEquals("video_duracion", assertFailsWith<Problema> { s.subirPortadaAnimada(yo, VideosTest().mp4(segundos = 20)) }.mensaje)
+    }
 }
