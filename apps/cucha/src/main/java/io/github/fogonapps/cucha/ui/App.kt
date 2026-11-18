@@ -1,5 +1,6 @@
 package io.github.fogonapps.cucha.ui
 
+import io.github.fogonapps.identidad.AvisoApoyo
 import io.github.fogonapps.identidad.destinoGuia
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -122,7 +123,12 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                         io.github.fogonapps.identidad.DeslizarParaRecargar(if (p == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                             when (p) {
-                                Pestana.HOY -> Hoy(vm, estado)
+                                Pestana.HOY -> {
+                                    Hoy(vm, estado)
+                                    if (pila.isEmpty()) {
+                                        AvisoApoyo(stringResource(R.string.app_name), enTutorial = guia.activo)
+                                    }
+                                }
                                 Pestana.GENTE -> TuGente(vm)
                                 Pestana.RECETAS -> Recetas(vm, estado)
                                 Pestana.PLAN -> Plan(vm, estado)

@@ -29,6 +29,19 @@ class AparienciaTest {
     }
 
     @Test
+    fun botonSecundarioDeshabilitadoSeLeeYConservaElContorno() {
+        for (paleta in listOf(Paleta.Cajon, Paleta.Forzudo, Paleta.Ahorrador, Paleta.Cucha)) {
+            for (estilo in Estilo.entries) {
+                val f = fogonDe(paleta, Apariencia(estilo = estilo))
+                val tinta = f.textoSecundarioDeshabilitado
+                assertTrue("$paleta · $estilo: texto", contraste(tinta, f.fondoSecundarioDeshabilitado) >= 4.5)
+                assertTrue("$paleta · $estilo: contorno sobre el papel", contraste(tinta, f.fondo) >= 3.0)
+                assertTrue("$paleta · $estilo: contorno sobre la tarjeta", contraste(tinta, f.tarjeta()) >= 3.0)
+            }
+        }
+    }
+
+    @Test
     fun lasAppsVienenEnGrafito() {
         val f = fogonDe(Paleta.Forzudo, Apariencia())
         assertEquals(Estilo.GRAFITO, f.estilo)

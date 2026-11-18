@@ -199,8 +199,17 @@ fun BotonSecundario(
         onClick = onClick,
         enabled = habilitado,
         shape = FormaPildora,
-        border = BorderStroke(f.borde, if (peligro) color.copy(alpha = 0.6f) else f.linea),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = f.superficie, contentColor = color),
+        border = BorderStroke(f.borde, when {
+            !habilitado -> f.textoSecundarioDeshabilitado
+            peligro -> color.copy(alpha = 0.6f)
+            else -> f.linea
+        }),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = f.superficie,
+            contentColor = color,
+            disabledContainerColor = f.fondoSecundarioDeshabilitado,
+            disabledContentColor = f.textoSecundarioDeshabilitado,
+        ),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         modifier = modifier.rebote().heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
@@ -503,6 +512,7 @@ fun AcercaDeFogon(
         )
         BotonRiso(stringResource(R.string.fogon_leer_manifiesto), onVerManifiesto)
         BotonSecundario(stringResource(R.string.fogon_licencias), onVerLicencias)
+        OpcionesApoyo(onAbrirEnlace)
         creditos.forEach {
             Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
         }

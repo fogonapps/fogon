@@ -574,6 +574,7 @@
     <string name="social_temas_explica">Fondos y marcos para tu perfil, como los de Steam.</string>
     <string name="social_temas_en_uso">En uso</string>
     <string name="social_temas_usar">Usar</string>
+    <string name="social_mercado_usar">usar</string>
     <string name="social_temas_reclamar">Reclamar gratis</string>
     <string name="cancion_silenciar">Silenciar la música de los perfiles</string>
     <string name="cancion_activar">Activar la música de los perfiles</string>
@@ -581,6 +582,8 @@
     <string name="social_chispas_explica">Gratis: bienvenida, reportes confirmados, reseñas útiles y pronto la ruta de temporada.</string>
     <string name="social_tienda_fondos">fondos</string>
     <string name="social_tienda_marcos">marcos</string>
+    <string name="social_equipar_fondos">Fondos</string>
+    <string name="social_equipar_marcos">Marcos</string>
     <string name="social_tienda_sin_fondo">Sin fondo</string>
     <string name="social_tienda_sin_marco">Sin marco</string>
     <string name="social_tienda_comprar">%1$s chispas</string>
@@ -660,7 +663,7 @@
     <string name="social_mercado_aviso">500 chispas por publicar. Antes de salir a la venta lo revisa el equipo. Si se rechaza, no se devuelve el cobro.</string>
     <string name="social_mercado_pagar">publicar por 500 chispas</string>
     <string name="social_mercado_adquiridos">mis artículos</string>
-    <string name="social_editor_crear">Crear</string>
+    <string name="social_editor_crear">crear</string>
     <string name="social_editor_banner">Crear banner</string>
     <string name="social_editor_marco">Crear marco</string>
     <string name="social_editor_gestos">Toca una capa para seleccionarla. Arrastra para mover y pellizca para cambiar el tamaño. El borrador se guarda en este teléfono.</string>

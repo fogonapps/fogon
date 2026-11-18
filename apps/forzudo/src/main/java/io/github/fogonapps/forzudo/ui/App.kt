@@ -1,5 +1,6 @@
 package io.github.fogonapps.forzudo.ui
 
+import io.github.fogonapps.identidad.AvisoApoyo
 import io.github.fogonapps.identidad.destinoGuia
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.semantics
@@ -140,7 +141,12 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                         modifier = Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp),
                     )
                     when (pestana) {
-                        Pestana.INICIO -> Inicio(vm, estado)
+                        Pestana.INICIO -> {
+                            Inicio(vm, estado)
+                            if (pila.isEmpty()) {
+                                AvisoApoyo(stringResource(R.string.app_name), enTutorial = verTutorialGuia || guia.activo)
+                            }
+                        }
                         Pestana.GENTE -> TuGente(vm)
                         Pestana.ENTRENAR -> Entrenar(vm, estado)
                         Pestana.RANGOS -> Rangos(vm, estado)

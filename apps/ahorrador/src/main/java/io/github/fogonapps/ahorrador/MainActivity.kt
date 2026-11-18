@@ -37,6 +37,7 @@ import io.github.fogonapps.ahorrador.ui.Bloqueada
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.registrarDiaDeUsoParaApoyo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -222,6 +223,11 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         abrirDesdeWidget(intent)
         abrirChatAvisado(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registrarDiaDeUsoParaApoyo(this)
     }
 
     override fun onStop() {

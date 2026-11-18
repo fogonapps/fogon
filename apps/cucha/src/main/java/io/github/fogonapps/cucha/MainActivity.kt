@@ -31,6 +31,7 @@ import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.registrarDiaDeUsoParaApoyo
 import io.github.fogonapps.identidad.fogonDe
 
 class MainActivity : ComponentActivity() {
@@ -165,6 +166,11 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         vm.leerForzudo()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registrarDiaDeUsoParaApoyo(this)
     }
 
     override fun onStop() {

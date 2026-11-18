@@ -12,7 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.semantics.text
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -121,7 +126,8 @@ fun Escaparates(lista: List<EscaparateVista>, alTocar: (() -> Unit)? = null, ima
                     }
                     else -> {
                         if (e.numero.isNotBlank()) {
-                            CifraEscaparate(e.numero)
+                            if (e.tipo == "numero") CifraNumeroEscaparate(numeroLocalizado(e.numero))
+                            else CifraEscaparate(e.numero)
                             if (e.etiqueta.isNotBlank()) Text(e.etiqueta, color = f.textoSuave)
                         }
                         if (e.texto.isNotBlank()) {
@@ -168,6 +174,39 @@ private fun CifraEscaparate(numero: String, unidad: String = "") {
         // Cifras largas se parten sin ocultarlas ni reducirlas por debajo del tamaño accesible.
         numero.chunked(5).forEach { NumeroRiso(it, 52.sp, color = f.numero) }
         if (unidad.isNotBlank()) Text(unidad, color = f.textoSuave, style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CifraNumeroEscaparate(numero: String) {
+    val f = FogonTema.actual
+    val cuerpo = MaterialTheme.typography.bodyLarge
+    FlowRow(
+        modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(numero) },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        gruposNumeroFormateado(numero).forEach { grupo ->
+            val tieneSeparador = grupo.lastOrNull() == '.' || grupo.lastOrNull() == ','
+            val texto = buildAnnotatedString {
+                withStyle(SpanStyle(fontFamily = f.puntos, fontSize = 52.sp)) {
+                    append(if (tieneSeparador) grupo.dropLast(1) else grupo)
+                }
+                if (tieneSeparador) {
+                    // Un espacio finísimo a cada lado para que el punto o la coma no se peguen a las cifras de puntos.
+                    withStyle(SpanStyle(fontSize = 34.sp, fontWeight = FontWeight.Bold)) { append("\u200A"); append(grupo.last()); append("\u200A") }
+                }
+            }
+            Text(
+                texto,
+                style = cuerpo,
+                fontSize = 52.sp,
+                lineHeight = 52.sp,
+                letterSpacing = 0.sp,
+                color = f.numero,
+                softWrap = false,
+            )
+        }
     }
 }
 

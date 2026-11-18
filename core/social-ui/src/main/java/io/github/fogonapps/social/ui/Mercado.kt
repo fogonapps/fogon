@@ -170,7 +170,7 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
                 if (a.motivo.isNotBlank()) Text(a.motivo, color = f.texto)
                 Text(stringResource(R.string.social_mercado_ventas,numeroSocial(a.ventas)), color = f.textoSuave)
                 error?.let { ErrorMercado(it) }
-                if ((a.adquirido || a.propio) && a.estado != "derechos") BotonRiso(stringResource(R.string.social_temas_usar), { accion { vm.red.ponerArticuloMercado(a.item) } }, modifier = Modifier.fillMaxWidth(), habilitado = !ocupada)
+                if ((a.adquirido || a.propio) && a.estado != "derechos") BotonRiso(stringResource(R.string.social_mercado_usar), { accion { vm.red.ponerArticuloMercado(a.item) } }, modifier = Modifier.fillMaxWidth(), habilitado = !ocupada)
                 if (!a.adquirido && !a.propio && a.estado == "aprobado") BotonRiso(stringResource(R.string.social_tienda_comprar,numeroSocial(a.precio)), { accion { vm.red.comprarMercado(a.id,clave) } }, modifier = Modifier.fillMaxWidth(), habilitado = !ocupada && temas.chispas >= a.precio)
                 if (!a.propio && a.estado == "aprobado") BotonSecundario(stringResource(R.string.social_regalar), { regalar = !regalar }, modifier = Modifier.fillMaxWidth(), habilitado = !ocupada)
                 if (regalar) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

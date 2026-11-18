@@ -8,11 +8,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -25,6 +29,7 @@ import io.github.fogonapps.perfil.R as RP
 import io.github.fogonapps.social.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.*
 
 /** Instantánea preparada localmente; nada se publica hasta confirmar. */
@@ -62,6 +67,18 @@ private fun ImagenEscaparate(vm: InterfazSocial, url: String, modifier: Modifier
         contentScale = ContentScale.Crop)
 }
 
+/** Guarda un borrador de repisas o fotos en el estado de la pantalla (sobrevive a girar el teléfono o cambiar la letra). */
+private val listaEscaparates = ListSerializer(EscaparateSocial.serializer())
+private val listaFotos = ListSerializer(FotoEscaparate.serializer())
+internal val guardaEscaparates = Saver<List<EscaparateSocial>?, String>(
+    save = { lista -> lista?.let { Json.encodeToString(listaEscaparates, it) } },
+    restore = { texto -> runCatching { Json.decodeFromString(listaEscaparates, texto) }.getOrNull() },
+)
+internal val guardaFotos = Saver<List<FotoEscaparate>, String>(
+    save = { Json.encodeToString(listaFotos, it) },
+    restore = { texto -> runCatching { Json.decodeFromString(listaFotos, texto) }.getOrNull() },
+)
+
 @Composable
 fun EscaparatesEnPerfil(vm: InterfazSocial, usuario: String) {
     val yo by vm.red.usuario.collectAsStateWithLifecycle()
@@ -71,7 +88,7 @@ fun EscaparatesEnPerfil(vm: InterfazSocial, usuario: String) {
         lista = emptyList()
         try { lista = vm.red.leerEscaparates(usuario) } catch (e: CancellationException) { throw e } catch (_: Exception) { /* Compatible con servidores anteriores; no modifica el perfil existente. */ }
     }
-    var editar by remember(usuario, yo) { mutableStateOf(false) }
+    var editar by rememberSaveable(usuario) { mutableStateOf(false) }
     Escaparates(lista.map { it.paraVista() }, alTocar = if (usuario == yo) ({ editar = true }) else null) { url, m -> ImagenEscaparate(vm, url, m) }
     if (editar) EdicionEscaparates(vm, usuario, emptyList()) { editar = false }
 }
@@ -83,7 +100,7 @@ fun BotonEditorEscaparates(vm: InterfazSocial, candidatos: List<EscaparateSocial
     var lista by remember(yo) { mutableStateOf<List<EscaparateSocial>?>(null) }
     var cupo by remember(yo) { mutableStateOf<CupoEscaparates?>(null) }
     var fotos by remember(yo) { mutableStateOf(emptyList<FotoEscaparate>()) }
-    var selector by remember(yo) { mutableStateOf(false) }
+    var selector by rememberSaveable(yo) { mutableStateOf(false) }
     var tienda by remember(yo) { mutableStateOf(false) }
     var ocupado by remember(yo) { mutableStateOf(false) }
     var error by remember(yo) { mutableStateOf(false) }
@@ -123,13 +140,13 @@ fun BotonEditorEscaparates(vm: InterfazSocial, candidatos: List<EscaparateSocial
 
 @Composable
 private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: List<EscaparateSocial>, cerrar: () -> Unit) {
-    var lista by remember { mutableStateOf<List<EscaparateSocial>?>(null) }
+    var lista by rememberSaveable(stateSaver = guardaEscaparates) { mutableStateOf<List<EscaparateSocial>?>(null) }
     var cupo by remember { mutableStateOf(CupoEscaparates()) }
     var fotos by remember { mutableStateOf(emptyList<FotoEscaparate>()) }
     var error by remember { mutableStateOf(false) }
     var ocupado by remember { mutableStateOf(false) }
     var tienda by remember { mutableStateOf(false) }
-    var agregar by remember { mutableStateOf(false) }
+    var agregar by rememberSaveable { mutableStateOf(false) }
     var recarga by remember { mutableIntStateOf(0) }
     val alcance = rememberCoroutineScope()
     LaunchedEffect(recarga) {
@@ -176,16 +193,26 @@ private fun EdicionEscaparates(vm: InterfazSocial, usuario: String, candidatos: 
     }) { agregar = false }
 }
 
+private val formatoNumeroRepisa = Regex("(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)")
+private val maximoNumeroRepisa = 999_999_999.toBigDecimal()
+
+internal fun limpiarNumeroRepisa(texto: String): String? {
+    if (texto.isEmpty()) return texto
+    if (!formatoNumeroRepisa.matches(texto)) return null
+    val normalizado = texto.replace(',', '.')
+    return normalizado.takeIf { it.toBigDecimal() <= maximoNumeroRepisa }
+}
+
 @Composable
 private fun SelectorEscaparate(vm: InterfazSocial, candidatos: List<EscaparateSocial>, fotos: List<FotoEscaparate>, agregar: (EscaparateSocial) -> Unit, cerrar: () -> Unit) {
-    var tipo by remember { mutableStateOf("") }
-    var texto by remember { mutableStateOf("") }
-    var numero by remember { mutableStateOf("") }
-    var etiqueta by remember { mutableStateOf("") }
-    var elegidas by remember { mutableStateOf(emptyList<FotoEscaparate>()) }
+    var tipo by rememberSaveable { mutableStateOf("") }
+    var texto by rememberSaveable { mutableStateOf("") }
+    var numero by rememberSaveable { mutableStateOf("") }
+    var etiqueta by rememberSaveable { mutableStateOf("") }
+    var elegidas by rememberSaveable(stateSaver = guardaFotos) { mutableStateOf(emptyList<FotoEscaparate>()) }
     var subiendo by remember { mutableStateOf(false) }
     var errorSubida by remember { mutableStateOf(false) }
-    var subidas by remember { mutableStateOf(emptyList<FotoEscaparate>()) }
+    var subidas by rememberSaveable(stateSaver = guardaFotos) { mutableStateOf(emptyList<FotoEscaparate>()) }
     val contexto = LocalContext.current
     val alcance = rememberCoroutineScope()
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -207,12 +234,26 @@ private fun SelectorEscaparate(vm: InterfazSocial, candidatos: List<EscaparateSo
             if (tipo.isEmpty()) {
                 listOf("texto", "numero", "galeria").forEach { t -> TextButton({ tipo = t }) { Text(nombreEscaparate(t)) } }
                 candidatos.forEach { e -> TextButton({ agregar(e) }) {
-                    Column { Text(nombreEscaparate(e.tipo)); val vista = e.paraVista(); vista.elementos.firstOrNull()?.let { Text(it.titulo) }; if (vista.numero.isNotEmpty()) Text(vista.numero + if (e.tipo == "alcancia:meta") "%" else "") }
+                    Column {
+                        Text(nombreEscaparate(e.tipo))
+                        val vista = e.paraVista()
+                        vista.elementos.firstOrNull()?.let { Text(it.titulo) }
+                        if (vista.numero.isNotEmpty()) Text(when (e.tipo) {
+                            "numero" -> numeroLocalizado(vista.numero)
+                            "alcancia:meta" -> vista.numero + "%"
+                            else -> vista.numero
+                        })
+                    }
                 } }
             } else when (tipo) {
                 "texto" -> OutlinedTextField(texto, { if (it.codePointCount(0, it.length) <= 300) texto = it }, label = { Text(nombreEscaparate(tipo)) })
                 "numero" -> {
-                    OutlinedTextField(numero, { numero = it }, label = { Text(stringResource(RP.string.escaparates_valor)) })
+                    OutlinedTextField(
+                        numero,
+                        { cambio -> limpiarNumeroRepisa(cambio)?.let { numero = it } },
+                        label = { Text(stringResource(RP.string.escaparates_valor)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    )
                     OutlinedTextField(etiqueta, { etiqueta = it.take(80) }, label = { Text(stringResource(RP.string.escaparates_etiqueta)) })
                 }
                 "galeria" -> {
@@ -240,6 +281,6 @@ private fun SelectorEscaparate(vm: InterfazSocial, candidatos: List<EscaparateSo
                 "numero" -> escaparateNumero(tipo, numero.toDouble(), etiqueta)
                 else -> EscaparateSocial(tipo, buildJsonObject { put("fotos", JsonArray(elegidas.map { buildJsonObject { it.publicacion?.let { id -> put("publicacion", id) }; put("nombre", it.nombre) } })) })
             })
-        }, enabled = !subiendo && (tipo != "numero" || numero.toDoubleOrNull()?.let { it.isFinite() && it >= 0 && it <= 999999999 } == true)) { Text(stringResource(RP.string.escaparates_confirmar)) }
+        }, enabled = !subiendo && (tipo != "numero" || numero.isNotEmpty())) { Text(stringResource(RP.string.escaparates_confirmar)) }
     }, dismissButton = { TextButton(cerrar, enabled = !subiendo) { Text(stringResource(RP.string.escaparates_cancelar)) } })
 }

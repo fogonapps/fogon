@@ -39,6 +39,7 @@ import io.github.fogonapps.identidad.AlmacenApariencia
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.registrarDiaDeUsoParaApoyo
 import io.github.fogonapps.identidad.fogonDe
 import kotlinx.coroutines.launch
 import java.io.File
@@ -240,6 +241,11 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         if (!cambiandoPerfil) vm.sincronizar()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registrarDiaDeUsoParaApoyo(this)
     }
 
     override fun onStop() {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -312,12 +313,8 @@ fun cifrasSociales(p: io.github.fogonapps.social.PerfilSocial): List<io.github.f
     io.github.fogonapps.perfil.ContadorPerfil("${p.siguiendo}", stringResource(R.string.social_cifra_siguiendo)),
 )
 
-internal fun formatearMiles(valor: Int, idioma: java.util.Locale): String =
-    java.text.NumberFormat.getIntegerInstance(if (idioma.language == "en") java.util.Locale.US else java.util.Locale.forLanguageTag("es-CO")).format(valor)
-
 @Composable
-internal fun numeroSocial(valor: Int): String = formatearMiles(valor,
-    androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
+internal fun numeroSocial(valor: Int): String = numeroLocalizado(valor.toString())
 
 /** En Google Play no se ofrecen pagos fuera de la tienda. */
 internal fun ofrecePagosExternos(tiendaPlay: Boolean): Boolean = !tiendaPlay
@@ -328,14 +325,18 @@ private fun EquiparComprados(vm: InterfazSocial, modifier: Modifier = Modifier) 
     val temas by vm.red.temas.collectAsStateWithLifecycle()
     Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
-            R.string.social_tienda_fondos to (listOf("") + temas.reclamados.filter { it in TemasPerfil.FONDOS }),
-            R.string.social_tienda_marcos to (listOf("marco:") + temas.reclamados.filter { it.startsWith("marco:") }),
+            R.string.social_equipar_fondos to (listOf("") + temas.reclamados.filter { it in TemasPerfil.FONDOS }),
+            R.string.social_equipar_marcos to (listOf("marco:") + temas.reclamados.filter { it.startsWith("marco:") }),
         ).forEach { (titulo, items) ->
-            Text(stringResource(titulo), style = MaterialTheme.typography.titleSmall, color = FogonTema.actual.texto)
+            Titulo(stringResource(titulo), Modifier.padding(horizontal = 4.dp))
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items.forEach { item ->
                     val id = item.removePrefix("banner:").removePrefix("marco:")
-                    val puesto = item == temas.banner || (!item.startsWith("banner:") && !item.startsWith("marco:") && item == temas.puesto) || (item.startsWith("marco:") && id == temas.marco)
+                    val puesto = when {
+                        item.startsWith("banner:") -> item == temas.banner
+                        item.startsWith("marco:") -> id == temas.marco
+                        else -> item == temas.puesto
+                    }
                     Column(Modifier.width(128.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Box {
                             when {
@@ -357,6 +358,10 @@ private fun EquiparComprados(vm: InterfazSocial, modifier: Modifier = Modifier) 
     }
 }
 
+private val DiscoMuestra = dibujo("disco",
+    trazo("M12 3a9 9 0 1 1 0 18 9 9 0 1 1 0-18z", 2f),
+    trazo("M12 8a4 4 0 1 1 0 8 4 4 0 1 1 0-8zM12 12h.1M6 12a6 6 0 0 1 6-6M18 12a6 6 0 0 1-6 6", 1.4f))
+
 /** Ejemplos locales: no consultan catálogos ni representan contenido de la cuenta. */
 @Composable
 internal fun MuestraRepisa(indice: Int) {
@@ -370,6 +375,13 @@ internal fun MuestraRepisa(indice: Int) {
         else -> EscaparateVista("numero", numero = "128", etiqueta = stringResource(PerfilR.string.muestra_numero))
     }
     Escaparates(listOf(muestra)) { id, modifier ->
-        Box(modifier.background(listOf(f.tinta1, f.tinta2, f.superficie)[id.toInt()]))
+        val fondo = when (id) {
+            "0" -> f.marca
+            "1" -> lerp(f.marca, f.tinta1, 0.55f)
+            else -> lerp(f.marca, f.fondo, 0.55f)
+        }
+        Box(modifier.background(fondo), contentAlignment = Alignment.Center) {
+            IconoRiso(DiscoMuestra, null, tamano = 48.dp, tinta = legibleSobre(fondo, listOf(f.texto, f.fondo, f.sobreTinta1)))
+        }
     }
 }

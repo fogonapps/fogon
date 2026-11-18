@@ -320,3 +320,8 @@ fun conApariencia(json: String, almacen: AlmacenApariencia): String = runCatchin
 fun aplicarApariencia(json: String, almacen: AlmacenApariencia) {
     runCatching { org.json.JSONObject(json).optString("aparienciaCopia", "") }.getOrNull()?.takeIf { it.isNotBlank() }?.let(almacen::importar)
 }
+
+/** Colores del botón secundario deshabilitado, con un fondo de vidrio opaco. */
+internal val Fogon.fondoSecundarioDeshabilitado: Color get() = superficie.compositeOver(fondo)
+internal val Fogon.textoSecundarioDeshabilitado: Color
+    get() = legibleSobre(fondoSecundarioDeshabilitado, listOf(textoSuave, texto, legible(fondoSecundarioDeshabilitado)))

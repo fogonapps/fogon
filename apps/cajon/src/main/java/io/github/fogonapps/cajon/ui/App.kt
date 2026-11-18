@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
+import io.github.fogonapps.identidad.AvisoApoyo
 import io.github.fogonapps.identidad.destinoGuia
 import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
@@ -159,7 +160,12 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                             AvisoPolitica(vm)
                             when (p) {
-                                Pestana.INICIO -> Inicio(vm, estado)
+                                Pestana.INICIO -> {
+                                    Inicio(vm, estado)
+                                    if (pila.isEmpty()) {
+                                        AvisoApoyo(stringResource(R.string.app_name), enTutorial = guia.activo)
+                                    }
+                                }
                                 Pestana.PARA_TI -> PantallaRed(vm, estado, enPestana = true)
                                 Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
                                 Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)

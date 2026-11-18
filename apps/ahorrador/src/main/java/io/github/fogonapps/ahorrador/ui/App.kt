@@ -1,5 +1,6 @@
 package io.github.fogonapps.ahorrador.ui
 
+import io.github.fogonapps.identidad.AvisoApoyo
 import io.github.fogonapps.identidad.tarjetaFogon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -117,7 +118,12 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                         io.github.fogonapps.identidad.DeslizarParaRecargar(if (pestana == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                             when (pestana) {
-                                Pestana.INICIO -> Inicio(vm, estado)
+                                Pestana.INICIO -> {
+                                    Inicio(vm, estado)
+                                    if (pila.isEmpty()) {
+                                        AvisoApoyo(stringResource(R.string.app_name), enTutorial = guia.activo)
+                                    }
+                                }
                                 Pestana.GENTE -> TuGente(vm)
                                 Pestana.RESUMEN -> Resumen(vm, estado)
                                 Pestana.SOBRES -> Presupuesto(vm, estado)

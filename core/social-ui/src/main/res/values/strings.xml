@@ -572,6 +572,7 @@
     <string name="social_temas_explica">Backgrounds and frames for your profile, like Steam ones.</string>
     <string name="social_temas_en_uso">In use</string>
     <string name="social_temas_usar">Use</string>
+    <string name="social_mercado_usar">use</string>
     <string name="social_temas_reclamar">Claim for free</string>
     <string name="cancion_silenciar">Mute profile music</string>
     <string name="cancion_activar">Unmute profile music</string>
@@ -579,6 +580,8 @@
     <string name="social_chispas_explica">Free sparks: welcome, confirmed reports, helpful reviews and soon the seasonal route.</string>
     <string name="social_tienda_fondos">backgrounds</string>
     <string name="social_tienda_marcos">frames</string>
+    <string name="social_equipar_fondos">Backgrounds</string>
+    <string name="social_equipar_marcos">Frames</string>
     <string name="social_tienda_sin_fondo">No background</string>
     <string name="social_tienda_sin_marco">No frame</string>
     <string name="social_tienda_comprar">%1$s sparks</string>
@@ -658,7 +661,7 @@
     <string name="social_mercado_aviso">Publishing costs 500 sparks. The team reviews it before it goes on sale. If rejected, the fee is not refunded.</string>
     <string name="social_mercado_pagar">publish for 500 sparks</string>
     <string name="social_mercado_adquiridos">my items</string>
-    <string name="social_editor_crear">Create</string>
+    <string name="social_editor_crear">create</string>
     <string name="social_editor_banner">Create banner</string>
     <string name="social_editor_marco">Create frame</string>
     <string name="social_editor_gestos">Tap a layer to select it. Drag to move and pinch to resize. The draft is saved on this phone.</string>

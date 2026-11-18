@@ -120,4 +120,11 @@
   <string name="fogon_tintas_guardar">Guardar estos colores</string>
   <string name="fogon_tintas_aplicar">Aplicar %1$s</string>
   <string name="fogon_tintas_borrar">Borrar %1$s</string>
+  <string name="fogon_apoyo_titulo">¿Te sirve %1$s?</string>
+  <string name="fogon_apoyo_cuerpo">Es gratis y lo seguirá siendo: sin anuncios, sin rastreo y sin suscripciones. Si quieres que Fogón siga creciendo, puedes apoyarlo. Si no, todo sigue igual.</string>
+  <string name="fogon_apoyo_apoyar">Apoyar</string>
+  <string name="fogon_apoyo_ahora_no">Ahora no</string>
+  <string name="fogon_apoyo_no_volver">No volver a mostrar</string>
+  <string name="fogon_apoyo_acerca">Apoya a Fogón</string>
+  <string name="fogon_apoyo_recordar">Recordármelo una vez al mes</string>
 </resources>

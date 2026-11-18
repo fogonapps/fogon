@@ -6,9 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -268,10 +268,9 @@ fun MuestraTema(tema: String, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     Box(modifier.aspectRatio(0.8f).clip(forma(16.dp)).tarjetaFogon(forma(16.dp), sombra = false)) {
         if (e != null) FondoTemaPerfil(tema, Modifier.matchParentSize())
-        Row(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(forma(10.dp)).then(if (e != null) Modifier.background(e.panel) else Modifier).padding(6.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(forma(10.dp))
+            .then(if (e != null) Modifier.background(e.panel) else Modifier).padding(6.dp)) {
             Box(Modifier.size(22.dp).clip(CircleShape).background(e?.texto ?: f.linea))
-            Text(TemasPerfil.nombre(tema), style = MaterialTheme.typography.labelMedium, color = e?.texto ?: f.texto, maxLines = 1)
         }
     }
 }
@@ -281,7 +280,7 @@ fun MuestraTema(tema: String, modifier: Modifier = Modifier) {
 fun MuestraMarco(marco: String, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     Box(modifier.aspectRatio(1.3f).clip(forma(16.dp)).tarjetaFogon(forma(16.dp), sombra = false), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(56.dp).clip(CircleShape).background(f.superficie))
+        Box(Modifier.size(56.dp).background(f.superficie, CircleShape).border(f.borde, f.linea, CircleShape))
         MarcoFoto(marco, 56.dp)
     }
 }

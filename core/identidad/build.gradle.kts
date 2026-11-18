@@ -9,6 +9,7 @@ android {
 
     defaultConfig {
         minSdk = 26
+        buildConfigField("boolean", "TIENDA_PLAY", (providers.gradleProperty("tienda").orNull == "play").toString())
     }
 
     compileOptions {
@@ -18,6 +19,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

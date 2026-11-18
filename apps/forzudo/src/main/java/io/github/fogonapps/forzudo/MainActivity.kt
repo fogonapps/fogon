@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Paleta
+import io.github.fogonapps.identidad.registrarDiaDeUsoParaApoyo
 import io.github.fogonapps.forzudo.datos.Estado
 import io.github.fogonapps.forzudo.datos.iso
 import io.github.fogonapps.forzudo.ui.App
@@ -134,6 +135,11 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val MAX_RESPALDO = 10 * 1024 * 1024
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registrarDiaDeUsoParaApoyo(this)
     }
 
     override fun onStop() {
