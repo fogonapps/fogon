@@ -450,7 +450,11 @@ abstract class ControladorSocial(
         resultado(null)
         _temas.value = cliente().temas()
     }
-    fun reclamarTema(tema: String) = lanzar { cliente().reclamarTema(tema); _temas.value = cliente().temas() }
+    fun reclamarTema(tema: String, alComprar: () -> Unit = {}) = lanzar {
+        cliente().reclamarTema(tema)
+        alComprar()
+        _temas.value = cliente().temas()
+    }
     protected open fun alCambiarBanner() {}
     suspend fun imagenPortada(nombre: String): ByteArray = cliente().descargarImagenPerfil(nombre)
 

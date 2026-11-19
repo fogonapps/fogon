@@ -120,6 +120,7 @@ class MainActivity : ComponentActivity() {
         vm.alCambiarPerfil = ::cambiarPerfil
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         if (savedInstanceState == null) { abrirEnlace(intent); abrirChatAvisado(intent) }
+        if (savedInstanceState == null) io.github.fogonapps.social.Contadores.arrancar(this)
         setContent {
             val apariencia by AlmacenApariencia.de(this).estado.collectAsStateWithLifecycle()
             // Barras del sistema con íconos claros u oscuros según el fondo del estilo elegido.
@@ -142,7 +143,7 @@ class MainActivity : ComponentActivity() {
                 val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
                     if (uri != null && !operacionVigente()) aviso(getString(R.string.perfiles_error))
                     else if (uri != null) runCatching {
-                        contentResolver.openOutputStream(uri, "wt")?.use { it.write(vm.exportarJson().encodeToByteArray()) }
+                        contentResolver.openOutputStream(uri, "wt")?.use { it.write(vm.exportarJson().encodeToByteArray()); io.github.fogonapps.social.Contadores.de(this@MainActivity).contar("respaldo.exportar") }
                     }.onSuccess { aviso(getString(R.string.aviso_respaldo_guardado)) }.onFailure { aviso(getString(R.string.aviso_no_exportado)) }
                 }
                 var porImportar by remember { mutableStateOf<Estado?>(null) }

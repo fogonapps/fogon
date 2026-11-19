@@ -106,7 +106,23 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
         PoliticaCuenta(vm)
         val verTutorialGuia by vm.tutorial.collectAsStateWithLifecycle()
         val guia = io.github.fogonapps.identidad.rememberGuia("forzudo")
-        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = !verTutorialGuia && pila.isEmpty() && pestana == Pestana.INICIO) {
+        val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
+        io.github.fogonapps.social.ui.ContarEntrada(when (pila.lastOrNull()) {
+            is Pantalla.Ajustes -> "ajustes.abrir"
+            is Pantalla.Perfil -> "perfil.abrir"
+            is Pantalla.Reporte -> "reporte.abrir"
+            is Pantalla.Detalle -> "forzudo.pantalla.ejercicio"
+            is Pantalla.Entreno -> "forzudo.pantalla.entreno_guardado"
+            is Pantalla.Musculo -> "forzudo.pantalla.musculo"
+            Pantalla.Programas -> "forzudo.pantalla.programas"
+            is Pantalla.Editor -> "forzudo.pantalla.editor_rutina"
+            Pantalla.Vivo -> "forzudo.pantalla.entreno_vivo"
+            is Pantalla.Resumen -> "forzudo.pantalla.resumen"
+            is Pantalla.Compartir -> "forzudo.pantalla.compartir"
+            null -> "forzudo.pantalla." + pestana.name.lowercase()
+            else -> null
+        })
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = !verTutorialGuia && pila.isEmpty() && pestana == Pestana.INICIO, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             Scaffold(
                 // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
@@ -114,7 +130,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
                 bottomBar = {
-                    Column {
+                    if (pila.isEmpty()) Column {
                         val confirmar = LocalConfirmar.current
                         if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmar, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
                         BarraPestanas(
@@ -178,7 +194,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Transparencia -> TransparenciaForzudo(vm)
                             is Pantalla.Ajustes -> Ajustes(vm, estado, onExportar, onImportar)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
-                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
+                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Forzudo, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current), alCambiarTema = { contadores.contar("apariencia.cambiar_tema") }) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); io.github.fogonapps.identidad.ManifiestoFogon() }
                             is Pantalla.Licencias -> Licencias(vm)
                             is Pantalla.Preguntas -> Preguntas(vm)

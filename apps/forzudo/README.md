@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Forzudo"></p>
 
-Registro de entrenos de gimnasio. Sin anuncios, sin rastreo, gratis de verdad. Su personaje es una bolita con los bracitos levantados. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
+Registro de entrenos de gimnasio. Sin anuncios y gratis de verdad. No vendemos tus datos. Su personaje es una bolita con los bracitos levantados. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
 
 - Descargar: [fogonapps/el-forzudo](https://github.com/fogonapps/el-forzudo/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-forzudo`).
 - Novedades de cada versión: en las [versiones de El Forzudo](https://github.com/fogonapps/el-forzudo/releases).

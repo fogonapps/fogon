@@ -80,6 +80,7 @@ enum class Pestana { HOY, GENTE, RECETAS, PLAN, PROGRESO }
 val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("cucha", "La Cucha", "LaCucha-Fogon")
 
 class CuchaViewModel(app: Application) : AndroidViewModel(app) {
+    private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
     /** Las frases del saludo, como en El Cajón: las propias (cu_) y, con red, las de la gente de La Cucha. */
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
     private val cuchaApp = app as CuchaApp
@@ -91,7 +92,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     val red = io.github.fogonapps.social.RedApp(cuchaApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
         io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil, R.string.cuenta_muchas_cuentas),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.cucha.datos.cabePublicacionCucha(it) }, "publicaciones-cucha.json",
-        listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES))
+        listOf(io.github.fogonapps.cucha.datos.PARTE_PLATOS, io.github.fogonapps.cucha.datos.PARTE_RESTAURANTES), alEntrar = { nueva -> contadores.contar(if (nueva) "social.registro" else "social.entrar") })
     /** D-033: el diario se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-cucha-p$idPerfil", android.content.Context.MODE_PRIVATE), viewModelScope,
         leer = { _estado.value?.let { e -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -365,7 +366,10 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         val busqueda = _pila.value.indexOfLast { it is Pantalla.Anotar }
         _pila.value = if (editar == null && busqueda >= 0) _pila.value.take(busqueda + 1)
             else _pila.value.filterNot { it is Pantalla.Anotar || it is Pantalla.Cantidad || it is Pantalla.EditarProducto }
-        if (editar == null) avisar(tx(R.string.aviso_anotado, nuevo.nombre))
+        if (editar == null) {
+            contadores.contar("cucha.comida_anotada")
+            avisar(tx(R.string.aviso_anotado, nuevo.nombre))
+        }
     }
 
     /** Lo anotado rápido lleva la referencia "rapido:<id>": no viene de la base, sus valores van en el mismo anotado. */
@@ -379,7 +383,10 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
             e.copy(dias = e.dias + (fecha to d.copy(anotados = lista)))
         }
         _pila.value = _pila.value.filterNot { it is Pantalla.Anotar || it is Pantalla.Rapido }
-        if (editar == null) avisar(tx(R.string.aviso_anotado, nuevo.nombre))
+        if (editar == null) {
+            contadores.contar("cucha.comida_anotada")
+            avisar(tx(R.string.aviso_anotado, nuevo.nombre))
+        }
     }
 
     fun borrarAnotado(fecha: String, id: String) = cambiar { e ->
@@ -434,6 +441,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     fun guardarReceta(r: Receta) {
         val id = r.id.ifEmpty { nuevoId("r") }
         cambiar { e -> e.copy(recetas = e.recetas.filter { it.id != id } + r.copy(id = id, propia = true)) }
+        if (r.id.isEmpty()) contadores.contar("cucha.receta_creada")
         reemplazar(Pantalla.VerReceta(id))
     }
 
@@ -491,9 +499,10 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Plan y mercado ----- */
 
-    fun ponerEnPlan(letra: String, dia: Int, comida: String, receta: String?) = cambiar { e ->
+    fun ponerEnPlan(letra: String, dia: Int, comida: String, receta: String?) {
         val k = L.clavePlan(letra, dia, comida)
-        e.copy(plan = if (receta == null) e.plan - k else e.plan + (k to receta))
+        if (receta != null && _estado.value?.plan?.get(k) != receta) contadores.contar("cucha.comida_planeada")
+        cambiar { e -> e.copy(plan = if (receta == null) e.plan - k else e.plan + (k to receta)) }
     }
 
     fun alternar(si: Boolean) = cambiar { it.copy(alternar = si) }
@@ -505,6 +514,7 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     fun agregarMercado(texto: String) {
         val t = texto.trim().take(60); if (t.isEmpty()) return
         cambiar { it.copy(mercadoExtra = it.mercadoExtra + t) }
+        contadores.contar("cucha.mercado_agregado")
     }
 
     fun quitarMercado(texto: String) = cambiar { it.copy(mercadoExtra = it.mercadoExtra - texto, mercadoHecho = it.mercadoHecho - texto) }

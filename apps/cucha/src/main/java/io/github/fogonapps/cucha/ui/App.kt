@@ -110,7 +110,22 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
         if (estado.listo) PoliticaCuenta(vm)
         val guia = io.github.fogonapps.identidad.rememberGuia("cucha")
-        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.HOY) {
+        val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
+        io.github.fogonapps.social.ui.ContarEntrada(when (pila.lastOrNull()) {
+            Pantalla.Ajustes -> "ajustes.abrir"
+            Pantalla.Perfil -> "perfil.abrir"
+            Pantalla.Reporte -> "reporte.abrir"
+            is Pantalla.Anotar -> "cucha.pantalla.anotar"
+            is Pantalla.Rapido -> "cucha.pantalla.anotar_rapido"
+            is Pantalla.VerReceta -> "cucha.pantalla.ver_receta"
+            is Pantalla.EditarReceta -> "cucha.pantalla.editar_receta"
+            Pantalla.Mercado -> "cucha.pantalla.lista_mercado"
+            Pantalla.Metas -> "cucha.pantalla.metas"
+            is Pantalla.ResenarRestaurante -> "cucha.pantalla.resenar_restaurante"
+            null -> "cucha.pantalla." + pestana.name.lowercase()
+            else -> null
+        })
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.HOY, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
             Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
@@ -138,7 +153,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                         }
                         }
                     }
-                    BarraFlotante(pestana, vm::irA, vm::anotarAhora, Modifier.align(Alignment.BottomCenter))
+                    if (pila.isEmpty()) BarraFlotante(pestana, vm::irA, vm::anotarAhora, Modifier.align(Alignment.BottomCenter))
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
 
@@ -166,7 +181,7 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                             Pantalla.Reporte -> Reporte(vm)
                             Pantalla.Apariencia -> Column {
                                 Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar)
-                                PantallaApariencia(Paleta.Cucha, AlmacenApariencia.de(LocalContext.current))
+                                PantallaApariencia(Paleta.Cucha, AlmacenApariencia.de(LocalContext.current), alCambiarTema = { contadores.contar("apariencia.cambiar_tema") })
                             }
                             Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             Pantalla.Licencias -> Licencias(vm)

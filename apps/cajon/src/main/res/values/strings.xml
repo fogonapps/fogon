@@ -191,7 +191,7 @@
   <string name="siguiente">Next</string>
   <string name="empezar">Start</string>
   <string name="tut_hola">Hi! I’m El Cajón</string>
-  <string name="tut_hola_texto">I keep everything you watch, read and listen to, with your rating, review and diary. No ads, no tracking.</string>
+  <string name="tut_hola_texto">I keep everything you watch, read and listen to, with your rating, review and diary. No ads. We don\'t sell your data.</string>
   <string name="tut_tengo_respaldo">I already have an account</string>
   <string name="tut_nombre">What should I call you?</string>
   <string name="tut_privado">Everything is saved on your phone. If you create an account, it is also kept in it, encrypted so only you can open it.</string>
@@ -548,7 +548,7 @@
   <string name="editar_perfil">Edit profile</string>
   <string name="como_lo_ves">As you see it</string>
   <string name="como_lo_verian">As others would see it</string>
-  <string name="vista_publica_pista">This is how your profile would look once public profiles exist: without private things or what El Cajón learned about your taste. For now nothing leaves your phone.</string>
+  <string name="vista_publica_pista">This is how your profile would look once public profiles exist: without private things or what El Cajón learned about your taste. This preview stays on your phone.</string>
   <string name="completar_perfil">Complete your profile</string>
   <string name="parte_destacados">Yours</string>
   <string name="destacados_pista">Tap a slot to pick; long-press to change it.</string>
@@ -1055,7 +1055,7 @@
   <string name="red_hace_horas">%1$d h ago</string>
   <string name="red_hace_min">%1$d min ago</string>
   <string name="red_invita_titulo">Your people on El Cajón</string>
-  <string name="red_invita_texto">Create your network account to follow people, see what they share and share yours. It’s optional: without an account, nothing leaves your phone.</string>
+  <string name="red_invita_texto">Create your network account to follow people, see what they share and share yours. The account is optional.</string>
   <string name="red_lo_ultimo">Latest</string>
   <string name="red_mandar_codigo">Send me the code</string>
   <string name="red_mas">See more</string>

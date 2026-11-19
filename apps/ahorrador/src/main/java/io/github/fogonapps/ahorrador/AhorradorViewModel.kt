@@ -81,6 +81,7 @@ enum class Pestana { INICIO, GENTE, RESUMEN, SOBRES, METAS }
 val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("alcancia", "La Alcancía", "LaAlcancia-Fogon")
 
 class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
+    private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
     /** Las frases del saludo, como en El Cajón: las propias (al_), las de la gente de La Alcancía y los votos. */
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) {
         // Sin cuenta, La Alcancía no se conecta a nada (ni para las frases de la comunidad).
@@ -95,7 +96,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     val red = io.github.fogonapps.social.RedApp(ahorradorApp.perfiles, sesion, viewModelScope, CONFIGURACION_RED,
         io.github.fogonapps.social.TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil, R.string.cuenta_muchas_cuentas),
         { avisar(tx(it)) }, ::cambiarPerfil, { io.github.fogonapps.ahorrador.datos.cabeLogro(it) }, "logros-publicados.json",
-        listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS))
+        listOf(io.github.fogonapps.ahorrador.datos.PARTE_METAS), alEntrar = { nueva -> contadores.contar(if (nueva) "social.registro" else "social.entrar") })
     /** D-033: el cuaderno se guarda solo en la cuenta, cifrado con la contraseña, y vuelve al reinstalar. */
     private val copia = io.github.fogonapps.social.CopiaEnCuenta(red, app.getSharedPreferences("copia-alcancia-p$idPerfil", Context.MODE_PRIVATE), viewModelScope,
         leer = { _estado.value?.let { io.github.fogonapps.social.ui.conPalabrasOcultas(io.github.fogonapps.identidad.conApariencia(JsonAhorrador.encodeToString(Estado.serializer(), it), io.github.fogonapps.identidad.AlmacenApariencia.de(app)), app) } },
@@ -302,7 +303,10 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             (mov.tipo == TipoMovimiento.GASTO || mov.tipo == TipoMovimiento.TRASPASO) && gmf(mov.monto) > 0)
             Movimiento(nuevoId("m"), mov.fecha, TipoMovimiento.GASTO, gmf(mov.monto), mov.cuenta, categoria = "impuestos", nota = "4×1000")
         else null
-        cambiar(alGuardar) { st ->
+        cambiar({ estado ->
+            if (nuevo) contadores.contar("alcancia.movimiento_anotado")
+            alGuardar(estado)
+        }) { st ->
             val lista = if (nuevo) st.movimientos + mov else st.movimientos.map { if (it.id == mov.id) mov else it }
             val avisos = st.notificaciones.registros.filter { it.movimiento == mov.id }
             val aprendidas = if (mov.categoria != null) avisos.associate { claveContraparte(it.aviso) to mov.categoria } else emptyMap()
@@ -323,7 +327,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
             listOfNotNull(m, if (e.gmf && origen?.tipo == TipoCuenta.BANCO && b.tipo == TipoMovimiento.GASTO && gmf(b.monto) > 0)
                 Movimiento(nuevoId("m"), fecha, TipoMovimiento.GASTO, gmf(b.monto), cuenta, categoria = "impuestos", nota = "4×1000") else null)
         }
-        cambiar { it.copy(movimientos = it.movimientos + nuevos) }
+        cambiar({ contadores.contar("alcancia.movimientos_en_lote") }) { it.copy(movimientos = it.movimientos + nuevos) }
         avisar(txPlural(R.plurals.varios_guardados, buenos.size))
         cerrar()
     }
@@ -496,7 +500,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     /* ----- Metas ----- */
 
     fun guardarMeta(m: Meta) {
-        cambiar { e ->
+        cambiar({ if (m.id.isEmpty()) contadores.contar("alcancia.meta_creada") }) { e ->
             if (m.id.isEmpty()) e.copy(metas = e.metas + m.copy(id = nuevoId("t")))
             else e.copy(metas = e.metas.map { if (it.id == m.id) m else it })
         }

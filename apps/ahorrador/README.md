@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="La Alcancía"></p>
 
-Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet salvo tu cuenta de Fogón Social (opcional) y sin pedirte las claves del banco. Su personaje es una ranita tranquila.
+Gastos, presupuesto y ahorro. Sin anuncios y sin pedirte las claves del banco. No vendemos tus datos. Su personaje es una ranita tranquila.
 
 - Descargar: [fogonapps/la-alcancia](https://github.com/fogonapps/la-alcancia/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-alcancia`).
 - Novedades de cada versión: en las [versiones de La Alcancía](https://github.com/fogonapps/la-alcancia/releases).
@@ -42,18 +42,18 @@ Gastos, presupuesto y ahorro. Sin anuncios, sin rastreo, sin internet salvo tu c
 | Permiso | Para qué |
 |---------|----------|
 | Notificaciones | Avisar de los pagos fijos que están por vencer y el recordatorio diario, si lo activas, además de confirmar las alertas del banco. Se pide al crear el primer pago fijo o al encender el recordatorio. |
-| Acceso a notificaciones (opcional) | Android permite ver todas las notificaciones. Solo se procesan las apps y los bancos elegidos: SMS que empiezan por «Bancolombia:» y envíos reconocidos de Nu. Lo demás se ignora y no se guarda. Solo alertas nuevas: no se lee el historial de SMS. Se activa en Perfil → Anotar desde el banco y se puede apagar allí o revocar en Android. Nada sale del teléfono. |
-| Internet | Solo si entras con tu cuenta de Fogón Social: «Tu gente», los logros que compartes, tus metas en porcentaje, las frases de la comunidad y la copia de tu cuaderno, cifrada con tu contraseña (nadie más la puede leer). Sin cuenta, la app no se conecta a nada. Nunca salen montos, saldos, cuentas, bancos ni movimientos. |
+| Acceso a notificaciones (opcional) | Android permite ver todas las notificaciones. Solo se procesan las apps y los bancos elegidos: SMS que empiezan por «Bancolombia:» y envíos reconocidos de Nu. Lo demás se ignora y no se guarda. Solo alertas nuevas: no se lee el historial de SMS. Se activa en Perfil → Anotar desde el banco y se puede apagar allí o revocar en Android. Las alertas se procesan en el teléfono. |
+| Internet | Estadísticas de uso anónimas, que puedes apagar en Ajustes, y Fogón Social si entras con tu cuenta. Tus movimientos se quedan en el teléfono y solo viajan en la copia cifrada con tu contraseña. En la red solo se ven los logros que compartes y tus metas en porcentaje. |
 | Huella o bloqueo del teléfono | El candado, si lo activas. |
 | Arrancar con el teléfono | Volver a programar el aviso diario después de reiniciar. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) pueda guardar o recuperar sus datos en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
-- **Sin internet salvo tu cuenta:** sin cuenta de Fogón Social la app no se conecta a nada; con cuenta, tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas y tus metas en porcentaje.
+- **Estadísticas anónimas:** vienen encendidas y se pueden apagar en Ajustes → Privacidad. Solo se envían sumas por día.
 - **Sin copias automáticas a la nube de Google:** solo se copian los datos al pasar a un teléfono nuevo.
 
 ## Por qué no se conecta al banco
 
-En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. Una app libre, sin servidor y sin internet no puede conectarse, y así tampoco nadie tiene tus claves. En cambio, la app importa el extracto que descargas del banco (CSV), sin salir del teléfono.
+En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. La Alcancía no se conecta al banco ni te pide tus claves. En cambio, la app importa el extracto que descargas del banco (CSV), sin salir del teléfono.
 
 ## Preguntas frecuentes
 
@@ -63,7 +63,7 @@ También están dentro de la app (Perfil → Preguntas frecuentes, arreglos `pre
 No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.
 
 **¿Dónde quedan mis datos?**
-Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social: tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas, nunca montos. Guarda respaldos desde Perfil → Respaldo.
+En tu teléfono. Si entras con tu cuenta de Fogón Social, también se guarda una copia cifrada con tu contraseña. Guarda respaldos desde Perfil → Respaldo.
 
 **¿Qué sistema elijo?**
 Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.

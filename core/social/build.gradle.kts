@@ -26,6 +26,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.work.runtime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     api(libs.okhttp)
@@ -33,5 +34,7 @@ dependencies {
     implementation(libs.media3.transformer)
     implementation(libs.media3.effect)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.work.testing)
     testImplementation(libs.kotlinx.coroutines.test)
 }

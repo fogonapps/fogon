@@ -25,6 +25,7 @@ open class RedApp(
     archivoPublicaciones: String,
     /** Las partes del perfil con «Quién lo ve» que se recuerdan en el teléfono. */
     private val partesVisibles: List<String> = emptyList(),
+    private val alEntrar: (Boolean) -> Unit = {},
 ) : ControladorCuentaSocial(scope, almacen.sesion, almacen.usuario) {
     private var redPermitida = almacen.politicaAceptada == POLITICA_VIGENTE
     val correoDisponible = MutableStateFlow<Boolean?>(null)
@@ -113,6 +114,7 @@ open class RedApp(
         sesion.invalidar(); almacen.guardarIdCuenta(a.idCuenta)
         almacen.token = a.token; almacen.usuario = a.usuario; _usuario.value = a.usuario
         revisarServidor().join()
+        alEntrar(a.nueva)
         return true
     }
     fun decidirGracia(conservar: Boolean) = scope.launch {

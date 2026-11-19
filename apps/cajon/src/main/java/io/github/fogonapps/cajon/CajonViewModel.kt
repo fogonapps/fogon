@@ -266,6 +266,7 @@ enum class EstadoSync { APAGADA, SINCRONIZANDO, LISTA, SIN_CONEXION, ERROR }
 data class Sync(val estado: EstadoSync, val ultima: Long = 0, val mensaje: String? = null)
 
 class CajonViewModel(app: Application) : AndroidViewModel(app) {
+    private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
     private val cajonApp = app as CajonApp
     val recursos = cajonApp.recursos()
     private val almacen = recursos.almacen
@@ -1057,6 +1058,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             val nueva = L.cambiarEstadoConRegistro(o.copy(id = id, artista = artistaId, agregada = ahora(), cambio = ahora()), estado, hoy, nuevoId("g"))
             e.copy(obras = e.obras + nueva, artistas = artistas)
         }
+        contadores.contar("cajon.coleccion_agregada")
         avisar(tx(R.string.aviso_agregada, o.titulo))
         if (abrirFicha) reemplazar(Pantalla.Ficha(id))
         // Si se agregó antes de que llegaran los datos completos (la previa se abre al instante), se traen ahora.
@@ -1468,6 +1470,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (!io.github.fogonapps.cajon.datos.Resenas.valida(r) || !io.github.fogonapps.cajon.datos.Resenas.parteValida(o, r.parte)) return
         if (!puedeCompartirResena(r.visibilidad)) return
         cambiarResenas { e -> io.github.fogonapps.cajon.datos.Resenas.guardar(e, r, ahora()) }
+        contadores.contar("cajon.resena_escrita")
         cerrar()
     }
 
@@ -1539,6 +1542,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             })
         }
         cerrar()
+        if (r.id.isEmpty()) contadores.contar("cajon.diario_anotado")
         avisar(tx(R.string.aviso_registrado))
         return nuevo.id
     }
@@ -2838,6 +2842,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (id == null) {
             val nueva = nuevoId("l")
             cambiar { e -> e.copy(listas = e.listas + Lista(nueva, n, descripcion.trim().take(500), numerada = numerada, cambio = ahora())) }
+            contadores.contar("cajon.lista_creada")
             reemplazar(Pantalla.VerLista(nueva))
         } else {
             cambiar { e -> e.copy(listas = e.listas.map { if (it.id == id) it.copy(nombre = n, descripcion = descripcion.trim().take(500), numerada = numerada, cambio = ahora()) else it }) }

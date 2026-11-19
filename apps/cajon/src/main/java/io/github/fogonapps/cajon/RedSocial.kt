@@ -395,6 +395,7 @@ class RedSocial(
             _borrarEl.value = a.borrarEl
             if (!decision.await() || !sesion.vigente(marca)) return false
         }
+        io.github.fogonapps.social.Contadores.de(app).contar(if (a.nueva) "social.registro" else "social.entrar")
         _usuario.value = a.usuario
         AvisosRed.programar(app)
         subida?.cancel()
@@ -779,7 +780,7 @@ class RedSocial(
                     cambiar { e -> e.copy(publicaciones = e.publicaciones + p) }
                     subirAhora()
                 }
-                if (ok) { decir(R.string.red_publicada); cargarFeed(); listo() }
+                if (ok) { io.github.fogonapps.social.Contadores.de(app).contar("cajon.publicado"); decir(R.string.red_publicada); cargarFeed(); listo() }
             } finally { preparado?.archivo?.delete(); _progresoVideo.value = null; _publicando.value = false }
         }.also { publicacionEnCurso = it }
     }

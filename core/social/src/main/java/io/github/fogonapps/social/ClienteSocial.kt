@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * El cliente de Fogón Social, el servidor de Fogón (perfiles, seguir, feed, me gusta, comentarios, avisos). Todo es
- * opcional: sin cuenta, la app funciona igual y nada sale del teléfono. [token] es el de la cuenta (en la caja fuerte).
+ * opcional: las operaciones de cuenta solo se ejecutan con sesión. Las estadísticas anónimas usan un cliente separado. [token] es el de la cuenta (en la caja fuerte).
  */
 open class ClienteSocial(
     private val token: String? = null,
@@ -406,6 +406,11 @@ open class ClienteSocial(
         val JSON = "application/json".toMediaType()
         private val JPEG = "image/jpeg".toMediaType()
         private val httpPredeterminado = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
+        internal val httpContadores = httpPredeterminado.newBuilder()
+            .cookieJar(okhttp3.CookieJar.NO_COOKIES)
+            .followRedirects(false)
+            .retryOnConnectionFailure(false)
+            .build()
         private val httpVideo = httpPredeterminado.newBuilder().writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS).build()
         /** Para esperar mensajes (el servidor tiene la pregunta abierta hasta 25 s). */
         private val httpLargo = httpPredeterminado.newBuilder().readTimeout(40, TimeUnit.SECONDS).build()

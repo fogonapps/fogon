@@ -51,6 +51,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         if (savedInstanceState == null) { abrirDesdeWidget(intent); abrirChatAvisado(intent) }
+        if (savedInstanceState == null) io.github.fogonapps.social.Contadores.arrancar(this)
         setContent {
             val perfil by (application as CuchaApp).perfilActivo.collectAsStateWithLifecycle()
             androidx.compose.runtime.key(perfil) {
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
 
                 val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
                     if (uri != null) runCatching {
-                        contentResolver.openOutputStream(uri, "wt")?.use { it.write(vm.exportarJson().encodeToByteArray()) }
+                        contentResolver.openOutputStream(uri, "wt")?.use { it.write(vm.exportarJson().encodeToByteArray()); io.github.fogonapps.social.Contadores.de(this@MainActivity).contar("respaldo.exportar") }
                     }.onSuccess { aviso(getString(R.string.aviso_respaldo_guardado)) }.onFailure { aviso(getString(R.string.aviso_no_exportado)) }
                 }
                 var porImportar by remember { mutableStateOf<Estado?>(null) }
@@ -91,7 +92,10 @@ class MainActivity : ComponentActivity() {
                 var paraEscanear by remember { mutableStateOf<Pair<String, String>?>(null) }
                 val escanear = rememberLauncherForActivityResult(ScanContract()) { r ->
                     val destino = paraEscanear
-                    if (r.contents != null && destino != null) vm.buscarCodigo(r.contents, destino.first, destino.second)
+                    if (r.contents != null && destino != null) {
+                        io.github.fogonapps.social.Contadores.de(this@MainActivity).contar("cucha.codigo_escaneado")
+                        vm.buscarCodigo(r.contents, destino.first, destino.second)
+                    }
                 }
                 // Una foto del teléfono para una receta: el selector de fotos del sistema (no pide permisos).
                 var alElegir by remember { mutableStateOf<((android.net.Uri) -> Unit)?>(null) }

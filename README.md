@@ -21,7 +21,7 @@ No copiamos marcas ni hablamos mal de nadie. Hacemos las cosas a nuestra manera 
 
 - **Sin suscripciones:** la app viene completa, sin cobros cada mes.
 - **Sin anuncios.**
-- **Sin rastreo:** lo tuyo se queda en tu teléfono y lo exportas cuando quieras.
+- **No vendemos tus datos.** Puedes exportar lo tuyo cuando quieras. Las estadísticas de uso anónimas vienen encendidas y puedes apagarlas en Ajustes.
 
 **Siempre alcanza para uno más.**
 

@@ -97,7 +97,7 @@ private val SEGUNDAS = listOf(Color(0xFF5E5E66), Color(0xFF5C7A12), Color(0xFFF5
  * no muestra la vista previa ni los temas (el paso "¡Dale vida!" del tutorial ya los tiene arriba).
  */
 @Composable
-fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier, conEstilo: Boolean = true) {
+fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier, conEstilo: Boolean = true, alCambiarTema: () -> Unit = {}) {
     val a by almacen.estado.collectAsState()
     val f = FogonTema.actual
     val e = a.estilo
@@ -107,7 +107,7 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
         if (conEstilo) {
             VistaPrevia(paleta)
             Encabezado(stringResource(R.string.fogon_ap_estilo))
-            SelectorEstilos(paleta, almacen)
+            SelectorEstilos(paleta, almacen, alCambiarTema = alCambiarTema)
         }
 
         Encabezado(stringResource(R.string.fogon_ap_tintas))
@@ -164,14 +164,17 @@ fun PantallaApariencia(paleta: Paleta, almacen: AlmacenApariencia, modifier: Mod
 
 /** Los cuatro temas en dos filas de dos, cada uno con su papel, su luz y sus tintas, y la explicación del elegido. */
 @Composable
-fun SelectorEstilos(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier) {
+fun SelectorEstilos(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier = Modifier, alCambiarTema: () -> Unit = {}) {
     val a by almacen.estado.collectAsState()
     val f = FogonTema.actual
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Estilo.entries.chunked(2).forEach { fila ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 fila.forEach { s ->
-                    MuestraEstilo(fogonDe(paleta, a.copy(estilo = s)), s.nombre(paleta), s == a.estilo, Modifier.weight(1f)) { almacen.elegirEstilo(s) }
+                    MuestraEstilo(fogonDe(paleta, a.copy(estilo = s)), s.nombre(paleta), s == a.estilo, Modifier.weight(1f)) {
+                        if (s != a.estilo) alCambiarTema()
+                        almacen.elegirEstilo(s)
+                    }
                 }
             }
         }

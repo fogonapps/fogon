@@ -5,6 +5,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
+import org.junit.Assert.assertEquals
+import io.github.fogonapps.social.ui.R as SocialR
 import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -80,6 +84,11 @@ class CapturasPantallasTest {
             regla.guardarCaptura("inicio", variante)
             abrir(Pantalla.Ajustes)
             regla.guardarCaptura("ajustes", variante)
+            val enviar = regla.onNodeWithText(app.getString(SocialR.string.contadores_titulo), useUnmergedTree = true)
+            val ver = regla.onNodeWithText(app.getString(SocialR.string.contadores_ver), useUnmergedTree = true)
+            ver.performScrollTo()
+            assertEquals(ver.fetchSemanticsNode().boundsInRoot.left, enviar.fetchSemanticsNode().boundsInRoot.left, 0.5f)
+            regla.guardarCaptura("ajustes-contadores-alineados", variante)
             abrir(Pantalla.Privacidad)
             regla.guardarCaptura("privacidad", variante)
             abrir(Pantalla.EditarPerfil)

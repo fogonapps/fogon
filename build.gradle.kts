@@ -17,8 +17,8 @@ subprojects {
 
 // Las pruebas visuales usan la tarea habitual, con su propio filtro y salida recuperable de la caché.
 subprojects {
-    if (path.startsWith(":apps:")) {
-        val soloCapturas = providers.gradleProperty("soloCapturas").isPresent
+    if (path.startsWith(":apps:") || path == ":core:social") {
+        val soloCapturas = path.startsWith(":apps:") && providers.gradleProperty("soloCapturas").isPresent
         val directorioCapturas = layout.buildDirectory.dir("reports/capturas-pantallas")
         val homePruebas = gradle.gradleUserHomeDir
         tasks.withType<Test>().configureEach {

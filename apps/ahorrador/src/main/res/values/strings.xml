@@ -322,7 +322,7 @@
   <string name="tut_empezar">Start</string>
   <string name="tut_hola">Hi, I’m La Alcancía</string>
   <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
-  <string name="tut_privado">Everything stays on this phone: nobody else sees your money. The app only uses the internet if you sign in with your Fogón Social account: then your notebook is saved there encrypted with your password, and nobody else can read it.</string>
+  <string name="tut_privado">Your transactions are saved on this phone. If you sign in with your Fogón Social account, your notebook is saved there encrypted with your password, and nobody else can read it.</string>
   <string name="tut_saldos">What are you starting with?</string>
   <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
   <string name="tut_sistema">How do you want to budget?</string>
@@ -390,7 +390,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. In Colombia, open finance only covers regulated companies, and a free app with no server can’t connect. This way nobody has your passwords, either. Logging entries is quick with the app’s keypad.</item>
-    <item>Only on your phone. The app only uses the internet if you sign in with your Fogón Social account: your notebook is saved there encrypted with your password and only the achievements you share appear on the network, never amounts. Save backups from Profile → Backup.</item>
+    <item>On your phone. If you sign in with your Fogón Social account, your notebook is saved there encrypted with your password and only the achievements you share appear on the network, never amounts. Save backups from Profile → Backup.</item>
     <item>For control, Envelopes. For something simple, the 50/30/20 rule. If you like writing and thinking about the month, kakeibo. If you only want to see where it goes, Just track. You can change it any time.</item>
     <item>Card purchases are expenses from the card account (with their instalments). Paying the card is a transfer from your bank to the card: it isn’t another expense, you already counted it when you bought.</item>
     <item>Because every bank calculates it its own way. The app estimates it with the percent you set on the account; the real figure is on your statement.</item>
@@ -417,7 +417,7 @@
     <string name="banco_titulo">Record from your bank</string>
     <string name="banco_explicacion">Android lets this access see all your notifications. La Alcancía filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands; from Nequi, Daviplata, Davivienda, Banco de Bogotá and BBVA it reads their app and texts that name them, and always asks before saving. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
     <string name="banco_activar">Enable</string>
-    <string name="banco_local">Everything stays on this phone.</string>
+    <string name="banco_local">Alerts are read and kept only on this phone.</string>
     <string name="banco_permiso">Open notification access in Android</string>
     <string name="banco_permiso_si">Notification access granted.</string>
     <string name="banco_permiso_no">Notification access has not been granted.</string>
@@ -463,7 +463,7 @@
     <string name="aj_apariencia_idioma">Appearance and language</string>
     <string name="aj_privacidad">Privacy</string>
     <string name="aj_que_sale">What leaves your phone</string>
-    <string name="aj_privacidad_texto">La Alcancía only uses the internet if you sign in with your Fogón Social account: then your notebook is saved there encrypted with your password (nobody else can read it) and only the achievements you share appear on the network. Backups save your data to a file you choose; CSV files contain your transactions. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages.</string>
+    <string name="aj_privacidad_texto">If you sign in with your Fogón Social account, your notebook is saved there encrypted with your password (nobody else can read it) and only the achievements you share appear on the network. If you agree to send anonymous counts, another Fogón app can send them. Backups save your data to a file you choose; CSV files contain your transactions. Notification access reads new alerts from selected banks and processes them here: it does not read SMS history or store original messages.</string>
     <string name="aj_sistema_pista">Choose how to organize your money</string>
     <string name="aj_importar_pista">Bring transactions from a CSV file</string>
     <string name="aj_apariencia_pista">Theme, colors and comfort</string>
@@ -509,7 +509,7 @@
     <item>Clear accounts, calm mind.</item>
   </string-array>
     <string name="varios_titulo">Log several</string>
-    <string name="varios_pista">Type or paste several entries, separated by “+”, commas or new lines. They’re read on your phone: nothing leaves it.</string>
+    <string name="varios_pista">Type or paste several entries, separated by “+”, commas or new lines. They’re read on your phone and the text never leaves it.</string>
     <string name="varios_ejemplo">Lunch 25k + Uber 12k\nGroceries $84,300</string>
     <string name="varios_sin_categoria">No category: tap to choose one</string>
     <string name="varios_quitar">Remove %1$s</string>

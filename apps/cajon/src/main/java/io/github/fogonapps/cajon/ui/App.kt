@@ -139,7 +139,29 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
 
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
         val guia = io.github.fogonapps.identidad.rememberGuia("cajon")
-        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
+        val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
+        io.github.fogonapps.social.ui.ContarEntrada(when (pila.lastOrNull()) {
+            Pantalla.Ajustes -> "ajustes.abrir"
+            Pantalla.Perfil -> "perfil.abrir"
+            Pantalla.Reporte -> "reporte.abrir"
+            Pantalla.Red -> "cajon.pantalla.gente"
+            is Pantalla.Buscar -> "cajon.pantalla.buscar"
+            is Pantalla.Ficha -> "cajon.pantalla.ficha"
+            is Pantalla.Previa -> "cajon.pantalla.previa"
+            Pantalla.Listas -> "cajon.pantalla.listas"
+            Pantalla.ListasComunes -> "cajon.pantalla.listas_comunes"
+            Pantalla.Diario -> "cajon.pantalla.diario"
+            Pantalla.Cifras -> "cajon.pantalla.cifras"
+            Pantalla.Artistas -> "cajon.pantalla.artistas"
+            Pantalla.Retos -> "cajon.pantalla.retos"
+            Pantalla.TusGustos -> "cajon.pantalla.gustos"
+            Pantalla.MusicaEscuchada -> "cajon.pantalla.escuchas"
+            Pantalla.OidosPendientes -> "cajon.pantalla.escuchas_pendientes"
+            Pantalla.AvisosRed -> "cajon.pantalla.avisos"
+            null -> "cajon.pantalla." + pestana.name.lowercase()
+            else -> null
+        })
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
             Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
@@ -175,7 +197,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                         }
                         }
                     }
-                    BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
+                    if (pila.isEmpty()) BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
             }
@@ -226,7 +248,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Sesiones -> Sesiones(vm)
                             Pantalla.Apariencia -> Column {
                                 Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar)
-                                PantallaApariencia(Paleta.Cajon, AlmacenApariencia.de(LocalContext.current))
+                                PantallaApariencia(Paleta.Cajon, AlmacenApariencia.de(LocalContext.current), alCambiarTema = { contadores.contar("apariencia.cambiar_tema") })
                             }
                             Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             Pantalla.Licencias -> Licencias(vm)

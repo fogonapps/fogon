@@ -83,18 +83,18 @@ fun Modifier.destinoGuia(id: String): Modifier = composed {
  * arranque de la app y sin pantallas encima); después, solo con [ControladorGuia.empezar].
  */
 @Composable
-fun ConGuia(guia: ControladorGuia, pasos: List<PasoGuia>, disponible: Boolean, contenido: @Composable () -> Unit) {
+fun ConGuia(guia: ControladorGuia, pasos: List<PasoGuia>, disponible: Boolean, alTerminar: (Boolean) -> Unit = {}, contenido: @Composable () -> Unit) {
     LaunchedEffect(disponible) { if (disponible && !guia.visto && !guia.activo && pasos.isNotEmpty()) guia.empezar() }
     CompositionLocalProvider(LocalGuia provides guia) {
         Box(Modifier.fillMaxSize()) {
             contenido()
-            if (guia.activo && pasos.isNotEmpty()) CapaGuia(guia, pasos)
+            if (guia.activo && pasos.isNotEmpty()) CapaGuia(guia, pasos, alTerminar)
         }
     }
 }
 
 @Composable
-private fun CapaGuia(guia: ControladorGuia, pasos: List<PasoGuia>) {
+private fun CapaGuia(guia: ControladorGuia, pasos: List<PasoGuia>, alTerminar: (Boolean) -> Unit) {
     val f = FogonTema.actual
     val densidad = LocalDensity.current
     val indice = guia.paso.coerceIn(0, pasos.lastIndex)
@@ -104,8 +104,9 @@ private fun CapaGuia(guia: ControladorGuia, pasos: List<PasoGuia>) {
     var alto by remember { mutableFloatStateOf(0f) }
     val margen = with(densidad) { 8.dp.toPx() }
     val zona = paso.destino?.let { guia.zonas[it] }?.translate(-origen)?.inflate(margen)
-    fun siguiente() { if (ultimo) guia.terminar() else guia.paso = indice + 1 }
-    BackHandler { guia.terminar() }
+    fun terminar(completa: Boolean) { guia.terminar(); alTerminar(completa) }
+    fun siguiente() { if (ultimo) terminar(true) else guia.paso = indice + 1 }
+    BackHandler { terminar(false) }
     Box(
         Modifier.fillMaxSize()
             .onGloballyPositioned { origen = it.positionInRoot(); alto = it.size.height.toFloat() }
@@ -141,7 +142,7 @@ private fun CapaGuia(guia: ControladorGuia, pasos: List<PasoGuia>) {
             Text(paso.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto)
             Text(paso.texto, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                if (!ultimo) TextButton({ guia.terminar() }) { Text(stringResource(R.string.fogon_guia_omitir), color = f.textoSuave) }
+                if (!ultimo) TextButton({ terminar(false) }) { Text(stringResource(R.string.fogon_guia_omitir), color = f.textoSuave) }
                 Spacer(Modifier.weight(1f))
                 BotonRiso(stringResource(if (ultimo) R.string.fogon_guia_entendido else R.string.fogon_guia_siguiente), ::siguiente)
             }

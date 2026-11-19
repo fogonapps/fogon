@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
         arranque.setKeepOnScreenCondition { vm.estado.value == null }
         bloqueada.value = vm.candado.value && candadoDisponible()
         if (savedInstanceState == null) { abrirDesdeWidget(intent); abrirChatAvisado(intent) }
+        if (savedInstanceState == null) io.github.fogonapps.social.Contadores.arrancar(this)
         setContent {
             val perfil by (application as AhorradorApp).perfilActivo.collectAsStateWithLifecycle()
             androidx.compose.runtime.key(perfil) {
@@ -91,7 +92,7 @@ class MainActivity : ComponentActivity() {
 
                 val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
                     if (uri != null) runCatching {
-                        contentResolver.openOutputStream(uri)?.use { it.write(vm.exportarJson().encodeToByteArray()) }
+                        contentResolver.openOutputStream(uri)?.use { it.write(vm.exportarJson().encodeToByteArray()); io.github.fogonapps.social.Contadores.de(this@MainActivity).contar("respaldo.exportar") }
                     }.onSuccess { aviso(getString(R.string.aviso_respaldo_guardado)) }.onFailure { aviso(getString(R.string.aviso_no_exportado)) }
                 }
                 val exportarCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->

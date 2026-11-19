@@ -190,7 +190,7 @@
   <string name="siguiente">Siguiente</string>
   <string name="empezar">Empezar</string>
   <string name="tut_hola">¡Hola! Soy El Cajón</string>
-  <string name="tut_hola_texto">Guardo todo lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario. Sin anuncios y sin rastreo.</string>
+  <string name="tut_hola_texto">Guardo todo lo que ves, lees y escuchas, con tu nota, tu reseña y tu diario. Sin anuncios. No vendemos tus datos.</string>
   <string name="tut_tengo_respaldo">Ya tengo cuenta</string>
   <string name="tut_nombre">¿Cómo te llamo?</string>
   <string name="tut_privado">Todo se guarda en tu teléfono. Si creas una cuenta, también queda en ella, cifrado para que solo tú lo abras.</string>
@@ -548,7 +548,7 @@
   <string name="editar_perfil">Editar perfil</string>
   <string name="como_lo_ves">Como lo ves tú</string>
   <string name="como_lo_verian">Como lo verían otros</string>
-  <string name="vista_publica_pista">Así se vería tu perfil cuando existan los perfiles públicos: sin lo privado ni lo que El Cajón aprendió de tus gustos. Por ahora nada sale de tu teléfono.</string>
+  <string name="vista_publica_pista">Así se vería tu perfil cuando existan los perfiles públicos: sin lo privado ni lo que El Cajón aprendió de tus gustos. Esta vista previa se queda en tu teléfono.</string>
   <string name="completar_perfil">Completar tu perfil</string>
   <string name="parte_destacados">Lo tuyo</string>
   <string name="destacados_pista">Toca un hueco para elegir; mantén presionado para cambiarlo.</string>
@@ -1055,7 +1055,7 @@
   <string name="red_hace_horas">hace %1$d h</string>
   <string name="red_hace_min">hace %1$d min</string>
   <string name="red_invita_titulo">Tu gente en El Cajón</string>
-  <string name="red_invita_texto">Crea tu cuenta en la red para seguir a otras personas, ver lo que comparten y compartir lo tuyo. Es opcional: sin cuenta, nada sale de tu teléfono.</string>
+  <string name="red_invita_texto">Crea tu cuenta en la red para seguir a otras personas, ver lo que comparten y compartir lo tuyo. La cuenta es opcional.</string>
   <string name="red_lo_ultimo">Lo último</string>
   <string name="red_mandar_codigo">Mandarme el código</string>
   <string name="red_mas">Ver más</string>

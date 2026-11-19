@@ -1,0 +1,1 @@
+Anonymous usage statistics: the app adds up each day how often each part is opened, so we know what to improve. No account, texts or amounts; you can see them and turn them off in Settings → Privacy. The bottom bar no longer peeks out in the shop and the market.

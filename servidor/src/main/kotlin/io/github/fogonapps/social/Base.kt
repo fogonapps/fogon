@@ -21,6 +21,11 @@ class Base(ruta: String) {
             createStatement().use { s ->
                 s.execute("PRAGMA journal_mode=WAL")
                 s.execute("PRAGMA foreign_keys=ON")
+                s.execute("""CREATE TABLE IF NOT EXISTS contadores(
+                    dia TEXT NOT NULL, app TEXT NOT NULL, version TEXT NOT NULL, nombre TEXT NOT NULL,
+                    total INTEGER NOT NULL, PRIMARY KEY(dia, app, version, nombre))""")
+                s.execute("""CREATE TABLE IF NOT EXISTS lotes_contadores(
+                    lote TEXT PRIMARY KEY, recibido_dia TEXT NOT NULL)""")
                 s.execute("""CREATE TABLE IF NOT EXISTS cuentas(
                     id INTEGER PRIMARY KEY, usuario TEXT UNIQUE NOT NULL, token TEXT UNIQUE NOT NULL,
                     nombre TEXT NOT NULL DEFAULT '', perfil TEXT NOT NULL DEFAULT '{}', foto INTEGER NOT NULL DEFAULT 0,

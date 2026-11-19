@@ -130,11 +130,11 @@
   <string name="metas_calculadas">Calculadas con tus datos; cambian si cambia tu peso.</string>
   <string name="cambiar_metas">Cambiar las metas</string>
   <string name="forzudo">El Forzudo</string>
-  <string name="forzudo_conectado">Conectada: La Cucha lee tu peso y tus entrenos de El Forzudo, sin internet. Nada sale del teléfono.</string>
+  <string name="forzudo_conectado">Conectada: La Cucha lee tu peso y tus entrenos de El Forzudo, sin internet.</string>
   <string name="forzudo_no_esta">Si instalas El Forzudo, La Cucha toma tu peso de allá y te muestra cuándo entrenaste.</string>
   <string name="opciones">Opciones</string>
   <string name="codigo_barras">Buscar por código de barras</string>
-  <string name="codigo_barras_pista">Usa internet y la cámara solo al escanear: el código se busca en Open Food Facts. Apagado, la app no se conecta a nada.</string>
+  <string name="codigo_barras_pista">Al escanear con la cámara, la app busca el código en Open Food Facts.</string>
   <string name="widget_poner">Poner el widget en la pantalla de inicio</string>
   <string name="widget_nombre">Calorías de hoy</string>
   <string name="widget_descripcion">Las calorías que te quedan hoy, la proteína y un botón para anotar.</string>
@@ -179,7 +179,7 @@
   <string name="volver">Volver</string>
   <string name="siguiente">Siguiente</string>
   <string name="tut_hola">¡Hola! Soy La Cucha</string>
-  <string name="tut_hola_texto">Te ayudo a llevar lo que comes: calorías, proteína y tus recetas de siempre. Sin anuncios y sin que nada salga de tu teléfono.</string>
+  <string name="tut_hola_texto">Te ayudo a llevar lo que comes: calorías, proteína y tus recetas de siempre. Sin anuncios. Tu diario se guarda en tu teléfono.</string>
   <string name="tut_tengo_respaldo">Tengo un respaldo</string>
   <string name="tut_datos">Cuéntame de ti</string>
   <string name="tut_datos_texto">Con esto calculo cuánto comer al día. Se queda en tu teléfono.</string>

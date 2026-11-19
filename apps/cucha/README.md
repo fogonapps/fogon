@@ -2,7 +2,7 @@
 
 <p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="La Cucha"></p>
 
-Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios, sin rastreo, y sin internet salvo para buscar un código de barras si tú lo activas. La Cucha es como se le dice con cariño en Antioquia a la señora de la casa, la que sabe cocinar.
+Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios. No vendemos tus datos. Usa internet para las estadísticas anónimas, que puedes apagar en Ajustes, y cuando buscas un código de barras o usas Fogón Social. La Cucha es como se le dice con cariño en Antioquia a la señora de la casa, la que sabe cocinar.
 
 - Descargar: [fogonapps/la-cucha](https://github.com/fogonapps/la-cucha/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-cucha`).
 - Novedades de cada versión: en las [versiones de La Cucha](https://github.com/fogonapps/la-cucha/releases).
@@ -31,7 +31,7 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Para buscar un código de barras en Open Food Facts, si activas esa opción, y para Fogón Social, si entras con tu cuenta (Tu gente y la copia de tu diario, cifrada con tu contraseña). Sin las dos, la app no se conecta a nada. |
+| Internet | Para buscar un código de barras en Open Food Facts, si activas esa opción, y para Fogón Social, si entras con tu cuenta (Tu gente y la copia de tu diario, cifrada con tu contraseña). Las estadísticas de uso anónimas se pueden apagar en Ajustes. |
 | Ubicación (aproximada o precisa) | Solo al tocar «Usar mi ubicación» al reseñar un restaurante: propone la dirección del lugar, que puedes corregir o quitar antes de publicar. Nunca se toma sola ni va en un plato sin restaurante. |
 | Cámara | La pide el lector de códigos de barras la primera vez que escaneas. Sin ella la app funciona igual. |
 | Datos de las apps de Fogón | Leer el peso y los entrenos de El Forzudo, y que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de La Cucha en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |

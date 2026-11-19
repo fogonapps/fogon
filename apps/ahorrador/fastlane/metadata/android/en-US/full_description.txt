@@ -1,4 +1,4 @@
-<p>La Alcancía helps you see where your money goes and save for what you want. No ads, no tracking and no bank passwords. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
+<p>La Alcancía helps you see where your money goes and save for what you want. No ads or bank passwords. We don’t sell your data. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
 
 <ul>
 <li><b>Log in seconds</b> with a big keypad: expenses, income, transfers between accounts and savings.</li>
@@ -15,9 +15,9 @@
 <li><b>In Spanish and English.</b></li>
 </ul>
 
-<p><b>Your data is yours.</b> Everything stays on your phone. Without a Fogón Social account the app connects to nothing. With one, your notebook is saved to it automatically, encrypted with your password (nobody else can read it and it comes back if you reinstall), and only the achievements you share appear on the network. Save a backup any time and export your entries to a spreadsheet.</p>
+<p><b>Your data is yours.</b> The app only uses the internet for anonymous usage statistics, which you can turn off in Settings, and for Fogón Social if you sign in. Your transactions stay on your phone and only travel in the backup encrypted with your password if you use your account. Save a backup any time and export your entries to a spreadsheet.</p>
 
 <p>La Alcancía isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</p>
 
 <p><b>Record from your bank (optional):</b> recognizes Bancolombia payments and transfers delivered by SMS and outgoing transfers from Nu. Link your accounts and confirm before recording, or enable automatic recording per bank to review and undo later. Detects transfers between your accounts.</p>
-<p><b>Notification access:</b> Android lets this access see all notifications. La Alcancía filters by app and selected bank first: only SMS starting with “Bancolombia:” and recognized outgoing transfers from the Nu app are processed. Everything else is never stored. SMS history is never read. Turn it off in Profile or revoke access in Android. Nothing leaves your phone.</p>
+<p><b>Notification access:</b> Android lets this access see all notifications. La Alcancía filters by app and selected bank first: only SMS starting with “Bancolombia:” and recognized outgoing transfers from the Nu app are processed. Everything else is never stored. SMS history is never read. Turn it off in Profile or revoke access in Android. Alerts are processed on your phone.</p>

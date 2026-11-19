@@ -321,7 +321,7 @@
   <string name="tut_empezar">Empezar</string>
   <string name="tut_hola">Hola, soy La Alcancía</string>
   <string name="tut_hola_texto">Te ayudo a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco.</string>
-  <string name="tut_privado">Todo queda en este teléfono: nadie más ve tu plata. La app solo usa internet si entras con tu cuenta de Fogón Social: entonces tu cuaderno se guarda en ella cifrado con tu contraseña, y nadie más lo puede leer.</string>
+  <string name="tut_privado">Tus movimientos se guardan en este teléfono. Si entras con tu cuenta de Fogón Social, tu cuaderno se guarda en ella cifrado con tu contraseña, y nadie más lo puede leer.</string>
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
   <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
   <string name="tut_sistema">¿Cómo te quieres organizar?</string>
@@ -391,7 +391,7 @@
   </string-array>
   <string-array name="respuestas">
     <item>No. En Colombia las finanzas abiertas solo obligan a entidades vigiladas, y una app libre sin servidor no puede conectarse. Además, así nadie tiene tus claves. Anotar es rápido con el teclado de la app.</item>
-    <item>Solo en tu teléfono. La app solo usa internet si entras con tu cuenta de Fogón Social: tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas, nunca montos. Guarda respaldos desde Perfil → Respaldo.</item>
+    <item>En tu teléfono. Si entras con tu cuenta de Fogón Social, tu cuaderno se guarda en ella cifrado con tu contraseña y en la red solo salen los logros que compartas, nunca montos. Guarda respaldos desde Perfil → Respaldo.</item>
     <item>Si quieres control, Sobres. Si quieres algo simple, la regla 50/30/20. Si te gusta escribir y pensar el mes, el kakeibo. Si solo quieres ver en qué se va, Solo anotar. Lo puedes cambiar cuando quieras.</item>
     <item>Las compras con la tarjeta son gastos desde la cuenta de la tarjeta (con sus cuotas). Pagar la tarjeta es pasar plata del banco a la tarjeta: no es otro gasto, ya lo contaste al comprar.</item>
     <item>Porque cada banco lo calcula a su manera. La app lo aproxima con el porcentaje que pongas en la cuenta; el valor real está en tu extracto.</item>
@@ -418,7 +418,7 @@
     <string name="banco_titulo">Anotar desde el banco</string>
     <string name="banco_explicacion">Android permite a este acceso ver todas tus notificaciones. La Alcancía filtra primero por app: de Mensajes solo lee textos que empiezan por «Bancolombia:», si elegiste ese banco; de Nu solo conserva lo que entiende una regla; de Nequi, Daviplata, Davivienda, Banco de Bogotá y BBVA lee su app y los SMS que los nombran, y siempre te pregunta antes de anotar. Todo lo demás se ignora y no se guarda. Solo lee alertas nuevas, no el historial de SMS. Puedes apagarlo aquí o revocar el acceso en Android.</string>
     <string name="banco_activar">Activar</string>
-    <string name="banco_local">Todo se queda en este teléfono.</string>
+    <string name="banco_local">Las alertas se leen y se guardan solo en este teléfono.</string>
     <string name="banco_permiso">Abrir acceso a notificaciones en Android</string>
     <string name="banco_permiso_si">Acceso a notificaciones concedido.</string>
     <string name="banco_permiso_no">Falta conceder el acceso a notificaciones.</string>
@@ -464,7 +464,7 @@
     <string name="aj_apariencia_idioma">Apariencia e idioma</string>
     <string name="aj_privacidad">Privacidad</string>
     <string name="aj_que_sale">Qué sale de tu teléfono</string>
-    <string name="aj_privacidad_texto">La Alcancía solo usa internet si entras con tu cuenta de Fogón Social: entonces tu cuaderno se guarda en ella cifrado con tu contraseña (nadie más lo puede leer) y en la red solo salen los logros que compartas. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales.</string>
+    <string name="aj_privacidad_texto">Si entras con tu cuenta de Fogón Social, tu cuaderno se guarda en ella cifrado con tu contraseña (nadie más lo puede leer) y en la red solo salen los logros que compartas. Si aceptas enviar sumas anónimas, otra app de Fogón puede enviarlas. El respaldo guarda tus datos en el archivo que elijas; el CSV contiene tus movimientos. El acceso a notificaciones lee las alertas nuevas de los bancos elegidos y las procesa aquí: no consulta el historial de SMS ni guarda los textos originales.</string>
     <string name="aj_sistema_pista">Elige cómo organizas tu plata</string>
     <string name="aj_importar_pista">Trae movimientos de un archivo CSV</string>
     <string name="aj_apariencia_pista">Tema, colores y comodidad</string>
@@ -510,7 +510,7 @@
     <item>Cuentas claras, cabeza tranquila.</item>
   </string-array>
     <string name="varios_titulo">Anotar varios</string>
-    <string name="varios_pista">Escribe o pega varios movimientos, separados por «+», comas o renglones. Se leen en tu teléfono: nada sale de él.</string>
+    <string name="varios_pista">Escribe o pega varios movimientos, separados por «+», comas o renglones. Se leen en tu teléfono y el texto no sale de él.</string>
     <string name="varios_ejemplo">Almuerzo 25 mil + Uber 12k\nMercado $84.300</string>
     <string name="varios_sin_categoria">Sin categoría: toca para elegirla</string>
     <string name="varios_quitar">Quitar %1$s</string>

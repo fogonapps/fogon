@@ -111,13 +111,14 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
     FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
     Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
     Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), null) { OrdenPestanas(vm, e) }
-    FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { pedirWidget(c, WidgetCursoReceptor::class.java) } }
+    FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { if (pedirWidget(c, WidgetCursoReceptor::class.java)) io.github.fogonapps.social.Contadores.de(c).contar("widget.agregado") } }
 
     SeccionAjustes(stringResource(R.string.fogon))
     FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
     val guia = io.github.fogonapps.identidad.LocalGuia.current
     FilaAjuste(Iconos.Estrella, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO); guia?.empezar() }
     SeccionAjustes(stringResource(R.string.privacidad_grupo))
+    io.github.fogonapps.social.ui.AjustesContadores()
     FilaAjuste(Iconos.Candado, stringResource(R.string.quien_lo_ve), null) { vm.abrir(Pantalla.PrivacidadPerfil) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }

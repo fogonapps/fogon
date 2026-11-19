@@ -19,7 +19,7 @@
   <string name="fogon_man_cierre">Siempre alcanza para uno más.</string>
   <string name="fogon_version">versión %1$s</string>
   <string name="fogon_hecha">Hecha en el Fogón</string>
-  <string name="fogon_sin_anuncios">Sin suscripciones · Sin anuncios · Sin rastreo</string>
+  <string name="fogon_sin_anuncios">Sin suscripciones · Sin anuncios · No vendemos tus datos</string>
   <string name="fogon_leer_manifiesto">Leer el manifiesto</string>
   <string name="fogon_licencias">Licencias</string>
   <string name="fogon_licencia_gpl">Licencia GPL-3.0 o posterior.</string>
@@ -27,7 +27,7 @@
   <string-array name="fogon_promesas">
     <item>Sin suscripciones: la app viene completa, sin cobros cada mes.</item>
     <item>Sin anuncios.</item>
-    <item>Sin rastreo: lo tuyo se queda en tu teléfono y lo exportas cuando quieras.</item>
+    <item>No vendemos tus datos. Puedes exportar lo tuyo cuando quieras.</item>
   </string-array>
   <string name="fogon_ap_titulo">Apariencia</string>
   <string name="fogon_ap_estilo">Estilo</string>
@@ -121,7 +121,7 @@
   <string name="fogon_tintas_aplicar">Aplicar %1$s</string>
   <string name="fogon_tintas_borrar">Borrar %1$s</string>
   <string name="fogon_apoyo_titulo">¿Te sirve %1$s?</string>
-  <string name="fogon_apoyo_cuerpo">Es gratis y lo seguirá siendo: sin anuncios, sin rastreo y sin suscripciones. Si quieres que Fogón siga creciendo, puedes apoyarlo. Si no, todo sigue igual.</string>
+  <string name="fogon_apoyo_cuerpo">Es gratis y lo seguirá siendo: sin anuncios y sin suscripciones. No vendemos tus datos. Si quieres que Fogón siga creciendo, puedes apoyarlo. Si no, todo sigue igual.</string>
   <string name="fogon_apoyo_apoyar">Apoyar</string>
   <string name="fogon_apoyo_ahora_no">Ahora no</string>
   <string name="fogon_apoyo_no_volver">No volver a mostrar</string>

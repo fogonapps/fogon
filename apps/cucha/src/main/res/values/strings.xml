@@ -131,11 +131,11 @@
   <string name="metas_calculadas">Calculated from your data; they change when your weight does.</string>
   <string name="cambiar_metas">Change goals</string>
   <string name="forzudo">El Forzudo</string>
-  <string name="forzudo_conectado">Connected: La Cucha reads your weight and workouts from El Forzudo, offline. Nothing leaves your phone.</string>
+  <string name="forzudo_conectado">Connected: La Cucha reads your weight and workouts from El Forzudo, offline.</string>
   <string name="forzudo_no_esta">If you install El Forzudo, La Cucha takes your weight from it and shows when you trained.</string>
   <string name="opciones">Options</string>
   <string name="codigo_barras">Look up barcodes</string>
-  <string name="codigo_barras_pista">Uses the internet and camera only when scanning: the barcode is looked up on Open Food Facts. Off, the app connects to nothing.</string>
+  <string name="codigo_barras_pista">When you scan with the camera, the app looks up the barcode on Open Food Facts.</string>
   <string name="widget_poner">Add the widget to your home screen</string>
   <string name="widget_nombre">Today’s calories</string>
   <string name="widget_descripcion">Calories left today, protein and a button to log.</string>
@@ -180,7 +180,7 @@
   <string name="volver">Back</string>
   <string name="siguiente">Next</string>
   <string name="tut_hola">Hi! I’m La Cucha</string>
-  <string name="tut_hola_texto">I help you keep track of what you eat: calories, protein and your everyday recipes. No ads, and nothing leaves your phone.</string>
+  <string name="tut_hola_texto">I help you keep track of what you eat: calories, protein and your everyday recipes. No ads. Your food diary is saved on your phone.</string>
   <string name="tut_tengo_respaldo">I have a backup</string>
   <string name="tut_datos">Tell me about you</string>
   <string name="tut_datos_texto">I use this to work out how much to eat a day. It stays on your phone.</string>

@@ -95,7 +95,7 @@ fun Ajustes(
     val contexto = LocalContext.current
     val alcanceWidget = androidx.compose.runtime.rememberCoroutineScope()
     FilaAjuste(Iconos.Inicio, stringResource(R.string.widget_poner), null) {
-        alcanceWidget.launch { io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.ahorrador.WidgetPlataReceptor::class.java) }
+        alcanceWidget.launch { if (io.github.fogonapps.identidad.pedirWidget(contexto, io.github.fogonapps.ahorrador.WidgetPlataReceptor::class.java)) io.github.fogonapps.social.Contadores.de(contexto).contar("widget.agregado") }
     }
 
     SeccionAjustes(stringResource(R.string.fogon))
@@ -105,6 +105,7 @@ fun Ajustes(
         vm.irA(io.github.fogonapps.ahorrador.Pestana.INICIO); guia?.empezar()
     }
     SeccionAjustes(stringResource(R.string.aj_privacidad))
+    io.github.fogonapps.social.ui.AjustesContadores()
     io.github.fogonapps.social.ui.FilasPrivacidadRed()
     FilaAjuste(Iconos.Candado, stringResource(R.string.aj_que_sale), null) { vm.abrir(Pantalla.Transparencia) }
     if (candadoDisponible) Desplegable(Iconos.Candado, stringResource(R.string.candado), stringResource(R.string.candado_pista)) {

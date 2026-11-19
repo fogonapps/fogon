@@ -46,12 +46,13 @@ fun Ajustes(vm: GymViewModel, e: Estado, onExportar: () -> Unit, onImportar: () 
     FilaAjuste(IconosFogon.Imagen, stringResource(io.github.fogonapps.identidad.R.string.fogon_ap_titulo), null) { vm.abrir(Pantalla.Apariencia) }
     Desplegable(IconosFogon.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
     FilaAjuste(IconosFogon.Inicio, stringResource(R.string.widget_poner), null) {
-        alcance.launch { pedirWidget(contexto, WidgetRachaReceptor::class.java) }
+        alcance.launch { if (pedirWidget(contexto, WidgetRachaReceptor::class.java)) io.github.fogonapps.social.Contadores.de(contexto).contar("widget.agregado") }
     }
     SeccionAjustes(stringResource(R.string.ajustes_fogon))
     FilaAjuste(IconosFogon.Estrella, stringResource(R.string.manifiesto_fogon), null) { vm.abrir(Pantalla.Manifiesto) }
     FilaAjuste(IconosFogon.Comentario, stringResource(R.string.preguntas_frecuentes), null) { vm.abrir(Pantalla.Preguntas) }
     SeccionAjustes(stringResource(R.string.ajustes_privacidad))
+    io.github.fogonapps.social.ui.AjustesContadores()
     io.github.fogonapps.social.ui.FilasPrivacidadRed()
     FilaAjuste(IconosFogon.Candado, stringResource(R.string.ajustes_sale), null) { vm.abrir(Pantalla.Transparencia) }
     FilaAjuste(IconosFogon.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }

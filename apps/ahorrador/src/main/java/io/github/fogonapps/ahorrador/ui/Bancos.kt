@@ -112,7 +112,9 @@ fun Bancos(vm: AhorradorViewModel, e: Estado) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val pendientes = e.notificaciones.registros.filter { !it.descartado && it.movimiento == null }
         if (pendientes.isEmpty()) Pista(stringResource(R.string.banco_sin_pendientes), Modifier)
+        val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
         pendientes.forEach { r ->
+            androidx.compose.runtime.LaunchedEffect(r.aviso.huella) { contadores.contar("alcancia.alerta_leida") }
             val a = r.aviso
             val propuesta = e.propuestaBanco(a.huella)
             Column(Modifier.fillMaxWidth().tarjetaFogon().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -2,6 +2,9 @@ package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -25,18 +28,49 @@ fun SeccionAjustes(titulo: String, modifier: Modifier = Modifier, derecha: @Comp
     }
 }
 
-/** Una fila de los ajustes: ícono, título, una pista y la flecha. */
+/** Una fila de Ajustes que abre otra vista. */
 @Composable
-fun FilaAjuste(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, onClick: () -> Unit) {
+fun FilaAjuste(icono: Dibujo, titulo: String, pista: String?, onClick: () -> Unit) {
+    ContenidoFilaAjuste(icono, titulo, pista, Modifier.clickable(onClick = onClick)) {
+        IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = FogonTema.actual.textoSuave)
+    }
+}
+
+/** Una fila de Ajustes que cambia un valor directamente. */
+@Composable
+fun FilaAjuste(icono: Dibujo, titulo: String, valor: Boolean, onCambio: (Boolean) -> Unit) {
+    FilaAjuste(icono, titulo, null, valor, onCambio)
+}
+
+@Composable
+fun FilaAjuste(icono: Dibujo, titulo: String, pista: String?, valor: Boolean, onCambio: (Boolean) -> Unit) {
+    ContenidoFilaAjuste(
+        icono, titulo, pista,
+        Modifier.toggleable(valor, role = Role.Switch, onValueChange = onCambio),
+        maxLineasPista = Int.MAX_VALUE,
+    ) {
+        Switch(valor, onCheckedChange = null)
+    }
+}
+
+@Composable
+private fun ContenidoFilaAjuste(
+    icono: Dibujo,
+    titulo: String,
+    pista: String?,
+    interaccion: Modifier,
+    maxLineasPista: Int = 2,
+    aLaDerecha: @Composable () -> Unit,
+) {
     val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 12.dp),
+    Row(Modifier.fillMaxWidth().clip(forma(16.dp)).then(interaccion).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
         Column(Modifier.weight(1f)) {
             Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
+            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = maxLineasPista) }
         }
-        IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+        aLaDerecha()
     }
 }
 

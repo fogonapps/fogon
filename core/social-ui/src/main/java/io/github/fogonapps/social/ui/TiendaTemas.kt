@@ -135,6 +135,9 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
     val f = FogonTema.actual
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val contadores = contadoresDeLaApp()
+    var esperandoRegreso by remember { mutableStateOf(false) }
+    ContarEntrada("tienda.abrir")
     val paquetes by vm.red.paquetesWompi.collectAsStateWithLifecycle()
     val chispasDeRegalo by vm.red.regaloWompi.collectAsStateWithLifecycle()
     val desplazamiento = rememberScrollState()
@@ -156,7 +159,13 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
     }
     DisposableEffect(ciclo) {
         val observador = androidx.lifecycle.LifecycleEventObserver { _, evento ->
-            if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vm.red.cargarTemas()
+            if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                if (esperandoRegreso) {
+                    esperandoRegreso = false
+                    contadores.contar("tienda.pago_vuelto")
+                }
+                vm.red.cargarTemas()
+            }
         }
         ciclo.lifecycle.addObserver(observador)
         onDispose { ciclo.lifecycle.removeObserver(observador) }
@@ -193,7 +202,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
             }
         } }, habilitado = destinatario.isNotBlank() && !regalando) },
         dismissButton = { BotonSecundario(stringResource(R.string.social_regalo_cancelar), { regalo = null }) })
-    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(if (soloChispas) R.string.social_wompi_titulo else R.string.social_temas_tienda), onCerrar)
             // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi).
@@ -213,6 +222,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                     paquetes.forEach { paquete ->
                         BotonRiso(chispasDeRegalo[paquete]?.let { extra -> stringResource(R.string.social_wompi_paquete_regalo, numeroSocial(paquete), numeroSocial(extra), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)) }
                             ?: stringResource(R.string.social_wompi_paquete, numeroSocial(paquete), numeroSocial(paquete * TemasPerfil.PESOS_POR_CHISPA)), {
+                            contadores.contar("tienda.paquete_elegido")
                             comprando = true
                             errorPago = false
                             vm.red.comprarChispas(paquete) { url ->
@@ -221,6 +231,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                                     val uri = android.net.Uri.parse(url)
                                     require(uri.scheme == "https" && uri.host == "checkout.wompi.co")
                                     contexto.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))
+                                    esperandoRegreso = true
+                                    contadores.contar("tienda.pago_iniciado")
                                 }.isFailure
                             }
                         }, Modifier.fillMaxWidth(), habilitado = !comprando)
@@ -246,7 +258,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                         val precio = TemasPerfil.PRECIOS.getValue(item)
                         Text(stringResource(R.string.social_precio_chispas, numeroSocial(precio)), color = f.textoSuave)
                         BotonSecundario(stringResource(if (tiene) PerfilR.string.escaparates_comprado else R.string.social_tienda_comprar, numeroSocial(precio)),
-                            { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = !tiene && temas.chispas >= precio)
+                            { vm.red.reclamarTema(item) { contadores.contar("tienda.tema_comprado") } }, Modifier.fillMaxWidth(), habilitado = !tiene && temas.chispas >= precio)
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -272,7 +284,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                                 when {
                                     puesto -> BotonSecundario(stringResource(R.string.social_temas_en_uso), {}, Modifier.fillMaxWidth(), habilitado = false)
                                     tiene -> BotonSecundario(stringResource(R.string.social_temas_usar), { vm.red.ponerTema(item) }, Modifier.fillMaxWidth())
-                                    else -> BotonRiso(stringResource(R.string.social_tienda_comprar, numeroSocial(precio)), { vm.red.reclamarTema(item) }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
+                                    else -> BotonRiso(stringResource(R.string.social_tienda_comprar, numeroSocial(precio)), { vm.red.reclamarTema(item) { contadores.contar("tienda.tema_comprado") } }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                                 }
                                 if (precio > 0) BotonSecundario(stringResource(R.string.social_regalar), { regalo = item; errorRegalo = null }, Modifier.fillMaxWidth(), habilitado = temas.chispas >= precio)
                             }

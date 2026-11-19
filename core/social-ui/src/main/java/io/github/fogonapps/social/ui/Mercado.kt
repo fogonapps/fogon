@@ -30,6 +30,7 @@ import java.util.UUID
 /** La misma pantalla en las cuatro apps: catálogo, publicaciones propias y cola del equipo. */
 @Composable
 fun Mercado(vm: InterfazSocial, onCerrar: () -> Unit) {
+    ContarEntrada("mercado.abrir")
     val f = FogonTema.actual
     val scope = rememberCoroutineScope()
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
@@ -65,7 +66,7 @@ fun Mercado(vm: InterfazSocial, onCerrar: () -> Unit) {
         } catch (e: CancellationException) { throw e }
         catch (_: Exception) { destacados = emptyList() }
     }
-    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(R.string.social_mercado), onCerrar)
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -192,6 +193,7 @@ private fun ImagenMercado(vm: InterfazSocial, a: ArticuloMercado, modifier: Modi
 
 @Composable
 private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> Unit, cambiado: () -> Unit) {
+    val contadores = contadoresDeLaApp()
     val f = FogonTema.actual
     val scope = rememberCoroutineScope()
     val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
@@ -244,7 +246,10 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
                     } else {
                         BotonRiso(texto, {
                             if (faltan > 0) conseguirChispas = true
-                            else accion { vm.red.comprarMercado(a.id, clave) }
+                            else accion {
+                                vm.red.comprarMercado(a.id, clave)
+                                contadores.contar("mercado.pieza_comprada")
+                            }
                         }, Modifier.fillMaxWidth(), habilitado = !ocupada)
                     }
                 }
@@ -275,6 +280,8 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
 
 @Composable
 private fun PublicarMercadoPantalla(vm: InterfazSocial, cerrar: () -> Unit, arte: Pair<String, ByteArray>? = null, publicado: () -> Unit) {
+    val contadores = contadoresDeLaApp()
+    ContarEntrada("mercado.publicar_abrir")
     val f = FogonTema.actual
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -291,8 +298,8 @@ private fun PublicarMercadoPantalla(vm: InterfazSocial, cerrar: () -> Unit, arte
     var borrador by remember { mutableStateOf<PublicarMercado?>(null) }
     val clave = remember { UUID.randomUUID().toString() }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { if (it != null) { uri=it; usarEditor=false; error=null } }
-    Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = !ocupada, dismissOnClickOutside = !ocupada)) {
-        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
+    Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = !ocupada, dismissOnClickOutside = !ocupada)) {
+        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().imePadding()) {
             Cabecera(stringResource(R.string.social_mercado_publicar), { if (!ocupada) cerrar() })
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -324,7 +331,9 @@ private fun PublicarMercadoPantalla(vm: InterfazSocial, cerrar: () -> Unit, arte
                             val imagen = vm.red.subirImagenEscaparate(bytes)
                             PublicarMercado(clave,imagen,nombre.trim(),tipo,precio.toInt()).also { borrador=it }
                         }
-                        vm.red.publicarMercado(d); publicado()
+                        vm.red.publicarMercado(d)
+                        contadores.contar("mercado.publicado")
+                        publicado()
                     } catch (e: CancellationException) { throw e }
                     catch (e: Exception) { error=if (e is IllegalArgumentException) "imagen" else (e as? ErrorSocial)?.error ?: "conexion" }
                     finally { ocupada=false }

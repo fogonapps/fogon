@@ -80,6 +80,7 @@ data class Descanso(val fin: Long, val total: Int)
 
 
 class GymViewModel(app: Application) : AndroidViewModel(app) {
+    private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
     private val gymApp = app as ForzudoApp
     val bib get() = gymApp.biblioteca
     val L get() = gymApp.logica
@@ -391,6 +392,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun nuevaRutina() {
         val r = Rutina("r${System.currentTimeMillis()}", tx(R.string.rutina_nueva), null, null, emptyList())
         cambiar { e -> e.copy(routines = e.routines.orEmpty() + r, progEdited = true) }
+        contadores.contar("forzudo.rutina_creada")
         abrir(Pantalla.Editor(r.id))
     }
 
@@ -468,6 +470,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                 entries = items.associate { it.id to seriesNuevas(it.sets ?: 3) },
             ))
         }
+        contadores.contar("forzudo.entrenamiento_empezado")
         abrir(Pantalla.Vivo)
     }
 
@@ -566,6 +569,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
             if (b == null || floor(r.rango.s * 3 + 1e-9) > b) SubioRango(m.n, r.rango) else null
         }
         cambiar { nuevo }
+        contadores.contar("forzudo.entrenamiento_terminado")
         pararDescanso()
         _pila.value = listOf(Pantalla.Resumen(ResumenEntreno(titulo, a.date, ms, L.volumen(entries), L.series(entries), subidas, records, a.id)))
         _pestana.value = Pestana.INICIO

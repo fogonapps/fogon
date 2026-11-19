@@ -129,7 +129,7 @@
   <string name="dias_entrenados">Days trained in %1$d</string>
   <string name="listo">Done</string>
   <string name="tut_hola">Hi! I’m El Forzudo</string>
-  <string name="tut_hola_texto">Your workout notebook. No ads, no tracking and truly free. Your data stays on your phone and, if you sign in with your Fogón account, in an encrypted copy too.</string>
+  <string name="tut_hola_texto">Your workout notebook. No ads and truly free. We don\'t sell your data: it stays on your phone and, if you sign in with your Fogón account, in an encrypted copy too.</string>
   <string name="tut_anota">Train and log</string>
   <string name="tut_anota_texto">In Train, pick your routine and tap Start. Enter the weight and reps for each set and tick it with ✓. Ticking it starts the rest timer and I’ll let you know when it’s over. Tap what you did last time and it’s copied over.</string>
   <string name="tut_racha">Your streak is real</string>

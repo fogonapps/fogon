@@ -105,7 +105,27 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
     CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
         if (estado.listo) PoliticaCuenta(vm)
         val guia = io.github.fogonapps.identidad.rememberGuia("alcancia")
-        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO) {
+        val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
+        io.github.fogonapps.social.ui.ContarEntrada(when (pila.lastOrNull()) {
+            is Pantalla.Ajustes -> "ajustes.abrir"
+            is Pantalla.Perfil -> "perfil.abrir"
+            is Pantalla.Reporte -> "reporte.abrir"
+            is Pantalla.Anotar -> "alcancia.pantalla.anotar"
+            is Pantalla.Movimientos -> "alcancia.pantalla.movimientos"
+            Pantalla.Cuentas -> "alcancia.pantalla.cuentas"
+            is Pantalla.Cuenta -> "alcancia.pantalla.cuenta"
+            Pantalla.Fijos -> "alcancia.pantalla.fijos"
+            Pantalla.Deudas -> "alcancia.pantalla.deudas"
+            is Pantalla.Cierre -> "alcancia.pantalla.cierre"
+            is Pantalla.ImportarExtracto -> "alcancia.pantalla.importar_extracto"
+            Pantalla.Bancos -> "alcancia.pantalla.bancos"
+            Pantalla.AnotarVarios -> "alcancia.pantalla.anotar_varios"
+            is Pantalla.MeAlcanza -> "alcancia.pantalla.me_alcanza"
+            Pantalla.Historial -> "alcancia.pantalla.historial"
+            null -> "alcancia.pantalla." + pestana.name.lowercase()
+            else -> null
+        })
+        io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
         Box(Modifier.fillMaxSize().fondoFogon(f)) {
             // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
             Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
@@ -133,7 +153,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                         }
                         }
                     }
-                    BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Anotar()) }, Modifier.align(Alignment.BottomCenter))
+                    if (pila.isEmpty()) BarraFlotante(pestana, vm::irA, { vm.abrir(Pantalla.Anotar()) }, Modifier.align(Alignment.BottomCenter))
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { AvisoTinta(it.visuals.message) }
                 }
 
@@ -162,7 +182,7 @@ fun App(vm: AhorradorViewModel, onExportar: () -> Unit, onExportarCsv: () -> Uni
                             is Pantalla.Ajustes -> Ajustes(vm, estado, onExportar, onExportarCsv, onImportar, candadoDisponible, onImportarExtracto)
                             is Pantalla.ImportarExtracto -> ImportarExtracto(vm, estado, p.filas)
                             is Pantalla.AcercaDe -> AcercaDe(vm)
-                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Ahorrador, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current)) }
+                            is Pantalla.Apariencia -> Column { Cabecera(stringResource(RId.string.fogon_ap_titulo), vm::cerrar); io.github.fogonapps.identidad.PantallaApariencia(io.github.fogonapps.identidad.Paleta.Ahorrador, io.github.fogonapps.identidad.AlmacenApariencia.de(androidx.compose.ui.platform.LocalContext.current), alCambiarTema = { contadores.contar("apariencia.cambiar_tema") }) }
                             is Pantalla.Manifiesto -> Column { Cabecera(stringResource(R.string.manifiesto), vm::cerrar); ManifiestoFogon() }
                             is Pantalla.Licencias -> Licencias(vm)
                             is Pantalla.Preguntas -> Preguntas(vm)

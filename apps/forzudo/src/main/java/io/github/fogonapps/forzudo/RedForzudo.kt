@@ -13,7 +13,9 @@ class RedForzudo(
 ) : RedApp(app.perfiles, almacen, scope, ConfiguracionSocial("forzudo", "El Forzudo", "ElForzudo-Fogon"),
     TextosRed(R.string.cuenta_error, R.string.cuenta_perfil_cambio, R.string.cuenta_operacion_lista, R.string.cuenta_otro_perfil, R.string.cuenta_muchas_cuentas),
     mensaje, cambiarPerfil, { io.github.fogonapps.forzudo.datos.cabeInstantaneaEntreno(it) }, "entrenos-publicados.json",
-    listOf("rangos", "medallas")) {
+    listOf("rangos", "medallas"),
+    alEntrar = { nueva -> Contadores.de(app).contar(if (nueva) "social.registro" else "social.entrar") },
+) {
     fun publicarEntreno(publicacion: PublicacionSubida, listo: () -> Unit) = publicar(publicacion, listo)
     fun borrarEntreno(id: Long) = borrar(id)
     fun retirarEntreno(clave: String, id: Long? = null) = retirar(clave, id)

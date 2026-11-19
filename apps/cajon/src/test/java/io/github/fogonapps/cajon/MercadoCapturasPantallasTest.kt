@@ -4,7 +4,16 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.res.stringResource
+import io.github.fogonapps.identidad.BotonRiso
+import io.github.fogonapps.social.ui.TiendaTemas
+import org.junit.Assert.assertEquals
+import io.github.fogonapps.social.ui.R as SocialR
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
@@ -70,6 +79,33 @@ class MercadoCapturasPantallasTest {
 
     @Test fun oscuro() = capturar(Estilo.GRAFITO, "oscuro")
     @Test fun claro() = capturar(Estilo.CLARO, "claro")
+
+    @Test
+    @Config(qualifiers = "en-w400dp-h800dp-xhdpi")
+    fun tiendaDePerfilCubreLaVentana() {
+        val app = ApplicationProvider.getApplicationContext<CajonApp>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+        val cuenta = Cuenta(tareas, ClienteSocial(configuracion = app.avisosConfiguracion, http = servidor()))
+        val vm = CajonViewModel(app)
+        val titulo = app.getString(SocialR.string.social_temas_tienda)
+        regla.setContent {
+            FogonTema(Paleta.Cajon, Apariencia(estilo = Estilo.GRAFITO)) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    BotonRiso(stringResource(R.string.empezar), {})
+                }
+                val adaptador = interfazSocial(vm)
+                TiendaTemas(object : InterfazSocial by adaptador {
+                    override val red = cuenta
+                }) {}
+            }
+        }
+        regla.onNodeWithText(titulo).assertIsDisplayed()
+        val ventana = regla.onNode(hasAnyDescendant(hasText("Start")) and androidx.compose.ui.test.isRoot()).fetchSemanticsNode().boundsInWindow
+        val dialogo = regla.onNode(isDialog() and hasAnyDescendant(hasText(titulo))).fetchSemanticsNode().boundsInWindow
+        assertEquals(ventana.width, dialogo.width, 1f)
+        assertEquals(ventana.height, dialogo.height, 1f)
+        guardar("cajon-tienda-perfil-sin-barra", "en", titulo)
+    }
 
     private fun capturar(estilo: Estilo, variante: String) {
         val app = ApplicationProvider.getApplicationContext<CajonApp>()

@@ -82,6 +82,11 @@ internal class LimiteDiario(private val porDia: Int) {
 /** Cuántas peticiones por minuto deja hacer a cada quien (por token o, sin él, por dirección). */
 private class Limite(private val porMinuto: Int) {
     private val cuentas = ConcurrentHashMap<String, Pair<Long, Int>>()
+    fun limpiar() {
+        val minuto = System.currentTimeMillis() / 60_000
+        cuentas.entries.removeIf { it.value.first != minuto }
+    }
+
     fun pasa(clave: String): Boolean {
         val minuto = System.currentTimeMillis() / 60_000
         val (m, n) = cuentas.compute(clave) { _, v -> if (v == null || v.first != minuto) minuto to 1 else v.first to v.second + 1 }!!
@@ -90,7 +95,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.45"
+const val VERSION = "0.46"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -115,6 +120,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 environment.log.error("No se pudieron revisar las insignias")
             }
             runCatching { portadas.limpiar() }
+            runCatching { Contadores(social.b).limpiarLotes() }
             try { social.limpiarSeguridad() } catch (_: Exception) {
                 environment.log.error("No se pudo completar la limpieza de seguridad")
             }
@@ -128,6 +134,14 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("json")) }
     }
     val general = Limite(120)
+    val limiteContadores = Limite(10)
+    val contadores = Contadores(social.b)
+    launch {
+        while (isActive) {
+            kotlinx.coroutines.delay(60_000)
+            limiteContadores.limpiar()
+        }
+    }
     val imagenes = Limite(900)
     val registros = Limite(5)
     val cuentasNuevas = LimiteDiario(10)
@@ -135,8 +149,12 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val pedidosLastfm = Limite(60)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
-            val token = call.request.header("Authorization")?.trim()?.removePrefix("Bearer ")?.trim()
             val ruta = call.request.local.uri.substringBefore('?')
+            if (ruta.trimEnd('/') == "/v1/contadores") {
+                if (!limiteContadores.pasa(call.ipReal())) throw Problema(429, "despacio")
+                return@onCall
+            }
+            val token = call.request.header("Authorization")?.trim()?.removePrefix("Bearer ")?.trim()
             if (ruta.startsWith("/v1/admin/") || ruta.startsWith("/v1/mfa/")) call.response.header("Cache-Control", "no-store")
             if ((ruta.startsWith("/v1/") || ruta.startsWith("/v2/")) && ruta !in setOf("/v1/cuenta", "/v1/cuenta/conservar", "/v1/cuenta/borrar", "/v1/salir") && !ruta.startsWith("/v1/acceso"))
                 social.cuentaDe(token)?.let { social.revisarBorrado(it) }
@@ -175,6 +193,16 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
 
     routing {
         route("/v1") {
+            post("/contadores") {
+                contadores.sumar(call.receive())
+                call.respond(HttpStatusCode.OK)
+            }
+            get("/equipo/contadores") {
+                call.requiere("ver_registro")
+                call.response.header("Cache-Control", "no-store")
+                val filtros = call.request.queryParameters
+                call.respond(contadores.consultar(filtros["desde"], filtros["hasta"], filtros["app"]))
+            }
             get("/pagos/wompi/paquetes") { pagos.comprobar(call.yo()); call.respond(ofertaWompi()) }
             post("/pagos/wompi/orden") {
                 pagos.comprobar()
