@@ -9,7 +9,7 @@
   <string name="pestana_inicio">Home</string>
   <string name="pestana_listas">Lists</string>
   <string name="vacio_titulo">Your cajón is empty</string>
-  <string name="vacio_texto">This is where you keep everything you watch, read and listen to: films, series, anime, books and records, with your rating and your diary.</string>
+  <string name="vacio_texto">This is where you keep everything you watch, read, listen to and play: films, series, anime, books, records and video games, with your rating and your diary.</string>
   <string name="agregar_lo_primero">Add your first one</string>
   <string name="este_anio">In %1$d</string>
   <string name="en_curso">In progress</string>

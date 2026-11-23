@@ -398,6 +398,8 @@ data class Ajustes(
     /** El orden de las pestañas de abajo (nombres de `Pestana`; vacío = el de siempre). */
     val ordenPestanas: List<String> = emptyList(),
     val barra: List<String> = emptyList(),
+    /** Ya se le sumó Juegos a la barra que había elegido (una sola vez: si después la quita, no vuelve). */
+    val juegosEnBarra: Boolean = false,
     /** Las frases del saludo que le gustan (o compartió) y las que no quiere ver (claves, ver `Frases`). */
     val frasesGusta: List<String> = emptyList(),
     val frasesNo: List<String> = emptyList(),

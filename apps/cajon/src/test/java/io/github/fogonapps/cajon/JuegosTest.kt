@@ -1,5 +1,6 @@
 package io.github.fogonapps.cajon
 
+import io.github.fogonapps.cajon.datos.Ajustes
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.ImagenElegida
 import io.github.fogonapps.cajon.datos.Imagenes
@@ -51,21 +52,51 @@ class JuegosTest {
         assertEquals(Secciones.PELICULAS, Secciones.de(Tipos.PELICULA))
         assertEquals(Secciones.MUSICA, Secciones.de(Tipos.ALBUM))
         assertFalse(Tipos.JUEGO in Secciones.tipos(Secciones.CINE))
-        // Los filtros de siempre no traen Juegos: se suman solo a quien usa los juegos ([Secciones.busqueda]).
-        assertFalse(Secciones.JUEGOS in Secciones.BUSQUEDA)
+        // El buscador trae Juegos siempre, como la barra, antes de Personas.
+        assertEquals(listOf(Secciones.JUEGOS, Secciones.PERSONAS), Secciones.BUSQUEDA.takeLast(2))
     }
 
-    @Test fun laBarraDeSiempreNoTraeJuegos() {
+    @Test fun laBarraDeSiempreTraeJuegos() {
         val deSiempre = Pestana.visibles(emptyList())
-        assertFalse(Pestana.JUEGOS in deSiempre)
-        assertEquals(listOf(Pestana.INICIO, Pestana.PARA_TI, Pestana.CINE, Pestana.MUSICA, Pestana.LIBROS), deSiempre)
-        // Con el orden viejo tampoco.
-        assertFalse(Pestana.JUEGOS in Pestana.visibles(emptyList(), listOf("LIBROS", "CINE")))
-        // La barra que alguien ya eligió no cambia.
+        assertEquals(listOf(Pestana.INICIO, Pestana.PARA_TI, Pestana.CINE, Pestana.MUSICA, Pestana.LIBROS, Pestana.JUEGOS), deSiempre)
+        // Con el orden viejo también (al final).
+        assertEquals(Pestana.JUEGOS, Pestana.visibles(emptyList(), listOf("LIBROS", "CINE")).last())
+        // La barra que alguien ya eligió no cambia aquí (la suma la hace la migración, una vez).
         val elegida = listOf("INICIO", "LIBROS", "MUSICA")
         assertEquals(listOf(Pestana.INICIO, Pestana.LIBROS, Pestana.MUSICA), Pestana.visibles(elegida))
-        // Al completar las tres mínimas tampoco se cuela.
-        assertFalse(Pestana.JUEGOS in Pestana.visibles(listOf("INICIO")))
+    }
+
+    @Test fun juegosLlegaUnaVezALaBarraElegida() {
+        val elegida = Estado(ajustes = Ajustes(barra = listOf("INICIO", "LIBROS", "MUSICA"), cambio = 7))
+        val migrada = Logica.normalizar(elegida)
+        assertEquals(listOf("INICIO", "LIBROS", "MUSICA", "JUEGOS"), migrada.ajustes.barra)
+        assertTrue(migrada.ajustes.juegosEnBarra)
+        // Normalizar otra vez no la repite.
+        assertEquals(migrada.ajustes, Logica.normalizar(migrada).ajustes)
+        // Si la quita en Ajustes, no vuelve: ni al leer de nuevo ni tras pasar por el JSON guardado.
+        val sin = Pestana.conPestana(migrada.ajustes.barra, emptyList(), Pestana.JUEGOS, false).map { it.name }
+        val quitada = migrada.copy(ajustes = migrada.ajustes.copy(barra = sin, cambio = 8))
+        val leida = Logica.normalizar(JsonCajon.decodeFromString(Estado.serializer(), JsonCajon.encodeToString(Estado.serializer(), quitada)))
+        assertFalse("JUEGOS" in leida.ajustes.barra)
+        assertFalse(Pestana.JUEGOS in Pestana.visibles(leida.ajustes.barra))
+        // Quien ya la tenía o usa la barra de siempre queda igual, solo con la marca.
+        val conJuegos = Ajustes(barra = listOf("INICIO", "JUEGOS", "CINE"))
+        assertEquals(conJuegos.barra, Logica.conJuegosEnBarra(conJuegos).barra)
+        assertEquals(emptyList<String>(), Logica.normalizar(Estado()).ajustes.barra)
+        assertEquals(Estado(), Logica.normalizar(Estado()))   // la barra de siempre no se toca (ya trae Juegos)
+        // Una barra elegida en Ajustes lleva la marca: sin Juegos, queda sin Juegos.
+        val nueva = Ajustes(barra = listOf("INICIO", "CINE", "LIBROS"), juegosEnBarra = true)
+        assertEquals(nueva, Logica.conJuegosEnBarra(nueva))
+    }
+
+    @Test fun juegosQuitadaNoVuelveAlUnirConUnaVersionVieja() {
+        // A (3.2.1) quitó Juegos; B (3.2, no conoce la marca) cambió después otro ajuste y subió su copia.
+        val a = Estado(ajustes = Ajustes(barra = listOf("INICIO", "CINE", "LIBROS"), juegosEnBarra = true, cambio = 1))
+        val b = Estado(ajustes = Ajustes(nombre = "Caro", barra = listOf("INICIO", "CINE", "LIBROS"), cambio = 2))
+        val unida = Logica.normalizar(Logica.unir(a, b))
+        assertEquals("Caro", unida.ajustes.nombre)
+        assertFalse("JUEGOS" in unida.ajustes.barra)
+        assertTrue(unida.ajustes.juegosEnBarra)
     }
 
     @Test fun juegosSePoneYSeQuitaComoLasDemas() {
@@ -89,15 +120,15 @@ class JuegosTest {
     }
 
     @Test fun losJuegosSalenEnCifrasYRetosSoloSiHayAlgoDeJuegos() {
-        val sinJuegos = Estado(obras = listOf(Obra("o1", Tipos.PELICULA, "Matrix")))
+        // Con la barra de siempre (que trae Juegos) salen.
+        assertEquals(Tipos.TODOS, Secciones.tiposVisibles(Estado(obras = listOf(Obra("o1", Tipos.PELICULA, "Matrix")))))
+        // Con una barra elegida sin Juegos, no.
+        val sinJuegos = Estado(ajustes = Ajustes(barra = listOf("INICIO", "CINE", "LIBROS"), juegosEnBarra = true), obras = listOf(Obra("o1", Tipos.PELICULA, "Matrix")))
         assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(sinJuegos))
         assertEquals(Tipos.TODOS - Tipos.JUEGO, Secciones.tiposVisibles(sinJuegos))
-        // Con la pestaña visible.
-        val conPestana = sinJuegos.copy(ajustes = sinJuegos.ajustes.copy(barra = Pestana.conPestana(emptyList(), emptyList(), Pestana.JUEGOS, true).map { it.name }))
-        assertEquals(Tipos.TODOS, Secciones.tiposVisibles(conPestana))
         // Con un juego vivo (uno borrado no cuenta).
-        assertTrue(Tipos.JUEGO in Secciones.tiposVisibles(Estado(obras = listOf(Obra("o2", Tipos.JUEGO, "Celeste")))))
-        assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(Estado(obras = listOf(Obra("o2", Tipos.JUEGO, "Celeste", borrada = true)))))
+        assertTrue(Tipos.JUEGO in Secciones.tiposVisibles(sinJuegos.copy(obras = listOf(Obra("o2", Tipos.JUEGO, "Celeste")))))
+        assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(sinJuegos.copy(obras = listOf(Obra("o2", Tipos.JUEGO, "Celeste", borrada = true)))))
         // Con un reto de juegos.
         assertTrue(Tipos.JUEGO in Secciones.tiposVisibles(sinJuegos.copy(ajustes = sinJuegos.ajustes.copy(retos = mapOf(Tipos.JUEGO to 5)))))
         assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(sinJuegos.copy(ajustes = sinJuegos.ajustes.copy(retos = mapOf(Tipos.JUEGO to 0)))))
@@ -118,15 +149,9 @@ class JuegosTest {
 
     /* ----- Paso 3: buscador, ficha y crédito ----- */
 
-    @Test fun juegosEnElBuscadorSoloSiSeUsan() {
-        val sinJuegos = Estado(obras = listOf(Obra("o1", Tipos.PELICULA, "Matrix")))
-        assertEquals(Secciones.BUSQUEDA, Secciones.busqueda(sinJuegos))
-        val conJuego = Estado(obras = listOf(Obra("o2", Tipos.JUEGO, "Celeste")))
-        val filtros = Secciones.busqueda(conJuego)
-        assertTrue(Secciones.JUEGOS in filtros)
-        // Antes de Personas, que sigue al final.
-        assertEquals(listOf(Secciones.JUEGOS, Secciones.PERSONAS), filtros.takeLast(2))
-        assertEquals(Secciones.BUSQUEDA.size + 1, filtros.size)
+    @Test fun juegosEnElBuscadorSiempre() {
+        assertTrue(Secciones.JUEGOS in Secciones.BUSQUEDA)
+        assertEquals(listOf(Secciones.JUEGOS, Secciones.PERSONAS), Secciones.BUSQUEDA.takeLast(2))
     }
 
     @Test fun elMasDeJuegosAbreElBuscadorDeJuegos() {

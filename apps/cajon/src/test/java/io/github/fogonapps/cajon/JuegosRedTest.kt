@@ -82,8 +82,10 @@ class JuegosRedTest {
     }
 
     @Test fun quienNoUsaJuegosNoLosVeEnCifras() {
-        assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(Estado(obras = listOf(pelicula))))
-        assertTrue(Tipos.JUEGO in Secciones.tiposVisibles(Estado(obras = listOf(pelicula, juego))))
+        // Con una barra elegida sin Juegos y sin juegos en el cajón, no salen.
+        val sinPestana = Ajustes(barra = listOf("INICIO", "CINE", "LIBROS"), juegosEnBarra = true)
+        assertFalse(Tipos.JUEGO in Secciones.tiposVisibles(Estado(ajustes = sinPestana, obras = listOf(pelicula))))
+        assertTrue(Tipos.JUEGO in Secciones.tiposVisibles(Estado(ajustes = sinPestana, obras = listOf(pelicula, juego))))
     }
 
     /* ----- B. Favoritas y destacados ----- */

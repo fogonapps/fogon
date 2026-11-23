@@ -5,7 +5,7 @@
 <ul>
 <li><b>Everything in one cajón:</b> films, series, anime, books, records and video games, with cover (change it or upload your own), year, director or author, genres and synopsis.</li>
 <li><b>Search and add:</b> books from Open Library and records and artists from MusicBrainz, no key needed; films, series and anime from TMDB with your own free key. Or add them by hand.</li>
-<li><b>Video games:</b> search for a game (data from Wikidata, cover from Wikimedia Commons when there is one, with credit) and mark it playing, finished, want to play or dropped, with a rating and review. Turn on the Games tab in Settings.</li>
+<li><b>Video games:</b> search for a game (data from Wikidata, cover from Wikimedia Commons when there is one, with credit) and mark it playing, finished, want to play or dropped, with a rating and review. They have their own tab, Games.</li>
 <li><b>Star ratings</b> (in halves), likes, reviews, trivia, tags for everything and favorite episodes.</li>
 <li><b>Diary:</b> every time you watch, read or listen to something, with date, rating and whether it was a rewatch.</li>
 <li><b>To watch, to read, to listen:</b> what’s up next, what you’re in the middle of and what you finished.</li>

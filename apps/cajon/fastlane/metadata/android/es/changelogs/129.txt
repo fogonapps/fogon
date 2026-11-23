@@ -1,0 +1,1 @@
+La pestaña Juegos ahora viene puesta en la barra, y el filtro Juegos sale siempre en el buscador. Si no la quieres, quítala en Ajustes → Apariencia e idioma → Barra inferior.

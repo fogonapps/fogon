@@ -60,7 +60,9 @@ object Logica {
         v = maxOf(a.v, b.v),
         listo = a.listo || b.listo,
         apariencia = unirApariencia(a.apariencia, b.apariencia),
-        ajustes = if (b.ajustes.cambio > a.ajustes.cambio) b.ajustes else a.ajustes,
+        // La marca de Juegos no se pierde al unir con una copia de una versión vieja (que no la conoce): si la quitó, no vuelve.
+        ajustes = (if (b.ajustes.cambio > a.ajustes.cambio) b.ajustes else a.ajustes)
+            .let { it.copy(juegosEnBarra = a.ajustes.juegosEnBarra || b.ajustes.juegosEnBarra) },
         obras = unirPor(a.obras, b.obras, { it.id }, { it.cambio }),
         artistas = unirPor(a.artistas, b.artistas, { it.id }, { it.cambio }),
         listas = unirPor(a.listas, b.listas, { it.id }, { it.cambio }),
@@ -118,8 +120,18 @@ object Logica {
         },
         resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
-        ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas.distinct().take(4)),
+        ajustes = conJuegosEnBarra(e.ajustes).let { it.copy(favoritas = it.favoritas.distinct().take(4)) },
     ) }.let(::favoritasDeDestacados))
+
+    /**
+     * Juegos entra a la barra de siempre; a quien ya había elegido su barra (sin la marca) se le suma al final
+     * una sola vez. Toda barra elegida en Ajustes lleva [Ajustes.juegosEnBarra], así que si después la quita, no vuelve.
+     */
+    fun conJuegosEnBarra(a: Ajustes): Ajustes = when {
+        a.juegosEnBarra || a.barra.isEmpty() -> a
+        "JUEGOS" in a.barra -> a.copy(juegosEnBarra = true)
+        else -> a.copy(barra = a.barra + "JUEGOS", juegosEnBarra = true)
+    }
 
     /* ----- El cajón ----- */
 

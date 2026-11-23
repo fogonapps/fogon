@@ -197,18 +197,12 @@ sealed interface Pantalla {
 
 enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS, JUEGOS;
     companion object {
-        /**
-         * Las que no están en la barra de siempre: se suman desde Ajustes. Así la barra de quien ya usa la app no cambia
-         * sola y, con cinco pestañas y el +, sigue cabiendo en un teléfono angosto.
-         */
-        val OPCIONALES = setOf(JUEGOS)
-
         /** Las pestañas en el orden que eligió la persona (las que falten van al final, en su orden de siempre). */
         fun visibles(barra: List<String>, orden: List<String> = emptyList()): List<Pestana> {
             if (barra.isEmpty()) return enOrden(orden)
             val elegidas = barra.mapNotNull { n -> entries.firstOrNull { it.name == n } }.distinct().toMutableList()
             if (INICIO !in elegidas) elegidas.add(0, INICIO)
-            entries.forEach { if (elegidas.size < 3 && it !in elegidas && it !in OPCIONALES) elegidas.add(it) }
+            entries.forEach { if (elegidas.size < 3 && it !in elegidas) elegidas.add(it) }
             return elegidas
         }
         /** La barra con [p] puesta o quitada. Inicio no se quita y quedan al menos tres. */
@@ -216,9 +210,9 @@ enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS, JUEGOS;
             val lista = visibles(barra, orden)
             return if (mostrar) (lista + p).distinct() else if (p != INICIO && lista.size > 3) lista - p else lista
         }
-        /** La barra de siempre (sin las [OPCIONALES]), con el orden viejo de [orden] si lo hay. */
+        /** La barra de siempre (todas), con el orden viejo de [orden] si lo hay. */
         fun enOrden(orden: List<String>): List<Pestana> =
-            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries.filter { it !in OPCIONALES }).distinct()
+            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries).distinct()
     }
 }
 
@@ -232,15 +226,12 @@ object Secciones {
     const val ANIMES = "animes"
     const val MUSICA = "musica"
     const val LIBROS = "libros"
-    /** El apartado Juegos (videojuegos). En el buscador solo sale si se usan los juegos ([busqueda]). */
+    /** El apartado Juegos (videojuegos). */
     const val JUEGOS = "juegos"
     /** Personas de la red (Fogón Social), por su @usuario o su nombre. */
     const val PERSONAS = "personas"
-    /** Los filtros del buscador (películas, series y animes, y personas de la red). */
-    val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS, PERSONAS)
-    /** Los filtros del buscador de esta persona: con Juegos (antes de Personas) si los juegos se le muestran ([tiposVisibles]). */
-    fun busqueda(e: io.github.fogonapps.cajon.datos.Estado): List<String> =
-        if (Tipos.JUEGO in tiposVisibles(e)) BUSQUEDA.dropLast(1) + JUEGOS + PERSONAS else BUSQUEDA
+    /** Los filtros del buscador (películas, series y animes por separado, juegos y personas de la red). */
+    val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS, JUEGOS, PERSONAS)
     val DE_CINE = setOf(CINE, PELICULAS, SERIES, ANIMES)
     fun de(tipo: String) = when (tipo) {
         Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; Tipos.SERIE -> SERIES; Tipos.ANIME -> ANIMES; Tipos.JUEGO -> JUEGOS; else -> PELICULAS
@@ -2259,12 +2250,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun moverPestana(p: Pestana, paso: Int) = cambiar { e ->
         val l = Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas).toMutableList()
         val i = l.indexOf(p); val j = i + paso
-        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(barra = l.map { it.name }, cambio = ahora())) }
+        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(barra = l.map { it.name }, juegosEnBarra = true, cambio = ahora())) }
     }
 
     fun mostrarPestana(p: Pestana, mostrar: Boolean) = cambiar { e ->
         val nueva = Pestana.conPestana(e.ajustes.barra, e.ajustes.ordenPestanas, p, mostrar)
-        e.copy(ajustes = e.ajustes.copy(barra = nueva.map { it.name }, cambio = ahora()))
+        e.copy(ajustes = e.ajustes.copy(barra = nueva.map { it.name }, juegosEnBarra = true, cambio = ahora()))
     }
     fun restablecerBarra() = cambiar { e -> e.copy(ajustes = e.ajustes.copy(barra = emptyList(), ordenPestanas = emptyList(), cambio = ahora())) }
 

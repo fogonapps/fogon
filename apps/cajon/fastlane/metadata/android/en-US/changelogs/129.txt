@@ -1,0 +1,1 @@
+The Games tab now comes in the bottom bar, and the Games filter always shows in search. If you don't want it, remove it in Settings → Appearance and language → Bottom bar.

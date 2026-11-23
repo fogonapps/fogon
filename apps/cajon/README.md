@@ -19,10 +19,10 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **La nota del público** junto a la tuya: la de TMDB (de 0 a 10), Open Library o MusicBrainz (de 0 a 5), con cuántos votaron.
 - **Progreso:** páginas (libros) y cada canción de un álbum con su nota y su corazón.
 - **Inicio y apartados:** el Inicio dice todo lo del cajón (películas, series y animes vistos, álbumes escuchados, artistas, libros leídos) y cada cosa tiene su apartado: Cine, Música y Libros, con sus cifras del año, lo que está en curso y su cajón con filtros.
-- **Buscador** como el de una app de música: arriba Todo, Películas, Series, Animes, Música, Libros o Juegos (si los usas); abajo el mejor resultado (un artista con su foto) y los grupos, cada uno con "Ver más". Géneros para tocar en cada sección (también los del anime), y la ficha completa de un artista, escritor o director antes de guardarlo.
+- **Buscador** como el de una app de música: arriba Todo, Películas, Series, Animes, Música, Libros, Juegos o Personas; abajo el mejor resultado (un artista con su foto) y los grupos, cada uno con "Ver más". Géneros para tocar en cada sección (también los del anime), y la ficha completa de un artista, escritor o director antes de guardarlo.
 - **Artistas** con su foto (Wikimedia Commons, por Wikidata, con autor y licencia) y su discografía de MusicBrainz para sumar discos con un toque; los artistas de los álbumes se suman solos.
 - **Escritores y directores**, como los artistas: escritores de Open Library (con su foto de Wikimedia Commons) y sus libros; directores de TMDB (con su foto) y lo que dirigieron. Van en los apartados de Libros y de Cine.
-- **Videojuegos (opcional):** una pestaña Juegos que se suma en Ajustes, con datos de Wikidata (estudio, año, géneros y plataformas) y, como portada, la imagen de Wikimedia Commons con su autor y licencia.
+- **Videojuegos:** una pestaña Juegos (se puede quitar en Ajustes), con datos de Wikidata (estudio, año, géneros y plataformas) y, como portada, la imagen de Wikimedia Commons con su autor y licencia.
 - **Listas propias** de cualquier tipo, con ranking si se quiere y para reordenar. Las cuatro favoritas en el perfil.
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine y de series, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores; con Juegos, también tus juegos y tus estudios. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).

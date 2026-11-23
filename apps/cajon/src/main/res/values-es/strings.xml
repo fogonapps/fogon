@@ -8,7 +8,7 @@
   <string name="pestana_inicio">Inicio</string>
   <string name="pestana_listas">Listas</string>
   <string name="vacio_titulo">Tu cajón está vacío</string>
-  <string name="vacio_texto">Aquí guardas todo lo que ves, lees y escuchas: películas, series, animes, libros y discos, con tu nota y tu diario.</string>
+  <string name="vacio_texto">Aquí guardas todo lo que ves, lees, escuchas y juegas: películas, series, animes, libros, discos y videojuegos, con tu nota y tu diario.</string>
   <string name="agregar_lo_primero">Agrega lo primero</string>
   <string name="este_anio">En %1$d</string>
   <string name="en_curso">En curso</string>

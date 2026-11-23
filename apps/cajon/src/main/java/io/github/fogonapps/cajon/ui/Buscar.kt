@@ -99,9 +99,9 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { vm.recientes.anotar(b.texto) }),
             )
         }
-        // Los filtros: todo, películas, series, animes, música, libros y, si se usan, juegos (se corren a lo ancho).
+        // Los filtros: todo, películas, series, animes, música, libros, juegos y personas (se corren a lo ancho).
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            remember(e) { Secciones.busqueda(e) }.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.forEach { s ->
+            Secciones.BUSQUEDA.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.forEach { s ->
                 val elegida = s == b.seccion
                 Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie)
                     .border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora).clickable(role = androidx.compose.ui.semantics.Role.Tab) { vm.cambiarSeccion(s) }
@@ -304,7 +304,7 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Recientes(vm)
         LoDelMomento(vm, b.seccion)
-        remember(e) { Secciones.busqueda(e) }.drop(1).forEach { s ->
+        Secciones.BUSQUEDA.drop(1).forEach { s ->
             Row(Modifier.fillMaxWidth().vidrio().clickable { vm.cambiarSeccion(s) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Ficha(if (s == b.seccion) f.tinta1 else f.tinta2, iconoSeccion(s))
