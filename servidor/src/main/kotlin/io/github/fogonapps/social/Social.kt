@@ -2739,7 +2739,7 @@ class Social(
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val FALLOS_CODIGO_DIA = 15
         const val MAX_VIDEOS_DIA = 20
-        const val POLITICA = "2026-11-13"
+        const val POLITICA = "2026-11-20"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")

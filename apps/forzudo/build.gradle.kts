@@ -5,6 +5,9 @@ plugins {
 }
 
 android {
+    // El idioma se elige dentro de la app (Idioma.envolver): el AAB de Play trae todos los idiomas,
+    // si no, quien elige un idioma distinto al del teléfono podría no tener sus textos.
+    bundle { language { enableSplit = false } }
     namespace = "io.github.fogonapps.forzudo"
     compileSdk = 37
 

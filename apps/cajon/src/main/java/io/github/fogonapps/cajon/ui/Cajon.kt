@@ -77,12 +77,14 @@ import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
 import io.github.fogonapps.identidad.haloPuntos
 
-/** Un apartado de la app: Cine, Música o Libros, con sus cifras, lo que está en curso y su cajón. */
+/** Un apartado de la app: Cine, Música, Libros o Juegos, con sus cifras, lo que está en curso y su cajón. */
 @Composable
 fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     val f = FogonTema.actual
     val tipos = Secciones.tipos(seccion)
     val musica = seccion == Secciones.MUSICA
+    // Los juegos no tienen personas (los estudios no se guardan aparte).
+    val juegos = seccion == Secciones.JUEGOS
     // Las personas de este apartado: artistas en Música, directores en Cine y escritores en Libros.
     val tipoPersona = when (seccion) { Secciones.LIBROS -> Personas.AUTOR; Secciones.CINE -> Personas.DIRECTOR; else -> CajonViewModel.TIPO_ARTISTA }
     val esDeAqui: (Artista) -> Boolean = { a -> if (musica) Personas.esMusico(a) else a.tipo == tipoPersona }
@@ -108,7 +110,9 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f)) {
             NumeroRiso("$terminadasAnio", 48.sp)
-            Text(stringResource(when (seccion) { Secciones.MUSICA -> R.string.escuchados_en; Secciones.LIBROS -> R.string.leidos_en; else -> R.string.vistas_en }, anio),
+            Text(stringResource(when (seccion) {
+                Secciones.MUSICA -> R.string.escuchados_en; Secciones.LIBROS -> R.string.leidos_en; Secciones.JUEGOS -> R.string.jugados_en; else -> R.string.vistas_en
+            }, anio),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -134,9 +138,9 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         // Las obras por tipo y, al final, los directores.
         val opciones = listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + tipos.map { it to nombreTipo(it) } + (Personas.DIRECTOR to nombreTipo(Personas.DIRECTOR))
         Chips(opciones, if (artistas) Personas.DIRECTOR else tipo) { if (it == Personas.DIRECTOR) artistas = true else { artistas = false; tipo = it } }
-    } else Chips(listOf(false to nombreTipo(tipos.first()), true to nombreTipo(tipoPersona)), artistas) { artistas = it }
+    } else if (!juegos) Chips(listOf(false to nombreTipo(tipos.first()), true to nombreTipo(tipoPersona)), artistas) { artistas = it }
 
-    if (artistas) { CajonArtistas(vm, e, texto, esDeAqui, musica); return }
+    if (artistas && !juegos) { CajonArtistas(vm, e, texto, esDeAqui, musica); return }
 
     val tipoEstados = tipo ?: tipos.first()
     Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipoEstados) }, estado) { estado = it }
@@ -149,7 +153,8 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         Pildora(stringResource(nombreOrden(orden)), Iconos.Ordenar) { orden = siguiente }
     }
     if (lista.isEmpty()) {
-        Pista(stringResource(if (obras.isEmpty()) R.string.apartado_vacio else R.string.cajon_nada), centro = true, modifier = Modifier.padding(top = 16.dp))
+        Pista(stringResource(when { obras.isNotEmpty() -> R.string.cajon_nada; juegos -> R.string.juegos_vacio; else -> R.string.apartado_vacio }),
+            centro = true, modifier = Modifier.padding(top = 16.dp))
         return
     }
     BarraSeleccion(vm, e, tipoEstados, deObras = true)

@@ -369,6 +369,7 @@
     <string name="historia_tipo_libro">Libro</string>
     <string name="historia_tipo_album">Álbum</string>
     <string name="historia_tipo_anime">Anime</string>
+    <string name="historia_tipo_juego">Juego</string>
     <string name="historia_tipo_entreno">Entreno</string>
     <string name="historia_tipo_ejercicio">Ejercicio</string>
     <string name="historia_tipo_logro">Logro</string>
@@ -432,6 +433,7 @@
     <string name="historia_tipo_peliculas">Películas</string>
     <string name="historia_tipo_series">Series y animes</string>
     <string name="historia_tipo_libros">Libros</string>
+    <string name="historia_tipo_juegos">Juegos</string>
     <string name="historia_silenciar">Silenciar sus historias</string>
     <string name="historia_activar">Ver sus historias</string>
     <string name="historia_responder_a">Responder a %1$s</string>

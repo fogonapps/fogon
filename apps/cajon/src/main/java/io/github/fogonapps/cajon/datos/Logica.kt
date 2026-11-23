@@ -295,6 +295,10 @@ object Logica {
         e.vivas.flatMap { o -> o.registros.map { EntradaDiario(o, it) } }
             .sortedWith(compareByDescending<EntradaDiario> { it.registro.fecha }.thenByDescending { it.registro.id })
 
+    /** Las plataformas de un juego escritas a mano ("PC, Switch,, pc"): sin vacías ni repetidas, cada una corta y como mucho 12. */
+    fun plataformas(texto: String): List<String> =
+        texto.split(',', '·', '\n').map { it.trim().take(40) }.filter { it.isNotEmpty() }.distinctBy { tituloLimpio(it) }.take(12)
+
     /* ----- Progreso ----- */
 
     fun totalEpisodios(o: Obra) = o.temporadas.sumOf { it.episodios }
@@ -329,7 +333,17 @@ object Logica {
     }
 
     /** Los destacados del perfil que salen de las cuatro favoritas (los de obras de un tipo). */
-    val HUECOS_DE_FAVORITAS = setOf(Destacados.PELICULA, Destacados.SERIE, Destacados.ANIME, Destacados.ALBUM, Destacados.LIBRO)
+    val HUECOS_DE_FAVORITAS = setOf(Destacados.PELICULA, Destacados.SERIE, Destacados.ANIME, Destacados.ALBUM, Destacados.LIBRO, Destacados.JUEGO)
+
+    /** El tipo de obra de un hueco de destacados que sale de las favoritas (null si el hueco no es de un tipo). */
+    fun tipoDeHueco(hueco: String): String? = when (hueco) {
+        Destacados.PELICULA -> Tipos.PELICULA; Destacados.SERIE -> Tipos.SERIE; Destacados.ANIME -> Tipos.ANIME
+        Destacados.ALBUM -> Tipos.ALBUM; Destacados.LIBRO -> Tipos.LIBRO; Destacados.JUEGO -> Tipos.JUEGO; else -> null
+    }
+
+    /** Los huecos de favoritos que se ven en el perfil: el de juego, solo si se usan los juegos o ya tiene uno puesto. */
+    fun huecosFavoritos(e: Estado, conJuegos: Boolean): List<String> =
+        Destacados.FAVORITOS.filter { it != Destacados.JUEGO || conJuegos || e.perfil.destacados[it] != null }
 
     /** Las favoritas que se pueden poner en un hueco de destacados (las de su tipo). */
     fun favoritasPara(e: Estado, tipo: String): List<Obra> =
@@ -385,7 +399,8 @@ object Logica {
             canciones = terminadas.filter { it.tipo == Tipos.ALBUM }.sumOf { it.canciones.size },
             notas = notas,
             generos = top { it.generos },
-            creadores = top { listOf(it.creador) },
+            // Un juego guarda hasta tres estudios separados por comas: cada estudio cuenta aparte.
+            creadores = top { o -> if (o.tipo == Tipos.JUEGO) o.creador.split(',').map { it.trim() } else listOf(o.creador) },
             porMes = porMes,
             notaMedia = if (conNota.isEmpty()) null else conNota.sumOf { it.nota } / 2.0 / conNota.size,
         )

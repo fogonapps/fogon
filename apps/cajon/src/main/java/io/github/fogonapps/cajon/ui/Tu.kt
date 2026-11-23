@@ -54,10 +54,12 @@ fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
     val tipos = when (seccion) {
         io.github.fogonapps.cajon.Secciones.MUSICA -> listOf(Tipos.ALBUM)
         io.github.fogonapps.cajon.Secciones.LIBROS -> listOf(Tipos.LIBRO)
-        null -> Tipos.TODOS
+        io.github.fogonapps.cajon.Secciones.JUEGOS -> listOf(Tipos.JUEGO)
+        null -> io.github.fogonapps.cajon.Secciones.tiposVisibles(todo)
         else -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME)
     }
-    val e = if (seccion == null) todo else remember(todo, seccion) { todo.copy(obras = todo.obras.filter { it.tipo in tipos }) }
+    // Los géneros de los juegos, en el idioma de la app: uno guardado en español y otro en inglés cuentan juntos.
+    val e = remember(todo, seccion) { todo.copy(obras = vm.conGenerosVisibles(if (seccion == null) todo.obras else todo.obras.filter { it.tipo in tipos })) }
     val c = vm.L.cifras(e, anio)
 
     Cabecera(if (seccion == null) stringResource(R.string.tus_cifras) else stringResource(R.string.cifras_de, nombreSeccion(seccion)), vm::cerrar)
@@ -87,7 +89,7 @@ fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
         c.generos.firstOrNull()?.let { Caja(stringResource(R.string.genero_favorito), it.first, Modifier.weight(1f)) }
         c.creadores.firstOrNull()?.let {
             Caja(stringResource(when (seccion) { io.github.fogonapps.cajon.Secciones.MUSICA -> R.string.artista_favorito; io.github.fogonapps.cajon.Secciones.LIBROS -> R.string.autor_favorito
-                else -> R.string.creador_favorito }), it.first, Modifier.weight(1f))
+                io.github.fogonapps.cajon.Secciones.JUEGOS -> R.string.estudio_favorito; else -> R.string.creador_favorito }), it.first, Modifier.weight(1f))
         }
     }
     // Lo que suma, según la sección.
@@ -141,7 +143,7 @@ fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
         Tops(c.generos)
     }
     if (c.creadores.isNotEmpty()) {
-        Seccion(stringResource(R.string.tus_creadores))
+        Seccion(stringResource(if (seccion == io.github.fogonapps.cajon.Secciones.JUEGOS) R.string.tus_estudios else R.string.tus_creadores))
         Tops(c.creadores)
     }
 
@@ -168,7 +170,9 @@ fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
 private fun Caja(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     Column(modifier.vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(valor, fontFamily = f.cifras, fontSize = 26.sp, color = f.texto)
+        // Un valor largo («Role-playing», un nombre) se achica para caber en una línea en vez de partir la palabra.
+        Text(valor, fontFamily = f.cifras, color = f.texto, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 26.sp))
         Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
     }
 }
@@ -226,7 +230,9 @@ fun Retos(vm: CajonViewModel, e: Estado) {
     val c = vm.L.cifras(e, anio)
     Cabecera(stringResource(R.string.retos_del_anio, anio), vm::cerrar)
     Pista(stringResource(R.string.retos_pista))
-    Tipos.TODOS.forEach { t ->
+    // Fija al entrar: si se borra el número de un reto de juegos, su fila no desaparece mientras se escribe.
+    val tipos = remember { io.github.fogonapps.cajon.Secciones.tiposVisibles(e) }
+    tipos.forEach { t ->
         var meta by rememberSaveable(t) { mutableStateOf(e.ajustes.retos[t]?.toString() ?: "") }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

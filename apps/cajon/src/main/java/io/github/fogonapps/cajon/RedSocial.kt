@@ -893,7 +893,7 @@ class RedSocial(
 
         /** Lo justo de una obra para mostrarla y abrirla en otro teléfono (perfil, listas en común). */
         fun obraBreve(o: Obra) = buildJsonObject {
-            put("titulo", o.titulo); put("tipoObra", o.tipo); put("portada", https(o.portada))
+            put("titulo", o.titulo); put("tipoObra", o.tipo); put("portada", io.github.fogonapps.cajon.datos.Imagenes.paraRed(o.portada))
             o.anio?.let { put("anio", it) }
             if (o.creador.isNotBlank()) put("creador", o.creador)
             if (o.fuente.isNotBlank()) put("fuente", o.fuente)
@@ -1165,7 +1165,7 @@ class RedSocial(
                 PublicacionSubida("l:${l.id}", vis, l.cambio, "lista", buildJsonObject {
                     put("titulo", l.nombre); if (l.descripcion.isNotBlank()) put("texto", l.descripcion.take(2000))
                     put("cuantas", obras.size)
-                    put("portadas", JsonArray(obras.map { https(it.portada) }.filter { it.isNotEmpty() }.take(4).map { JsonPrimitive(it) }))
+                    put("portadas", JsonArray(obras.map { io.github.fogonapps.cajon.datos.Imagenes.paraRed(it.portada) }.filter { it.isNotEmpty() }.take(4).map { JsonPrimitive(it) }))
                 })
             }
             val propias = e.publicaciones.filter { !it.borrada && it.visibilidad != Visibilidad.PRIVADA }.map { p ->

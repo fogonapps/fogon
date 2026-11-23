@@ -200,13 +200,15 @@ private fun categorias() = listOf(
 private fun ElegirCategorias(vm: CajonViewModel, e: Estado) {
     val elegidas = e.ajustes.categorias
     FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        categorias().forEach { (t, nombre) ->
+        val categorias = categorias()
+        categorias.forEach { (t, nombre) ->
             val si = elegidas.isEmpty() || t in elegidas
             Pildora(nombre, if (si) Iconos.Chulo else null, acento = si) {
-                val base = elegidas.ifEmpty { Tipos.TODOS }
+                val todas = categorias.map { it.first }
+                val base = elegidas.ifEmpty { todas }
                 val nuevas = if (si) base - t else base + t
                 // Todas = ninguna elegida (así lo nuevo que llegue también sale).
-                vm.elegirCategorias(if (nuevas.size == Tipos.TODOS.size || nuevas.isEmpty()) emptyList() else nuevas)
+                vm.elegirCategorias(if (nuevas.toSet().containsAll(todas) || nuevas.isEmpty()) emptyList() else nuevas)
             }
         }
     }

@@ -244,7 +244,8 @@ fun TarjetaAdjunto(a: JsonObject, modifier: Modifier = Modifier, sonar: Boolean 
 private fun nombreTipoAdjunto(tipo: String, tipoObra: String): String = stringResource(when (tipo) {
     "cancion" -> R.string.historia_tipo_cancion
     "artista" -> R.string.historia_tipo_artista_uno
-    "obra" -> when (tipoObra) { "serie" -> R.string.historia_tipo_serie; "libro" -> R.string.historia_tipo_libro; "album", "disco" -> R.string.historia_tipo_album; "anime" -> R.string.historia_tipo_anime; else -> R.string.historia_tipo_pelicula }
+    "obra" -> when (tipoObra) { "serie" -> R.string.historia_tipo_serie; "libro" -> R.string.historia_tipo_libro; "album", "disco" -> R.string.historia_tipo_album; "anime" -> R.string.historia_tipo_anime
+        "juego" -> R.string.historia_tipo_juego; else -> R.string.historia_tipo_pelicula }
     "entreno" -> R.string.historia_tipo_entreno
     "ejercicio" -> R.string.historia_tipo_ejercicio
     "logro", "racha" -> R.string.historia_tipo_logro
@@ -465,7 +466,8 @@ fun ElegirAdjunto(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (JsonObjec
             Seccion(stringResource(R.string.historia_tipo_peliculas), encontrados.filter { clave(it) == "pelicula" })
             Seccion(stringResource(R.string.historia_tipo_series), encontrados.filter { clave(it) == "serie" || clave(it) == "anime" })
             Seccion(stringResource(R.string.historia_tipo_libros), encontrados.filter { clave(it) == "libro" })
-            Seccion(stringResource(R.string.historia_de_la_app), encontrados.filter { clave(it) !in setOf("artista", "album", "pelicula", "serie", "anime", "libro") })
+            Seccion(stringResource(R.string.historia_tipo_juegos), encontrados.filter { clave(it) == "juego" })
+            Seccion(stringResource(R.string.historia_de_la_app), encontrados.filter { clave(it) !in setOf("artista", "album", "pelicula", "serie", "anime", "libro", "juego") })
             if (opciones.isNotEmpty() && canciones == null) {
                 Text(stringResource(R.string.historia_de_la_app), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.padding(top = 6.dp))
                 opciones.forEach { a -> Box(Modifier.clip(forma(18.dp)).clickable { elegir(a) }) { TarjetaAdjunto(a) } }

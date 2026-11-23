@@ -1,25 +1,26 @@
 <p><b>Beta:</b> El Cajón todavía puede cambiar y tener fallos. Los problemas conocidos están en <a href="https://github.com/fogonapps/el-cajon#problemas-conocidos">github.com/fogonapps/el-cajon</a>.</p>
-<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios. No vendemos tus datos. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
-<p><b>La red (opcional):</b> crea tu @usuario, sigue a otras personas, mira lo que comparten en el Inicio y publica tus reseñas y fotos, con me gusta, comentarios y guardados. Solo sube lo que tú marcas como público o para tus seguidores.</p>
+<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, videojuegos, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios. No vendemos tus datos. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
+<p><b>La red (opcional):</b> crea tu @usuario, sigue a otras personas, mira lo que comparten en el Inicio y publica tus reseñas, fotos y juegos en tus historias, con me gusta, comentarios y guardados. Solo sube lo que tú marcas como público o para tus seguidores.</p>
 
 <ul>
-<li><b>Todo en un cajón:</b> películas, series, animes, libros y discos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>
+<li><b>Todo en un cajón:</b> películas, series, animes, libros, discos y videojuegos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>
 <li><b>Busca y agrega:</b> libros en Open Library y discos y artistas en MusicBrainz, sin clave; películas, series y animes en TMDB con tu propia clave gratuita. O agrégalos a mano.</li>
+<li><b>Videojuegos:</b> busca un juego (datos de Wikidata y portada de Wikimedia Commons cuando existe, con su crédito) y márcalo como jugando, terminado, quiero jugar o abandonado, con nota y reseña. La pestaña Juegos se agrega en Ajustes.</li>
 <li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos, etiquetas para todo y episodios favoritos.</li>
 <li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
 <li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
 <li><b>La nota del público</b> junto a la tuya: TMDB, Open Library o MusicBrainz.</li>
 <li><b>Progreso:</b> páginas en libros y cada canción de un álbum con su nota y su corazón.</li>
-<li><b>Cine, Música y Libros</b>, cada uno con su apartado, y un Inicio con todo lo que has visto, escuchado y leído.</li>
+<li><b>Cine, Música, Libros y Juegos</b>, cada uno con su apartado, y un Inicio con todo lo que has visto, escuchado, leído y jugado.</li>
 <li><b>Artistas, escritores y directores</b> con su foto y sus discos, libros o películas, para sumarlos con un toque.</li>
-<li><b>Listas propias</b>, con ranking si quieres, y tus cuatro favoritas en el perfil.</li>
-<li><b>Tus cifras:</b> lo terminado en el año, horas de cine y de series, páginas, canciones, tus notas, meses, géneros y creadores. Y retos del año.</li>
+<li><b>Listas propias</b>, con ranking si quieres, y tus cuatro favoritas en el perfil, con tu juego favorito.</li>
+<li><b>Tus cifras:</b> lo terminado en el año, horas de cine y de series, páginas, canciones, juegos, tus notas, meses, géneros y creadores. Y retos del año.</li>
 <li><b>Comparte</b> una reseña o una lista como imagen.</li>
-<li><b>Trae lo que tenías:</b> importa tu historial de Letterboxd (ZIP o CSV) y tu biblioteca de Goodreads (CSV).</li>
+<li><b>Trae lo que tenías:</b> importa desde Letterboxd (ZIP o CSV), Netflix (CSV de actividad de visionado), Trakt (ZIP o JSON), TV Time (ZIP o CSV), Goodreads y The StoryGraph (CSV). Sin repetir lo que ya tienes.</li>
 <li><b>Copia cifrada:</b> si usas una cuenta de Fogón, puedes guardar una copia cifrada de tu cajón.</li>
 <li><b>En español e inglés.</b></li>
 </ul>
 
 <p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Internet solo se usa para buscar, traer portadas y, si lo activas, sincronizar. Puedes guardar un respaldo cuando quieras.</p>
 
-<p>El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.</p>
+<p>El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB. Datos de videojuegos: Wikidata (CC0). Portadas de Wikimedia Commons, con el crédito de su autor y su licencia.</p>

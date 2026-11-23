@@ -59,7 +59,7 @@ fun EditorEtiquetas(
         FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             etiquetas.forEach { g ->
                 if (editando) Pildora(textoVisible(g), Iconos.Cerrar) { onCambio(etiquetas - g) }
-                else Pildora(textoVisible(g), onClick = { onTocar?.invoke(g) })
+                else Pildora(textoVisible(g), onClick = onTocar?.let { t -> { t(g) } })
             }
         }
         if (editando) {

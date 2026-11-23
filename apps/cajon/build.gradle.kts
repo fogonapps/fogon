@@ -5,6 +5,9 @@ plugins {
 }
 
 android {
+    // El idioma se elige dentro de la app (Idioma.envolver): el AAB de Play trae todos los idiomas,
+    // si no, quien elige un idioma distinto al del teléfono podría no tener sus textos.
+    bundle { language { enableSplit = false } }
     // Las pruebas de pantallas (Robolectric) necesitan los recursos de la app.
     testOptions { unitTests.isIncludeAndroidResources = true }
     namespace = "io.github.fogonapps.cajon"
@@ -15,8 +18,8 @@ android {
         applicationId = "io.github.fogonapps.cajon"
         minSdk = 26
         targetSdk = 37
-        versionCode = 127
-        versionName = "3.1"
+        versionCode = 128
+        versionName = "3.2"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).

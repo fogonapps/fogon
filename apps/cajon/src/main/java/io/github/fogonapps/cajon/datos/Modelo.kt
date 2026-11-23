@@ -19,7 +19,9 @@ object Tipos {
     const val ANIME = "anime"
     const val LIBRO = "libro"
     const val ALBUM = "album"
-    val TODOS = listOf(PELICULA, SERIE, ANIME, LIBRO, ALBUM)
+    /** Videojuegos (de Wikidata o a mano). */
+    const val JUEGO = "juego"
+    val TODOS = listOf(PELICULA, SERIE, ANIME, LIBRO, ALBUM, JUEGO)
     /** Los que se siguen por episodios. */
     fun porEpisodios(t: String) = t == SERIE || t == ANIME
 }
@@ -68,8 +70,8 @@ data class Registro(
 )
 
 /**
- * Una película, serie, anime, libro o álbum.
- * Los datos "de afuera" (título, sinopsis, portada…) vienen de TMDB, Open Library o MusicBrainz, o se
+ * Una película, serie, anime, libro, álbum o videojuego.
+ * Los datos "de afuera" (título, sinopsis, portada…) vienen de TMDB, Open Library, MusicBrainz o Wikidata, o se
  * escriben a mano. Lo "de la persona" (estado, nota, reseña, diario, progreso) es solo suyo.
  */
 @Serializable
@@ -79,7 +81,7 @@ data class Obra(
     val titulo: String,
     val original: String = "",
     val anio: Int? = null,
-    /** Director, creador, autor o artista. */
+    /** Director, creador, autor, artista o estudio (juegos). */
     val creador: String = "",
     val generos: List<String> = emptyList(),
     val sinopsis: String = "",
@@ -89,7 +91,7 @@ data class Obra(
     val edicion: String? = null,
     val portada: String = "",
     val fondo: String = "",
-    /** De dónde salió: "tmdb:movie:603", "tmdb:tv:1396", "ol:OL274505W", "mb:rg:<mbid>"; vacío si es a mano. */
+    /** De dónde salió: "tmdb:movie:603", "tmdb:tv:1396", "ol:OL274505W", "mb:rg:<mbid>", "wd:Q…" (juegos); vacío si es a mano. */
     val fuente: String = "",
     /** Minutos (películas), páginas (libros). */
     val minutos: Int? = null,
@@ -98,6 +100,8 @@ data class Obra(
     val canciones: List<Cancion> = emptyList(),
     /** Álbum, EP, sencillo, en vivo… (como lo dice MusicBrainz o la persona). */
     val formato: String = "",
+    /** En qué se juega (juegos): "PC", "Nintendo Switch"…, como lo dice la fuente o la persona. */
+    val plataformas: List<String> = emptyList(),
     /** El id del artista en El Cajón (álbumes), si está. */
     val artista: String? = null,
     /** La nota del público en su fuente (TMDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
@@ -280,11 +284,13 @@ object Destacados {
     const val ANIME = "anime"
     const val ALBUM = "album"
     const val LIBRO = "libro"
+    /** Un videojuego favorito. */
+    const val JUEGO = "juego"
     const val ARTISTA = "artista"
     /** "La obra que me marcó" y "mi descubrimiento del momento": cualquier obra, con unas palabras. */
     const val MARCO = "marco"
     const val DESCUBRIMIENTO = "descubrimiento"
-    val FAVORITOS = listOf(PELICULA, SERIE, ANIME, ALBUM, LIBRO, ARTISTA)
+    val FAVORITOS = listOf(PELICULA, SERIE, ANIME, ALBUM, LIBRO, JUEGO, ARTISTA)
     val TODOS = FAVORITOS + listOf(MARCO, DESCUBRIMIENTO)
 }
 

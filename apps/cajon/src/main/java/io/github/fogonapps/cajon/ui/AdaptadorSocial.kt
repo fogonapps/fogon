@@ -1,6 +1,7 @@
 package io.github.fogonapps.cajon.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
@@ -34,7 +35,12 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
         override suspend fun detallarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.detallarAdjunto(a)
         override suspend fun buscarConFotos(q: String) = vm.buscarConFotos(q)
         override suspend fun fotosDe(fuente: String) = vm.fotosDe(fuente)
-        @androidx.compose.runtime.Composable override fun textoBuscarAdjunto() = androidx.compose.ui.res.stringResource(R.string.historia_buscar_todo)
+        // Nombra los juegos solo si la búsqueda los trae (los de quien usa los juegos: [CajonViewModel.buscarAdjuntos]).
+        @androidx.compose.runtime.Composable override fun textoBuscarAdjunto(): String {
+            val e by vm.estado.collectAsStateWithLifecycle()
+            val conJuegos = e?.let { io.github.fogonapps.cajon.datos.Tipos.JUEGO in io.github.fogonapps.cajon.Secciones.tiposVisibles(it) } == true
+            return androidx.compose.ui.res.stringResource(if (conJuegos) R.string.historia_buscar_todo_juegos else R.string.historia_buscar_todo)
+        }
         override suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.completarAdjunto(a)
         override val textosApp = textos
         override val red = vm.red

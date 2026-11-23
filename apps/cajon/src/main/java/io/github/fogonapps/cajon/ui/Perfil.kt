@@ -83,8 +83,8 @@ import io.github.fogonapps.identidad.rebote
 @Composable
 private fun nombreHueco(h: String): String = stringResource(when (h) {
     Destacados.PELICULA -> R.string.dest_pelicula; Destacados.SERIE -> R.string.dest_serie; Destacados.ANIME -> R.string.dest_anime
-    Destacados.ALBUM -> R.string.dest_album; Destacados.LIBRO -> R.string.dest_libro; Destacados.ARTISTA -> R.string.dest_artista
-    Destacados.MARCO -> R.string.dest_marco; else -> R.string.dest_descubrimiento
+    Destacados.ALBUM -> R.string.dest_album; Destacados.LIBRO -> R.string.dest_libro; Destacados.JUEGO -> R.string.dest_juego
+    Destacados.ARTISTA -> R.string.dest_artista; Destacados.MARCO -> R.string.dest_marco; else -> R.string.dest_descubrimiento
 })
 
 @Composable
@@ -226,7 +226,8 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
                 if (metasReto.isNotEmpty()) TarjetaReto(stringResource(R.string.retos_del_anio, anio), metasReto) { vm.abrir(Pantalla.Retos) }
                 else Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { Pildora(stringResource(R.string.reto_ponerme, anio), Iconos.Trofeo) { vm.abrir(Pantalla.Retos) } }
                 // Favoritos por tipo, la obra que te marcó y tu descubrimiento.
-                Destacados.FAVORITOS.chunked(3).forEach { fila ->
+                val conJuegos = Tipos.JUEGO in io.github.fogonapps.cajon.Secciones.tiposVisibles(e)
+                Logica.huecosFavoritos(e, conJuegos).chunked(3).forEach { fila ->
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fila.forEach { h ->
                             val id = p.destacados[h]
@@ -531,7 +532,8 @@ internal fun PrivacidadPerfil(vm: CajonViewModel, e: Estado) {
 private fun seccionDeHueco(h: String) = when (h) {
     Destacados.PELICULA -> io.github.fogonapps.cajon.Secciones.PELICULAS; Destacados.SERIE -> io.github.fogonapps.cajon.Secciones.SERIES
     Destacados.ANIME -> io.github.fogonapps.cajon.Secciones.ANIMES; Destacados.LIBRO -> io.github.fogonapps.cajon.Secciones.LIBROS
-    Destacados.ALBUM, Destacados.ARTISTA -> io.github.fogonapps.cajon.Secciones.MUSICA; else -> io.github.fogonapps.cajon.Secciones.TODO
+    Destacados.ALBUM, Destacados.ARTISTA -> io.github.fogonapps.cajon.Secciones.MUSICA; Destacados.JUEGO -> io.github.fogonapps.cajon.Secciones.JUEGOS
+    else -> io.github.fogonapps.cajon.Secciones.TODO
 }
 
 @Composable
@@ -558,9 +560,7 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
     }
     val q = Logica.tituloLimpio(texto)
     if (hueco in Logica.HUECOS_DE_FAVORITAS) {
-        val tipo = when (hueco) { Destacados.PELICULA -> Tipos.PELICULA; Destacados.SERIE -> Tipos.SERIE; Destacados.ANIME -> Tipos.ANIME
-            Destacados.ALBUM -> Tipos.ALBUM; else -> Tipos.LIBRO }
-        val lista = Logica.favoritasPara(e, tipo)
+        val lista = Logica.tipoDeHueco(hueco)?.let { Logica.favoritasPara(e, it) }.orEmpty()
         if (lista.isEmpty()) Pista(stringResource(R.string.destacado_desde_favoritas))
         lista.chunked(3).forEach { fila ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -593,8 +593,7 @@ fun ElegirDestacado(vm: CajonViewModel, e: Estado, hueco: String) {
             }
         }
     } else {
-        val tipo = when (hueco) { Destacados.PELICULA -> Tipos.PELICULA; Destacados.SERIE -> Tipos.SERIE; Destacados.ANIME -> Tipos.ANIME
-            Destacados.ALBUM -> Tipos.ALBUM; Destacados.LIBRO -> Tipos.LIBRO; else -> null }
+        val tipo = Logica.tipoDeHueco(hueco)
         val lista = e.vivas.filter { (tipo == null || it.tipo == tipo) && (q.isEmpty() || q in Logica.tituloLimpio(it.titulo + " " + it.creador)) }
             .sortedWith(compareByDescending<Obra> { it.id == actual }.thenByDescending { it.nota }.thenByDescending { it.meGusta }.thenBy { it.titulo }).take(60)
         if (lista.isEmpty()) Pista(stringResource(R.string.sin_resultados))

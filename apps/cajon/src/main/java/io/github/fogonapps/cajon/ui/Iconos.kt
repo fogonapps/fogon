@@ -26,6 +26,9 @@ object Iconos {
     val Libro = IconosSociales.Libro
     /** Un disco de vinilo: álbumes. */
     val Disco = IconosSociales.Disco
+    /** Un mando con su cruz y dos botones: videojuegos. */
+    val Juego = dibujo("juego", relleno("M7.2 7.4h9.6a4.4 4.4 0 0 1 4.3 3.5l.9 4.6a2.6 2.6 0 0 1-4.5 2.2l-2-2.3H8.5l-2 2.3a2.6 2.6 0 0 1-4.5-2.2l.9-4.6a4.4 4.4 0 0 1 4.3-3.5z"),
+        huecoTrazo("M8 9.8v3.6M6.2 11.6h3.6", 1.6f), hueco("M15.4 9.6a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM17.6 11.8a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"))
     /** Un micrófono: artistas. */
     val Artista = dibujo("artista", relleno("M9.4 4.6a2.6 2.6 0 0 1 5.2 0v6a2.6 2.6 0 0 1-5.2 0z"), trazo("M6.4 10.6a5.6 5.6 0 0 0 11.2 0M12 16.2v3.8M8.8 20h6.4", 2.2f))
     /** Renglones con viñeta: las listas. */
@@ -94,6 +97,7 @@ object Iconos {
         "anime" -> Anime
         "libro" -> Libro
         "album" -> Disco
+        "juego" -> Juego
         else -> Artista
     }
 }

@@ -60,7 +60,6 @@ import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Estados
-import io.github.fogonapps.cajon.datos.Generos
 import io.github.fogonapps.cajon.datos.Obra
 import io.github.fogonapps.cajon.datos.Registro
 import io.github.fogonapps.cajon.datos.Temporada
@@ -71,9 +70,6 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
-
-private fun etiquetaLibroVisible(o: Obra, texto: String, idioma: String): String =
-    if (o.tipo == Tipos.LIBRO) Generos.etiquetaLibro(texto, idioma) else texto
 
 /** Lo de arriba de la ficha: el fondo (cine), la portada y los datos de afuera. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -101,7 +97,7 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
                     }
                     Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), lugar = Imagenes.Lugar.VISOR)
                     SobreImagen(vm, o.id, o.portada, o.fuente)
-                    if (Imagenes.autorizada(o.portada)) {
+                    if (Imagenes.autorizada(Imagenes.clave(o.portada))) {
                         var reportar by remember { mutableStateOf(false) }
                         Pildora(stringResource(R.string.imagen_reportar), Iconos.Bandera, acento = reportar) { reportar = !reportar }
                         if (reportar) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -118,16 +114,21 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
                     lineHeight = if (largo <= 22) 26.sp else if (largo <= 40) 23.sp else 21.sp, color = f.texto, maxLines = 4, overflow = TextOverflow.Ellipsis)
                 if (o.original.isNotBlank()) Text(o.original, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 o.anio?.let { Text("$it", style = MaterialTheme.typography.bodyMedium, color = f.texto) }
+                // Una imagen de Wikimedia Commons lleva su crédito a la vista (autor y licencia); el detalle, al tocarla.
+                creditoImagen(o)?.let { Text(stringResource(R.string.imagen_de, it), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
+                    maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp)) }
             }
         }
     }
     // Quién la hizo: cada nombre se toca para abrir su ficha (director, escritor o artista), sin guardarlo.
     val nombres = o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     val buscando by vm.buscandoPersona.collectAsStateWithLifecycle()
+    // (Un estudio de juegos abre el buscador de juegos con sus juegos.)
     if (conCreadores && nombres.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         nombres.take(6).forEach { n ->
-            Pildora(if (buscando == n.trimEnd('.')) stringResource(R.string.buscando) else n, if (o.tipo == Tipos.ALBUM) Iconos.Artista else Iconos.Persona) { vm.abrirPersona(n, o.tipo) }
+            Pildora(if (buscando == n.trimEnd('.')) stringResource(R.string.buscando) else n,
+                when (o.tipo) { Tipos.ALBUM -> Iconos.Artista; Tipos.JUEGO -> Iconos.Gente; else -> Iconos.Persona }) { vm.abrirPersona(n, o.tipo) }
         }
     }
     Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -138,8 +139,15 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
     Enlaces(vm, o.fuente)
     if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (en todos los tipos).
-        o.generos.forEach { g -> Pildora(etiquetaLibroVisible(o, g, vm.idioma())) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
+        o.generos.forEach { g -> Pildora(vm.generoVisible(o, g)) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
     }
+}
+
+/** El crédito de la portada si es de Wikimedia Commons y se sabe quién la hizo: "Autor · CC BY-SA 4.0". */
+internal fun creditoImagen(o: Obra): String? {
+    val i = o.imagen?.takeIf { it.fuente == "wikimedia" && it.url == o.portada && o.portada.isNotBlank() } ?: return null
+    val autor = i.autor?.takeIf { it.isNotBlank() } ?: return null
+    return listOfNotNull(autor, i.licencia?.takeIf { it.isNotBlank() }).joinToString(" · ")
 }
 
 /** La nota del público en su fuente: "★ 7,8 de 10 en TMDB · 11.536 votos". */
@@ -160,12 +168,13 @@ fun NotaPublica(fuente: String, publica: Double?, votos: Int, modifier: Modifier
     }
 }
 
-/** "1 h 52 min", "3 temporadas · 30 episodios", "432 páginas", "10 canciones · 47 min". */
+/** "1 h 52 min", "3 temporadas · 30 episodios", "432 páginas", "10 canciones · 47 min", "PC · Nintendo Switch". */
 @Composable
 private fun medida(o: Obra): String = when {
     Tipos.porEpisodios(o.tipo) && o.temporadas.isNotEmpty() -> pluralStringResource(R.plurals.temporadas, o.temporadas.size, o.temporadas.size) + " · " +
         pluralStringResource(R.plurals.episodios, o.temporadas.sumOf { it.episodios }, o.temporadas.sumOf { it.episodios })
     o.tipo == Tipos.LIBRO && o.paginas != null -> pluralStringResource(R.plurals.paginas, o.paginas, o.paginas)
+    o.tipo == Tipos.JUEGO -> o.plataformas.joinToString(" · ").ifBlank { nombreTipo(o.tipo, plural = false) }
     o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> pluralStringResource(R.plurals.canciones, o.canciones.size, o.canciones.size) +
         (o.minutos?.let { " · " + stringResource(R.string.minutos_n, it) } ?: "") + (o.formato.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
     o.minutos != null -> if (o.minutos >= 60) stringResource(R.string.horas_minutos, o.minutos / 60, o.minutos % 60) else stringResource(R.string.minutos_n, o.minutos)
@@ -182,15 +191,20 @@ private fun QuienLaHizo(vm: CajonViewModel, o: Obra, personas: List<io.github.fo
     val buscando by vm.buscandoPersona.collectAsStateWithLifecycle()
     val nombres = o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(6)
     if (personas.isEmpty() && nombres.isEmpty()) return
-    Seccion(stringResource(when (o.tipo) { Tipos.ALBUM -> R.string.tipo_artista; Tipos.LIBRO -> R.string.autor; Tipos.PELICULA -> R.string.director; else -> R.string.creador }))
+    Seccion(stringResource(when (o.tipo) {
+        Tipos.ALBUM -> R.string.tipo_artista; Tipos.LIBRO -> R.string.autor; Tipos.PELICULA -> R.string.director; Tipos.JUEGO -> R.string.estudio; else -> R.string.creador
+    }))
     @Composable
     fun Fila(nombre: String, foto: String, tipo: String, onClick: () -> Unit) = FilaVidrio(onClick) {
-        FotoArtista(foto, nombre, 46.dp, tipo)
+        // Un estudio de juegos lleva el mismo ícono que su píldora del encabezado (no las iniciales de una persona).
+        if (o.tipo == Tipos.JUEGO) Box(Modifier.size(46.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie).border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape),
+            contentAlignment = Alignment.Center) { IconoRiso(Iconos.Gente, null, tamano = 20.dp, tinta = f.acentoTexto) }
+        else FotoArtista(foto, nombre, 46.dp, tipo)
         Text(if (buscando == nombre.trimEnd('.')) stringResource(R.string.buscando) else nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto,
             maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
-    val tipoPersona = when (o.tipo) { Tipos.ALBUM -> ""; Tipos.LIBRO -> io.github.fogonapps.cajon.datos.Personas.AUTOR; else -> io.github.fogonapps.cajon.datos.Personas.DIRECTOR }
+    val tipoPersona = when (o.tipo) { Tipos.ALBUM, Tipos.JUEGO -> ""; Tipos.LIBRO -> io.github.fogonapps.cajon.datos.Personas.AUTOR; else -> io.github.fogonapps.cajon.datos.Personas.DIRECTOR }
     if (personas.isNotEmpty()) personas.forEach { a -> Fila(a.nombre, a.foto, a.tipo) { vm.abrir(Pantalla.PreviaArtista(a)) } }
     else nombres.forEach { n -> Fila(n, "", tipoPersona) { vm.abrirPersona(n, o.tipo) } }
 }
@@ -269,11 +283,15 @@ private fun Sinopsis(texto: String) {
 
 /** "Anotar cuándo lo vi", "…lo leí", "…lo escuché": guarda en el diario el día que se vio, leyó o escuchó. */
 @Composable
-fun textoAnotar(tipo: String) = stringResource(when (tipo) { Tipos.LIBRO -> R.string.anotar_leido; Tipos.ALBUM -> R.string.anotar_escuchado; else -> R.string.anotar_visto })
+fun textoAnotar(tipo: String) = stringResource(when (tipo) {
+    Tipos.LIBRO -> R.string.anotar_leido; Tipos.ALBUM -> R.string.anotar_escuchado; Tipos.JUEGO -> R.string.anotar_jugado; else -> R.string.anotar_visto
+})
 
 /** "Cuándo lo viste", "…lo leíste", "…lo escuchaste": la lista de esas fechas en la ficha. */
 @Composable
-fun textoCuando(tipo: String) = stringResource(when (tipo) { Tipos.LIBRO -> R.string.cuando_leido; Tipos.ALBUM -> R.string.cuando_escuchado; else -> R.string.cuando_visto })
+fun textoCuando(tipo: String) = stringResource(when (tipo) {
+    Tipos.LIBRO -> R.string.cuando_leido; Tipos.ALBUM -> R.string.cuando_escuchado; Tipos.JUEGO -> R.string.cuando_jugado; else -> R.string.cuando_visto
+})
 
 /** La ficha de una obra del cajón: todo lo de afuera y todo lo de la persona. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -324,7 +342,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     val textoAgregar = stringResource(if (o.tipo == Tipos.LIBRO) R.string.agregar_tema else R.string.agregar_genero)
     EditorEtiquetas("g" + o.id, tituloEtiquetas, o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
         { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, textoAgregar,
-        textoVisible = { etiquetaLibroVisible(o, it, idioma) }, editable = o.fuente.isEmpty())
+        textoVisible = { vm.generoVisible(o, it) }, editable = o.fuente.isEmpty())
 
     // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
     var celebrando by remember(id) { mutableStateOf(false) }
@@ -530,7 +548,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
                                     .clickable { info = true }, contentAlignment = Alignment.Center) {
                                     Text("i", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = "$nombreOpcion · " })
                                 }
-                                if (o != null && !fondo && Imagenes.autorizada(url)) {
+                                if (o != null && !fondo && Imagenes.votable(fuente, url, vm.procedencia(id, url))) {
                                     val votada = comunidad?.miVoto?.let { Imagenes.clave(it) == Imagenes.clave(url) } == true
                                     val votos = comunidad?.votos.orEmpty().filterKeys { Imagenes.clave(it) == Imagenes.clave(url) }.values.sum()
                                     val accionVoto = stringResource(if (votada) R.string.imagen_quitar_voto else R.string.imagen_votar)
@@ -706,7 +724,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
         Text(stringResource(R.string.tu_resena), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(nota, { nota = it }, descripcion = stringResource(R.string.tu_nota))
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            FilaInterruptorCajon(stringResource(R.string.otra_vez_pregunta), otraVez) { otraVez = it }
+            FilaInterruptorCajon(stringResource(if (o.tipo == Tipos.JUEGO) R.string.otra_vez_pregunta_juego else R.string.otra_vez_pregunta), otraVez) { otraVez = it }
         }
         OutlinedTextField(texto, { texto = it }, Modifier.fillMaxWidth(), minLines = 3,
             label = { Text(stringResource(R.string.resena_pista)) }, isError = texto.length > 5000,
@@ -735,6 +753,8 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
     // Series: "10, 8, 12" = episodios de cada temporada. Álbum: una canción por línea.
     var temporadas by rememberSaveable { mutableStateOf(viejo?.temporadas?.joinToString(", ") { it.episodios.toString() } ?: "") }
     var canciones by rememberSaveable { mutableStateOf(viejo?.canciones?.joinToString("\n") { it.titulo } ?: "") }
+    // Juegos: "PC, Nintendo Switch".
+    var plataformas by rememberSaveable { mutableStateOf(viejo?.plataformas?.joinToString(", ") ?: "") }
 
     Cabecera(stringResource(if (viejo == null) R.string.agregar_a_mano else R.string.corregir_datos), vm::cerrar)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -743,11 +763,13 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
         CampoTexto(original, { original = it }, stringResource(R.string.titulo_original), max = 150)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             CampoNumero(anio, { anio = it.take(4) }, stringResource(R.string.anio), Modifier.weight(1f))
-            CampoNumero(medida, { medida = it }, stringResource(if (tipo == Tipos.LIBRO) R.string.paginas_campo else R.string.minutos_campo), Modifier.weight(1f))
+            // Un juego no se mide en minutos ni en páginas.
+            if (tipo != Tipos.JUEGO) CampoNumero(medida, { medida = it }, stringResource(if (tipo == Tipos.LIBRO) R.string.paginas_campo else R.string.minutos_campo), Modifier.weight(1f))
         }
         CampoTexto(creador, { creador = it }, stringResource(when (tipo) {
-            Tipos.LIBRO -> R.string.autor; Tipos.ALBUM -> R.string.tipo_artista; Tipos.PELICULA -> R.string.director; else -> R.string.creador
+            Tipos.LIBRO -> R.string.autor; Tipos.ALBUM -> R.string.tipo_artista; Tipos.PELICULA -> R.string.director; Tipos.JUEGO -> R.string.estudio; else -> R.string.creador
         }), max = 150)
+        if (tipo == Tipos.JUEGO) CampoTexto(plataformas, { plataformas = it }, stringResource(R.string.plataformas_campo), max = 300)
         if (Tipos.porEpisodios(tipo)) {
             CampoTexto(temporadas, { temporadas = it.filter { c -> c.isDigit() || c == ',' || c == ' ' } }, stringResource(R.string.temporadas_campo), max = 200)
             Pista(stringResource(R.string.temporadas_pista), adentro = true)
@@ -763,7 +785,8 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
                 tipo = tipo, titulo = titulo.trim(), original = original.trim(), anio = anio.toIntOrNull(), creador = creador.trim(),
                 sinopsis = sinopsis.trim(),
                 paginas = if (tipo == Tipos.LIBRO) medida.toIntOrNull() else base.paginas,
-                minutos = if (tipo != Tipos.LIBRO) medida.toIntOrNull() else base.minutos,
+                minutos = if (tipo != Tipos.LIBRO && tipo != Tipos.JUEGO) medida.toIntOrNull() else base.minutos,
+                plataformas = if (tipo == Tipos.JUEGO) io.github.fogonapps.cajon.datos.Logica.plataformas(plataformas) else base.plataformas,
                 temporadas = if (Tipos.porEpisodios(tipo)) eps.mapIndexed { i, n -> base.temporadas.getOrNull(i)?.copy(episodios = n) ?: Temporada(i + 1, n) } else base.temporadas,
                 canciones = if (tipo == Tipos.ALBUM) lineas.mapIndexed { i, t -> base.canciones.getOrNull(i)?.takeIf { it.titulo == t } ?: io.github.fogonapps.cajon.datos.Cancion(t) } else base.canciones,
             ))

@@ -81,7 +81,8 @@ object Recomendar {
             val malo = o.estado == Estados.ABANDONADO || o.nota in 1..4
             val x = if (malo) -0.6 * v else peso(o, e.ajustes.favoritas) * v
             (o.generos + o.etiquetas).filter { it.isNotBlank() }.distinctBy { Logica.tituloLimpio(it) }.forEach { sumar(generos, claveGenero(it), it, x, cuando) }
-            if (o.tipo != Tipos.ALBUM && o.creador.isNotBlank()) o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(2)
+            // Los estudios de los juegos no son directores ni escritores: no se piden sus obras.
+            if (o.tipo != Tipos.ALBUM && o.tipo != Tipos.JUEGO && o.creador.isNotBlank()) o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(2)
                 .forEach { sumar(personas, clavePersona(it), it, x * 0.6, cuando) }
         }
         // Los músicos: lo de ahora es lo que escucha (la última vez que sonó); sin escuchas, pesa parejo.

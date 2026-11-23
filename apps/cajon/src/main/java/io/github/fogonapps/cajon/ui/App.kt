@@ -192,12 +192,13 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                                 Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
                                 Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)
                                 Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
+                                Pestana.JUEGOS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.JUEGOS)
                             }
                             Espacio(120.dp)
                         }
                         }
                     }
-                    if (pila.isEmpty()) BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(pestana))) }, Modifier.align(Alignment.BottomCenter))
+                    if (pila.isEmpty()) BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(agregarDesde(pestana)) }, Modifier.align(Alignment.BottomCenter))
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
             }
@@ -299,12 +300,15 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
 /** El ícono y el nombre de cada pestaña. */
 fun iconoPestana(p: Pestana): Dibujo = when (p) {
     Pestana.INICIO -> Iconos.Inicio; Pestana.PARA_TI -> Iconos.Gente; Pestana.CINE -> Iconos.Pelicula
-    Pestana.MUSICA -> Iconos.Disco; Pestana.LIBROS -> Iconos.Libro
+    Pestana.MUSICA -> Iconos.Disco; Pestana.LIBROS -> Iconos.Libro; Pestana.JUEGOS -> Iconos.Juego
 }
 fun textoPestana(p: Pestana): Int = when (p) {
     Pestana.INICIO -> R.string.pestana_inicio; Pestana.PARA_TI -> R.string.red_titulo; Pestana.CINE -> R.string.seccion_cine
-    Pestana.MUSICA -> R.string.seccion_musica; Pestana.LIBROS -> R.string.seccion_libros
+    Pestana.MUSICA -> R.string.seccion_musica; Pestana.LIBROS -> R.string.seccion_libros; Pestana.JUEGOS -> R.string.seccion_juegos
 }
+
+/** Lo que abre el + de la barra: el buscador en la sección de la pestaña (en Juegos, el de juegos). */
+fun agregarDesde(p: Pestana): Pantalla = Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(p))
 
 /**
  * La barra de pestañas: una píldora que flota, con las pestañas en el orden elegido y el botón de agregar al final.
@@ -331,15 +335,16 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
             },
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Cinco pestañas y el +: se apretan un poco para que quepan en un teléfono angosto; con seis, un poco más.
+        val apretada = pestanas.size > 5
         pestanas.forEach { pe ->
             Box(Modifier.destinoGuia("pestana_${pe.name}").onGloballyPositioned { c -> val x = c.positionInParent().x; bordes[pe] = x..(x + c.size.width) }) {
-                BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual) { onIr(pe) }
+                BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual, apretada) { onIr(pe) }
             }
         }
-        // Cinco pestañas y el +: se apretan un poco para que quepan en un teléfono angosto.
         val agregar = stringResource(R.string.buscar_y_agregar)
         Box(
-            Modifier.destinoGuia("agregar").rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.destinoGuia("agregar").rebote(0.9f).size(if (apretada) 46.dp else 50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAgregar).semantics { contentDescription = agregar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
@@ -348,11 +353,11 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
 
 /** Una pestaña: solo el ícono; la elegida, en una píldora más clara con el ícono en la primera tinta. */
 @Composable
-private fun BotonPestana(icono: Dibujo, texto: String, elegida: Boolean, onClick: () -> Unit) {
+private fun BotonPestana(icono: Dibujo, texto: String, elegida: Boolean, apretada: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
     val fondo by animateColorAsState(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent, label = "pestana")
     Box(
-        Modifier.rebote(0.9f).size(44.dp).clip(CircleShape).background(fondo)
+        Modifier.rebote(0.9f).size(if (apretada) 42.dp else 44.dp).clip(CircleShape).background(fondo)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
     ) { IconoRiso(icono, null, tamano = 22.dp, tinta = if (elegida) f.acentoTexto else f.textoSuave) }

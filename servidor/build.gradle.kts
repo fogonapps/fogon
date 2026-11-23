@@ -24,4 +24,13 @@ dependencies {
 
 application { mainClass.set("io.github.fogonapps.social.PrincipalKt") }
 
-tasks.test { useJUnitPlatform() }
+// Las pruebas crean carpetas temporales: van a ~/.cache (disco, fuera del repo; /tmp vive en la RAM) y se borran siempre al terminar, aunque fallen.
+val temporalPruebas = File(System.getProperty("user.home"), ".cache/fogon-pruebas-servidor")
+val limpiarTemporalPruebas by tasks.registering { doLast { temporalPruebas.deleteRecursively() } }
+tasks.test {
+    useJUnitPlatform()
+    systemProperty("java.io.tmpdir", temporalPruebas.absolutePath)
+    doFirst { temporalPruebas.deleteRecursively(); temporalPruebas.mkdirs() }
+    finalizedBy(limpiarTemporalPruebas)
+}
+

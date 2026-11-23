@@ -37,7 +37,7 @@ fun Chat.enviarObra(usuario: String, texto: String, obra: io.github.fogonapps.ca
 /** Una obra como tarjeta del chat (lo que ve la otra persona). */
 fun obraJson(obra: io.github.fogonapps.cajon.datos.Obra) = kotlinx.serialization.json.buildJsonObject {
     put("id", kotlinx.serialization.json.JsonPrimitive(obra.id)); put("titulo", kotlinx.serialization.json.JsonPrimitive(obra.titulo)); put("tipoObra", kotlinx.serialization.json.JsonPrimitive(obra.tipo))
-    put("portada", kotlinx.serialization.json.JsonPrimitive(obra.portada.takeIf { u -> u.startsWith("https://") }.orEmpty()))
+    put("portada", kotlinx.serialization.json.JsonPrimitive(io.github.fogonapps.cajon.datos.Imagenes.paraRed(obra.portada)))
     obra.anio?.let { put("anio", kotlinx.serialization.json.JsonPrimitive(it)) }
     if (obra.fuente.isNotBlank()) put("fuente", kotlinx.serialization.json.JsonPrimitive(obra.fuente))
 }

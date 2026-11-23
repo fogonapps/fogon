@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit
  *  - Open Library (libros): datos abiertos del Internet Archive, sin clave.
  *  - MusicBrainz (álbumes y artistas): datos CC0, sin clave; pide un User-Agent con contacto y como mucho
  *    una consulta por segundo. Las carátulas vienen del Cover Art Archive.
+ *  - Wikidata (videojuegos): datos CC0, sin clave; las portadas, de Wikimedia Commons. Se le da el crédito a Wikidata.
  * Solo se consulta cuando la persona busca o abre una obra; nada se manda de vuelta.
  */
 
@@ -75,6 +76,20 @@ class SinRed : IOException()
 class ClaveMala : IOException()
 /** El servicio pidió esperar (503 o 429): se reintenta. */
 class Ocupado(val segundos: Long? = null) : IOException()
+/** El servidor de Fogón no tiene TMDB (503 «sin_tmdb»): no es estar ocupado, así que esperar no sirve. */
+class SinTmdb : IOException()
+
+/**
+ * El fallo que corresponde a una respuesta [codigo] de [ruta] (null si no es un fallo de estos): un 503 del puente de
+ * TMDB con «sin_tmdb» es [SinTmdb]; los demás 503 y los 429, [Ocupado].
+ */
+internal fun falloDeRespuesta(codigo: Int, ruta: String, cuerpo: () -> String, reintentarEn: String?): IOException? = when {
+    codigo == 401 -> ClaveMala()
+    // Si no se puede leer el cuerpo, se trata como ocupado (no como «sin internet»).
+    codigo == 503 && ruta.startsWith("/v1/tmdb/") && "sin_tmdb" in runCatching { cuerpo() }.getOrDefault("") -> SinTmdb()
+    codigo == 503 || codigo == 429 -> Ocupado(segundosDeEspera(reintentarEn))
+    else -> null
+}
 
 private const val AGENTE = "ElCajon-Fogon/1.0 (fogonapps@gmail.com)"
 private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
@@ -94,15 +109,18 @@ private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emp
     val masivo = kotlin.coroutines.coroutineContext[EnlaceMasivo]
     suspend fun pedir(): JsonElement {
         masivo?.comprobar()
-        if (url.encodedPath.startsWith("/v1/tmdb/")) masivo?.pausarTmdb()
+        val tmdb = url.encodedPath.startsWith("/v1/tmdb/")
+        // Si el servidor ya dijo que no tiene TMDB, el trabajo masivo no lo vuelve a pedir: sigue con lo demás.
+        if (tmdb && masivo?.sinTmdb == true) throw SinTmdb()
+        if (tmdb) masivo?.pausarTmdb()
         try {
             return http.newCall(req).execute().use { r ->
-                if (r.code == 401) throw ClaveMala()
-                if (r.code == 503 || r.code == 429) throw Ocupado(segundosDeEspera(r.header("Retry-After")))
+                falloDeRespuesta(r.code, url.encodedPath, { r.body.string() }, r.header("Retry-After"))?.let { throw it }
                 if (!r.isSuccessful) throw IllegalStateException("HTTP ${r.code}")
                 JsonCajon.parseToJsonElement(r.body.string()).also { masivo?.respondio() }
             }
         } catch (e: ClaveMala) { masivo?.fallar(e); throw e }
+        catch (e: SinTmdb) { masivo?.sinTmdb = true; masivo?.respondio(); throw e }
         catch (e: Ocupado) { throw e }
         catch (e: IOException) { val fallo = SinRed(); masivo?.corte(fallo); throw fallo }
     }
@@ -1046,6 +1064,7 @@ object Wikimedia {
      * servicio es otra línea en [SERVICIOS].
      */
     suspend fun enlaces(fuente: String, idioma: String): List<Enlace> {
+        if (fuente.startsWith("wd:")) return WikidataJuegos.enlaces(fuente, idioma).first
         val partes = fuente.split(":")
         val id = partes.last()
         val (prop, propia) = when {
@@ -1201,20 +1220,38 @@ object Wikimedia {
         return listOfNotNull(i.autor?.takeIf { it.isNotBlank() }, i.licencia?.takeIf { it.isNotBlank() }, "Wikimedia Commons").joinToString(" · ")
     }
 
-    suspend fun procedencia(foto: String): ImagenElegida {
-        val nombre = if ("Special:FilePath/" in foto) foto.substringAfter("Special:FilePath/").substringBefore("?")
-            else foto.substringBefore('?').substringAfterLast('/').replace(Regex("^\\d+px-"), "")
-        val archivo = java.net.URLDecoder.decode(nombre, "UTF-8")
+    /**
+     * El autor y la licencia de una imagen de Commons. Con [ancho], la dirección que queda es la de upload.wikimedia.org
+     * que da Commons para ese ancho (la miniatura, o el original si es más chico), la que aceptan las portadas de la red.
+     */
+    suspend fun procedencia(foto: String, ancho: Int? = null): ImagenElegida {
+        val archivo = java.net.URLDecoder.decode(Imagenes.archivoCommons(foto).replace("+", "%2B"), "UTF-8")
         val u = commons.newBuilder().addQueryParameter("action", "query").addQueryParameter("format", "json")
-            .addQueryParameter("prop", "imageinfo").addQueryParameter("iiprop", "extmetadata").addQueryParameter("titles", "File:$archivo").build()
+            .addQueryParameter("prop", "imageinfo").addQueryParameter("iiprop", if (ancho != null) "extmetadata|url" else "extmetadata")
+            .apply { if (ancho != null) addQueryParameter("iiurlwidth", "$ancho") }
+            .addQueryParameter("titles", "File:$archivo").build()
         val paginas = pedirJson(u).jsonObject["query"]?.jsonObject?.get("pages") as? JsonObject ?: return ImagenElegida("wikimedia", foto)
-        val meta = paginas.values.firstOrNull()?.jsonObject?.arr("imageinfo")?.firstOrNull()?.jsonObject?.get("extmetadata") as? JsonObject ?: return ImagenElegida("wikimedia", foto)
+        val info = paginas.values.firstOrNull()?.jsonObject?.arr("imageinfo")?.firstOrNull()?.jsonObject
+        val meta = info?.get("extmetadata") as? JsonObject ?: return ImagenElegida("wikimedia", foto)
+        val url = if (ancho != null) urlSubida(info) ?: Imagenes.deCommons(foto) else foto
         // Commons repite a veces el texto en una etiqueta escondida (`<span style="display: none;">Unknown author</span>`):
         // lo escondido se quita antes que las etiquetas, para que no salga "Unknown authorUnknown author".
         fun v(k: String) = (meta[k] as? JsonObject)?.get("value").texto()
             .replace(Regex("<(\\w+)[^>]*display:\\s*none[^>]*>.*?</\\1>", RegexOption.DOT_MATCHES_ALL), "")
             .replace(Regex("<[^>]+>"), "").replace("&amp;", "&").replace(Regex("\\s+"), " ").trim()
-        return ImagenElegida("wikimedia", foto, v("Artist"), v("LicenseShortName"), cuando = System.currentTimeMillis())
+        return ImagenElegida("wikimedia", url, v("Artist"), v("LicenseShortName"), cuando = System.currentTimeMillis())
+    }
+
+    /**
+     * De la respuesta de imageinfo («iiprop=url» con «iiurlwidth»), la miniatura (o el original, si la imagen es más
+     * chica) en upload.wikimedia.org, sin parámetros. Commons da la miniatura en thumb.wikimedia.org con «?utm_…»: la
+     * misma ruta está en upload.wikimedia.org, el único que aceptan las portadas de la red. Su nombre lo pone Commons
+     * (con un nombre largo es «500px-thumbnail.jpg»), por eso no se arma a mano.
+     */
+    internal fun urlSubida(info: JsonObject): String? = listOf("thumburl", "url").firstNotNullOfOrNull { k ->
+        val u = (info[k] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return@firstNotNullOfOrNull null
+        val ruta = Regex("^https://(upload|thumb)\\.wikimedia\\.org(/wikipedia/commons/[^?#]+)").find(u)?.groupValues?.get(2)
+        ruta?.let { "https://upload.wikimedia.org$it" }
     }
 }
 
@@ -1239,4 +1276,321 @@ object TvMaze {
                 Encontrado(Tipos.SERIE, s["name"].texto(), anioDe(s["premiered"].texto()), "", foto, "tvmaze:${s["id"].entero()}")
             }.take(24)
     }
+}
+
+/**
+ * Videojuegos en Wikidata (datos CC0, sin clave): se busca por nombre, por estudio o por género y se dejan solo los
+ * elementos que son un juego. Se le da el crédito a Wikidata en la pantalla. Tres consultas por búsqueda: la búsqueda
+ * (solo de juegos), los elementos encontrados y, en lote, los nombres de sus desarrolladores y plataformas. El detalle
+ * de uno ([detalles]) suma sus géneros y la imagen de Commons, que solo se usa como portada con su autor y licencia.
+ */
+object WikidataJuegos {
+    private val api = "https://www.wikidata.org/w/api.php".toHttpUrl()
+
+    /** wbgetentities acepta como mucho 50 ids por consulta. */
+    private const val LOTE = 50
+
+    /**
+     * Lo que cuenta como juego por su P31 ("instancia de"): videojuego, videojuego libre, nueva versión (remake),
+     * remasterización, modificación (mod) y recopilación. Quedan fuera las series y franquicias (no se juegan), las
+     * demos, las expansiones y los proyectos sin publicar.
+     */
+    internal val CLASES = setOf(
+        "Q7889",     // video game
+        "Q21125433", // free and open-source video game
+        "Q4393107",  // video game remake
+        "Q65963104", // video game remaster
+        "Q865493",   // video game mod
+        "Q16070115", // video game compilation
+    )
+
+    /** Un juego leído de Wikidata, con los ids de sus desarrolladores, plataformas y géneros todavía sin nombre. */
+    internal data class Juego(
+        val qid: String, val titulo: String, val anio: Int?, val desarrolladores: List<String>, val plataformas: List<String>, val imagen: String,
+        val generos: List<String> = emptyList(),
+    )
+
+    /**
+     * Los géneros de juego más usados en Wikidata (su P136), en orden. Sus nombres cortos ("Plataformas" en vez de
+     * "videojuego de plataformas") están en el `string-array` `generos_juegos` de cada idioma, en este mismo orden:
+     * sirven para mostrar los géneros y para buscar juegos por género.
+     */
+    internal val GENEROS: List<String> = listOf(
+        "Q270948", "Q23916", "Q343568", "Q744038", "Q1422746", "Q472055", "Q208189", "Q2176159", "Q1610017", "Q828322",
+        "Q19643088", "Q1143132", "Q54767", "Q860750", "Q868217", "Q846224", "Q4282636", "Q185029", "Q333967",
+        "Q11338014", "Q689445", "Q584105", "Q1050023", "Q25397095", "Q21030988", "Q858523", "Q1199309",
+        "Q821157", "Q113939522", "Q401831",
+    )
+
+    /**
+     * «Género de videojuego» en Wikidata: un género de un juego (su P136) entra solo si es instancia de este (P31). Así
+     * quedan fuera los temas que Wikidata también pone como género («videojuego con personajes LGBT», «de estilo retro»).
+     */
+    internal const val GENERO_DE_JUEGO = "Q659563"
+
+    /**
+     * Un género de juego guardado (con su nombre en cualquiera de las [listas], una por idioma) con su nombre corto en
+     * [actual], la lista del idioma de la app; uno que no es de [GENEROS] queda como se guardó.
+     */
+    fun etiquetaGenero(nombre: String, actual: List<String>, vararg listas: List<String>): String =
+        generoConocido(nombre, *listas)?.let { actual.getOrNull(GENEROS.indexOf(it)) } ?: nombre
+
+    /**
+     * El id del género conocido que se llama [nombre] en alguna de las [listas] de nombres (una por idioma, en el orden
+     * de [GENEROS]), o null.
+     */
+    fun generoConocido(nombre: String, vararg listas: List<String>): String? {
+        val n = Logica.tituloLimpio(nombre)
+        if (n.isEmpty()) return null
+        return listas.firstNotNullOfOrNull { l -> l.indexOfFirst { Logica.tituloLimpio(it) == n }.takeIf { it >= 0 } }?.let { GENEROS.getOrNull(it) }
+    }
+
+    /** Un elemento de Wikidata que ya no está (borrado o fusionado) o no tiene nombre: no es un fallo de la red. */
+    class SinDatos(qid: String) : Exception("Wikidata no tiene datos de $qid")
+
+    suspend fun buscar(texto: String, idioma: String): List<Encontrado> {
+        if (texto.isBlank()) return emptyList()
+        val lengua = if (idioma == "en") "en" else "es"
+        // El buscador de Wikidata (CirrusSearch) con el filtro de clase: así llegan solo juegos y no el personaje, la
+        // franquicia o las personas que se llaman igual. "haswbstatement:A|B" es un O entre las dos condiciones.
+        return porConsulta(consulta(texto), lengua, masEnlazadosPrimero = false)
+    }
+
+    /**
+     * Los juegos de un estudio por su nombre: los elementos que se llaman así (nombre o alias, hasta tres, por si hay
+     * otro con el mismo nombre) y los juegos que tienen a alguno de ellos como desarrollador (P178), los más
+     * conocidos primero. Vacío si ningún elemento se llama así.
+     */
+    suspend fun deEstudio(nombre: String, idioma: String): List<Encontrado> {
+        if (nombre.isBlank()) return emptyList()
+        val lengua = if (idioma == "en") "en" else "es"
+        val u = api.newBuilder().addQueryParameter("action", "wbsearchentities").addQueryParameter("format", "json")
+            .addQueryParameter("type", "item").addQueryParameter("limit", "10").addQueryParameter("language", lengua)
+            .addQueryParameter("uselang", lengua).addQueryParameter("search", nombre.trim()).build()
+        val ids = idsConNombre(pedirJson(u) as? JsonObject ?: return emptyList(), nombre)
+        if (ids.isEmpty()) return emptyList()
+        return porConsulta(conPropiedad("P178", ids), lengua, masEnlazadosPrimero = true)
+    }
+
+    /** Los juegos de un género conocido ([GENEROS], por su id), los más conocidos primero. */
+    suspend fun deGenero(qid: String, idioma: String): List<Encontrado> {
+        if (qid !in GENEROS) return emptyList()
+        return porConsulta(conPropiedad("P136", listOf(qid)), if (idioma == "en") "en" else "es", masEnlazadosPrimero = true)
+    }
+
+    /** Una búsqueda de Wikidata ([srsearch], con el filtro de clase) convertida en juegos con sus nombres. */
+    private suspend fun porConsulta(srsearch: String, lengua: String, masEnlazadosPrimero: Boolean): List<Encontrado> {
+        val b = api.newBuilder().addQueryParameter("action", "query").addQueryParameter("format", "json")
+            .addQueryParameter("list", "search").addQueryParameter("srnamespace", "0").addQueryParameter("srlimit", "15")
+            .addQueryParameter("srprop", "").addQueryParameter("srsearch", srsearch)
+        // Sin texto que comparar, el orden de relevancia no dice nada: primero los que más enlaces reciben.
+        if (masEnlazadosPrimero) b.addQueryParameter("srsort", "incoming_links_desc")
+        val ids = idsDeBusqueda(pedirJson(b.build()) as? JsonObject ?: return emptyList())
+        if (ids.isEmpty()) return emptyList()
+        val juegos = juegosDe(entidades(ids, "claims|labels"), ids, lengua)
+        if (juegos.isEmpty()) return emptyList()
+        val otros = juegos.flatMap { it.desarrolladores + it.plataformas }.distinct()
+        // Sin los nombres de desarrolladores y plataformas, los juegos igual sirven: se muestran sin esa línea.
+        val nombres = oVacio { otros.chunked(LOTE).map { etiquetasDe(entidades(it, "labels"), lengua) }.fold(emptyMap()) { a, m -> a + m } }
+        return juegos.map { encontrado(it, nombres) }
+    }
+
+    /** Lo que se le pide al buscador: el texto y que sea de una de las [CLASES]. */
+    internal fun consulta(texto: String) = texto.trim().replace(Regex("\\s+"), " ") + " " + soloJuegos()
+
+    /** Que tenga la propiedad [p] con alguno de los [ids] y sea de una de las [CLASES] (las dos cosas a la vez). */
+    internal fun conPropiedad(p: String, ids: List<String>) =
+        "haswbstatement:" + ids.joinToString("|") { "$p=$it" } + " " + soloJuegos()
+
+    private fun soloJuegos() = "haswbstatement:" + CLASES.joinToString("|") { "P31=$it" }
+
+    /**
+     * Los ids de una respuesta de wbsearchentities cuyo nombre o alias es [nombre] (sin importar mayúsculas ni
+     * tildes), como mucho tres: "Team Cherry" el estudio y no "Team Cherry Jam".
+     */
+    internal fun idsConNombre(r: JsonObject, nombre: String): List<String> {
+        val buscado = Logica.tituloLimpio(nombre)
+        if (buscado.isEmpty()) return emptyList()
+        return r.arr("search").mapNotNull { it as? JsonObject }.filter { x ->
+            val coincide = (x["match"] as? JsonObject)?.get("text").texto()
+            Logica.tituloLimpio(coincide) == buscado || Logica.tituloLimpio(x["label"].texto()) == buscado
+        }.mapNotNull { x -> x["id"].texto().takeIf { it.matches(Regex("Q[0-9]+")) } }.distinct().take(3)
+    }
+
+    /** Lo que devuelve [pedir], o nada si falla por lo que sea (red, error del servidor, respuesta rara); cancelar sí sigue. */
+    internal suspend fun oVacio(pedir: suspend () -> Map<String, String>): Map<String, String> =
+        try { pedir() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Exception) { emptyMap() }
+
+    private suspend fun entidades(ids: List<String>, props: String): JsonObject {
+        val u = api.newBuilder().addQueryParameter("action", "wbgetentities").addQueryParameter("format", "json")
+            .addQueryParameter("props", props).addQueryParameter("languages", "es|en|mul")
+            .addQueryParameter("ids", ids.joinToString("|")).build()
+        return (pedirJson(u) as? JsonObject)?.get("entities") as? JsonObject ?: JsonObject(emptyMap())
+    }
+
+    /** Los ids (Q…) de una respuesta de list=search, en su orden. */
+    internal fun idsDeBusqueda(r: JsonObject): List<String> = ((r["query"] as? JsonObject)?.arr("search") ?: JsonArray(emptyList()))
+        .mapNotNull { (it as? JsonObject)?.get("title").texto().takeIf { s -> s.matches(Regex("Q[0-9]+")) } }.distinct()
+
+    /** Los que son juego de una respuesta de wbgetentities ("entities"), en el orden de [orden]. */
+    internal fun juegosDe(entidades: JsonObject, orden: List<String>, idioma: String): List<Juego> = orden.mapNotNull { q ->
+        val x = entidades[q] as? JsonObject ?: return@mapNotNull null
+        val claims = x["claims"] as? JsonObject ?: return@mapNotNull null
+        if (valores(claims, "P31").none { idDe(it) in CLASES }) return@mapNotNull null
+        leer(q, x, idioma)
+    }
+
+    /** Un elemento leído como juego, sin mirar su clase (el detalle de uno ya guardado); null si no tiene nombre. */
+    internal fun leer(q: String, x: JsonObject, idioma: String): Juego? {
+        val claims = x["claims"] as? JsonObject ?: JsonObject(emptyMap())
+        val titulo = etiqueta(x, idioma).ifBlank { return null }
+        // La salida más temprana: un juego sale en varias fechas (por plataforma y país) y la primera es la suya.
+        val anio = valores(claims, "P577").mapNotNull { anioDeTiempo(((it as? JsonObject)?.get("time")).texto()) }.minOrNull()
+        val desarrolladores = valores(claims, "P178", preferidosPrimero = true).mapNotNull { idDe(it) }.distinct()
+        val plataformas = valores(claims, "P400").mapNotNull { idDe(it) }.distinct()
+        val imagen = valores(claims, "P18", preferidosPrimero = true).firstNotNullOfOrNull { it.texto().takeIf { s -> s.isNotBlank() } }.orEmpty()
+        val generos = valores(claims, "P136", preferidosPrimero = true).mapNotNull { idDe(it) }.distinct()
+        return Juego(q, titulo, anio, desarrolladores, plataformas, imagen, generos)
+    }
+
+    /**
+     * Los datos de un juego por su fuente ("wd:Q…"): sus estudios, géneros y plataformas y, si su imagen de Commons trae
+     * autor y licencia, la portada con ese crédito. Si fallan los nombres o la imagen, sale igual con lo demás.
+     */
+    suspend fun detalles(fuente: String, idioma: String, nombresGeneros: List<String>): Obra {
+        val qid = fuente.removePrefix("wd:")
+        require(qid.matches(Regex("Q[0-9]+"))) { "No es un elemento de Wikidata: $fuente" }
+        val lengua = if (idioma == "en") "en" else "es"
+        val j = leer(qid, entidadDe(entidades(listOf(qid), "claims|labels"), qid), lengua) ?: throw SinDatos(qid)
+        val otros = (j.desarrolladores + j.plataformas).distinct()
+        val nombres = oVacio { otros.chunked(LOTE).map { etiquetasDe(entidades(it, "labels"), lengua) }.fold(emptyMap()) { a, m -> a + m } }
+        // Los géneros que no están en la tabla, con su clase: solo entran los que son género de videojuego.
+        val desconocidos = j.generos.filter { it !in GENEROS }.distinct().take(LOTE)
+        val generos = if (desconocidos.isEmpty()) emptyMap() else oVacio { generosDeJuego(entidades(desconocidos, "claims|labels"), lengua) }
+        val imagen = if (j.imagen.isBlank()) null else try { conCredito(Wikimedia.procedencia(urlImagen(j.imagen), ancho = 500)) }
+            catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Exception) { null }
+        return obra(j, nombres + generos, nombresGeneros, imagen)
+    }
+
+    /** De una respuesta de wbgetentities (claims y labels) de géneros, el nombre de los que son [GENERO_DE_JUEGO]. */
+    internal fun generosDeJuego(entidades: JsonObject, idioma: String): Map<String, String> = entidades.entries.mapNotNull { (q, x) ->
+        val o = x as? JsonObject ?: return@mapNotNull null
+        val claims = o["claims"] as? JsonObject ?: return@mapNotNull null
+        if (valores(claims, "P31").none { idDe(it) == GENERO_DE_JUEGO }) return@mapNotNull null
+        etiqueta(o, idioma).takeIf { it.isNotBlank() && !it.matches(CATEGORIA) }?.let { q to it }
+    }.toMap()
+
+    /** El elemento [qid] de una respuesta de wbgetentities; [SinDatos] si no vino o Wikidata lo marca como "missing". */
+    internal fun entidadDe(entidades: JsonObject, qid: String): JsonObject {
+        val x = entidades[qid] as? JsonObject ?: throw SinDatos(qid)
+        if ("missing" in x) throw SinDatos(qid)
+        return x
+    }
+
+    /** Lo leído de un juego como obra del cajón; [imagen], la portada ya con su crédito (o null: sin portada). */
+    internal fun obra(j: Juego, nombres: Map<String, String>, nombresGeneros: List<String>, imagen: ImagenElegida?) = Obra(
+        id = "", tipo = Tipos.JUEGO, titulo = j.titulo, anio = j.anio,
+        // Hasta tres estudios (los preferidos antes), separados por comas como los demás creadores: la coma de un
+        // nombre ("Foo Co., Ltd.") se quita para que no lo parta en dos.
+        creador = j.desarrolladores.mapNotNull { nombres[it] }.map { sinComas(it) }.filter { it.isNotEmpty() }.distinct().take(3).joinToString(", "),
+        generos = generosDe(j.generos, nombres, nombresGeneros),
+        plataformas = j.plataformas.mapNotNull { nombres[it] }.distinct(),
+        portada = imagen?.url.orEmpty(), imagen = imagen,
+        fuente = "wd:${j.qid}", traida = System.currentTimeMillis(),
+    )
+
+    /** "Foo Co., Ltd." → "Foo Co. Ltd.": sin comas y sin espacios de más. */
+    internal fun sinComas(nombre: String) = nombre.replace(",", " ").replace(Regex("\\s+"), " ").trim()
+
+    /**
+     * Los nombres de los géneros: los conocidos con su nombre corto ([nombresGeneros], en el orden de [GENEROS]), los
+     * demás como los nombra Wikidata (con mayúscula).
+     */
+    internal fun generosDe(ids: List<String>, nombres: Map<String, String>, nombresGeneros: List<String>): List<String> = ids.mapNotNull { q ->
+        GENEROS.indexOf(q).takeIf { it >= 0 }?.let { nombresGeneros.getOrNull(it) } ?: nombres[q]?.replaceFirstChar { it.uppercase() }
+    }.distinctBy { Logica.tituloLimpio(it) }.take(6)
+
+    /** La dirección de una imagen de Commons por el nombre de su archivo (P18), a 500 px de ancho. */
+    internal fun urlImagen(archivo: String) = "https://commons.wikimedia.org/wiki/Special:FilePath/" +
+        java.net.URLEncoder.encode(archivo, "UTF-8").replace("+", "%20") + "?width=500"
+
+    /**
+     * La imagen, solo si trae su autor y su licencia (sin eso no se puede dar el crédito que pide la licencia). Un autor
+     * "desconocido" no cuenta como autor.
+     */
+    internal fun conCredito(i: ImagenElegida): ImagenElegida? {
+        val autor = i.autor?.trim().orEmpty()
+        // Se compara la frase entera: "Unknown Worlds Entertainment" o un nombre en japonés sí son autores.
+        val desconocido = autor.isBlank() || Logica.tituloLimpio(autor) in DESCONOCIDOS
+        return i.takeIf { !desconocido && !i.licencia.isNullOrBlank() }
+    }
+
+    private val DESCONOCIDOS = setOf("unknown", "unknown author", "author unknown", "desconocido", "autor desconocido", "anonymous", "anonimo")
+
+    /**
+     * Los enlaces de un juego: su página de Wikidata (siempre, sin pedir nada) y, si la hay, la de Wikipedia en el
+     * idioma de la app o en inglés. Si falla la consulta, queda el de Wikidata y el segundo valor es false (se puede
+     * volver a pedir).
+     */
+    suspend fun enlaces(fuente: String, idioma: String): Pair<List<Enlace>, Boolean> {
+        val qid = fuente.removePrefix("wd:").takeIf { it.matches(Regex("Q[0-9]+")) } ?: return emptyList<Enlace>() to true
+        val propia = Enlace("Wikidata", "https://www.wikidata.org/wiki/$qid")
+        val pedia = try {
+            val u = api.newBuilder().addQueryParameter("action", "wbgetentities").addQueryParameter("format", "json")
+                .addQueryParameter("props", "sitelinks/urls").addQueryParameter("sitefilter", "eswiki|enwiki").addQueryParameter("ids", qid).build()
+            Result.success(wikipediaDe((pedirJson(u) as? JsonObject)?.get("entities") as? JsonObject ?: JsonObject(emptyMap()), qid, idioma))
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { Result.failure(e) }
+        return listOfNotNull(pedia.getOrNull()?.let { Enlace("Wikipedia", it) }, propia) to pedia.isSuccess
+    }
+
+    /** El artículo de Wikipedia de [qid] en el idioma de la app o, si no, en inglés (de wbgetentities con sitelinks/urls). */
+    internal fun wikipediaDe(entidades: JsonObject, qid: String, idioma: String): String? {
+        val sitios = ((entidades[qid] as? JsonObject)?.get("sitelinks") as? JsonObject) ?: return null
+        return listOf(if (idioma == "en") "enwiki" else "eswiki", "enwiki").distinct()
+            .firstNotNullOfOrNull { (sitios[it] as? JsonObject)?.get("url").texto().takeIf { u -> u.startsWith("https://") } }
+    }
+
+    /**
+     * El nombre de cada elemento de una respuesta de wbgetentities con props=labels. Sin las categorías de Wikipedia
+     * ("Categoría:Videojuegos de…"), que a veces quedan puestas por error como desarrollador.
+     */
+    internal fun etiquetasDe(entidades: JsonObject, idioma: String): Map<String, String> =
+        entidades.entries.mapNotNull { (q, x) -> (x as? JsonObject)?.let { etiqueta(it, idioma) }
+            ?.takeIf { it.isNotBlank() && !it.matches(CATEGORIA) }?.let { q to it } }.toMap()
+
+    private val CATEGORIA = Regex("^(Category|Categoría):.*")
+
+    internal fun encontrado(j: Juego, nombres: Map<String, String>) = Encontrado(
+        tipo = Tipos.JUEGO, titulo = j.titulo, anio = j.anio,
+        // El primero con nombre (el preferido antes): si uno quedó fuera (una categoría), el siguiente.
+        creador = j.desarrolladores.firstNotNullOfOrNull { nombres[it] }.orEmpty(),
+        // En la búsqueda, sin portada (el ícono del tipo): la imagen de Commons se pone en la previa, cuando ya se trajo su
+        // autor y su licencia ([detalles]).
+        portada = "",
+        fuente = "wd:${j.qid}",
+        detalle = j.plataformas.mapNotNull { nombres[it] }.distinct().joinToString(" · "),
+    )
+
+    /**
+     * La etiqueta en el idioma pedido; si no, la multilingüe ("mul", que Wikidata usa para los nombres que no cambian
+     * entre idiomas, como el de casi todos los juegos) y, al final, la del otro idioma.
+     */
+    private fun etiqueta(x: JsonObject, idioma: String): String {
+        val l = x["labels"] as? JsonObject ?: return ""
+        val orden = if (idioma == "en") listOf("en", "mul", "es") else listOf("es", "mul", "en")
+        return orden.firstNotNullOfOrNull { (l[it] as? JsonObject)?.get("value").texto().takeIf { s -> s.isNotBlank() } }.orEmpty()
+    }
+
+    /** Los valores de una propiedad, sin los marcados como obsoletos. */
+    private fun valores(claims: JsonObject, p: String, preferidosPrimero: Boolean = false): List<JsonElement> {
+        val vigentes = claims.arr(p).mapNotNull { it as? JsonObject }.filter { it["rank"].texto() != "deprecated" }
+        val ordenadas = if (preferidosPrimero) vigentes.sortedByDescending { it["rank"].texto() == "preferred" } else vigentes
+        return ordenadas.mapNotNull { ((it["mainsnak"] as? JsonObject)?.get("datavalue") as? JsonObject)?.get("value") }
+    }
+
+    private fun idDe(v: JsonElement): String? = (v as? JsonObject)?.get("id").texto().takeIf { it.matches(Regex("Q[0-9]+")) }
+
+    /** El año de un tiempo de Wikidata ("+2017-02-24T00:00:00Z"); null si es antes de Cristo o no se entiende. */
+    private fun anioDeTiempo(t: String): Int? =
+        if (!t.startsWith("+")) null else t.drop(1).substringBefore('-').toIntOrNull()?.takeIf { it > 0 }
 }

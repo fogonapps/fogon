@@ -37,6 +37,8 @@
   <string name="tipo_libro">Libro</string>
   <string name="tipo_albumes">Álbumes</string>
   <string name="tipo_album">Álbum</string>
+  <string name="tipo_juego">Juego</string>
+  <string name="tipo_juegos">Juegos</string>
   <string name="tipo_artistas">Artistas</string>
   <string name="tipo_artista">Artista</string>
   <string name="estado_por_ver">Por ver</string>
@@ -46,6 +48,8 @@
   <string name="estado_viendo">Viendo</string>
   <string name="estado_leyendo">Leyendo</string>
   <string name="estado_escuchando">Escuchando</string>
+  <string name="estado_por_jugar">Quiero jugar</string>
+  <string name="estado_jugando">Jugando</string>
   <string name="estado_en_curso">En curso</string>
   <string name="estado_visto">Visto</string>
   <string name="estado_leido">Leído</string>
@@ -57,12 +61,14 @@
   <string name="buscar_tmdb_mala">TMDB no aceptó tu clave. Revísala en Ajustes.</string>
   <string name="buscar_sin_red">Sin internet. Revisa la conexión y vuelve a intentar.</string>
   <string name="buscar_fallo">No se pudo buscar ahora. Prueba de nuevo en un momento.</string>
+  <string name="buscar_sin_tmdb">Los datos de cine no están disponibles ahora.</string>
   <string name="agregar_a_mano">Agregar a mano</string>
   <string name="buscar_nada">No encontré «%1$s».</string>
   <string name="ya_en_cajon">Ya está en tu cajón</string>
   <string name="no_esta_a_mano">¿No está? Agrégalo a mano</string>
   <string name="fuente_tmdb">Películas, series y animes: TMDB.</string>
   <string name="fuente_open_library">Libros: Open Library (Internet Archive), datos abiertos.</string>
+  <string name="fuente_wikidata">Videojuegos: Wikidata, datos abiertos (CC0).</string>
   <string name="fuente_musicbrainz">Música: MusicBrainz (datos de dominio público) y carátulas del Cover Art Archive.</string>
   <string name="minutos_n">%1$d min</string>
   <string name="horas_minutos">%1$d h %2$d min</string>
@@ -96,6 +102,7 @@
   <string name="tus_favoritas">Tus favoritas: %1$s</string>
   <string name="cuando">Cuándo</string>
   <string name="otra_vez_pregunta">Ya lo había visto, leído o escuchado</string>
+  <string name="otra_vez_pregunta_juego">Ya lo había jugado</string>
   <string name="unas_palabras">Unas palabras sobre esta vez</string>
   <string name="borrar_registro_pregunta">¿Borrar esta entrada del diario?</string>
   <string name="titulo">Título</string>
@@ -106,6 +113,8 @@
   <string name="autor">Autor</string>
   <string name="director">Director</string>
   <string name="creador">Creador</string>
+  <string name="estudio">Estudio</string>
+  <string name="plataformas_campo">Plataformas, separadas por comas</string>
   <string name="temporadas_campo">Episodios por temporada</string>
   <string name="temporadas_pista">Por ejemplo «10, 8, 12» son tres temporadas de 10, 8 y 12 episodios.</string>
   <string name="canciones_campo">Canciones, una por línea</string>
@@ -146,6 +155,7 @@
   <string name="por_mes">Por mes</string>
   <string name="tus_generos">Tus géneros</string>
   <string name="tus_creadores">Tus directores, autores y artistas</string>
+  <string name="tus_estudios">Tus estudios</string>
   <string name="mas">Más</string>
   <string name="retos_pista">Cuántas obras de cada tipo quieres terminar este año. Deja en blanco las que no.</string>
   <string name="meta">Meta</string>
@@ -166,7 +176,7 @@
   <string name="idioma">Idioma</string>
   <string name="idioma_telefono">El del teléfono</string>
   <string name="traer_de_otras">Traer de otras apps</string>
-  <string name="traer_de_otras_pista">Elige una copia de El Cajón o el archivo que exporta Netflix (tu historial de actividad, el CSV), Letterboxd (el ZIP o un CSV), Goodreads (el CSV) o Spotify (el ZIP de tu historial). Desde Netflix, Spotify y otras apps también puedes compartir algo directo a El Cajón.</string>
+  <string name="traer_de_otras_pista">Elige una copia de El Cajón o el archivo que exporta Netflix (tu historial de actividad, el CSV), Letterboxd (el ZIP o un CSV), Goodreads (el CSV), The StoryGraph (el CSV), Trakt (el ZIP o un JSON), TV Time (el ZIP o un CSV) o Spotify (el ZIP de tu historial). Desde Netflix, Spotify y otras apps también puedes compartir algo directo a El Cajón.</string>
   <string name="elegir_archivo">Elegir el archivo</string>
   <string name="respaldo">Respaldo</string>
   <string name="respaldo_pista">Guarda todo en un archivo cuando quieras (las claves no van).</string>
@@ -202,7 +212,7 @@
   <string name="aviso_sin_detalles">No se pudieron traer todos los datos; se agrega con lo que hay.</string>
   <string name="aviso_datos_al_dia">Datos al día</string>
   <string name="aviso_registrado">Anotado en tu diario</string>
-  <string name="aviso_no_es_de_otra_app">Ese archivo no parece una copia de El Cajón ni de Letterboxd, Goodreads, Netflix o Spotify.</string>
+  <string name="aviso_no_es_de_otra_app">Ese archivo no parece una copia de El Cajón ni de Letterboxd, Goodreads, The StoryGraph, Trakt, TV Time, Netflix o Spotify.</string>
   <string name="aviso_importado">Respaldo recuperado</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
@@ -259,21 +269,26 @@
   <string name="buscar_y_agregar">Buscar y agregar</string>
   <string name="borrar_texto">Borrar el texto</string>
   <string name="ver_mas">Ver más</string>
-  <string name="fuentes_busqueda">Cine: TMDB. Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.\nEscuchas importadas: Last.fm (https://www.last.fm).</string>
+  <string name="fuentes_busqueda">Cine: TMDB. Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Juegos: Wikidata e imágenes de Wikimedia Commons. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.\nEscuchas importadas: Last.fm (https://www.last.fm).</string>
   <string name="seccion_cine">Cine</string>
   <string name="seccion_musica">Música</string>
   <string name="seccion_libros">Libros</string>
+  <string name="seccion_juegos">Juegos</string>
   <string name="seccion_musica_pista">Álbumes y artistas</string>
   <string name="seccion_libros_pista">Novelas, cuentos, ensayos, poesía…</string>
+  <string name="seccion_juegos_pista">Consola, PC o móvil; por nombre, estudio o género</string>
   <string name="vistas_en">vistas en %1$d</string>
   <string name="leidos_en">leídos en %1$d</string>
+  <string name="jugados_en">jugados en %1$d</string>
   <string name="escuchados_en">escuchados en %1$d</string>
   <string name="tu_cajon">Tu cajón</string>
   <string name="apartado_vacio">Todavía no hay nada aquí. Toca Buscar para agregar.</string>
+  <string name="juegos_vacio">Todavía no hay juegos. Toca + para agregar uno.</string>
   <string name="todo_tu_cajon">Todo tu cajón</string>
   <string name="tus_cifras">Tus cifras</string>
   <string name="foto_de">Foto: %1$s</string>
-  <string name="lic_wikimedia">Fotos de artistas, escritores y directores de Wikimedia Commons, encontradas por Wikidata (datos CC0) o por la imagen libre de su artículo de Wikipedia; de directores, también las de TMDB, y de escritores, las de Open Library. Antes de usarla, la app revisa en el teléfono que tenga buen tamaño y una cara; si ninguna pasa, no hay foto y la persona puede elegir otra o subir la suya. Cada foto de Commons tiene su propia licencia libre y su autor, que se muestran en la ficha. Las biografías breves son la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito.</string>
+  <string name="imagen_de">Imagen: %1$s</string>
+  <string name="lic_wikimedia">Fotos de artistas, escritores y directores de Wikimedia Commons, encontradas por Wikidata (datos CC0) o por la imagen libre de su artículo de Wikipedia; de directores, también las de TMDB, y de escritores, las de Open Library. Antes de usarla, la app revisa en el teléfono que tenga buen tamaño y una cara; si ninguna pasa, no hay foto y la persona puede elegir otra o subir la suya. Cada foto de Commons tiene su propia licencia libre y su autor, que se muestran en la ficha. Las biografías breves son la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito. Los datos de los videojuegos son de Wikidata (CC0), y la portada de un juego es su imagen de Wikimedia Commons solo si trae autor y licencia, que se muestran en la ficha.</string>
   <plurals name="peliculas_vistas">
     <item quantity="one">película vista</item>
     <item quantity="other">películas vistas</item>
@@ -322,9 +337,11 @@
   <string name="anotar_visto">Anotar cuándo lo vi</string>
   <string name="anotar_leido">Anotar cuándo lo leí</string>
   <string name="anotar_escuchado">Anotar cuándo lo escuché</string>
+  <string name="anotar_jugado">Anotar cuándo lo jugué</string>
   <string name="cuando_visto">Cuándo lo viste</string>
   <string name="cuando_leido">Cuándo lo leíste</string>
   <string name="cuando_escuchado">Cuándo lo escuchaste</string>
+  <string name="cuando_jugado">Cuándo lo jugaste</string>
   <string name="agregar_datos_curiosos">Agregar datos curiosos</string>
   <string name="biografia">Biografía</string>
   <string name="bio_credito">Texto de Wikipedia, con licencia CC BY-SA 4.0.</string>
@@ -526,6 +543,39 @@
     <item>Folk</item>
     <item>Reggae</item>
   </string-array>
+  <!-- Mismo orden que WikidataJuegos.GENEROS (un id de Wikidata por nombre). -->
+  <string-array name="generos_juegos">
+    <item>Acción</item>
+    <item>Aventura</item>
+    <item>Acción-aventura</item>
+    <item>Rol</item>
+    <item>Rol de acción</item>
+    <item>Estrategia</item>
+    <item>Estrategia en tiempo real</item>
+    <item>Estrategia por turnos</item>
+    <item>Simulación</item>
+    <item>Plataformas</item>
+    <item>Metroidvania</item>
+    <item>Roguelike</item>
+    <item>Lógica</item>
+    <item>Carreras</item>
+    <item>Deportes</item>
+    <item>Lucha</item>
+    <item>Disparos</item>
+    <item>Disparos en primera persona</item>
+    <item>Survival horror</item>
+    <item>Terror</item>
+    <item>Novela visual</item>
+    <item>Musical</item>
+    <item>Casual</item>
+    <item>Sandbox</item>
+    <item>Supervivencia</item>
+    <item>Sigilo</item>
+    <item>Simulación de vida</item>
+    <item>Lluvia de balas</item>
+    <item>Comedia</item>
+    <item>Beat \'em up</item>
+  </string-array>
   <string-array name="generos_libros">
     <item>Novela</item>
     <item>Ciencia ficción</item>
@@ -557,6 +607,7 @@
   <string name="dest_anime">Anime favorito</string>
   <string name="dest_album">Álbum favorito</string>
   <string name="dest_libro">Libro favorito</string>
+  <string name="dest_juego">Juego favorito</string>
   <string name="dest_artista">Artista favorito</string>
   <string name="dest_marco">La obra que me marcó</string>
   <string name="dest_descubrimiento">Mi descubrimiento del momento</string>
@@ -683,6 +734,7 @@
   <string name="artista_favorito">Artista favorito</string>
   <string name="autor_favorito">Autor favorito</string>
   <string name="creador_favorito">Quien más aparece</string>
+  <string name="estudio_favorito">Estudio favorito</string>
   <string name="paginas_por_libro">Páginas por libro</string>
   <string name="reproducciones">Reproducciones</string>
   <string name="minutos_aprox">Minutos escuchados (aprox.)</string>
@@ -863,7 +915,7 @@
   <string name="aj_tu_cajon">Tu cajón</string>
   <string name="aj_musica_pista">Anotar lo que escuchas y Spotify</string>
   <string name="aj_respaldo_pista">Guardar o recuperar todo tu cajón en un archivo</string>
-  <string name="aj_traer_pista">Netflix, Letterboxd, Goodreads, Spotify y Last.fm</string>
+  <string name="aj_traer_pista">Netflix, Letterboxd, Trakt, TV Time, Goodreads, The StoryGraph, Spotify y Last.fm</string>
   <string name="aj_apariencia_idioma">Apariencia e idioma</string>
   <string name="aj_apariencia_pista">Tema, colores y letra</string>
   <string name="notif_explica">El permiso de mostrar notificaciones sirve para avisarte de novedades de la red y mensajes: quién y qué («@pedro empezó a seguirte», «@ana te escribió»). Con la app cerrada llegan al instante; en teléfonos sin los servicios de Google, cada 15 minutos o más. No permite leer las notificaciones de otras apps.</string>
@@ -1046,7 +1098,7 @@
   <string name="red_es_privada">Es una cuenta privada</string>
   <string name="red_explorar">Explorar</string>
   <string name="red_explorar_vacio">Todavía no hay nada público para explorar.</string>
-  <string name="red_feed_vacio">Aquí sale lo que vean, lean y escuchen las personas que sigues. Busca a tu gente o explora.</string>
+  <string name="red_feed_vacio">Aquí sale lo que vean, lean, escuchen y jueguen las personas que sigues. Busca a tu gente o explora.</string>
   <string name="red_guardada">Guardada</string>
   <string name="red_guardadas">Guardadas</string>
   <string name="red_guardar">Guardar</string>
@@ -1079,7 +1131,7 @@
   <string name="red_publicaciones">publicaciones</string>
   <string name="red_publicada">Publicada</string>
   <string name="red_publicar">Publicar</string>
-  <string name="red_que_es">La red de El Cajón: sigue a otras personas, mira lo que ven, leen y escuchan, y comparte tus reseñas, tu diario, tus listas y tus fotos.</string>
+  <string name="red_que_es">La red de El Cajón: sigue a otras personas, mira lo que ven, leen, escuchan y juegan, y comparte tus reseñas, tu diario, tus listas y tus fotos.</string>
   <string name="red_que_sube">Tu cajón se guarda cifrado en tu cuenta: nadie más puede leerlo. En la red solo sale lo que marques como público o para tus seguidores, y lo que publiques.</string>
   <string name="red_que_quieres_decir">¿Qué quieres contar?</string>
   <string name="red_que_se_comparte">Lo que se comparte lo eliges en tu perfil (quién ve cada parte), en cada entrada del diario y en cada lista.</string>
@@ -1547,6 +1599,7 @@
   <string name="red_aviso_historia">le gustó tu historia</string>
   <string name="historia_obras">Películas, series, libros y más</string>
   <string name="historia_buscar_todo">Busca una canción, película, serie, anime, libro o álbum</string>
+  <string name="historia_buscar_todo_juegos">Busca una canción, película, serie, anime, libro, álbum o juego</string>
   <string name="historia_responder">Responder</string>
   <string name="historia_tamano">Cambiar el tamaño</string>
   <string name="historia_foto_obra">Foto de una obra o persona</string>

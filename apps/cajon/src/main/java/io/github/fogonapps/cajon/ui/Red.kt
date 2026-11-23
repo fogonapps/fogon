@@ -789,7 +789,7 @@ private fun FilaGeneros(vm: CajonViewModel, titulo: String, generos: List<String
 @Composable
 private fun nombreHuecoRed(h: String): String = stringResource(when (h) {
     "pelicula" -> R.string.dest_pelicula; "serie" -> R.string.dest_serie; "anime" -> R.string.dest_anime
-    "album" -> R.string.dest_album; "libro" -> R.string.dest_libro; "artista" -> R.string.dest_artista
+    "album" -> R.string.dest_album; "libro" -> R.string.dest_libro; "juego" -> R.string.dest_juego; "artista" -> R.string.dest_artista
     "marco" -> R.string.dest_marco; else -> R.string.dest_descubrimiento
 })
 

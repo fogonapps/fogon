@@ -41,7 +41,7 @@ class EnlaceMasivoTest {
         val enlace = EnlaceMasivo()
         kotlinx.coroutines.withContext(enlace) {
             repeat(6) { enlace.pausarTmdb() }
-            assertEquals(2_100L, testScheduler.currentTime)
+            assertEquals(6 * EnlaceMasivo.PAUSA_TMDB_MS, testScheduler.currentTime)
             val fallo = SinRed()
             enlace.fallar(fallo)
             try { enlace.comprobar(); fail("Debe detenerse") }
@@ -49,4 +49,11 @@ class EnlaceMasivoTest {
         }
     }
 
+    /** El servidor deja 120 pedidos por minuto a cada dirección: el trabajo masivo usa menos y deja margen para buscar a mano. */
+    @Test fun ritmoMasivoDejaCupoParaBuscarAMano() = runTest {
+        val enlace = EnlaceMasivo()
+        repeat(10) { enlace.pausarTmdb() }
+        val porMinuto = 10 * 60_000L / testScheduler.currentTime
+        assertTrue("$porMinuto pedidos por minuto", porMinuto <= 90)
+    }
 }

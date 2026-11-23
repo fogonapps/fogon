@@ -50,6 +50,7 @@ import io.github.fogonapps.cajon.datos.Gusto
 import io.github.fogonapps.cajon.datos.Senales
 import io.github.fogonapps.cajon.datos.Recomendar as Rec
 import io.github.fogonapps.cajon.datos.Wikimedia
+import io.github.fogonapps.cajon.datos.WikidataJuegos
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -76,6 +77,7 @@ import kotlin.random.Random
 internal fun avisoErrorBusqueda(error: Throwable): Int = when (error) {
     is CancellationException -> throw error
     is ClaveMala -> R.string.buscar_tmdb_mala
+    is io.github.fogonapps.cajon.datos.SinTmdb -> R.string.buscar_sin_tmdb
     is io.github.fogonapps.cajon.datos.Ocupado, is io.github.fogonapps.cajon.datos.ErrorSocial -> R.string.buscar_fallo
     is java.io.IOException -> R.string.buscar_sin_red
     else -> R.string.buscar_fallo
@@ -193,22 +195,34 @@ sealed interface Pantalla {
     data object Licencias : Pantalla
 }
 
-enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS;
+enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS, JUEGOS;
     companion object {
+        /**
+         * Las que no están en la barra de siempre: se suman desde Ajustes. Así la barra de quien ya usa la app no cambia
+         * sola y, con cinco pestañas y el +, sigue cabiendo en un teléfono angosto.
+         */
+        val OPCIONALES = setOf(JUEGOS)
+
         /** Las pestañas en el orden que eligió la persona (las que falten van al final, en su orden de siempre). */
         fun visibles(barra: List<String>, orden: List<String> = emptyList()): List<Pestana> {
             if (barra.isEmpty()) return enOrden(orden)
             val elegidas = barra.mapNotNull { n -> entries.firstOrNull { it.name == n } }.distinct().toMutableList()
             if (INICIO !in elegidas) elegidas.add(0, INICIO)
-            entries.forEach { if (elegidas.size < 3 && it !in elegidas) elegidas.add(it) }
+            entries.forEach { if (elegidas.size < 3 && it !in elegidas && it !in OPCIONALES) elegidas.add(it) }
             return elegidas
         }
+        /** La barra con [p] puesta o quitada. Inicio no se quita y quedan al menos tres. */
+        fun conPestana(barra: List<String>, orden: List<String>, p: Pestana, mostrar: Boolean): List<Pestana> {
+            val lista = visibles(barra, orden)
+            return if (mostrar) (lista + p).distinct() else if (p != INICIO && lista.size > 3) lista - p else lista
+        }
+        /** La barra de siempre (sin las [OPCIONALES]), con el orden viejo de [orden] si lo hay. */
         fun enOrden(orden: List<String>): List<Pestana> =
-            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries).distinct()
+            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries.filter { it !in OPCIONALES }).distinct()
     }
 }
 
-/** Los apartados de la app (y de la búsqueda): cine, música y libros. */
+/** Los apartados de la app (y de la búsqueda): cine, música, libros y juegos. */
 object Secciones {
     const val TODO = "todo"
     /** El apartado Cine (la pestaña): películas, series y animes juntos. En el buscador van por separado. */
@@ -218,19 +232,35 @@ object Secciones {
     const val ANIMES = "animes"
     const val MUSICA = "musica"
     const val LIBROS = "libros"
+    /** El apartado Juegos (videojuegos). En el buscador solo sale si se usan los juegos ([busqueda]). */
+    const val JUEGOS = "juegos"
     /** Personas de la red (Fogón Social), por su @usuario o su nombre. */
     const val PERSONAS = "personas"
     /** Los filtros del buscador (películas, series y animes, y personas de la red). */
     val BUSQUEDA = listOf(TODO, PELICULAS, SERIES, ANIMES, MUSICA, LIBROS, PERSONAS)
+    /** Los filtros del buscador de esta persona: con Juegos (antes de Personas) si los juegos se le muestran ([tiposVisibles]). */
+    fun busqueda(e: io.github.fogonapps.cajon.datos.Estado): List<String> =
+        if (Tipos.JUEGO in tiposVisibles(e)) BUSQUEDA.dropLast(1) + JUEGOS + PERSONAS else BUSQUEDA
     val DE_CINE = setOf(CINE, PELICULAS, SERIES, ANIMES)
-    fun de(tipo: String) = when (tipo) { Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; Tipos.SERIE -> SERIES; Tipos.ANIME -> ANIMES; else -> PELICULAS }
+    fun de(tipo: String) = when (tipo) {
+        Tipos.LIBRO -> LIBROS; Tipos.ALBUM -> MUSICA; Tipos.SERIE -> SERIES; Tipos.ANIME -> ANIMES; Tipos.JUEGO -> JUEGOS; else -> PELICULAS
+    }
     fun tipos(s: String) = when (s) {
         CINE -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME); PELICULAS -> listOf(Tipos.PELICULA); SERIES -> listOf(Tipos.SERIE); ANIMES -> listOf(Tipos.ANIME)
-        MUSICA -> listOf(Tipos.ALBUM); LIBROS -> listOf(Tipos.LIBRO); else -> Tipos.TODOS
+        MUSICA -> listOf(Tipos.ALBUM); LIBROS -> listOf(Tipos.LIBRO); JUEGOS -> listOf(Tipos.JUEGO); else -> Tipos.TODOS
+    }
+    /**
+     * Los tipos que se muestran en las cifras y los retos: los juegos solo si su pestaña está visible, ya hay juegos en
+     * el cajón o un reto de juegos (a quien no juega no se le llenan esas pantallas de ceros).
+     */
+    fun tiposVisibles(e: io.github.fogonapps.cajon.datos.Estado): List<String> {
+        val juegos = Pestana.JUEGOS in Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas) ||
+            e.vivas.any { it.tipo == Tipos.JUEGO } || (e.ajustes.retos[Tipos.JUEGO] ?: 0) > 0
+        return if (juegos) Tipos.TODOS else Tipos.TODOS - Tipos.JUEGO
     }
     /** El buscador no tiene "Cine": abierto desde el apartado Cine, empieza en películas. */
     fun paraBuscar(s: String) = if (s == CINE) PELICULAS else s
-    fun dePestana(p: Pestana) = when (p) { Pestana.CINE -> CINE; Pestana.MUSICA -> MUSICA; Pestana.LIBROS -> LIBROS; else -> TODO }
+    fun dePestana(p: Pestana) = when (p) { Pestana.CINE -> CINE; Pestana.MUSICA -> MUSICA; Pestana.LIBROS -> LIBROS; Pestana.JUEGOS -> JUEGOS; else -> TODO }
 }
 
 /**
@@ -660,22 +690,27 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             kotlinx.serialization.json.buildJsonObject {
                 put("tipo", "obra"); put("tipoObra", o.tipo); put("titulo", o.titulo)
                 listOfNotNull(o.creador.ifBlank { null }, o.anio?.toString()).joinToString(" · ").takeIf { it.isNotBlank() }?.let { put("detalle", it) }
-                if (o.portada.startsWith("https://")) put("imagen", o.portada)
+                Imagenes.paraRed(o.portada).takeIf { it.isNotEmpty() }?.let { put("imagen", it) }
                 if (o.nota > 0) put("cifra", "${o.nota}/10")
                 if (o.fuente.isNotBlank()) put("fuente", o.fuente)
             }
         }
     }
 
-    /** Buscar cualquier película, serie, anime, libro o álbum (no solo los del cajón) para una historia o una nota. */
+    /**
+     * Buscar cualquier película, serie, anime, libro o álbum (no solo los del cajón) para una historia o una nota; también
+     * juegos si se usan los juegos.
+     */
     suspend fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> = kotlinx.coroutines.coroutineScope {
         val idioma = idioma()
         val tm = Tmdb(claveCine ?: "")
-        val partes = listOf(
+        val conJuegos = _estado.value?.let { Tipos.JUEGO in Secciones.tiposVisibles(it) } == true
+        val partes = listOfNotNull(
             async { runCatching { tm.buscar(q, Tipos.PELICULA, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { tm.buscar(q, Tipos.SERIE, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { io.github.fogonapps.cajon.datos.OpenLibrary.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarAlbumes(q).take(6) }.getOrDefault(emptyList()) },
+            if (conJuegos) async { runCatching { io.github.fogonapps.cajon.datos.WikidataJuegos.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) } else null,
         )
         val artistas = async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarArtistas(q).take(5) }.getOrDefault(emptyList()) }
         artistas.await().map { a ->
@@ -940,6 +975,21 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.avisarFallo(aviso("fotos_autores")).getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
+            // Juegos (Wikidata): en su sección y, si se usan los juegos, en «Todo». Un género o un estudio busca sus juegos.
+            val conJuegos = seccion == Secciones.JUEGOS || seccion == Secciones.TODO && _estado.value?.let { Tipos.JUEGO in Secciones.tiposVisibles(it) } == true
+            if (conJuegos) fuente("juegos") {
+                val e = _estado.value
+                val generoJuego = if (seccion == Secciones.JUEGOS) WikidataJuegos.generoConocido(t, generosJuegos("es"), generosJuegos("en")) else null
+                if (generoJuego != null && _busqueda.value.genero == null) _busqueda.value = _busqueda.value.copy(genero = t)
+                when {
+                    generoJuego != null -> poner(WikidataJuegos.deGenero(generoJuego, idioma()))
+                    // Un género de los juegos del cajón que no está entre los conocidos: solo lo del cajón (buscarlo
+                    // como título traería juegos que se llaman así). En «Todo», un género de otro tipo tampoco se busca aquí.
+                    local != null -> Unit
+                    esEstudio(t, e) -> poner(WikidataJuegos.deEstudio(t, idioma()).ifEmpty { WikidataJuegos.buscar(t, idioma()) })
+                    else -> poner(WikidataJuegos.buscar(t, idioma()))
+                }
+            }
             // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
             if (musical) fuente("canciones") {
                 val c = red.canciones(t).take(if (seccion == Secciones.MUSICA) 15 else 5)
@@ -973,6 +1023,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 when (tipo) {
                     Tipos.LIBRO -> OpenLibrary.buscar(titulo, idioma(), creador)
                     Tipos.ALBUM -> MusicBrainz.buscarAlbum(titulo, creador)
+                    Tipos.JUEGO -> io.github.fogonapps.cajon.datos.WikidataJuegos.buscar(titulo, idioma())
                     else -> Tmdb(claveCine ?: throw ClaveMala()).buscar(titulo, tipo, idioma(), anio = anio)
                 }
             }.getOrDefault(emptyList())
@@ -1015,7 +1066,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         // reemplaza la previa si la persona sigue en ella. Así no hay que esperar a MusicBrainz (1 consulta por segundo).
         abrir(Pantalla.Previa(Obra("", r.tipo, r.titulo, anio = r.anio, creador = r.creador, portada = r.portada, fuente = r.fuente,
             publica = r.publica, votos = r.votos, paginas = if (r.tipo == Tipos.LIBRO) r.detalle.removeSuffix(" p.").toIntOrNull() else null,
-            formato = if (r.tipo == Tipos.ALBUM) r.detalle else "")))
+            formato = if (r.tipo == Tipos.ALBUM) r.detalle else "",
+            plataformas = if (r.tipo == Tipos.JUEGO) r.detalle.split(" · ").map { it.trim() }.filter { it.isNotEmpty() } else emptyList())))
         _trayendo.value = r.fuente
         viewModelScope.launch {
             try {
@@ -1035,6 +1087,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun detalles(r: Encontrado): Obra = when {
         r.fuente.startsWith("tmdb:") -> Tmdb(claveCine ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
         r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
+        r.fuente.startsWith("wd:") -> WikidataJuegos.detalles(r.fuente, idioma(), generosJuegos(idioma()))
         else -> MusicBrainz.detalles(r)
     }
 
@@ -1189,21 +1242,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     // En libros, el título es el de la traducción que se leyó: si el de la fuente es otro ("Convenience
                     // store woman" para "La dependienta"), se queda el de la persona; si es el mismo, el de la fuente.
                     val titulo = if (v.tipo == Tipos.LIBRO && v.titulo.isNotBlank() && L.tituloLimpio(v.titulo) != L.tituloLimpio(d.titulo)) v.titulo else d.titulo
+                    val portada = if (v.portadaPropia) v.portada else Imagenes.elegir(v,
+                        _portadasComunidad.value[id] ?: PortadasComunidad(), d.portada.ifBlank { v.portadaRecomendada ?: v.portada })
                     v.copy(titulo = titulo, original = if (titulo != d.titulo && d.original.isBlank()) d.titulo else d.original, anio = d.anio ?: v.anio, creador = creador,
                         generos = if (v.fuente.isEmpty()) v.generos.ifEmpty { d.generos } else d.generos.ifEmpty { v.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
-                        portada = if (v.portadaPropia) v.portada else Imagenes.elegir(v,
-                            _portadasComunidad.value[id] ?: PortadasComunidad(), d.portada.ifBlank { v.portadaRecomendada ?: v.portada }),
-                        portadaRecomendada = d.portada.ifBlank { v.portadaRecomendada ?: v.portada },
-                        imagen = if (v.portadaPropia) v.imagen else d.imagen,
+                        portada = portada, portadaRecomendada = d.portada.ifBlank { v.portadaRecomendada ?: v.portada },
+                        imagen = Imagenes.alRenovar(v, d, portada, _creditosComunidad.value[id]),
                         fondo = if (v.fondoPropio) v.fondo else d.fondo.ifBlank { v.fondo }, minutos = d.minutos ?: v.minutos, paginas = d.paginas ?: v.paginas,
-                        temporadas = d.temporadas.ifEmpty { v.temporadas },
+                        temporadas = d.temporadas.ifEmpty { v.temporadas }, plataformas = d.plataformas.ifEmpty { v.plataformas },
                         canciones = if (d.canciones.isEmpty()) v.canciones else d.canciones.mapIndexed { i, c -> v.canciones.getOrNull(i)?.takeIf { it.titulo == c.titulo }?.let { c.copy(nota = it.nota, favorita = it.favorita) } ?: c },
                         traida = d.traida, publica = d.publica ?: v.publica, votos = if (d.publica != null) d.votos else v.votos)
                 }
                 if (!callado) avisar(tx(R.string.aviso_datos_al_dia))
             } catch (x: ClaveMala) { if (!callado) avisar(tx(R.string.buscar_tmdb_mala)); if (callado) throw x }
+            // Wikidata ya no tiene ese juego (borrado o fusionado): no es la conexión.
+            catch (x: WikidataJuegos.SinDatos) { if (!callado) avisar(tx(R.string.aviso_sin_detalles)); if (callado) throw x }
             catch (x: kotlinx.coroutines.CancellationException) { throw x }
-            catch (x: Exception) { if (!callado) avisar(tx(R.string.buscar_sin_red)); if (callado) throw x }
+            catch (x: Exception) { if (!callado) avisar(tx(avisoErrorBusqueda(x))); if (callado) throw x }
         }
     }
 
@@ -1270,7 +1325,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val clave = claveCine
         val revisadas = caja.portadasRevisadas.toMutableSet()
         val pendientes = _estado.value?.vivas.orEmpty()
-            .filter { it.fuente.isEmpty() && (it.tipo == Tipos.ALBUM || it.tipo == Tipos.LIBRO || clave != null) && it.id !in revisadas }
+            .filter { it.fuente.isEmpty() && it.tipo != Tipos.JUEGO && (it.tipo == Tipos.ALBUM || it.tipo == Tipos.LIBRO || clave != null) && it.id !in revisadas }
         // Los artistas guardados sin fuente (a mano o de otra app) se enlazan con MusicBrainz: así traen foto y biografía.
         val artistas = _estado.value?.musicosVivos.orEmpty().filter { it.fuente.isEmpty() && it.id !in revisadas }
         // Escritores (Open Library) y directores (TMDB, con clave) guardados sin fuente: así tienen foto, biografía y obras.
@@ -1593,7 +1648,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         if (faltan.isEmpty()) return
         fotosPedidas = true
         val clave = claveCine
-        viewModelScope.launch {
+        // Con el ritmo del trabajo masivo: los retratos de TMDB van por el servidor y, sin pausa, gastaban el cupo de
+        // pedidos por dirección y las búsquedas a mano fallaban un rato.
+        viewModelScope.launch(EnlaceMasivo()) {
             fun id(a: Artista) = a.fuente.substringAfterLast(":")
             suspend fun porTandas(ids: List<String>, f: suspend (List<String>) -> Map<String, String>) =
                 ids.chunked(50).fold(emptyMap<String, String>()) { m, t -> m + runCatching { f(t) }.getOrDefault(emptyMap()) }
@@ -1664,6 +1721,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun abrirPersona(nombre: String, tipoObra: String) {
         val n = nombre.trim().trimEnd('.')
         if (n.isEmpty() || _buscandoPersona.value != null) return
+        // Los estudios de los juegos no tienen ficha: se buscan sus juegos (los del cajón y los de Wikidata).
+        if (tipoObra == Tipos.JUEGO) { buscarEstudio(n); return }
         val tipo = when (tipoObra) { Tipos.LIBRO -> Personas.AUTOR; Tipos.ALBUM -> TIPO_ARTISTA; else -> Personas.DIRECTOR }
         val e = _estado.value ?: return
         val ya = e.artistasVivos.firstOrNull { L.tituloLimpio(it.nombre.trimEnd('.')) == L.tituloLimpio(n) &&
@@ -1747,6 +1806,49 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Abre el buscador de música con un género (al tocar el género de un artista; el de una obra va a su sección). */
     fun buscarGenero(g: String) = buscarEtiqueta(g, Secciones.MUSICA)
+
+    /** Los nombres cortos de los géneros de juegos ([WikidataJuegos.GENEROS]) en [lengua] ("es" o "en"), de los recursos. */
+    private val generosJuegosPorLengua = java.util.concurrent.ConcurrentHashMap<String, List<String>>()
+    // Si una instalación por partes de la tienda no trae los textos en español, sale la lista en inglés (`values`):
+    // los nombres en inglés se siguen reconociendo y no se rompe nada, solo no se reconocen los nombres en español.
+    @android.annotation.SuppressLint("AppBundleLocaleChanges")
+    private fun generosJuegos(lengua: String): List<String> = generosJuegosPorLengua.getOrPut(if (lengua == "en") "en" else "es") {
+        val app = getApplication<Application>()
+        val config = android.content.res.Configuration(app.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag(if (lengua == "en") "en" else "es")) }
+        app.createConfigurationContext(config).resources.getStringArray(R.array.generos_juegos).toList()
+    }
+
+    /**
+     * Un género o tema de [o] como se muestra, en el idioma de la app, sin cambiar el dato guardado: los de libros por su
+     * tabla y los de juegos de [WikidataJuegos.GENEROS] (guardados en el idioma de cuando se agregó el juego).
+     */
+    fun generoVisible(o: Obra, g: String): String = when (o.tipo) {
+        Tipos.LIBRO -> io.github.fogonapps.cajon.datos.Generos.etiquetaLibro(g, idioma())
+        Tipos.JUEGO -> WikidataJuegos.etiquetaGenero(g, generosJuegos(idioma()), generosJuegos("es"), generosJuegos("en"))
+        else -> g
+    }
+
+    /** Las obras con los géneros de sus juegos en el idioma de la app (para contarlos juntos en las cifras). */
+    fun conGenerosVisibles(obras: List<Obra>): List<Obra> = obras.map { o ->
+        if (o.tipo != Tipos.JUEGO || o.generos.isEmpty()) o else o.copy(generos = o.generos.map { generoVisible(o, it) }.distinct())
+    }
+
+    /** El último estudio que se tocó en una ficha: buscarlo trae sus juegos en vez de los que se llaman así. */
+    private var estudioPedido: String? = null
+
+    /** Abre el buscador de juegos con un estudio: sus juegos del cajón y, de Wikidata, los que desarrolló. */
+    fun buscarEstudio(nombre: String) {
+        estudioPedido = nombre.trim()
+        buscarEtiqueta(nombre.trim(), Secciones.JUEGOS)
+    }
+
+    /** Si [t] es un estudio: el que se tocó en una ficha o el de algún juego del cajón. */
+    private fun esEstudio(t: String, e: io.github.fogonapps.cajon.datos.Estado?): Boolean {
+        val n = L.tituloLimpio(t)
+        if (n.isEmpty()) return false
+        if (estudioPedido?.let { L.tituloLimpio(it) } == n) return true
+        return e?.vivas.orEmpty().any { o -> o.tipo == Tipos.JUEGO && o.creador.split(",").any { L.tituloLimpio(it) == n } }
+    }
 
     /** Abre el buscador en la [seccion] con una etiqueta (un género o una etiqueta propia): primero sale lo del cajón que la lleva. */
     fun buscarEtiqueta(t: String, seccion: String) {
@@ -2161,8 +2263,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun mostrarPestana(p: Pestana, mostrar: Boolean) = cambiar { e ->
-        val lista = Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas)
-        val nueva = if (mostrar) (lista + p).distinct() else if (p != Pestana.INICIO && lista.size > 3) lista - p else lista
+        val nueva = Pestana.conPestana(e.ajustes.barra, e.ajustes.ordenPestanas, p, mostrar)
         e.copy(ajustes = e.ajustes.copy(barra = nueva.map { it.name }, cambio = ahora()))
     }
     fun restablecerBarra() = cambiar { e -> e.copy(ajustes = e.ajustes.copy(barra = emptyList(), ordenPestanas = emptyList(), cambio = ahora())) }
@@ -2474,9 +2575,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun cargarEnlaces(fuente: String) {
         if (fuente.isEmpty() || !enlacesPedidos.add(fuente)) return
         viewModelScope.launch {
-            val l = runCatching { Wikimedia.enlaces(fuente, idioma()) }.getOrNull()
-            if (l == null) { enlacesPedidos.remove(fuente); return@launch }
-            _enlaces.value = _enlaces.value + (fuente to l)
+            // De un juego, el de Wikidata sale aunque falle la red; si quedó incompleto, se vuelve a pedir la próxima vez.
+            val (l, completos) = runCatching {
+                if (fuente.startsWith("wd:")) WikidataJuegos.enlaces(fuente, idioma()) else Wikimedia.enlaces(fuente, idioma()) to true
+            }.getOrNull() ?: (null to false)
+            if (!completos) enlacesPedidos.remove(fuente)
+            if (l != null) _enlaces.value = _enlaces.value + (fuente to l)
         }
     }
 
@@ -2485,24 +2589,38 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _candidatas = MutableStateFlow<Pair<String, List<String>?>?>(null)
     private val _portadasComunidad = MutableStateFlow<Map<String, PortadasComunidad>>(emptyMap())
     val portadasComunidad = _portadasComunidad.asStateFlow()
+    /** El autor y la licencia de la imagen de la comunidad de cada obra (para votarla aunque tu portada sea otra). */
+    private val _creditosComunidad = MutableStateFlow<Map<String, ImagenElegida>>(emptyMap())
     private val _ediciones = MutableStateFlow<Map<String, List<EdicionLibro>>>(emptyMap())
     val ediciones = _ediciones.asStateFlow()
 
     fun procedencia(id: String, url: String): ImagenElegida {
         val guardada = _estado.value?.vivas?.firstOrNull { it.id == id }?.imagen?.takeIf { it.url == url }
         val ed = _ediciones.value[id]?.firstOrNull { Imagenes.clave(it.portada) == Imagenes.clave(url) }
-        return guardada?.copy(edicion = ed?.id ?: guardada.edicion) ?: ImagenElegida(Imagenes.fuente(url), url, edicion = ed?.id, cuando = ahora())
+        return guardada?.copy(edicion = ed?.id ?: guardada.edicion)
+            ?: Imagenes.creditoConocido(url, _creditosComunidad.value[id])?.copy(edicion = ed?.id)
+            ?: ImagenElegida(Imagenes.fuente(url), url, edicion = ed?.id, cuando = ahora())
     }
     fun cargarImagenesObra(id: String) = viewModelScope.launch {
         val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return@launch
         if (o.fuente.isBlank()) return@launch
         val eds = if (o.fuente.startsWith("ol:")) runCatching { OpenLibrary.ediciones(o.fuente) }.getOrDefault(emptyList()) else emptyList()
         _ediciones.value = _ediciones.value + (id to eds)
-        val comunidad = runCatching { red.portadas(o.fuente) }.getOrElse { _portadasComunidad.value[id] ?: PortadasComunidad(comunidad = o.portada.takeIf { o.portadaRecomendada != null && it != o.portadaRecomendada && !o.portadaPropia }) }
-        _portadasComunidad.value = _portadasComunidad.value + (id to comunidad)
-        val creditoComunidad = comunidad.comunidad?.takeIf { Imagenes.fuente(it) == "wikimedia" }?.let { url ->
-            runCatching { Wikimedia.procedencia(url) }.getOrNull()
+        val llegada = runCatching { red.portadas(o.fuente) }.getOrElse { _portadasComunidad.value[id] ?: PortadasComunidad(comunidad = o.portada.takeIf { o.portadaRecomendada != null && it != o.portadaRecomendada && !o.portadaPropia }) }
+        // La de Commons se vota por su original, que puede pesar varios MB: de esa misma imagen se usa la miniatura que da
+        // Commons (la ya conocida o la que se pide con su crédito); el original, solo si no se pudo pedir.
+        // Si Commons no respondió, lo que se use (el crédito conocido con el original) no se guarda como «ya pedida»:
+        // en la próxima apertura se vuelve a pedir la miniatura.
+        var sinRespuesta = false
+        val creditoComunidad = llegada.comunidad?.takeIf { Imagenes.fuente(it) == "wikimedia" }?.let { url ->
+            Imagenes.creditoDeComunidad(url, o.imagen, _creditosComunidad.value[id]) {
+                runCatching { Wikimedia.procedencia(url, ancho = 500) }.getOrNull().also { if (it == null) sinRespuesta = true }
+            }
         }
+        if (!sinRespuesta) _creditosComunidad.value = if (creditoComunidad != null) _creditosComunidad.value + (id to creditoComunidad) else _creditosComunidad.value - id
+        // En un juego, la imagen de la comunidad sin autor y licencia conocidos no se usa (queda la de respaldo).
+        val comunidad = Imagenes.comunidadLigera(Imagenes.comunidadUsable(o.fuente, llegada, creditoComunidad), creditoComunidad)
+        _portadasComunidad.value = _portadasComunidad.value + (id to comunidad)
         val recomendada = Imagenes.edicion(eds.filterNot { Imagenes.bloqueada(it.portada, comunidad.bloqueadas) }, idioma())
         val cubiertaObra = if (o.fuente.startsWith("ol:") && recomendada == null)
             runCatching { OpenLibrary.portadaDeObra(o.fuente) }.getOrNull() else null
@@ -2527,6 +2645,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun votarImagen(id: String, url: String?) {
         val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
+        // Solo se vota una imagen que se puede mostrar a todos (en un juego, además, con su autor y su licencia).
+        if (url != null && !Imagenes.votable(o.fuente, url, procedencia(id, url))) return
         red.votarPortada(o.fuente, url?.let(Imagenes::clave)) { cargarImagenesObra(id).join() }
     }
 
@@ -2607,9 +2727,13 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             IMAGEN_FONDO -> cambiarObra(id) { it.copy(fondo = url, fondoPropio = true) }
             else -> {
                 cambiarObra(id) { it.copy(portada = url, portadaPropia = true, imagen = procedencia(id, url)) }
+                // De Commons llega como «Special:FilePath», que en la red pasaría a su original (varios MB): se cambia por la
+                // miniatura que da Commons junto con su autor y su licencia.
                 if (Imagenes.fuente(url) == "wikimedia") viewModelScope.launch {
-                    val imagen = runCatching { Wikimedia.procedencia(url) }.getOrNull() ?: return@launch
-                    cambiarObra(id) { if (it.imagen?.url == url) it.copy(imagen = imagen) else it }
+                    val imagen = runCatching { Wikimedia.procedencia(url, ancho = 500) }.getOrNull() ?: return@launch
+                    val ligera = imagen.url.takeIf { Imagenes.autorizada(it) && Imagenes.clave(it) == Imagenes.clave(url) }
+                    cambiarObra(id) { if (it.imagen?.url == url) it.copy(imagen = if (ligera != null) imagen else imagen.copy(url = url),
+                        portada = if (ligera != null && it.portada == url) ligera else it.portada) else it }
                 }
             }
         }
@@ -2726,6 +2850,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             Secciones.ANIMES -> anime + sinAnimacion
             Secciones.MUSICA -> musica
             Secciones.LIBROS -> libros
+            Secciones.JUEGOS -> generosJuegos(idioma())
             // Todo: de a uno de cada lista, para que se vean de todo.
             else -> (0 until maxOf(cine.size, musica.size, libros.size)).flatMap { i -> listOfNotNull(cine.getOrNull(i), musica.getOrNull(i), libros.getOrNull(i)) }
         }
@@ -3013,7 +3138,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Un archivo de Letterboxd (ZIP o CSV), de Netflix o de Goodreads (CSV). */
+    /** Un archivo de Letterboxd (ZIP o CSV), de Trakt (ZIP o JSON), de TV Time (ZIP o CSV), de Netflix, de Goodreads o de StoryGraph (CSV). */
     fun importarDeOtraApp(bytes: ByteArray, nombre: String, perfilNetflix: String? = null) {
         // El historial de Spotify: sus escuchas van a "Escuchado hace poco" (y se agregan solas si está activado).
         Importar.spotify(bytes, nombre)?.let { h ->
@@ -3024,8 +3149,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             procesarOidos()
             return
         }
-        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora(), perfilNetflix)
+        val r = Importar.letterboxd(bytes, nombre, ::nuevoId, ahora()) ?: Importar.trakt(bytes, nombre, ::nuevoId, ahora())
+            ?: Importar.tvtime(bytes, nombre, ::nuevoId, ahora())
+            ?: Importar.netflix(bytes.decodeToString(), ::nuevoId, ahora(), perfilNetflix)
             ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
+            ?: Importar.storygraph(bytes.decodeToString(), ::nuevoId, ahora())
         if (r == null || r.obras.isEmpty()) {
             // Una copia de El Cajón ("Descargar una copia de tus datos"): se junta con lo que hay, como un respaldo.
             leerRespaldoCajon(bytes.decodeToString())?.let { importar(it); return }

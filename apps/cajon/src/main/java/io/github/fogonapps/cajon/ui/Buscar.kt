@@ -46,6 +46,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -97,12 +99,13 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { vm.recientes.anotar(b.texto) }),
             )
         }
-        // Los filtros: todo, películas, series, animes, música y libros (se corren a lo ancho).
+        // Los filtros: todo, películas, series, animes, música, libros y, si se usan, juegos (se corren a lo ancho).
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Secciones.BUSQUEDA.forEach { s ->
+            remember(e) { Secciones.busqueda(e) }.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.forEach { s ->
                 val elegida = s == b.seccion
                 Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie)
-                    .border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora).clickable { vm.cambiarSeccion(s) }.padding(horizontal = 16.dp, vertical = 9.dp),
+                    .border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora).clickable(role = androidx.compose.ui.semantics.Role.Tab) { vm.cambiarSeccion(s) }
+                    .semantics { selected = elegida }.padding(horizontal = 16.dp, vertical = 9.dp),
                     contentAlignment = Alignment.Center) {
                     Text(nombreSeccion(s), style = MaterialTheme.typography.labelLarge, color = if (elegida) f.sobreTinta1 else f.texto, maxLines = 1)
                 }
@@ -227,7 +230,8 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 Secciones.ANIMES -> listOf(Tipos.ANIME)
                 Secciones.MUSICA -> listOf(Tipos.ALBUM)
                 Secciones.LIBROS -> listOf(Tipos.LIBRO)
-                else -> listOf(Tipos.ALBUM, Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.LIBRO)
+                Secciones.JUEGOS -> listOf(Tipos.JUEGO)
+                else -> listOf(Tipos.ALBUM, Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.LIBRO, Tipos.JUEGO)
             }
             // En «Todo», primero el grupo cuyo primer resultado se parece más a lo buscado (una película no queda
             // debajo de los discos si es lo que se buscaba).
@@ -300,7 +304,7 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Recientes(vm)
         LoDelMomento(vm, b.seccion)
-        Secciones.BUSQUEDA.drop(1).forEach { s ->
+        remember(e) { Secciones.busqueda(e) }.drop(1).forEach { s ->
             Row(Modifier.fillMaxWidth().vidrio().clickable { vm.cambiarSeccion(s) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Ficha(if (s == b.seccion) f.tinta1 else f.tinta2, iconoSeccion(s))
@@ -308,7 +312,8 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
                     Text(nombreSeccion(s), style = MaterialTheme.typography.bodyLarge, color = f.texto)
                     Text(stringResource(when (s) { Secciones.PELICULAS -> R.string.seccion_peliculas_pista; Secciones.SERIES -> R.string.seccion_series_pista
                         Secciones.ANIMES -> R.string.seccion_animes_pista; Secciones.MUSICA -> R.string.seccion_musica_pista
-                        Secciones.PERSONAS -> R.string.red_personas_pista; else -> R.string.seccion_libros_pista }),
+                        Secciones.PERSONAS -> R.string.red_personas_pista; Secciones.JUEGOS -> R.string.seccion_juegos_pista
+                        else -> R.string.seccion_libros_pista }),
                         style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 }
             }
@@ -348,6 +353,7 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
         Secciones.ANIMES -> listOf(Tipos.ANIME)
         Secciones.MUSICA -> listOf(Tipos.ALBUM)
         Secciones.LIBROS -> listOf(Tipos.LIBRO)
+        Secciones.JUEGOS -> listOf(Tipos.JUEGO)
         else -> listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.ALBUM, Tipos.LIBRO)
     }
     // Con todo: un poco de cada tipo, intercalado.
@@ -447,7 +453,10 @@ fun LoDelMomento(vm: CajonViewModel, seccion: String, compacto: Boolean = false)
 /** El nombre de una plataforma como se dice aquí ("Amazon Prime Video" → "Prime Video"). */
 private fun nombrePlataforma(n: String) = when (n) { "Amazon Prime Video" -> "Prime Video"; "Disney Plus" -> "Disney+"; else -> n }
 
-private fun tipoAMano(seccion: String) = when (seccion) { Secciones.MUSICA -> Tipos.ALBUM; Secciones.LIBROS -> Tipos.LIBRO; Secciones.SERIES -> Tipos.SERIE; Secciones.ANIMES -> Tipos.ANIME; else -> Tipos.PELICULA }
+private fun tipoAMano(seccion: String) = when (seccion) {
+    Secciones.MUSICA -> Tipos.ALBUM; Secciones.LIBROS -> Tipos.LIBRO; Secciones.SERIES -> Tipos.SERIE; Secciones.ANIMES -> Tipos.ANIME
+    Secciones.JUEGOS -> Tipos.JUEGO; else -> Tipos.PELICULA
+}
 
 @Composable
 private fun Titulo(texto: String, onVerMas: (() -> Unit)?) {
@@ -541,6 +550,7 @@ fun nombreSeccion(s: String): String = stringResource(when (s) {
     Secciones.ANIMES -> R.string.seccion_animes
     Secciones.MUSICA -> R.string.seccion_musica
     Secciones.LIBROS -> R.string.seccion_libros
+    Secciones.JUEGOS -> R.string.seccion_juegos
     Secciones.PERSONAS -> R.string.red_personas
     else -> R.string.todo
 })
@@ -551,6 +561,7 @@ fun iconoSeccion(s: String) = when (s) {
     Secciones.ANIMES -> Iconos.de(Tipos.ANIME)
     Secciones.MUSICA -> Iconos.Disco
     Secciones.LIBROS -> Iconos.Libro
+    Secciones.JUEGOS -> Iconos.Juego
     Secciones.PERSONAS -> Iconos.Gente
     else -> Iconos.Cajon
 }
@@ -566,6 +577,7 @@ fun fuentePersona(fuente: String) = when {
 fun fuenteDe(tipo: String) = when (tipo) {
     Tipos.LIBRO -> R.string.fuente_open_library
     Tipos.ALBUM, CajonViewModel.TIPO_ARTISTA -> R.string.fuente_musicbrainz
+    Tipos.JUEGO -> R.string.fuente_wikidata
     else -> R.string.fuente_tmdb
 }
 

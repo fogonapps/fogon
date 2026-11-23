@@ -32,7 +32,15 @@ internal fun segundosDeEspera(valor: String?, ahora: Long = System.currentTimeMi
 
 /** Solo el trabajo masivo hereda este contexto; las consultas manuales no esperan. */
 internal class EnlaceMasivo : AbstractCoroutineContextElement(Key) {
-    companion object Key : CoroutineContext.Key<EnlaceMasivo> { const val CORTES = 5 }
+    companion object Key : CoroutineContext.Key<EnlaceMasivo> {
+        const val CORTES = 5
+        /**
+         * Espacio entre pedidos a TMDB del trabajo masivo: 750 ms son 80 por minuto. El servidor deja 120 por
+         * minuto a cada dirección (todas las rutas juntas); con 350 ms (171 por minuto) el trabajo agotaba el cupo y
+         * las búsquedas a mano daban «No se pudo buscar ahora» mientras corría.
+         */
+        const val PAUSA_TMDB_MS = 750L
+    }
     private val turno = Mutex()
     private var fallo: Exception? = null
     private var cortes = 0
@@ -40,12 +48,17 @@ internal class EnlaceMasivo : AbstractCoroutineContextElement(Key) {
     /** Un corte de red suelto se salta; con [CORTES] seguidos no hay internet y el trabajo se detiene. */
     fun corte(x: Exception) { if (++cortes >= CORTES) fallo = x }
     fun respondio() { cortes = 0 }
+    /**
+     * El servidor dijo que no tiene TMDB ([SinTmdb]): lo de cine se salta (se reintenta la próxima vez) y el avance
+     * sigue con los álbumes, los libros y las personas, en vez de esperar para siempre como si estuviera ocupado.
+     */
+    @Volatile var sinTmdb = false
     suspend fun comprobar() {
         currentCoroutineContext().ensureActive()
         fallo?.let { throw it }
     }
     suspend fun pausarTmdb() = turno.withLock {
         comprobar()
-        delay(350)
+        delay(PAUSA_TMDB_MS)
     }
 }

@@ -23,7 +23,7 @@ class PersonalizacionTest {
     @Test fun barraConservaInicioYMinimoTres() {
         assertEquals(3, Pestana.visibles(listOf("MUSICA")).size)
         assertTrue(Pestana.INICIO in Pestana.visibles(listOf("CINE", "LIBROS", "MUSICA")))
-        assertEquals(Pestana.entries, Pestana.visibles(emptyList()))
+        assertEquals(Pestana.entries - Pestana.OPCIONALES, Pestana.visibles(emptyList()))
         assertEquals(listOf(Pestana.MUSICA, Pestana.INICIO, Pestana.CINE), Pestana.visibles(listOf("MUSICA", "INICIO", "CINE", "CINE", "desconocida")))
     }
 }

@@ -255,14 +255,14 @@ fun FilaInterruptorCajon(texto: String, valor: Boolean, pista: String? = null, m
     }
 }
 
-/** Una píldora que se toca (filtros y acciones pequeñas). */
+/** Una píldora que se toca (filtros y acciones pequeñas). Sin [onClick] solo se lee: ni rebota ni es botón. */
 @Composable
-fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun Pildora(texto: String, icono: Dibujo? = null, acento: Boolean = false, modifier: Modifier = Modifier, onClick: (() -> Unit)?) {
     val f = FogonTema.actual
     Row(
-        modifier.rebote().clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
+        (if (onClick != null) modifier.rebote() else modifier).clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
             .border(f.borde, if (acento) f.tinta1 else f.linea, FormaPildora)
-            .clickable(onClick = onClick).defaultMinSize(minWidth = 48.dp).padding(horizontal = 14.dp, vertical = 8.dp),
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier).defaultMinSize(minWidth = 48.dp).padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
         if (icono != null) IconoRiso(icono, null, tamano = 16.dp, tinta = if (acento) f.sobreTinta1 else f.texto)
@@ -376,17 +376,20 @@ fun nombreTipo(tipo: String, plural: Boolean = true): String = stringResource(wh
     "anime" -> if (plural) R.string.tipo_animes else R.string.tipo_anime
     "libro" -> if (plural) R.string.tipo_libros else R.string.tipo_libro
     "album" -> if (plural) R.string.tipo_albumes else R.string.tipo_album
+    "juego" -> if (plural) R.string.tipo_juegos else R.string.tipo_juego
     "autor" -> if (plural) R.string.tipo_autores else R.string.tipo_autor
     "director" -> if (plural) R.string.tipo_directores else R.string.tipo_director
     else -> if (plural) R.string.tipo_artistas else R.string.tipo_artista
 })
 
-/** Cómo se dice cada estado según el tipo: "Por ver", "Por leer", "Por escuchar"… */
+/** Cómo se dice cada estado según el tipo: "Por ver", "Por leer", "Por escuchar", "Quiero jugar"… */
 @Composable
 fun nombreEstado(estado: String, tipo: String?): String = stringResource(when (estado) {
-    "quiero" -> when (tipo) { "libro" -> R.string.estado_por_leer; "album" -> R.string.estado_por_escuchar; null -> R.string.estado_pendiente; else -> R.string.estado_por_ver }
-    "en_curso" -> when (tipo) { "libro" -> R.string.estado_leyendo; "album" -> R.string.estado_escuchando; null -> R.string.estado_en_curso; else -> R.string.estado_viendo }
-    "terminado" -> when (tipo) { "libro" -> R.string.estado_leido; "album" -> R.string.estado_escuchado; null -> R.string.estado_terminado; else -> R.string.estado_visto }
+    "quiero" -> when (tipo) { "libro" -> R.string.estado_por_leer; "album" -> R.string.estado_por_escuchar; "juego" -> R.string.estado_por_jugar
+        null -> R.string.estado_pendiente; else -> R.string.estado_por_ver }
+    "en_curso" -> when (tipo) { "libro" -> R.string.estado_leyendo; "album" -> R.string.estado_escuchando; "juego" -> R.string.estado_jugando
+        null -> R.string.estado_en_curso; else -> R.string.estado_viendo }
+    "terminado" -> when (tipo) { "libro" -> R.string.estado_leido; "album" -> R.string.estado_escuchado; null, "juego" -> R.string.estado_terminado; else -> R.string.estado_visto }
     else -> R.string.estado_abandonado
 })
 
