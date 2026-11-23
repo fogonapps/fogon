@@ -3,6 +3,7 @@ package io.github.fogonapps.cajon.ui
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import kotlinx.serialization.json.put
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import io.github.fogonapps.cajon.datos.Imagenes
@@ -28,6 +29,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
@@ -134,12 +138,13 @@ private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, 
     Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(medida(o), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         NotaPublica(o.fuente, o.publica, o.votos)
+        NotaPublica(o.fuente, o.criticos, o.votosCriticos, critica = true)
     }
     // A Spotify, Wikipedia, IMDb, Letterboxd, Goodreads… (los que tenga).
     Enlaces(vm, o.fuente)
     if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (en todos los tipos).
-        o.generos.forEach { g -> Pildora(vm.generoVisible(o, g)) { vm.buscarEtiqueta(g, Secciones.de(o.tipo)) } }
+        o.generos.forEach { g -> vm.generoVisible(o, g).let { n -> Pildora(n) { vm.buscarEtiqueta(if (o.tipo == Tipos.JUEGO) n else g, Secciones.de(o.tipo)) } } }
     }
 }
 
@@ -150,21 +155,46 @@ internal fun creditoImagen(o: Obra): String? {
     return listOfNotNull(autor, i.licencia?.takeIf { it.isNotBlank() }).joinToString(" · ")
 }
 
-/** La nota del público en su fuente: "★ 7,8 de 10 en TMDB · 11.536 votos". */
+/**
+ * La nota del público en su fuente: "★ 7,8 de 10 en TMDB · 11.536 votos". Con [critica], la de la crítica (IGDB):
+ * "★ 8,9 de 10 de la crítica en IGDB · 31 reseñas".
+ */
 @Composable
-fun NotaPublica(fuente: String, publica: Double?, votos: Int, modifier: Modifier = Modifier) {
+fun NotaPublica(fuente: String, publica: Double?, votos: Int, modifier: Modifier = Modifier, critica: Boolean = false) {
     if (publica == null) return
     val f = FogonTema.actual
     val idioma = LocalConfiguration.current.locales[0]
     val (escala, nombre) = when {
         fuente.startsWith("tmdb:") -> 10 to R.string.nombre_tmdb
+        fuente.startsWith("igdb:") -> 10 to R.string.nombre_igdb
         fuente.startsWith("ol:") -> 5 to R.string.nombre_open_library
         else -> 5 to R.string.nombre_musicbrainz
     }
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         IconoRiso(Iconos.Estrella, null, tamano = 14.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
-        Text(pluralStringResource(R.plurals.nota_publica, votos, String.format(idioma, "%.1f", publica), escala, stringResource(nombre),
-            NumberFormat.getIntegerInstance(idioma).format(votos)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        Text(pluralStringResource(if (critica) R.plurals.nota_critica else R.plurals.nota_publica, votos, String.format(idioma, "%.1f", publica), escala,
+            stringResource(nombre), NumberFormat.getIntegerInstance(idioma).format(votos)), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    }
+}
+
+/**
+ * De dónde salen los datos (el crédito al pie de la ficha). Los de IGDB llevan su crédito con enlace a la página del
+ * juego en IGDB, como pide IGDB.
+ */
+@Composable
+private fun CreditoFuente(o: Obra, modifier: Modifier = Modifier, adentro: Boolean = false) {
+    if (!io.github.fogonapps.cajon.datos.Igdb.esFuente(o.fuente)) { Pista(stringResource(fuenteDe(o.tipo)), modifier, adentro = adentro); return }
+    val f = FogonTema.actual
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    // Se ve como enlace (subrayado, en el color de acento y con la flecha de abrir afuera), como los demás de la ficha.
+    Row(modifier.padding(horizontal = if (adentro) 0.dp else 12.dp).clip(forma(8.dp))
+        .clickable(role = Role.Button) { alcance.launch { runCatching { uri.openUri(io.github.fogonapps.cajon.datos.Igdb.paginaDe(o.fuente)) } } }
+        .heightIn(min = 48.dp).padding(horizontal = if (adentro) 0.dp else 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.fuente_igdb), style = MaterialTheme.typography.bodySmall.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline),
+            color = f.acentoTexto, modifier = Modifier.weight(1f, fill = false))
+        IconoRiso(Iconos.Enlace, null, tamano = 16.dp, tinta = f.acentoTexto)
     }
 }
 
@@ -227,7 +257,7 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
         }
     }
     QuienLaHizo(vm, o, personas)
-    Sinopsis(o.sinopsis)
+    Sinopsis(o.sinopsis, o.sinopsisFuente)
     Galeria(vm, o)
     if (o.canciones.isNotEmpty()) {
         Seccion(stringResource(R.string.canciones))
@@ -240,12 +270,12 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
             }
         }
     }
-    Pista(stringResource(fuenteDe(o.tipo)), Modifier.padding(top = 12.dp))
+    CreditoFuente(o, Modifier.padding(top = 12.dp))
 }
 
 @Composable
 private fun Galeria(vm: CajonViewModel, o: Obra) {
-    if (!io.github.fogonapps.cajon.datos.Tmdb.esFuenteGaleria(o.fuente)) return
+    if (!io.github.fogonapps.cajon.datos.Tmdb.esFuenteGaleria(o.fuente) && !io.github.fogonapps.cajon.datos.Igdb.esFuente(o.fuente)) return
     val f = FogonTema.actual
     var fotos by remember(vm, o.fuente) { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     var abierta by rememberSaveable(o.fuente) { mutableStateOf<Int?>(null) }
@@ -269,8 +299,9 @@ private fun Galeria(vm: CajonViewModel, o: Obra) {
     abierta?.let { indice -> VisorFotos(fotos.map { it.second }, indice) { abierta = null } }
 }
 
+/** La sinopsis; si es de Wikipedia ([fuente], la dirección del artículo), con su crédito, que abre el artículo. */
 @Composable
-private fun Sinopsis(texto: String) {
+private fun Sinopsis(texto: String, fuente: String = "") {
     if (texto.isBlank()) return
     val f = FogonTema.actual
     var abierta by rememberSaveable { mutableStateOf(false) }
@@ -279,6 +310,12 @@ private fun Sinopsis(texto: String) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable { abierta = !abierta })
     if (!abierta && texto.length > 300) Text(stringResource(R.string.leer_mas), style = MaterialTheme.typography.labelLarge, color = f.acentoTexto,
         modifier = Modifier.padding(horizontal = 12.dp).clip(forma(8.dp)).clickable { abierta = true }.padding(horizontal = 8.dp, vertical = 8.dp))
+    if (fuente.startsWith("https://") && ".wikipedia.org/" in fuente) {
+        val uri = androidx.compose.ui.platform.LocalUriHandler.current
+        Text(stringResource(R.string.bio_credito), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
+            modifier = Modifier.padding(horizontal = 12.dp).clip(forma(8.dp)).clickable(role = Role.Button) { runCatching { uri.openUri(fuente) } }
+                .heightIn(min = 48.dp).wrapContentHeight(Alignment.CenterVertically).padding(horizontal = 8.dp, vertical = 6.dp))
+    }
 }
 
 /** "Anotar cuándo lo vi", "…lo leí", "…lo escuché": guarda en el diario el día que se vio, leyó o escuchó. */
@@ -386,7 +423,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> Canciones(vm, e, o)
     }
 
-    Sinopsis(o.sinopsis)
+    Sinopsis(o.sinopsis, o.sinopsisFuente)
     Galeria(vm, o)
 
     // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
@@ -437,7 +474,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
 
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (o.fuente.isNotEmpty()) {
-            Pista(stringResource(fuenteDe(o.tipo)), adentro = true)
+            CreditoFuente(o, adentro = true)
             BotonSecundario(stringResource(R.string.actualizar_datos), { vm.actualizarDatos(o.id) }, Modifier.fillMaxWidth())
         }
         BotonSecundario(stringResource(R.string.borrar), {

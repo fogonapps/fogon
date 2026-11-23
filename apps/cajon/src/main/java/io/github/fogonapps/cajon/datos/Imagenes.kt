@@ -23,19 +23,22 @@ object Imagenes {
         "covers.openlibrary.org" -> "ol"
         "coverartarchive.org", "archive.org" -> "caa"
         "upload.wikimedia.org", "commons.wikimedia.org" -> "wikimedia"
+        "images.igdb.com" -> "igdb"
         else -> "local"
     }
     fun autorizada(url: String) = runCatching {
         val u = URI(url)
-        u.scheme == "https" && u.host in setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org") && u.userInfo == null
+        u.scheme == "https" && u.host in setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org", "images.igdb.com") && u.userInfo == null
     }.getOrDefault(false)
     fun tamano(fuente: String, lugar: Lugar, ahorro: Boolean = false): String {
-        val normal = when (lugar) { Lugar.LISTA -> 1; Lugar.FICHA -> 2; Lugar.VISOR -> if (fuente == "tmdb") 3 else 2 }
+        val normal = when (lugar) { Lugar.LISTA -> 1; Lugar.FICHA -> 2; Lugar.VISOR -> if (fuente == "tmdb" || fuente == "igdb") 3 else 2 }
         val nivel = (normal - if (ahorro) 1 else 0).coerceAtLeast(0)
         return when (fuente) {
             "tmdb" -> listOf("w185", "w342", "w780", "original")[nivel]
             "ol" -> listOf("M", "L", "L")[nivel]   // La "M" de Open Library (180 px) se ve borrosa en pantallas densas.
             "caa" -> listOf("250", "500", "1200")[nivel]
+            // Solo las portadas de IGDB cambian de tamaño; los fondos y capturas quedan como se pidieron.
+            "igdb" -> listOf("cover_small", "cover_big", "cover_big_2x", "720p")[nivel]
             else -> ""
         }
     }
@@ -45,6 +48,7 @@ object Imagenes {
             "tmdb" -> url.replace(Regex("/t/p/(w\\d+|original)/"), "/t/p/$t/")
             "ol" -> url.replace(Regex("-[SML]\\.jpg"), "-$t.jpg")
             "caa" -> url.replace(Regex("-(250|500|1200)(?=\\.|$|\\?)"), "-$t")
+            "igdb" -> url.replace(Regex("/t_(cover_small|cover_big|cover_big_2x|720p)/"), "/t_$t/")
             else -> url
         }
     }

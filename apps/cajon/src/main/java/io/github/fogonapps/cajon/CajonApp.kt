@@ -40,6 +40,7 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
     private var confirmarMigracion = false
     override fun onCreate() {
         super.onCreate()
+        nombresGenerosJuego()
         confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").let { it.exists() && it.readText() == "terminada" }
         limpiarClavesRetiradas(this)
         migracion.ejecutar()
@@ -50,6 +51,20 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
             check(java.io.File(cacheDir, "compartir/$id").let { !it.exists() || it.deleteRecursively() })
         }
     }
+    /**
+     * Los nombres de los géneros de juego en los dos idiomas (`generos_juegos` y `generos_igdb`), para mostrar y migrar
+     * los guardados como claves ([io.github.fogonapps.cajon.datos.GenerosJuego]); antes de leer ningún cajón.
+     */
+    @android.annotation.SuppressLint("AppBundleLocaleChanges")
+    private fun nombresGenerosJuego() {
+        fun de(lengua: String): io.github.fogonapps.cajon.datos.GenerosJuego.Nombres {
+            val config = android.content.res.Configuration(resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag(lengua)) }
+            val r = createConfigurationContext(config).resources
+            return io.github.fogonapps.cajon.datos.GenerosJuego.Nombres(r.getStringArray(R.array.generos_juegos).toList(), r.getStringArray(R.array.generos_igdb).toList())
+        }
+        io.github.fogonapps.cajon.datos.GenerosJuego.configurar(de("es"), de("en")) { io.github.fogonapps.identidad.Idioma.actual(this) }
+    }
+
     @Synchronized fun recursos(id: String = perfiles.lista.activo): RecursosPerfil {
         require(id !in retirados && perfiles.lista.perfiles.any { it.id == id })
         return porPerfil.getOrPut(id) { RecursosPerfil(this, id, perfiles.directorio(id)) }

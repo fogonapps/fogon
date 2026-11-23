@@ -287,7 +287,8 @@ fun AcercaDe(vm: CajonViewModel) {
             quien = io.github.fogonapps.identidad.Quien.CAJON,
             nombreApp = stringResource(R.string.app_name),
             version = BuildConfig.VERSION_NAME,
-            creditos = stringArrayResource(R.array.creditos).toList() + stringResource(R.string.lastfm_credito),
+            // Last.fm e IGDB van abajo una sola vez, como botón con enlace a su sitio (lo piden).
+            creditos = stringArrayResource(R.array.creditos).toList(),
             onVerManifiesto = { vm.abrir(Pantalla.Manifiesto) },
             onVerLicencias = { vm.abrir(Pantalla.Licencias) },
             onAbrirEnlace = { uri.openUri(it) },
@@ -300,6 +301,7 @@ fun AcercaDe(vm: CajonViewModel) {
         BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/el-cajon#problemas-conocidos") }, Modifier.padding(horizontal = 16.dp))
         Pista(stringResource(R.string.tmdb_aviso))
         BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") }, Modifier.padding(horizontal = 16.dp))
+        BotonSecundario(stringResource(R.string.igdb_credito), { uri.openUri(io.github.fogonapps.cajon.datos.Igdb.SITIO) }, Modifier.padding(horizontal = 16.dp))
     }
 }
 
@@ -310,6 +312,7 @@ fun Licencias(vm: CajonViewModel) {
         // Las fuentes de datos y la biblioteca de imágenes; lo común lo pone core.
         LicenciasFogon(propias = listOf(
             Licencia("TMDB", stringResource(R.string.lic_tmdb)),
+            Licencia("IGDB", stringResource(R.string.lic_igdb)),
             Licencia("Open Library", stringResource(R.string.lic_open_library)),
             Licencia("MusicBrainz · Cover Art Archive", stringResource(R.string.lic_musicbrainz)),
             Licencia("Wikimedia Commons · Wikidata", stringResource(R.string.lic_wikimedia)),

@@ -50,6 +50,8 @@ import io.github.fogonapps.cajon.datos.Gusto
 import io.github.fogonapps.cajon.datos.Senales
 import io.github.fogonapps.cajon.datos.Recomendar as Rec
 import io.github.fogonapps.cajon.datos.Wikimedia
+import io.github.fogonapps.cajon.datos.GenerosJuego
+import io.github.fogonapps.cajon.datos.Igdb
 import io.github.fogonapps.cajon.datos.WikidataJuegos
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.CancellationException
@@ -701,7 +703,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             async { runCatching { tm.buscar(q, Tipos.SERIE, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { io.github.fogonapps.cajon.datos.OpenLibrary.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) },
             async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarAlbumes(q).take(6) }.getOrDefault(emptyList()) },
-            if (conJuegos) async { runCatching { io.github.fogonapps.cajon.datos.WikidataJuegos.buscar(q, idioma).take(5) }.getOrDefault(emptyList()) } else null,
+            if (conJuegos) async { runCatching { buscarJuegos(q).take(5) }.getOrDefault(emptyList()) } else null,
         )
         val artistas = async { runCatching { io.github.fogonapps.cajon.datos.MusicBrainz.buscarArtistas(q).take(5) }.getOrDefault(emptyList()) }
         artistas.await().map { a ->
@@ -966,19 +968,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.avisarFallo(aviso("fotos_autores")).getOrDefault(emptyMap())
                 if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
             }
-            // Juegos (Wikidata): en su sección y, si se usan los juegos, en «Todo». Un género o un estudio busca sus juegos.
+            // Juegos (IGDB; Wikidata de respaldo y para estudios y géneros): en su sección y, si se usan los juegos, en «Todo». Un género o un estudio busca sus juegos.
             val conJuegos = seccion == Secciones.JUEGOS || seccion == Secciones.TODO && _estado.value?.let { Tipos.JUEGO in Secciones.tiposVisibles(it) } == true
             if (conJuegos) fuente("juegos") {
                 val e = _estado.value
                 val generoJuego = if (seccion == Secciones.JUEGOS) WikidataJuegos.generoConocido(t, generosJuegos("es"), generosJuegos("en")) else null
                 if (generoJuego != null && _busqueda.value.genero == null) _busqueda.value = _busqueda.value.copy(genero = t)
                 when {
-                    generoJuego != null -> poner(WikidataJuegos.deGenero(generoJuego, idioma()))
+                    generoJuego != null -> poner(Igdb.desdeWikidata(WikidataJuegos.deGenero(generoJuego, idioma())))
                     // Un género de los juegos del cajón que no está entre los conocidos: solo lo del cajón (buscarlo
                     // como título traería juegos que se llaman así). En «Todo», un género de otro tipo tampoco se busca aquí.
                     local != null -> Unit
-                    esEstudio(t, e) -> poner(WikidataJuegos.deEstudio(t, idioma()).ifEmpty { WikidataJuegos.buscar(t, idioma()) })
-                    else -> poner(WikidataJuegos.buscar(t, idioma()))
+                    esEstudio(t, e) -> poner(Igdb.desdeWikidata(WikidataJuegos.deEstudio(t, idioma())).ifEmpty { buscarJuegos(t) })
+                    else -> poner(buscarJuegos(t))
                 }
             }
             // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
@@ -1014,7 +1016,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 when (tipo) {
                     Tipos.LIBRO -> OpenLibrary.buscar(titulo, idioma(), creador)
                     Tipos.ALBUM -> MusicBrainz.buscarAlbum(titulo, creador)
-                    Tipos.JUEGO -> io.github.fogonapps.cajon.datos.WikidataJuegos.buscar(titulo, idioma())
+                    Tipos.JUEGO -> buscarJuegos(titulo)
                     else -> Tmdb(claveCine ?: throw ClaveMala()).buscar(titulo, tipo, idioma(), anio = anio)
                 }
             }.getOrDefault(emptyList())
@@ -1078,7 +1080,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun detalles(r: Encontrado): Obra = when {
         r.fuente.startsWith("tmdb:") -> Tmdb(claveCine ?: throw ClaveMala()).detalles(r.fuente, r.tipo, idioma())
         r.fuente.startsWith("ol:") -> OpenLibrary.detalles(r, idioma())
-        r.fuente.startsWith("wd:") -> WikidataJuegos.detalles(r.fuente, idioma(), generosJuegos(idioma()))
+        r.fuente.startsWith("wd:") || r.fuente.startsWith("igdb:") -> detallesJuego(r.fuente)
         else -> MusicBrainz.detalles(r)
     }
 
@@ -1223,7 +1225,12 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         run {
             try {
                 val r = io.github.fogonapps.cajon.datos.Encontrado(o.tipo, o.titulo, o.anio, o.creador, o.portada, o.fuente, o.paginas?.let { "$it p." } ?: o.formato)
-                val d = detalles(r)
+                var d = detalles(r)
+                // Si otra obra ya tiene esa ficha de IGDB y el título no coincide, es un error de Wikidata: el juego
+                // sigue siendo de Wikidata (con sus datos) en vez de juntarse en silencio con otro.
+                if (o.fuente.startsWith("wd:") && Igdb.esFuente(d.fuente) &&
+                    !L.puedePasarAIgdb(_estado.value ?: return, o, d.fuente, listOf(d.titulo, d.original)))
+                    d = WikidataJuegos.detalles(o.fuente, idioma())
                 kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                 cambiarObra(id) { v ->
                     // Los géneros de una obra con fuente son los de la fuente (no se editan); a mano, los suyos. La sinopsis
@@ -1235,15 +1242,23 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     val titulo = if (v.tipo == Tipos.LIBRO && v.titulo.isNotBlank() && L.tituloLimpio(v.titulo) != L.tituloLimpio(d.titulo)) v.titulo else d.titulo
                     val portada = if (v.portadaPropia) v.portada else Imagenes.elegir(v,
                         _portadasComunidad.value[id] ?: PortadasComunidad(), d.portada.ifBlank { v.portadaRecomendada ?: v.portada })
+                    val (sinopsis, sinopsisFuente) = L.sinopsisAlRenovar(v, d, idioma())
                     v.copy(titulo = titulo, original = if (titulo != d.titulo && d.original.isBlank()) d.titulo else d.original, anio = d.anio ?: v.anio, creador = creador,
-                        generos = if (v.fuente.isEmpty()) v.generos.ifEmpty { d.generos } else d.generos.ifEmpty { v.generos }, sinopsis = v.sinopsis.ifBlank { d.sinopsis },
+                        generos = if (v.fuente.isEmpty()) v.generos.ifEmpty { d.generos } else d.generos.ifEmpty { v.generos },
+                        sinopsis = sinopsis,
                         portada = portada, portadaRecomendada = d.portada.ifBlank { v.portadaRecomendada ?: v.portada },
                         imagen = Imagenes.alRenovar(v, d, portada, _creditosComunidad.value[id]),
                         fondo = if (v.fondoPropio) v.fondo else d.fondo.ifBlank { v.fondo }, minutos = d.minutos ?: v.minutos, paginas = d.paginas ?: v.paginas,
                         temporadas = d.temporadas.ifEmpty { v.temporadas }, plataformas = d.plataformas.ifEmpty { v.plataformas },
                         canciones = if (d.canciones.isEmpty()) v.canciones else d.canciones.mapIndexed { i, c -> v.canciones.getOrNull(i)?.takeIf { it.titulo == c.titulo }?.let { c.copy(nota = it.nota, favorita = it.favorita) } ?: c },
-                        traida = d.traida, publica = d.publica ?: v.publica, votos = if (d.publica != null) d.votos else v.votos)
+                        traida = d.traida, publica = d.publica ?: v.publica, votos = if (d.publica != null) d.votos else v.votos,
+                        criticos = d.criticos ?: v.criticos, votosCriticos = if (d.criticos != null) d.votosCriticos else v.votosCriticos,
+                        sinopsisFuente = sinopsisFuente,
+                        // Un juego de Wikidata que tiene ficha en IGDB pasa a ser de IGDB.
+                        fuente = if (v.fuente.startsWith("wd:") && Igdb.esFuente(d.fuente)) d.fuente else v.fuente)
                 }
+                // Si ya estaba el mismo juego de IGDB (agregado aparte), quedan en uno.
+                if (o.fuente.startsWith("wd:") && Igdb.esFuente(d.fuente)) cambiar { L.sinRepetidas(it) }
                 if (!callado) avisar(tx(R.string.aviso_datos_al_dia))
             } catch (x: ClaveMala) { if (!callado) avisar(tx(R.string.buscar_tmdb_mala)); if (callado) throw x }
             // Wikidata ya no tiene ese juego (borrado o fusionado): no es la conexión.
@@ -1310,6 +1325,45 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     fun detenerEnlace() { trabajoPortadas?.cancel() }
 
+    /**
+     * Los juegos guardados de Wikidata que tienen ficha en IGDB (P5794) pasan a IGDB: fuente, portada, notas, resumen…
+     * (ver [traerDatos]); los que no la tienen, o cuya ficha ya es de otro juego del cajón con otro título, quedan
+     * revisados (se miran otra vez en 30 días). Va de a [LOTE_JUEGOS]: cada tanda pide sus referencias a Wikidata y sus
+     * fichas a IGDB de una vez, y la ficha de cada juego sale de ahí. Si IGDB o Wikidata no responden, no se marca nada:
+     * se intenta la próxima vez. Devuelve cuántos pasaron (los que quedaron de IGDB, no los que se renovaron con
+     * Wikidata porque IGDB falló).
+     */
+    private suspend fun pasarJuegosAIgdb(juegos: List<Obra>, antes: Int, total: Int, revisadas: MutableSet<String>): Int {
+        var pasaron = 0
+        var hechos = 0
+        for (tanda in juegos.chunked(LOTE_JUEGOS)) {
+            val refs = try { WikidataJuegos.igdbDeElementos(tanda.map { it.fuente.removePrefix("wd:") }) }
+                catch (x: CancellationException) { throw x } catch (_: Exception) { return pasaron }
+            val fichas = if (refs.isEmpty()) emptyMap() else try { Igdb.porReferencias(refs.values.toList()) }
+                catch (x: CancellationException) { throw x } catch (_: Exception) { return pasaron }
+            for (o in tanda) {
+                kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
+                val qid = o.fuente.removePrefix("wd:")
+                val ficha = refs[qid]?.let { fichas[it] }
+                val fuente = ficha?.let(Igdb::fuenteDe)
+                if (ficha == null || fuente == null) revisadas += o.id
+                else {
+                    refsJuegos[qid] = refs.getValue(qid)
+                    try { traerDatos(o.id, callado = true) } catch (x: CancellationException) { throw x } catch (_: Exception) { }
+                    refsJuegos.remove(qid)
+                    val e = _estado.value
+                    if (e?.obras?.firstOrNull { it.id == o.id }?.fuente == fuente) pasaron++
+                    else if (e != null && e.vivas.any { it.id != o.id && it.fuente == fuente }) revisadas += o.id
+                }
+                _completando.value = Completando(antes + ++hechos, total, pasaron)
+            }
+        }
+        return pasaron
+    }
+
+    /** La referencia de IGDB ya conocida de un elemento de Wikidata mientras se pasan los juegos (no se vuelve a pedir). */
+    private val refsJuegos = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     fun buscarPortadas() {
         // Al abrir, al importar o al poner la clave: también los datos de lo que llegó enlazado sin ellos.
         if (trabajoPortadas?.isActive == true) return
@@ -1323,9 +1377,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val personas = _estado.value?.artistasVivos.orEmpty().filter { !Personas.esMusico(it) && it.fuente.isEmpty() && it.id !in revisadas &&
             (it.tipo == Personas.AUTOR || clave != null) }
         val faltan = _estado.value?.vivas.orEmpty().filter { it.fuente.isNotEmpty() && it.traida <= 0L && (clave != null || !it.fuente.startsWith("tmdb:")) }
-        if (pendientes.isEmpty() && artistas.isEmpty() && personas.isEmpty() && faltan.isEmpty()) return
+        // Los juegos de Wikidata pasan a su ficha de IGDB (portada, notas, capturas y enlaces), si Wikidata la conoce.
+        val juegosWd = _estado.value?.vivas.orEmpty().filter { it.fuente.startsWith("wd:") && it.id !in revisadas && it !in faltan }
+        if (pendientes.isEmpty() && artistas.isEmpty() && personas.isEmpty() && faltan.isEmpty() && juegosWd.isEmpty()) return
         trabajoPortadas = viewModelScope.launch(EnlaceMasivo()) {
-            val total = faltan.size + pendientes.size + artistas.size + personas.size
+            val total = faltan.size + juegosWd.size + pendientes.size + artistas.size + personas.size
             var encontradas = 0
             fun fallo(x: Throwable): Boolean {
                 // Un corte suelto se salta (se reintenta la próxima vez); sin internet, `comprobar` detiene el trabajo.
@@ -1335,6 +1391,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             _completando.value = Completando(0, total, 0)
             try {
                 completarDatos(faltan, total)
+                encontradas += pasarJuegosAIgdb(juegosWd, faltan.size, total, revisadas)
+                val faltanYJuegos = faltan.size + juegosWd.size
                 pendientes.forEachIndexed { i, o ->
                     kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     val candidatos = runCatching {
@@ -1390,7 +1448,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                             }
                             todos
                         }
-                    }.getOrElse { if (fallo(it)) { _completando.value = Completando(faltan.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
+                    }.getOrElse { if (fallo(it)) { _completando.value = Completando(faltanYJuegos + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
                     // En libros, Open Library tiene obras repetidas de una sola edición y sin portada: primero la del mismo
                     // título y con portada (el orden de la búsqueda ya pone arriba la de más ediciones).
                     val r = candidatos.filter { L.esLaMisma(o, it) && L.porFuente(_estado.value!!, it.fuente) == null }
@@ -1408,11 +1466,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         try { traerDatos(o.id, callado = true) }
                         catch (x: Exception) { fallo(x) }
                     }
-                    _completando.value = Completando(faltan.size + i + 1, total, encontradas)
+                    _completando.value = Completando(faltanYJuegos + i + 1, total, encontradas)
                 }
                 artistas.forEachIndexed { i, a ->
                     val r = runCatching { MusicBrainz.buscarArtistas(a.nombre) }
-                        .getOrElse { if (fallo(it)) { _completando.value = Completando(faltan.size + pendientes.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
+                        .getOrElse { if (fallo(it)) { _completando.value = Completando(faltanYJuegos + pendientes.size + i + 1, total, encontradas); return@forEachIndexed }; emptyList() }
                         .firstOrNull { L.mismoArtista(a.nombre, it) && _estado.value!!.artistasVivos.none { x -> x.fuente == it.fuente } }
                     kotlin.coroutines.coroutineContext[EnlaceMasivo]?.comprobar()
                     revisadas += a.id
@@ -1420,10 +1478,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                         encontradas++
                         cambiarArtista(a.id) { it.copy(fuente = r.fuente, tipo = it.tipo.ifBlank { r.tipo }, pais = it.pais.ifBlank { r.pais }, desde = it.desde ?: r.desde) }
                     }
-                    _completando.value = Completando(faltan.size + pendientes.size + i + 1, total, encontradas)
+                    _completando.value = Completando(faltanYJuegos + pendientes.size + i + 1, total, encontradas)
                 }
                 personas.forEachIndexed { i, a ->
-                    val base = faltan.size + pendientes.size + artistas.size
+                    val base = faltanYJuegos + pendientes.size + artistas.size
                     val nombre = a.nombre.trimEnd('.')
                     val r = runCatching {
                         if (a.tipo == Personas.AUTOR) {
@@ -1810,18 +1868,41 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
+     * Los juegos que se llaman [t]: de IGDB (con portada y nota) por el servidor; si no responde o no encuentra nada, de
+     * Wikidata (los que tienen ficha en IGDB pasan a la de IGDB, ver [Igdb.desdeWikidata]).
+     */
+    private suspend fun buscarJuegos(t: String): List<io.github.fogonapps.cajon.datos.Encontrado> {
+        val deIgdb = try { Igdb.buscar(t) } catch (x: CancellationException) { throw x } catch (_: Exception) { emptyList() }
+        return deIgdb.ifEmpty { Igdb.desdeWikidata(WikidataJuegos.buscar(t, idioma())) }
+    }
+
+    /**
+     * Los datos de un juego: de IGDB si es de IGDB o si Wikidata une el de Wikidata con su ficha de IGDB (entonces la
+     * fuente pasa a ser la de IGDB); si no, o si IGDB no responde, de Wikidata.
+     */
+    private suspend fun detallesJuego(fuente: String): Obra {
+        if (fuente.startsWith("igdb:")) return Igdb.detalles(fuente, idioma())
+        val qid = fuente.removePrefix("wd:")
+        val deIgdb = try {
+            (refsJuegos[qid] ?: WikidataJuegos.igdbDeElementos(listOf(qid))[qid])?.let { ref -> Igdb.porReferencias(listOf(ref))[ref] }
+                ?.let { j -> Igdb.conResumen(Igdb.obra(j), j, idioma(), qid) }
+        } catch (x: CancellationException) { throw x } catch (_: Exception) { null }
+        return deIgdb ?: WikidataJuegos.detalles(fuente, idioma())
+    }
+
+    /**
      * Un género o tema de [o] como se muestra, en el idioma de la app, sin cambiar el dato guardado: los de libros por su
-     * tabla y los de juegos de [WikidataJuegos.GENEROS] (guardados en el idioma de cuando se agregó el juego).
+     * tabla y los de juegos por su clave ([GenerosJuego]).
      */
     fun generoVisible(o: Obra, g: String): String = when (o.tipo) {
         Tipos.LIBRO -> io.github.fogonapps.cajon.datos.Generos.etiquetaLibro(g, idioma())
-        Tipos.JUEGO -> WikidataJuegos.etiquetaGenero(g, generosJuegos(idioma()), generosJuegos("es"), generosJuegos("en"))
+        Tipos.JUEGO -> GenerosJuego.visible(g)
         else -> g
     }
 
     /** Las obras con los géneros de sus juegos en el idioma de la app (para contarlos juntos en las cifras). */
     fun conGenerosVisibles(obras: List<Obra>): List<Obra> = obras.map { o ->
-        if (o.tipo != Tipos.JUEGO || o.generos.isEmpty()) o else o.copy(generos = o.generos.map { generoVisible(o, it) }.distinct())
+        if (o.tipo != Tipos.JUEGO || o.generos.isEmpty()) o else o.copy(generos = GenerosJuego.visibles(o))
     }
 
     /** El último estudio que se tocó en una ficha: buscarlo trae sus juegos en vez de los que se llaman así. */
@@ -2240,7 +2321,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 r.copy(cine = r.cine.filter { (x, _) -> "obra:" + x.fuente != clave && !p.excluido(x.generos, "") },
                     artistas = r.artistas.filter { (a, _) -> Rec.clavePersona(a.nombre) != clave && !p.excluido(emptyList(), a.nombre) },
                     libros = r.libros.filter { (x, _) -> "obra:" + x.fuente != clave && !p.excluido(emptyList(), x.creador) },
-                    pendientes = r.pendientes.filter { o -> "obra:" + o.fuente != clave && !p.excluido(o.generos + o.etiquetas, o.creador) })
+                    pendientes = r.pendientes.filter { o -> "obra:" + o.fuente != clave && !p.excluido(GenerosJuego.visibles(o) + o.etiquetas, o.creador) })
             }
         }
     }
@@ -2568,7 +2649,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             // De un juego, el de Wikidata sale aunque falle la red; si quedó incompleto, se vuelve a pedir la próxima vez.
             val (l, completos) = runCatching {
-                if (fuente.startsWith("wd:")) WikidataJuegos.enlaces(fuente, idioma()) else Wikimedia.enlaces(fuente, idioma()) to true
+                when {
+                    fuente.startsWith("igdb:") -> Igdb.enlaces(fuente, idioma())
+                    fuente.startsWith("wd:") -> WikidataJuegos.enlaces(fuente, idioma())
+                    else -> Wikimedia.enlaces(fuente, idioma()) to true
+                }
             }.getOrNull() ?: (null to false)
             if (!completos) enlacesPedidos.remove(fuente)
             if (l != null) _enlaces.value = _enlaces.value + (fuente to l)
@@ -2645,11 +2730,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val galerias = mutableMapOf<String, kotlinx.coroutines.Deferred<List<Pair<String, String>>>>()
 
     suspend fun galeria(fuente: String): List<Pair<String, String>> {
-        if (!Tmdb.esFuenteGaleria(fuente)) return emptyList()
+        if (!Tmdb.esFuenteGaleria(fuente) && !Igdb.esFuente(fuente)) return emptyList()
         return galerias.getOrPut(fuente) {
             viewModelScope.async {
                 try {
-                    Tmdb(claveCine ?: "").galeria(fuente, idioma())
+                    if (Igdb.esFuente(fuente)) Igdb.galeria(fuente) else Tmdb(claveCine ?: "").galeria(fuente, idioma())
                 } catch (cancelada: CancellationException) {
                     throw cancelada
                 } catch (_: Exception) {
@@ -3191,6 +3276,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             "Fantasía", "Romance", "Animación", "Documental", "Crimen", "Misterio", "Bélica", "Historia", "Biografía", "Musical", "Familiar",
             "Novela", "Cuento", "Poesía", "Ensayo", "Filosofía", "Psicología", "Realismo mágico", "Distopía", "Clásico", "Juvenil", "Shonen", "Seinen")
         private const val SEIS_MESES = 182L * 24 * 3600 * 1000
+        /** De cuántos juegos va cada tanda al pasarlos de Wikidata a IGDB (lo que IGDB deja pedir de una vez). */
+        private const val LOTE_JUEGOS = 50
         /** Desde cuándo se guarda la nota del público: lo traído antes se renueva una vez al abrirlo. */
         private const val ANTES_DE_NOTAS = 1792990800000L
     }

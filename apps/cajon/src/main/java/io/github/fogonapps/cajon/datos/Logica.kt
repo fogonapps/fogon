@@ -82,9 +82,9 @@ object Logica {
 
     /**
      * Cada obra de afuera va una sola vez en el cajón. Si quedaron dos con la misma fuente (agregada en dos teléfonos,
-     * o antes de recuperar la copia), se juntan en la más completa: suma los registros del diario y el me gusta, y
-     * las listas y reseñas pasan a ella. La otra queda borrada (así el otro aparato también la quita). La elección no
-     * depende del teléfono, para que los dos lleguen a lo mismo.
+     * antes de recuperar la copia, o un juego de Wikidata que pasó a IGDB), se juntan en la más completa sin perder
+     * nada de la persona ([juntarPersonal]); las listas, reseñas y borradores pasan a ella. La otra queda borrada (así
+     * el otro aparato también la quita). La elección no depende del teléfono, para que los dos lleguen a lo mismo.
      */
     fun sinRepetidas(e: Estado): Estado {
         val grupos = e.obras.filter { !it.borrada && it.fuente.isNotEmpty() }.groupBy { it.fuente }.values.filter { it.size > 1 }
@@ -96,22 +96,75 @@ object Logica {
                 .thenBy { if (it.agregada > 0) it.agregada else Long.MAX_VALUE }.thenBy { it.id }).first()
             val otras = g.filter { it.id != queda.id }
             val marca = g.maxOf { it.cambio } + 1
-            nuevas[queda.id] = queda.copy(
-                registros = (queda.registros + otras.flatMap { it.registros }).distinctBy { it.id },
-                meGusta = g.any { it.meGusta }, nota = if (queda.nota > 0) queda.nota else g.maxOf { it.nota }, cambio = marca)
+            nuevas[queda.id] = juntarPersonal(queda, otras).copy(cambio = marca)
             otras.forEach { o -> pasa[o.id] = queda.id; nuevas[o.id] = o.copy(borrada = true, cambio = marca) }
         }
         return e.copy(
             obras = e.obras.map { nuevas[it.id] ?: it },
             listas = e.listas.map { l -> if (l.obras.none { it in pasa } && l.portada !in pasa) l else l.copy(obras = l.obras.map { pasa[it] ?: it }.distinct(), portada = pasa[l.portada] ?: l.portada, cambio = maxOf(l.cambio, grupos.maxOf { g -> g.maxOf { it.cambio } } + 1)) },
             resenas = e.resenas.map { r -> pasa[r.obra]?.let { r.copy(obra = it, cambio = r.cambio + 1) } ?: r },
+            borradoresResena = e.borradoresResena.map { r -> pasa[r.obra]?.let { r.copy(obra = it, cambio = r.cambio + 1) } ?: r },
             ajustes = if (e.ajustes.favoritas.none { it in pasa }) e.ajustes else e.ajustes.copy(favoritas = e.ajustes.favoritas.map { pasa[it] ?: it }.distinct()),
+            publicaciones = e.publicaciones.map { p -> pasa[p.obra]?.let { p.copy(obra = it, cambio = p.cambio + 1) } ?: p },
+            perfil = if (e.perfil.destacados.values.none { it in pasa }) e.perfil
+                else e.perfil.copy(destacados = e.perfil.destacados.mapValues { (_, id) -> pasa[id] ?: id }, cambio = e.perfil.cambio + 1),
         )
+    }
+
+    /**
+     * Lo de la persona de [queda] más lo de [otras] (la misma obra repetida): registros, etiquetas, vistos y episodios
+     * favoritos se suman; las notas sueltas distintas se juntan una tras otra; el me gusta queda si alguna lo tenía;
+     * empezó en la fecha más temprana y terminó en la más tardía; la página, la más avanzada. En lo que es un solo valor
+     * (estado, nota, portada o fondo elegidos, visibilidad de la reseña) manda la que se cambió más recientemente
+     * entre las que lo tienen puesto.
+     */
+    internal fun juntarPersonal(queda: Obra, otras: List<Obra>): Obra {
+        val todas = listOf(queda) + otras
+        val recientes = todas.sortedByDescending { it.cambio }
+        val conPortada = recientes.firstOrNull { it.portadaPropia }
+        val conFondo = recientes.firstOrNull { it.fondoPropio }
+        val canciones = queda.canciones.map { c ->
+            if (c.nota > 0 && c.favorita) c else otras.firstNotNullOfOrNull { o -> o.canciones.firstOrNull { it.titulo == c.titulo } }
+                ?.let { o -> c.copy(nota = if (c.nota > 0) c.nota else o.nota, favorita = c.favorita || o.favorita) } ?: c
+        }
+        return queda.copy(
+            estado = recientes.firstOrNull { it.estado != Estados.QUIERO }?.estado ?: queda.estado,
+            nota = recientes.firstOrNull { it.nota > 0 }?.nota ?: 0,
+            meGusta = todas.any { it.meGusta },
+            resena = recientes.firstOrNull { it.resena.isNotBlank() }?.resena.orEmpty(),
+            resenaVisibilidad = recientes.firstOrNull { it.resenaVisibilidad.isNotEmpty() }?.resenaVisibilidad.orEmpty(),
+            notas = todas.map { it.notas.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("\n\n"),
+            etiquetas = todas.flatMap { it.etiquetas }.distinct(),
+            vistos = todas.flatMap { it.vistos }.distinct(),
+            episodiosFavoritos = todas.flatMap { it.episodiosFavoritos }.distinct(),
+            pagina = todas.maxOf { it.pagina },
+            registros = todas.flatMap { it.registros }.distinctBy { it.id },
+            empezada = todas.mapNotNull { it.empezada?.takeIf { f -> f.isNotBlank() } }.minOrNull() ?: queda.empezada,
+            terminada = todas.mapNotNull { it.terminada?.takeIf { f -> f.isNotBlank() } }.maxOrNull() ?: queda.terminada,
+            portadaPropia = conPortada != null,
+            portada = conPortada?.portada ?: queda.portada,
+            imagen = conPortada?.imagen ?: queda.imagen,
+            fondoPropio = conFondo != null,
+            fondo = conFondo?.fondo ?: queda.fondo,
+            canciones = canciones,
+            agregada = todas.map { it.agregada }.filter { it > 0 }.minOrNull() ?: queda.agregada,
+        )
+    }
+
+    /**
+     * Si un juego de Wikidata ([o]) puede pasar a la ficha [fuente] de IGDB. Sí, salvo que otra obra del cajón ya
+     * tenga esa ficha y el título no coincida con el de ella ni con el de IGDB ([titulos]): sería un error de
+     * Wikidata que juntaría dos juegos distintos, así que ese queda como estaba.
+     */
+    fun puedePasarAIgdb(e: Estado, o: Obra, fuente: String, titulos: List<String>): Boolean {
+        val otra = e.vivas.firstOrNull { it.id != o.id && it.fuente == fuente } ?: return true
+        val mios = listOf(o.titulo, o.original).map(::tituloLimpio).filter { it.isNotEmpty() }.toSet()
+        return (titulos + otra.titulo + otra.original).map(::tituloLimpio).any { it.isNotEmpty() && it in mios }
     }
 
     /** Ordena y quita lo repetido (por si un respaldo viejo trae duplicados, o la misma obra entró dos veces). */
     fun normalizar(e: Estado): Estado = Resenas.migrar(sinRepetidas(e).let { e -> e.copy(
-        obras = e.obras.distinctBy { it.id }.map(Imagenes::migrar),
+        obras = e.obras.distinctBy { it.id }.map(Imagenes::migrar).map(GenerosJuego::migrar),
         artistas = e.artistas.distinctBy { it.id },
         listas = e.listas.distinctBy { it.id },
         gustos = e.gustos.distinctBy { it.clave },
@@ -133,13 +186,28 @@ object Logica {
         else -> a.copy(barra = a.barra + "JUEGOS", juegosEnBarra = true)
     }
 
+    /**
+     * La sinopsis (y su fuente) al renovar los datos de [v] con los de afuera ([d]). La que ya tenía se respeta y solo se
+     * llena si falta; salvo en un juego, que no tiene sinopsis propia (solo se escribe a mano, sin fuente): la de la
+     * fuente la reemplaza, así llega en el idioma actual ([idioma]; en español, la de Wikipedia con su crédito). En
+     * español, una de Wikipedia no se cambia por la de IGDB (en inglés) si esta vez Wikipedia no respondió.
+     */
+    fun sinopsisAlRenovar(v: Obra, d: Obra, idioma: String): Pair<String, String> {
+        val deFuente = v.tipo == Tipos.JUEGO && d.sinopsis.isNotBlank() &&
+            (idioma == "en" || d.sinopsisFuente.isNotBlank() || v.sinopsisFuente.isBlank())
+        return when {
+            deFuente || v.sinopsis.isBlank() -> d.sinopsis.ifBlank { v.sinopsis } to (if (d.sinopsis.isBlank()) v.sinopsisFuente else d.sinopsisFuente)
+            else -> v.sinopsis to v.sinopsisFuente
+        }
+    }
+
     /* ----- El cajón ----- */
 
     fun filtrar(e: Estado, tipo: String?, estado: String?, texto: String, orden: Orden): List<Obra> {
         val palabras = normal(texto).split(" ").filter { it.isNotBlank() }
         val lista = e.vivas.filter { o ->
             (tipo == null || o.tipo == tipo) && (estado == null || o.estado == estado) &&
-                (palabras.isEmpty() || normal("${o.titulo} ${o.original} ${o.creador} ${o.generos.joinToString(" ")} ${o.etiquetas.joinToString(" ")}").let { t -> palabras.all { it in t } })
+                (palabras.isEmpty() || normal("${o.titulo} ${o.original} ${o.creador} ${GenerosJuego.visibles(o).joinToString(" ")} ${o.etiquetas.joinToString(" ")}").let { t -> palabras.all { it in t } })
         }
         return when (orden) {
             // Lo agregado más recientemente primero (por la fecha en que entró al cajón, no por la última vez que se tocó).
@@ -155,13 +223,13 @@ object Logica {
 
     /** Todas las etiquetas del cajón (géneros y etiquetas propias de obras y artistas), las más usadas primero. */
     fun etiquetasDelCajon(e: Estado, tipos: Collection<String>? = null): List<String> =
-        (e.vivas.filter { tipos == null || it.tipo in tipos }.flatMap { it.generos + it.etiquetas } +
+        (e.vivas.filter { tipos == null || it.tipo in tipos }.flatMap { GenerosJuego.visibles(it) + it.etiquetas } +
             (if (tipos == null || Tipos.ALBUM in tipos) e.musicosVivos.flatMap { it.generos } else emptyList()))
             .map { it.trim() }.filter { it.isNotEmpty() }
             .groupBy { tituloLimpio(it) }.values.sortedByDescending { it.size }.map { it.first() }
 
     /** Si una obra o un artista lleva esa etiqueta (como género o como etiqueta propia). */
-    fun tieneEtiqueta(o: Obra, etiqueta: String) = tituloLimpio(etiqueta).let { t -> (o.generos + o.etiquetas).any { tituloLimpio(it) == t } }
+    fun tieneEtiqueta(o: Obra, etiqueta: String) = tituloLimpio(etiqueta).let { t -> (o.generos + GenerosJuego.visibles(o) + o.etiquetas).any { tituloLimpio(it) == t } }
 
     /**
      * Si lo buscado es un género: uno de los del cajón ([delCajon]) o de los comunes ([GENEROS_COMUNES]).
@@ -460,7 +528,7 @@ object Logica {
         return entradas.groupBy { it.first }.entries.sortedByDescending { it.key }.take(n).map { (anio, l) ->
             val mejores = l.sortedWith(compareByDescending<Triple<Int, Obra, Registro>> { maxOf(it.third.nota, it.second.nota) }
                 .thenByDescending { it.second.meGusta }).map { it.second }.distinctBy { it.id }.take(3)
-            val genero = l.flatMap { it.second.generos }.filter { it.isNotBlank() }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+            val genero = l.flatMap { GenerosJuego.visibles(it.second) }.filter { it.isNotBlank() }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
             AnioCultural(anio, l.size, mejores, genero)
         }
     }

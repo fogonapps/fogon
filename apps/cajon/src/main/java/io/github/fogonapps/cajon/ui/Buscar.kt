@@ -164,7 +164,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 fun tiene(lista: List<String>) = lista.any { io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it) == g }
                 val susArtistas = if (todo || b.seccion == Secciones.MUSICA) e.musicosVivos.filter { tiene(it.generos) } else emptyList()
                 val tipos = Secciones.tipos(b.seccion)
-                val susAlbumes = e.vivas.filter { (todo || it.tipo in tipos) && tiene(it.generos + it.etiquetas) }
+                val susAlbumes = e.vivas.filter { (todo || it.tipo in tipos) && tiene(it.generos + io.github.fogonapps.cajon.datos.GenerosJuego.visibles(it) + it.etiquetas) }
                 if (susArtistas.isNotEmpty() || susAlbumes.isNotEmpty()) {
                     hayDelCajon = true
                     item(key = "t-genero") { Titulo(stringResource(R.string.genero_en_tu_cajon, genero), null) }
@@ -532,7 +532,8 @@ private fun FilaEncontrado(vm: CajonViewModel, e: Estado, r: Encontrado, modifie
         Column(Modifier.weight(1f)) {
             Text(r.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val nota = r.publica?.let { "★ " + String.format(LocalConfiguration.current.locales[0], "%.1f", it) } ?: ""
-            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", r.creador, r.detalle, nota).filter { it.isNotBlank() }.joinToString(" · "),
+            // La nota va antes de lo largo (plataformas, formato): al final quedaba cortada en unos y en otros no.
+            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", nota, r.creador, r.detalle).filter { it.isNotBlank() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         when {

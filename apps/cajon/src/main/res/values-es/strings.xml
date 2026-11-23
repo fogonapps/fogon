@@ -269,7 +269,7 @@
   <string name="buscar_y_agregar">Buscar y agregar</string>
   <string name="borrar_texto">Borrar el texto</string>
   <string name="ver_mas">Ver más</string>
-  <string name="fuentes_busqueda">Cine: TMDB. Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Juegos: Wikidata e imágenes de Wikimedia Commons. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.\nEscuchas importadas: Last.fm (https://www.last.fm).</string>
+  <string name="fuentes_busqueda">Cine: TMDB. Música: MusicBrainz, carátulas del Cover Art Archive y fotos de Wikimedia Commons. Libros: Open Library. Juegos: IGDB (datos e imágenes) y Wikidata. Lo del momento: Wikipedia y Wikidata, TMDB, ListenBrainz, Open Library y TVmaze.\nEscuchas importadas: Last.fm (https://www.last.fm).</string>
   <string name="seccion_cine">Cine</string>
   <string name="seccion_musica">Música</string>
   <string name="seccion_libros">Libros</string>
@@ -288,7 +288,7 @@
   <string name="tus_cifras">Tus cifras</string>
   <string name="foto_de">Foto: %1$s</string>
   <string name="imagen_de">Imagen: %1$s</string>
-  <string name="lic_wikimedia">Fotos de artistas, escritores y directores de Wikimedia Commons, encontradas por Wikidata (datos CC0) o por la imagen libre de su artículo de Wikipedia; de directores, también las de TMDB, y de escritores, las de Open Library. Antes de usarla, la app revisa en el teléfono que tenga buen tamaño y una cara; si ninguna pasa, no hay foto y la persona puede elegir otra o subir la suya. Cada foto de Commons tiene su propia licencia libre y su autor, que se muestran en la ficha. Las biografías breves son la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito. Los datos de los videojuegos son de Wikidata (CC0), y la portada de un juego es su imagen de Wikimedia Commons solo si trae autor y licencia, que se muestran en la ficha.</string>
+  <string name="lic_wikimedia">Fotos de artistas, escritores y directores de Wikimedia Commons, encontradas por Wikidata (datos CC0) o por la imagen libre de su artículo de Wikipedia; de directores, también las de TMDB, y de escritores, las de Open Library. Antes de usarla, la app revisa en el teléfono que tenga buen tamaño y una cara; si ninguna pasa, no hay foto y la persona puede elegir otra o subir la suya. Cada foto de Commons tiene su propia licencia libre y su autor, que se muestran en la ficha. Las biografías breves son la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito. Si un videojuego no está en IGDB, sus datos son de Wikidata (CC0), y su portada es su imagen de Wikimedia Commons solo si trae autor y licencia, que se muestran en la ficha.</string>
   <plurals name="peliculas_vistas">
     <item quantity="one">película vista</item>
     <item quantity="other">películas vistas</item>
@@ -1361,7 +1361,7 @@
   <string name="politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se publica ni se sincroniza la copia cifrada. Tu cajón local sigue disponible.</string>
   <string name="privacidad_local">Solo aquí: tu diario y reseñas privadas, notas, escuchas, gustos y recomendaciones.\nLas conversaciones se guardan en este teléfono.\nSi activas una copia, los datos incluidos en ella también salen como se explica abajo.</string>
   <string name="privacidad_social">Con cuenta, Fogón Social recibe tu correo e identidad, sesiones y prueba de aceptación; lo que compartes según su visibilidad, tus interacciones, bloqueos y reportes.\nLos mensajes viajan cifrados hasta su entrega (máximo 30 días).\nLa copia en la cuenta, si la activas, va cifrada y solo tu contraseña la abre.\nModeración puede conservar contenido retirado como evidencia.</string>
-  <string name="privacidad_servicios">Para buscar y completar obras, los servicios directos ven tu IP y la consulta o imagen solicitada, pero no tu cuenta ni tu cajón.\n\nTMDB: películas, series y anime, por el servidor de Fogón; TMDB no ve tu IP. Fogón no guarda búsquedas y conserva respuestas unas horas. Las imágenes de image.tmdb.org llegan directamente.\nTVmaze: series y estrenos.\nOpen Library: libros y portadas.\nMusicBrainz: música y artistas.\nListenBrainz: música popular.\nCover Art Archive: portadas de discos.\nWikidata: datos y enlaces de personas y obras.\nWikipedia: información.\nWikimedia Commons: fotos.\nLast.fm: solo si importas tu historial, por el servidor de Fogón; no guarda tu usuario ni lo que escuchas.\nLos enlaces a otros servicios se abren en el navegador.</string>
+  <string name="privacidad_servicios">Para buscar y completar obras, los servicios directos ven tu IP y la consulta o imagen solicitada, pero no tu cuenta ni tu cajón.\n\nTMDB: películas, series y anime, por el servidor de Fogón; TMDB no ve tu IP. Fogón conserva las respuestas unas horas y después las borra, con lo buscado. Las imágenes de image.tmdb.org llegan directamente.\nTVmaze: series y estrenos.\nOpen Library: libros y portadas.\nMusicBrainz: música y artistas.\nListenBrainz: música popular.\nCover Art Archive: portadas de discos.\nIGDB: videojuegos, por el servidor de Fogón; IGDB no ve tu IP. Fogón conserva las respuestas unas horas y después las borra, con lo buscado. Las imágenes de images.igdb.com llegan directamente.\nWikidata: datos y enlaces de personas y obras.\nWikipedia: información.\nWikimedia Commons: fotos.\nLast.fm: solo si importas tu historial, por el servidor de Fogón; no guarda tu usuario ni lo que escuchas.\nLos enlaces a otros servicios se abren en el navegador.</string>
   <string name="privacidad_opciones">Opciones y permisos actuales</string>
   <string name="privacidad_activa">Activado</string>
   <string name="privacidad_inactiva">Desactivado</string>
@@ -1808,4 +1808,27 @@
   <string name="album_oido_descripcion">%1$s, %2$s</string>
   <string name="agregar_album_oido">Agregar %1$s</string>
   <string name="descartar_album_oido">Descartar %1$s</string>
+  <!-- IGDB (videojuegos) -->
+  <string name="nombre_igdb">IGDB</string>
+  <string name="fuente_igdb">Datos e imágenes de IGDB (igdb.com)</string>
+  <string name="lic_igdb">Datos e imágenes de videojuegos de IGDB (igdb.com), por el servidor de Fogón; las imágenes llegan de images.igdb.com. El resumen en español, si lo hay, es la introducción del artículo de Wikipedia (CC BY-SA 4.0), con su crédito. Wikidata (CC0) une cada juego con su ficha de IGDB y suma su sitio oficial y Steam si IGDB no los tiene.</string>
+  <string name="igdb_credito">Datos e imágenes de videojuegos: IGDB</string>
+  <string name="enlace_sitio_oficial">Sitio oficial</string>
+  <string name="enlace_wiki">Wiki de %1$s</string>
+  <plurals name="nota_critica">
+    <item quantity="one">%1$s de %2$d de la crítica en %3$s · %4$s reseña</item>
+    <item quantity="many">%1$s de %2$d de la crítica en %3$s · %4$s reseñas</item>
+    <item quantity="other">%1$s de %2$d de la crítica en %3$s · %4$s reseñas</item>
+  </plurals>
+  <!-- Los géneros de IGDB que no están en generos_juegos, en el orden de Igdb.OTROS_GENEROS. -->
+  <string-array name="generos_igdb">
+    <item>Independiente</item>
+    <item>Arcade</item>
+    <item>Táctico</item>
+    <item>Apuntar y hacer clic</item>
+    <item>Cartas y tablero</item>
+    <item>MOBA</item>
+    <item>Preguntas</item>
+    <item>Pinball</item>
+  </string-array>
 </resources>

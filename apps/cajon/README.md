@@ -22,7 +22,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **Buscador** como el de una app de música: arriba Todo, Películas, Series, Animes, Música, Libros, Juegos o Personas; abajo el mejor resultado (un artista con su foto) y los grupos, cada uno con "Ver más". Géneros para tocar en cada sección (también los del anime), y la ficha completa de un artista, escritor o director antes de guardarlo.
 - **Artistas** con su foto (Wikimedia Commons, por Wikidata, con autor y licencia) y su discografía de MusicBrainz para sumar discos con un toque; los artistas de los álbumes se suman solos.
 - **Escritores y directores**, como los artistas: escritores de Open Library (con su foto de Wikimedia Commons) y sus libros; directores de TMDB (con su foto) y lo que dirigieron. Van en los apartados de Libros y de Cine.
-- **Videojuegos:** una pestaña Juegos (se puede quitar en Ajustes), con datos de Wikidata (estudio, año, géneros y plataformas) y, como portada, la imagen de Wikimedia Commons con su autor y licencia.
+- **Videojuegos:** una pestaña Juegos (se puede quitar en Ajustes), con datos e imágenes de IGDB: portada, capturas, nota de la crítica y del público, resumen, estudio, año, géneros, plataformas y enlaces a su sitio oficial y tiendas. Si un juego no está en IGDB, sus datos son de Wikidata.
 - **Listas propias** de cualquier tipo, con ranking si se quiere y para reordenar. Las cuatro favoritas en el perfil.
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine y de series, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores; con Juegos, también tus juegos y tus estudios. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).
@@ -46,7 +46,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. |
+| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, IGDB, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. |
 | Acceso a notificaciones (opcional) | Solo si se activa "Anotar lo que escucho": Android lo pide para dejar ver qué canción suena en otras apps (Spotify, YouTube Music…). El Cajón no lee las notificaciones: solo artista, álbum y canción de lo que suena, y lo guarda en el teléfono. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de El Cajón en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
@@ -61,5 +61,5 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - Libros: [Open Library](https://openlibrary.org/) (Internet Archive).
 - Música: [MusicBrainz](https://musicbrainz.org/) (núcleo de datos CC0) y carátulas del [Cover Art Archive](https://coverartarchive.org/).
 - Fotos de artistas: [Wikimedia Commons](https://commons.wikimedia.org/), encontradas por [Wikidata](https://www.wikidata.org/); cada una con su autor y licencia en la ficha del artista.
-- Videojuegos: datos de [Wikidata](https://www.wikidata.org/) (CC0); la portada de un juego es su imagen de [Wikimedia Commons](https://commons.wikimedia.org/) solo si trae autor y licencia, que se muestran en la ficha.
+- Videojuegos: datos e imágenes de [IGDB](https://www.igdb.com/), a través del servidor de Fogón; si un juego no está en IGDB, datos de [Wikidata](https://www.wikidata.org/) (CC0) y su portada de [Wikimedia Commons](https://commons.wikimedia.org/) solo si trae autor y licencia, que se muestran en la ficha.
 - Portadas: Coil, Apache 2.0.

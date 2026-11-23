@@ -2739,10 +2739,10 @@ class Social(
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val FALLOS_CODIGO_DIA = 15
         const val MAX_VIDEOS_DIA = 20
-        const val POLITICA = "2026-11-20"
+        const val POLITICA = "2026-11-23"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
-        val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org")
+        val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org", "images.igdb.com")
         /** Además, para portadas de publicaciones, notas y perfiles: TVmaze, Spotify y las imágenes subidas a este servidor. */
         val DOMINIOS_PORTADA = DOMINIOS_IMAGEN + setOf("static.tvmaze.com", "i.scdn.co", "fogonapps.duckdns.org")
         /** Una portada solo puede venir de esos dominios: una dirección cualquiera delataría la IP de quien la vea. */

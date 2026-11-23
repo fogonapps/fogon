@@ -138,17 +138,22 @@ class WikidataJuegosTest {
     /* ----- Paso 3: detalle, portada con crédito, estudios, géneros y enlaces ----- */
 
     /** Los nombres cortos de los géneros de juegos de los recursos (`generos_juegos`), como los pasa la app. Corre desde apps/cajon. */
-    private fun generosJuegos(carpeta: String): List<String> {
+    private fun generosJuegos(carpeta: String): List<String> = arreglo(carpeta, "generos_juegos")
+
+    /** Un `string-array` de los recursos. */
+    private fun arreglo(carpeta: String, nombre: String): List<String> {
         val doc = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(java.io.File("src/main/res/$carpeta/strings.xml"))
         val lista = doc.getElementsByTagName("string-array")
         for (i in 0 until lista.length) {
             val n = lista.item(i) as org.w3c.dom.Element
-            if (n.getAttribute("name") == "generos_juegos") return (0 until n.getElementsByTagName("item").length).map { n.getElementsByTagName("item").item(it).textContent }
+            if (n.getAttribute("name") == nombre) return (0 until n.getElementsByTagName("item").length).map { n.getElementsByTagName("item").item(it).textContent }
         }
-        error("no está generos_juegos en $carpeta")
+        error("no está $nombre en $carpeta")
     }
     private val es by lazy { generosJuegos("values-es") }
     private val en by lazy { generosJuegos("values") }
+    private val nEs by lazy { GenerosJuego.Nombres(es, arreglo("values-es", "generos_igdb")) }
+    private val nEn by lazy { GenerosJuego.Nombres(en, arreglo("values", "generos_igdb")) }
 
     private val hollow = json("""{
       "Q29300592":{"type":"item","id":"Q29300592","labels":${etiquetas("mul" to "Hollow Knight")},"claims":{
@@ -175,25 +180,27 @@ class WikidataJuegosTest {
 
     @Test fun deResultadoAObraSinImagen() {
         val j = WikidataJuegos.leer("Q29300592", hollow["Q29300592"] as JsonObject, "es")!!
-        val o = WikidataJuegos.obra(j, nombresHollow, es, null)
+        val o = WikidataJuegos.obra(j, nombresHollow, null)
         assertEquals(Tipos.JUEGO, o.tipo)
         assertEquals("wd:Q29300592", o.fuente)
         assertEquals("Hollow Knight", o.titulo)
         assertEquals(2017, o.anio)
         assertEquals("Team Cherry, Otro, Tercero", o.creador) // hasta tres estudios
         assertEquals(listOf("Microsoft Windows", "GNU/Linux"), o.plataformas)
-        // Los conocidos con su nombre corto (sin repetir) y el que no, como lo nombra Wikidata, con mayúscula.
-        assertEquals(listOf("Plataformas", "Metroidvania", "Videojuego independiente"), o.generos)
+        // Los conocidos por su elemento (sin repetir) y el que no, como lo nombra Wikidata, con mayúscula.
+        assertEquals(listOf("Q828322", "Q19643088", "Videojuego independiente"), o.generos)
+        // Se muestran con su nombre corto en el idioma de la app.
+        assertEquals(listOf("Plataformas", "Metroidvania", "Videojuego independiente"), o.generos.map { GenerosJuego.nombre(it, nEs, nEs, nEn) })
         // Tiene P18, pero sin crédito no hay portada: queda la de respaldo (el ícono del tipo).
         assertEquals("", o.portada)
         assertNull(o.imagen)
         assertTrue(o.traida > 0) // ya tiene sus datos: no se vuelven a pedir al agregarlo
         // En inglés, los nombres cortos en inglés.
-        assertEquals(listOf("Platformer", "Metroidvania", "Videojuego independiente"), WikidataJuegos.obra(j, nombresHollow, en, null).generos)
+        assertEquals(listOf("Platformer", "Metroidvania", "Videojuego independiente"), o.generos.map { GenerosJuego.nombre(it, nEn, nEs, nEn) })
         // Sin los nombres (falló esa consulta) sale igual, sin estudio ni plataformas.
-        val sinNombres = WikidataJuegos.obra(j, emptyMap(), es, null)
+        val sinNombres = WikidataJuegos.obra(j, emptyMap(), null)
         assertEquals("", sinNombres.creador)
-        assertEquals(listOf("Plataformas", "Metroidvania"), sinNombres.generos)
+        assertEquals(listOf("Q828322", "Q19643088"), sinNombres.generos)
     }
 
     @Test fun laPortadaSoloConAutorYLicencia() {
@@ -214,7 +221,7 @@ class WikidataJuegosTest {
         assertNotNull(WikidataJuegos.conCredito(buena.copy(autor = "Unknown Worlds Entertainment")))
         assertNotNull(WikidataJuegos.conCredito(buena.copy(autor = "山田太郎")))
         val j = WikidataJuegos.leer("Q29300592", hollow["Q29300592"] as JsonObject, "es")!!
-        val o = WikidataJuegos.obra(j, nombresHollow, es, buena)
+        val o = WikidataJuegos.obra(j, nombresHollow, buena)
         assertEquals(url, o.portada)
         assertEquals("Team Cherry", o.imagen?.autor)
         assertEquals("CC BY-SA 4.0", o.imagen?.licencia)
@@ -273,7 +280,7 @@ class WikidataJuegosTest {
 
     @Test fun unEstudioConComaEsUnSoloEstudio() {
         val j = WikidataJuegos.leer("Q29300592", hollow["Q29300592"] as JsonObject, "es")!!
-        val o = WikidataJuegos.obra(j, nombresHollow + ("Q29326164" to "Foo Co., Ltd."), es, null)
+        val o = WikidataJuegos.obra(j, nombresHollow + ("Q29326164" to "Foo Co., Ltd."), null)
         assertEquals("Foo Co. Ltd., Otro, Tercero", o.creador)
         // La ficha parte por comas: quedan tres, no cuatro.
         assertEquals(listOf("Foo Co. Ltd.", "Otro", "Tercero"), o.creador.split(",").map { it.trim() })
@@ -306,18 +313,45 @@ class WikidataJuegosTest {
         assertEquals("bullet hell", WikidataJuegos.generosDeJuego(generos, "en")["Q821157"])
         // En la obra: el conocido con su nombre corto, el otro género con mayúscula y sin el tema.
         val j = WikidataJuegos.Juego("Q21039924", "Undertale", 2015, emptyList(), emptyList(), "", listOf("Q744038", "Q85422949", "Q821157"))
-        assertEquals(listOf("Rol", "Lluvia de balas"), WikidataJuegos.obra(j, n, es, null).generos)
+        assertEquals(listOf("Q744038", "Q821157"), WikidataJuegos.obra(j, n, null).generos)
+        assertEquals(listOf("Rol", "Lluvia de balas"), WikidataJuegos.obra(j, n, null).generos.map { GenerosJuego.nombre(it, nEs, nEs, nEn) })
     }
 
     @Test fun losGenerosGuardadosSeMuestranEnElIdiomaDeLaApp() {
         // Guardado en español, visto en inglés, y al revés; sin importar mayúsculas ni tildes.
-        assertEquals("Platformer", WikidataJuegos.etiquetaGenero("Plataformas", en, es, en))
-        assertEquals("Lógica", WikidataJuegos.etiquetaGenero("puzzle", es, es, en))
-        assertEquals("Supervivencia", WikidataJuegos.etiquetaGenero("Survival", es, es, en))
+        assertEquals("Platformer", GenerosJuego.nombre("Plataformas", nEn, nEs, nEn))
+        assertEquals("Lógica", GenerosJuego.nombre("puzzle", nEs, nEs, nEn))
+        assertEquals("Supervivencia", GenerosJuego.nombre("Survival", nEs, nEs, nEn))
         // Los sumados tras la prueba en el emulador (Undertale) también cambian de idioma.
-        assertEquals("Bullet hell", WikidataJuegos.etiquetaGenero("Lluvia de balas", en, es, en))
-        assertEquals("Comedia", WikidataJuegos.etiquetaGenero("Comedy", es, es, en))
+        assertEquals("Bullet hell", GenerosJuego.nombre("Lluvia de balas", nEn, nEs, nEn))
+        assertEquals("Comedia", GenerosJuego.nombre("Comedy", nEs, nEs, nEn))
         // Uno que no está en la tabla queda como se guardó.
-        assertEquals("Juego de cartas coleccionables", WikidataJuegos.etiquetaGenero("Juego de cartas coleccionables", en, es, en))
+        assertEquals("Juego de cartas coleccionables", GenerosJuego.nombre("Juego de cartas coleccionables", nEn, nEs, nEn))
+    }
+
+    /** Los géneros de juego se guardan como claves y se traducen al mostrarlos; los ya guardados con su nombre se migran. */
+    @Test fun generosDeJuegoComoClaves() {
+        // Las claves de IGDB fuera de Wikidata, en el mismo orden que sus nombres.
+        assertEquals(Igdb.OTROS_GENEROS.size, GenerosJuego.CLAVES_IGDB.size)
+        assertEquals(GenerosJuego.CLAVES_IGDB.size, nEs.igdb.size)
+        assertEquals(GenerosJuego.CLAVES_IGDB.size, nEn.igdb.size)
+        assertEquals(WikidataJuegos.GENEROS.size, nEs.wikidata.size)
+        // Lo que vio el tester: Celeste refrescado en español y vuelto a inglés mezclaba «Independiente».
+        val celeste = Obra("1", Tipos.JUEGO, "Celeste", fuente = "igdb:26226", generos = listOf("Action", "Plataformas", "Adventure", "Independiente"))
+        val migrada = GenerosJuego.migrar(celeste, nEs, nEn)
+        assertEquals(listOf("Q270948", "Q828322", "Q23916", "igdb-genero:indie"), migrada.generos)
+        assertEquals(listOf("Action", "Platformer", "Adventure", "Indie"), migrada.generos.map { GenerosJuego.nombre(it, nEn, nEs, nEn) })
+        assertEquals(listOf("Acción", "Plataformas", "Aventura", "Independiente"), migrada.generos.map { GenerosJuego.nombre(it, nEs, nEs, nEn) })
+        // Otra vez no cambia nada (es la misma obra), y un nombre de IGDB en inglés también se reconoce.
+        assertSame(migrada, GenerosJuego.migrar(migrada, nEs, nEn))
+        assertEquals("igdb-genero:card-board", GenerosJuego.clave("Card & Board Game", nEs, nEn))
+        assertEquals("igdb-genero:point-and-click", GenerosJuego.clave("Apuntar y hacer clic", nEs, nEn))
+        assertEquals("Q1610017", GenerosJuego.clave("Simulator"))
+        // El mismo género con dos nombres queda una sola vez; uno desconocido queda como estaba.
+        assertEquals(listOf("Q828322", "Juego de cartas coleccionables"),
+            GenerosJuego.migrar(celeste.copy(generos = listOf("Platformer", "Plataformas", "Juego de cartas coleccionables")), nEs, nEn).generos)
+        // A mano (sin fuente) o de otro tipo, no se toca: lo escribió la persona.
+        assertEquals(celeste.generos, GenerosJuego.migrar(celeste.copy(fuente = ""), nEs, nEn).generos)
+        assertEquals(listOf("Acción"), GenerosJuego.migrar(Obra("2", Tipos.PELICULA, "X", fuente = "tmdb:movie:1", generos = listOf("Acción")), nEs, nEn).generos)
     }
 }

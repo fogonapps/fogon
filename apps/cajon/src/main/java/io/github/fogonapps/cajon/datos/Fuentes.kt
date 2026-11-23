@@ -31,7 +31,9 @@ import java.util.concurrent.TimeUnit
  *  - Open Library (libros): datos abiertos del Internet Archive, sin clave.
  *  - MusicBrainz (álbumes y artistas): datos CC0, sin clave; pide un User-Agent con contacto y como mucho
  *    una consulta por segundo. Las carátulas vienen del Cover Art Archive.
- *  - Wikidata (videojuegos): datos CC0, sin clave; las portadas, de Wikimedia Commons. Se le da el crédito a Wikidata.
+ *  - IGDB (videojuegos): por el servidor de Fogón, que pone la clave; las imágenes, directo de images.igdb.com. Pide
+ *    atribución visible: «Datos e imágenes de IGDB», con enlace, en la ficha y en Ajustes.
+ *  - Wikidata (videojuegos, de respaldo y para unir con IGDB): datos CC0, sin clave; las portadas, de Wikimedia Commons.
  * Solo se consulta cuando la persona busca o abre una obra; nada se manda de vuelta.
  */
 
@@ -52,6 +54,8 @@ data class Encontrado(
     val alias: List<String> = emptyList(),
     /** Sus géneros, si la fuente los da en la lista (TMDB en recomendaciones y tendencias). */
     val generos: List<String> = emptyList(),
+    /** Un juego de Wikidata con su ficha en IGDB: "id:14593" o "slug:hollow-knight" (ver [Igdb.desdeWikidata]). */
+    val igdb: String = "",
 )
 
 /**
@@ -70,7 +74,14 @@ data class ArtistaEncontrado(
 data class PersonaDeAfuera(val foto: String, val bio: String, val bioFuente: String, val desde: Int?, val pais: String)
 
 /** Un enlace a otro servicio desde una ficha o un perfil ("Spotify", "Wikipedia"…). */
-data class Enlace(val nombre: String, val url: String)
+data class Enlace(val nombre: String, val url: String) {
+    companion object {
+        /** [nombre] de un sitio oficial: la pantalla lo muestra traducido. */
+        const val OFICIAL = "oficial"
+        /** [nombre] de una wiki: este prefijo y su sitio ("wiki:fandom.com"); la pantalla dice de qué sitio es. */
+        const val WIKI = "wiki:"
+    }
+}
 
 class SinRed : IOException()
 class ClaveMala : IOException()
@@ -78,6 +89,8 @@ class ClaveMala : IOException()
 class Ocupado(val segundos: Long? = null) : IOException()
 /** El servidor de Fogón no tiene TMDB (503 «sin_tmdb»): no es estar ocupado, así que esperar no sirve. */
 class SinTmdb : IOException()
+/** El servidor de Fogón no tiene IGDB (503 «sin_igdb»): los juegos siguen con Wikidata. */
+class SinIgdb : IOException()
 
 /**
  * El fallo que corresponde a una respuesta [codigo] de [ruta] (null si no es un fallo de estos): un 503 del puente de
@@ -87,6 +100,7 @@ internal fun falloDeRespuesta(codigo: Int, ruta: String, cuerpo: () -> String, r
     codigo == 401 -> ClaveMala()
     // Si no se puede leer el cuerpo, se trata como ocupado (no como «sin internet»).
     codigo == 503 && ruta.startsWith("/v1/tmdb/") && "sin_tmdb" in runCatching { cuerpo() }.getOrDefault("") -> SinTmdb()
+    codigo == 503 && ruta.startsWith("/v1/igdb/") && "sin_igdb" in runCatching { cuerpo() }.getOrDefault("") -> SinIgdb()
     codigo == 503 || codigo == 429 -> Ocupado(segundosDeEspera(reintentarEn))
     else -> null
 }
@@ -103,7 +117,7 @@ suspend fun bajarImagen(url: String, tope: Int = 4_000_000): ByteArray? = withCo
     }.getOrNull()
 }
 
-private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emptyMap()): JsonElement = withContext(Dispatchers.IO) {
+internal suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emptyMap()): JsonElement = withContext(Dispatchers.IO) {
     val req = Request.Builder().url(url).header("User-Agent", AGENTE).header("Accept", "application/json")
         .apply { cabeceras.forEach { (k, v) -> header(k, v) } }.build()
     val masivo = kotlin.coroutines.coroutineContext[EnlaceMasivo]
@@ -121,6 +135,7 @@ private suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = emp
             }
         } catch (e: ClaveMala) { masivo?.fallar(e); throw e }
         catch (e: SinTmdb) { masivo?.sinTmdb = true; masivo?.respondio(); throw e }
+        catch (e: SinIgdb) { masivo?.respondio(); throw e }
         catch (e: Ocupado) { throw e }
         catch (e: IOException) { val fallo = SinRed(); masivo?.corte(fallo); throw fallo }
     }
@@ -1206,12 +1221,31 @@ object Wikimedia {
             val u = sparql.newBuilder().addQueryParameter("query", q).addQueryParameter("format", "json").build()
             val art = ((pedirJson(u, mapOf("Accept" to "application/sparql-results+json")).jsonObject["results"] as? JsonObject)
                 ?.arr("bindings")?.firstOrNull() as? JsonObject)?.let { (it["art"] as? JsonObject)?.get("value").texto() } ?: continue
-            val titulo = art.substringAfter("/wiki/")
-            val resumen = pedirJson("https://$lengua.wikipedia.org/api/rest_v1/page/summary/$titulo".toHttpUrl()).jsonObject
+            val resumen = pedirJson(urlResumen(lengua, art.substringAfter("/wiki/"))).jsonObject
             val texto = resumen["extract"].texto().trim()
             if (texto.isNotEmpty()) return texto to art
         }
         return null
+    }
+
+    /**
+     * La introducción de un artículo de Wikipedia por su dirección ("https://es.wikipedia.org/wiki/Hollow_Knight"):
+     * texto CC BY-SA 4.0, que se muestra con su crédito. Vacío si la dirección no es de Wikipedia o no tiene texto.
+     */
+    suspend fun resumen(articulo: String): String {
+        val m = Regex("^https://([a-z]{2,3})\\.wikipedia\\.org/wiki/([^?#]+)$").find(articulo) ?: return ""
+        val (lengua, titulo) = m.destructured
+        return pedirJson(urlResumen(lengua, titulo)).jsonObject["extract"].texto().trim()
+    }
+
+    /**
+     * La dirección del resumen de un artículo por su título tal como va en la dirección del artículo (con o sin
+     * códigos «%»). El título es un solo tramo: una «/» del título («Fate/stay night») va como %2F, no como carpeta.
+     */
+    internal fun urlResumen(lengua: String, titulo: String): HttpUrl {
+        val limpio = runCatching { java.net.URLDecoder.decode(titulo.replace("+", "%2B"), "UTF-8") }.getOrDefault(titulo)
+        return HttpUrl.Builder().scheme("https").host("$lengua.wikipedia.org")
+            .addPathSegments("api/rest_v1/page/summary").addPathSegment(limpio).build()
     }
 
     /** El crédito de una foto de Commons: "Autor · Licencia · Wikimedia Commons" (sin HTML). */
@@ -1308,6 +1342,8 @@ object WikidataJuegos {
     internal data class Juego(
         val qid: String, val titulo: String, val anio: Int?, val desarrolladores: List<String>, val plataformas: List<String>, val imagen: String,
         val generos: List<String> = emptyList(),
+        /** Su ficha en IGDB, si Wikidata la conoce ([igdbDe]). */
+        val igdb: String = "",
     )
 
     /**
@@ -1329,17 +1365,11 @@ object WikidataJuegos {
     internal const val GENERO_DE_JUEGO = "Q659563"
 
     /**
-     * Un género de juego guardado (con su nombre en cualquiera de las [listas], una por idioma) con su nombre corto en
-     * [actual], la lista del idioma de la app; uno que no es de [GENEROS] queda como se guardó.
-     */
-    fun etiquetaGenero(nombre: String, actual: List<String>, vararg listas: List<String>): String =
-        generoConocido(nombre, *listas)?.let { actual.getOrNull(GENEROS.indexOf(it)) } ?: nombre
-
-    /**
      * El id del género conocido que se llama [nombre] en alguna de las [listas] de nombres (una por idioma, en el orden
      * de [GENEROS]), o null.
      */
     fun generoConocido(nombre: String, vararg listas: List<String>): String? {
+        if (nombre.trim() in GENEROS) return nombre.trim()
         val n = Logica.tituloLimpio(nombre)
         if (n.isEmpty()) return null
         return listas.firstNotNullOfOrNull { l -> l.indexOfFirst { Logica.tituloLimpio(it) == n }.takeIf { it >= 0 } }?.let { GENEROS.getOrNull(it) }
@@ -1450,14 +1480,77 @@ object WikidataJuegos {
         val plataformas = valores(claims, "P400").mapNotNull { idDe(it) }.distinct()
         val imagen = valores(claims, "P18", preferidosPrimero = true).firstNotNullOfOrNull { it.texto().takeIf { s -> s.isNotBlank() } }.orEmpty()
         val generos = valores(claims, "P136", preferidosPrimero = true).mapNotNull { idDe(it) }.distinct()
-        return Juego(q, titulo, anio, desarrolladores, plataformas, imagen, generos)
+        return Juego(q, titulo, anio, desarrolladores, plataformas, imagen, generos, igdbDe(claims))
+    }
+
+    /**
+     * Su ficha en IGDB (P5794): "id:<número>" si trae el id numérico (el calificador P9043) o, si no, "slug:<nombre
+     * corto>" ("hollow-knight"); vacío si no la tiene.
+     */
+    internal fun igdbDe(claims: JsonObject): String {
+        val d = claims.arr("P5794").mapNotNull { it as? JsonObject }.filter { it["rank"].texto() != "deprecated" }
+            .sortedByDescending { it["rank"].texto() == "preferred" }.firstOrNull() ?: return ""
+        val numero = ((d["qualifiers"] as? JsonObject)?.arr("P9043")?.firstOrNull() as? JsonObject)
+            ?.let { ((it["datavalue"] as? JsonObject)?.get("value")).texto() }?.takeIf { it.matches(Regex("[0-9]{1,10}")) }
+        if (numero != null) return "id:$numero"
+        val slug = ((d["mainsnak"] as? JsonObject)?.get("datavalue") as? JsonObject)?.get("value").texto()
+        return if (slug.matches(SLUG_IGDB)) "slug:$slug" else ""
+    }
+
+    private val SLUG_IGDB = Regex("[a-z0-9][a-z0-9$~-]{0,150}")
+
+    /** Lo que Wikidata suma a un juego de IGDB: su elemento, su sitio oficial (P856), su id de Steam (P1733) y Wikipedia. */
+    data class Extra(val qid: String, val oficial: String? = null, val steam: String? = null, val wikipedia: Map<String, String> = emptyMap())
+
+    /** Los de IGDB que Wikidata conoce ([refs]: "id:…" o "slug:…"), con su elemento: referencia → Q…. */
+    suspend fun qidsDeIgdb(refs: List<String>): Map<String, String> {
+        val validas = refs.filter { it.startsWith("slug:") && it.removePrefix("slug:").matches(SLUG_IGDB) }.distinct().take(LOTE)
+        if (validas.isEmpty()) return emptyMap()
+        val b = api.newBuilder().addQueryParameter("action", "query").addQueryParameter("format", "json")
+            .addQueryParameter("list", "search").addQueryParameter("srnamespace", "0").addQueryParameter("srlimit", "$LOTE")
+            .addQueryParameter("srprop", "").addQueryParameter("srsearch", "haswbstatement:" + validas.joinToString("|") { "P5794=${it.removePrefix("slug:")}" })
+        val ids = idsDeBusqueda(pedirJson(b.build()) as? JsonObject ?: return emptyMap())
+        if (ids.isEmpty()) return emptyMap()
+        val e = entidades(ids, "claims")
+        return ids.mapNotNull { q -> ((e[q] as? JsonObject)?.get("claims") as? JsonObject)?.let { c ->
+            val slug = valores(c, "P5794").firstNotNullOfOrNull { v -> v.texto().takeIf { "slug:$it" in validas } }
+            slug?.let { "slug:$it" to q }
+        } }.toMap()
+    }
+
+    /** La ficha de IGDB de cada juego de Wikidata ([qids], de a 50 por consulta): Q… → "id:…" o "slug:…". */
+    suspend fun igdbDeElementos(qids: List<String>): Map<String, String> =
+        qids.filter { it.matches(Regex("Q[0-9]+")) }.distinct().chunked(LOTE).flatMap { tanda ->
+            val e = entidades(tanda, "claims")
+            tanda.mapNotNull { q -> ((e[q] as? JsonObject)?.get("claims") as? JsonObject)?.let { igdbDe(it) }?.takeIf { it.isNotEmpty() }?.let { q to it } }
+        }.toMap()
+
+    /** El [Extra] de un elemento (una consulta: sus datos y sus artículos de Wikipedia). */
+    suspend fun extra(qid: String): Extra {
+        require(qid.matches(Regex("Q[0-9]+")))
+        val u = api.newBuilder().addQueryParameter("action", "wbgetentities").addQueryParameter("format", "json")
+            .addQueryParameter("props", "claims|sitelinks/urls").addQueryParameter("sitefilter", "eswiki|enwiki").addQueryParameter("ids", qid).build()
+        return extraDe((pedirJson(u) as? JsonObject)?.get("entities") as? JsonObject ?: JsonObject(emptyMap()), qid)
+    }
+
+    /** El [Extra] de [qid] en una respuesta de wbgetentities con claims y sitelinks/urls. */
+    internal fun extraDe(entidades: JsonObject, qid: String): Extra {
+        val x = entidades[qid] as? JsonObject ?: return Extra(qid)
+        val claims = x["claims"] as? JsonObject ?: JsonObject(emptyMap())
+        val oficial = valores(claims, "P856", preferidosPrimero = true).firstNotNullOfOrNull { it.texto().takeIf { u -> u.startsWith("https://") || u.startsWith("http://") } }
+        val steam = valores(claims, "P1733", preferidosPrimero = true).firstNotNullOfOrNull { it.texto().takeIf { s -> s.matches(Regex("[0-9]{1,10}")) } }
+        val sitios = x["sitelinks"] as? JsonObject
+        val wikipedia = listOf("es" to "eswiki", "en" to "enwiki").mapNotNull { (l, k) ->
+            (sitios?.get(k) as? JsonObject)?.get("url").texto().takeIf { it.startsWith("https://") }?.let { l to it }
+        }.toMap()
+        return Extra(qid, oficial, steam, wikipedia)
     }
 
     /**
      * Los datos de un juego por su fuente ("wd:Q…"): sus estudios, géneros y plataformas y, si su imagen de Commons trae
      * autor y licencia, la portada con ese crédito. Si fallan los nombres o la imagen, sale igual con lo demás.
      */
-    suspend fun detalles(fuente: String, idioma: String, nombresGeneros: List<String>): Obra {
+    suspend fun detalles(fuente: String, idioma: String): Obra {
         val qid = fuente.removePrefix("wd:")
         require(qid.matches(Regex("Q[0-9]+"))) { "No es un elemento de Wikidata: $fuente" }
         val lengua = if (idioma == "en") "en" else "es"
@@ -1469,7 +1562,7 @@ object WikidataJuegos {
         val generos = if (desconocidos.isEmpty()) emptyMap() else oVacio { generosDeJuego(entidades(desconocidos, "claims|labels"), lengua) }
         val imagen = if (j.imagen.isBlank()) null else try { conCredito(Wikimedia.procedencia(urlImagen(j.imagen), ancho = 500)) }
             catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Exception) { null }
-        return obra(j, nombres + generos, nombresGeneros, imagen)
+        return obra(j, nombres + generos, imagen)
     }
 
     /** De una respuesta de wbgetentities (claims y labels) de géneros, el nombre de los que son [GENERO_DE_JUEGO]. */
@@ -1488,12 +1581,12 @@ object WikidataJuegos {
     }
 
     /** Lo leído de un juego como obra del cajón; [imagen], la portada ya con su crédito (o null: sin portada). */
-    internal fun obra(j: Juego, nombres: Map<String, String>, nombresGeneros: List<String>, imagen: ImagenElegida?) = Obra(
+    internal fun obra(j: Juego, nombres: Map<String, String>, imagen: ImagenElegida?) = Obra(
         id = "", tipo = Tipos.JUEGO, titulo = j.titulo, anio = j.anio,
         // Hasta tres estudios (los preferidos antes), separados por comas como los demás creadores: la coma de un
         // nombre ("Foo Co., Ltd.") se quita para que no lo parta en dos.
         creador = j.desarrolladores.mapNotNull { nombres[it] }.map { sinComas(it) }.filter { it.isNotEmpty() }.distinct().take(3).joinToString(", "),
-        generos = generosDe(j.generos, nombres, nombresGeneros),
+        generos = generosDe(j.generos, nombres),
         plataformas = j.plataformas.mapNotNull { nombres[it] }.distinct(),
         portada = imagen?.url.orEmpty(), imagen = imagen,
         fuente = "wd:${j.qid}", traida = System.currentTimeMillis(),
@@ -1503,11 +1596,11 @@ object WikidataJuegos {
     internal fun sinComas(nombre: String) = nombre.replace(",", " ").replace(Regex("\\s+"), " ").trim()
 
     /**
-     * Los nombres de los géneros: los conocidos con su nombre corto ([nombresGeneros], en el orden de [GENEROS]), los
-     * demás como los nombra Wikidata (con mayúscula).
+     * Los géneros para guardar: los conocidos ([GENEROS]) por su elemento, que se muestra con su nombre corto en el idioma
+     * de la app ([GenerosJuego]); los demás como los nombra Wikidata (con mayúscula).
      */
-    internal fun generosDe(ids: List<String>, nombres: Map<String, String>, nombresGeneros: List<String>): List<String> = ids.mapNotNull { q ->
-        GENEROS.indexOf(q).takeIf { it >= 0 }?.let { nombresGeneros.getOrNull(it) } ?: nombres[q]?.replaceFirstChar { it.uppercase() }
+    internal fun generosDe(ids: List<String>, nombres: Map<String, String>): List<String> = ids.mapNotNull { q ->
+        q.takeIf { it in GENEROS } ?: nombres[q]?.replaceFirstChar { it.uppercase() }
     }.distinctBy { Logica.tituloLimpio(it) }.take(6)
 
     /** La dirección de una imagen de Commons por el nombre de su archivo (P18), a 500 px de ancho. */
@@ -1569,6 +1662,7 @@ object WikidataJuegos {
         portada = "",
         fuente = "wd:${j.qid}",
         detalle = j.plataformas.mapNotNull { nombres[it] }.distinct().joinToString(" · "),
+        igdb = j.igdb,
     )
 
     /**

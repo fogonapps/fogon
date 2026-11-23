@@ -5,7 +5,7 @@
 <ul>
 <li><b>Todo en un cajón:</b> películas, series, animes, libros, discos y videojuegos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>
 <li><b>Busca y agrega:</b> libros en Open Library y discos y artistas en MusicBrainz, sin clave; películas, series y animes en TMDB con tu propia clave gratuita. O agrégalos a mano.</li>
-<li><b>Videojuegos:</b> busca un juego (datos de Wikidata y portada de Wikimedia Commons cuando existe, con su crédito) y márcalo como jugando, terminado, quiero jugar o abandonado, con nota y reseña. Tienen su propia pestaña, Juegos.</li>
+<li><b>Videojuegos:</b> busca un juego (portada, capturas, notas de la crítica y del público, resumen y enlaces, de IGDB) y márcalo como jugando, terminado, quiero jugar o abandonado, con nota y reseña. Tienen su propia pestaña, Juegos.</li>
 <li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos, etiquetas para todo y episodios favoritos.</li>
 <li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
 <li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
@@ -23,4 +23,4 @@
 
 <p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Internet solo se usa para buscar, traer portadas y, si lo activas, sincronizar. Puedes guardar un respaldo cuando quieras.</p>
 
-<p>El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB. Datos de videojuegos: Wikidata (CC0). Portadas de Wikimedia Commons, con el crédito de su autor y su licencia.</p>
+<p>El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB. Datos e imágenes de videojuegos de IGDB (igdb.com); los juegos que no están en IGDB, de Wikidata (CC0), con portadas de Wikimedia Commons con el crédito de su autor y su licencia.</p>

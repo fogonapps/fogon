@@ -91,7 +91,7 @@ data class Obra(
     val edicion: String? = null,
     val portada: String = "",
     val fondo: String = "",
-    /** De dónde salió: "tmdb:movie:603", "tmdb:tv:1396", "ol:OL274505W", "mb:rg:<mbid>", "wd:Q…" (juegos); vacío si es a mano. */
+    /** De dónde salió: "tmdb:movie:603", "tmdb:tv:1396", "ol:OL274505W", "mb:rg:<mbid>", "igdb:1942" o "wd:Q…" (juegos); vacío si es a mano. */
     val fuente: String = "",
     /** Minutos (películas), páginas (libros). */
     val minutos: Int? = null,
@@ -104,9 +104,14 @@ data class Obra(
     val plataformas: List<String> = emptyList(),
     /** El id del artista en El Cajón (álbumes), si está. */
     val artista: String? = null,
-    /** La nota del público en su fuente (TMDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
+    /** La nota del público en su fuente (TMDB e IGDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
     val publica: Double? = null,
     val votos: Int = 0,
+    /** La nota de la crítica (IGDB, de 0 a 10) y de cuántas reseñas sale. */
+    val criticos: Double? = null,
+    val votosCriticos: Int = 0,
+    /** De dónde salió la sinopsis si no es de la fuente: el artículo de Wikipedia (texto CC BY-SA 4.0, con su crédito). */
+    val sinopsisFuente: String = "",
 
     // Lo de la persona
     val estado: String = Estados.QUIERO,

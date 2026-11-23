@@ -32,7 +32,7 @@ object Recomendar {
      */
     fun pendientes(e: Estado, perfil: PerfilGustos = perfil(e, null), n: Int = 12): List<Obra> =
         e.vivas.filter { it.estado == Estados.QUIERO && "obra:${it.fuente}" !in perfil.noRecomendar }.mapNotNull { o ->
-            val gs = (o.generos + o.etiquetas).filter { it.isNotBlank() }.distinct()
+            val gs = (GenerosJuego.visibles(o) + o.etiquetas).filter { it.isNotBlank() }.distinct()
             if (perfil.excluido(gs, o.creador)) return@mapNotNull null
             val pesos = gs.map { perfil.pesoGenero(it) }
             val x = pesos.sum() / sqrt(gs.size.coerceAtLeast(1).toDouble()) + 0.5 * perfil.pesoPersona(o.creador)
@@ -80,7 +80,7 @@ object Recomendar {
             val v = if (cuando > 0) vigencia((ahora - cuando) / DIA) else 0.6
             val malo = o.estado == Estados.ABANDONADO || o.nota in 1..4
             val x = if (malo) -0.6 * v else peso(o, e.ajustes.favoritas) * v
-            (o.generos + o.etiquetas).filter { it.isNotBlank() }.distinctBy { Logica.tituloLimpio(it) }.forEach { sumar(generos, claveGenero(it), it, x, cuando) }
+            (GenerosJuego.visibles(o) + o.etiquetas).filter { it.isNotBlank() }.distinctBy { Logica.tituloLimpio(it) }.forEach { sumar(generos, claveGenero(it), it, x, cuando) }
             // Los estudios de los juegos no son directores ni escritores: no se piden sus obras.
             if (o.tipo != Tipos.ALBUM && o.tipo != Tipos.JUEGO && o.creador.isNotBlank()) o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(2)
                 .forEach { sumar(personas, clavePersona(it), it, x * 0.6, cuando) }

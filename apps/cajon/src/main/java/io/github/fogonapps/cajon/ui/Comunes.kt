@@ -440,6 +440,15 @@ fun Enlaces(vm: io.github.fogonapps.cajon.CajonViewModel, fuente: String) {
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
     androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        lista.forEach { e -> Pildora(e.nombre, Iconos.Enlace) { runCatching { uri.openUri(e.url) } } }
+        val oficial = stringResource(R.string.enlace_sitio_oficial)
+        val wiki = io.github.fogonapps.cajon.datos.Enlace.WIKI
+        lista.forEach { e ->
+            val nombre = when {
+                e.nombre == io.github.fogonapps.cajon.datos.Enlace.OFICIAL -> oficial
+                e.nombre.startsWith(wiki) -> stringResource(R.string.enlace_wiki, e.nombre.removePrefix(wiki))
+                else -> e.nombre
+            }
+            Pildora(nombre, Iconos.Enlace) { runCatching { uri.openUri(e.url) } }
+        }
     }
 }

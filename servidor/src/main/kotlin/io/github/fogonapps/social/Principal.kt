@@ -95,7 +95,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.46"
+const val VERSION = "0.48"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -111,6 +111,7 @@ var correoListo = false
 data class ErrorConFecha(val error: String, val desde: Long)
 
 fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), canciones: Canciones = Canciones(), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY")),
+    igdb: Igdb = Igdb(System.getenv("IGDB_CLIENT_ID"), System.getenv("IGDB_CLIENT_SECRET")),
     portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas")),
     pagos: PagosWompi = PagosWompi(social.b, delEquipo = { social.equipo.rol(it).isNotEmpty() })) {
     runCatching { social.quitarPortadasAjenas() }.onFailure { environment.log.error("No se pudieron quitar las portadas ajenas") }
@@ -140,6 +141,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         while (isActive) {
             kotlinx.coroutines.delay(60_000)
             limiteContadores.limpiar()
+            // Lo guardado de TMDB e IGDB (con el texto de las búsquedas) no se queda más de 6 horas.
+            cine.barrer()
+            igdb.barrer()
         }
     }
     val imagenes = Limite(900)
@@ -147,6 +151,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val cuentasNuevas = LimiteDiario(10)
     val pedidosCine = Limite(240)
     val pedidosLastfm = Limite(60)
+    // IGDB deja 4 pedidos por segundo para todo el servidor: 60 por minuto por IP para que pocas no lo agoten.
+    val pedidosJuegos = Limite(60)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
             val ruta = call.request.local.uri.substringBefore('?')
@@ -254,6 +260,25 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 val ruta = call.parameters.getAll("ruta").orEmpty().joinToString("/")
                 val params = call.request.queryParameters.entries().associate { it.key to it.value.firstOrNull().orEmpty() }
                 val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { cine.pedir(ruta, params) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
+            }
+            // IGDB por el servidor (la clave solo vive aquí): tres pedidos armados aquí, ver Igdb.
+            get("/igdb/buscar") {
+                if (!pedidosJuegos.pasa("igdb:${call.ipReal()}")) throw Problema(429, "despacio")
+                val q = call.request.queryParameters["q"]
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { igdb.buscar(q) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
+            }
+            get("/igdb/juegos/{id}") {
+                if (!pedidosJuegos.pasa("igdb:${call.ipReal()}")) throw Problema(429, "despacio")
+                val id = call.parameters["id"]
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { igdb.juego(id) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
+            }
+            get("/igdb/juegos") {
+                if (!pedidosJuegos.pasa("igdb:${call.ipReal()}")) throw Problema(429, "despacio")
+                val p = call.request.queryParameters
+                val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { igdb.juegos(p["ids"], p["slugs"]) }
                 call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
             // La ruta /acceso/correo (decía si un correo tenía cuenta) ya no existe: ninguna app vigente la
