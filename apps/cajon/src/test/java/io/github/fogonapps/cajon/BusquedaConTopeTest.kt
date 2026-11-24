@@ -72,4 +72,34 @@ class BusquedaConTopeTest {
         assertTrue(estado.value.cargando.isEmpty())
         assertEquals(8, estado.value.errores.size)
     }
+
+    /**
+     * Sin red, en «Películas» (o cualquier pestaña de una sola fuente): la consulta falla, queda el aviso «Sin internet» y
+     * cambia [Busqueda.llegadas], que es lo que hace volver la lista arriba. Si no cambiara, la lista seguía anclada a lo
+     * del momento y el aviso quedaba arriba, fuera de la vista.
+     */
+    @Test fun sinRedEnUnaPestanaDeUnTipoElAvisoHaceVolverLaListaArriba() {
+        for (fuente in listOf("tmdb", "libros", "juegos", "personas")) {
+            val estado = MutableStateFlow(Busqueda(texto = "joker", seccion = Secciones.PELICULAS))
+            val antes = estado.value.llegadas
+            lanzar(estado, { e ->
+                fuenteDeBusqueda(e, fuente) {
+                    runCatching<List<Any>> { throw java.net.UnknownHostException("api.themoviedb.org") }
+                        .avisarFallo { aviso -> e.value = e.value.copy(errores = e.value.errores + ("${fuente}_obras" to aviso)) }
+                    throw java.net.UnknownHostException("directores")
+                }
+            })
+            assertTrue(estado.value.cargando.isEmpty())
+            assertEquals(listOf(R.string.buscar_sin_red), estado.value.avisos)
+            assertTrue("$fuente: la lista no vuelve arriba con el aviso", estado.value.llegadas != antes)
+        }
+    }
+
+    /** Un aviso distinto (sin red → no se pudo buscar) también cuenta como algo nuevo arriba. */
+    @Test fun cambiarDeAvisoTambienEsUnaLlegada() {
+        val sinRed = Busqueda(texto = "dune", errores = mapOf("tmdb" to R.string.buscar_sin_red))
+        val fallo = sinRed.copy(errores = mapOf("tmdb" to R.string.buscar_fallo))
+        assertTrue(sinRed.llegadas != fallo.llegadas)
+        assertEquals(Busqueda(texto = "dune").llegadas, Busqueda(texto = "dune", seccion = Secciones.SERIES).llegadas)
+    }
 }

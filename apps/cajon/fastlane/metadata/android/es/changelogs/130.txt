@@ -1,8 +1,0 @@
-Juegos completos:
-• Portada, fondo e imágenes del juego.
-• Nota de la crítica y nota del público.
-• Resumen en tu idioma.
-• Enlaces a tiendas y sitios del juego.
-• Los juegos que ya tenías se completan solos.
-• Crédito a IGDB, de donde salen los datos.
-La pestaña Juegos ahora viene en la barra; si no la quieres, quítala en Ajustes.

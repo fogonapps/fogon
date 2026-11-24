@@ -124,9 +124,10 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         }
 
         // Cada fuente llega a su tiempo y sus grupos van arriba de otros: mientras la persona no haya bajado por
-        // su cuenta, la lista vuelve arriba para que lo nuevo no quede escondido.
+        // su cuenta, la lista vuelve arriba para que lo nuevo no quede escondido. También con un aviso: si no, la
+        // lista se queda anclada a lo del momento y el aviso («Sin internet», «Volver a intentar») queda arriba, fuera de la vista.
         val lista = androidx.compose.foundation.lazy.rememberLazyListState()
-        val llegadas = (b.artistas.size + b.autores.size + b.directores.size + b.personas.size + b.canciones.size) * 1000 + b.obras.values.sumOf { it.size }
+        val llegadas = b.llegadas
         val titulos = mapOf("artistas" to nombreTipo(CajonViewModel.TIPO_ARTISTA), "directores" to nombreTipo(Personas.DIRECTOR), "autores" to nombreTipo(Personas.AUTOR))
         // (Se mira si la persona arrastró la lista, no en qué fila está: lo del momento va debajo de los resultados y, sin
         // esto, la lista se quedaba pegada a él y los resultados quedaban arriba, fuera de la vista.)

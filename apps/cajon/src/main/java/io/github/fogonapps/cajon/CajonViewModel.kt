@@ -313,6 +313,13 @@ data class Busqueda(
 ) {
     /** Un aviso por mensaje, aunque fallen varias fuentes por la misma causa. */
     val avisos: List<Int> get() = resumirAvisos(errores.values)
+    /**
+     * Cambia cada vez que llega algo que va arriba en la lista (resultados o un aviso): el buscador vuelve arriba con
+     * cada cambio, para que lo nuevo no quede escondido sobre lo que ya estaba a la vista.
+     */
+    val llegadas: List<Any> get() = listOf(
+        (artistas.size + autores.size + directores.size + personas.size + canciones.size) * 1000 + obras.values.sumOf { it.size }, avisos,
+    )
     /** Un fallo impide concluir que la obra no existe, aunque otras consultas terminen vacías. */
     val mostrarNoEncontrado: Boolean get() = texto.trim().length >= 2 && cargando.isEmpty() && errores.isEmpty() &&
         personas.isEmpty() && artistas.isEmpty() && autores.isEmpty() && directores.isEmpty() && obras.values.all { it.isEmpty() }

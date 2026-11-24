@@ -1,8 +1,0 @@
-Complete games:
-• Cover, background and images for each game.
-• Critic score and audience score.
-• Summary in your language.
-• Links to stores and game sites.
-• Games you already had fill in on their own.
-• Credit to IGDB, where the data comes from.
-The Games tab now comes in the bottom bar; if you don't want it, remove it in Settings.
