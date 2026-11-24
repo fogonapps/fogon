@@ -275,8 +275,15 @@ class LogicaTest {
         assertEquals("870 mil", Formato.compacto(870_400))
         assertEquals("2,2 M", Formato.compacto(2_220_400))
         assertEquals("15 M", Formato.compacto(15_000_000))
+        // Montos enormes: sube de escala en vez de mostrar "1000000".
+        assertEquals("1 M", Formato.compacto(999_600))
+        assertEquals("1 B", Formato.compacto(999_999_999_999))
+        assertEquals("1,5 mil M", Formato.compacto(1_500_000_000))
+        assertEquals("$ 1 M", Formato.pesosCompacto(1_000_000))
         Formato.idioma = "en"
         assertEquals("2.2M", Formato.compacto(2_220_400))
+        assertEquals("1T", Formato.compacto(999_999_999_999))
+        assertEquals("$1.5B", Formato.pesosCompacto(1_500_000_000))
         Formato.idioma = "es"
     }
 

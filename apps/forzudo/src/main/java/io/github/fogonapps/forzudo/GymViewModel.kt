@@ -51,7 +51,8 @@ sealed interface Pantalla {
     data object Vivo : Pantalla
     data class Resumen(val r: ResumenEntreno) : Pantalla
     data class Zoom(val id: String, val i: Int) : Pantalla
-    data object Perfil : Pantalla
+    /** [pestana]: la que se abre (0 entrenos, 1 rangos, donde está el peso). */
+    data class Perfil(val pestana: Int = 0) : Pantalla
     data object Cuenta : Pantalla
     data class Seguridad(val ajuste: io.github.fogonapps.social.ui.AjusteSocial) : Pantalla
     data class Gente(val usuario: String, val seguidores: Boolean) : Pantalla
@@ -201,7 +202,11 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun cambiarIdioma(codigo: String) {
         Idioma.elegir(getApplication(), codigo)
         gymApp.aplicarIdioma()
+        _estado.value?.let { e -> deFabrica(e).takeIf { it !== e }?.let { nuevo -> cambiar { nuevo } } }
     }
+
+    /** Los nombres de fábrica de las rutinas (también de un respaldo viejo) en el idioma de ahora. */
+    private fun deFabrica(e: Estado): Estado = L.traducirRutinasDeFabrica(e, gymApp.bibliotecaDelOtroIdioma())
 
     fun terminarTutorial() { prefsUi.edit().putBoolean("tutorial_visto", true).apply(); _tutorial.value = false }
 
@@ -231,13 +236,13 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     }
     init {
         viewModelScope.launch {
-            _estado.value = L.normalizar(almacen.data.first())
+            _estado.value = deFabrica(L.normalizar(almacen.data.first()))
             copia.sincronizar()
             gymApp.confirmarCuaderno()
             WidgetRacha.actualizar(getApplication())
             // Si otra app de Fogón restauró los datos (respaldo de todo Fogón), se toman.
             almacen.data.drop(1).collect { d ->
-                if (d != ultimoGuardado && d != _estado.value) _estado.value = L.normalizar(d).copy(active = _estado.value?.active)
+                if (d != ultimoGuardado && d != _estado.value) _estado.value = deFabrica(L.normalizar(d)).copy(active = _estado.value?.active)
             }
         }
     }
@@ -621,7 +626,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun importar(d: Estado) {
         val activo = _estado.value?.active
         val nombre = _estado.value?.nombre
-        cambiar { L.normalizar(d).copy(active = activo, nombre = d.nombre ?: nombre) }
+        cambiar { deFabrica(L.normalizar(d)).copy(active = activo, nombre = d.nombre ?: nombre) }
         avisar(tx(R.string.aviso_importado))
     }
 

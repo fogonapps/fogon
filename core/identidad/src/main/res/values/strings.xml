@@ -18,7 +18,7 @@
   <string name="fogon_man_t3">What we promise</string>
   <string name="fogon_man_cierre">There’s always enough for one more.</string>
   <string name="fogon_version">version %1$s</string>
-  <string name="fogon_hecha">Made at the Fogón</string>
+  <string name="fogon_hecha">Made at Fogón</string>
   <string name="fogon_sin_anuncios">No subscriptions · No ads · We don\'t sell your data</string>
   <string name="fogon_leer_manifiesto">Read the manifesto</string>
   <string name="fogon_licencias">Licenses</string>
@@ -127,4 +127,18 @@
   <string name="fogon_apoyo_no_volver">Don’t show again</string>
   <string name="fogon_apoyo_acerca">Support Fogón</string>
   <string name="fogon_apoyo_recordar">Remind me once a month</string>
+  <string name="fogon_color_negro">black</string>
+  <string name="fogon_color_blanco">white</string>
+  <string name="fogon_color_gris">gray</string>
+  <string name="fogon_color_rojo">red</string>
+  <string name="fogon_color_naranja">orange</string>
+  <string name="fogon_color_amarillo">yellow</string>
+  <string name="fogon_color_verde">green</string>
+  <string name="fogon_color_turquesa">turquoise</string>
+  <string name="fogon_color_azul">blue</string>
+  <string name="fogon_color_morado">purple</string>
+  <string name="fogon_color_rosado">pink</string>
+  <string name="fogon_color_muy_oscuro">very dark %1$s</string>
+  <string name="fogon_color_oscuro">dark %1$s</string>
+  <string name="fogon_color_claro">light %1$s</string>
 </resources>

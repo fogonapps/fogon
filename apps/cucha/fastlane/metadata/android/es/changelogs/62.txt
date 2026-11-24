@@ -1,0 +1,1 @@
+Pulido: lo que trae la app (comidas, recetas de ejemplo) sale en el idioma que elijas; «1 porción» en singular; el perfil revisa edad, altura y peso al salir del campo; un respaldo dañado lo dice claro; el anillo de Hoy cabe con cifras grandes y letra grande; la barra ya no tapa nada en horizontal; colores con nombre para el lector de pantalla; fecha en tu formato.

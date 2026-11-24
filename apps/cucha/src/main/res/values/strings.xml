@@ -203,7 +203,7 @@
   <string name="aviso_importado">Done, the backup was restored.</string>
   <string name="aviso_respaldo_guardado">Backup saved.</string>
   <string name="aviso_no_exportado">Couldn’t save the file.</string>
-  <string name="aviso_no_es_respaldo">That file isn’t a La Cucha backup.</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a valid La Cucha backup: it may be damaged or incomplete.</string>
   <string name="escanear_pista">Point at the package’s barcode</string>
   <string name="aviso_salud_titulo">Health notice</string>
   <string name="aviso_salud">La Cucha is a food diary, not medical or nutrition advice. Goals are general estimates that don’t know your health, and food values are approximate. If you have an illness, are pregnant, or have or had an eating disorder, talk to a health professional. You use the app at your own risk.</string>
@@ -268,7 +268,7 @@
     <string name="perfil_sin_recetas">Your own recipes will appear here.</string>
     <string name="perfil_sin_comidas">The meals you log will appear here.</string>
     <string name="perfil_crear_receta">Create recipe</string>
-    <string name="perfil_dias">days logged</string>
+    <plurals name="perfil_dias"><item quantity="one">day logged</item><item quantity="other">days logged</item></plurals>
     <string name="perfil_platos">dishes logged</string>
     <string name="perfil_editar">Edit profile</string>
     <string name="perfil_bio">About you</string>
@@ -296,7 +296,7 @@
     <string name="cuenta_tu_cuenta_pista">Fogón Social: profile, people and what you share</string>
     <string name="cuenta_error">The operation couldn’t be completed. Check your connection and try again.</string>
     <string name="cuenta_operacion_lista">Done.</string>
-    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
+    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use “Profiles on this phone”.</string>
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
     <string name="cuenta_local">Your diary, goals, weight, recipes and products stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
@@ -414,4 +414,6 @@
     <string name="red_guardar_lugar">Save</string>
     <string name="historia_buscar_app">Search for a song, recipe or food</string>
     <string name="cuenta_muchas_cuentas">Too many accounts were created from this connection today. Try again tomorrow or from another network.</string>
+    <string name="fuera_de_rango">Between %1$s and %2$s</string>
+  <plurals name="porciones_cifra"><item quantity="one">%1$s serving</item><item quantity="other">%1$s servings</item></plurals>
 </resources>

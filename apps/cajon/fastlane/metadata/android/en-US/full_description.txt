@@ -16,7 +16,7 @@
 <li><b>Your own lists</b>, ranked if you like, and your top four on your profile, with your favorite game.</li>
 <li><b>Your stats:</b> what you finished this year, hours of film and series, pages, tracks, games, your ratings, months, genres and creators. Plus yearly challenges.</li>
 <li><b>Share</b> a review or a list as an image.</li>
-<li><b>Bring what you had:</b> import from Letterboxd (ZIP or CSV), Netflix (viewing activity CSV), Trakt (ZIP or JSON), TV Time (ZIP or CSV), Goodreads and The StoryGraph (CSV). Nothing gets duplicated.</li>
+<li><b>Bring what you had:</b> import from Letterboxd (ZIP or CSV), Netflix (viewing activity CSV), Trakt (ZIP or JSON), TV Time (ZIP or CSV), Goodreads and The StoryGraph (CSV), plus your Steam library with your playtime (from your profile link, if your game details are public). Nothing gets duplicated.</li>
 <li><b>Encrypted copy:</b> if you use a Fogón account, you can keep an encrypted copy of your collection.</li>
 <li><b>In Spanish and English.</b></li>
 </ul>

@@ -326,7 +326,7 @@
   <string name="tut_saldos">What are you starting with?</string>
   <string name="tut_saldos_texto">Enter what you have today. Leave empty what you don’t use; you can add more accounts later.</string>
   <string name="tut_sistema">How do you want to budget?</string>
-  <string name="tut_sistema_texto">You can change it any time in Settings.</string>
+  <string name="tut_sistema_texto">You can change it any time.</string>
   <string name="tut_tengo_respaldo">I have a backup</string>
   <string name="tut_tengo_tarjeta">I have a credit card</string>
   <string name="tut_tu_nombre">What should I call you? (optional)</string>
@@ -478,7 +478,7 @@
   <string name="ajustes">Settings</string>
   <string name="editar_perfil">Edit profile</string>
   <string name="todo_fogon">All Fogón in one file</string>
-  <string name="perfil_dias">days with entries</string>
+  <plurals name="perfil_dias"><item quantity="one">day with entries</item><item quantity="other">days with entries</item></plurals>
   <string name="perfil_cumplidas">goals reached</string>
   <string name="perfil_logros">Milestones</string>
   <string name="perfil_metas_vacias">Your goals will appear here.</string>
@@ -558,7 +558,7 @@
     <string name="ocultar_montos">Hide amounts</string>
     <string name="mostrar_montos">Show amounts</string>
     <string name="tut_categorias">Your categories</string>
-    <string name="tut_categorias_texto">Choose the ones you’ll use. You can always change them later in Settings.</string>
+    <string name="tut_categorias_texto">Choose the ones you’ll use. You can always change them later.</string>
     <string name="tut_gastos">Expenses</string>
     <string name="tut_ingresos">Income</string>
     <plurals name="varios_guardar"><item quantity="one">Save %d entry</item><item quantity="other">Save %d entries</item></plurals>
@@ -569,7 +569,7 @@
     <string name="cuenta_tu_cuenta_pista">Fogón Social: profile, people and your achievements</string>
     <string name="cuenta_error">The operation couldn’t be completed. Check your connection and try again.</string>
     <string name="cuenta_operacion_lista">Done.</string>
-    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use Switch account.</string>
+    <string name="cuenta_otro_perfil">This account needs another profile on this phone. Use “Profiles on this phone”.</string>
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
     <string name="cuenta_local">Your accounts, transactions, envelopes, goals and balances stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
@@ -642,4 +642,15 @@
   <string name="ajustar">Adjust</string>
   <string name="ajustar_saldo">Adjust balance</string>
   <string name="ajuste_saldo">Balance adjustment</string>
+  <string name="meta_fecha_pasada">That date has already passed: pick today or a later date.</string>
+  <string name="icono_meta_moneda">Coin</string>
+  <string name="icono_meta_viaje">Trip</string>
+  <string name="icono_meta_casa">Home</string>
+  <string name="icono_meta_estudio">Education</string>
+  <string name="icono_meta_transporte">Transport</string>
+  <string name="icono_meta_celular">Phone</string>
+  <string name="icono_meta_salud">Health</string>
+  <string name="icono_meta_prima">Bonus</string>
+  <string name="icono_meta_extra">Extra income</string>
+  <string name="icono_meta_compras">Shopping</string>
 </resources>

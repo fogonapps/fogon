@@ -66,6 +66,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -152,7 +153,15 @@ fun Barra(progreso: Float, color: Color, modifier: Modifier = Modifier) {
 
 @Composable
 fun CampoTexto(valor: String, onCambio: (String) -> Unit, etiqueta: String, modifier: Modifier = Modifier, max: Int = 40) {
-    OutlinedTextField(valor, { onCambio(it.take(max)) }, modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true)
+    // Al llegar al tope se dice (también al lector de pantalla), para que no parezca que el teclado dejó de funcionar.
+    OutlinedTextField(valor, { onCambio(io.github.fogonapps.cajon.datos.Logica.recortarSinPartir(it, max)) }, modifier.fillMaxWidth(), label = { Text(etiqueta) }, singleLine = true,
+        supportingText = if (valor.length >= max) ({ AvisoTope(max) }) else null)
+}
+
+/** «Máximo N caracteres», anunciado por el lector de pantalla cuando aparece. */
+@Composable
+fun AvisoTope(max: Int) {
+    Text(stringResource(R.string.campo_tope, max), Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite })
 }
 
 @Composable
@@ -390,6 +399,7 @@ fun nombreEstado(estado: String, tipo: String?): String = stringResource(when (e
     "en_curso" -> when (tipo) { "libro" -> R.string.estado_leyendo; "album" -> R.string.estado_escuchando; "juego" -> R.string.estado_jugando
         null -> R.string.estado_en_curso; else -> R.string.estado_viendo }
     "terminado" -> when (tipo) { "libro" -> R.string.estado_leido; "album" -> R.string.estado_escuchado; null, "juego" -> R.string.estado_terminado; else -> R.string.estado_visto }
+    "" -> R.string.estado_sin
     else -> R.string.estado_abandonado
 })
 

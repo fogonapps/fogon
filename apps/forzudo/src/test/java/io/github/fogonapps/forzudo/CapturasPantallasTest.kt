@@ -81,7 +81,7 @@ class CapturasPantallasTest {
             abrir(Pantalla.EditarPerfil)
             regla.guardarCaptura("editar-perfil", variante)
         }
-        abrir(Pantalla.Perfil)
+        abrir(Pantalla.Perfil())
         regla.waitUntil(5_000) { regla.onAllNodesWithText("Marina").fetchSemanticsNodes().isNotEmpty() }
         regla.guardarCaptura("perfil-propio", variante)
         abrir(Pantalla.Social("perfil", usuario = "ines"))

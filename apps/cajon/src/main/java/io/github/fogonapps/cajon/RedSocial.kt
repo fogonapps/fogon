@@ -1106,10 +1106,11 @@ class RedSocial(
             val reto = e.ajustes.retos.filterValues { it > 0 }.takeIf { it.isNotEmpty() }?.let { r ->
                 buildJsonObject { put("anio", anio); r.forEach { (t, meta) -> put(t, JsonArray(listOf(JsonPrimitive(c.porTipo[t] ?: 0), JsonPrimitive(meta)))) } }
             }
-            val viendo = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO }
+            // Lo que entró en silencio de una importación (Steam) no llena el perfil hasta que la persona lo toque.
+            val viendo = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.EN_CURSO && !it.silenciosa }
                 .sortedByDescending { maxOf(it.empezada ?: "", L.ultimaVez(it) ?: "") }.take(8)
                 .map { o -> conDatos(o, mapOf("avance" to JsonPrimitive(avanceDe(o)))) }
-            val porVer = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.QUIERO && it.tipo != io.github.fogonapps.cajon.datos.Tipos.ALBUM }
+            val porVer = e.vivas.filter { it.estado == io.github.fogonapps.cajon.datos.Estados.QUIERO && it.tipo != io.github.fogonapps.cajon.datos.Tipos.ALBUM && !it.silenciosa }
                 .sortedByDescending { it.agregada }.take(30)
                 .map { o -> conDatos(o, o.minutos?.let { mapOf("minutos" to JsonPrimitive(it)) } ?: emptyMap()) }
             val insignias = io.github.fogonapps.cajon.datos.Insignias.de(e, anio).filter { it.ganada }.map { JsonPrimitive(it.id) }

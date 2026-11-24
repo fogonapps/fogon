@@ -31,11 +31,16 @@ fun PestanasFeedSocial(pestana: Int, usuario: String?, cambiarPestana: (Int) -> 
     }
 }
 @Composable
-fun <M> ListaFeedSocial(lista: List<Pair<PublicacionSocial, M>>?, pestana: Int, mas: () -> Unit, pie: String, tarjeta: @Composable (PublicacionSocial, M) -> Unit) {
+fun <M> ListaFeedSocial(
+    lista: List<Pair<PublicacionSocial, M>>?, pestana: Int, mas: () -> Unit, pie: String,
+    /** Lo que dice el feed vacío; el de El Cajón habla de ver, leer, escuchar y jugar, las demás apps usan uno general. */
+    vacio: Int = R.string.social_red_feed_vacio,
+    tarjeta: @Composable (PublicacionSocial, M) -> Unit,
+) {
     val f = FogonTema.actual
     when {
         lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        lista.isEmpty() -> Pista(stringResource(if (pestana == 0) R.string.social_red_feed_vacio else R.string.social_red_explorar_vacio), Modifier.padding(16.dp))
+        lista.isEmpty() -> Pista(stringResource(if (pestana == 0) vacio else R.string.social_red_explorar_vacio), Modifier.padding(16.dp))
         else -> {
             lista.forEach { (p, motivo) -> tarjeta(p, motivo) }
             if (pestana == 0 && lista.size >= 40) BotonSecundario(stringResource(R.string.social_red_mas), { mas() }, Modifier.fillMaxWidth().padding(16.dp))

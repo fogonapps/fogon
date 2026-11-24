@@ -241,7 +241,7 @@
     <string name="social_cancelar">Cancelar</string>
     <string name="social_perfiles_activo">Activo</string>
     <string name="social_perfiles_anadir">Añadir cuenta</string>
-    <string name="social_perfiles_cambiar">Cambiar de cuenta</string>
+    <string name="social_perfiles_cambiar">Perfiles en este teléfono</string>
     <string name="social_perfiles_confirmar">Es el perfil que estás usando: se cerrará su sesión y se borrarán sus datos de este teléfono. Su cuenta de la red seguirá existiendo. Puedes descargar antes la copia JSON.</string>
     <string name="social_perfiles_copia">Descargar copia JSON</string>
     <string name="social_perfiles_local">Perfil local</string>
@@ -256,7 +256,7 @@
     <string name="social_red_conservar_pregunta">Tu cuenta se borrará el %1$s. ¿Quieres conservarla?</string>
     <string name="social_red_explorar">Explorar</string>
     <string name="social_red_explorar_vacio">Todavía no hay nada público para explorar.</string>
-    <string name="social_red_feed_vacio">Aquí sale lo que vean, lean y escuchen las personas que sigues. Busca a tu gente o explora.</string>
+    <string name="social_red_feed_vacio">Aquí sale lo que vean, lean, escuchen y jueguen las personas que sigues. Busca a tu gente o explora.</string>
     <string name="social_red_invita_texto">Crea tu cuenta en la red para seguir a otras personas, ver lo que comparten y compartir lo tuyo. La cuenta es opcional.</string>
     <string name="social_red_mas">Ver más</string>
     <string name="social_red_por_borrar">Cuenta pendiente de borrado</string>
@@ -581,7 +581,7 @@
     <string name="cancion_silenciar">Silenciar la música de los perfiles</string>
     <string name="cancion_activar">Activar la música de los perfiles</string>
     <string name="social_chispas_n">%1$s chispas</string>
-    <string name="social_chispas_explica">Gratis: bienvenida, reportes confirmados, reseñas útiles y pronto la ruta de temporada.</string>
+    <string name="social_chispas_explica">Gratis: bienvenida, reportes confirmados y reseñas útiles.</string>
     <string name="social_tienda_fondos">fondos</string>
     <string name="social_tienda_marcos">marcos</string>
     <string name="social_equipar_fondos">Fondos</string>
@@ -894,4 +894,5 @@
     <string name="contador_tienda_paquete_elegido">Elegiste un paquete de chispas</string>
     <string name="contador_tienda_tema_comprado">Compraste un tema, marco o portada</string>
     <string name="contador_widget_agregado">Agregaste el widget</string>
+    <string name="social_red_feed_vacio_general">Aquí sale lo que compartan las personas que sigues. Busca a tu gente o explora.</string>
 </resources>

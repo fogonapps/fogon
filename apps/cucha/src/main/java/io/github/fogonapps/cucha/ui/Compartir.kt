@@ -294,7 +294,7 @@ fun CompartirPlato(vm: CuchaViewModel, e: Estado, fecha: String?, idAnotado: Str
     val clave = clavePublicacion(TIPO_PLATO, origen)
     val anterior = remember(clave) { vm.red.publicada(clave) }
     val d = anterior?.datos
-    var nombre by rememberSaveable(clave) { mutableStateOf(d?.get("nombre")?.jsonPrimitive?.content ?: anotado?.nombre.orEmpty()) }
+    var nombre by rememberSaveable(clave) { mutableStateOf(d?.get("nombre")?.jsonPrimitive?.content ?: anotado?.let { vm.nombreDe(e, it) }.orEmpty()) }
     var nota by rememberSaveable(clave) { mutableStateOf(d?.get("nota")?.jsonPrimitive?.intOrNull) }
     var texto by rememberSaveable(clave) { mutableStateOf(d?.get("texto")?.jsonPrimitive?.content.orEmpty()) }
     var seguidores by rememberSaveable(clave) { mutableStateOf(anterior?.visibilidad == "amigos") }

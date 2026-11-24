@@ -35,6 +35,8 @@ open class RedApp(
     val foto = MutableStateFlow("")
     val identidad = MutableStateFlow<PerfilSocial?>(null)
     private val carpeta = perfilesTelefono.directorio(almacen.perfil)
+    /** El chat cifrado de este perfil, en este teléfono (y a su lado, sus borradores). */
+    private val archivoChats = java.io.File(carpeta, "chats.json")
     private val cache = java.io.File(carpeta, "identidad-social.json")
     private val cacheFoto = java.io.File(carpeta, "foto-social")
     override val archivoHistorias = java.io.File(carpeta, "historias.json")
@@ -75,6 +77,8 @@ open class RedApp(
         copiaLista.value = false; copiaBloqueada.value = false
         _usuario.value = null; _cuenta.value = null; identidad.value = null; foto.value = ""; portadaImagen.value = ""; revision = null
         listOf(cache, cacheFoto, cachePortada, archivoHistorias).forEach { it.delete() }; borrarFeedGuardado()
+        // Los borradores del chat se van con la sesión, aunque el chat no se haya abierto en esta app.
+        BorradoresChat.borrarDe(archivoChats)
         _historias.value = emptyList(); _notasGente.value = emptyList()
         _feed.value = null; _explorar.value = null; _perfiles.value = emptyMap(); _vistas.value = emptyMap()
         _comentarios.value = emptyMap(); _guardados.value = null; _avisos.value = null; _casos.value = null
@@ -319,13 +323,16 @@ open class RedApp(
     /** El chat cifrado de este perfil (el mismo de El Cajón: mismas llaves de la cuenta, compartidas cifradas). */
     private var chatCreado: ChatSocial? = null
     fun chat(contexto: android.content.Context, decir: (String) -> Unit): ChatSocial = chatCreado ?: ChatSocial(contexto.applicationContext, scope,
-        java.io.File(carpeta, "chats.json"), object : AlmacenChat {
+        archivoChats, object : AlmacenChat {
             override var chatLlaves: String?
                 get() = almacen.chatLlaves
                 set(v) { almacen.chatLlaves = v }
             override val llaveCuenta: String? get() = almacen.llaveCopia
             override val permisoRed = MutableStateFlow(true)
-        }, ::cliente, usuario, decir = decir).also { chatCreado = it }
+        }, ::cliente, usuario, decir = decir).also { c ->
+            chatCreado = c
+            scope.launch { bloqueadas.collect { c.olvidarSinEntregar(it) } }
+        }
     /** La canción del perfil de esta app (con su avance de Apple): se cambia sola, sin tocar las demás partes. */
     fun ponerCancionPerfil(c: CancionSocial?) = lanzar {
         val datos = c?.let { kotlinx.serialization.json.buildJsonObject {

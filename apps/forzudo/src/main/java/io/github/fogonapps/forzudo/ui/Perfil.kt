@@ -22,7 +22,7 @@ import io.github.fogonapps.forzudo.datos.medallas
 import io.github.fogonapps.social.ClienteSocial
 
 @Composable
-fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
+fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit, pestanaInicial: Int = 0) {
     val usuario by vm.red.usuario.collectAsState()
     val remoto by vm.red.identidad.collectAsState()
     val fotoRemota by vm.red.foto.collectAsState()
@@ -31,7 +31,7 @@ fun PerfilLocal(vm: GymViewModel, e: Estado, exportar: () -> Unit) {
     LaunchedEffect(usuario) { if (usuario != null) vm.red.cargarIdentidad() }
     val identidad = if (usuario == null) e else e.copy(nombre = remoto?.persona?.nombre.orEmpty(),
         bio = remoto?.bio.orEmpty(), foto = fotoRemota, portada = portadaRemota)
-    var elegida by rememberSaveable { mutableIntStateOf(0) }
+    var elegida by rememberSaveable { mutableIntStateOf(pestanaInicial) }
     val secciones = listOf(
         SeccionPerfil(0, Iconos.Pesa, stringResource(R.string.titulo_entrenos)) {
             if (usuario != null) {

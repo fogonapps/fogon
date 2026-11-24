@@ -222,10 +222,11 @@ private fun FilaMuestras(titulo: String, actual: Color, lista: List<Color>, onEl
             val enLista = actual in lista
             (if (enLista) lista else listOf(actual) + lista).forEach { c ->
                 val elegido = c == actual
+                val nombre = nombreColor(c)
                 Box(
                     Modifier.size(40.dp).clip(CircleShape).background(c).border(if (elegido) 3.dp else 1.dp, if (elegido) f.texto else f.linea, CircleShape)
                         .clickable { onElegir(c) }
-                        .semantics { contentDescription = hex(c) + if (elegido) ", $elegidoTexto" else ""; selected = elegido; role = Role.RadioButton },
+                        .semantics { contentDescription = nombre + if (elegido) ", $elegidoTexto" else ""; selected = elegido; role = Role.RadioButton },
                 )
             }
             val otro = stringResource(R.string.fogon_ap_otro_color)
@@ -308,6 +309,66 @@ fun Interruptor(titulo: String, pista: String, valor: Boolean, habilitado: Boole
 
 fun hex(c: Color): String = "#%06X".format(c.toArgb() and 0xFFFFFF)
 
+/** La familia de un color, para nombrarlo al lector de pantalla en vez de leer su código. */
+enum class FamiliaColor(val texto: Int) {
+    NEGRO(R.string.fogon_color_negro), BLANCO(R.string.fogon_color_blanco), GRIS(R.string.fogon_color_gris),
+    ROJO(R.string.fogon_color_rojo), NARANJA(R.string.fogon_color_naranja), AMARILLO(R.string.fogon_color_amarillo),
+    VERDE(R.string.fogon_color_verde), TURQUESA(R.string.fogon_color_turquesa), AZUL(R.string.fogon_color_azul),
+    MORADO(R.string.fogon_color_morado), ROSADO(R.string.fogon_color_rosado),
+}
+
+/** Qué tan claro u oscuro es, dentro de su familia. */
+enum class LuzColor { MUY_OSCURO, OSCURO, MEDIO, CLARO }
+
+/** Familia y luz de un color por su tono, saturación y brillo (HSV); sin Android, para probarlo en la JVM. */
+fun describirColor(rgb: Int): Pair<FamiliaColor, LuzColor> {
+    val r = (rgb shr 16 and 0xFF) / 255f; val g = (rgb shr 8 and 0xFF) / 255f; val b = (rgb and 0xFF) / 255f
+    val max = maxOf(r, g, b); val min = minOf(r, g, b); val d = max - min
+    val v = max; val s = if (max == 0f) 0f else d / max
+    val h = when {
+        d == 0f -> 0f
+        max == r -> 60f * (((g - b) / d) % 6f)
+        max == g -> 60f * ((b - r) / d + 2f)
+        else -> 60f * ((r - g) / d + 4f)
+    }.let { if (it < 0f) it + 360f else it }
+    if (v < 0.12f && s < 0.35f) return FamiliaColor.NEGRO to LuzColor.MEDIO
+    if (s < 0.15f) return when {
+        v > 0.88f -> FamiliaColor.BLANCO to LuzColor.MEDIO
+        v < 0.12f -> FamiliaColor.NEGRO to LuzColor.MEDIO
+        else -> FamiliaColor.GRIS to if (v < 0.4f) LuzColor.OSCURO else if (v > 0.7f) LuzColor.CLARO else LuzColor.MEDIO
+    }
+    val familia = when {
+        h < 15f || h >= 345f -> FamiliaColor.ROJO
+        h < 45f -> FamiliaColor.NARANJA
+        h < 70f -> FamiliaColor.AMARILLO
+        h < 165f -> FamiliaColor.VERDE
+        h < 195f -> FamiliaColor.TURQUESA
+        h < 255f -> FamiliaColor.AZUL
+        h < 290f -> FamiliaColor.MORADO
+        else -> FamiliaColor.ROSADO
+    }
+    val luz = when {
+        v < 0.2f -> LuzColor.MUY_OSCURO
+        v < 0.45f -> LuzColor.OSCURO
+        s < 0.4f && v > 0.8f -> LuzColor.CLARO
+        else -> LuzColor.MEDIO
+    }
+    return familia to luz
+}
+
+/** El nombre de un color en el idioma de la app ("Azul oscuro", "Light pink"). */
+@Composable
+fun nombreColor(c: Color): String {
+    val (familia, luz) = describirColor(c.toArgb() and 0xFFFFFF)
+    val base = stringResource(familia.texto)
+    return when (luz) {
+        LuzColor.MUY_OSCURO -> stringResource(R.string.fogon_color_muy_oscuro, base)
+        LuzColor.OSCURO -> stringResource(R.string.fogon_color_oscuro, base)
+        LuzColor.CLARO -> stringResource(R.string.fogon_color_claro, base)
+        LuzColor.MEDIO -> base
+    }.replaceFirstChar { it.uppercase() }
+}
+
 private fun deHex(s: String): Color? = s.trim().removePrefix("#").takeIf { it.length == 6 && it.all { ch -> ch.isDigit() || ch.lowercaseChar() in 'a'..'f' } }
     ?.let { Color(0xFF000000 or it.toLong(16)) }
 
@@ -337,7 +398,7 @@ fun DialogoColor(titulo: String, inicial: Color, base: Color, onListo: (Color?) 
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     (listOf(base) + MUESTRAS).distinct().forEach { c ->
-                        val nombre = hex(c)
+                        val nombre = nombreColor(c)
                         Box(Modifier.size(34.dp).clip(CircleShape).background(c)
                             .border(if (c == actual) 3.dp else 1.dp, if (c == actual) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
                             .clickable { poner(c) }.semantics { contentDescription = nombre; selected = c == actual })

@@ -106,8 +106,10 @@ fun Progreso(vm: CuchaViewModel, e: Estado) {
     else {
         var kg by rememberSaveable { mutableStateOf("") }
         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            CampoNumero(kg, { kg = it }, stringResource(R.string.peso_hoy), Modifier.weight(1f), decimales = true)
-            BotonSecundario(stringResource(R.string.anotar), { numero(kg)?.takeIf { it in 25.0..350.0 }?.let { vm.anotarPeso(it); kg = "" } })
+            // Un peso fuera de rango no se anota: se dice al escribirlo, en vez de descartarlo en silencio.
+            val errorKg = numero(kg)?.takeIf { it !in 25.0..350.0 }?.let { stringResource(R.string.fuera_de_rango, "25", "350") }
+            CampoNumero(kg, { kg = it }, stringResource(R.string.peso_hoy), Modifier.weight(1f), decimales = true, error = errorKg, maximo = 350.0)
+            BotonSecundario(stringResource(R.string.anotar), { numero(kg)?.takeIf { it in 25.0..350.0 }?.let { vm.anotarPeso(it); kg = "" } }, habilitado = numero(kg) != null && errorKg == null)
         }
         Pista(stringResource(R.string.peso_sin_forzudo))
     }

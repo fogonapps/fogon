@@ -69,7 +69,8 @@ fun EscribirResena(vm: CajonViewModel, e: Estado, id: String, elegirObra: Boolea
         }, Modifier.fillMaxWidth()) else Text(o?.titulo.orEmpty(), style = MaterialTheme.typography.titleMedium, color = f.texto)
         if (o != null) PartesResena(vm, o, r) { vm.borradorResena(r.copy(parte = it)) }
         if (r.registro != null) Text(fechaCorta(r.fecha, vm.idioma()), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-        OutlinedTextField(r.texto, { vm.borradorResena(r.copy(texto = it)) }, Modifier.fillMaxWidth(), minLines = 5,
+        // Lo nuevo se recorta a 5000; en rojo solo queda un borrador guardado antes con más (no se puede publicar, ver Resenas.valida).
+        OutlinedTextField(r.texto, { vm.borradorResena(r.copy(texto = io.github.fogonapps.cajon.datos.Logica.recortarSinPartir(it, 5000))) }, Modifier.fillMaxWidth(), minLines = 5,
             label = { Text(stringResource(R.string.resena_pista)) }, isError = r.texto.length > 5000,
             supportingText = { Text(stringResource(R.string.resena_limite, r.texto.length)) })
         ElegirEstrellas(r.nota ?: 0, { n -> vm.borradorResena(r.copy(nota = n.takeIf { it > 0 })) },

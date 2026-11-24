@@ -56,6 +56,8 @@ data class Encontrado(
     val generos: List<String> = emptyList(),
     /** Un juego de Wikidata con su ficha en IGDB: "id:14593" o "slug:hollow-knight" (ver [Igdb.desdeWikidata]). */
     val igdb: String = "",
+    /** Su título en el idioma original (TMDB: original_title / original_name), para reconocer lo buscado en otro idioma. */
+    val original: String = "",
 )
 
 /**
@@ -68,6 +70,11 @@ data class ArtistaEncontrado(
     val fuente: String = "mb:artist:$mbid",
     /** Otros nombres con que lo conoce MusicBrainz ("Los Enanitos Verdes" para "Enanitos Verdes"). */
     val alias: List<String> = emptyList(),
+    /**
+     * Cuánto lo conoce la gente, si la fuente lo dice: en MusicBrainz, la suma de los votos de sus etiquetas de
+     * género (un grupo famoso suma cientos; uno pequeño, casi nada). Null si la fuente no lo trae (escritores, directores).
+     */
+    val etiquetas: Int? = null,
 )
 
 /** Lo que una fuente sabe de una persona (director o escritor): foto, biografía y su dirección, nacimiento y país. */
@@ -106,7 +113,26 @@ internal fun falloDeRespuesta(codigo: Int, ruta: String, cuerpo: () -> String, r
 }
 
 private const val AGENTE = "ElCajon-Fogon/1.0 (fogonapps@gmail.com)"
-private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
+// callTimeout: ninguna consulta pasa de 25 s en total (también la espera del DNS, que no tiene tope propio). Varias a la vez
+// por servidor: en «Todo» van al de Fogón las personas, TMDB (géneros, películas, series, directores) e IGDB al mismo tiempo.
+private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).callTimeout(25, TimeUnit.SECONDS)
+    .dispatcher(okhttp3.Dispatcher().apply { maxRequestsPerHost = 16 }).build()
+
+/**
+ * Hace la llamada sin dejar la corrutina presa de ella: si se cancela (una búsqueda nueva o el tope de 15 s de
+ * [io.github.fogonapps.cajon.buscarEnFuente]), se suelta al instante y la llamada se cancela. Con `execute()` dentro de
+ * `withContext`, la corrutina esperaba a que la llamada terminara sola: con el DNS lento (el del servidor dura 60 s en la
+ * caché), la búsqueda quedaba cargando sin fin, sin resultados y sin aviso.
+ */
+internal suspend fun okhttp3.Call.esperar(): okhttp3.Response = kotlinx.coroutines.suspendCancellableCoroutine { c ->
+    c.invokeOnCancellation { runCatching { cancel() } }
+    enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: okhttp3.Call, e: IOException) { if (c.isActive) c.resumeWith(Result.failure(e)) }
+        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+            c.resume(response) { _, r, _ -> r.close() }
+        }
+    })
+}
 
 /** Los bytes de una imagen (para revisarla antes de usarla, ver [Fotos]). Null si no se pudo bajar. */
 suspend fun bajarImagen(url: String, tope: Int = 4_000_000): ByteArray? = withContext(Dispatchers.IO) {
@@ -128,7 +154,7 @@ internal suspend fun pedirJson(url: HttpUrl, cabeceras: Map<String, String> = em
         if (tmdb && masivo?.sinTmdb == true) throw SinTmdb()
         if (tmdb) masivo?.pausarTmdb()
         try {
-            return http.newCall(req).execute().use { r ->
+            return http.newCall(req).esperar().use { r ->
                 falloDeRespuesta(r.code, url.encodedPath, { r.body.string() }, r.header("Retry-After"))?.let { throw it }
                 if (!r.isSuccessful) throw IllegalStateException("HTTP ${r.code}")
                 JsonCajon.parseToJsonElement(r.body.string()).also { masivo?.respondio() }
@@ -227,12 +253,12 @@ class Tmdb(private val clave: String = "") {
         series.map { it.jsonObject }.filter { tipo != Tipos.ANIME || esAnime(it) }.forEach { o ->
             r += Encontrado(if (esAnime(o)) Tipos.ANIME else Tipos.SERIE, o["name"].texto(), anioDe(o["first_air_date"].texto()), "",
                 imagen(o["poster_path"].texto(), "w342"), "tmdb:tv:${o["id"].entero()}", o["original_name"].texto().takeIf { it != o["name"].texto() } ?: "",
-                publica(o), votos(o))
+                publica(o), votos(o), original = o["original_name"].texto())
         }
         pelis.map { it.jsonObject }.filter { tipo != Tipos.ANIME || esAnime(it) }.forEach { o ->
             r += Encontrado(if (esAnime(o)) Tipos.ANIME else Tipos.PELICULA, o["title"].texto(), anioDe(o["release_date"].texto()), "",
                 imagen(o["poster_path"].texto(), "w342"), "tmdb:movie:${o["id"].entero()}", o["original_title"].texto().takeIf { it != o["title"].texto() } ?: "",
-                publica(o), votos(o))
+                publica(o), votos(o), original = o["original_title"].texto())
         }
         return r
     }
@@ -271,7 +297,7 @@ class Tmdb(private val clave: String = "") {
             Encontrado(if (esAnime(o)) Tipos.ANIME else if (serie) Tipos.SERIE else Tipos.PELICULA, titulo,
                 anioDe((if (serie) o["first_air_date"] else o["release_date"]).texto()), "", imagen(o["poster_path"].texto(), "w342"),
                 "tmdb:$c:${o["id"].entero()}", original.takeIf { it != titulo } ?: "", publica(o), votos(o),
-                generos = o.arr("genre_ids").mapNotNull { it.entero()?.let { id -> nombres[id] } })
+                generos = o.arr("genre_ids").mapNotNull { it.entero()?.let { id -> nombres[id] } }, original = original)
         }
     }
 
@@ -682,7 +708,7 @@ object OpenLibrary {
         val (id, w) = obra(e.fuente.removePrefix("ol:"))
         val desc = sinFormato(w["description"].let { d -> if (d is JsonObject) d["value"].texto() else d.texto() }
             .substringBefore("\n----").substringBefore("([source]").trim())
-        val temas = w.arr("subjects").map { it.texto() }.filter { t -> t.length in 3..30 && !t.contains(":") && RUIDO.none { it in t.lowercase() } }.take(4)
+        val temas = temas(w.arr("subjects").map { it.texto() })
         // La nota de los lectores de Open Library (de 1 a 5); si no se puede traer, la de la búsqueda.
         val notas = runCatching { pedirJson(base.newBuilder().addPathSegments("works/$id/ratings.json").build()).jsonObject["summary"] as? JsonObject }.getOrNull()
         val votos = notas?.get("count").entero() ?: e.votos
@@ -788,9 +814,54 @@ object OpenLibrary {
         return (listOf(portadaDeObra(fuente)) + ediciones(fuente).map { it.portada }).filter { it.isNotBlank() }.distinct()
     }
 
-    /** Temas de Open Library que no son géneros (de bibliotecas, idiomas, formatos). */
-    private val RUIDO = listOf("language", "translation", "accessible", "daisy", "library", "lending", "reading level", "large type",
-        "juvenile", "social conditions", "materials", "in spanish", "long now", "open_syllabus", "staff picks", "protected")
+    /**
+     * Los temas de Open Library que sirven como géneros (hasta 4). Los que la app sabe traducir (`TEMAS_TRADUCIDOS`)
+     * o son un género conocido se quedan siempre, salvo los de [NO_SON_GENERO] («Language»). De los demás se quitan
+     * los de catálogo y de biblioteca («Accessible book», «In library», «Translations into French»: palabras enteras
+     * de [RUIDO], en singular o plural, con «_» como espacio), los que traen una aclaración entre paréntesis en
+     * cualquier idioma («Dune (Imaginary place)», «Macondo (Lugar imaginario)», «Tolkien (Tolkien, J.R.R.)») y los
+     * largos o con códigos («nyt:…»). Una «X literature» que la app no sabe traducir también se quita.
+     *
+     * Primero van los que la app sabe traducir y, entre ellos, sin repetir lo que ya dice otro una vez traducido
+     * («Fiction», «Ficción» y «Novela» son «Novela»; «Science-fiction», «Ciencia ficción»), sin mayúsculas ni tildes,
+     * en español o en inglés. Se deduplica antes de quedarse con cuatro, para no gastar el lugar en repetidos.
+     */
+    fun temas(subjects: List<String>): List<String> {
+        val validos = subjects.map { it.trim() }.filter { t ->
+            val limpio = t.replace('_', ' ')
+            conocido(t) || t.length in 3..30 && !t.contains(":") && !t.replace(ACLARACION_ACEPTADA, "").contains("(") &&
+                RUIDO.none { it.containsMatchIn(limpio) } && !Logica.tituloLimpio(t.replace(ACLARACION_ACEPTADA, "")).endsWith(" literature")
+        }
+        val vistos = mutableSetOf<String>()
+        return validos.sortedBy { !conocido(it) }.filter { t ->
+            val formas = listOf("es", "en").map { Logica.tituloLimpio(Generos.etiquetaLibro(t, it)) } + Logica.tituloLimpio(t)
+            val repetido = formas.any { it in vistos }
+            vistos += formas
+            !repetido
+        }.take(4)
+    }
+
+    private val TEMAS_CONOCIDOS by lazy { TEMAS_TRADUCIDOS.keys.flatMap { listOf(it, Logica.tituloLimpio(it)) }.toSet() }
+
+    /** La única aclaración entre paréntesis que no sobra: dice que es un género literario («Magic realism (Literature)»). */
+    internal val ACLARACION_ACEPTADA = Regex("\\s*\\(literature\\)", RegexOption.IGNORE_CASE)
+
+    /** Temas que la app sabe traducir pero que solos no dicen de qué trata un libro. */
+    private val NO_SON_GENERO = setOf("language")
+
+    private fun conocido(t: String): Boolean {
+        val clave = t.lowercase()
+        if (clave in NO_SON_GENERO) return false
+        val sinAclaracion = t.replace(ACLARACION_ACEPTADA, "")
+        return clave in TEMAS_CONOCIDOS || Logica.tituloLimpio(sinAclaracion) in TEMAS_CONOCIDOS || Generos.libro(t) != null
+    }
+
+    /** Palabras de catálogo; cada una vale también en plural («translation» y «translations»). */
+    private val RUIDO = listOf("language", "translation", "accessible", "daisy", "library", "libraries", "lending", "reading level",
+        "large type", "juvenile", "social conditions", "condiciones sociales", "conditions sociales", "materials", "in spanish", "long now", "open syllabus", "staff pick", "protected",
+        "reviewed", "new york times", "nyt", "bestseller", "best seller", "award", "prize", "readers", "textual",
+        "copy", "copies", "edition", "internet archive", "overdrive", "ebook", "e-book", "audiobook",
+    ).map { Regex("\\b" + Regex.escape(it) + "s?\\b", RegexOption.IGNORE_CASE) }
 
     /** Quita el formato de Markdown que traen algunas descripciones (*cursiva*, **negrita**, [texto](enlace)). */
     fun sinFormato(t: String) = t.replace(Regex("\\[([^\\]]+)]\\([^)]*\\)"), "$1").replace(Regex("(\\*{1,2}|_{1,2})([^*_\\n]+)\\1"), "$2")
@@ -958,7 +1029,8 @@ object MusicBrainz {
         pedir("artist", "query" to texto, "limit" to "20").arr("artists").map { it.jsonObject }.filter { (it["score"].entero() ?: 0) >= 70 }.map { a ->
             ArtistaEncontrado(a["id"].texto(), a["name"].texto(), a["country"].texto(),
                 anioDe((a["life-span"] as? JsonObject)?.get("begin").texto()), a["type"].texto(), a["disambiguation"].texto(),
-                alias = a.arr("aliases").map { it.jsonObject["name"].texto() }.filter { it.isNotBlank() })
+                alias = a.arr("aliases").map { it.jsonObject["name"].texto() }.filter { it.isNotBlank() },
+                etiquetas = a.arr("tags").sumOf { (it as? JsonObject)?.get("count").entero() ?: 0 })
         }
 
     /** Los álbumes y EP de un artista (su discografía), del más nuevo al más viejo. */

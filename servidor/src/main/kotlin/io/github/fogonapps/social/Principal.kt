@@ -95,7 +95,7 @@ private class Limite(private val porMinuto: Int) {
     }
 }
 
-const val VERSION = "0.48"
+const val VERSION = "0.49"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -112,6 +112,7 @@ data class ErrorConFecha(val error: String, val desde: Long)
 
 fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMDB_API_KEY")), canciones: Canciones = Canciones(), lastfm: Lastfm = Lastfm(System.getenv("LASTFM_API_KEY")),
     igdb: Igdb = Igdb(System.getenv("IGDB_CLIENT_ID"), System.getenv("IGDB_CLIENT_SECRET")),
+    steam: Steam = Steam(System.getenv("STEAM_API_KEY"), igdb),
     portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas")),
     pagos: PagosWompi = PagosWompi(social.b, delEquipo = { social.equipo.rol(it).isNotEmpty() })) {
     runCatching { social.quitarPortadasAjenas() }.onFailure { environment.log.error("No se pudieron quitar las portadas ajenas") }
@@ -153,6 +154,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     val pedidosLastfm = Limite(60)
     // IGDB deja 4 pedidos por segundo para todo el servidor: 60 por minuto por IP para que pocas no lo agoten.
     val pedidosJuegos = Limite(60)
+    // Importar la biblioteca de Steam es de vez en cuando: pocas por minuto y por IP (los topes por día, por hora de
+    // IGDB y de a una en todo el servidor están en Steam).
+    val pedidosSteam = Limite(6)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
             val ruta = call.request.local.uri.substringBefore('?')
@@ -279,6 +283,15 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 if (!pedidosJuegos.pasa("igdb:${call.ipReal()}")) throw Problema(429, "despacio")
                 val p = call.request.queryParameters
                 val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { igdb.juegos(p["ids"], p["slugs"]) }
+                call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
+            }
+            // La biblioteca de Steam de un perfil, con el id de IGDB de cada juego; no se guarda nada (ver Steam).
+            get("/steam/biblioteca") {
+                if (!pedidosSteam.pasa("steam:${call.ipReal()}")) throw Problema(429, "despacio")
+                val perfil = call.request.queryParameters["perfil"]
+                // Con turno y tope de tiempo; si la app corta, la importación se interrumpe (ver Steam.importar).
+                val r = steam.importar(perfil, call.ipReal())
+                call.response.header("Cache-Control", "no-store")
                 call.respondText(r.cuerpo, ContentType.Application.Json, HttpStatusCode.fromValue(r.codigo))
             }
             // La ruta /acceso/correo (decía si un correo tenía cuenta) ya no existe: ninguna app vigente la

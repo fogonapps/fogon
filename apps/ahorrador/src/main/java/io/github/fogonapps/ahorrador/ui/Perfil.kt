@@ -78,7 +78,7 @@ fun Perfil(vm: AhorradorViewModel, e: Estado, exportar: () -> Unit = {}) {
     val miInsignia = vm.red.cuenta.collectAsState().value?.insignia.orEmpty()
     val vista = PerfilVista(nombre.ifBlank { stringResource(R.string.perfil_sin_nombre) }, usuario.orEmpty(), foto,
         portada, bio, emptyList(), true, "yo", listOf(
-            ContadorPerfil(dias.toString(), stringResource(R.string.perfil_dias)),
+            ContadorPerfil(dias.toString(), androidx.compose.ui.res.pluralStringResource(R.plurals.perfil_dias, dias)),
             ContadorPerfil(e.movimientos.size.toString(), stringResource(R.string.movimientos)),
             ContadorPerfil(cumplidas.toString(), stringResource(R.string.perfil_cumplidas)),
         ), secciones, insignia = miInsignia)

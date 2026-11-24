@@ -22,6 +22,7 @@ import io.github.fogonapps.ahorrador.datos.gmf
 import io.github.fogonapps.ahorrador.datos.mesDe
 import io.github.fogonapps.identidad.Idioma
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,7 +104,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         aplicar = { texto ->
             io.github.fogonapps.identidad.aplicarApariencia(texto, io.github.fogonapps.identidad.AlmacenApariencia.de(app))
             io.github.fogonapps.social.ui.aplicarPalabrasOcultas(texto, app)
-            val remoto = L.normalizar(JsonAhorrador.decodeFromString(Estado.serializer(), texto))
+            val remoto = L.traducirFabrica(L.normalizar(JsonAhorrador.decodeFromString(Estado.serializer(), texto)), io.github.fogonapps.ahorrador.Categorias.fabrica(app))
             _estado.value = almacen.updateData { remoto }
             WidgetPlata.actualizar(getApplication())
         },
@@ -147,11 +148,20 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
 
     private var guardado: Job? = null
 
+    /**
+     * Al abrir: el cuaderno, sus nombres de fábrica y lo que traiga la cuenta. Los pagos fijos se anotan después
+     * ([anotarFijos]), sobre lo ya traído: si se anotaran antes, el cuaderno de un teléfono que pasó días sin abrirse
+     * quedaría como el más nuevo y pisaría los movimientos que se anotaron en otro.
+     */
+    private val arranque: Job
+    private val candadoFijos = kotlinx.coroutines.sync.Mutex()
+
     init {
         viewModelScope.launch {
             almacen.data.collect { _estado.value = it }
         }
-        viewModelScope.launch { almacen.data.first(); ahorradorApp.confirmarCuaderno(); anotarFijos(); copia.sincronizar() }
+        arranque = viewModelScope.launch { almacen.data.first(); ahorradorApp.confirmarCuaderno(); traducirFabrica().join(); copia.sincronizar().join() }
+        anotarFijos()
     }
 
     fun hoy(): LocalDate = LocalDate.now()
@@ -418,18 +428,26 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
         guardarMovimiento(Movimiento("", hoy().toString(), TipoMovimiento.GASTO, f.monto, f.cuenta, categoria = f.categoria, nota = f.nombre, fijo = f.id))
     }
 
-    /** Anota solos los fijos automáticos que ya vencieron. Corre al abrir la app. */
-    fun anotarFijos() {
-        val e = _estado.value ?: return
-        val pend = L.aAnotar(e, hoy())
-        if (pend.isEmpty()) return
-        val mes = mesDe(hoy())
-        cambiar { st ->
-            st.copy(movimientos = st.movimientos + L.aAnotar(st, hoy()).map { f ->
-                Movimiento(nuevoId("m"), L.vence(f, mes).toString(), TipoMovimiento.GASTO, f.monto, f.cuenta, categoria = f.categoria, nota = f.nombre, fijo = f.id)
-            })
+    /**
+     * Anota solos los fijos automáticos que ya vencieron (al abrir la app y al volver a ella), cuando ya terminó
+     * [arranque]. Anota los fijos automáticos vencidos, cuando ya terminó [arranque]. Uno ya anotado este mes (también desde otro
+     * teléfono, con el mismo `fijo`) no se repite: [Logica.aAnotar] se calcula de nuevo dentro de la transacción.
+     */
+    fun anotarFijos(): Job = viewModelScope.launch {
+        arranque.join()
+        // Uno a la vez (al abrir corren el del arranque y el de onStart): el segundo ya ve lo que anotó el primero.
+        candadoFijos.withLock {
+            val pend = L.aAnotar(almacen.data.first(), hoy())
+            if (pend.isEmpty()) return@withLock
+            val mes = mesDe(hoy())
+            cambiar { st ->
+                st.copy(movimientos = st.movimientos + L.aAnotar(st, hoy()).map { f ->
+                    Movimiento(nuevoId("m"), L.vence(f, mes).toString(), TipoMovimiento.GASTO, f.monto, f.cuenta, categoria = f.categoria, nota = f.nombre, fijo = f.id)
+                })
+            }
+            guardado?.join()
+            avisar(txPlural(R.plurals.fijos_anotados, pend.size))
         }
-        avisar(txPlural(R.plurals.fijos_anotados, pend.size))
     }
 
     /* ----- Sobres (las categorías de gasto) ----- */
@@ -556,6 +574,19 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     fun cambiarIdioma(codigo: String) {
         Idioma.elegir(getApplication(), codigo)
         ahorradorApp.aplicarIdioma()
+        traducirFabrica()
+    }
+
+    /**
+     * Lo de fábrica guardado en otro idioma (también lo de un respaldo viejo) pasa al idioma de ahora. No es un cambio
+     * de la persona: no toca `updatedAt` ni marca la copia de la cuenta como pendiente. Si contara como cambio, un
+     * teléfono que solo tradujo nombres subiría su cuaderno viejo encima del de la cuenta (y se perderían los
+     * movimientos anotados en otro teléfono).
+     */
+    private fun traducirFabrica(): Job = viewModelScope.launch {
+        val fabrica = io.github.fogonapps.ahorrador.Categorias.fabrica(getApplication())
+        val e = almacen.updateData { L.traducirFabrica(it, fabrica) }
+        _estado.value = e
     }
 
     /* ----- Respaldo ----- */
@@ -565,7 +596,7 @@ class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     fun leerRespaldo(texto: String): Estado? = leerRespaldoAhorrador(texto)
 
     fun importar(e: Estado) {
-        cambiar { L.normalizar(e) }
+        cambiar { L.traducirFabrica(L.normalizar(e), io.github.fogonapps.ahorrador.Categorias.fabrica(getApplication())) }
         _pila.value = emptyList(); _pestana.value = Pestana.INICIO
         avisar(tx(R.string.aviso_importado))
     }

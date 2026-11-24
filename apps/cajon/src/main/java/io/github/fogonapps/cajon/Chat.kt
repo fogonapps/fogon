@@ -1,5 +1,7 @@
 package io.github.fogonapps.cajon
 
+import kotlinx.coroutines.launch
+
 /*
  * El chat cifrado vive en lo común (`core/social/ChatSocial.kt`) y es el mismo en las cuatro apps. Aquí quedan los
  * nombres de siempre de El Cajón (mismo archivo `chats.json` y mismas llaves de la caja fuerte).
@@ -29,7 +31,7 @@ fun chatDeCajon(app: CajonApp, scope: kotlinx.coroutines.CoroutineScope, caja: i
             "sin_conexion" -> R.string.red_sin_conexion; "sticker_guardado" -> R.string.chat_sticker_guardado
             else -> R.string.red_error
         })
-    }
+    }.also { chat -> scope.launch { red.bloqueadas.collect { chat.olvidarSinEntregar(it) } } }
 
 /** Mandar una obra del cajón como tarjeta. */
 fun Chat.enviarObra(usuario: String, texto: String, obra: io.github.fogonapps.cajon.datos.Obra) = enviar(usuario, texto, obraJson(obra))

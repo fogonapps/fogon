@@ -18,7 +18,7 @@
   <string name="fogon_man_t3">Lo que prometemos</string>
   <string name="fogon_man_cierre">Siempre alcanza para uno más.</string>
   <string name="fogon_version">versión %1$s</string>
-  <string name="fogon_hecha">Hecha en el Fogón</string>
+  <string name="fogon_hecha">Hecha en Fogón</string>
   <string name="fogon_sin_anuncios">Sin suscripciones · Sin anuncios · No vendemos tus datos</string>
   <string name="fogon_leer_manifiesto">Leer el manifiesto</string>
   <string name="fogon_licencias">Licencias</string>
@@ -127,4 +127,18 @@
   <string name="fogon_apoyo_no_volver">No volver a mostrar</string>
   <string name="fogon_apoyo_acerca">Apoya a Fogón</string>
   <string name="fogon_apoyo_recordar">Recordármelo una vez al mes</string>
+  <string name="fogon_color_negro">negro</string>
+  <string name="fogon_color_blanco">blanco</string>
+  <string name="fogon_color_gris">gris</string>
+  <string name="fogon_color_rojo">rojo</string>
+  <string name="fogon_color_naranja">naranja</string>
+  <string name="fogon_color_amarillo">amarillo</string>
+  <string name="fogon_color_verde">verde</string>
+  <string name="fogon_color_turquesa">turquesa</string>
+  <string name="fogon_color_azul">azul</string>
+  <string name="fogon_color_morado">morado</string>
+  <string name="fogon_color_rosado">rosado</string>
+  <string name="fogon_color_muy_oscuro">%1$s muy oscuro</string>
+  <string name="fogon_color_oscuro">%1$s oscuro</string>
+  <string name="fogon_color_claro">%1$s claro</string>
 </resources>

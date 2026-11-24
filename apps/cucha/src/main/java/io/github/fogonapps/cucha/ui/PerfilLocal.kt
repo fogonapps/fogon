@@ -62,7 +62,7 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
         }
     }
     val contadores = if (usuario != null) cifrasRed(publicadas) else listOf(
-        ContadorPerfil(e.dias.count { it.value.anotados.isNotEmpty() }.toString(), stringResource(R.string.perfil_dias)),
+        e.dias.count { it.value.anotados.isNotEmpty() }.let { n -> ContadorPerfil(n.toString(), androidx.compose.ui.res.pluralStringResource(R.plurals.perfil_dias, n)) },
         ContadorPerfil(e.recetas.size.toString(), stringResource(R.string.pestana_recetas)),
         ContadorPerfil(e.dias.values.sumOf { it.anotados.size }.toString(), stringResource(R.string.perfil_platos)),
     )
@@ -97,10 +97,12 @@ fun Perfil(vm: CuchaViewModel, e: Estado) {
 private fun ComidasPerfil(vm: CuchaViewModel, e: Estado) {
     val dias = e.dias.filterValues { it.anotados.isNotEmpty() }.toSortedMap(reverseOrder())
     if (dias.isEmpty()) PerfilVacio(Iconos.Plato, stringResource(R.string.perfil_sin_comidas))
+    val hoy = vm.hoy()
+    val idioma = vm.idioma()
     dias.forEach { (fecha, dia) ->
-        Seccion(fecha)
+        Seccion(fechaLegible(fecha, hoy, idioma))
         dia.anotados.forEach { anotado ->
-            FilaAjuste(Iconos.Plato, anotado.nombre, nombreComida(anotado.comida)) {
+            FilaAjuste(Iconos.Plato, vm.nombreDe(e, anotado), nombreComida(anotado.comida)) {
                 vm.abrir(if (anotado.ref.startsWith("rapido:")) Pantalla.Rapido(anotado.comida, fecha, anotado.id)
                     else Pantalla.Cantidad(anotado.ref, anotado.comida, fecha, anotado.id))
             }
@@ -206,4 +208,12 @@ private fun EditarPerfilRed(vm: CuchaViewModel) {
     PartesCucha(vm)
     if (error) Text(stringResource(io.github.fogonapps.perfil.R.string.perfil_local_error), Modifier.padding(16.dp), color = FogonTema.actual.texto)
     Espacio(40.dp)
+}
+
+/** La fecha guardada ("AAAA-MM-DD") como se lee en el idioma: "Hoy", "Ayer", "Martes 24 de noviembre" (con el año si es otro). */
+@Composable
+private fun fechaLegible(fecha: String, hoy: java.time.LocalDate, idioma: String): String {
+    val f = runCatching { java.time.LocalDate.parse(fecha) }.getOrNull() ?: return fecha
+    if (f.year == hoy.year || f >= hoy.minusDays(1)) return nombreDia(f, hoy, idioma)
+    return f.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG).withLocale(java.util.Locale.forLanguageTag(idioma)))
 }

@@ -108,7 +108,7 @@ abstract class ControladorSocial(
             if (_feed.value == null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { leerFeedGuardado(u) }
                 ?.let { if (_feed.value == null && _usuario.value == u) _feed.value = it }
             intentar(avisar = avisar) {
-                val l = cliente().feed()
+                val l = conReintento { cliente().feed() }
                 // Si mientras tanto se salió o se cambió de cuenta, la respuesta no se usa ni se guarda.
                 if (_usuario.value != u) return@intentar
                 _feed.value = l
@@ -136,7 +136,20 @@ abstract class ControladorSocial(
         _feed.value = (ya + mas).distinctBy { it.id }
     }
 
-    fun cargarExplorar() = lanzar { _explorar.value = cliente().explorar() }
+    fun cargarExplorar() = lanzar { _explorar.value = conReintento { cliente().explorar() } }
+
+    /**
+     * Una lectura al abrir una pantalla. Justo al volver la red (al quitar el modo avión), el primer pedido puede
+     * fallar antes de que haya conexión: se espera un momento y se intenta una vez más antes de avisar. Un error del
+     * servidor no se repite.
+     */
+    protected suspend fun <T> conReintento(leer: suspend () -> T): T = try {
+        leer()
+    } catch (x: IOException) {
+        if (x is ErrorSocial) throw x
+        kotlinx.coroutines.delay(1500)
+        leer()
+    }
 
     /** Los @usuarios que se buscaron y no existen (para decirlo en vez de quedarse cargando). */
     protected val _noEstan = MutableStateFlow<Set<String>>(emptySet())
@@ -242,9 +255,14 @@ abstract class ControladorSocial(
         _gente.value = _gente.value + (clave to if (seguidores) cliente().seguidores(usuario) else cliente().siguiendo(usuario))
     }
 
+    private val _bloqueadas = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 16)
+    /** Cada cuenta que se acaba de bloquear (el chat olvida lo que no se le pudo entregar). */
+    val bloqueadas: kotlinx.coroutines.flow.SharedFlow<String> = _bloqueadas
+
     fun bloquear(usuario: String, si: Boolean) = lanzar {
         cliente().bloquear(usuario, si)
         if (si) {
+            _bloqueadas.tryEmit(usuario)
             _gente.value = quitarCuentaBloqueada(_gente.value, usuario)
             _feed.value = quitarPublicacionesBloqueadas(_feed.value, usuario)
         }

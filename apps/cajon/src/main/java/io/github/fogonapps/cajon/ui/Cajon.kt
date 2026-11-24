@@ -143,9 +143,13 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     if (artistas && !juegos) { CajonArtistas(vm, e, texto, esDeAqui, musica); return }
 
     val tipoEstados = tipo ?: tipos.first()
-    Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipoEstados) }, estado) { estado = it }
-    val lista = remember(e, tipos, tipo, estado, texto, orden) {
-        vm.L.filtrar(e, null, estado, texto, orden).filter { it.tipo in tipos && (tipo == null || it.tipo == tipo) }
+    // «Sin estado» (juegos traídos de Steam que ya se jugaron) aparece solo si hay alguno; si ya no queda, vuelve a todo.
+    val haySinEstado = obras.any { it.estado == Estados.SIN_ESTADO && (tipo == null || it.tipo == tipo) }
+    val estadoVisto = estado.takeIf { it != Estados.SIN_ESTADO || haySinEstado }
+    Chips(listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + Estados.TODOS.map { it to nombreEstado(it, tipoEstados) } +
+        listOfNotNull(if (haySinEstado) Estados.SIN_ESTADO to nombreEstado(Estados.SIN_ESTADO, tipoEstados) else null), estadoVisto) { estado = it }
+    val lista = remember(e, tipos, tipo, estadoVisto, texto, orden) {
+        vm.L.filtrar(e, null, estadoVisto, texto, orden).filter { it.tipo in tipos && (tipo == null || it.tipo == tipo) }
     }
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(pluralStringResource(R.plurals.obras_n, lista.size, lista.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, modifier = Modifier.weight(1f))

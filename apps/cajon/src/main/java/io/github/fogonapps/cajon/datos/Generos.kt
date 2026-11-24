@@ -90,7 +90,7 @@ object Generos {
     /** Etiqueta para mostrar un género o tema de Open Library en el idioma activo, sin cambiar el dato guardado. */
     fun etiquetaLibro(texto: String, idioma: String): String {
         libro(texto)?.let { return it.etiqueta(idioma) }
-        val clave = Logica.tituloLimpio(texto)
+        val clave = Logica.tituloLimpio(texto.replace(OpenLibrary.ACLARACION_ACEPTADA, ""))
         val base = clave.replace(Regex(" (?:juvenile )?fiction$"), "")
         val tema = TEMAS_TRADUCIDOS[clave] ?: TEMAS_TRADUCIDOS[base]
         return tema?.let { if (idioma == "en") it.second else it.first } ?: texto

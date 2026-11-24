@@ -33,6 +33,8 @@ object Estados {
     const val EN_CURSO = "en_curso"
     const val TERMINADO = "terminado"
     const val ABANDONADO = "abandonado"
+    /** Sin estado: en el cajón, pero sin decir dónde va (un juego traído de Steam que ya se jugó). No se elige a mano. */
+    const val SIN_ESTADO = ""
     val TODOS = listOf(QUIERO, EN_CURSO, TERMINADO, ABANDONADO)
 }
 
@@ -107,6 +109,12 @@ data class Obra(
     /** La nota del público en su fuente (TMDB e IGDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
     val publica: Double? = null,
     val votos: Int = 0,
+    /**
+     * Minutos jugados según Steam (juegos importados de Steam); null si no se sabe. Llevan su propia hora
+     * ([minutosSteamCuando]) y no cambian [cambio]: al reimportar en un teléfono no se pisa lo hecho en otro.
+     */
+    val minutosSteam: Int? = null,
+    val minutosSteamCuando: Long = 0,
     /** La nota de la crítica (IGDB, de 0 a 10) y de cuántas reseñas sale. */
     val criticos: Double? = null,
     val votosCriticos: Int = 0,
@@ -141,6 +149,11 @@ data class Obra(
 
     val agregada: Long = 0,
     val cambio: Long = 0,
+    /**
+     * Entró de una importación masiva (Steam) y la persona todavía no la tocó: está en el cajón, pero no va a lo que
+     * se ve de ella en la red («Por ver», «Viendo») hasta que le cambie algo suyo ([Logica.alTocar]).
+     */
+    val silenciosa: Boolean = false,
     /** Cuándo se trajeron los datos de afuera (TMDB pide no guardarlos más de 6 meses sin renovarlos). */
     val traida: Long = 0,
     val borrada: Boolean = false,

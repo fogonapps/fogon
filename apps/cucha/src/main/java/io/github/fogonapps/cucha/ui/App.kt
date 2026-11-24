@@ -18,6 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -136,7 +142,8 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                     PestanaAnimada(pestana) { p ->
                         // X-09: en Tu gente, deslizar hacia abajo recarga el feed.
                         io.github.fogonapps.identidad.DeslizarParaRecargar(if (p == Pestana.GENTE) ({ vm.red.recargarFeed() }) else null, Modifier.fillMaxSize().statusBarsPadding()) {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                        // En horizontal, la barra del sistema y el recorte de la cámara quedan a los lados: el contenido no va debajo.
+                        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)).verticalScroll(rememberScrollState())) {
                             when (p) {
                                 Pestana.HOY -> {
                                     Hoy(vm, estado)
@@ -149,7 +156,9 @@ fun App(vm: CuchaViewModel, acciones: Acciones) {
                                 Pestana.PLAN -> Plan(vm, estado)
                                 Pestana.PROGRESO -> Progreso(vm, estado)
                             }
+                            // Lo último queda por encima de la barra flotante y de la del sistema.
                             Espacio(120.dp)
+                            androidx.compose.foundation.layout.Spacer(Modifier.navigationBarsPadding())
                         }
                         }
                     }
@@ -226,7 +235,7 @@ private fun BarraFlotante(actual: Pestana, onIr: (Pestana) -> Unit, onAnotar: ()
         Triple(Pestana.PROGRESO, Iconos.Progreso, R.string.pestana_progreso),
     )
     Row(
-        modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth()
+        modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).widthIn(max = 560.dp).fillMaxWidth()
             .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {

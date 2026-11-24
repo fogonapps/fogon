@@ -82,7 +82,8 @@ class MainActivity : ComponentActivity() {
                 val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                     if (uri != null) {
                         val d = leerTexto(uri)?.let { vm.leerRespaldo(it) }
-                        if (d == null) aviso(getString(R.string.aviso_no_es_respaldo)) else porImportar = d
+                        // Dentro de la app, como los demás avisos: así no se confunde con un aviso de la red.
+                        if (d == null) vm.avisar(vm.tx(R.string.aviso_no_es_respaldo)) else porImportar = d
                     }
                 }
                 val importarRecetas = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->

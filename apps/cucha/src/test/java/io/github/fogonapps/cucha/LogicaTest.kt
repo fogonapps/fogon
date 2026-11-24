@@ -120,4 +120,60 @@ class LogicaTest {
         val a = io.github.fogonapps.cucha.datos.Nutrientes(1.0, fibra = 2.0, azucar = 3.0)
         assertEquals(4.0, (a + a).fibra, 0.0); assertEquals(9.0, (a * 3.0).azucar, 0.0)
     }
+
+    /* ----- Lo de fábrica, en el idioma de ahora ----- */
+
+    private fun cifraEn(idioma: String): (Double) -> String = { d ->
+        val t = if (d == Math.floor(d)) Math.round(d).toString() else (Math.round(d * 10) / 10.0).toString()
+        if (idioma == "en") t else t.replace('.', ',')
+    }
+    /** Como el plurals porciones_cifra de la app. */
+    private val porcionesEs: (Double) -> String = { n -> cifraEn("es")(n) + if (n == 1.0) " porción" else " porciones" }
+    private val porcionesEn: (Double) -> String = { n -> cifraEn("en")(n) + if (n == 1.0) " serving" else " servings" }
+
+    @Test fun unaPorcionVaEnSingular() {
+        val e = Estado()
+        val viejo = Anotado("n5", "desayuno", "r:arepa_huevo_queso", "Arepa con huevo y queso", 1.0, "1 porciones", Nutrientes())
+        assertEquals("1 porción", L.detalleAnotado(e, viejo, "es", porcionesEs, { it }, cifraEn("es")))
+        assertEquals("1 serving", L.detalleAnotado(e, viejo, "en", porcionesEn, { it }, cifraEn("en")))
+    }
+
+    @Test fun loAnotadoDeFabricaSeMuestraEnElIdiomaActual() {
+        val e = Estado()
+        // Anotado con la app en inglés; ahora la app está en español.
+        val receta = Anotado("n1", "desayuno", "r:arepa_huevo_queso", "Arepa with egg and cheese", 2.0, "2 servings", Nutrientes())
+        assertEquals("Arepa con huevo y queso", L.nombreAnotado(e, receta, "es"))
+        assertEquals("2 porciones", L.detalleAnotado(e, receta, "es", porcionesEs, { "Porción ($it g)" }, cifraEn("es")))
+        // Y al revés.
+        val arroz = Anotado("n2", "almuerzo", "a:arroz_blanco", "Arroz blanco cocido", 237.0, "1,5 taza · 237 g", Nutrientes())
+        assertEquals("White rice, cooked", L.nombreAnotado(e, arroz, "en"))
+        assertEquals("1.5 cup · 237 g", L.detalleAnotado(e, arroz, "en", porcionesEn, { "Serving ($it g)" }, cifraEn("en")))
+        val gramos = arroz.copy(cantidad = 100.0, detalle = "100 g")
+        assertEquals("100 g", L.detalleAnotado(e, gramos, "en", porcionesEn, { "Serving ($it g)" }, cifraEn("en")))
+    }
+
+    @Test fun loEscritoPorLaPersonaNoSeTraduce() {
+        val e = Estado()
+        val rapido = Anotado("n3", "cena", "rapido:n3", "Sopa de mi abuela", 1.0, "Lo que sea", Nutrientes())
+        assertEquals("Sopa de mi abuela", L.nombreAnotado(e, rapido, "en"))
+        assertEquals("Lo que sea", L.detalleAnotado(e, rapido, "en", porcionesEn, { it }, cifraEn("en")))
+        // Un nombre que no es el de fábrica (un respaldo raro) se deja igual.
+        val otro = Anotado("n4", "cena", "a:arroz_blanco", "Mi arroz", 100.0, "100 g", Nutrientes())
+        assertEquals("Mi arroz", L.nombreAnotado(e, otro, "en"))
+        // Una receta de ejemplo corregida por la persona con otro nombre: lo anotado con ese nombre se queda así.
+        val propia = L.base.receta("arepa_huevo_queso")!!.copy(es = "Mi arepa", en = "", propia = true)
+        val conPropia = e.copy(recetas = listOf(propia))
+        val anotada = Anotado("n5", "desayuno", "r:arepa_huevo_queso", "Mi arepa", 1.0, "1 porciones", Nutrientes())
+        assertEquals("Mi arepa", L.nombreAnotado(conPropia, anotada, "en"))
+    }
+
+    @Test fun unRespaldoViejoSeLeeYSeMuestraTraducido() {
+        // Un respaldo de antes (sin campos nuevos) se lee igual; lo de fábrica sale en el idioma actual.
+        val json = """{"listo":true,"dias":{"2026-11-20":{"anotados":[{"id":"n1","comida":"desayuno","ref":"r:arepa_huevo_queso",
+            "nombre":"Arepa con huevo y queso","cantidad":2.0,"detalle":"2 porciones","n":{"kcal":800.0}}]}}}"""
+        val e = leerRespaldoCucha(json)!!
+        val a = e.dias.getValue("2026-11-20").anotados.single()
+        assertEquals("Arepa with egg and cheese", L.nombreAnotado(e, a, "en"))
+        assertEquals("2 servings", L.detalleAnotado(e, a, "en", porcionesEn, { it }, cifraEn("en")))
+    }
 }

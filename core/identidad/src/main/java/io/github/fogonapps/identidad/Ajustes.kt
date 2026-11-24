@@ -84,7 +84,9 @@ fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pis
         IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
         Column(Modifier.weight(1f)) {
             Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2) }
+            // Cerrado, la pista va en dos líneas; abierto, entera.
+            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = if (abierto) Int.MAX_VALUE else 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
         }
         IconoRiso(if (abierto) flechaArriba else IconosFogon.Abajo, null, tamano = 18.dp, tinta = f.textoSuave)
     }

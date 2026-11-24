@@ -97,6 +97,15 @@ class Logica(val b: Biblioteca) {
 
     fun dias(e: Estado): List<Dia> = b.dias(e.routines ?: b.programas.first().routines)
 
+    /**
+     * La rutina que toca: la de hoy si no está hecha esta semana, o la siguiente sin hacer. [hechos] son los días ya
+     * entrenados esta semana; [enCurso], el del entreno que está abierto, que tampoco cuenta como pendiente.
+     */
+    fun queToca(dias: List<Dia>, hoy: LocalDate, hechos: Set<String?>, enCurso: String? = null): Dia? {
+        val fuera = hechos + enCurso
+        return dias.firstOrNull { it.id == diaDeHoy(dias, hoy) && it.id !in fuera } ?: dias.firstOrNull { it.id !in fuera }
+    }
+
     fun diaDeHoy(dias: List<Dia>, hoy: LocalDate): String? {
         val g = hoy.dayOfWeek.value % 7 // domingo = 0, como getDay()
         return dias.firstOrNull { it.dow == g }?.id
@@ -354,6 +363,24 @@ class Logica(val b: Biblioteca) {
             e = e.copy(weekMarks = marcas, weeks = null)
         }
         return e
+    }
+
+    /**
+     * Los nombres de las rutinas de los programas ("Torso A" / "Upper A") se guardan en el idioma de ese momento, en
+     * la rutina, en cada entreno y en el entreno en curso. Si un nombre es el de fábrica de esa rutina en cualquiera
+     * de los dos idiomas ([otra] es la biblioteca del otro idioma), pasa al idioma actual; los que la persona cambió no
+     * se tocan. Devuelve el mismo objeto si no hay nada que cambiar.
+     */
+    fun traducirRutinasDeFabrica(e: Estado, otra: Biblioteca): Estado {
+        val actual = b.programas.flatMap { it.routines }.associate { it.id to it.title }
+        val conocidos = (b.programas + otra.programas).flatMap { it.routines }.groupBy({ it.id }, { it.title }).mapValues { it.value.toSet() }
+        fun titulo(id: String?, t: String?): String? =
+            if (id != null && t != null && t in conocidos[id].orEmpty()) actual[id] ?: t else t
+        val rutinas = e.routines?.map { r -> titulo(r.id, r.title)?.takeIf { it != r.title }?.let { r.copy(title = it) } ?: r }
+        val sesiones = e.sessions.map { s -> titulo(s.day, s.title)?.takeIf { it != s.title }?.let { s.copy(title = it) } ?: s }
+        val activo = e.active?.let { a -> titulo(a.day, a.title)?.takeIf { it != a.title }?.let { a.copy(title = it) } ?: a }
+        return if (rutinas == e.routines && sesiones == e.sessions && activo == e.active) e
+            else e.copy(routines = rutinas, sessions = sesiones, active = activo)
     }
 
     /** Une el estado del teléfono (a) con el de la nube (b), igual que mergeState() en la web. */

@@ -49,7 +49,8 @@ object Logica {
 
     /**
      * Une lo de este aparato con lo de la copia de la cuenta o un respaldo: por cada obra, artista y lista gana la versión
-     * con el [Obra.cambio] más reciente; lo borrado sigue borrado si su borrado es lo más reciente.
+     * con el [Obra.cambio] más reciente; lo borrado sigue borrado si su borrado es lo más reciente. Las horas de Steam
+     * van aparte: quedan las de la hora más reciente ([Obra.minutosSteamCuando]), gane la versión que gane.
      */
     fun unir(a: Estado, b: Estado): Estado = unirMigrados(
         Resenas.migrar(a, b.resenas.map { it.id }.toSet()),
@@ -63,7 +64,7 @@ object Logica {
         // La marca de Juegos no se pierde al unir con una copia de una versión vieja (que no la conoce): si la quitó, no vuelve.
         ajustes = (if (b.ajustes.cambio > a.ajustes.cambio) b.ajustes else a.ajustes)
             .let { it.copy(juegosEnBarra = a.ajustes.juegosEnBarra || b.ajustes.juegosEnBarra) },
-        obras = unirPor(a.obras, b.obras, { it.id }, { it.cambio }),
+        obras = conHorasSteam(unirPor(a.obras, b.obras, { it.id }, { it.cambio }), a.obras, b.obras),
         artistas = unirPor(a.artistas, b.artistas, { it.id }, { it.cambio }),
         listas = unirPor(a.listas, b.listas, { it.id }, { it.cambio }),
         gustos = unirPor(a.gustos, b.gustos, { it.clave }, { it.cambio }),
@@ -72,6 +73,43 @@ object Logica {
         resenas = unirPor(a.resenas, b.resenas, { it.id }, { it.cambio }),
         borradoresResena = unirPor(a.borradoresResena, b.borradoresResena, { it.id }, { it.cambio }),
     )
+
+    /** A cada obra de [unidas], las horas de Steam más recientes entre las de [a] y [b]. */
+    private fun conHorasSteam(unidas: List<Obra>, a: List<Obra>, b: List<Obra>): List<Obra> {
+        val conHoras = (a + b).filter { it.minutosSteamCuando > 0 }
+        if (conHoras.isEmpty()) return unidas
+        val mejor = HashMap<String, Obra>()
+        conHoras.forEach { o -> val y = mejor[o.id]; if (y == null || o.minutosSteamCuando > y.minutosSteamCuando) mejor[o.id] = o }
+        return unidas.map { o ->
+            val m = mejor[o.id] ?: return@map o
+            if (m.minutosSteamCuando > o.minutosSteamCuando) o.copy(minutosSteam = m.minutosSteam, minutosSteamCuando = m.minutosSteamCuando) else o
+        }
+    }
+
+    /**
+     * Lo que se ve en el perfil se respeta: una obra importada en silencio ([Obra.silenciosa]) deja de estarlo apenas
+     * la persona le cambia algo suyo (estado, nota, reseña, notas, diario, progreso, portada o fondo, listas, favoritas o destacados).
+     */
+    fun alTocar(antes: Estado, despues: Estado): Estado {
+        if (despues.obras.none { it.silenciosa && !it.borrada }) return despues
+        val previas = antes.obras.associateBy { it.id }
+        fun resenas(e: Estado, id: String) = e.resenas.filter { it.obra == id && !it.borrada }.map { listOf(it.texto, it.nota, it.visibilidad, it.borrada) }
+        fun listas(e: Estado, id: String) = e.listas.count { !it.borrada && id in it.obras }
+        var cambio = false
+        val obras = despues.obras.map { o ->
+            if (!o.silenciosa || o.borrada) return@map o
+            val p = previas[o.id] ?: return@map o
+            val tocada = personal(p) != personal(o) || resenas(antes, o.id) != resenas(despues, o.id) || listas(antes, o.id) != listas(despues, o.id) ||
+                (o.id in despues.ajustes.favoritas) != (o.id in antes.ajustes.favoritas) ||
+                (o.id in despues.perfil.destacados.values) != (o.id in antes.perfil.destacados.values)
+            if (tocada) { cambio = true; o.copy(silenciosa = false) } else o
+        }
+        return if (cambio) despues.copy(obras = obras) else despues
+    }
+
+    /** Lo de la persona en una obra (para saber si la tocó). */
+    private fun personal(o: Obra) = listOf(o.estado, o.nota, o.meGusta, o.resena, o.resenaVisibilidad, o.notas, o.etiquetas, o.vistos,
+        o.episodiosFavoritos, o.pagina, o.registros, o.empezada, o.terminada, o.portadaPropia, o.fondoPropio)
 
     private fun <T> unirPor(a: List<T>, b: List<T>, id: (T) -> String, cambio: (T) -> Long): List<T> {
         val m = LinkedHashMap<String, T>()
@@ -114,9 +152,10 @@ object Logica {
     /**
      * Lo de la persona de [queda] más lo de [otras] (la misma obra repetida): registros, etiquetas, vistos y episodios
      * favoritos se suman; las notas sueltas distintas se juntan una tras otra; el me gusta queda si alguna lo tenía;
-     * empezó en la fecha más temprana y terminó en la más tardía; la página, la más avanzada. En lo que es un solo valor
-     * (estado, nota, portada o fondo elegidos, visibilidad de la reseña) manda la que se cambió más recientemente
-     * entre las que lo tienen puesto.
+     * empezó en la fecha más temprana y terminó en la más tardía; la página, la más alta; las horas de Steam, las de la
+     * hora más reciente. En lo que es un solo valor (estado, nota, portada o fondo elegidos, visibilidad de la reseña)
+     * manda la que se cambió más recientemente entre las que lo tienen puesto; si ninguna tiene un estado de verdad y
+     * alguna se jugó en Steam, queda «Sin estado» y no «Quiero jugar». Sigue en silencio solo si todas lo estaban.
      */
     internal fun juntarPersonal(queda: Obra, otras: List<Obra>): Obra {
         val todas = listOf(queda) + otras
@@ -127,8 +166,13 @@ object Logica {
             if (c.nota > 0 && c.favorita) c else otras.firstNotNullOfOrNull { o -> o.canciones.firstOrNull { it.titulo == c.titulo } }
                 ?.let { o -> c.copy(nota = if (c.nota > 0) c.nota else o.nota, favorita = c.favorita || o.favorita) } ?: c
         }
+        val horas = todas.filter { it.minutosSteam != null }
+            .maxWithOrNull(compareBy<Obra> { it.minutosSteamCuando }.thenBy { it.minutosSteam ?: 0 })
+        val jugado = todas.any { (it.minutosSteam ?: 0) > 0 }
         return queda.copy(
-            estado = recientes.firstOrNull { it.estado != Estados.QUIERO }?.estado ?: queda.estado,
+            estado = recientes.firstOrNull { it.estado != Estados.QUIERO && it.estado != Estados.SIN_ESTADO }?.estado
+                ?: (if (jugado) Estados.SIN_ESTADO else null)
+                ?: todas.firstOrNull { it.estado == Estados.QUIERO }?.estado ?: queda.estado,
             nota = recientes.firstOrNull { it.nota > 0 }?.nota ?: 0,
             meGusta = todas.any { it.meGusta },
             resena = recientes.firstOrNull { it.resena.isNotBlank() }?.resena.orEmpty(),
@@ -148,6 +192,9 @@ object Logica {
             fondo = conFondo?.fondo ?: queda.fondo,
             canciones = canciones,
             agregada = todas.map { it.agregada }.filter { it > 0 }.minOrNull() ?: queda.agregada,
+            minutosSteam = horas?.minutosSteam,
+            minutosSteamCuando = horas?.minutosSteamCuando ?: 0,
+            silenciosa = todas.all { it.silenciosa },
         )
     }
 
@@ -503,6 +550,17 @@ object Logica {
      */
     fun recortar(t: String, n: Int): String =
         if (t.codePointCount(0, t.length) <= n) t else t.substring(0, t.offsetByCodePoints(0, n))
+
+    /**
+     * [t] con a lo sumo [max] unidades de UTF-16 (lo que mide `length`), cortado donde termina un carácter visible:
+     * un emoji (dos unidades, o varios unidos como 👩‍👩‍👧) no queda partido a la mitad.
+     */
+    fun recortarSinPartir(t: String, max: Int): String {
+        if (t.length <= max) return t
+        val limites = java.text.BreakIterator.getCharacterInstance().apply { setText(t) }
+        val corte = if (limites.isBoundary(max)) max else limites.preceding(max)
+        return t.substring(0, corte.coerceAtLeast(0))
+    }
 
     /** El nombre de usuario limpio: minúsculas, letras, números, punto y guion bajo, hasta 30. */
     fun usuarioLimpio(t: String): String = normal(t.trimStart().removePrefix("@")).replace(' ', '_').filter { it in 'a'..'z' || it in '0'..'9' || it == '.' || it == '_' }.take(30)

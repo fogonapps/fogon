@@ -293,9 +293,41 @@ class Logica {
 
     /* ----- Respaldo ----- */
 
+    /**
+     * Lo que trae la app de fábrica (categorías, cuentas iniciales, el reto, la nota del ajuste de saldo) se guardó en
+     * el idioma de ese momento. Si un nombre sigue siendo exactamente el de fábrica en cualquiera de los dos idiomas,
+     * pasa al idioma de ahora; lo que la persona cambió o escribió no se toca. Devuelve el mismo objeto si no hay nada
+     * que cambiar.
+     */
+    fun traducirFabrica(e: Estado, f: Fabrica): Estado {
+        fun TextoFabrica?.en(texto: String) = if (this != null && texto in conocidos) actual else texto
+        val categorias = e.categorias.map { c -> f.categorias[c.id].en(c.nombre).let { if (it == c.nombre) c else c.copy(nombre = it) } }
+        val cuentas = e.cuentas.map { c ->
+            val nombre = f.cuentas[c.id].en(c.nombre)
+            val nota = f.ajusteSaldo.en(c.notaSaldo)
+            if (nombre == c.nombre && nota == c.notaSaldo) c else c.copy(nombre = nombre, notaSaldo = nota)
+        }
+        val metas = e.metas.map { m ->
+            if (m.id == e.reto?.meta) f.reto.en(m.nombre).let { if (it == m.nombre) m else m.copy(nombre = it) } else m
+        }
+        return if (categorias == e.categorias && cuentas == e.cuentas && metas == e.metas) e
+            else e.copy(categorias = categorias, cuentas = cuentas, metas = metas)
+    }
+
     /** Arregla un estado recién leído de un respaldo sin borrar nada: quita movimientos de cuentas que no existen. */
     fun normalizar(e: Estado): Estado {
         val ids = e.cuentas.map { it.id }.toSet()
         return e.copy(movimientos = e.movimientos.filter { it.cuenta in ids && (it.aCuenta == null || it.aCuenta in ids) }, listo = true)
     }
 }
+
+/** Un texto de fábrica: cómo se escribe en los dos idiomas y cómo va en el idioma de ahora. */
+data class TextoFabrica(val conocidos: Set<String>, val actual: String)
+
+/** Los textos de fábrica que se guardan en el estado: categorías y cuentas por su id, el reto y la nota del ajuste. */
+data class Fabrica(
+    val categorias: Map<String, TextoFabrica> = emptyMap(),
+    val cuentas: Map<String, TextoFabrica> = emptyMap(),
+    val reto: TextoFabrica? = null,
+    val ajusteSaldo: TextoFabrica? = null,
+)

@@ -71,6 +71,15 @@ class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
         aplicarIdioma()
     }
 
+    /** La biblioteca en el otro idioma (inglés si la app está en español, y al revés), para reconocer lo de fábrica. */
+    fun bibliotecaDelOtroIdioma(): Biblioteca {
+        val idioma = if (Idioma.actual(this) == "en") "es" else "en"
+        otraBiblioteca?.takeIf { it.first == idioma }?.let { return it.second }
+        return Biblioteca.cargar(idioma) { nombre -> assets.open("datos/$nombre").bufferedReader().use { it.readText() } }
+            .also { otraBiblioteca = idioma to it }
+    }
+    @Volatile private var otraBiblioteca: Pair<String, Biblioteca>? = null
+
     fun aplicarIdioma() {
         val c = Idioma.envolver(this)
         Textos.aplicar(c, Idioma.actual(this))

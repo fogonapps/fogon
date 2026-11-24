@@ -71,7 +71,8 @@ fun ListasComunes(vm: CajonViewModel) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.listas_comunes_nueva), style = MaterialTheme.typography.titleMedium, color = f.texto)
             OutlinedTextField(nombre, { nombre = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
-                placeholder = { Text(stringResource(R.string.listas_comunes_nombre)) })
+                placeholder = { Text(stringResource(R.string.listas_comunes_nombre)) },
+                supportingText = if (nombre.length >= 60) ({ AvisoTope(60) }) else null)
             Text(stringResource(R.string.listas_comunes_con_quien), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             if (amigos.isEmpty()) Pista(stringResource(R.string.listas_comunes_sin_amigos))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

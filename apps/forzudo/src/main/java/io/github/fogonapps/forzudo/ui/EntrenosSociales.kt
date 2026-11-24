@@ -249,7 +249,7 @@ fun TuGente(vm: GymViewModel, interfaz: InterfazSocial = interfazCuenta(vm), con
         }, confirmButton = { TextButton({ eligiendo = false }) { Text(stringResource(R.string.volver)) } })
     val palabrasOcultas = io.github.fogonapps.social.ui.palabrasOcultasRed()
     ListaFeedSocial((if (pestana == 0) (if (usuario == null) emptyList() else feed) else explorar)?.filter { it.id !in ocultas && !io.github.fogonapps.social.ui.PalabrasOcultasRed.lleva(palabrasOcultas, io.github.fogonapps.social.ui.PalabrasOcultasRed.textoDe(it)) }?.map { it to Unit }, pestana,
-        vm.red::masFeed, stringResource(R.string.entreno_feed_pie)) { p, _ -> TarjetaPublicacion(interfaz, p) }
+        vm.red::masFeed, stringResource(R.string.entreno_feed_pie), io.github.fogonapps.social.ui.R.string.social_red_feed_vacio_general) { p, _ -> TarjetaPublicacion(interfaz, p) }
 }
 
 @Composable

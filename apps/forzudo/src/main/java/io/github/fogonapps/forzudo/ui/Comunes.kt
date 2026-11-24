@@ -179,8 +179,11 @@ fun Trio(vararg datos: Pair<String, String>) {
     Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         datos.forEach { (k, v) ->
             Column(Modifier.weight(1f)) {
-                Text(k, style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                Text(v, style = MaterialTheme.typography.displaySmall.copy(fontSize = 24.sp), color = f.texto, maxLines = 1)
+                // Cada dato en su línea: con cifras enormes o letra grande se achica en vez de cortarse o tapar a los otros.
+                Text(k, style = MaterialTheme.typography.labelMedium, color = f.textoSuave, maxLines = 1, softWrap = false,
+                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelMedium.fontSize))
+                Text(v, style = MaterialTheme.typography.displaySmall, color = f.texto, maxLines = 1, softWrap = false,
+                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 24.sp))
             }
         }
     }

@@ -146,6 +146,31 @@ class ChatSocial(
     val confirmaLectura: StateFlow<Boolean> = _confirmaLectura
     private val _enviando = MutableStateFlow(false)
     val enviando: StateFlow<Boolean> = _enviando
+    private val pendientes = PendientesChat()
+    /** Conversación → lo escrito que no se pudo entregar (ver [PendientesChat]). */
+    val sinEntregar: StateFlow<Map<String, PendientesChat.SinEntregar>> = pendientes.estado
+
+    /** Lo que no salió en la conversación con [usuario], para devolverlo al campo; null si no hay o era de otra cuenta. */
+    fun tomarSinEntregar(usuario: String): PendientesChat.SinEntregar? = pendientes.tomar(usuario, this.usuario.value)
+
+    /** Olvida lo que no salió con [usuario] y su borrador (al bloquearlo o borrar la conversación). */
+    fun olvidarSinEntregar(usuario: String) {
+        pendientes.olvidar(usuario)
+        scope.launch(Dispatchers.IO) { borradores.olvidar(usuario) }
+    }
+
+    /** Lo escrito y no enviado en cada conversación, en este teléfono (ver [BorradoresChat]). */
+    private val borradores = BorradoresChat(BorradoresChat.archivoDe(archivo))
+
+    /** El borrador de la conversación con [usuario], de la cuenta abierta; vacío si no hay. */
+    suspend fun borrador(usuario: String): String = withContext(Dispatchers.IO) { borradores.de(this@ChatSocial.usuario.value, usuario) }
+
+    /** Guarda lo que hay escrito para [usuario] (vacío lo quita: así se borra al enviar). */
+    suspend fun guardarBorrador(usuario: String, texto: String) = withContext(Dispatchers.IO) { borradores.poner(this@ChatSocial.usuario.value, usuario, texto) }
+
+    /** Cuántas veces se olvidó lo escrito a cada persona (ver [PendientesChat.descartes]): la pantalla vacía el campo al cambiar. */
+    val descartes: StateFlow<Map<String, Int>> = pendientes.descartes
+    fun vecesOlvidada(usuario: String): Int = pendientes.vecesOlvidada(usuario)
     private val llavesDe = HashMap<String, LlavesPublicas>()
 
     init {
@@ -154,6 +179,9 @@ class ChatSocial(
             // Al cerrar o borrar la cuenta, el chat de este teléfono se va con ella.
             kotlinx.coroutines.flow.combine(usuario, caja.permisoRed) { usuario, permiso -> usuario to permiso }
                 .collect { (u, permiso) ->
+                    // Sin sesión no quedan borradores, aunque no hubiera llaves todavía (también los de una sesión
+                    // que se cerró con el chat sin abrir).
+                    if (u == null) withContext(Dispatchers.IO) { borradores.olvidarTodo() }
                     if (u == null && caja.chatLlaves != null) borrarTodo()
                     else if (u != null && permiso) asegurarLlaves()
                 }
@@ -234,19 +262,33 @@ class ChatSocial(
         Cifrado.numeroSeguridad(Cifrado.publicas(p), llaves(usuario))
     }.getOrNull()
 
-    /** Manda unas palabras, una obra (como tarjeta) o un sticker a [usuario]; con [responde], como respuesta a ese mensaje. */
+    /**
+     * Manda unas palabras, una obra (como tarjeta) o un sticker a [usuario]; con [responde], como respuesta a ese mensaje.
+     * Con [devolverSiFalla], lo escrito que no se pudo entregar queda en [sinEntregar] para volver al campo.
+     */
     fun enviar(usuario: String, texto: String, obra: JsonObject? = null, responde: MensajeChat? = null, sticker: String? = null, tamano: Int = 1,
-               foto: String? = null, audio: String? = null, segundos: Int = 0) = scope.launch {
-        val yo = this@ChatSocial.usuario.value ?: return@launch
-        val ahora = System.currentTimeMillis()
-        val o = obra
-        val r = responde?.let { Respuesta(it.clave, if (it.mio) yo else usuario, resumenCorto(it), sticker = it.sticker != null) }
-        val id = "m${ahora.toString(36)}"
-        val z = tamano.coerceIn(0, 2).takeIf { sticker != null && it != 1 }
-        val d = segundos.takeIf { audio != null }
-        val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z, f = foto, a = audio, d = d)
-        if (mandar(usuario, yo, c)) agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1,
-            foto = foto, audio = audio, segundos = d ?: 0))
+               foto: String? = null, audio: String? = null, segundos: Int = 0, devolverSiFalla: Boolean = false): kotlinx.coroutines.Job {
+        // Cuándo se escribió, antes de esperar a nada: si fallan dos seguidos, vuelven en ese orden.
+        val escrito = System.nanoTime()
+        if (devolverSiFalla) pendientes.empezar(usuario)
+        return scope.launch {
+            try {
+                // Sin sesión no se devuelve nada: lo escrito era de una cuenta que ya no está.
+                val yo = this@ChatSocial.usuario.value ?: return@launch
+                fun devolver() { if (devolverSiFalla) pendientes.guardar(usuario, yo, escrito, texto, responde) }
+                val ahora = System.currentTimeMillis()
+                val o = obra
+                val r = responde?.let { Respuesta(it.clave, if (it.mio) yo else usuario, resumenCorto(it), sticker = it.sticker != null) }
+                val id = "m${ahora.toString(36)}"
+                val z = tamano.coerceIn(0, 2).takeIf { sticker != null && it != 1 }
+                val d = segundos.takeIf { audio != null }
+                val c = Contenido(texto.trim().take(4000), o, ahora, i = id, r = r, s = sticker, z = z, f = foto, a = audio, d = d)
+                val salio = try { mandar(usuario, yo, c) } catch (x: Throwable) { devolver(); throw x }
+                if (!salio) { devolver(); return@launch }
+                agregar(usuario, MensajeChat(id, true, ahora, texto.trim(), o, leido = true, k = id, responde = r, sticker = sticker, tamano = z ?: 1,
+                    foto = foto, audio = audio, segundos = d ?: 0))
+            } finally { if (devolverSiFalla) pendientes.terminar(usuario) }
+        }
     }
 
     /** Reaccionar a un mensaje con un emoji (o quitar la reacción, con ""), como en Instagram. */
@@ -491,6 +533,8 @@ class ChatSocial(
     }
 
     fun borrarConversacion(usuario: String) = scope.launch {
+        pendientes.olvidar(usuario)
+        withContext(Dispatchers.IO) { borradores.olvidar(usuario) }
         candado.withLock { val c = _chats.value; poner(c.copy(conversaciones = c.conversaciones - usuario)); guardar() }
     }
 
@@ -506,7 +550,8 @@ class ChatSocial(
     }
 
     private suspend fun borrarTodo() {
-        candado.withLock { poner(Chats()); withContext(Dispatchers.IO) { archivo.delete() } }
+        candado.withLock { poner(Chats()); withContext(Dispatchers.IO) { archivo.delete(); borradores.olvidarTodo() } }
+        pendientes.olvidarTodo()
         caja.chatLlaves = null
         llavesDe.clear()
     }

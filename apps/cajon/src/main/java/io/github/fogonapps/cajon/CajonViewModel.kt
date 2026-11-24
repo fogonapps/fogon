@@ -72,6 +72,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.currentCoroutineContext
 import java.time.LocalDate
 import kotlin.random.Random
 
@@ -93,6 +94,35 @@ internal fun <T> Result<T>.avisarFallo(avisar: (Int) -> Unit): Result<T> =
 internal fun resumirAvisos(avisos: Collection<Int>): List<Int> =
     if (R.string.buscar_sin_red in avisos) listOf(R.string.buscar_sin_red) else avisos.distinct()
 
+/** Lo más que dura una búsqueda: después, la barra se apaga y, si algo quedó sin terminar, sale el aviso. */
+internal const val TOPE_BUSQUEDA = 20_000L
+
+/**
+ * Corre las [fuentes] de una búsqueda (cada una con [fuenteDeBusqueda]) y, cuando terminan todas o vence [tope], deja
+ * [estado] sin nada cargando. Si vence con algo cargando, lo cancela sin esperarlo y avisa con «No se pudo buscar».
+ * Es la garantía de que la barra se apaga, haga lo que haga una fuente: también una que no responde a la cancelación o
+ * que escribe el estado con una copia vieja y vuelve a poner como «cargando» una fuente que ya terminó.
+ */
+internal suspend fun busquedaConTope(estado: MutableStateFlow<Busqueda>, tope: Long = TOPE_BUSQUEDA, fuentes: CoroutineScope.() -> Unit) {
+    // Hija de esta corrutina (una búsqueda nueva la cancela), pero sin esperarla al vencer el tope.
+    val trabajo = CoroutineScope(currentCoroutineContext()).launch { fuentes() }
+    if (withTimeoutOrNull(tope) { trabajo.join() } == null) {
+        trabajo.cancel()
+        if (estado.value.cargando.isNotEmpty()) estado.value = estado.value.copy(errores = estado.value.errores + ("tope" to R.string.buscar_fallo))
+    }
+    estado.value = estado.value.copy(cargando = emptySet())
+}
+
+/** Una fuente de la búsqueda: se marca como cargando, junta sus avisos en [estado] y siempre se desmarca al terminar. */
+internal fun CoroutineScope.fuenteDeBusqueda(estado: MutableStateFlow<Busqueda>, nombre: String, trabajo: suspend CoroutineScope.() -> Unit): Job = launch {
+    estado.value = estado.value.copy(cargando = estado.value.cargando + nombre)
+    buscarEnFuente(
+        error = { aviso -> estado.value = estado.value.copy(errores = estado.value.errores + (nombre to aviso)) },
+        terminar = { estado.value = estado.value.copy(cargando = estado.value.cargando - nombre) },
+        trabajo = trabajo,
+    )
+}
+
 internal suspend fun buscarEnFuente(
     error: (Int) -> Unit,
     terminar: () -> Unit,
@@ -108,8 +138,11 @@ internal suspend fun buscarEnFuente(
 sealed interface Pantalla {
     data object OidosPendientes : Pantalla
     /** Buscar algo para agregar, empezando en la [seccion] (ver [Secciones]). */
-    /** [elegirPara]: "destacado:<hueco>" o "favorita" si se busca para ponerlo en el perfil (no para ver la previa). */
-    data class Buscar(val seccion: String, val elegirPara: String? = null) : Pantalla
+    /**
+     * [elegirPara]: "destacado:<hueco>" o "favorita" si se busca para ponerlo en el perfil (no para ver la previa).
+     * [paraMensaje]: se busca a alguien para escribirle; solo salen personas y tocar una abre la conversación.
+     */
+    data class Buscar(val seccion: String, val elegirPara: String? = null, val paraMensaje: Boolean = false) : Pantalla
     /**
      * Una obra encontrada afuera, antes de agregarla. [personas]: quienes la firman, si la fuente los da (todos los
      * artistas de un álbum); no se guardan en la obra, solo sirven para abrir su ficha sin guardarlos.
@@ -786,7 +819,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private fun cambiar(f: (Estado) -> Estado) {
         if (!vigenciaPerfil.vigente()) return
         val e = _estado.value ?: return
-        _estado.value = f(e)
+        // Una obra importada en silencio deja de estarlo cuando la persona le cambia algo suyo.
+        _estado.value = L.alTocar(e, f(e))
         guardado?.cancel()
         guardado = viewModelScope.launch { delay(300); guardarYa() }
         if (caja.llaveCajon != null) { syncJob?.cancel(); syncJob = viewModelScope.launch { delay(4000); sincronizar() } }
@@ -812,7 +846,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             elegirObraResena(_busqueda.value.elegirPara!!.removePrefix("resena:"), p.id); return
         }
         // Cada búsqueda nueva empieza en blanco, en el tipo pedido.
-        if (p is Pantalla.Buscar) { buscando?.cancel(); _busqueda.value = Busqueda(seccion = Secciones.paraBuscar(p.seccion), elegirPara = p.elegirPara) }
+        if (p is Pantalla.Buscar) {
+            buscando?.cancel()
+            if (p.paraMensaje) busquedaAntesDelMensaje = _busqueda.value
+            _busqueda.value = Busqueda(seccion = Secciones.paraBuscar(p.seccion), elegirPara = p.elegirPara)
+        }
         // Buscando para el perfil: tocar un artista lo elige en vez de abrir su ficha.
         if (p is Pantalla.PreviaArtista && _pila.value.lastOrNull() is Pantalla.Buscar) _busqueda.value.elegirPara?.let {
             if (it.startsWith("resena:")) {
@@ -826,9 +864,22 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         _pila.value = _pila.value + p
     }
-    fun cerrar() { _pila.value = _pila.value.dropLast(1) }
-    fun reemplazar(p: Pantalla) { _pila.value = _pila.value.dropLast(1) + p }
-    fun irA(p: Pestana) { _pila.value = emptyList(); _pestana.value = p }
+    fun cerrar() { salirDe(_pila.value.lastOrNull()); _pila.value = _pila.value.dropLast(1) }
+    fun reemplazar(p: Pantalla) { salirDe(_pila.value.lastOrNull()); _pila.value = _pila.value.dropLast(1) + p }
+
+    /** La búsqueda que había antes de buscar a quién escribirle: al salir, la de abajo vuelve como estaba. */
+    private var busquedaAntesDelMensaje: Busqueda? = null
+
+    private fun salirDe(p: Pantalla?) {
+        if (p !is Pantalla.Buscar || !p.paraMensaje) return
+        val antes = busquedaAntesDelMensaje ?: return
+        busquedaAntesDelMensaje = null
+        buscando?.cancel()
+        _busqueda.value = antes.copy(cargando = emptySet())
+        // Si la de abajo seguía buscando cuando se cortó, se vuelve a buscar.
+        if (antes.cargando.isNotEmpty()) buscar(antes.texto)
+    }
+    fun irA(p: Pestana) { busquedaAntesDelMensaje = null; _pila.value = emptyList(); _pestana.value = p }
     fun atras() { if (_pila.value.isNotEmpty()) cerrar() else _pestana.value = Pestana.INICIO }
 
     /* ----- Tutorial y perfil ----- */
@@ -874,132 +925,136 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         buscando = viewModelScope.launch {
             delay(250) // espera a que la persona deje de escribir
             _busqueda.value = Busqueda(texto = texto, seccion = seccion, elegirPara = _busqueda.value.elegirPara)
-            fun fuente(nombre: String, trabajo: suspend CoroutineScope.() -> Unit) = launch {
-                _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando + nombre)
-                buscarEnFuente(
-                    error = { aviso -> _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to aviso)) },
-                    terminar = { _busqueda.value = _busqueda.value.copy(cargando = _busqueda.value.cargando - nombre) },
-                    trabajo = trabajo,
-                )
-            }
-            // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
-            if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) fuente("personas") {
-                val gente = caja.clienteSocial().buscar(t)
-                _busqueda.value = _busqueda.value.copy(personas = gente)
-            }
-            if (seccion == Secciones.PERSONAS) return@launch
-            fun aviso(nombre: String): (Int) -> Unit = { mensaje ->
-                _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to mensaje))
-            }
-            suspend fun consulta(nombre: String, traer: suspend () -> List<Encontrado>): List<Encontrado> =
-                runCatching { traer() }.avisarFallo(aviso(nombre)).getOrDefault(emptyList())
-            fun poner(r: List<Encontrado>) {
-                val grupos = r.groupBy { it.tipo }
-                _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)
-            }
-            // ¿Es un género? Entonces se busca lo más visto, leído o escuchado de ese género en cada fuente (desde
-            // la 1.15 en todas las secciones; antes, solo en la música). Primero sale lo del cajón que lo lleva.
-            val deCine = seccion == Secciones.TODO || seccion in Secciones.DE_CINE
-            val generoCine = if (deCine) Generos.cine(t) else null
-            val generoLibro = if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) Generos.libro(t) else null
-            val musical = seccion == Secciones.TODO || seccion == Secciones.MUSICA
-            val genero = if (musical) L.genero(t, generosDelCajon()) else null
-            val local = genero ?: _estado.value?.let { e -> L.etiquetasDelCajon(e, Secciones.tipos(seccion).takeIf { seccion != Secciones.TODO }).firstOrNull { L.tituloLimpio(it) == L.tituloLimpio(t) } }
-                ?: generoCine?.let { t.trim() } ?: generoLibro?.let { t.trim() }
-            if (local != null) _busqueda.value = _busqueda.value.copy(genero = local)
-            if (deCine) {
-                val clave = claveCine
-                if (clave == null) _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + ("tmdb" to R.string.buscar_falta_tmdb))
-                else fuente("tmdb") {
-                    // Lo de la sección y los directores, a la vez. En "Series" sin los animes; en "Animes", series y
-                    // películas animadas japonesas.
-                    val tm = Tmdb(clave)
-                    // Un género: el de la tabla o, si no está, uno de los nombres de géneros de TMDB ("Acción y aventura").
-                    val g = generoCine ?: runCatching { tm.generos(idioma()) }.avisarFallo(aviso("generos")).getOrDefault(emptyMap()).entries
-                        .firstOrNull { L.tituloLimpio(it.value) == L.tituloLimpio(t) }?.let { (id, nombre) -> Generos.Cine(listOf(nombre), "$id", "$id") }
-                    if (g != null) {
-                        if (generoCine == null) _busqueda.value = _busqueda.value.copy(genero = _busqueda.value.genero ?: g.nombres.first())
-                        val anime = seccion == Secciones.ANIMES
-                        suspend fun de(clase: String) = consulta("tmdb_$clase") {
-                            if (clase == "movie") tm.descubrir(clase, g.peliculas, g.clavePeliculas, anime, idioma())
-                            else tm.descubrir(clase, g.series, g.claveSeries, anime, idioma())
-                        }
-                        when (seccion) {
-                            Secciones.PELICULAS -> poner(de("movie").filter { it.tipo == Tipos.PELICULA })
-                            Secciones.SERIES -> poner(de("tv").filter { it.tipo == Tipos.SERIE })
-                            Secciones.ANIMES -> { val series = async { de("tv") }; poner(series.await() + de("movie")) }
-                            else -> { val series = async { de("tv") }; poner(de("movie")); poner(series.await()) }
-                        }
-                        return@fuente
-                    }
-                    fuente("directores") {
-                        _busqueda.value = _busqueda.value.copy(directores = tm.buscarDirectores(t, idioma()))
+            busquedaConTope(_busqueda) { buscarEnFuentes(t, seccion) }
+        }
+    }
+
+    /** Lanza una tarea por cada fuente de la [seccion] (ver [buscar]); cada una pone sus resultados al llegar. */
+    private fun CoroutineScope.buscarEnFuentes(t: String, seccion: String) {
+        fun fuente(nombre: String, trabajo: suspend CoroutineScope.() -> Unit) = fuenteDeBusqueda(_busqueda, nombre, trabajo)
+        // Personas de la red: en "Todo" y en "Personas" (en "Personas", nada más).
+        if (seccion == Secciones.TODO || seccion == Secciones.PERSONAS) fuente("personas") {
+            val gente = caja.clienteSocial().buscar(t)
+            _busqueda.value = _busqueda.value.copy(personas = gente)
+        }
+        if (seccion == Secciones.PERSONAS) return
+        fun aviso(nombre: String): (Int) -> Unit = { mensaje ->
+            _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + (nombre to mensaje))
+        }
+        suspend fun consulta(nombre: String, traer: suspend () -> List<Encontrado>): List<Encontrado> =
+            runCatching { traer() }.avisarFallo(aviso(nombre)).getOrDefault(emptyList())
+        fun poner(r: List<Encontrado>) {
+            val grupos = r.groupBy { it.tipo }
+            _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)
+        }
+        // ¿Es un género? Entonces se busca lo más visto, leído o escuchado de ese género en cada fuente (desde
+        // la 1.15 en todas las secciones; antes, solo en la música). Primero sale lo del cajón que lo lleva.
+        val deCine = seccion == Secciones.TODO || seccion in Secciones.DE_CINE
+        val generoCine = if (deCine) Generos.cine(t) else null
+        val generoLibro = if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) Generos.libro(t) else null
+        val musical = seccion == Secciones.TODO || seccion == Secciones.MUSICA
+        val genero = if (musical) L.genero(t, generosDelCajon()) else null
+        val local = genero ?: _estado.value?.let { e -> L.etiquetasDelCajon(e, Secciones.tipos(seccion).takeIf { seccion != Secciones.TODO }).firstOrNull { L.tituloLimpio(it) == L.tituloLimpio(t) } }
+            ?: generoCine?.let { t.trim() } ?: generoLibro?.let { t.trim() }
+        if (local != null) _busqueda.value = _busqueda.value.copy(genero = local)
+        if (deCine) {
+            val clave = claveCine
+            if (clave == null) _busqueda.value = _busqueda.value.copy(errores = _busqueda.value.errores + ("tmdb" to R.string.buscar_falta_tmdb))
+            else fuente("tmdb") {
+                // Lo de la sección y los directores, a la vez. En "Series" sin los animes; en "Animes", series y
+                // películas animadas japonesas.
+                val tm = Tmdb(clave)
+                // Un género: el de la tabla o, si no está, uno de los nombres de géneros de TMDB ("Acción y aventura").
+                val g = generoCine ?: runCatching { tm.generos(idioma()) }.avisarFallo(aviso("generos")).getOrDefault(emptyMap()).entries
+                    .firstOrNull { L.tituloLimpio(it.value) == L.tituloLimpio(t) }?.let { (id, nombre) -> Generos.Cine(listOf(nombre), "$id", "$id") }
+                if (g != null) {
+                    if (generoCine == null) _busqueda.value = _busqueda.value.copy(genero = _busqueda.value.genero ?: g.nombres.first())
+                    val anime = seccion == Secciones.ANIMES
+                    suspend fun de(clase: String) = consulta("tmdb_$clase") {
+                        if (clase == "movie") tm.descubrir(clase, g.peliculas, g.clavePeliculas, anime, idioma())
+                        else tm.descubrir(clase, g.series, g.claveSeries, anime, idioma())
                     }
                     when (seccion) {
-                        Secciones.PELICULAS -> poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) }.filter { it.tipo == Tipos.PELICULA })
-                        Secciones.SERIES -> poner(consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) }.filter { it.tipo == Tipos.SERIE })
-                        Secciones.ANIMES -> poner(consulta("tmdb_anime") { tm.buscar(t, Tipos.ANIME, idioma()) })
-                        else -> {
-                            val series = async { consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) } }
-                            poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) })
-                            poner(series.await())
-                        }
+                        Secciones.PELICULAS -> poner(de("movie").filter { it.tipo == Tipos.PELICULA })
+                        Secciones.SERIES -> poner(de("tv").filter { it.tipo == Tipos.SERIE })
+                        Secciones.ANIMES -> { val series = async { de("tv") }; poner(series.await() + de("movie")) }
+                        else -> { val series = async { de("tv") }; poner(de("movie")); poner(series.await()) }
+                    }
+                    return@fuente
+                }
+                fuente("directores") {
+                    // Primero la consulta y después el estado: `_busqueda.value.copy(directores = consulta())` toma la
+                    // copia antes de esperar y, al volver, borra lo que llegó mientras tanto (las películas) y vuelve
+                    // a poner como «cargando» las fuentes que ya terminaron.
+                    val directores = tm.buscarDirectores(t, idioma())
+                    _busqueda.value = _busqueda.value.copy(directores = directores)
+                }
+                when (seccion) {
+                    Secciones.PELICULAS -> poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) }.filter { it.tipo == Tipos.PELICULA })
+                    Secciones.SERIES -> poner(consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) }.filter { it.tipo == Tipos.SERIE })
+                    Secciones.ANIMES -> poner(consulta("tmdb_anime") { tm.buscar(t, Tipos.ANIME, idioma()) })
+                    else -> {
+                        val series = async { consulta("tmdb_serie") { tm.buscar(t, Tipos.SERIE, idioma()) } }
+                        poner(consulta("tmdb_pelicula") { tm.buscar(t, Tipos.PELICULA, idioma()) })
+                        poner(series.await())
                     }
                 }
             }
-            if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") {
-                if (generoLibro != null) { poner(OpenLibrary.porTema(generoLibro.tema, idioma())); return@fuente }
-                fuente("obras_libros") {
-                    val libros = OpenLibrary.buscar(t, idioma())
-                    poner(libros)
-                    // Después, la portada de una edición en el idioma de la app para los primeros resultados (a la vez).
-                    val primeros = libros.take(10)
-                    val mejores = kotlinx.coroutines.coroutineScope {
-                        primeros.map { l -> async { runCatching { OpenLibrary.portadaEnIdioma(l.fuente, idioma()) }.getOrNull() } }.awaitAll()
-                    }
-                    val cambios = primeros.zip(mejores).mapNotNull { (l, p) -> if (!p.isNullOrBlank() && p != l.portada) l.fuente to p else null }.toMap()
-                    if (cambios.isNotEmpty()) _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras.mapValues { (_, lista) ->
-                        lista.map { e -> cambios[e.fuente]?.let { e.copy(portada = it) } ?: e }
-                    })
-                }
-                // Los escritores, con su foto de Wikimedia Commons (por su id de Open Library en Wikidata).
-                val autores = runCatching { OpenLibrary.buscarAutores(t) }.avisarFallo(aviso("autores")).getOrDefault(emptyList())
-                _busqueda.value = _busqueda.value.copy(autores = autores)
-                val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.avisarFallo(aviso("fotos_autores")).getOrDefault(emptyMap())
-                if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
+        }
+        if (seccion == Secciones.TODO || seccion == Secciones.LIBROS) fuente("libros") {
+            if (generoLibro != null) { poner(OpenLibrary.porTema(generoLibro.tema, idioma())); return@fuente }
+            fuente("obras_libros") {
+                val libros = OpenLibrary.buscar(t, idioma())
+                poner(libros)
+                // Después, la portada de una edición en el idioma de la app para los primeros resultados (a la vez).
+                // Es un adorno: con tope propio, para que unas ediciones lentas (Open Library tarda hasta 18 s con
+                // diez) no hagan vencer la fuente y salga «No se pudo buscar» con los libros ya a la vista.
+                val primeros = libros.take(10)
+                val mejores = withTimeoutOrNull(8_000) {
+                    primeros.map { l -> async { try { OpenLibrary.portadaEnIdioma(l.fuente, idioma()) } catch (x: CancellationException) { throw x } catch (_: Exception) { null } } }.awaitAll()
+                } ?: return@fuente
+                val cambios = primeros.zip(mejores).mapNotNull { (l, p) -> if (!p.isNullOrBlank() && p != l.portada) l.fuente to p else null }.toMap()
+                if (cambios.isNotEmpty()) _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras.mapValues { (_, lista) ->
+                    lista.map { e -> cambios[e.fuente]?.let { e.copy(portada = it) } ?: e }
+                })
             }
-            // Juegos (IGDB; Wikidata de respaldo y para estudios y géneros): en su sección y, si se usan los juegos, en «Todo». Un género o un estudio busca sus juegos.
-            val conJuegos = seccion == Secciones.JUEGOS || seccion == Secciones.TODO && _estado.value?.let { Tipos.JUEGO in Secciones.tiposVisibles(it) } == true
-            if (conJuegos) fuente("juegos") {
-                val e = _estado.value
-                val generoJuego = if (seccion == Secciones.JUEGOS) WikidataJuegos.generoConocido(t, generosJuegos("es"), generosJuegos("en")) else null
-                if (generoJuego != null && _busqueda.value.genero == null) _busqueda.value = _busqueda.value.copy(genero = t)
-                when {
-                    generoJuego != null -> poner(Igdb.desdeWikidata(WikidataJuegos.deGenero(generoJuego, idioma())))
-                    // Un género de los juegos del cajón que no está entre los conocidos: solo lo del cajón (buscarlo
-                    // como título traería juegos que se llaman así). En «Todo», un género de otro tipo tampoco se busca aquí.
-                    local != null -> Unit
-                    esEstudio(t, e) -> poner(Igdb.desdeWikidata(WikidataJuegos.deEstudio(t, idioma())).ifEmpty { buscarJuegos(t) })
-                    else -> poner(buscarJuegos(t))
-                }
+            // Los escritores, con su foto de Wikimedia Commons (por su id de Open Library en Wikidata).
+            val autores = runCatching { OpenLibrary.buscarAutores(t) }.avisarFallo(aviso("autores")).getOrDefault(emptyList())
+            _busqueda.value = _busqueda.value.copy(autores = autores)
+            val fotos = runCatching { Wikimedia.fotos(autores.map { it.fuente.removePrefix("ol:author:") }, "P648") }.avisarFallo(aviso("fotos_autores")).getOrDefault(emptyMap())
+            if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(autores = autores.map { a -> fotos[a.fuente.removePrefix("ol:author:")]?.let { a.copy(foto = it) } ?: a })
+        }
+        // Juegos (IGDB; Wikidata de respaldo y para estudios y géneros): en su sección y, si se usan los juegos, en «Todo». Un género o un estudio busca sus juegos.
+        val conJuegos = seccion == Secciones.JUEGOS || seccion == Secciones.TODO && _estado.value?.let { Tipos.JUEGO in Secciones.tiposVisibles(it) } == true
+        if (conJuegos) fuente("juegos") {
+            val e = _estado.value
+            val generoJuego = if (seccion == Secciones.JUEGOS) WikidataJuegos.generoConocido(t, generosJuegos("es"), generosJuegos("en")) else null
+            if (generoJuego != null && _busqueda.value.genero == null) _busqueda.value = _busqueda.value.copy(genero = t)
+            when {
+                generoJuego != null -> poner(Igdb.desdeWikidata(WikidataJuegos.deGenero(generoJuego, idioma())))
+                // Un género de los juegos del cajón que no está entre los conocidos: solo lo del cajón (buscarlo
+                // como título traería juegos que se llaman así). En «Todo», un género de otro tipo tampoco se busca aquí.
+                local != null -> Unit
+                esEstudio(t, e) -> poner(Igdb.desdeWikidata(WikidataJuegos.deEstudio(t, idioma())).ifEmpty { buscarJuegos(t) })
+                else -> poner(buscarJuegos(t))
             }
-            // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
-            if (musical) fuente("canciones") {
-                val c = red.canciones(t).take(if (seccion == Secciones.MUSICA) 15 else 5)
-                _busqueda.value = _busqueda.value.copy(canciones = c)
-            }
-            if (musical) fuente("musica") {
-                fuente("albumes") {
-                    val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
-                    poner(if (etiqueta != null) MusicBrainz.albumesPorGenero(etiqueta) else MusicBrainz.buscarAlbumes(t))
-                }
-                // Los artistas y los álbumes conservan sus resultados por separado.
+        }
+        // En la música, un género busca artistas y álbumes con esa etiqueta de MusicBrainz (como en las apps de música).
+        if (musical) fuente("canciones") {
+            val c = red.canciones(t).take(if (seccion == Secciones.MUSICA) 15 else 5)
+            _busqueda.value = _busqueda.value.copy(canciones = c)
+        }
+        if (musical) fuente("musica") {
+            fuente("albumes") {
                 val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
-                val artistas = if (etiqueta != null) MusicBrainz.artistasPorGenero(etiqueta) else MusicBrainz.buscarArtistas(t)
-                _busqueda.value = _busqueda.value.copy(artistas = artistas)
-                val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.avisarFallo(aviso("fotos_artistas")).getOrDefault(emptyMap())
-                if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
+                poner(if (etiqueta != null) MusicBrainz.albumesPorGenero(etiqueta) else MusicBrainz.buscarAlbumes(t))
             }
+            // Los artistas y los álbumes conservan sus resultados por separado.
+            val etiqueta = genero?.let { L.etiquetaMusicBrainz(it) }
+            val artistas = if (etiqueta != null) MusicBrainz.artistasPorGenero(etiqueta) else MusicBrainz.buscarArtistas(t)
+            _busqueda.value = _busqueda.value.copy(artistas = artistas)
+            val fotos = runCatching { Wikimedia.fotos(artistas.take(8).map { it.mbid }) }.avisarFallo(aviso("fotos_artistas")).getOrDefault(emptyMap())
+            if (fotos.isNotEmpty()) _busqueda.value = _busqueda.value.copy(artistas = artistas.map { a -> fotos[a.mbid]?.let { a.copy(foto = it) } ?: a })
         }
     }
 
@@ -2165,6 +2220,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val libros: List<Pair<Encontrado, Rec.Por>> = emptyList(),
         val pendientes: List<Obra> = emptyList(),
         val avisos: List<Int> = emptyList(),
+        /** Mientras se consultan las fuentes (para no decir «vacío» antes de tiempo). */
+        val cargando: Boolean = false,
     ) { val vacias get() = cine.isEmpty() && artistas.isEmpty() && libros.isEmpty() && pendientes.isEmpty() }
 
     private val _recomendaciones = MutableStateFlow<Recomendaciones?>(null)
@@ -2198,7 +2255,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val titulos = e.obras.map { L.tituloLimpio(it.titulo) }.toSet()
         val nombres = e.artistas.map { L.tituloLimpio(it.nombre) }.toSet()
         val cineQuiere = listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME).filter { perfil.quiere(it) }
-        _recomendaciones.value = Recomendaciones(pendientes = Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) })
+        _recomendaciones.value = Recomendaciones(pendientes = Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, cargando = true)
         recomendando = viewModelScope.launch {
             val avisos = mutableListOf<Int>()
             val registrar: (Int) -> Unit = { avisos.add(it) }
@@ -2280,7 +2337,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     Rec.elegir(c, perfil, vistos, 12)
                 }.avisarFallo(registrar).getOrDefault(emptyList())
             }
-            val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, avisos = avisos.distinct())
+            val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, avisos = resumirAvisos(avisos))
             _recomendaciones.value = r
             historial.mostrado(r.cine.map { "obra:" + it.first.fuente } + r.libros.map { "obra:" + it.first.fuente } + r.artistas.map { Rec.clavePersona(it.first.nombre) })
         }
@@ -3190,7 +3247,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun importarLastfm(fecha: String) {
         if (_lastfmAvance.value != null || _lastfmResumen.value == null) return
         val desde = if (fecha.isBlank()) 0L else try {
-            java.time.LocalDate.parse(fecha).atStartOfDay(java.time.ZoneOffset.UTC).toEpochSecond().also {
+            java.time.LocalDate.parse(fecha).atStartOfDay(java.time.ZoneId.systemDefault()).toEpochSecond().also {
                 require(it >= 0 && it <= System.currentTimeMillis() / 1000)
             }
         } catch (_: Exception) { avisar(tx(R.string.lastfm_fecha_error)); return }
@@ -3211,6 +3268,79 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                 if (isActive) _lastfmAvance.value = null
                 if (vigenciaPerfil.vigente()) procesarOidos()
             }
+        }
+    }
+
+    /**
+     * Cómo va la importación de Steam: [trabajando] (con [fichas] de [totalFichas] traídas) o el [error] del último
+     * intento (los de [io.github.fogonapps.cajon.datos.Steam]), que la pantalla explica con su botón de reintentar.
+     */
+    data class PasoSteam(val trabajando: Boolean = false, val fichas: Int = 0, val totalFichas: Int = 0, val error: String? = null)
+    private val _steam = MutableStateFlow<PasoSteam?>(null)
+    val steam: StateFlow<PasoSteam?> = _steam
+    private var steamTrabajo: kotlinx.coroutines.Job? = null
+
+    fun cancelarSteam() { steamTrabajo?.cancel(); _steam.value = null }
+    fun editarSteam() { if (_steam.value?.trabajando != true) _steam.value = null }
+
+    /**
+     * Trae la biblioteca de Steam de [perfil] (el perfil sale del teléfono solo aquí, al tocar «Importar»): las fichas
+     * de IGDB de los juegos nuevos en tandas de 50, los `wd:` del cajón que ya apuntan a una de esas fichas (para no
+     * repetirlos) y después [io.github.fogonapps.cajon.datos.Steam.sumar]. Al final dice cuántos trajo, cuántos
+     * actualizó y cuántos quedaron sin ficha.
+     */
+    fun importarSteam(perfil: String) {
+        val S = io.github.fogonapps.cajon.datos.Steam
+        if (_steam.value?.trabajando == true || !S.perfilValido(perfil)) return
+        steamTrabajo = viewModelScope.launch {
+            _steam.value = PasoSteam(trabajando = true)
+            try {
+                val biblioteca = S.biblioteca(perfil)
+                val juegos = biblioteca.juegos
+                val e0 = _estado.value ?: run { _steam.value = null; return@launch }
+                // Lo que ya está (o se borró, y no vuelve) no necesita ficha.
+                val enCajon = e0.obras.mapNotNull { Igdb.idDe(it.fuente) }.toSet()
+                val faltan = juegos.mapNotNull { it.igdb }.distinct().filter { it !in enCajon }
+                // Los juegos de Wikidata del cajón: con qué ficha de IGDB se unen (para actualizarlos y no repetirlos).
+                val wd = e0.vivas.filter { it.tipo == Tipos.JUEGO && it.fuente.startsWith("wd:") }
+                val wdConIgdb = HashMap<Long, String>()
+                if (wd.isNotEmpty() && faltan.isNotEmpty()) {
+                    val refs = WikidataJuegos.igdbDeElementos(wd.map { it.fuente.removePrefix("wd:") })
+                    val porSlug = refs.values.filter { it.startsWith("slug:") }.takeIf { it.isNotEmpty() }
+                        ?.let { io.github.fogonapps.cajon.datos.reintentarOcupado { Igdb.porReferencias(it) } }.orEmpty()
+                    wd.forEach { o ->
+                        val ref = refs[o.fuente.removePrefix("wd:")] ?: return@forEach
+                        val id = if (ref.startsWith("id:")) ref.removePrefix("id:").toLongOrNull() else porSlug[ref]?.let { Igdb.idDe(Igdb.fuenteDe(it).orEmpty()) }
+                        if (id != null) wdConIgdb.putIfAbsent(id, o.id)
+                    }
+                }
+                val pedir = faltan.filter { it !in wdConIgdb }
+                val fichas = HashMap<Long, Obra>()
+                pedir.chunked(LOTE_JUEGOS).forEachIndexed { n, tanda ->
+                    // El servidor deja 60 pedidos de IGDB por minuto: una tanda por segundo y, si dice que espere, se espera.
+                    if (n > 0) delay(1100)
+                    io.github.fogonapps.cajon.datos.reintentarOcupado { Igdb.porReferencias(tanda.map { "id:$it" }) }.values.forEach { j ->
+                        runCatching { Igdb.obra(j) }.getOrNull()?.let { o -> Igdb.idDe(o.fuente)?.let { fichas[it] = o } }
+                    }
+                    _steam.value = PasoSteam(trabajando = true, fichas = minOf((n + 1) * LOTE_JUEGOS, pedir.size), totalFichas = pedir.size)
+                }
+                if (!vigenciaPerfil.vigente()) { _steam.value = null; return@launch }
+                var r = io.github.fogonapps.cajon.datos.Steam.Resultado(0, 0, 0)
+                // En español, los datos se vuelven a traer después para tener el resumen de Wikipedia en español.
+                cambiar { e -> val (x, res) = S.sumar(e, juegos, fichas, wdConIgdb, ::nuevoId, ahora(), renovar = idioma() == "es"); r = res; x }
+                _steam.value = null
+                avisar(when {
+                    juegos.isEmpty() -> tx(R.string.steam_vacia)
+                    biblioteca.recortada -> tx(R.string.steam_listo, r.nuevos, r.actualizados, r.sinFicha) + " " +
+                        tx(R.string.steam_recortada, juegos.size, biblioteca.total)
+                    else -> tx(R.string.steam_listo, r.nuevos, r.actualizados, r.sinFicha)
+                })
+                buscarPortadas()
+            } catch (x: kotlinx.coroutines.CancellationException) { throw x
+            } catch (x: io.github.fogonapps.cajon.datos.Steam.Fallo) { _steam.value = PasoSteam(error = x.error)
+            } catch (_: SinRed) { _steam.value = PasoSteam(error = S.SIN_RED)
+            } catch (_: java.io.IOException) { _steam.value = PasoSteam(error = S.SIN_RED)
+            } catch (_: Exception) { _steam.value = PasoSteam(error = S.NO_RESPONDE) }
         }
     }
 

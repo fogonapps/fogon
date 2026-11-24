@@ -208,12 +208,14 @@ fun EditarReceta(vm: CuchaViewModel, e: Estado, p: Pantalla.EditarReceta) {
     var carb by rememberSaveable { mutableStateOf(r?.porPorcion?.carbos?.let { cifra(it, idioma) } ?: "") }
     var gras by rememberSaveable { mutableStateOf(r?.porPorcion?.grasa?.let { cifra(it, idioma) } ?: "") }
 
+    // Una receta de más de un día no tiene sentido: se avisa al escribir y no se deja guardar.
+    val errorMinutos = minutos.toIntOrNull()?.takeIf { it > MAX_MINUTOS_RECETA }?.let { stringResource(R.string.fuera_de_rango, "0", "$MAX_MINUTOS_RECETA") }
     Cabecera(stringResource(if (r == null) R.string.nueva_receta else R.string.editar_receta), vm::cerrar)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.nombre), max = 60)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             CampoNumero(porciones, { porciones = it }, stringResource(R.string.porciones), Modifier.weight(1f))
-            CampoNumero(minutos, { minutos = it }, stringResource(R.string.minutos_campo), Modifier.weight(1f))
+            CampoNumero(minutos, { minutos = it }, stringResource(R.string.minutos_campo), Modifier.weight(1f), error = errorMinutos, maximo = MAX_MINUTOS_RECETA.toDouble())
         }
         Text(stringResource(R.string.para_que_comida), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -263,15 +265,18 @@ fun EditarReceta(vm: CuchaViewModel, e: Estado, p: Pantalla.EditarReceta) {
                 id = r?.id ?: "", es = if (idioma == "en") r?.es?.ifBlank { nombre } ?: nombre else nombre.trim(),
                 en = if (idioma == "en") nombre.trim() else r?.en ?: "",
                 comidas = vm.comidas.filter { it in comidas }, porciones = (porciones.toIntOrNull() ?: 1).coerceIn(1, 50),
-                minutos = minutos.toIntOrNull() ?: 0, ingredientes = ingredientes.toList(),
+                minutos = (minutos.toIntOrNull() ?: 0).coerceIn(0, MAX_MINUTOS_RECETA), ingredientes = ingredientes.toList(),
                 pasosEs = if (idioma == "en") r?.pasosEs ?: emptyList() else lista,
                 pasosEn = if (idioma == "en") lista else r?.pasosEn ?: emptyList(),
                 porPorcion = if (ingredientes.isEmpty()) Nutrientes(numero(kcal) ?: 0.0, numero(prot) ?: 0.0, numero(carb) ?: 0.0, numero(gras) ?: 0.0) else null,
                 nota = nota.trim(),
             ))
-        }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank())
+        }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank() && errorMinutos == null)
     }
 }
+
+/** Lo más que puede tardar una receta: un día. */
+const val MAX_MINUTOS_RECETA = 1440
 
 /** Los gramos de un ingrediente: guarda su propio texto, así se puede borrar y volver a escribir. */
 @Composable

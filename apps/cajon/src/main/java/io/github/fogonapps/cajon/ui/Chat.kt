@@ -111,7 +111,7 @@ fun Chats(vm: CajonViewModel, e: Estado, obra: String?) {
     LaunchedEffect(Unit) { vm.chat.recibir() }
     val o = obra?.let { id -> e.vivas.firstOrNull { it.id == id } }
     Cabecera(stringResource(if (o != null) R.string.chat_mandar_a else R.string.chat_titulo), vm::cerrar) {
-        if (o == null) BotonIcono(Iconos.Lapiz, stringResource(R.string.chat_nuevo), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS)) }
+        if (o == null) BotonIcono(Iconos.Lapiz, stringResource(R.string.chat_nuevo), grande = true) { vm.abrir(Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.PERSONAS, paraMensaje = true)) }
     }
     if (usuario == null) { Pista(stringResource(R.string.red_invita_texto), Modifier.padding(16.dp)); return }
     LaunchedEffect(Unit) { vm.red.cargarHistorias() }

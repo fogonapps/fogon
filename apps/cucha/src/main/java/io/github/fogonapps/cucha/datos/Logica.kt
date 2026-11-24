@@ -111,6 +111,56 @@ class Logica(val base: Base) {
         return refs.distinct().mapNotNull { comible(e, it) }.take(max)
     }
 
+    /* ----- Lo anotado, en el idioma de ahora ----- */
+
+    /**
+     * El nombre de lo anotado en el idioma actual. Lo anotado guarda el nombre del idioma de ese momento; si es el de
+     * fábrica (el del alimento de la base o de la receta, en cualquiera de los dos idiomas), se muestra el del idioma
+     * actual. Un nombre escrito por la persona (anotar rápido, un producto propio) se deja como está.
+     */
+    fun nombreAnotado(e: Estado, a: Anotado, idioma: String): String {
+        val partes = a.ref.split(":", limit = 2)
+        if (partes.size != 2) return a.nombre
+        val id = partes[1]
+        return when (partes[0]) {
+            "a" -> base.alimento(id)?.takeIf { a.nombre == it.es || a.nombre == it.en }?.nombre(idioma)
+            "r" -> listOfNotNull(base.receta(id), e.recetas.firstOrNull { it.id == id })
+                .firstOrNull { a.nombre == it.es || (it.en.isNotBlank() && a.nombre == it.en) }?.nombre(idioma)
+            else -> null
+        } ?: a.nombre
+    }
+
+    /**
+     * El detalle de lo anotado ("2 porciones", "1 taza · 240 g") en el idioma actual, armado otra vez con la cantidad
+     * guardada. [porciones] y [porcionDe] son los textos del idioma actual; [cifra] escribe un número a su manera.
+     * Si el detalle guardado no tiene la forma de fábrica, se deja como está.
+     */
+    fun detalleAnotado(
+        e: Estado, a: Anotado, idioma: String, porciones: (Double) -> String, porcionDe: (String) -> String, cifra: (Double) -> String,
+    ): String {
+        val partes = a.ref.split(":", limit = 2)
+        if (partes.size != 2) return a.detalle
+        val id = partes[1]
+        val conMedida = " · " in a.detalle
+        val numero = Regex("^[0-9.,]+ ")
+        if (!numero.containsMatchIn(a.detalle)) return a.detalle
+        val gramos = "${cifra(a.cantidad)} g"
+        return when (partes[0]) {
+            "r" -> if (!conMedida && a.detalle.trim().count { it == ' ' } == 1) porciones(a.cantidad) else a.detalle
+            "a", "p" -> when {
+                !conMedida -> if (a.detalle.endsWith(" g")) gramos else a.detalle
+                partes[0] == "a" -> {
+                    val medida = a.detalle.substringBefore(" · ").replaceFirst(numero, "")
+                    base.alimento(id)?.porciones?.firstOrNull { medida == it.es.lowercase() || medida == it.en.lowercase() }
+                        ?.let { p -> "${cifra(a.cantidad / p.gramos)} ${p.nombre(idioma).lowercase()} · $gramos" } ?: a.detalle
+                }
+                else -> e.productos.firstOrNull { it.id == id }?.porcionGramos?.takeIf { it > 0 }
+                    ?.let { g -> "${cifra(a.cantidad / g)} ${porcionDe(cifra(g)).lowercase()} · $gramos" } ?: a.detalle
+            }
+            else -> a.detalle
+        }
+    }
+
     /* ----- Plan y mercado ----- */
 
     /** "A" o "B": con [alternar], las semanas pares del año son A y las impares B. */

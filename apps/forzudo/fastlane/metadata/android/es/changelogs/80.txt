@@ -1,0 +1,1 @@
+Pulido: «Registrar mi peso» te lleva directo al campo; el descanso ya no tapa las series en horizontal; volumen y series caben con cifras grandes; la tarjeta de Inicio dice qué entreno está en curso y cuál sigue; cancelar dice «Seguir entrenando» o «Cancelar entreno»; la bienvenida tiene «Volver»; las rutinas de fábrica salen en tu idioma.

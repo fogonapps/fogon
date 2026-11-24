@@ -239,7 +239,7 @@
     <string name="social_cancelar">Cancel</string>
     <string name="social_perfiles_activo">Active</string>
     <string name="social_perfiles_anadir">Add account</string>
-    <string name="social_perfiles_cambiar">Switch account</string>
+    <string name="social_perfiles_cambiar">Profiles on this phone</string>
     <string name="social_perfiles_confirmar">This is the profile you are using: it will be signed out and its data deleted from this phone. The network account will still exist. You can download a JSON backup first.</string>
     <string name="social_perfiles_copia">Download JSON backup</string>
     <string name="social_perfiles_local">Local profile</string>
@@ -254,7 +254,7 @@
     <string name="social_red_conservar_pregunta">Your account will be deleted on %1$s. Do you want to keep it?</string>
     <string name="social_red_explorar">Explore</string>
     <string name="social_red_explorar_vacio">There’s nothing public to explore yet.</string>
-    <string name="social_red_feed_vacio">Here you’ll see what the people you follow watch, read and listen to. Find your people or explore.</string>
+    <string name="social_red_feed_vacio">Here you’ll see what the people you follow watch, read, listen to and play. Find your people or explore.</string>
     <string name="social_red_invita_texto">Create your network account to follow people, see what they share and share yours. The account is optional.</string>
     <string name="social_red_mas">See more</string>
     <string name="social_red_por_borrar">Account scheduled for deletion</string>
@@ -579,7 +579,7 @@
     <string name="cancion_silenciar">Mute profile music</string>
     <string name="cancion_activar">Unmute profile music</string>
     <string name="social_chispas_n">%1$s sparks</string>
-    <string name="social_chispas_explica">Free sparks: welcome, confirmed reports, helpful reviews and soon the seasonal route.</string>
+    <string name="social_chispas_explica">Free sparks: welcome, confirmed reports and helpful reviews.</string>
     <string name="social_tienda_fondos">backgrounds</string>
     <string name="social_tienda_marcos">frames</string>
     <string name="social_equipar_fondos">Backgrounds</string>
@@ -892,4 +892,5 @@
     <string name="contador_tienda_paquete_elegido">Selected a spark pack</string>
     <string name="contador_tienda_tema_comprado">Bought a theme, frame or cover</string>
     <string name="contador_widget_agregado">Added the widget</string>
+    <string name="social_red_feed_vacio_general">Here you’ll see what the people you follow share. Find your people or explore.</string>
 </resources>

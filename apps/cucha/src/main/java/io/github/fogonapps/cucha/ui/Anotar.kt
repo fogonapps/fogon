@@ -78,7 +78,7 @@ fun Anotar(vm: CuchaViewModel, e: Estado, p: Pantalla.Anotar, acciones: Acciones
             Pildora(stringResource(R.string.producto_nuevo), Iconos.Mas) { vm.abrir(Pantalla.EditarProducto(null, p.comida, p.fecha)) }
             Pildora(stringResource(R.string.anotar_rapido), Iconos.Lapiz) { vm.abrir(Pantalla.Rapido(p.comida, p.fecha)) }
         }
-        if (enLaComida.isNotEmpty()) LlevasEn(vm, p, enLaComida)
+        if (enLaComida.isNotEmpty()) LlevasEn(vm, e, p, enLaComida)
         if (texto.isBlank()) Pista(stringResource(if (resultados.isEmpty()) R.string.buscar_vacio else R.string.recientes))
         else if (resultados.isEmpty()) Pista(stringResource(R.string.buscar_nada, texto))
         LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
@@ -141,7 +141,7 @@ fun Cantidad(vm: CuchaViewModel, e: Estado, p: Pantalla.Cantidad) {
     val cantidad = (numero(cuantas) ?: 0.0) * m.valor
     val n = vm.valores(c, cantidad)
     val detalle = when {
-        c is Comible.DeReceta -> "${cifra(cantidad, idioma)} $porcionTxt".lowercase()
+        c is Comible.DeReceta -> vm.porcionesTexto(cantidad)
         m.valor == 1.0 -> "${cifra(cantidad, idioma)} g"
         else -> "${cifra(numero(cuantas) ?: 0.0, idioma)} ${m.nombre.lowercase()} · ${cifra(cantidad, idioma)} g"
     }
@@ -184,7 +184,7 @@ fun Cantidad(vm: CuchaViewModel, e: Estado, p: Pantalla.Cantidad) {
             vm.abrir(Pantalla.CompartirPlato(p.fecha, anterior.id))
         }, Modifier.fillMaxWidth())
         if (anterior != null) BotonSecundario(stringResource(R.string.borrar), {
-            confirmar(vm.tx(R.string.borrar_pregunta, anterior.nombre), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
+            confirmar(vm.tx(R.string.borrar_pregunta, vm.nombreDe(e, anterior)), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)
         if (c is Comible.DeReceta) BotonSecundario(stringResource(R.string.ver_receta), { vm.abrir(Pantalla.VerReceta(c.r.id)) }, Modifier.fillMaxWidth())
         if (c is Comible.DeProducto) BotonSecundario(stringResource(R.string.corregir_producto), { vm.abrir(Pantalla.EditarProducto(c.p, comida, p.fecha)) }, Modifier.fillMaxWidth())
@@ -252,7 +252,7 @@ fun Rapido(vm: CuchaViewModel, e: Estado, p: Pantalla.Rapido) {
             vm.abrir(Pantalla.CompartirPlato(p.fecha, anterior.id))
         }, Modifier.fillMaxWidth())
         if (anterior != null) BotonSecundario(stringResource(R.string.borrar), {
-            confirmar(vm.tx(R.string.borrar_pregunta, anterior.nombre), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
+            confirmar(vm.tx(R.string.borrar_pregunta, vm.nombreDe(e, anterior)), null) { vm.borrarAnotado(p.fecha, anterior.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)
     }
 }
@@ -305,7 +305,7 @@ fun EditarProducto(vm: CuchaViewModel, p: Pantalla.EditarProducto) {
  * "Guardar como receta" para repetirlo con un toque (si hay dos o más alimentos de la base).
  */
 @Composable
-private fun LlevasEn(vm: CuchaViewModel, p: Pantalla.Anotar, anotados: List<Anotado>) {
+private fun LlevasEn(vm: CuchaViewModel, e: Estado, p: Pantalla.Anotar, anotados: List<Anotado>) {
     val f = FogonTema.actual
     val idioma = vm.idioma()
     val total = anotados.map { it.n }.suma()
@@ -318,7 +318,7 @@ private fun LlevasEn(vm: CuchaViewModel, p: Pantalla.Anotar, anotados: List<Anot
             Text(stringResource(R.string.llevas_en, nombreComida(p.comida).lowercase()), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.weight(1f))
             Text("${total.kcal.roundToInt()} kcal", fontFamily = f.cifras, color = f.texto)
         }
-        Text(anotados.joinToString(" · ") { it.nombre }, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 3)
+        Text(anotados.joinToString(" · ") { vm.nombreDe(e, it) }, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 3)
         Text(stringResource(R.string.agrega_otro), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pildora(stringResource(R.string.listo), Iconos.Chulo, acento = true) { vm.cerrar() }

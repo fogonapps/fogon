@@ -34,6 +34,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.BuildConfig
@@ -100,6 +102,7 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
         FilaAjuste(Iconos.Repetir, stringResource(R.string.importar_respaldo), null, acciones.importar)
     }
     Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
+        ImportacionSteam(vm)
         ImportacionLastfm(vm)
         Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
         if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
@@ -313,6 +316,7 @@ fun Licencias(vm: CajonViewModel) {
         LicenciasFogon(propias = listOf(
             Licencia("TMDB", stringResource(R.string.lic_tmdb)),
             Licencia("IGDB", stringResource(R.string.lic_igdb)),
+            Licencia("Steam Web API", stringResource(R.string.lic_steam)),
             Licencia("Open Library", stringResource(R.string.lic_open_library)),
             Licencia("MusicBrainz · Cover Art Archive", stringResource(R.string.lic_musicbrainz)),
             Licencia("Wikimedia Commons · Wikidata", stringResource(R.string.lic_wikimedia)),
@@ -384,6 +388,60 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
             Text(stringResource(R.string.spotify_historial_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
     }
+}
+
+/**
+ * Importar la biblioteca de Steam: el enlace del perfil (se manda solo al tocar «Importar»), cómo poner públicos los
+ * detalles de juego con el botón a esa página de Steam, el avance y, si falló, qué pasó y el botón de reintentar.
+ */
+@Composable
+private fun ImportacionSteam(vm: CajonViewModel) {
+    val f = FogonTema.actual
+    val uri = LocalUriHandler.current
+    val paso by vm.steam.collectAsStateWithLifecycle()
+    var perfil by rememberSaveable { mutableStateOf("") }
+    val valido = io.github.fogonapps.cajon.datos.Steam.perfilValido(perfil)
+    val trabajando = paso?.trabajando == true
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.steam_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        Pista(stringResource(R.string.steam_pista))
+        Pista(stringResource(R.string.steam_privacidad_pista))
+        BotonSecundario(stringResource(R.string.steam_abrir_privacidad), { runCatching { uri.openUri(io.github.fogonapps.cajon.datos.Steam.PRIVACIDAD) } })
+        OutlinedTextField(perfil, { perfil = it; vm.editarSteam() }, label = { Text(stringResource(R.string.steam_perfil)) },
+            supportingText = { Text(stringResource(if (perfil.isNotBlank() && !valido) R.string.steam_perfil_no_valido else R.string.steam_perfil_ejemplo)) },
+            isError = perfil.isNotBlank() && !valido, enabled = !trabajando, singleLine = true, modifier = Modifier.fillMaxWidth())
+        val p = paso
+        when {
+            p != null && p.trabajando -> {
+                if (p.totalFichas > 0) {
+                    LinearProgressIndicator({ p.fichas.toFloat() / p.totalFichas }, Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+                    Text(stringResource(R.string.steam_avance, p.fichas, p.totalFichas), color = f.texto)
+                } else Text(stringResource(R.string.steam_espera), color = f.texto)
+                BotonSecundario(stringResource(R.string.steam_cancelar), vm::cancelarSteam)
+            }
+            p?.error != null -> {
+                // Región viva: el lector de pantalla lo dice apenas aparece.
+                Text(stringResource(errorSteam(p.error)), color = f.texto,
+                    modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite })
+                BotonRiso(stringResource(R.string.steam_reintentar), { vm.importarSteam(perfil) }, habilitado = valido)
+            }
+            else -> BotonRiso(stringResource(R.string.steam_importar), { vm.importarSteam(perfil) }, habilitado = valido)
+        }
+    }
+}
+
+/** El texto de cada error de la importación de Steam. */
+internal fun errorSteam(error: String): Int = when (error) {
+    io.github.fogonapps.cajon.datos.Steam.PRIVADA -> R.string.steam_error_privada
+    io.github.fogonapps.cajon.datos.Steam.PERFIL_INVALIDO -> R.string.steam_error_enlace
+    io.github.fogonapps.cajon.datos.Steam.NO_ENCONTRADO -> R.string.steam_error_no_encontrado
+    io.github.fogonapps.cajon.datos.Steam.SIN_STEAM, "sin_igdb" -> R.string.steam_error_no_disponible
+    io.github.fogonapps.cajon.datos.Steam.SIN_RED -> R.string.buscar_sin_red
+    io.github.fogonapps.cajon.datos.Steam.CUPO_DIARIO -> R.string.steam_error_cupo
+    io.github.fogonapps.cajon.datos.Steam.DESPACIO -> R.string.steam_error_despacio
+    io.github.fogonapps.cajon.datos.Steam.OCUPADO -> R.string.steam_error_ocupado
+    io.github.fogonapps.cajon.datos.Steam.IGDB -> R.string.steam_error_igdb
+    else -> R.string.steam_error_no_responde
 }
 
 @Composable

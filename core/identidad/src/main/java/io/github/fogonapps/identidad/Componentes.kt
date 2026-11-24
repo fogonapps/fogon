@@ -498,7 +498,8 @@ fun AcercaDeFogon(
         Text(stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(
             painterResource(if (f.oscuro) R.drawable.fogon_logotipo_claro else R.drawable.fogon_logotipo),
-            contentDescription = stringResource(R.string.fogon_hecha),
+            // Decorativo: el texto de abajo ya dice «Hecha en Fogón» (si no, TalkBack lo leía dos veces).
+            contentDescription = null,
             modifier = Modifier.padding(top = 8.dp).size(width = 180.dp, height = 82.dp),
         )
         Text(stringResource(R.string.fogon_hecha), style = MaterialTheme.typography.titleLarge, color = f.texto)

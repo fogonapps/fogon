@@ -319,10 +319,11 @@ fun Resumen(vm: AhorradorViewModel, e: Estado) {
     }
     SelectorMes(mes, { mes = it }, hasta = actual)
 
-    Row(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        Dato(stringResource(R.string.entro), Formato.pesos(L.ingresos(e, mes)))
-        Dato(stringResource(R.string.salio), Formato.pesos(L.gastos(e, mes)))
-        Dato(stringResource(R.string.guardaste), Formato.pesos(L.ahorrado(e, mes)))
+    // Tres columnas iguales: con montos enormes o letra grande, cada dato se achica en su línea en vez de partirse.
+    Row(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Dato(stringResource(R.string.entro), Formato.pesos(L.ingresos(e, mes)), Modifier.weight(1f), ajustar = true)
+        Dato(stringResource(R.string.salio), Formato.pesos(L.gastos(e, mes)), Modifier.weight(1f), ajustar = true)
+        Dato(stringResource(R.string.guardaste), Formato.pesos(L.ahorrado(e, mes)), Modifier.weight(1f), ajustar = true)
     }
     L.cambioGastos(e, mes, vm.hoy())?.let { c ->
         val antes = Formato.mes(mesAnterior(mes))
@@ -345,9 +346,13 @@ fun Resumen(vm: AhorradorViewModel, e: Estado) {
         porCat.forEach { (c, n) ->
             FilaVidrio({ vm.abrir(Pantalla.Movimientos(c.id, mes)) }) {
                 Ficha(colorDe(c.color), Iconos.de(c.icono), 38.dp)
-                Text(c.nombre, style = MaterialTheme.typography.titleSmall, color = f.texto, modifier = Modifier.weight(1f), maxLines = 1)
-                Text("${n * 100 / total} %", style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-                Pesos(n, 16.sp)
+                // El nombre siempre queda a la vista: el monto se achica antes de taparlo.
+                Text(c.nombre, style = MaterialTheme.typography.titleSmall, color = f.texto, modifier = Modifier.weight(1f), maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text("${n * 100 / total} %", style = MaterialTheme.typography.labelMedium, color = f.textoSuave, maxLines = 1, softWrap = false)
+                Text(Formato.pesos(n), fontFamily = f.cifras, color = f.texto, maxLines = 1, softWrap = false,
+                    modifier = Modifier.weight(1f, fill = false), textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 16.sp))
             }
         }
     }

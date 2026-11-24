@@ -461,7 +461,7 @@
   <string name="tu_perfil">Tu perfil</string>
     <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
     <string name="cuenta_operacion_lista">Operación completada.</string>
-    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
+    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa «Perfiles en este teléfono».</string>
     <string name="cuenta_local">Tu cuaderno se queda en este perfil del teléfono y, con tu cuenta, se guarda solo en ella, cifrado con tu contraseña: si reinstalas o cambias de teléfono, entras con tu correo y tu contraseña y vuelve. Exporta una copia antes de retirar un perfil.</string>
     <string name="cuenta_intro">La red de El Forzudo: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
     <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
@@ -535,4 +535,6 @@
     <string name="historia_ejercicios_min">%1$d ejercicios · %2$d min</string>
     <string name="historia_buscar_app">Busca una canción o un ejercicio</string>
     <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
+  <string name="seguir_entrenando">Seguir entrenando</string>
+  <string name="inicio_despues">Después: %1$s</string>
 </resources>

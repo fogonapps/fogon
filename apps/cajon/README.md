@@ -26,7 +26,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **Listas propias** de cualquier tipo, con ranking si se quiere y para reordenar. Las cuatro favoritas en el perfil.
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine y de series, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores; con Juegos, también tus juegos y tus estudios. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).
-- **Traer de otras apps:** el historial de Letterboxd (ZIP o CSV), de Trakt (ZIP, con los episodios vistos) o de TV Time (ZIP, con los episodios vistos) y la biblioteca de Goodreads o de The StoryGraph (CSV), sin repetir lo que ya está.
+- **Traer de otras apps:** el historial de Letterboxd (ZIP o CSV), de Trakt (ZIP, con los episodios vistos) o de TV Time (ZIP, con los episodios vistos), la biblioteca de Goodreads o de The StoryGraph (CSV) y tu biblioteca de Steam con las horas jugadas (con el enlace de tu perfil, si tus detalles de juego son públicos en Steam; cada juego llega con su ficha de IGDB), sin repetir lo que ya está.
 - **Copia cifrada:** con una cuenta de Fogón puedes guardar una copia cifrada de tu cajón.
 - **Widget:** lo terminado este año y lo que está en curso.
 - **Respaldo** en JSON y el respaldo de todo Fogón. **Apariencia** como en todas las apps (Grafito, Vinilo, Claro y Contraste). **En español e inglés.**
@@ -46,7 +46,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 
 | Permiso | Para qué |
 |---------|----------|
-| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, IGDB, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. |
+| Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, IGDB, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. Si importas tu biblioteca de Steam, el servidor de Fogón le pide la lista a Steam y no la guarda. |
 | Acceso a notificaciones (opcional) | Solo si se activa "Anotar lo que escucho": Android lo pide para dejar ver qué canción suena en otras apps (Spotify, YouTube Music…). El Cajón no lee las notificaciones: solo artista, álbum y canción de lo que suena, y lo guarda en el teléfono. |
 | Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de El Cajón en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
@@ -57,9 +57,10 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 
 ## Créditos
 
-- Películas, series y animes: [TMDB](https://www.themoviedb.org/), con la clave de cada persona. El Cajón usa TMDB y su API, pero no está respaldada, certificada ni aprobada por TMDB.
+- Películas, series y animes: [TMDB](https://www.themoviedb.org/), con la clave de cada persona. El Cajón usa TMDB y su API, pero no está respaldado, certificado ni aprobado por TMDB.
 - Libros: [Open Library](https://openlibrary.org/) (Internet Archive).
 - Música: [MusicBrainz](https://musicbrainz.org/) (núcleo de datos CC0) y carátulas del [Cover Art Archive](https://coverartarchive.org/).
 - Fotos de artistas: [Wikimedia Commons](https://commons.wikimedia.org/), encontradas por [Wikidata](https://www.wikidata.org/); cada una con su autor y licencia en la ficha del artista.
 - Videojuegos: datos e imágenes de [IGDB](https://www.igdb.com/), a través del servidor de Fogón; si un juego no está en IGDB, datos de [Wikidata](https://www.wikidata.org/) (CC0) y su portada de [Wikimedia Commons](https://commons.wikimedia.org/) solo si trae autor y licencia, que se muestran en la ficha.
+- Biblioteca de Steam (solo si la importas): [Steam Web API](https://steamcommunity.com/dev), a través del servidor de Fogón. Valve y Steam son marcas de Valve Corporation; El Cajón no está respaldado por Valve.
 - Portadas: Coil, Apache 2.0.

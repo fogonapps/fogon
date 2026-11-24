@@ -204,7 +204,7 @@ fun <T> Selector(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> U
 /** Botón con la fecha; al tocarlo abre el calendario (no deja elegir días futuros si [hastaHoy]). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BotonFecha(fecha: String, onElegir: (String) -> Unit, hoy: LocalDate, hastaHoy: Boolean = true) {
+fun BotonFecha(fecha: String, onElegir: (String) -> Unit, hoy: LocalDate, hastaHoy: Boolean = true, desdeHoy: Boolean = false) {
     var abierto by remember { mutableStateOf(false) }
     val f = FogonTema.actual
     TextButton({ abierto = true }, Modifier.vidrio(FormaPildora)) { Text(Formato.fechaCorta(fecha), color = f.texto) }
@@ -214,7 +214,7 @@ fun BotonFecha(fecha: String, onElegir: (String) -> Unit, hoy: LocalDate, hastaH
         val estado = rememberDatePickerState(
             initialSelectedDateMillis = ms,
             selectableDates = object : androidx.compose.material3.SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long) = !hastaHoy || utcTimeMillis <= tope
+                override fun isSelectableDate(utcTimeMillis: Long) = (!hastaHoy || utcTimeMillis <= tope) && (!desdeHoy || utcTimeMillis >= tope)
             },
         )
         DatePickerDialog(
@@ -247,11 +247,30 @@ fun Cabecera(titulo: String, onAtras: (() -> Unit)?, icono: Dibujo = Iconos.Atra
 
 /** Dato pequeño: etiqueta arriba, valor en la letra de las cifras. */
 @Composable
-fun Dato(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
+fun Dato(etiqueta: String, valor: String, modifier: Modifier = Modifier, ajustar: Boolean = false) {
     Column(modifier) {
-        Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.textoSuave)
-        Text(valor, fontFamily = FogonTema.actual.cifras, fontSize = 20.sp, color = FogonTema.actual.texto, maxLines = 1)
+        if (ajustar) {
+            // Etiqueta y valor en una línea cada uno, achicados si no caben (montos enormes, letra grande).
+            Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.textoSuave, maxLines = 1, softWrap = false,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelMedium.fontSize))
+            Text(valor, fontFamily = FogonTema.actual.cifras, color = FogonTema.actual.texto, maxLines = 1, softWrap = false,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 20.sp))
+        } else {
+            Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = FogonTema.actual.textoSuave)
+            Text(valor, fontFamily = FogonTema.actual.cifras, fontSize = 20.sp, color = FogonTema.actual.texto, maxLines = 1)
+        }
     }
+}
+
+/**
+ * El tamaño para que [texto] (cifras de puntos) quepa en [anchoDp] sin pasar de [maximo]: esas cifras miden cerca de
+ * 0,62 veces su tamaño de ancho, y la letra grande del teléfono también las agranda.
+ */
+@Composable
+fun cifraQueCabe(texto: String, anchoDp: Float, maximo: TextUnit): TextUnit {
+    val escala = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    val cabe = anchoDp / (texto.length.coerceAtLeast(1) * 0.62f) / escala
+    return minOf(maximo.value, cabe).sp
 }
 
 @Composable

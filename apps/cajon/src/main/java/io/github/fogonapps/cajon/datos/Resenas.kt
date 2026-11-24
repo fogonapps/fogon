@@ -2,7 +2,7 @@ package io.github.fogonapps.cajon.datos
 
 import kotlinx.serialization.Serializable
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 /** Opinión de una obra, una parte o una entrada del diario. */
 @Serializable
@@ -195,7 +195,8 @@ object Resenas {
         return migrarNotas(e.copy(resenas = e.resenas + nuevas))
     }
 
-    private fun fecha(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC).toLocalDate().toString()
+    /** El día en la zona del teléfono: a las 23:00 en Bogotá sigue siendo hoy, no mañana en UTC. */
+    private fun fecha(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate().toString()
 
     fun valida(r: Resena): Boolean = r.obra.isNotBlank() &&
         (r.texto.isNotBlank() || (r.nota ?: 0) > 0) && r.texto.length <= 5000 &&

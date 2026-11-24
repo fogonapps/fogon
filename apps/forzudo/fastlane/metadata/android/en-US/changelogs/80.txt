@@ -1,0 +1,1 @@
+Polish: “Log my weight” takes you straight to the field; rest no longer covers your sets in landscape; volume and sets fit big numbers; the Home card shows the workout in progress and what's next; cancelling says “Keep training” or “Cancel workout”; onboarding has “Go back”; built-in routines follow your language.

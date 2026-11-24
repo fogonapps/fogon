@@ -313,6 +313,16 @@ private fun NotaVoz(b64: String, segundos: Int, color: Color) {
     }
 }
 
+/** [texto] en el campo de escribir, con el cursor al final. */
+/**
+ * Si la conversación se olvidó desde que la pantalla la vio [vista] veces: solo cuando el contador [actual] subió. El
+ * contador vive en memoria y [vista] se guarda con la pantalla: si Android cerró la app, el contador vuelve a 0 y lo
+ * escrito no debe borrarse por eso.
+ */
+internal fun seOlvidoDesde(vista: Int, actual: Int) = actual > vista
+
+internal fun alFinal(texto: String) = androidx.compose.ui.text.input.TextFieldValue(texto, androidx.compose.ui.text.TextRange(texto.length))
+
 /** Una conversación: los mensajes (del más nuevo abajo), fotos, notas de voz, stickers, reacciones, responder y borrar. */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -328,8 +338,40 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
     val persona = personas[usuario] ?: PersonaSocial(usuario)
     val estilo = estilos[usuario] ?: EstiloChat()
     val nombre = estilo.apodo.ifBlank { persona.nombre.ifBlank { "@$usuario" } }
-    var texto by rememberSaveable { mutableStateOf("") }
+    var campo by rememberSaveable(stateSaver = androidx.compose.ui.text.input.TextFieldValue.Saver) { mutableStateOf(androidx.compose.ui.text.input.TextFieldValue("")) }
+    val texto = campo.text
     var responder by remember { mutableStateOf<MensajeChat?>(null) }
+    // Lo que no se pudo entregar vuelve al campo, delante de lo que se haya escrito mientras tanto, para reintentar,
+    // con el cursor al final para seguir escribiendo.
+    val sinEntregar by chat.sinEntregar.collectAsStateWithLifecycle()
+    LaunchedEffect(sinEntregar[usuario]) {
+        if (sinEntregar[usuario] == null) return@LaunchedEffect
+        val n = chat.tomarSinEntregar(usuario) ?: return@LaunchedEffect
+        campo = alFinal(listOf(n.texto, campo.text).filter { it.isNotBlank() }.joinToString(" ").take(4000))
+        if (responder == null) responder = n.responde
+    }
+    // Si se bloqueó a la persona o se borró la conversación (o se cerró la cuenta), lo escrito ya no va: el campo se vacía,
+    // también si la pantalla estaba guardada en el historial mientras tanto.
+    val descartes by chat.descartes.collectAsStateWithLifecycle()
+    var olvidadaVista by rememberSaveable(usuario) { androidx.compose.runtime.mutableIntStateOf(chat.vecesOlvidada(usuario)) }
+    LaunchedEffect(descartes) {
+        val veces = chat.vecesOlvidada(usuario)
+        if (seOlvidoDesde(olvidadaVista, veces)) { campo = alFinal(""); responder = null }
+        olvidadaVista = veces
+    }
+    // Lo escrito y no enviado queda guardado en el teléfono (ver [BorradoresChat]): vuelve al abrir la conversación,
+    // también después de salir con Atrás o de que Android cierre la app. Se guarda solo lo que la persona cambia después
+    // de recuperarlo; enviar deja el campo vacío y eso lo borra.
+    var borradorListo by rememberSaveable(usuario) { mutableStateOf(false) }
+    LaunchedEffect(usuario, yo) {
+        if (borradorListo || yo == null) return@LaunchedEffect
+        val guardado = chat.borrador(usuario)
+        if (guardado.isNotBlank() && campo.text.isBlank()) campo = alFinal(guardado)
+        borradorListo = true
+    }
+    LaunchedEffect(usuario) {
+        androidx.compose.runtime.snapshotFlow { borradorListo to campo.text }.collect { (listo, t) -> if (listo) chat.guardarBorrador(usuario, t) }
+    }
     var stickers by remember { mutableStateOf(false) }
     var elegirObra by remember { mutableStateOf(false) }
     var menuDe by remember { mutableStateOf<MensajeChat?>(null) }
@@ -464,15 +506,16 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
             if (extras.elegirObra != null && extras.iconoObra != null) Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { elegirObra = !elegirObra; stickers = false }, contentAlignment = Alignment.Center) {
                 IconoRiso(extras.iconoObra, stringResource(extras.textoObra), tamano = 20.dp, tinta = f.sobreTinta1)
             }
-            androidx.compose.foundation.text.BasicTextField(texto, { texto = it.take(4000) }, Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 10.dp), maxLines = 5,
+            androidx.compose.foundation.text.BasicTextField(campo, { campo = if (it.text.length > 4000) alFinal(it.text.take(4000)) else it }, Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 10.dp), maxLines = 5,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = f.texto), cursorBrush = androidx.compose.ui.graphics.SolidColor(f.acentoTexto),
-                decorationBox = { campo -> Box { if (texto.isEmpty()) Text(stringResource(R.string.social_chat_escribe), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave); campo() } })
+                decorationBox = { interior -> Box { if (texto.isEmpty()) Text(stringResource(R.string.social_chat_escribe), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave); interior() } })
             if (texto.isBlank()) {
                 BotonIcono(IconosFogon.Imagen, stringResource(R.string.social_chat_mandar_foto)) { stickers = false; elegirObra = false; elegirFoto.launch("image/*") }
                 BotonIcono(IconosMultimedia.Microfono, stringResource(R.string.social_chat_grabar)) { grabar() }
                 BotonIcono(Iconos.Estrella, stringResource(R.string.social_chat_stickers), tinta = if (stickers) f.acentoTexto else null) { stickers = !stickers; elegirObra = false }
             } else BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_mensaje), lleno = true, activo = !enviando) {
-                if (chat.listo()) { chat.enviar(usuario, texto, responde = responder); texto = ""; responder = null } else chat.revisarListo()
+                // El campo se vacía al enviar; si el mensaje no se pudo entregar, vuelve (ver «sinEntregar» arriba).
+                if (chat.listo()) { chat.enviar(usuario, texto, responde = responder, devolverSiFalla = true); campo = alFinal(""); responder = null } else chat.revisarListo()
             }
         }
     }

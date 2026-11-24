@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,8 +85,16 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
         BotonSecundario(stringResource(R.string.ahora_no), { vm.gustosListos() }, Modifier.fillMaxWidth())
     }
     val rec = r ?: return
-    rec.avisos.forEach { Pista(stringResource(it)) }
-    if (rec.vacias && rec.avisos.isNotEmpty()) return
+    if (rec.cargando && rec.vacias) {
+        LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), color = f.tinta1, trackColor = f.linea)
+        return
+    }
+    // Sin internet, Inicio no falla: explica qué falta y que lo guardado sigue ahí.
+    rec.avisos.forEach { Pista(stringResource(if (it == R.string.buscar_sin_red) R.string.inicio_sin_red else it)) }
+    if (rec.vacias && rec.avisos.isNotEmpty()) {
+        BotonSecundario(stringResource(R.string.inicio_reintentar), { vm.cargarRecomendaciones(otraVez = true) }, Modifier.padding(horizontal = 20.dp))
+        return
+    }
     if (rec.vacias) { Pista(stringResource(R.string.para_ti_vacio)); return }
     // Decir que no se aprende en el tutorial y al elegir gustos; aquí queda solo para lectores de pantalla.
     val decirNo = stringResource(R.string.decir_no)

@@ -63,16 +63,24 @@ fun DatosPersona(vm: CuchaViewModel, nombreInicial: String, p: Perfil, pesoDeFor
     var objetivo by rememberSaveable { mutableStateOf(p.objetivo) }
     var ritmo by rememberSaveable { mutableStateOf(p.ritmo) }
     val f = FogonTema.actual
-    val nuevo = Perfil(sexo, edad.toIntOrNull()?.coerceIn(12, 100) ?: p.edad, numero(altura)?.coerceIn(100.0, 230.0) ?: p.alturaCm,
-        numero(peso)?.coerceIn(25.0, 350.0) ?: p.pesoKg, actividad, objetivo, ritmo)
+    // Fuera de rango se avisa (al salir del campo, o ya si pasa del máximo) y no se deja guardar; un campo vacío conserva el valor anterior.
+    val edadN = edad.toIntOrNull()
+    val alturaN = numero(altura)
+    val pesoN = numero(peso)
+    val errorEdad = edadN?.takeIf { it !in 12..100 }?.let { stringResource(R.string.fuera_de_rango, "12", "100") }
+    val errorAltura = alturaN?.takeIf { it !in 100.0..230.0 }?.let { stringResource(R.string.fuera_de_rango, "100", "230") }
+    val errorPeso = pesoN?.takeIf { it !in 25.0..350.0 }?.let { stringResource(R.string.fuera_de_rango, "25", "350") }
+    val valido = errorEdad == null && errorAltura == null && errorPeso == null
+    val nuevo = Perfil(sexo, edadN?.coerceIn(12, 100) ?: p.edad, alturaN?.coerceIn(100.0, 230.0) ?: p.alturaCm,
+        pesoN?.coerceIn(25.0, 350.0) ?: p.pesoKg, actividad, objetivo, ritmo)
 
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre))
         Selector(listOf("m" to stringResource(R.string.hombre), "f" to stringResource(R.string.mujer)), sexo, { sexo = it })
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            CampoNumero(edad, { edad = it }, stringResource(R.string.edad), Modifier.weight(1f))
-            CampoNumero(altura, { altura = it }, stringResource(R.string.altura_cm), Modifier.weight(1f), decimales = true)
-            CampoNumero(peso, { peso = it }, stringResource(R.string.peso_kg), Modifier.weight(1f), decimales = true)
+            CampoNumero(edad, { edad = it }, stringResource(R.string.edad), Modifier.weight(1f), error = errorEdad, maximo = 100.0)
+            CampoNumero(altura, { altura = it }, stringResource(R.string.altura_cm), Modifier.weight(1f), decimales = true, error = errorAltura, maximo = 230.0)
+            CampoNumero(peso, { peso = it }, stringResource(R.string.peso_kg), Modifier.weight(1f), decimales = true, error = errorPeso, maximo = 350.0)
         }
         if (pesoDeForzudo) Text(stringResource(R.string.peso_lo_trae_forzudo), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         Text(stringResource(R.string.actividad), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
@@ -82,7 +90,7 @@ fun DatosPersona(vm: CuchaViewModel, nombreInicial: String, p: Perfil, pesoDeFor
         if (objetivo != 0) Selector(listOf(0.25 to stringResource(R.string.ritmo_kg, cifra(0.25, idioma, 2)), 0.5 to stringResource(R.string.ritmo_kg, cifra(0.5, idioma))), ritmo, { ritmo = it })
         val metas = vm.L.metasDe(nuevo)
         Text(stringResource(R.string.metas_previa, metas.kcal, metas.proteina), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        BotonRiso(textoBoton ?: stringResource(R.string.guardar), { onGuardar(nombre, nuevo) }, Modifier.fillMaxWidth())
+        BotonRiso(textoBoton ?: stringResource(R.string.guardar), { onGuardar(nombre, nuevo) }, Modifier.fillMaxWidth(), habilitado = valido)
     }
 }
 

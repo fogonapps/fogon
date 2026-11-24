@@ -7,8 +7,8 @@ import io.github.fogonapps.identidad.Idioma
 
 /**
  * Las categorías con las que empieza la app, cada una con su tinta riso (como los músculos en
- * El Forzudo) y su grupo para el 50/30/20 y el kakeibo. Se crean en el idioma de la app; después
- * son datos de la persona y no cambian si cambia el idioma.
+ * El Forzudo) y su grupo para el 50/30/20 y el kakeibo. Se crean en el idioma de la app; mientras
+ * la persona no les cambie el nombre, siguen al idioma de la app (ver [fabrica]).
  */
 object Categorias {
     private data class Base(val id: String, val nombre: Int, val color: Long, val icono: String, val grupo: Grupo, val ingreso: Boolean = false)
@@ -40,6 +40,31 @@ object Categorias {
     /** Id y nombre de las que se eligen al empezar (sin las de [SIEMPRE]), con si son de ingreso. */
     fun elegibles(c: Context): List<Triple<String, String, Boolean>> =
         base(c).filter { it.id !in SIEMPRE }.map { Triple(it.id, it.nombre, it.ingreso) }
+
+    /**
+     * Los textos de fábrica en español, en inglés y en el idioma de ahora, para pasar al idioma actual lo que se guardó
+     * en otro (ver Logica.traducirFabrica).
+     */
+    fun fabrica(c: Context): io.github.fogonapps.ahorrador.datos.Fabrica {
+        val actual = Idioma.envolver(c).resources
+        val idiomas = listOf("es", "en").map { codigo ->
+            val conf = android.content.res.Configuration(c.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag(codigo)) }
+            c.createConfigurationContext(conf).resources
+        }
+        fun texto(id: Int) = io.github.fogonapps.ahorrador.datos.TextoFabrica(idiomas.map { it.getString(id) }.toSet(), actual.getString(id))
+        return io.github.fogonapps.ahorrador.datos.Fabrica(
+            categorias = BASE.associate { it.id to texto(it.nombre) },
+            cuentas = CUENTAS.mapValues { texto(it.value) },
+            reto = texto(R.string.reto_nombre),
+            ajusteSaldo = texto(R.string.ajuste_saldo),
+        )
+    }
+
+    /** Las cuentas con las que empieza la app (el tutorial las crea con estos ids). */
+    val CUENTAS = mapOf(
+        "efectivo" to R.string.cuenta_efectivo, "banco" to R.string.cuenta_banco,
+        "billetera" to R.string.cuenta_billetera, "tarjeta" to R.string.cuenta_tarjeta,
+    )
 
     fun base(c: Context): List<Categoria> {
         val r = Idioma.envolver(c).resources

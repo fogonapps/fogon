@@ -79,9 +79,14 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
         if (nombre.isNotBlank() && nombre.trim() != nombreActual) vm.ponerNombre(nombre)
         vm.terminarTutorial()
     }
+    // Atrás (el botón y el gesto del sistema) vuelve al paso anterior.
+    val anterior = { alcance.launch { estado.animateScrollToPage(estado.currentPage - 1) }; Unit }
+    androidx.activity.compose.BackHandler(enabled = estado.currentPage > 0, onBack = anterior)
     Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding()) {
         Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (estado.currentPage > 0) TextButton(anterior) { Text(stringResource(R.string.volver), color = f.texto) }
+                Spacer(Modifier.weight(1f))
                 TextButton(terminar) { Text(stringResource(R.string.saltar), fontWeight = FontWeight.Bold, color = f.acentoTexto) }
             }
             HorizontalPager(estado, Modifier.weight(1f)) { i ->

@@ -46,6 +46,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -77,6 +78,7 @@ import io.github.fogonapps.identidad.aparecer
  * El buscador, como el de una app de música: arriba se elige Todo, Cine, Música o Libros; abajo salen el mejor
  * resultado y los grupos (artistas, álbumes, películas, series, animes, libros), cada uno con "Ver más".
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
     val f = FogonTema.actual
@@ -85,22 +87,25 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
     LaunchedEffect(Unit) { foco.requestFocus() }
     // X-07: lo que se buscó queda en «Búsquedas recientes» al salir (o al tocar buscar en el teclado).
     val textoActual by rememberUpdatedState(b.texto)
-    DisposableEffect(Unit) { onDispose { vm.recientes.anotar(textoActual) } }
+    DisposableEffect(Unit) { onDispose { if (!p.paraMensaje) vm.recientes.anotar(textoActual) } }
 
     Column(Modifier.fillMaxSize()) {
+        if (p.paraMensaje) Text(stringResource(R.string.chat_nuevo), style = MaterialTheme.typography.titleLarge, color = f.texto,
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp).semantics { heading() })
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             BotonIcono(Iconos.Atras, stringResource(R.string.volver), grande = true) { vm.cerrar() }
             OutlinedTextField(
                 b.texto, { vm.buscar(it.take(80)) }, Modifier.weight(1f).focusRequester(foco),
-                placeholder = { Text(stringResource(R.string.buscar_pista)) }, singleLine = true, shape = FormaPildora,
+                placeholder = { Text(stringResource(if (p.paraMensaje) R.string.buscar_persona_pista else R.string.buscar_pista)) }, singleLine = true, shape = FormaPildora,
                 leadingIcon = { IconoRiso(Iconos.Buscar, null, tamano = 20.dp, tinta = f.textoSuave) },
                 trailingIcon = if (b.texto.isNotEmpty()) ({ BotonIcono(Iconos.Cerrar, stringResource(R.string.borrar_texto)) { vm.buscar("") } }) else null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { vm.recientes.anotar(b.texto) }),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { if (!p.paraMensaje) vm.recientes.anotar(b.texto) }),
             )
         }
-        // Los filtros: todo, películas, series, animes, música, libros, juegos y personas (se corren a lo ancho).
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Los filtros: todo, películas, series, animes, música, libros, juegos y personas. Todos a la vista, en dos filas si hace falta.
+        // Buscando a quién escribirle no hay filtros: solo personas.
+        if (!p.paraMensaje) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Secciones.BUSQUEDA.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.forEach { s ->
                 val elegida = s == b.seccion
                 Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie)
@@ -113,7 +118,10 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         }
         if (b.cargando.isNotEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = f.tinta1, trackColor = f.linea)
 
-        if (b.texto.trim().length < 2) { SinBuscar(vm, e, b); return@Column }
+        if (b.texto.trim().length < 2) {
+            if (p.paraMensaje) Pista(stringResource(R.string.red_personas_pista), Modifier.padding(16.dp)) else SinBuscar(vm, e, b)
+            return@Column
+        }
 
         // Cada fuente llega a su tiempo y sus grupos van arriba de otros: mientras la persona no haya bajado por
         // su cuenta, la lista vuelve arriba para que lo nuevo no quede escondido.
@@ -153,7 +161,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             // Personas de la red (en "Todo", las primeras tres; en "Personas", todas).
             if (b.personas.isNotEmpty()) {
                 item("personas-titulo") { Titulo(stringResource(R.string.red_personas), if (todo) ({ vm.cambiarSeccion(Secciones.PERSONAS) }) else null) }
-                items(b.personas.take(maximo(3)), key = { "persona-" + it.usuario }) { p -> FilaPersona(p, { vm.abrir(Pantalla.PerfilRed(p.usuario)) }) }
+                items(b.personas.take(maximo(3)), key = { "persona-" + it.usuario }) { u -> FilaPersona(u, { if (p.paraMensaje) vm.reemplazar(Pantalla.Conversacion(u.usuario)) else vm.abrir(Pantalla.PerfilRed(u.usuario)) }) }
             } else if (b.seccion == Secciones.PERSONAS && b.mostrarNoEncontrado) item("sin-personas") { Pista(stringResource(R.string.red_nadie_encontrado), Modifier.padding(16.dp)) }
 
             // Si se buscó un género o una etiqueta: primero lo del cajón que la lleva (artistas y obras), después lo de afuera.
@@ -196,33 +204,6 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             val personas = listOf(Triple("artistas", Secciones.MUSICA, b.artistas), Triple("directores", Secciones.PELICULAS, b.directores),
                 Triple("autores", Secciones.LIBROS, b.autores)).filter { todo || b.seccion == it.second || it.first == "directores" && b.seccion in Secciones.DE_CINE }
 
-            // El mejor resultado: la persona más conocida (cada lista viene de la más a la menos) cuyo nombre tiene
-            // todas las palabras buscadas, como en las apps de música.
-            val palabras = normal(b.texto).split(" ").filter { it.isNotBlank() }
-            val exacto = personas.flatMap { it.third }.firstOrNull { a -> normal(a.nombre) == normal(b.texto.trim()) }
-                ?: personas.flatMap { it.third }.firstOrNull { a -> palabras.size >= 2 && palabras.all { it in normal(a.nombre) } }
-            if (exacto != null) item(key = "mejor") { MejorArtista(vm, e, exacto) }
-
-            // En Todo, una fila de fotos redondas por grupo; en su sección, la lista completa.
-            personas.forEach { (clave, seccion, lista0) ->
-                val lista = lista0.filter { it != exacto || !todo }
-                if (lista.isNotEmpty()) {
-                    item(key = "t-$clave") { Titulo(titulos.getValue(clave), if (todo) ({ vm.cambiarSeccion(seccion) }) else null) }
-                    if (todo) item(key = "fila-$clave") {
-                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                            items(lista.take(8), key = { it.fuente }) { a -> ArtistaRedondo(vm, a) }
-                        }
-                    } else items(lista, key = { "a" + it.fuente }) { a -> FilaArtista(vm, e, a, Modifier.animateItem()) }
-                }
-            }
-
-            // Canciones (de Apple): escucharlas 30 segundos, ir a Apple Music o, al tocarlas, buscar su álbum.
-            val cancionesArriba = b.seccion == Secciones.MUSICA
-            if (b.canciones.isNotEmpty() && cancionesArriba) {
-                item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
-                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
-            }
-
             // Los grupos de obras, en el orden de la sección.
             val orden = when (b.seccion) {
                 Secciones.PELICULAS -> listOf(Tipos.PELICULA)
@@ -233,14 +214,50 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 Secciones.JUEGOS -> listOf(Tipos.JUEGO)
                 else -> listOf(Tipos.ALBUM, Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME, Tipos.LIBRO, Tipos.JUEGO)
             }
+
+            // El mejor resultado: la persona más conocida (cada lista viene de la más a la menos) cuyo nombre tiene
+            // todas las palabras buscadas, como en las apps de música; pero si una obra conocida se llama así, van
+            // primero las obras (ver [OrdenBusqueda]).
+            val decision = io.github.fogonapps.cajon.datos.OrdenBusqueda.decidir(b.texto, orden.map { b.obras[it].orEmpty() }, personas.flatMap { it.third })
+            val exacto = decision.mejorPersona
+
+            // Lo que no se pudo buscar (sin internet, la fuente no respondió a tiempo), arriba para que se vea y con
+            // «Volver a intentar»: una fuente caída no deja la lista vacía y callada.
+            b.avisos.forEach { error ->
+                item(key = "e-$error") {
+                    Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(error), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                        if (error != R.string.buscar_falta_tmdb && error != R.string.buscar_tmdb_mala)
+                            BotonSecundario(stringResource(R.string.inicio_reintentar), { vm.buscar(b.texto) }, Modifier.fillMaxWidth())
+                    }
+                }
+            }
+            if (exacto != null) item(key = "mejor") { MejorArtista(vm, e, exacto) }
+
+            fun grupoPersonas() = personas.forEach { (clave, seccion, lista0) ->
+                val lista = if (todo) io.github.fogonapps.cajon.datos.OrdenBusqueda.sinLaMejor(lista0, exacto) else lista0
+                if (lista.isNotEmpty()) {
+                    item(key = "t-$clave") { Titulo(titulos.getValue(clave), if (todo) ({ vm.cambiarSeccion(seccion) }) else null) }
+                    if (todo) item(key = "fila-$clave") {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            items(lista.take(8), key = { it.fuente }) { a -> ArtistaRedondo(vm, a) }
+                        }
+                    } else items(lista, key = { "a" + it.fuente }) { a -> FilaArtista(vm, e, a, Modifier.animateItem()) }
+                }
+            }
+            if (!decision.obrasPrimero) grupoPersonas()
+
+            // Canciones (de Apple): escucharlas 30 segundos, ir a Apple Music o, al tocarlas, buscar su álbum.
+            val cancionesArriba = b.seccion == Secciones.MUSICA
+            if (b.canciones.isNotEmpty() && cancionesArriba) {
+                item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
+                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
+            }
+
             // En «Todo», primero el grupo cuyo primer resultado se parece más a lo buscado (una película no queda
-            // debajo de los discos si es lo que se buscaba).
-            val buscado = normal(b.texto.trim())
-            fun parecido(t: String): Int = b.obras[t].orEmpty().take(3).maxOfOrNull { r ->
-                val n = normal(r.titulo)
-                when { n == buscado -> 3; n.startsWith(buscado) -> 2; buscado in n -> 1; else -> 0 }
-            } ?: -1
-            val ordenFinal = if (todo) orden.sortedByDescending { parecido(it) } else orden
+            // debajo de los discos si es lo que se buscaba). Si dos grupos se parecen igual (la película «Inception» y
+            // su banda sonora), primero el de más votos.
+            val ordenFinal = if (todo) io.github.fogonapps.cajon.datos.OrdenBusqueda.ordenGrupos(b.texto, orden, b.obras) else orden
             ordenFinal.forEach { t ->
                 val lista = b.obras[t].orEmpty()
                 if (lista.isNotEmpty()) {
@@ -248,15 +265,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                     items(lista.take(maximo(4)), key = { "o" + it.fuente }) { r -> FilaEncontrado(vm, e, r, Modifier.animateItem()) }
                 }
             }
-
-            // Lo que no se pudo buscar (sin clave de TMDB, sin internet).
-            b.avisos.forEach { error ->
-                item(key = "e-$error") {
-                    Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(error.let { stringResource(it) }, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                    }
-                }
-            }
+            if (decision.obrasPrimero) grupoPersonas()
 
             if (b.canciones.isNotEmpty() && todo) {
                 item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
@@ -265,9 +274,9 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
 
             // Lo del momento también debajo de los resultados (en todas las secciones), cuando ya llegó todo: si
             // estuviera desde el principio, la lista se quedaría anclada a él y los resultados entrarían por arriba, fuera de la vista.
-            if (b.cargando.isEmpty()) item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
+            if (b.cargando.isEmpty() && !p.paraMensaje) item(key = "momento") { Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { LoDelMomento(vm, b.seccion, compacto = true) } }
 
-            item(key = "pie") {
+            if (!p.paraMensaje) item(key = "pie") {
                 val vacio = !hayDelCajon && b.seccion != Secciones.PERSONAS && b.mostrarNoEncontrado
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (vacio) Pista(stringResource(R.string.buscar_nada, b.texto.trim()), adentro = true)

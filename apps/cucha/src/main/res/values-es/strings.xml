@@ -202,7 +202,7 @@
   <string name="aviso_importado">Listo, se recuperó el respaldo.</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado.</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo.</string>
-  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de La Cucha.</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo válido de La Cucha: puede estar dañado o incompleto.</string>
   <string name="escanear_pista">Apunta al código de barras del empaque</string>
   <string name="aviso_salud_titulo">Aviso de salud</string>
   <string name="aviso_salud">La Cucha es un cuaderno de comidas, no un consejo médico ni nutricional. Las metas son cálculos generales que no conocen tu salud, y los valores de los alimentos son aproximados. Si tienes una enfermedad, estás embarazada o tienes o tuviste un trastorno de la conducta alimentaria, consulta a un profesional de la salud. Usas la app bajo tu propia responsabilidad.</string>
@@ -267,7 +267,7 @@
     <string name="perfil_sin_recetas">Aquí aparecerán tus recetas propias.</string>
     <string name="perfil_sin_comidas">Aquí aparecerán las comidas que anotes.</string>
     <string name="perfil_crear_receta">Crear receta</string>
-    <string name="perfil_dias">días registrados</string>
+    <plurals name="perfil_dias"><item quantity="one">día registrado</item><item quantity="other">días registrados</item></plurals>
     <string name="perfil_platos">platos anotados</string>
     <string name="perfil_editar">Editar perfil</string>
     <string name="perfil_bio">Sobre ti</string>
@@ -295,7 +295,7 @@
     <string name="cuenta_tu_cuenta_pista">Fogón Social: perfil, gente y lo que compartes</string>
     <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
     <string name="cuenta_operacion_lista">Operación completada.</string>
-    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
+    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa «Perfiles en este teléfono».</string>
     <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
     <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
     <string name="cuenta_local">Tu diario, tus metas, tu peso, tus recetas y tus productos se quedan en este perfil del teléfono y, con tu cuenta, se guardan solos en ella, cifrados con tu contraseña: si reinstalas o cambias de teléfono, vuelven. Guarda un respaldo antes de retirar un perfil.</string>
@@ -413,4 +413,6 @@
     <string name="red_guardar_lugar">Guardar</string>
     <string name="historia_buscar_app">Busca una canción, receta o alimento</string>
     <string name="cuenta_muchas_cuentas">Desde esta conexión ya se crearon muchas cuentas hoy. Inténtalo mañana o desde otra red.</string>
+    <string name="fuera_de_rango">Entre %1$s y %2$s</string>
+  <plurals name="porciones_cifra"><item quantity="one">%1$s porción</item><item quantity="other">%1$s porciones</item></plurals>
 </resources>

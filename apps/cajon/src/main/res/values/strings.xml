@@ -57,11 +57,16 @@
   <string name="estado_escuchado">Listened</string>
   <string name="estado_terminado">Finished</string>
   <string name="estado_abandonado">Dropped</string>
+  <string name="estado_sin">No status</string>
   <string name="buscar_pista">Title, original title…</string>
+  <string name="buscar_persona_pista">Name or @username</string>
   <string name="buscar_falta_tmdb">Searching films, series and anime needs your TMDB key (it’s free). You can also add them by hand.</string>
   <string name="buscar_tmdb_mala">TMDB didn’t accept your key. Check it in Settings.</string>
   <string name="buscar_sin_red">No internet. Check your connection and try again.</string>
   <string name="buscar_fallo">Couldn’t search right now. Try again in a moment.</string>
+  <string name="anio_invalido">Enter a year between 1000 and %1$d.</string>
+  <string name="inicio_sin_red">Recommendations need internet. Everything you saved is still here.</string>
+  <string name="inicio_reintentar">Try again</string>
   <string name="buscar_sin_tmdb">Film data isn’t available right now.</string>
   <string name="agregar_a_mano">Add by hand</string>
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
@@ -265,12 +270,13 @@
     <item>Films, series and anime: TMDB.</item>
     <item>Books: Open Library.</item>
     <item>Music: MusicBrainz and Cover Art Archive.</item>
+    <item>Steam library: Steam Web API. Valve and Steam are trademarks of Valve Corporation. El Cajón is not endorsed by Valve.</item>
   </string-array>
   <string name="buscar">Search</string>
   <string name="buscar_y_agregar">Search and add</string>
   <string name="borrar_texto">Clear text</string>
   <string name="ver_mas">See more</string>
-  <string name="fuentes_busqueda">Film: TMDB. Music: MusicBrainz, covers from the Cover Art Archive and photos from Wikimedia Commons. Books: Open Library. Games: IGDB (data and images) and Wikidata. Trending: Wikipedia and Wikidata, TMDB, ListenBrainz, Open Library and TVmaze.\nImported listens: Last.fm (https://www.last.fm).</string>
+  <string name="fuentes_busqueda">Film: TMDB. Music: MusicBrainz, covers from the Cover Art Archive and photos from Wikimedia Commons. Books: Open Library. Games: IGDB (data and images) and Wikidata. Trending: Wikipedia and Wikidata, TMDB, ListenBrainz, Open Library and TVmaze.\nImported listens: Last.fm (https://www.last.fm). Steam library: Steam Web API.</string>
   <string name="seccion_cine">Film</string>
   <string name="seccion_musica">Music</string>
   <string name="seccion_libros">Books</string>
@@ -915,7 +921,7 @@
   <string name="aj_tu_cajon">Your cajón</string>
   <string name="aj_musica_pista">Log what you listen to and Spotify</string>
   <string name="aj_respaldo_pista">Save or restore your whole cajón to a file</string>
-  <string name="aj_traer_pista">Netflix, Letterboxd, Trakt, TV Time, Goodreads, The StoryGraph, Spotify and Last.fm</string>
+  <string name="aj_traer_pista">Netflix, Letterboxd, Trakt, TV Time, Goodreads, The StoryGraph, Spotify, Last.fm and Steam</string>
   <string name="aj_apariencia_idioma">Appearance and language</string>
   <string name="aj_apariencia_pista">Theme, colors and type</string>
   <string name="notif_explica">Permission to show notifications lets you know about network updates and messages: who and what (“@pedro started following you”, “@ana sent you a message”). With the app closed they arrive right away; on phones without Google services, every 15 minutes or more. It does not grant access to other apps’ notifications.</string>
@@ -1277,7 +1283,6 @@
   <string name="equipo_p_usuarios">Manage users</string>
   <string name="equipo_p_equipo">Assign team</string>
   <string name="equipo_p_registro">View audit log</string>
-    <string name="perfiles_cambiar">Switch account</string>
     <string name="perfiles_anadir">Add account</string>
     <string name="perfiles_limite">You can keep up to 5 profiles on this phone.</string>
     <string name="perfiles_local">Local profile</string>
@@ -1293,6 +1298,7 @@
     <string name="resena_borrador">Your draft is saved when you leave. Photos require an account and are uploaded when added.</string>
     <string name="resena_elegir_obra">Choose a work, artist or author</string>
     <string name="resena_limite">%1$d / 5000 characters</string>
+    <string name="campo_tope">Up to %1$d characters</string>
     <string name="resena_escribir_algo">Write something</string>
     <string name="resena_escribir_parte">Review a part</string>
     <string name="resena_nota_compartida">It\'s the same rating shown on the page.</string>
@@ -1359,7 +1365,7 @@
   <string name="politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is published and the encrypted copy does not sync. Your local drawer remains available.</string>
   <string name="privacidad_local">On this phone: your private diary and reviews, notes, listening history, tastes and recommendations.\nConversations stay on this phone.\nIf you enable a backup, its included data also leaves as described below.</string>
   <string name="privacidad_social">With an account, Fogón Social receives your email and identity, sessions and acceptance record; what you share according to its visibility, interactions, blocks and reports.\nMessages travel encrypted until delivery (up to 30 days).\nAn optional account copy is encrypted and only your password unlocks it.\nModeration may retain removed content as evidence.</string>
-  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or drawer.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nIGDB: video games, through the Fogón server; IGDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from images.igdb.com are fetched directly.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLast.fm: only if you import your history, through the Fogón server; it does not store your username or what you listen to.\nLinks to other services open in your browser.</string>
+  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or drawer.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nIGDB: video games, through the Fogón server; IGDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from images.igdb.com are fetched directly.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLast.fm: only if you import your history, through the Fogón server; it does not store your username or what you listen to.\nSteam: only if you import your library. When you tap “Import”, the Fogón server asks Steam for your list of games and does not store it. What you import stays in your drawer: on this phone and in your encrypted copy, if you have one.\nLinks to other services open in your browser.</string>
   <string name="privacidad_opciones">Current options and permissions</string>
   <string name="privacidad_activa">Enabled</string>
   <string name="privacidad_inactiva">Disabled</string>
@@ -1432,6 +1438,32 @@
   <string name="lastfm_credito">Data from Last.fm · visit source</string>
   <string name="lastfm_error">Could not query Last.fm. Check that the profile is public and exists. If the service is busy or has not been configured, try later. Retrying does not duplicate listens.</string>
   <string name="lastfm_fecha_error">Enter a valid date between 1970 and today (YYYY-MM-DD).</string>
+  <string name="steam_titulo">Steam</string>
+  <string name="steam_pista">Bring your Steam games with your playtime. Paste your profile link: it is sent only when you tap “Import” and is not stored. You can repeat it without duplicates: games you already have only get their hours updated, and games you deleted don’t come back. New games don’t show on your profile until you touch them.</string>
+  <string name="steam_privacidad_pista">Your game details must be public on Steam: Profile → Edit Profile → Privacy Settings → Game details: Public.</string>
+  <string name="steam_abrir_privacidad">Open Steam privacy settings</string>
+  <string name="steam_perfil">Your Steam profile link</string>
+  <string name="steam_perfil_ejemplo">steamcommunity.com/id/… or steamcommunity.com/profiles/…</string>
+  <string name="steam_perfil_no_valido">That link doesn’t look like a Steam profile</string>
+  <string name="steam_importar">Import</string>
+  <string name="steam_reintentar">Try again</string>
+  <string name="steam_cancelar">Cancel</string>
+  <string name="steam_espera">Checking Steam…</string>
+  <string name="steam_avance">Getting game pages: %1$d of %2$d</string>
+  <string name="steam_listo">Steam import finished. New: %1$d · Updated: %2$d · Without a game page (kept with their name): %3$d.</string>
+  <string name="steam_vacia">Your Steam library has no games.</string>
+  <string name="steam_error_privada">Steam doesn’t show your games because your game details are private. On Steam: Profile → Edit Profile → Privacy Settings → Game details: Public. Save and try again.</string>
+  <string name="steam_error_enlace">That link doesn’t look like a Steam profile. Copy it from your profile: steamcommunity.com/id/… or steamcommunity.com/profiles/…</string>
+  <string name="steam_error_no_encontrado">We couldn’t find that profile on Steam. Check the link.</string>
+  <string name="steam_error_no_disponible">Steam import isn’t available right now. Try again later.</string>
+  <string name="steam_error_no_responde">Steam didn’t respond. Try again in a while.</string>
+  <string name="steam_error_igdb">Couldn’t recognize the games right now. Try again later.</string>
+  <string name="steam_error_cupo">There are no Steam imports left for today. Try again tomorrow.</string>
+  <string name="steam_error_despacio">Too many tries in a row. Wait a few minutes and try again.</string>
+  <string name="steam_error_ocupado">Another import is in progress. Try again in a few minutes.</string>
+  <string name="steam_recortada">Your library has %2$d games: the %1$d most played came in.</string>
+  <string name="steam_horas">%1$d h on Steam</string>
+  <string name="lic_steam">Steam library: Steam Web API, through the Fogón server and only when you import. Valve and Steam are trademarks of Valve Corporation; El Cajón is not endorsed by Valve.</string>
   <string name="lastfm_listo">Last.fm import complete.</string>
   <string name="beta_aviso">Beta: El Cajón may still change and have bugs. If something doesn’t work, tell us in “Report a problem or suggest something”.</string>
   <string name="beta_problemas">Known issues</string>
@@ -1712,7 +1744,7 @@
     <string name="cancion_silenciar">Mute profile music</string>
     <string name="cancion_activar">Unmute profile music</string>
     <string name="chispas_n">%1$s sparks</string>
-    <string name="chispas_explica">Free sparks: welcome, confirmed reports, helpful reviews and soon the seasonal route.</string>
+    <string name="chispas_explica">Free sparks: welcome, confirmed reports and helpful reviews.</string>
     <string name="chispas_diario">Today’s</string>
     <string name="tienda_fondos">backgrounds</string>
     <string name="tienda_marcos">frames</string>

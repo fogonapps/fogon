@@ -325,7 +325,7 @@
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
   <string name="tut_saldos_texto">Escribe lo que tienes hoy. Lo que no uses, déjalo vacío; después puedes agregar más cuentas.</string>
   <string name="tut_sistema">¿Cómo te quieres organizar?</string>
-  <string name="tut_sistema_texto">Lo puedes cambiar cuando quieras en Ajustes.</string>
+  <string name="tut_sistema_texto">Lo puedes cambiar cuando quieras.</string>
   <string name="tut_tengo_respaldo">Ya tengo un respaldo</string>
   <string name="tut_tengo_tarjeta">Tengo tarjeta de crédito</string>
   <string name="tut_tu_nombre">¿Cómo te llamo? (opcional)</string>
@@ -479,7 +479,7 @@
   <string name="ajustes">Ajustes</string>
   <string name="editar_perfil">Editar perfil</string>
   <string name="todo_fogon">Todo Fogón en un archivo</string>
-  <string name="perfil_dias">días anotando</string>
+  <plurals name="perfil_dias"><item quantity="one">día anotando</item><item quantity="other">días anotando</item></plurals>
   <string name="perfil_cumplidas">metas cumplidas</string>
   <string name="perfil_logros">Logros</string>
   <string name="perfil_metas_vacias">Tus metas aparecerán aquí.</string>
@@ -559,7 +559,7 @@
     <string name="ocultar_montos">Ocultar los montos</string>
     <string name="mostrar_montos">Mostrar los montos</string>
     <string name="tut_categorias">Tus categorías</string>
-    <string name="tut_categorias_texto">Elige las que usarás. Siempre puedes cambiarlas después en Ajustes.</string>
+    <string name="tut_categorias_texto">Elige las que usarás. Siempre puedes cambiarlas después.</string>
     <string name="tut_gastos">Gastos</string>
     <string name="tut_ingresos">Ingresos</string>
     <plurals name="varios_guardar"><item quantity="one">Guardar %d movimiento</item><item quantity="other">Guardar %d movimientos</item></plurals>
@@ -570,7 +570,7 @@
     <string name="cuenta_tu_cuenta_pista">Fogón Social: perfil, gente y tus logros</string>
     <string name="cuenta_error">No se pudo completar la operación. Revisa la conexión y vuelve a intentarlo.</string>
     <string name="cuenta_operacion_lista">Operación completada.</string>
-    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa Cambiar de cuenta.</string>
+    <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa «Perfiles en este teléfono».</string>
     <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
     <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
     <string name="cuenta_local">Tus cuentas, movimientos, sobres, metas y saldos se quedan en este perfil del teléfono y, con tu cuenta, se guardan solos en ella, cifrados con tu contraseña: si reinstalas o cambias de teléfono, vuelven. Guarda un respaldo antes de retirar un perfil.</string>
@@ -643,4 +643,15 @@
   <string name="ajustar">Ajustar</string>
   <string name="ajustar_saldo">Ajustar saldo</string>
   <string name="ajuste_saldo">Ajuste de saldo</string>
+  <string name="meta_fecha_pasada">Esa fecha ya pasó: elige hoy o una fecha más adelante.</string>
+  <string name="icono_meta_moneda">Moneda</string>
+  <string name="icono_meta_viaje">Viaje</string>
+  <string name="icono_meta_casa">Casa</string>
+  <string name="icono_meta_estudio">Estudio</string>
+  <string name="icono_meta_transporte">Transporte</string>
+  <string name="icono_meta_celular">Celular</string>
+  <string name="icono_meta_salud">Salud</string>
+  <string name="icono_meta_prima">Prima</string>
+  <string name="icono_meta_extra">Ingreso extra</string>
+  <string name="icono_meta_compras">Compras</string>
 </resources>

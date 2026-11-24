@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.focus.onFocusChanged
 import io.github.fogonapps.identidad.contraste
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -128,10 +129,20 @@ fun CampoTexto(valor: String, onCambio: (String) -> Unit, etiqueta: String, modi
 }
 
 @Composable
-fun CampoNumero(valor: String, onCambio: (String) -> Unit, etiqueta: String, modifier: Modifier = Modifier, decimales: Boolean = false) {
+fun CampoNumero(
+    valor: String, onCambio: (String) -> Unit, etiqueta: String, modifier: Modifier = Modifier, decimales: Boolean = false,
+    error: String? = null, maximo: Double? = null,
+) {
+    // El error no salta al primer dígito: se muestra al salir del campo, o enseguida si el número ya pasa del
+    // [maximo] (con más dígitos solo crece).
+    var enfocado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val yaNoSirve = maximo != null && (numero(valor) ?: 0.0) > maximo
+    val verError = error?.takeIf { !enfocado || yaNoSirve }
     OutlinedTextField(
-        valor, { t -> onCambio(t.filter { it.isDigit() || (decimales && (it == ',' || it == '.')) }.take(6)) }, modifier,
-        label = { Text(etiqueta) }, singleLine = true,
+        valor, { t -> onCambio(t.filter { it.isDigit() || (decimales && (it == ',' || it == '.')) }.take(6)) },
+        modifier.onFocusChanged { enfocado = it.isFocused },
+        label = { Text(etiqueta) }, singleLine = true, isError = verError != null,
+        supportingText = verError?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = if (decimales) KeyboardType.Decimal else KeyboardType.Number),
     )
 }
@@ -182,6 +193,17 @@ fun cifra(d: Double, idioma: String, decimales: Int = 1): String {
     val r = Math.round(d * escala) / escala
     val t = if (r == Math.floor(r) || r >= 100) Math.round(r).toString() else r.toString()
     return if (idioma == "en") t else t.replace('.', ',')
+}
+
+/**
+ * El tamaño para que [texto] (cifras) quepa en [anchoDp] sin pasar de [maximo]: las cifras de puntos miden cerca de
+ * 0,62 veces su tamaño de ancho, y la letra grande del teléfono también las agranda.
+ */
+@Composable
+fun cifraQueCabe(texto: String, anchoDp: Float, maximo: androidx.compose.ui.unit.TextUnit): androidx.compose.ui.unit.TextUnit {
+    val escala = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    val cabe = anchoDp / (texto.length.coerceAtLeast(1) * 0.62f) / escala
+    return minOf(maximo.value, cabe).sp
 }
 
 /** Lee lo que escribió la persona con coma o punto. */

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -87,9 +88,11 @@ fun DonaDelMes(porCategoria: List<Pair<io.github.fogonapps.ahorrador.datos.Categ
                 inicio += barrido
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.salio), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
-            NumeroRiso(Formato.pesos(total), if (Formato.pesos(total).length <= 9) 26.sp else 20.sp, color = f.texto)
+        // Adentro de la dona caben unos 150 dp: el total se achica para no salirse del anillo.
+        Column(Modifier.width(150.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.salio), style = MaterialTheme.typography.labelMedium, color = f.textoSuave, maxLines = 1)
+            val texto = Formato.pesos(total)
+            NumeroRiso(texto, cifraQueCabe(texto, 150f, 26.sp), color = f.texto)
         }
     }
 }
@@ -107,8 +110,9 @@ fun UltimosMeses(vm: AhorradorViewModel, e: Estado, mes: String) {
             meses.zip(montos).forEachIndexed { i, (m, n) ->
                 val alto = progresoAnimado(n.toFloat() / mayor)
                 Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                    if (n > 0) Text(Formato.compacto(n), style = MaterialTheme.typography.labelSmall, color = if (m == mes) f.texto else f.textoSuave, maxLines = 1,
-                        modifier = Modifier.padding(bottom = 2.dp))
+                    if (n > 0) Text(Formato.pesosCompacto(n), style = MaterialTheme.typography.labelSmall, color = if (m == mes) f.texto else f.textoSuave, maxLines = 1,
+                        softWrap = false, modifier = Modifier.padding(bottom = 2.dp),
+                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 7.sp, maxFontSize = MaterialTheme.typography.labelSmall.fontSize))
                     Box(Modifier.fillMaxWidth().fillMaxHeight(alto.coerceAtLeast(0.02f) * 0.8f).clip(forma(8.dp))
                         .background(if (m == mes) f.tinta1 else f.tinta1.copy(alpha = 0.28f)))
                     Text(Formato.mesCorto(m), style = MaterialTheme.typography.labelSmall, color = if (m == mes) f.texto else f.textoSuave, modifier = Modifier.padding(top = 4.dp))

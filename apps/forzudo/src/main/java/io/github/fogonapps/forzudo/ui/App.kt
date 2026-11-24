@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -80,7 +81,12 @@ typealias Confirmar = (String, String?, () -> Unit) -> Unit
 
 val LocalConfirmar = staticCompositionLocalOf<Confirmar> { { _, _, si -> si() } }
 
-private data class Pregunta(val titulo: String, val texto: String?, val si: () -> Unit)
+/** Como [Confirmar], con los textos propios de los botones (el que hace la acción y el que vuelve). */
+typealias ConfirmarCon = (titulo: String, texto: String?, siTexto: String, noTexto: String, si: () -> Unit) -> Unit
+
+val LocalConfirmarCon = staticCompositionLocalOf<ConfirmarCon> { { _, _, _, _, si -> si() } }
+
+private data class Pregunta(val titulo: String, val texto: String?, val si: () -> Unit, val siTexto: String? = null, val noTexto: String? = null)
 
 @Composable
 fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
@@ -102,7 +108,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
         return
     }
 
-    CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }) {
+    CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) },
+        LocalConfirmarCon provides { t, x, siTexto, noTexto, si -> pregunta = Pregunta(t, x, si, siTexto, noTexto) }) {
         PoliticaCuenta(vm)
         val verTutorialGuia by vm.tutorial.collectAsStateWithLifecycle()
         val guia = io.github.fogonapps.identidad.rememberGuia("forzudo")
@@ -131,8 +138,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                 snackbarHost = { SnackbarHost(snack) { AvisoTinta(it.visuals.message) } },
                 bottomBar = {
                     if (pila.isEmpty()) Column {
-                        val confirmar = LocalConfirmar.current
-                        if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmar, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
+                        val confirmarCon = LocalConfirmarCon.current
+                        if (estado.active != null && pila.none { it is Pantalla.Vivo }) BarraEntreno(estado.active.title ?: stringResource(R.string.voc_entreno), estado.active.start, { cancelarEntreno(vm, confirmarCon, vm.L.series(estado.active.entries)) }) { vm.abrir(Pantalla.Vivo) }
                         BarraPestanas(
                             listOf(
                                 Triple(Pestana.INICIO, stringResource(R.string.pestana_inicio), Iconos.Inicio),
@@ -186,7 +193,7 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                             is Pantalla.Editor -> Editor(vm, estado, p.rid)
                             is Pantalla.Cambiar -> Cambiar(vm, p)
                             is Pantalla.Zoom -> Zoom(vm, p.id, p.i)
-                            is Pantalla.Perfil -> PerfilLocal(vm, estado, onExportar)
+                            is Pantalla.Perfil -> PerfilLocal(vm, estado, onExportar, p.pestana)
                             is Pantalla.EditarPerfil -> EditarPerfilLocal(vm, estado)
                             is Pantalla.Cuenta -> Cuenta(vm, onExportar)
                             is Pantalla.Seguridad -> SeguridadCuenta(vm, p.ajuste)
@@ -215,8 +222,8 @@ fun App(vm: GymViewModel, onExportar: () -> Unit, onImportar: () -> Unit) {
                     onDismissRequest = { pregunta = null },
                     title = { Text(q.titulo) },
                     text = q.texto?.let { { Text(it) } },
-                    confirmButton = { TextButton({ pregunta = null; q.si() }) { Text(stringResource(R.string.si_continuar), fontWeight = FontWeight.Bold) } },
-                    dismissButton = { TextButton({ pregunta = null }) { Text(stringResource(R.string.volver)) } },
+                    confirmButton = { TextButton({ pregunta = null; q.si() }) { Text(q.siTexto ?: stringResource(R.string.si_continuar), fontWeight = FontWeight.Bold) } },
+                    dismissButton = { TextButton({ pregunta = null }) { Text(q.noTexto ?: stringResource(R.string.volver)) } },
                 )
             }
         }
@@ -301,9 +308,20 @@ private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Desca
         val dd = d ?: return@AnimatedVisibility
         val rest = maxOf(0L, (dd.fin - ahora + 999) / 1000)
         // Con fondo sólido debajo del vidrio: flota sobre el entrenamiento y lo de atrás no se mezcla con el reloj.
-        Row(Modifier.fillMaxWidth().padding(12.dp).background(f.fondo, forma(22.dp)).tarjetaFogon(forma(22.dp)).padding(12.dp),
+        // En horizontal (pantalla baja), el reloj se achica y los tres botones van en una fila: no tapa media sesión.
+        val bajo = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
+        val falta = if (dd.total > 0) rest.toFloat() / dd.total else 0f
+        val reloj = "${rest / 60}:${(rest % 60).toString().padStart(2, '0')}"
+        if (bajo) Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).widthIn(max = 640.dp).fillMaxWidth()
+            .background(f.fondo, forma(22.dp)).tarjetaFogon(forma(22.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MedidorDescanso(falta, reloj, 64.dp)
+            io.github.fogonapps.identidad.BotonSecundario("−15", { vm.ajustarDescanso(-15) }, Modifier.weight(1f))
+            io.github.fogonapps.identidad.BotonSecundario("+15", { vm.ajustarDescanso(15) }, Modifier.weight(1f))
+            io.github.fogonapps.identidad.BotonRiso(stringResource(R.string.saltar), { vm.pararDescanso() }, Modifier.weight(1.4f))
+        } else Row(Modifier.fillMaxWidth().padding(12.dp).background(f.fondo, forma(22.dp)).tarjetaFogon(forma(22.dp)).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MedidorDescanso(if (dd.total > 0) rest.toFloat() / dd.total else 0f, "${rest / 60}:${(rest % 60).toString().padStart(2, '0')}")
+            MedidorDescanso(falta, reloj)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     io.github.fogonapps.identidad.BotonSecundario("−15", { vm.ajustarDescanso(-15) }, Modifier.weight(1f))
@@ -320,12 +338,12 @@ private fun BarraDescanso(vm: GymViewModel, d: io.github.fogonapps.forzudo.Desca
  * alrededor, el arco de lo que falta en el acento y una bolita blanca en la punta.
  */
 @Composable
-private fun MedidorDescanso(falta: Float, texto: String) {
+private fun MedidorDescanso(falta: Float, texto: String, tamano: androidx.compose.ui.unit.Dp = 108.dp) {
     val f = FogonTema.actual
     val marcas = f.texto.copy(alpha = 0.5f); val arco = f.paleta.tinta; val bola = f.pildora
     val descripcion = stringResource(R.string.descanso_queda, texto)
-    Box(Modifier.size(108.dp).semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
-        androidx.compose.foundation.Canvas(Modifier.size(108.dp)) {
+    Box(Modifier.size(tamano).semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.Canvas(Modifier.size(tamano)) {
             val c = center; val r = size.minDimension / 2
             for (i in 0 until 60) {
                 val a = Math.toRadians(i * 6.0 - 90)
@@ -341,7 +359,7 @@ private fun MedidorDescanso(falta: Float, texto: String) {
             val a = Math.toRadians(360.0 * falta.coerceIn(0f, 1f) - 90)
             drawCircle(bola, 5.dp.toPx(), androidx.compose.ui.geometry.Offset(c.x + kotlin.math.cos(a).toFloat() * ri, c.y + kotlin.math.sin(a).toFloat() * ri))
         }
-        Text(texto, fontFamily = FogonTema.actual.cifras, fontSize = 26.sp, color = f.texto)
+        Text(texto, fontFamily = FogonTema.actual.cifras, fontSize = 26.sp * (tamano / 108.dp), color = f.texto)
     }
 }
 

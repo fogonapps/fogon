@@ -339,6 +339,14 @@ fun Metas(vm: AhorradorViewModel, e: Estado) {
 val COLORES_META = listOf(Tintas.Verde, Tintas.Amarillo, Tintas.Rosa, Tintas.Azul, Tintas.Violeta, Tintas.Naranja, Tintas.Cian, Tintas.Rojo)
 val ICONOS_META = listOf("moneda", "viaje", "casa", "estudio", "transporte", "celular", "salud", "prima", "extra", "compras")
 
+/** Cómo se lee cada ícono de meta en el idioma de la app. */
+private val NOMBRES_ICONOS_META = mapOf(
+    "moneda" to R.string.icono_meta_moneda, "viaje" to R.string.icono_meta_viaje, "casa" to R.string.icono_meta_casa,
+    "estudio" to R.string.icono_meta_estudio, "transporte" to R.string.icono_meta_transporte, "celular" to R.string.icono_meta_celular,
+    "salud" to R.string.icono_meta_salud, "prima" to R.string.icono_meta_prima, "extra" to R.string.icono_meta_extra,
+    "compras" to R.string.icono_meta_compras,
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
@@ -363,8 +371,11 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
         }
         if (conFecha) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.meta_para), color = f.textoSuave)
-            BotonFecha(fecha, { fecha = it }, vm.hoy(), hastaHoy = false)
+            BotonFecha(fecha, { fecha = it }, vm.hoy(), hastaHoy = false, desdeHoy = true)
         }
+        // Una fecha que ya pasó no sirve para una meta nueva; la de una meta vieja que ya venció se puede dejar.
+        val fechaPasada = conFecha && fecha != m?.fecha && java.time.LocalDate.parse(fecha) < vm.hoy()
+        if (fechaPasada) Text(stringResource(R.string.meta_fecha_pasada), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         Text(stringResource(R.string.color), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             COLORES_META.forEachIndexed { nColor, c ->
@@ -377,19 +388,20 @@ fun EditarMeta(vm: AhorradorViewModel, e: Estado, id: String?) {
         Text(stringResource(R.string.icono), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ICONOS_META.forEach { i ->
+                val nombreIcono = stringResource(NOMBRES_ICONOS_META.getValue(i))
                 Box(Modifier.size(46.dp).clip(CircleShape).background(if (i == icono) colorDe(color) else f.superficie).clickable { icono = i }
-                    .semantics { selected = i == icono; contentDescription = i }, contentAlignment = Alignment.Center) {
+                    .semantics { selected = i == icono; contentDescription = nombreIcono }, contentAlignment = Alignment.Center) {
                     io.github.fogonapps.identidad.IconoRiso(Iconos.de(i), null, tamano = 22.dp, tinta = if (i == icono) io.github.fogonapps.identidad.legibleSobre(colorDe(color), listOf(f.texto, f.fondo)) else f.texto, corrida = null)
                 }
             }
         }
         BotonRiso(stringResource(R.string.guardar), {
             val obj = objetivo.toLongOrNull() ?: 0
-            if (nombre.isNotBlank() && obj > 0) {
+            if (nombre.isNotBlank() && obj > 0 && !fechaPasada) {
                 vm.guardarMeta(Meta(m?.id.orEmpty(), nombre.trim(), obj, if (conFecha) fecha else null, color, icono))
                 vm.cerrar()
             }
-        }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank() && (objetivo.toLongOrNull() ?: 0) > 0)
+        }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank() && (objetivo.toLongOrNull() ?: 0) > 0 && !fechaPasada)
         if (m != null) BotonSecundario(stringResource(R.string.borrar_meta), {
             confirmar(vm.tx(R.string.borrar_meta_pregunta, m.nombre), vm.tx(R.string.borrar_meta_texto)) { vm.borrarMeta(m.id) }
         }, Modifier.fillMaxWidth(), peligro = true)

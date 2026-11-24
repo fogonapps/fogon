@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -142,9 +143,14 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Anillo((total.kcal / e.metas.kcal.coerceAtLeast(1)).toFloat(), Modifier.size(140.dp)) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NumeroRiso("${kotlin.math.abs(quedan)}", 32.sp)
-                    Text(stringResource(if (quedan >= 0) R.string.kcal_quedan else R.string.kcal_de_mas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
+                // Adentro del anillo caben unos 96 dp: el número y la etiqueta se achican para no salirse (cifras
+                // enormes o letra grande).
+                Column(Modifier.width(96.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    val numeroQuedan = "${kotlin.math.abs(quedan)}"
+                    NumeroRiso(numeroQuedan, cifraQueCabe(numeroQuedan, 96f, 32.sp))
+                    Text(stringResource(if (quedan >= 0) R.string.kcal_quedan else R.string.kcal_de_mas), style = MaterialTheme.typography.labelMedium, color = f.textoSuave,
+                        maxLines = 1, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelMedium.fontSize))
                 }
             }
             Column(Modifier.weight(1f).padding(start = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -152,7 +158,12 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
                 Dato(stringResource(R.string.meta), "${e.metas.kcal} kcal")
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        // Con letra grande, los tres macros van uno debajo del otro para que se lean enteros.
+        if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            BarraMacro(stringResource(R.string.proteina), total.proteina, e.metas.proteina, f.tinta1, Modifier.fillMaxWidth(), pasarseEsMalo = false)
+            BarraMacro(stringResource(R.string.carbos), total.carbos, e.metas.carbos, f.tinta2, Modifier.fillMaxWidth())
+            BarraMacro(stringResource(R.string.grasa), total.grasa, e.metas.grasa, f.textoSuave, Modifier.fillMaxWidth())
+        } else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             BarraMacro(stringResource(R.string.proteina), total.proteina, e.metas.proteina, f.tinta1, Modifier.weight(1f), pasarseEsMalo = false)
             BarraMacro(stringResource(R.string.carbos), total.carbos, e.metas.carbos, f.tinta2, Modifier.weight(1f))
             BarraMacro(stringResource(R.string.grasa), total.grasa, e.metas.grasa, f.textoSuave, Modifier.weight(1f))
@@ -256,8 +267,8 @@ private fun TarjetaComida(vm: CuchaViewModel, e: Estado, comida: String, fecha: 
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(a.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1)
-                    Text(a.detalle, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
+                    Text(vm.nombreDe(e, a), style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1)
+                    Text(vm.detalleDe(e, a), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1)
                 }
                 Text("${a.n.kcal.roundToInt()}", fontFamily = f.cifras, color = f.textoSuave)
             }

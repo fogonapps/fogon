@@ -198,13 +198,14 @@ private fun CreditoFuente(o: Obra, modifier: Modifier = Modifier, adentro: Boole
     }
 }
 
-/** "1 h 52 min", "3 temporadas · 30 episodios", "432 páginas", "10 canciones · 47 min", "PC · Nintendo Switch". */
+/** "1 h 52 min", "3 temporadas · 30 episodios", "432 páginas", "10 canciones · 47 min", "PC · Nintendo Switch · 120 h en Steam". */
 @Composable
 private fun medida(o: Obra): String = when {
     Tipos.porEpisodios(o.tipo) && o.temporadas.isNotEmpty() -> pluralStringResource(R.plurals.temporadas, o.temporadas.size, o.temporadas.size) + " · " +
         pluralStringResource(R.plurals.episodios, o.temporadas.sumOf { it.episodios }, o.temporadas.sumOf { it.episodios })
     o.tipo == Tipos.LIBRO && o.paginas != null -> pluralStringResource(R.plurals.paginas, o.paginas, o.paginas)
-    o.tipo == Tipos.JUEGO -> o.plataformas.joinToString(" · ").ifBlank { nombreTipo(o.tipo, plural = false) }
+    o.tipo == Tipos.JUEGO -> o.plataformas.joinToString(" · ").ifBlank { nombreTipo(o.tipo, plural = false) } +
+        (io.github.fogonapps.cajon.datos.Steam.horas(o.minutosSteam)?.let { " · " + stringResource(R.string.steam_horas, it) } ?: "")
     o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> pluralStringResource(R.plurals.canciones, o.canciones.size, o.canciones.size) +
         (o.minutos?.let { " · " + stringResource(R.string.minutos_n, it) } ?: "") + (o.formato.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
     o.minutos != null -> if (o.minutos >= 60) stringResource(R.string.horas_minutos, o.minutos / 60, o.minutos % 60) else stringResource(R.string.minutos_n, o.minutos)
@@ -746,7 +747,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
     var fecha by rememberSaveable { mutableStateOf(viejo?.fecha ?: vm.hoy().toString()) }
     val resena = viejo?.let { io.github.fogonapps.cajon.datos.Resenas.deDestino(e, o.id, registro = it.id) }
     var nota by rememberSaveable { mutableStateOf(resena?.nota ?: viejo?.nota ?: 0) }
-    var texto by rememberSaveable { mutableStateOf(resena?.texto.orEmpty()) }
+    var texto by rememberSaveable { mutableStateOf(io.github.fogonapps.cajon.datos.Logica.recortarSinPartir(resena?.texto.orEmpty(), 5000)) }
     var otraVez by rememberSaveable { mutableStateOf(viejo?.otraVez ?: o.registros.isNotEmpty()) }
     var visibilidad by rememberSaveable { mutableStateOf(resena?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) }
 
@@ -763,13 +764,13 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
         Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             FilaInterruptorCajon(stringResource(if (o.tipo == Tipos.JUEGO) R.string.otra_vez_pregunta_juego else R.string.otra_vez_pregunta), otraVez) { otraVez = it }
         }
-        OutlinedTextField(texto, { texto = it }, Modifier.fillMaxWidth(), minLines = 3,
-            label = { Text(stringResource(R.string.resena_pista)) }, isError = texto.length > 5000,
+        OutlinedTextField(texto, { texto = io.github.fogonapps.cajon.datos.Logica.recortarSinPartir(it, 5000) }, Modifier.fillMaxWidth(), minLines = 3,
+            label = { Text(stringResource(R.string.resena_pista)) },
             supportingText = { Text(stringResource(R.string.resena_limite, texto.length)) })
         ElegirVisibilidad(visibilidad) { if (vm.puedeCompartirResena(it)) visibilidad = it }
         BotonRiso(stringResource(R.string.guardar), {
             vm.registrar(o.id, Registro(viejo?.id ?: "", fecha, nota, otraVez, visibilidad = visibilidad), texto)
-        }, Modifier.fillMaxWidth(), habilitado = texto.length <= 5000)
+        }, Modifier.fillMaxWidth())
         if (viejo != null) BotonSecundario(stringResource(R.string.borrar), {
             confirmar(vm.tx(R.string.borrar_registro_pregunta), null) { vm.borrarRegistro(o.id, viejo.id); vm.cerrar() }
         }, Modifier.fillMaxWidth(), peligro = true)
@@ -803,6 +804,10 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
             // Un juego no se mide en minutos ni en páginas.
             if (tipo != Tipos.JUEGO) CampoNumero(medida, { medida = it }, stringResource(if (tipo == Tipos.LIBRO) R.string.paginas_campo else R.string.minutos_campo), Modifier.weight(1f))
         }
+        // Un año de cuatro cifras, hasta unos años adelante (estrenos anunciados). El que ya tenía la obra sigue valiendo.
+        val anioTope = java.time.Year.now().value + 10
+        val anioValido = anio.isBlank() || anio.toIntOrNull() in 1000..anioTope || (viejo?.anio != null && anio.toIntOrNull() == viejo.anio)
+        if (!anioValido) Pista(stringResource(R.string.anio_invalido, anioTope), adentro = true)
         CampoTexto(creador, { creador = it }, stringResource(when (tipo) {
             Tipos.LIBRO -> R.string.autor; Tipos.ALBUM -> R.string.tipo_artista; Tipos.PELICULA -> R.string.director; Tipos.JUEGO -> R.string.estudio; else -> R.string.creador
         }), max = 150)
@@ -827,7 +832,7 @@ fun EditarObra(vm: CajonViewModel, e: Estado, p: Pantalla.EditarObra) {
                 temporadas = if (Tipos.porEpisodios(tipo)) eps.mapIndexed { i, n -> base.temporadas.getOrNull(i)?.copy(episodios = n) ?: Temporada(i + 1, n) } else base.temporadas,
                 canciones = if (tipo == Tipos.ALBUM) lineas.mapIndexed { i, t -> base.canciones.getOrNull(i)?.takeIf { it.titulo == t } ?: io.github.fogonapps.cajon.datos.Cancion(t) } else base.canciones,
             ))
-        }, Modifier.fillMaxWidth(), habilitado = titulo.isNotBlank())
+        }, Modifier.fillMaxWidth(), habilitado = titulo.isNotBlank() && anioValido)
         // Los géneros y la portada se ponen después, en la ficha (como etiquetas y con "Cambiar la portada").
         Pista(stringResource(R.string.a_mano_pista), adentro = true)
     }

@@ -118,9 +118,11 @@ fun Anotar(vm: AhorradorViewModel, e: Estado, p: Pantalla.Anotar) {
         // El monto, grande
         Text(
             if (monto.isEmpty()) Formato.pesos(0) else Formato.pesos(monto.toLong()),
-            fontFamily = FogonTema.actual.cifras, fontSize = 48.sp, maxLines = 1, textAlign = TextAlign.Center,
+            // Un monto enorme se achica para quedar en una línea, sin partirse ni montarse.
+            fontFamily = FogonTema.actual.cifras, maxLines = 1, softWrap = false, textAlign = TextAlign.Center,
+            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = 48.sp),
             color = if (monto.isEmpty()) f.textoSuave else if (tipo == TipoMovimiento.INGRESO) f.acentoTexto else f.texto,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
         )
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

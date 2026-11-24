@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -133,6 +134,7 @@ fun Vivo(vm: GymViewModel, e: Estado) {
     val a = e.active ?: run { LaunchedEffect(Unit) { vm.cerrar() }; return }
     val L = vm.L
     val confirmar = LocalConfirmar.current
+    val confirmarCon = LocalConfirmarCon.current
     var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { ahora = System.currentTimeMillis(); delay(1000) } }
     Column {
@@ -143,7 +145,7 @@ fun Vivo(vm: GymViewModel, e: Estado) {
         }
         Cabecera(a.title ?: stringResource(R.string.voc_entreno), vm::cerrar, Iconos.Abajo)
         Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BotonSecundario(stringResource(R.string.cancelar), { cancelarEntreno(vm, confirmar, marcadas) }, Modifier.weight(1f), peligro = true)
+            BotonSecundario(stringResource(R.string.cancelar), { cancelarEntreno(vm, confirmarCon, marcadas) }, Modifier.weight(1f), peligro = true)
             BotonRiso(stringResource(if (marcadas == 0) R.string.terminar else R.string.terminar_guardar), terminar, Modifier.weight(1f))
         }
         Trio(stringResource(R.string.duracion) to duracion(ahora - a.start), stringResource(R.string.volumen) to fmtVol(L.volumen(a.entries)), stringResource(R.string.series) to "${L.series(a.entries)}")
@@ -164,9 +166,11 @@ fun Vivo(vm: GymViewModel, e: Estado) {
 }
 
 /** Cancela el entreno en curso: sin series marcadas no hay nada que perder y no pregunta. */
-fun cancelarEntreno(vm: GymViewModel, confirmar: Confirmar, marcadas: Int) {
+fun cancelarEntreno(vm: GymViewModel, confirmar: ConfirmarCon, marcadas: Int) {
     if (marcadas == 0) vm.descartar()
-    else confirmar(vm.tx(R.string.cancelar_entreno_pregunta), vm.txPlural(R.plurals.se_borran_series, marcadas)) { vm.descartar() }
+    // Botones que dicen lo que hacen: seguir entrenando o cancelar el entreno.
+    else confirmar(vm.tx(R.string.cancelar_entreno_pregunta), vm.txPlural(R.plurals.se_borran_series, marcadas),
+        vm.tx(R.string.cancelar_entreno), vm.tx(R.string.seguir_entrenando)) { vm.descartar() }
 }
 
 @Composable
@@ -249,7 +253,8 @@ private fun BloqueEjercicio(vm: GymViewModel, e: Estado, c: EjercicioCfg) {
                 val txtPrev = if (p == null) "" else if (c.e.kind == "w") (p.kg?.let { fk(it) + "kg" } ?: "") + (p.reps?.let { " × " + fk(it) } ?: "") else p.reps?.let { fk(it) + if (c.e.kind == "s") " s" else "" } ?: ""
                 Text(txtPrev, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1,
                     modifier = Modifier.weight(1.2f).clickable(enabled = p != null) { vm.copiarAnterior(c.id, i) }.padding(vertical = 12.dp)
-                        .semantics { contentDescription = "$descCopiar: $txtPrev" })
+                        // Sin valores anteriores no hay nada que copiar: el lector no anuncia un botón vacío.
+                        .then(if (p != null && txtPrev.isNotBlank()) Modifier.semantics { contentDescription = "$descCopiar: $txtPrev" } else Modifier.clearAndSetSemantics { }))
                 if (c.e.kind == "w") CampoNumero(s.kg?.let { fk(it) } ?: "", p?.kg?.let { fk(it) } ?: "", stringResource(R.string.kg_serie, i + 1), true,
                     { vm.escribir(c.id, i, "kg", it) }, Modifier.weight(1f))
                 CampoNumero(s.reps?.let { fk(it) } ?: "", p?.reps?.let { fk(it) } ?: "${c.lo}", stringResource(if (c.e.kind == "s") R.string.segundos_serie else R.string.reps_serie, i + 1), false,

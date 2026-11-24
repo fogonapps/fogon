@@ -42,14 +42,22 @@ object Formato {
     fun compacto(n: Long): String {
         if (ocultar) return "•••"
         val a = abs(n)
-        fun dec(x: Double) = (if (x >= 10) Math.round(x).toString() else (Math.round(x * 10) / 10.0).toString().removeSuffix(".0"))
-            .let { if (idioma == "es") it.replace('.', ',') else it }
-        return when {
-            a >= 1_000_000 -> dec(a / 1_000_000.0) + if (idioma == "es") " M" else "M"
-            a >= 1_000 -> Math.round(a / 1_000.0).toString() + if (idioma == "es") " mil" else "K"
-            else -> a.toString()
+        if (a < 1_000) return a.toString()
+        val es = idioma == "es"
+        fun redondo(x: Double) = if (x >= 10) Math.round(x).toDouble() else Math.round(x * 10) / 10.0
+        fun dec(x: Double) = redondo(x).toString().removeSuffix(".0").let { if (es) it.replace('.', ',') else it }
+        // Mil, millón, mil millones y billón (en inglés K, M, B y T). Si al redondear llega a mil, sube de escala.
+        val escalas = listOf(1e3 to (if (es) " mil" else "K"), 1e6 to (if (es) " M" else "M"), 1e9 to (if (es) " mil M" else "B"), 1e12 to (if (es) " B" else "T"))
+        escalas.forEachIndexed { i, (escala, sufijo) ->
+            val x = a / escala
+            val r = if (i == 0) Math.round(x).toDouble() else redondo(x)
+            if (r < 1000 || i == escalas.lastIndex) return (if (i == 0) Math.round(x).toString() else dec(x)) + sufijo
         }
+        return a.toString()
     }
+
+    /** Un monto corto con su signo de pesos, para los ejes y las etiquetas: "$ 2,2 M", "$2.2M". */
+    fun pesosCompacto(n: Long): String = if (idioma == "es") "$ ${compacto(n)}" else "$${compacto(n)}"
 
     fun fechaCorta(fecha: String): String = fechaCorta(LocalDate.parse(fecha))
     fun fechaCorta(d: LocalDate): String =

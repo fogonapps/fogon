@@ -45,6 +45,11 @@ class Igdb(
         /** El token se renueva una hora antes de vencer (o a la mitad de su vida, si dura menos de dos). */
         const val MARGEN = 3600_000L
         const val MAX_IDS = 50
+        /** Cuántos juegos de Steam van en cada consulta a `external_games` (un appid puede traer varias filas). */
+        const val LOTE_STEAM = 100
+        /** Filas por página de `external_games` (lo más que deja IGDB) y cuántas páginas, como mucho, por lote. */
+        const val FILAS_STEAM = 500
+        const val PAGINAS_STEAM = 4
         private val SLUG = Regex("[a-z0-9][a-z0-9$~-]{0,150}")
 
         /** Lo que llega en una búsqueda o en una lista: lo justo para mostrar el juego y elegirlo. */
@@ -145,14 +150,56 @@ class Igdb(
         return consultar("games", "fields $CAMPOS_FICHA; where $donde; limit $MAX_IDS;")
     }
 
-    private fun consultar(ruta: String, cuerpo: String): Cine.Respuesta {
+    /**
+     * Los ids de IGDB de unos juegos de Steam ([appids]): appid → id de IGDB. Se pregunta a `external_games` (fuente
+     * 1 = Steam) en lotes de [LOTE_STEAM]; si un lote trae [FILAS_STEAM] filas (un appid puede tener varias), se pide
+     * la página siguiente, hasta [PAGINAS_STEAM]. Si un appid tiene varias filas, queda el id más bajo. No se guarda en
+     * la caché: la lista es la biblioteca de una persona. Entre una consulta y la siguiente se esperan [pausa] ms, para
+     * que una importación no ocupe toda la fila; antes de cada una se pregunta si [sigue] (la importación pudo
+     * cancelarse). Cada página de más se pide antes a [otraPagina] (el cupo de quien importa) y cada consulta que
+     * sale se avisa a [alConsultar]. Null si IGDB no está, un lote falla, ya no sigue o no hay cupo para otra página.
+     */
+    fun deSteam(appids: List<Long>, pausa: Long = 0, sigue: () -> Boolean = { true }, otraPagina: () -> Boolean = { true },
+                alConsultar: () -> Unit = {}): Map<Long, Long>? {
+        if (!lista) return null
+        val r = HashMap<Long, Long>()
+        var primera = true
+        for (lote in appids.filter { it > 0 }.distinct().chunked(LOTE_STEAM)) {
+            for (pagina in 0 until PAGINAS_STEAM) {
+                if (!primera && pausa > 0) esperar(pausa)
+                primera = false
+                if (!sigue()) return null
+                if (pagina > 0 && !otraPagina()) return null
+                alConsultar()
+                val desde = if (pagina == 0) "" else " offset ${pagina * FILAS_STEAM};"
+                val res = consultar("external_games", "fields game,uid; where external_game_source = 1 & uid = (" +
+                    lote.joinToString(",") { "\"$it\"" } + "); limit $FILAS_STEAM;$desde", guardar = false)
+                if (res.codigo != 200) return null
+                val filas = runCatching { JsonSocial.parseToJsonElement(res.cuerpo) as? kotlinx.serialization.json.JsonArray }.getOrNull() ?: return null
+                filas.forEach { f ->
+                    val o = f as? JsonObject ?: return@forEach
+                    val uid = (o["uid"] as? JsonPrimitive)?.content?.toLongOrNull() ?: return@forEach
+                    val juego = when (val g = o["game"]) {
+                        is JsonPrimitive -> g.longOrNull
+                        is JsonObject -> (g["id"] as? JsonPrimitive)?.longOrNull
+                        else -> null
+                    }?.takeIf { it > 0 } ?: return@forEach
+                    r[uid] = r[uid]?.let { minOf(it, juego) } ?: juego
+                }
+                if (filas.size < FILAS_STEAM) break
+            }
+        }
+        return r
+    }
+
+    private fun consultar(ruta: String, cuerpo: String, guardar: Boolean = true): Cine.Respuesta {
         val llave = "$ruta|$cuerpo"
-        guardadas.leer(llave)?.let { return it }
+        if (guardar) guardadas.leer(llave)?.let { return it }
         val acceso = token(forzar = false) ?: return FALLO
         var r = pedir(ruta, cuerpo, acceso) ?: return DESPACIO
         // Un token que IGDB ya no acepta (revocado o vencido antes de tiempo): uno nuevo y otra vez, una sola vez.
         if (r.codigo == 401) r = pedir(ruta, cuerpo, token(forzar = true) ?: return FALLO) ?: return DESPACIO
-        if (r.codigo == 200 && r.cuerpo.length <= 600_000) guardadas.guardar(llave, r)
+        if (guardar && r.codigo == 200 && r.cuerpo.length <= 600_000) guardadas.guardar(llave, r)
         return when (r.codigo) { 200, 429 -> r; 400 -> MALA; else -> FALLO }
     }
 

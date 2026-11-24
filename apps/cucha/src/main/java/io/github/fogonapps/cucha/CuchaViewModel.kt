@@ -198,7 +198,35 @@ class CuchaViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
     fun tx(id: Int, vararg a: Any): String = Idioma.envolver(getApplication()).getString(id, *a)
-    private fun avisar(m: String) { _mensajes.trySend(m) }
+
+    /** El nombre y el detalle de lo anotado en el idioma de ahora (lo de fábrica se traduce; lo escrito, no). */
+    fun nombreDe(e: Estado, a: io.github.fogonapps.cucha.datos.Anotado): String =
+        if (a.ref.startsWith("rapido:")) deFabrica(a.nombre, R.string.anotado_rapido) else L.nombreAnotado(e, a, idioma())
+    fun detalleDe(e: Estado, a: io.github.fogonapps.cucha.datos.Anotado): String {
+        if (a.ref.startsWith("rapido:")) return deFabrica(a.detalle, R.string.anotado_rapido_detalle)
+        val idioma = idioma()
+        return L.detalleAnotado(e, a, idioma, { porcionesTexto(it) }, { tx(R.string.porcion_de, it) }) { io.github.fogonapps.cucha.ui.cifra(it, idioma) }
+    }
+
+    /** «1 porción», «1,5 porciones», «2 servings»: cuántas porciones de una receta, en el idioma de ahora. */
+    fun porcionesTexto(n: Double): String {
+        val idioma = idioma()
+        val cuenta = if (n == kotlin.math.floor(n) && n < Int.MAX_VALUE) n.toInt() else 0
+        return recursosEn(idioma).getQuantityString(R.plurals.porciones_cifra, cuenta, io.github.fogonapps.cucha.ui.cifra(n, idioma))
+    }
+
+    /** Si [texto] es el texto de fábrica [id] en español o en inglés, el del idioma de ahora; si no, [texto] tal cual. */
+    private fun deFabrica(texto: String, id: Int): String =
+        if (listOf("es", "en").any { texto == recursosEn(it).getString(id) }) tx(id) else texto
+
+    /** Los recursos en español y en inglés, creados una vez (se piden en cada recomposición de las listas). */
+    private val recursosPorIdioma = java.util.concurrent.ConcurrentHashMap<String, android.content.res.Resources>()
+    private fun recursosEn(codigo: String): android.content.res.Resources = recursosPorIdioma.getOrPut(codigo) {
+        val app = getApplication<Application>()
+        val c = android.content.res.Configuration(app.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag(codigo)) }
+        app.createConfigurationContext(c).resources
+    }
+    fun avisar(m: String) { _mensajes.trySend(m) }
     private fun nuevoId(prefijo: String) = prefijo + System.currentTimeMillis().toString(36) + Random.nextInt(1296).toString(36)
 
     /** Todo cambio pasa por aquí: memoria, pantalla y, 300 ms después, el disco. */

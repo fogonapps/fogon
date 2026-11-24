@@ -1,0 +1,1 @@
+Polish: built-in categories and accounts follow your language; a goal can't have a past date; huge amounts fit in the keypad, summary and chart (short format on the axis); fixed expenses don't repeat across phones and are added after your copy syncs; the bar no longer covers anything in landscape; goal icons are read in your language.

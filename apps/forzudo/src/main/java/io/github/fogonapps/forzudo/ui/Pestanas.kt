@@ -131,7 +131,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
             adorno = { if (frase?.gusta == true) io.github.fogonapps.identidad.IconoRiso(io.github.fogonapps.identidad.IconosSociales.Corazon, stringResource(io.github.fogonapps.social.ui.R.string.social_frase_te_gusta), tamano = 14.dp, tinta = f.acentoTexto) },
             perfil = { androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { io.github.fogonapps.social.ui.ChispasArriba(interfazCuenta(vm)); androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.destinoGuia("perfil")) {
                 io.github.fogonapps.identidad.BotonPerfilMascota(io.github.fogonapps.identidad.Quien.FORZUDO, stringResource(R.string.pestana_perfil), cara,
-                    foto = foto.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil) }
+                    foto = foto.takeIf { it.isNotBlank() }?.let { { io.github.fogonapps.perfil.FotoPerfilLocal(it, tamano = 48.dp) } }) { vm.abrir(Pantalla.Perfil()) }
             }}})
         if (menuFrase && frase != null) io.github.fogonapps.social.ui.MenuFrase(frase.frase.texto, frase.gusta, cerrar = { menuFrase = false },
             onGusta = frase::gustar, onNoMostrar = frase::noMostrar, onCompartido = frase::compartida,
@@ -201,19 +201,31 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         }
 
         // Lo que toca: la rutina de hoy (o la siguiente sin hacer esta semana) y el botón para empezarla.
-        val toca = dias.firstOrNull { it.id == L.diaDeHoy(dias, hoy) && it.id !in hechos } ?: dias.firstOrNull { it.id !in hechos }
+        val toca = L.queToca(dias, hoy, hechos)
+        // Con un entreno en curso, «Después» es la siguiente sin contar la que se está haciendo (puede no haber).
+        val despues = e.active?.let { L.queToca(dias, hoy, hechos, it.day) }
         if (toca != null) Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).aparecer(4).tarjetaFogon(forma(24.dp)).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             io.github.fogonapps.identidad.Ilustracion(io.github.fogonapps.forzudo.R.drawable.ilustracion_mancuerna, tamano = 64.dp)
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.inicio_hoy_toca), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                Text(toca.title, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(pluralStringResource(R.plurals.n_ejercicios, toca.ejercicios.size, toca.ejercicios.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                // Con un entreno en curso, la tarjeta habla de ese entreno (puede ser otra rutina que la de hoy).
+                val enCurso = e.active
+                if (enCurso != null) {
+                    val nombre = enCurso.title ?: stringResource(R.string.voc_entreno)
+                    Text(stringResource(R.string.entreno_en_curso, nombre), style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (despues != null) Text(stringResource(R.string.inicio_despues, despues.title), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                } else {
+                    Text(stringResource(R.string.inicio_hoy_toca), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    Text(toca.title, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(pluralStringResource(R.plurals.n_ejercicios, toca.ejercicios.size, toca.ejercicios.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
             }
+            // Con un entreno en curso no se empieza otro: el botón lleva de vuelta a ese entreno.
             if (e.active == null)
                 BotonRiso(stringResource(R.string.empezar), { vm.empezar(toca.id) }, habilitado = toca.ejercicios.isNotEmpty())
+            else io.github.fogonapps.identidad.BotonSecundario(stringResource(R.string.seguir_entrenando), { vm.abrir(Pantalla.Vivo) })
         }
 
         Seccion(stringResource(R.string.semanas_de, Vocabulario.actual.mesesLargos[mes.takeLast(2).toInt() - 1])) {
@@ -375,7 +387,7 @@ fun Rangos(vm: GymViewModel, e: Estado) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.pestana_rangos), style = MaterialTheme.typography.headlineLarge, color = f.texto)
                 Text(stringResource(R.string.rangos_falta_peso), color = f.texto)
-                BotonRiso(stringResource(R.string.registrar_peso), { vm.abrir(Pantalla.Perfil) })
+                BotonRiso(stringResource(R.string.registrar_peso), { vm.abrir(Pantalla.Perfil(pestana = 1)) })
             }
         } else {
             // Cabecera con el ADN: el nombre del rango gigante, en su color, y la figura-calcomanía.
