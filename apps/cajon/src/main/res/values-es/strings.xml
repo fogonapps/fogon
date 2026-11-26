@@ -2051,4 +2051,12 @@
     <string name="juntos_sin_listas">Todavía no tienen una lista en común.</string>
     <string name="juntos_armar_lista">Armar una lista en común</string>
     <string name="gente_resenas_comunidad">Reseñas de la comunidad</string>
+  <plurals name="traidas_resenas_titulo">
+    <item quantity="one">Trajiste %1$d reseña de %2$s</item>
+    <item quantity="other">Trajiste %1$d reseñas de %2$s</item>
+  </plurals>
+  <string name="traidas_resenas_texto">Por ahora son privadas: solo tú las ves. ¿Las compartes en tu perfil? Después puedes cambiar cada una.</string>
+  <string name="traidas_resenas_publicas">Compartir con todos</string>
+  <string name="traidas_resenas_amigos">Solo con amigos</string>
+  <string name="traidas_resenas_privadas">Dejarlas privadas</string>
 </resources>

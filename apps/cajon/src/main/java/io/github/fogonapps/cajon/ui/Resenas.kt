@@ -40,6 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
 import io.github.fogonapps.cajon.R
+import io.github.fogonapps.cajon.datos.Visibilidad
+import androidx.compose.ui.res.pluralStringResource
 import io.github.fogonapps.cajon.datos.ClienteSocial
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Obra
@@ -270,4 +272,27 @@ fun TarjetaResena(texto: String, nota: Int?) {
         nota?.let { NotaResena(it) }
         Text(texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
     }
+}
+
+/**
+ * Tras traer reseñas de otra app (entran privadas), con cuenta se pregunta una vez si se comparten todas.
+ * Sin cuenta no sale: esperan a que la persona entre.
+ */
+@Composable
+internal fun CompartirResenasTraidas(vm: CajonViewModel) {
+    val traidas by vm.resenasTraidas.collectAsStateWithLifecycle()
+    val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+    val t = traidas ?: return
+    if (usuario == null) return
+    val n = t.ids.size
+    AlertDialog(onDismissRequest = { vm.compartirResenasTraidas(null) },
+        title = { Text(pluralStringResource(R.plurals.traidas_resenas_titulo, n, n, t.deDonde)) },
+        text = { Text(stringResource(R.string.traidas_resenas_texto)) },
+        confirmButton = {
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton({ vm.compartirResenasTraidas(Visibilidad.PUBLICA) }) { Text(stringResource(R.string.traidas_resenas_publicas)) }
+                TextButton({ vm.compartirResenasTraidas(Visibilidad.AMIGOS) }) { Text(stringResource(R.string.traidas_resenas_amigos)) }
+                TextButton({ vm.compartirResenasTraidas(null) }) { Text(stringResource(R.string.traidas_resenas_privadas)) }
+            }
+        })
 }

@@ -2048,4 +2048,12 @@
     <string name="juntos_sin_listas">You don\'t have a shared list yet.</string>
     <string name="juntos_armar_lista">Make a shared list</string>
     <string name="gente_resenas_comunidad">Community reviews</string>
+  <plurals name="traidas_resenas_titulo">
+    <item quantity="one">You brought %1$d review from %2$s</item>
+    <item quantity="other">You brought %1$d reviews from %2$s</item>
+  </plurals>
+  <string name="traidas_resenas_texto">For now they’re private: only you can see them. Share them on your profile? You can change each one later.</string>
+  <string name="traidas_resenas_publicas">Share with everyone</string>
+  <string name="traidas_resenas_amigos">Friends only</string>
+  <string name="traidas_resenas_privadas">Keep them private</string>
 </resources>

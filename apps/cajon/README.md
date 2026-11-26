@@ -26,7 +26,7 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 - **Listas propias** de cualquier tipo, con ranking si se quiere y para reordenar. Las cuatro favoritas en el perfil.
 - **Tus cifras:** lo terminado en el año (o siempre), horas de cine y de series, páginas, canciones, entradas del diario, racha, notas por estrellas, meses, géneros y creadores; con Juegos, también tus juegos y tus estudios. **Retos** del año por tipo.
 - **Compartir** una obra o una lista como imagen (portada, estrellas, reseña).
-- **Traer de otras apps:** el historial de Letterboxd (ZIP o CSV), de Trakt (ZIP, con los episodios vistos) o de TV Time (ZIP, con los episodios vistos), la biblioteca de Goodreads o de The StoryGraph (CSV) y tu biblioteca de Steam con las horas jugadas (con el enlace de tu perfil, si tus detalles de juego son públicos en Steam; cada juego llega con su ficha de IGDB), sin repetir lo que ya está.
+- **Traer de otras apps:** el historial de Letterboxd (ZIP o CSV), de Trakt (ZIP, con los episodios vistos) o de TV Time (ZIP, con los episodios vistos), la biblioteca de Goodreads o de The StoryGraph (CSV) y tu biblioteca de Steam con las horas jugadas (con el enlace de tu perfil, si tus detalles de juego son públicos en Steam; cada juego llega con su ficha de IGDB), sin repetir lo que ya está. Las reseñas llegan privadas; con cuenta, la app pregunta una vez si las compartes con todos o solo con amigos.
 - **Copia cifrada:** con una cuenta de Fogón puedes guardar una copia cifrada de tu colección.
 - **Widget:** lo terminado este año y lo que está en curso.
 - **Respaldo** en JSON y el respaldo de todo Fogón. **Apariencia** como en todas las apps (Grafito, Vinilo, Claro y Contraste). **En español e inglés.**

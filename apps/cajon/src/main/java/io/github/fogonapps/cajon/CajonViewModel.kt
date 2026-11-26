@@ -487,6 +487,24 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val _recienImportado = MutableStateFlow<Int?>(null)
     val recienImportado: StateFlow<Int?> = _recienImportado
     fun olvidarImportado() { _recienImportado.value = null }
+
+    /**
+     * Las reseñas que trajo la última importación (entran privadas) y de qué app vienen: con cuenta, se ofrece una vez
+     * compartirlas todas juntas. Sin cuenta esperan aquí hasta que la persona entre.
+     */
+    data class ResenasTraidas(val ids: List<String>, val deDonde: String)
+    private val _resenasTraidas = MutableStateFlow<ResenasTraidas?>(null)
+    val resenasTraidas: StateFlow<ResenasTraidas?> = _resenasTraidas
+
+    /** Comparte las reseñas traídas con [visibilidad] (amigos o pública), o las deja privadas con null. */
+    fun compartirResenasTraidas(visibilidad: String?) {
+        val traidas = _resenasTraidas.value ?: return
+        _resenasTraidas.value = null
+        val vis = visibilidad?.let { Visibilidad.de(it) }?.takeIf { it != Visibilidad.PRIVADA } ?: return
+        if (red.usuario.value == null) return
+        val t = ahora()
+        cambiarResenas { e -> io.github.fogonapps.cajon.datos.Resenas.compartir(e, traidas.ids.toSet(), vis, t) }
+    }
     val mensajes = _mensajes.receiveAsFlow()
 
     private var guardado: Job? = null
@@ -3417,7 +3435,14 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             avisar(tx(R.string.aviso_no_es_de_otra_app)); return
         }
         var nuevas = 0
-        cambiar { e -> val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n; x }
+        var resenasNuevas = emptyList<String>()
+        cambiar { e ->
+            val antes = io.github.fogonapps.cajon.datos.Resenas.migrar(e).resenas.mapTo(HashSet()) { it.id }
+            val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n
+            resenasNuevas = x.resenas.filter { it.id !in antes && !it.borrada && it.texto.isNotBlank() }.map { it.id }
+            x
+        }
+        if (resenasNuevas.isNotEmpty()) _resenasTraidas.value = ResenasTraidas(resenasNuevas, r.deDonde)
         avisar(txPlural(R.plurals.aviso_importadas, r.obras.size, r.obras.size, r.deDonde, nuevas))
         _recienImportado.value = r.obras.size
         buscarPortadas()

@@ -152,6 +152,11 @@ object Resenas {
             .copy(texto = texto, nota = r.nota.takeIf { it > 0 }, visibilidad = visibilidad, fecha = r.fecha), cambio)
     }
 
+    /** Comparte con [visibilidad] las reseñas [ids] que sigan privadas (las traídas de otra app); las demás no se tocan. */
+    fun compartir(e: Estado, ids: Set<String>, visibilidad: String, cambio: Long): Estado =
+        e.resenas.filter { it.id in ids && !it.borrada && Visibilidad.de(it.visibilidad) == Visibilidad.PRIVADA }
+            .fold(e) { acc, r -> guardar(acc, r.copy(visibilidad = visibilidad), cambio) }
+
     /** Solo se incorporan notas privadas a una reseña que seguirá siendo privada. */
     fun migrarNotas(e: Estado): Estado {
         var nuevo = e

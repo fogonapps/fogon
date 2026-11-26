@@ -174,6 +174,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
         })
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
         Box(Modifier.fillMaxSize().fondoFogon(f).anotarToques(vuelos)) {
+            CompartirResenasTraidas(vm)
             // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
             Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
                 if (!estado.listo) {
