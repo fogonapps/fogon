@@ -1,5 +1,6 @@
 package io.github.fogonapps.perfil
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
@@ -67,7 +68,7 @@ internal fun NivelChico(vista: PerfilVista) {
         if (vista.relacion == "yo" && vista.abrirNivel != null) vista.abrirNivel.invoke()
         else abierto = true
     }.minimumInteractiveComponentSize().semantics(mergeDescendants = true) { contentDescription = descripcion; role = Role.Button }, contentAlignment = Alignment.Center) {
-        Row(Modifier.heightIn(min = 20.dp).clip(FormaPildora).background(f.superficie).padding(horizontal = 6.dp).clearAndSetSemantics {},
+        Row(Modifier.heightIn(min = 20.dp).clip(FormaPildora).then(if (Trama.apagada) Modifier.border(1.dp, f.linea, FormaPildora) else Modifier.background(f.superficie)).padding(horizontal = 6.dp).clearAndSetSemantics {},
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             ContornoNivel(vista.nivel, Modifier.size(12.dp), 1.5.dp)
             Text(vista.nivel.toString(), style = MaterialTheme.typography.labelMedium, color = f.texto)
@@ -94,7 +95,7 @@ fun NivelDetalle(nivel: Int, insignias: List<String>, propio: Boolean, gratis: I
                 val texto = pluralStringResource(R.plurals.perfil_nivel_faltan, faltan, faltan)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.semantics { contentDescription = texto }, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        repeat(3) { i -> Box(Modifier.size(10.dp).background(if (i < nivel % 3) f.tinta1 else f.linea, forma(5.dp))) }
+                        repeat(3) { i -> Box(Modifier.size(10.dp).background(if (i < nivel % 3) (if (Trama.apagada) f.texto else f.tinta1) else f.linea, forma(5.dp))) }
                     }
                     Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
                 }

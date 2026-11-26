@@ -140,8 +140,8 @@ fun ChatsSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat) {
                 Text(ultimo?.let { resumenMensaje(it) }.orEmpty(), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1,
                     overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
                 if (estilos[u]?.silenciado == true) Text(stringResource(R.string.social_chat_silenciado), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
-                if (nuevos > 0) Box(Modifier.clip(forma(10.dp)).background(f.tinta1).padding(horizontal = 8.dp, vertical = 2.dp)) {
-                    Text("$nuevos", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
+                if (nuevos > 0) Box(Modifier.clip(forma(10.dp)).background(f.acentoSocial).padding(horizontal = 8.dp, vertical = 2.dp)) {
+                    Text("$nuevos", style = MaterialTheme.typography.labelSmall, color = f.sobreAcentoSocial)
                 }
             }
         }
@@ -156,7 +156,7 @@ fun CumplesHoyChat(vm: InterfazSocial, escribir: (String) -> Unit) {
     val amigos by vm.red.amigos.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.red.cargarCumples() }
     amigos.filter { it.usuario in cumples }.forEach { p ->
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(16.dp)).background(f.superficie).border(f.borde, f.linea, forma(16.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(16.dp)).cajaSocial(f, forma(16.dp))
             .clickable { escribir(p.usuario) }.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AvatarRed(p, 36.dp)
             Text(stringResource(R.string.cumple_hoy_aviso, p.nombre.ifBlank { p.usuario }), style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
@@ -169,7 +169,7 @@ fun CumplesHoyChat(vm: InterfazSocial, escribir: (String) -> Unit) {
 private fun NotaChat(p: PersonaSocial, texto: String, onClick: () -> Unit) {
     val f = FogonTema.actual
     Column(Modifier.width(80.dp).clip(forma(16.dp)).clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(Modifier.clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp)).padding(horizontal = 8.dp, vertical = 5.dp)) {
+        Box(Modifier.cajaSocial(f, forma(14.dp), hondura = 1.8f).padding(horizontal = 8.dp, vertical = 5.dp)) {
             Text(texto, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         AvatarRed(p, 52.dp)
@@ -182,6 +182,8 @@ private fun NotaChat(p: PersonaSocial, texto: String, onClick: () -> Unit) {
 private fun coloresBurbuja(estilo: EstiloChat): Pair<Color, Color> {
     val f = FogonTema.actual
     fun legible(c: Color) = if (c.luminance() > 0.5f) (if (f.texto.luminance() < 0.5f) f.texto else f.fondo) else (if (f.texto.luminance() >= 0.5f) f.texto else f.fondo)
+    // Con el diseño nuevo, las burbujas propias siempre en la tinta del texto, con letra del papel.
+    if (Trama.apagada) return f.texto to f.fondo
     return when (estilo.color) {
         1 -> f.tinta2 to legible(f.tinta2)
         2 -> f.superficie to f.texto
@@ -224,7 +226,7 @@ private fun SeparadorDia(dia: java.time.LocalDate) {
     }
     Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
         Text(texto, style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
-            modifier = Modifier.clip(forma(10.dp)).background(f.superficie).padding(horizontal = 10.dp, vertical = 3.dp))
+            modifier = Modifier.clip(forma(10.dp)).background(f.superficieSocial).padding(horizontal = 10.dp, vertical = 3.dp))
     }
 }
 
@@ -428,7 +430,7 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
     // El fondo de la conversación: el póster de una obra (tenue) o puntos, si se eligió.
     val poster = coil3.compose.rememberAsyncImagePainter(estilo.poster.takeIf { it.startsWith("https://") })
     Column(Modifier.fillMaxSize().then(if (estilo.poster.startsWith("https://")) Modifier.paint(poster, contentScale = ContentScale.Crop, alpha = 0.18f) else Modifier)
-        .then(if (estilo.puntos) Modifier.fondoPuntos(f.linea) else Modifier)) {
+        .then(if (estilo.puntos && !Trama.apagada) Modifier.fondoPuntos(f.linea) else Modifier)) {
         // Arriba: volver, la foto y el nombre (llevan al perfil) y la información del chat.
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             BotonIcono(Iconos.Atras, stringResource(R.string.social_volver)) { vm.navegacion.volver() }
@@ -468,20 +470,20 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
         // Sin llaves en esta app todavía: se dice por qué no se puede escribir y cómo seguir (nunca se borra lo escrito).
         val listoChat by chat.listoChat.collectAsStateWithLifecycle()
         LaunchedEffect(usuario) { chat.revisarListo(); while (!chat.listo()) { kotlinx.coroutines.delay(3000); chat.revisarListo() } }
-        if (!listoChat) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(16.dp)).background(f.superficie).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (!listoChat) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(16.dp)).background(if (Trama.apagada) f.papelHondo(1.8f) else f.superficie).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.social_chat_sin_llaves_aqui), style = MaterialTheme.typography.bodySmall, color = f.texto)
             Pildora(stringResource(R.string.social_chat_llaves_nuevas)) {
                 vm.confirmar(vm.tx(R.string.social_chat_llaves_nuevas), vm.tx(R.string.social_chat_llaves_nuevas_seguro)) { chat.llavesNuevasAqui() }
             }
         }
-        if (enviando) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = f.tinta1, trackColor = f.linea)
+        if (enviando) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = f.acentoSocial, trackColor = f.linea)
         // Respondiendo a un mensaje: la cita encima del campo.
         responder?.let { r ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(forma(14.dp)).background(f.superficie).border(f.borde, f.linea, forma(14.dp)).padding(start = 12.dp),
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).cajaSocial(f, forma(14.dp), hondura = 1.8f).padding(start = 12.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(3.dp).heightIn(min = 36.dp).background(f.tinta1))
+                Box(Modifier.width(3.dp).heightIn(min = 36.dp).background(f.acentoSocial))
                 Column(Modifier.weight(1f).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(stringResource(R.string.social_chat_respondiendo, if (r.mio) stringResource(R.string.social_chat_ti) else nombre), style = MaterialTheme.typography.labelMedium, color = f.acentoTexto)
+                    Text(stringResource(R.string.social_chat_respondiendo, if (r.mio) stringResource(R.string.social_chat_ti) else nombre), style = MaterialTheme.typography.labelMedium, color = f.letraAcentoSocial)
                     Text(resumenMensaje(r), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.social_cancelar)) { responder = null }
@@ -493,7 +495,7 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
             extras.panelStickers?.invoke(mandar) ?: PanelStickersChat(chat, mandar)
         }
         // La barra de escribir: una sola píldora. Grabando, muestra el tiempo con cancelar y enviar.
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp).clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp).cajaSocial(f, FormaPildora, hondura = 1.8f)
             .padding(horizontal = 6.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             if (grabando) {
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.social_cancelar)) { grabadora.cancelar(); grabando = false }
@@ -503,16 +505,16 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
                 BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_enviar_voz), lleno = true, activo = !enviando) { mandarVoz() }
                 return@Row
             }
-            if (extras.elegirObra != null && extras.iconoObra != null) Box(Modifier.size(40.dp).clip(CircleShape).background(f.tinta1).clickable { elegirObra = !elegirObra; stickers = false }, contentAlignment = Alignment.Center) {
-                IconoRiso(extras.iconoObra, stringResource(extras.textoObra), tamano = 20.dp, tinta = f.sobreTinta1)
+            if (extras.elegirObra != null && extras.iconoObra != null) Box(Modifier.size(40.dp).clip(CircleShape).background(f.acentoSocial).clickable { elegirObra = !elegirObra; stickers = false }, contentAlignment = Alignment.Center) {
+                IconoRiso(extras.iconoObra, stringResource(extras.textoObra), tamano = 20.dp, tinta = f.sobreAcentoSocial)
             }
             androidx.compose.foundation.text.BasicTextField(campo, { campo = if (it.text.length > 4000) alFinal(it.text.take(4000)) else it }, Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 10.dp), maxLines = 5,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = f.texto), cursorBrush = androidx.compose.ui.graphics.SolidColor(f.acentoTexto),
-                decorationBox = { interior -> Box { if (texto.isEmpty()) Text(stringResource(R.string.social_chat_escribe), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave); interior() } })
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = f.texto), cursorBrush = androidx.compose.ui.graphics.SolidColor(f.letraAcentoSocial),
+                decorationBox = { interior -> Box { if (texto.isEmpty()) Text(stringResource(R.string.social_chat_escribe), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = MaterialTheme.typography.bodyLarge.fontSize)); interior() } })
             if (texto.isBlank()) {
                 BotonIcono(IconosFogon.Imagen, stringResource(R.string.social_chat_mandar_foto)) { stickers = false; elegirObra = false; elegirFoto.launch("image/*") }
                 BotonIcono(IconosMultimedia.Microfono, stringResource(R.string.social_chat_grabar)) { grabar() }
-                BotonIcono(Iconos.Estrella, stringResource(R.string.social_chat_stickers), tinta = if (stickers) f.acentoTexto else null) { stickers = !stickers; elegirObra = false }
+                BotonIcono(Iconos.Estrella, stringResource(R.string.social_chat_stickers), tinta = if (stickers) f.letraAcentoSocial else null) { stickers = !stickers; elegirObra = false }
             } else BotonIcono(Iconos.Enviar, stringResource(R.string.social_chat_mensaje), lleno = true, activo = !enviando) {
                 // El campo se vacía al enviar; si el mensaje no se pudo entregar, vuelve (ver «sinEntregar» arriba).
                 if (chat.listo()) { chat.enviar(usuario, texto, responde = responder, devolverSiFalla = true); campo = alFinal(""); responder = null } else chat.revisarListo()
@@ -523,6 +525,7 @@ fun ConversacionSocial(vm: InterfazSocial, chat: ChatSocial, nav: NavegacionChat
     fotoAbierta?.let { b64 ->
         val imagen = imagenB64(b64)
         androidx.compose.ui.window.Dialog({ fotoAbierta = null }, androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+            io.github.fogonapps.identidad.BarrasDelDialogo()
             Box(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().clickable { fotoAbierta = null }, contentAlignment = Alignment.Center) {
                 if (imagen != null) Image(imagen.asImageBitmap(), stringResource(R.string.social_chat_foto), Modifier.fillMaxWidth(), contentScale = ContentScale.Fit)
                 Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) { BotonIcono(Iconos.Cerrar, stringResource(R.string.social_cancelar)) { fotoAbierta = null } }
@@ -612,8 +615,12 @@ private fun BurbujaChat(
             if (foto != null) AvatarRed(foto, 28.dp) else Box(Modifier.size(28.dp))
             Box(Modifier.width(8.dp))
         }
-        Column(Modifier.widthIn(max = 280.dp).clip(forma(18.dp))
-            .then(if (soloImagen) Modifier else Modifier.background(if (m.mio) fondoMio else f.superficie).border(f.borde, if (m.mio) fondoMio else f.linea, forma(18.dp)))
+        // Sin ocupar de más: así la reacción de al lado no se sale de la pantalla con la letra grande.
+        Column(Modifier.weight(1f, fill = false).widthIn(max = 280.dp).clip(forma(18.dp))
+            .then(if (soloImagen) Modifier
+                // Con el diseño nuevo: las mías en tinta, las otras en un papel más hondo, sin borde.
+                else if (Trama.apagada) Modifier.background(if (m.mio) fondoMio else f.papelHondo(2.2f))
+                else Modifier.background(if (m.mio) fondoMio else f.superficie).border(f.borde, if (m.mio) fondoMio else f.linea, forma(18.dp)))
             .combinedClickable(onClick = { m.foto?.let(onFoto) }, onLongClick = onMenu)
             .padding(horizontal = if (soloImagen) 0.dp else 12.dp, vertical = if (soloImagen) 0.dp else 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -623,7 +630,7 @@ private fun BurbujaChat(
             m.responde?.let { r ->
                 Text(stringResource(if (m.mio) R.string.social_chat_respondiste else R.string.social_chat_respondio), style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
                 Row(Modifier.clip(forma(10.dp)).background(f.fondo.copy(alpha = 0.35f)).combinedClickable(onClick = { onIrA(r.k) }, onLongClick = onMenu)) {
-                    Box(Modifier.width(3.dp).heightIn(min = 34.dp).background(if (m.mio) letraMia else f.tinta1))
+                    Box(Modifier.width(3.dp).heightIn(min = 34.dp).background(if (m.mio) letraMia else f.acentoSocial))
                     Column(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         Text(if (r.de == yo) stringResource(R.string.social_chat_ti) else nombre, style = MaterialTheme.typography.labelMedium, color = color)
                         Text(if (r.sticker) stringResource(R.string.social_chat_un_sticker) else r.texto, style = MaterialTheme.typography.bodySmall, color = color.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -641,7 +648,8 @@ private fun BurbujaChat(
             Text(hora, style = MaterialTheme.typography.labelSmall, color = (if (soloImagen) f.textoSuave else color).copy(alpha = 0.7f), modifier = Modifier.align(Alignment.End).padding(end = if (soloImagen) 6.dp else 0.dp, bottom = if (soloImagen) 4.dp else 0.dp))
         }
         val reacciones = listOf(m.reaccionSuya, m.reaccionMia).filter { it.isNotBlank() }
-        if (reacciones.isNotEmpty()) Box(Modifier.offset(y = (-6).dp).clip(FormaPildora).background(f.fondo).border(f.borde, f.linea, FormaPildora).padding(horizontal = 6.dp, vertical = 2.dp)) {
+        if (reacciones.isNotEmpty()) Box(Modifier.offset(y = (-6).dp).then(if (Trama.apagada) Modifier.clip(FormaPildora).background(f.papelHondo(2.2f))
+            else Modifier.clip(FormaPildora).background(f.fondo).border(f.borde, f.linea, FormaPildora)).padding(horizontal = 6.dp, vertical = 2.dp)) {
             Text(reacciones.joinToString(" "), fontSize = 14.sp)
         }
     }
@@ -682,14 +690,14 @@ private fun PanelStickersChat(chat: ChatSocial, onMandar: (String, Int) -> Unit)
         Pildora(stringResource(R.string.social_chat_sticker_crear), Iconos.Mas) { elegir.launch("image/*") }
         if (guardados.isNotEmpty()) Text(stringResource(R.string.social_chat_stickers_tuyos), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            guardados.forEach { s -> Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficie).clickable { onMandar(s.imagen, tamano) }.padding(4.dp)) { ImagenStickerChat(s.imagen, Modifier.fillMaxSize()) } }
+            guardados.forEach { s -> Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficieSocial).clickable { onMandar(s.imagen, tamano) }.padding(4.dp)) { ImagenStickerChat(s.imagen, Modifier.fillMaxSize()) } }
         }
         Text(stringResource(R.string.social_chat_stickers_fogon), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(io.github.fogonapps.identidad.R.drawable.personaje_cajon_feliz, io.github.fogonapps.identidad.R.drawable.personaje_forzudo_feliz,
                 io.github.fogonapps.identidad.R.drawable.personaje_ahorrador_feliz, io.github.fogonapps.identidad.R.drawable.personaje_cucha_feliz,
                 io.github.fogonapps.identidad.R.drawable.chispa).forEach { r ->
-                Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficie).clickable { alcance.launch { chat.stickerDe(r)?.let { onMandar(it, tamano) } } }.padding(8.dp)) {
+                Box(Modifier.size(72.dp).clip(forma(14.dp)).background(f.superficieSocial).clickable { alcance.launch { chat.stickerDe(r)?.let { onMandar(it, tamano) } } }.padding(8.dp)) {
                     Image(androidx.compose.ui.res.painterResource(r), null, Modifier.fillMaxSize())
                 }
             }
@@ -709,7 +717,7 @@ private fun EditorStickerChat(foto: android.graphics.Bitmap, onCancelar: () -> U
     androidx.compose.ui.window.Dialog(onCancelar) {
         Column(Modifier.fillMaxWidth().clip(forma(24.dp)).background(f.fondo).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.social_chat_sticker_editar), style = MaterialTheme.typography.titleMedium, color = f.texto)
-            Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(if (redondo) CircleShape else forma(18.dp)).background(f.superficie)
+            Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(if (redondo) CircleShape else forma(18.dp)).background(f.superficieSocial)
                 .onSizeChanged { lado = it.width }
                 .pointerInput(foto) {
                     detectTransformGestures { _, mover, escala, _ ->
@@ -751,8 +759,9 @@ fun InfoChatSocial(vm: InterfazSocial, chat: ChatSocial, usuario: String) {
     Cabecera(stringResource(R.string.social_chat_info), vm.navegacion.volver)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Pista(stringResource(R.string.social_chat_cifrado))
-        Text(stringResource(R.string.social_chat_color_burbujas), style = MaterialTheme.typography.bodyMedium, color = f.texto)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Con el diseño nuevo las burbujas no llevan color propio ni fondo de puntos: esas opciones no se muestran.
+        if (!Trama.apagada) Text(stringResource(R.string.social_chat_color_burbujas), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        if (!Trama.apagada) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             listOf(f.tinta1, f.tinta2, f.superficie, f.tinta1.copy(alpha = 0.45f).compositeOver(f.fondo), f.tinta2.copy(alpha = 0.45f).compositeOver(f.fondo), f.pildora).forEachIndexed { i, c ->
                 Box(Modifier.size(40.dp).clip(CircleShape).background(c).border(if (estilo.color == i) 3.dp else f.borde, if (estilo.color == i) f.texto else f.linea, CircleShape)
                     .clickable { chat.ponerEstilo(usuario, estilo.copy(color = i)) })
@@ -764,14 +773,14 @@ fun InfoChatSocial(vm: InterfazSocial, chat: ChatSocial, usuario: String) {
                 Pildora(stringResource(t), acento = estilo.tamanoLetra == i) { chat.ponerEstilo(usuario, estilo.copy(letra = i, letraGrande = i == 2)) }
             }
         }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        if (!Trama.apagada) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.social_chat_fondo_puntos), style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-            Switch(estilo.puntos, { chat.ponerEstilo(usuario, estilo.copy(puntos = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
+            Switch(estilo.puntos, { chat.ponerEstilo(usuario, estilo.copy(puntos = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = f.acentoSocial, checkedThumbColor = f.sobreAcentoSocial))
         }
         val conVisto by chat.confirmaLectura.collectAsStateWithLifecycle()
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.social_chat_confirma_lectura), style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-            Switch(conVisto, { chat.ponerConfirmaLectura(it) }, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
+            Switch(conVisto, { chat.ponerConfirmaLectura(it) }, colors = SwitchDefaults.colors(checkedTrackColor = f.acentoSocial, checkedThumbColor = f.sobreAcentoSocial))
         }
         Text(stringResource(R.string.social_chat_confirma_lectura_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         var apodo by remember(usuario) { mutableStateOf(estilo.apodo) }
@@ -786,7 +795,7 @@ fun InfoChatSocial(vm: InterfazSocial, chat: ChatSocial, usuario: String) {
                 val clave = "p$perfil.silenciados"
                 val actual = prefs.getStringSet(clave, emptySet()).orEmpty()
                 prefs.edit().putStringSet(clave, if (si) actual + usuario else actual - usuario).apply()
-            }, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
+            }, colors = SwitchDefaults.colors(checkedTrackColor = f.acentoSocial, checkedThumbColor = f.sobreAcentoSocial))
         }
         BotonSecundario(stringResource(R.string.social_chat_vaciar), {
             vm.confirmar(vm.tx(R.string.social_chat_vaciar), vm.tx(R.string.social_chat_vaciar_seguro)) { chat.vaciar(usuario) }

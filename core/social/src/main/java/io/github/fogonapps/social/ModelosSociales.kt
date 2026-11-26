@@ -44,6 +44,8 @@ data class PerfilSocial(
     val nivelLena: String = "",
     val colorBanner: String = "",
     val portadaAnimada: Boolean = false,
+    /** Si puedo abrirle un chat (lo decide la persona en «Quién puede escribirme»); los servidores viejos no lo mandan. */
+    val puedoEscribir: Boolean = true,
 )
 
 @Serializable
@@ -90,6 +92,8 @@ data class MiCuenta(val usuario: String, val nombre: String = "", val correo: St
     val nivelLena: String = "",
     @kotlinx.serialization.SerialName("lena_visible") val lenaVisible: Boolean = false,
     @kotlinx.serialization.SerialName("lena_preguntada") val lenaPreguntada: Boolean = false,
+    /** Quién puede abrirme un chat: "mutuos" (nos seguimos), "sigo" (personas que sigo) o "nadie". */
+    val escribir: String = "mutuos",
 )
 
 @Serializable internal data class VisibilidadLena(val visible: Boolean)
@@ -99,7 +103,15 @@ data class MiCuenta(val usuario: String, val nombre: String = "", val correo: St
 data class CasoModeracion(val que: String, val objeto: String, val motivos: Map<String, Int> = emptyMap(), val personas: Int = 0, val oculto: Boolean = false,
     val contenido: String = "", val autor: PersonaSocial? = null, val faltasAutor: Int = 0, val estado: String = "visible", val retiradoHasta: Long? = null,
     /** Lo reportaste tú: lo decide otra persona del equipo. */
-    val propio: Boolean = false)
+    val propio: Boolean = false,
+    /** El número de la denuncia ante las autoridades, si ya se anotó. */
+    val radicado: String = "",
+    /** Lo marcó la revisión automática de fotos. */
+    val automatico: Boolean = false)
+@Serializable
+internal data class Radicado(val que: String, val objeto: String, val radicado: String)
+@Serializable
+internal data class AjusteEscribir(val escribir: String)
 @Serializable
 @kotlinx.serialization.SerialName("io.github.fogonapps.cajon.datos.Decision")
 internal data class Decision(val que: String, val objeto: String, val decision: String, val regla: String = "", val mensaje: String = "")
@@ -161,7 +173,7 @@ fun nombreDispositivo(fabricante: String, modelo: String): String {
 
 data class SesionMostrada(val id: String, val dispositivo: String?, val creada: Long, val ultimoUso: Long, val actual: Boolean)
 fun SesionSocial.paraPantalla(): SesionMostrada {
-    val origen = when (app) { "forzudo" -> "El Forzudo"; "cucha" -> "La Cucha"; "alcancia" -> "La Alcancía"; else -> "" }
+    val origen = when (app) { "forzudo" -> "Forz"; "cucha" -> "Ñom"; "alcancia" -> "Pezi"; else -> "" }
     val nombre = listOf(origen, dispositivo.trim()).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { null }
     return SesionMostrada(id, nombre, creada, ultimoUso, actual)
 }
@@ -194,6 +206,13 @@ data class LlavesPublicas(val cifrar: String, val firmar: String)
 @Serializable data class PedidoPagoWompi(val paquete: Int)
 @Serializable data class CheckoutWompi(val referencia: String, val url: String)
 @Serializable data class OfertaWompi(val paquetes: List<Int> = emptyList(), val regalo: Map<String, Int> = emptyMap())
+/** Un producto de Google Play (versión de Play): cuántas chispas da; [unico] se compra una sola vez y no se consume. */
+@Serializable data class ProductoPlay(val id: String, val chispas: Int = 0, val regalo: Int = 0, val unico: Boolean = false)
+/** El catálogo de Play que decide el servidor y el identificador opaco de la cuenta que viaja a Google con la compra. */
+@Serializable data class OfertaPlay(val productos: List<ProductoPlay> = emptyList(), val cuenta: String = "")
+@Serializable internal data class PedidoPlay(val paquete: String, val producto: String, val token: String)
+/** [estado]: "acreditada" (ya se puede consumir) o "pendiente". [chispas]: el saldo nuevo. */
+@Serializable data class RespuestaPlay(val estado: String = "", val chispas: Int = 0)
 
 @Serializable data class TemasCuentaSocial(val reclamados: List<String> = emptyList(), val puesto: String = "", val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "", val colorBanner: String = "")
 @Serializable internal data class TemaElegidoSocial(val tema: String)
@@ -272,6 +291,10 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 @Serializable data class VistaHistoriaSocial(val persona: PersonaSocial, val cuando: Long, val meGusta: Boolean = false)
 @Serializable internal data class HistoriaNueva(val datos: JsonObject)
 @Serializable internal data class ListaUsuarios(val usuarios: List<String> = emptyList())
+/** Un voto de «Juntos»: «si», «no» o null para quitarlo. */
+@Serializable internal data class VotoJuntosSocial(val clave: String, val voto: String? = null)
+/** Los votos de «Juntos»: los tuyos para la otra persona y los suyos para ti, por clave de obra. */
+@Serializable data class VotosJuntosSocial(val mios: Map<String, String> = emptyMap(), val suyos: Map<String, String> = emptyMap())
 /** La nota de una persona: unas palabras (hasta 60) y, si quiere, un adjunto (canción, obra, entreno, plato, meta…). */
 @Serializable data class NotaGente(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long = 0)
 @Serializable internal data class NotaNuevaGente(val texto: String, val datos: JsonObject = JsonObject(emptyMap()))

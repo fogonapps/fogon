@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -59,7 +60,7 @@ private val Chispa = dibujo("chispa",
     relleno("M12 7.2l1.3 3.5 3.5 1.3-3.5 1.3L12 16.8l-1.3-3.5L7.2 12l3.5-1.3z"))
 
 @Composable
-private fun IconoChispa(tamano: androidx.compose.ui.unit.Dp) = IconoRiso(Chispa, null, tamano = tamano, tinta = FogonTema.actual.texto)
+internal fun IconoChispa(tamano: androidx.compose.ui.unit.Dp) = IconoRiso(Chispa, null, tamano = tamano, tinta = FogonTema.actual.texto)
 
 /**
  * La tienda en la barra de arriba, al lado de tu foto (como la moneda de los juegos): un botón redondo con la chispa,
@@ -74,7 +75,9 @@ fun ChispasArriba(vm: InterfazSocial, modifier: Modifier = Modifier) {
     val f = FogonTema.actual
     var abierta by remember { mutableStateOf(false) }
     val texto = stringResource(R.string.social_temas_tienda)
-    Box(modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie).border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape)
+    // En Fabs, como el lápiz de al lado: mismo tamaño y sin círculo. Con contorno: rellena, la chispa parecía un «+».
+    if (Trama.apagada) Box(modifier) { io.github.fogonapps.identidad.BotonIconoSocial(Chispa, texto, grande = true) { abierta = true } }
+    else Box(modifier.size(48.dp).cajaSocial(f, androidx.compose.foundation.shape.CircleShape)
         .clickable { abierta = true }.semantics { contentDescription = texto }, contentAlignment = Alignment.Center) {
         IconoChispa(24.dp)
     }
@@ -96,7 +99,7 @@ fun BotonTiendaTemas(vm: InterfazSocial, modifier: Modifier = Modifier) {
  * se ve tu perfil). Solo con cuenta.
  */
 @Composable
-fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
+fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier, inicio: String = "", equipar: Boolean = true) {
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
     if (usuario == null) return
     val temas by vm.red.temas.collectAsStateWithLifecycle()
@@ -105,7 +108,7 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
     var abierta by remember { mutableStateOf(false) }
     var mercado by remember { mutableStateOf(false) }
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).rebote().clickable { abierta = true }.padding(14.dp),
+        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficieSocial).rebote().clickable { abierta = true }.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconoChispa(28.dp)
             Column(Modifier.weight(1f)) {
@@ -114,16 +117,16 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
             }
             IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
         }
-        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).rebote().clickable { mercado = true }.padding(14.dp),
+        Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficieSocial).rebote().clickable { mercado = true }.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconoRiso(IconosFogon.Moneda, null, tamano = 28.dp)
             Text(stringResource(R.string.social_mercado), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = f.texto)
             IconoRiso(IconosFogon.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
         }
     }
-    EquiparComprados(vm, Modifier.padding(top = 12.dp))
+    if (equipar) EquiparComprados(vm, Modifier.padding(top = 12.dp))
     if (mercado) Mercado(vm) { mercado = false }
-    if (abierta) TiendaTemas(vm) { abierta = false }
+    if (abierta) TiendaTemas(vm, inicio = inicio) { abierta = false }
 }
 
 /**
@@ -131,7 +134,7 @@ fun TiendaEnEditarPerfil(vm: InterfazSocial, modifier: Modifier = Modifier) {
  * Las chispas se ganan usando las apps (bienvenida y aportes verificados) y solo sirven aquí.
  */
 @Composable
-fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChispas: Boolean = false, onCerrar: () -> Unit) {
+fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChispas: Boolean = false, inicio: String = "", onCerrar: () -> Unit) {
     val f = FogonTema.actual
     val contexto = androidx.compose.ui.platform.LocalContext.current
     val ciclo = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -154,6 +157,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
     var comprando by remember { mutableStateOf(false) }
     var errorPago by remember { mutableStateOf(false) }
     val pagosExternos = ofrecePagosExternos(BuildConfig.TIENDA_PLAY)
+    // Versión de Play: la venta con Google Play Billing (solo si la app trae su pasarela).
+    val tiendaPlay = vm.red.tiendaPlay.takeIf { ofrecePagosPlay(BuildConfig.TIENDA_PLAY, it != null) }
     LaunchedEffect(pagosExternos) {
         if (pagosExternos) vm.red.cargarPaquetesWompi()
     }
@@ -177,6 +182,11 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
     var destinatario by remember { mutableStateOf("") }
     var pestana by remember { mutableStateOf(0) }
     var mercado by remember { mutableStateOf(false) }
+    // Con el diseño nuevo: el tipo del catálogo que se ve y el artículo en el probador. [inicio] es un tipo
+    // ("banner", "animado", "marco", "fondo") o un artículo, que abre directo su probador.
+    val tipos = setOf("banner", "animado", "marco", "fondo")
+    var tipoFabs by rememberSaveable { mutableStateOf(if (inicio in tipos) inicio else if (inicio.isNotEmpty()) tipoArticulo(inicio) else "banner") }
+    var probando by rememberSaveable { mutableStateOf(inicio.takeIf { it.isNotEmpty() && it !in tipos }) }
     if (mercado) Mercado(vm) { mercado = false }
     LaunchedEffect(Unit) { vm.red.cargarTemas() }
     if (regalo != null) androidx.compose.material3.AlertDialog(
@@ -191,6 +201,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                 "a_si_mismo" -> R.string.social_regalo_propio
                 "no_existe" -> R.string.social_regalo_no_existe
                 "sin_chispas" -> R.string.social_regalo_sin_chispas
+                "deuda_chispas" -> R.string.social_deuda_chispas
                 else -> R.string.social_regalo_error
             }), color = f.texto) }
         } },
@@ -203,14 +214,21 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
         } }, habilitado = destinatario.isNotBlank() && !regalando) },
         dismissButton = { BotonSecundario(stringResource(R.string.social_regalo_cancelar), { regalo = null }) })
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(if (soloChispas) R.string.social_wompi_titulo else R.string.social_temas_tienda), onCerrar)
-            // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi).
-            io.github.fogonapps.identidad.DeslizarParaRecargar({ vm.red.cargarTemas(); if (pagosExternos) vm.red.cargarPaquetesWompi() }, Modifier.fillMaxSize()) {
+            // Deslizar hacia abajo recarga el saldo (y, en el servidor, concilia los pagos pendientes con Wompi o Play).
+            io.github.fogonapps.identidad.DeslizarParaRecargar({ vm.red.cargarTemas(); if (pagosExternos) vm.red.cargarPaquetesWompi(); tiendaPlay?.cargar() }, Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (Trama.apagada && !soloChispas) {
+                    // Fabs: la vitrina arriba, en grande; luego el catálogo oficial. Tocar un artículo lo prueba en tu perfil.
+                    VitrinaFabs(TemasPerfil.coleccionDeLaSemana(), temas) { probando = it; contadores.contar("tienda.probar") }
+                    CatalogoFabs(vm, temas, tipoFabs, { tipoFabs = it }) { probando = it; contadores.contar("tienda.probar") }
+                }
                 if (!soloChispas) BotonSecundario(stringResource(R.string.social_mercado), { mercado = true }, Modifier.fillMaxWidth())
-                // Saldo de la cuenta.
-                Row(Modifier.fillMaxWidth().clip(forma(20.dp)).background(f.superficie).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Saldo de la cuenta (con el diseño nuevo, sin caja).
+                Row(Modifier.fillMaxWidth().then(if (Trama.apagada) Modifier.padding(vertical = 6.dp) else Modifier.clip(forma(20.dp)).background(f.superficieSocial).padding(14.dp)),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     IconoChispa(28.dp)
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.social_chispas_n, numeroSocial(temas.chispas)), style = MaterialTheme.typography.titleMedium, color = f.texto)
@@ -242,7 +260,7 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                     }
                     if (paquetes.isNotEmpty()) Text(stringResource(R.string.social_wompi_explica), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                     if (errorPago) Text(stringResource(R.string.social_wompi_error), color = f.texto)
-                }
+                } else if (tiendaPlay != null) ConseguirChispasPlay(tiendaPlay, soloChispas)
                 if (soloChispas) return@Column
                 Text(stringResource(PerfilR.string.tienda_repisas_titulo), Modifier.onGloballyPositioned { posicionEscaparates = it.positionInParent().y.roundToInt() }, color = f.texto, style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(PerfilR.string.tienda_repisas_intro), color = f.textoSuave)
@@ -261,13 +279,18 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
                             { vm.red.reclamarTema(item) { contadores.contar("tienda.tema_comprado") } }, Modifier.fillMaxWidth(), habilitado = !tiene && temas.chispas >= precio)
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!Trama.apagada) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pildora(stringResource(R.string.social_tienda_fondos), acento = pestana == 0) { pestana = 0 }
                     Pildora(stringResource(R.string.social_tienda_marcos), acento = pestana == 1) { pestana = 1 }
                     Pildora(stringResource(R.string.social_tienda_banners), acento = pestana == 2) { pestana = 2 }
                 }
-                if (pestana == 2) PortadasPropias(vm)
-                val lista = when (pestana) { 0 -> listOf("") + TemasPerfil.FONDOS; 1 -> listOf("marco:") + TemasPerfil.MARCOS.map { "marco:$it" }; else -> TemasPerfil.BANNERS.keys.map { "banner:$it" } }
+                if (pestana == 2 && !Trama.apagada) PortadasPropias(vm)
+                // Lo que se ofrece en esta app (el catálogo de Fabs solo en Fabs); con el diseño nuevo va arriba.
+                val lista = if (Trama.apagada) emptyList() else when (pestana) {
+                    0 -> listOf("") + TemasPerfil.FONDOS.filter(TemasPerfil::seOfrece)
+                    1 -> listOf("marco:") + TemasPerfil.MARCOS.filter(TemasPerfil::seOfrece).map { "marco:$it" }
+                    else -> TemasPerfil.BANNERS.keys.filter(TemasPerfil::seOfrece).map { "banner:$it" }
+                }
                 lista.chunked(2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         fila.forEach { item ->
@@ -297,6 +320,8 @@ fun TiendaTemas(vm: InterfazSocial, escaparatesExtra: Boolean = false, soloChisp
             }
         }
     }
+    // Después de la tienda, para que su ventana quede encima.
+    probando?.let { item -> ProbadorCatalogo(vm, item) { probando = null } }
 }
 
 /** La portada (banner) de un perfil ajeno, llenando su marco (para las apps sin cargador de imágenes propio). */

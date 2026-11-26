@@ -1,18 +1,18 @@
-# El Cajón · Fogón
+# Fabs · Fogón
 
-<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Cajón"></p>
+<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="Fabs"></p>
 
-Todo lo que ves, lees y escuchas en un mismo lugar: películas, series, animes, libros, álbumes y artistas, con tu nota, tu reseña y tu diario. Sin anuncios. No vendemos tus datos. Su personaje es una cajita curiosa que pone cara según lo que estás viendo o escuchando.
+Todo lo que ves, lees y escuchas en un mismo lugar: películas, series, animes, libros, álbumes y artistas, con tu nota, tu reseña y tu diario. Sin anuncios. No vendemos tus datos. Antes se llamaba El Cajón.
 
-- Descargar: [fogonapps/el-cajon](https://github.com/fogonapps/el-cajon/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-cajon`).
-- Novedades de cada versión: en las [versiones de El Cajón](https://github.com/fogonapps/el-cajon/releases).
+- Descargar: en [Google Play](https://play.google.com/store/apps/details?id=io.github.fogonapps.cajon), por ahora como tester: los pasos están en [fogonapps.github.io](https://fogonapps.github.io/#testers).
+- El código de esta carpeta es el de la versión de Play.
 
 ## Qué hace
 
 Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de las apps de diario de cine, libros y discos, en una sola app.
 
 - **Todo en un cajón:** películas, series, animes, libros y álbumes, cada uno con portada (se puede cambiar o subir una imagen propia), año, director/autor/artista, géneros y sinopsis de su fuente (lo oficial no se edita). Filtros por tipo y estado, búsqueda y orden (recientes, nota, año, A–Z).
-- **Buscar y agregar:** libros en Open Library y discos y artistas en MusicBrainz (sin clave); películas, series y animes en TMDB con la clave gratuita de cada persona. Lo que no está en ninguna fuente se agrega a mano.
+- **Buscar y agregar:** libros en Open Library y discos y artistas en MusicBrainz (sin clave); películas, series y animes en TMDB, a través del servidor de Fogón (no hace falta clave). Lo que no está en ninguna fuente se agrega a mano.
 - **Estados:** por ver/leer/escuchar, viendo/leyendo/escuchando, visto/leído/escuchado, abandonado. Con las fechas de empezar y terminar.
 - **Nota en estrellas** de media en media, me gusta, reseña (solo de la persona: la app nunca la escribe), datos curiosos, etiquetas propias y géneros como etiquetas (tocar una busca lo que la lleva) y episodios favoritos.
 - **Diario:** cada vez que se ve, lee o escucha algo, con fecha, nota de ese día, si fue otra vez y unas palabras.
@@ -47,20 +47,20 @@ Lo que antes se anotaba a mano en tablas de cine, lectura y música, más lo de 
 | Permiso | Para qué |
 |---------|----------|
 | Internet | Buscar y traer los datos, portadas y fotos (TMDB, Open Library, MusicBrainz, Cover Art Archive, IGDB, Wikidata y Wikimedia Commons) y usar las funciones opcionales de Fogón Social. Si importas tu biblioteca de Steam, el servidor de Fogón le pide la lista a Steam y no la guarda. |
-| Acceso a notificaciones (opcional) | Solo si se activa "Anotar lo que escucho": Android lo pide para dejar ver qué canción suena en otras apps (Spotify, YouTube Music…). El Cajón no lee las notificaciones: solo artista, álbum y canción de lo que suena, y lo guarda en el teléfono. |
-| Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de El Cajón en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
+| Acceso a notificaciones (opcional) | Solo si se activa "Anotar lo que escucho": Android lo pide para dejar ver qué canción suena en otras apps (Spotify, YouTube Music…). Fabs no lee las notificaciones: solo artista, álbum y canción de lo que suena, y lo guarda en el teléfono. |
+| Datos de las apps de Fogón | Que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de Fabs en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Lo que sale del teléfono:** el texto que buscas va a la fuente elegida. Si usas Fogón Social, se envía lo que compartes y, si activas la copia, el cajón se guarda cifrado en tu cuenta.
 - **Lo que escuchas** (con "Anotar lo que escucho", Spotify o su historial) se guarda en el teléfono (`files/escuchas.json`) y se incluye en el respaldo a archivo y en la copia cifrada de la cuenta.
-- **Las claves** (TMDB y el acceso a Spotify) se cifran con el Keystore de Android y quedan fuera de los respaldos.
+- **El acceso a Spotify** (si lo conectas) se cifra con el Keystore de Android y queda fuera de los respaldos.
 - **Sin copias automáticas a la nube de Google.**
 
 ## Créditos
 
-- Películas, series y animes: [TMDB](https://www.themoviedb.org/), con la clave de cada persona. El Cajón usa TMDB y su API, pero no está respaldado, certificado ni aprobado por TMDB.
+- Películas, series y animes: [TMDB](https://www.themoviedb.org/), a través del servidor de Fogón. Fabs usa TMDB y su API, pero no está respaldado, certificado ni aprobado por TMDB.
 - Libros: [Open Library](https://openlibrary.org/) (Internet Archive).
 - Música: [MusicBrainz](https://musicbrainz.org/) (núcleo de datos CC0) y carátulas del [Cover Art Archive](https://coverartarchive.org/).
 - Fotos de artistas: [Wikimedia Commons](https://commons.wikimedia.org/), encontradas por [Wikidata](https://www.wikidata.org/); cada una con su autor y licencia en la ficha del artista.
 - Videojuegos: datos e imágenes de [IGDB](https://www.igdb.com/), a través del servidor de Fogón; si un juego no está en IGDB, datos de [Wikidata](https://www.wikidata.org/) (CC0) y su portada de [Wikimedia Commons](https://commons.wikimedia.org/) solo si trae autor y licencia, que se muestran en la ficha.
-- Biblioteca de Steam (solo si la importas): [Steam Web API](https://steamcommunity.com/dev), a través del servidor de Fogón. Valve y Steam son marcas de Valve Corporation; El Cajón no está respaldado por Valve.
+- Biblioteca de Steam (solo si la importas): [Steam Web API](https://steamcommunity.com/dev), a través del servidor de Fogón. Valve y Steam son marcas de Valve Corporation; Fabs no está respaldado por Valve.
 - Portadas: Coil, Apache 2.0.

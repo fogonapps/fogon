@@ -32,14 +32,19 @@ class ContadoresPerfilPantallaTest {
     @Test fun espanolContraste() = comprobar(Estilo.CONTRASTE, false)
 
     private fun comprobar(estilo: Estilo, ingles: Boolean) {
-        val etiquetas = if (ingles) listOf("following", "followers", "in your cajón")
-            else listOf("siguiendo", "seguidores", "en tu cajón")
+        val etiquetas = if (ingles) listOf("following", "followers", "in your collection")
+            else listOf("siguiendo", "seguidores", "en tu colección")
         regla.setContent {
             val densidad = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(densidad.density, 1.3f)) {
                 FogonTema(Paleta.Cajon, Apariencia(estilo = estilo)) {
-                    PerfilCabecera(PerfilVista("Prueba", "prueba", "", "", "", emptyList(), false, "yo",
-                        contadores = etiquetas.map { ContadorPerfil("32", it) }), portada = {}, foto = {})
+                    // Con el diseño de Fabs las cifras van bajo la biografía, en PerfilInformacion.
+                    val vista = PerfilVista("Prueba", "prueba", "", "", "", emptyList(), false, "yo",
+                        contadores = etiquetas.map { ContadorPerfil("32", it) })
+                    androidx.compose.foundation.layout.Column {
+                        PerfilCabecera(vista, portada = {}, foto = {})
+                        PerfilInformacion(vista, enlace = {}, acciones = {})
+                    }
                 }
             }
         }

@@ -64,7 +64,9 @@ open class RedApp(
         sesion.intentar(marca, trabajo) { x ->
             error.value = x.message
             if (x is ErrorSocial && x.codigo == 401) olvidarCuenta()
-            if (avisar) mensaje(when {
+            // Con la red en pausa por una política nueva, se muestra la hoja para aceptarla en vez de un error.
+            if (x.message == "politica_pendiente") { if (avisar && _politicaPendiente.value) _hojaPolitica.value = true }
+            else if (avisar) mensaje(when {
                 x is ErrorSocial && x.error == "perfil_revision" -> textos.perfilCambio
                 x is ErrorSocial && x.error == "muchas_cuentas" -> textos.muchasCuentas
                 else -> textos.error

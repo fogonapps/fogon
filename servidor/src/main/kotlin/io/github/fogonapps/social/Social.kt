@@ -98,6 +98,11 @@ data class PerfilVisto(
     val nivelLena: String = "",
     val colorBanner: String = "",
     val portadaAnimada: Boolean = false,
+    /**
+     * Quien mira puede abrirle un chat (lo decide la persona en «Quién puede escribirme»; un chat que ya existe sigue).
+     * Siempre viaja: la app lo toma como true si falta (servidores de antes, sin la regla).
+     */
+    @kotlinx.serialization.EncodeDefault val puedoEscribir: Boolean = false,
 )
 
 @Serializable
@@ -138,6 +143,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
     @kotlinx.serialization.EncodeDefault val nivelLena: String = "",
     @kotlinx.serialization.EncodeDefault val lena_visible: Boolean = false,
     @kotlinx.serialization.EncodeDefault val lena_preguntada: Boolean = false,
+    /** Quién puede abrirle un chat nuevo ([Social.ESCRIBIR]). */
+    @kotlinx.serialization.EncodeDefault val escribir: String = "mutuos",
 )
 @Serializable data class Aceptacion(val politica: String)
 @Serializable data class VotoImagen(val fuente: String, val url: String)
@@ -157,7 +164,8 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class CambioApodo(val nombre: String)
 @Serializable data class CambioUsuario(val usuario: String)
 @Serializable data class CuentaCreada(val usuario: String, val token: String)
-@Serializable data class Ajustes(val privada: Boolean? = null)
+/** [escribir]: quién puede abrirle un chat nuevo a la cuenta ([Social.ESCRIBIR]). */
+@Serializable data class Ajustes(val privada: Boolean? = null, val escribir: String? = null)
 @Serializable data class NuevoComentario(val texto: String, val padre: Long? = null)
 @Serializable data class NuevoReporte(val que: String, val objeto: String, val motivo: String)
 @Serializable data class ImagenSubida(val nombre: String)
@@ -182,6 +190,10 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 @Serializable data class GrupoDestacadas(val titulo: String, val historias: List<Historia>)
 @Serializable data class GrupoHistorias(val persona: Persona, val historias: List<Historia>, val silenciada: Boolean = false)
 @Serializable data class ListaUsuarios(val usuarios: List<String>)
+/** Un voto de «Juntos»: «si», «no» o null para quitarlo. */
+@Serializable data class VotoJuntos(val clave: String, val voto: String? = null)
+/** Los votos de «Juntos» de los dos, por clave de obra. */
+@Serializable data class VotosJuntos(val mios: Map<String, String>, val suyos: Map<String, String>)
 @Serializable data class Cumple(val fecha: String)
 /** Lo de la tienda de la cuenta: lo que tiene, lo puesto (fondo y marco) y sus chispas. */
 @Serializable data class TemasCuenta(val reclamados: List<String>, val puesto: String, val marco: String = "", val chispas: Int = 0, val diario: Boolean = false, val banner: String = "", val colorBanner: String = "")
@@ -195,15 +207,27 @@ data class Aviso(val id: Long, val tipo: String, val de: Persona, val objeto: St
 object TemasPerfil {
     val EXTRAS = (1..3).map { "escaparate:extra$it" }
 
-    val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500)
-    val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600)
+    val FONDOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
+        // Catálogo oficial de Fabs.
+        "negro-estreno" to 1200, "videoclub-pasillo" to 1200, "biblioteca-sala" to 1200, "vinilo-funda" to 1000, "arcade-moqueta" to 1200)
+    val MARCOS = mapOf("doble" to 400, "llamas" to 800, "pixel" to 600, "estrellas" to 700, "espinas" to 800, "luna" to 600,
+        "negro-diafragma" to 500, "videoclub-rebobine" to 500, "biblioteca-exlibris" to 500, "vinilo-disco" to 500, "arcade-fosforo" to 500)
     fun precio(item: String): Int? = if (item == "portada:propia") 2500 else if (item == "portada:animada") 5000 else if (item in EXTRAS) 1000 else BANNERS[item.removePrefix("banner:")]?.takeIf { item.startsWith("banner:") } ?: FONDOS[item] ?: MARCOS[item.removePrefix("marco:")]?.takeIf { item.startsWith("marco:") }
-    const val BIENVENIDA = 1500
+    /** Se da una sola vez, al consultar las chispas por primera vez: las cuentas que ya la recibieron conservan la suya. */
+    const val BIENVENIDA = 500
     const val PESOS_POR_CHISPA = 10
     val COLORES_BANNER = setOf("rojo", "amarillo", "rosa", "azul", "verde", "violeta", "naranja", "cian")
-    val BANNERS_ANIMADOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia")
+    /** Los animados de puntos (se pueden teñir). */
+    val ANIMADOS_PUNTOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia")
+    /** Catálogo oficial de Fabs: banners animados, banners y los gratis sobrios (ninguno se tiñe). */
+    val ANIMADOS_FABS = mapOf("negro-ventilador" to 1800, "videoclub-abierto" to 1600, "biblioteca-polvo" to 1600, "vinilo-giradiscos" to 2000, "arcade-hiperespacio" to 1800)
+    val BANNERS_FABS = mapOf("negro-persiana" to 1000, "negro-hotel" to 1200, "videoclub-estanteria" to 1000, "videoclub-rebobinar" to 900,
+        "biblioteca-lomos" to 1100, "biblioteca-marmolado" to 1000, "vinilo-surco" to 1200, "vinilo-sello" to 900, "arcade-puntajes" to 1000, "arcade-vector" to 1100,
+        "fabs-papel" to 0, "fabs-grano" to 0, "fabs-tinta" to 0) + ANIMADOS_FABS
+    val BANNERS_ANIMADOS = ANIMADOS_PUNTOS + ANIMADOS_FABS.keys
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
-        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) + BANNERS_ANIMADOS.associateWith { 600 }
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) + ANIMADOS_PUNTOS.associateWith { 600 } + BANNERS_FABS
+    fun admiteColor(id: String) = (BANNERS[id] == 0 || id in BANNERS_ANIMADOS) && id !in BANNERS_FABS
 }
 @Serializable data class CumpleAmigo(val persona: Persona, val fecha: String)
 /** Una lista en común: quién la armó, quiénes están y cuántas obras tiene. */
@@ -223,6 +247,19 @@ object TemasPerfil {
 
 class Problema(val codigo: Int, val mensaje: String, val desde: Long = 0) : Exception(mensaje)
 
+/**
+ * La fila de la revisión automática de fotos: un hilo y como mucho [tope] fotos esperando (cada una guarda sus bytes
+ * en memoria). Si llegan más, las que no caben se descartan y quedan sin revisar, como sin el modelo.
+ */
+internal fun filaRevision(tope: Int = 50): java.util.concurrent.ThreadPoolExecutor = java.util.concurrent.ThreadPoolExecutor(
+    1, 1, 0L, java.util.concurrent.TimeUnit.MILLISECONDS, java.util.concurrent.LinkedBlockingQueue(tope),
+    { r -> Thread(r, "revision-fotos").apply { isDaemon = true; priority = Thread.MIN_PRIORITY } },
+    object : java.util.concurrent.ThreadPoolExecutor.DiscardPolicy() {
+        override fun rejectedExecution(r: Runnable, e: java.util.concurrent.ThreadPoolExecutor) {
+            System.err.println("Fila de revisión de fotos llena: una foto queda sin revisar.")
+        }
+    })
+
 /** Todo lo que hace el servidor, sin HTTP (así se prueba directo). [ahora] se puede cambiar en las pruebas. */
 class Social(
     internal val b: Base,
@@ -231,6 +268,10 @@ class Social(
     private val cartero: Cartero = Cartero { _, _, _ -> throw Problema(503, "sin_correo") },
     principal: String? = null,
     mensajero: Mensajero? = null,
+    /** La revisión automática de fotos ([Desnudos]); sin ella (o sin el modelo instalado), no se revisa nada. */
+    private val revisor: RevisorFotos? = null,
+    /** Dónde corre la revisión: en un hilo aparte, de a una foto, para no demorar la subida (las pruebas la corren en el acto). */
+    private val revisarEn: java.util.concurrent.Executor = filaRevision(),
 ) {
 
     val escaparates = Escaparates(this, b, ahora)
@@ -257,6 +298,17 @@ class Social(
         mac.init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256"))
         return java.util.Base64.getUrlEncoder().withoutPadding()
             .encodeToString(mac.doFinal("cuenta:$id".toByteArray(Charsets.UTF_8))).take(22)
+    }
+
+    /**
+     * El identificador de la cuenta que viaja a Google Play con cada compra (obfuscatedAccountId): opaco, sin datos
+     * personales y distinto del público, para que el servidor compruebe que la compra se hizo desde esta cuenta.
+     */
+    fun idPlay(id: Long): String {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256"))
+        return java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(mac.doFinal("play:$id".toByteArray(Charsets.UTF_8))).take(32)
     }
 
     /* ----- Cuentas ----- */
@@ -304,7 +356,7 @@ class Social(
      * "cuenta_nueva" sin gastar el código (la app pregunta y vuelve a llamar).
      */
     @Synchronized
-    fun entrar(e: Entrada, dispositivo: String = "", puedeCrear: () -> Boolean = { true }): Acceso {
+    fun entrar(e: Entrada, dispositivo: String = "", ip: String = "", puedeCrear: () -> Boolean = { true }): Acceso {
         e.app?.let(AppsSocial::validar)
         if (e.clave.isNotEmpty()) Claves.validar(e.clave)
         val correo = e.correo.trim().lowercase()
@@ -324,6 +376,7 @@ class Social(
                 insertar("INSERT INTO cuentas(id, usuario, token, nombre, creada, cambio, correo, acepto, acepto_cuando) VALUES(?,?,?,?,?,?,?,?,?)",
                     insertar("INSERT INTO secuencia_cuentas DEFAULT VALUES"), u, "retirado:" + Base.huella(Base.tokenNuevo()), e.nombre.trim().take(40), ahora(), ahora(), correo, POLITICA, ahora())
             }
+            if (ip.isNotBlank()) b.usar { cambiar("UPDATE cuentas SET ip_registro = ? WHERE id = ?", huellaDireccion(ip), nuevo) }
             Triple(nuevo, u, true)
         }
         // Con el código comprobado se puede poner la contraseña (nueva cuenta, la olvidó o no tenía).
@@ -436,6 +489,7 @@ class Social(
     @Synchronized
     fun limpiarSeguridad() {
         limpiarHistorias()
+        limpiarPaquetes()
         b.usar { leer("SELECT id FROM cuentas WHERE borrar_el > 0 AND borrar_el <= ? AND id NOT IN (SELECT cuenta FROM roles WHERE rol IN ('principal','administrador'))", ahora()) { it.getLong(1) } }.forEach(::borrarCuenta)
         b.usar {
             val videosVencidos = leer("SELECT DISTINCT v.nombre FROM videos v JOIN publicaciones p ON p.cuenta = v.cuenta AND instr(p.datos, v.nombre) > 0 WHERE p.estado = 'retirado' AND p.retirado_hasta <= ?", ahora()) { it.getString(1) }
@@ -465,13 +519,16 @@ class Social(
             cambiar("DELETE FROM envios_codigo WHERE cuando <= ?", ahora() - HORA)
             cambiar("DELETE FROM fallos_codigo WHERE cuando <= ?", ahora() - 24 * HORA)
             cambiar("DELETE FROM apodo_cambios WHERE cuando <= ?", ahora() - 14 * DIA)
+            cambiar("UPDATE cuentas SET ip_registro = NULL WHERE ip_registro IS NOT NULL AND creada <= ?", ahora() - 90 * DIA)
             // La política promete un año para reportes, decisiones y faltas vencidas; lo preservado para las
             // autoridades y lo que sigue abierto no se toca.
             val anio = ahora() - 365 * DIA
             cambiar("""DELETE FROM reportes WHERE estado != 'abierto' AND cuando <= ?
+                AND NOT EXISTS(SELECT 1 FROM preservados v WHERE v.liberado = 0 AND v.que = reportes.que AND v.objeto = reportes.objeto)
                 AND NOT (que = 'publicacion' AND EXISTS(SELECT 1 FROM publicaciones p WHERE CAST(p.id AS TEXT) = reportes.objeto AND p.estado = 'preservado'))
                 AND NOT (que = 'comentario' AND EXISTS(SELECT 1 FROM comentarios c WHERE CAST(c.id AS TEXT) = reportes.objeto AND c.estado = 'preservado'))""", anio)
             cambiar("""DELETE FROM decisiones WHERE cuando <= ?
+                AND NOT EXISTS(SELECT 1 FROM preservados v WHERE v.liberado = 0 AND v.que = decisiones.que AND v.objeto = decisiones.objeto)
                 AND NOT (que = 'publicacion' AND EXISTS(SELECT 1 FROM publicaciones p WHERE CAST(p.id AS TEXT) = decisiones.objeto AND p.estado = 'preservado'))
                 AND NOT (que = 'comentario' AND EXISTS(SELECT 1 FROM comentarios c WHERE CAST(c.id AS TEXT) = decisiones.objeto AND c.estado = 'preservado'))""", anio)
             cambiar("DELETE FROM faltas WHERE vence <= ?", anio)
@@ -489,9 +546,9 @@ class Social(
     }
 
     fun miCuenta(yo: Long, token: String? = null): MiCuenta = b.usar {
-        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto, insignia, dos_pasos, lena_visible, lena_preguntada FROM cuentas WHERE id = ?", yo) {
+        leer("SELECT usuario, nombre, coalesce(correo, ''), privada, clave IS NOT NULL, usuario_cambio, admin, acepto, insignia, dos_pasos, lena_visible, lena_preguntada, escribir FROM cuentas WHERE id = ?", yo) {
             MiCuenta(it.getString(1), it.getString(2), it.getString(3), it.getInt(4) == 1, it.getInt(5) == 1, (if (it.getLong(6) == 0L) 0 else it.getLong(6) + 30 * DIA).takeIf { d -> d > ahora() } ?: 0, equipo.rol(yo).isNotBlank(), apodoDesde(yo), borrarEl(yo), equipo.rol(yo), equipo.permisos(yo), equipo.activa(yo), equipo.elevada(yo, token), idCuenta(yo), it.getString(8), it.getString(9), it.getInt(10) == 1,
-                nivelLena = lena.nivel(yo), lena_visible = it.getBoolean(11), lena_preguntada = it.getBoolean(12))
+                nivelLena = lena.nivel(yo), lena_visible = it.getBoolean(11), lena_preguntada = it.getBoolean(12), escribir = it.getString(13))
         }.first()
     }
 
@@ -723,6 +780,10 @@ class Social(
     }
 
     fun ajustar(yo: Long, a: Ajustes) {
+        a.escribir?.let { escribir ->
+            if (escribir !in ESCRIBIR) throw Problema(400, "escribir")
+            b.usar { cambiar("UPDATE cuentas SET escribir = ? WHERE id = ?", escribir, yo) }
+        }
         a.privada?.let { privada ->
             b.usar { cambiar("UPDATE cuentas SET privada = ?, cambio = MAX(cambio + 1, ?) WHERE id = ?", if (privada) 1 else 0, ahora(), yo) }
             // Al volverse pública, las solicitudes que esperaban quedan aceptadas.
@@ -819,6 +880,10 @@ class Social(
         if (equipo.rol(yo) == "principal") throw Problema(403, "cuenta_protegida")
         // Las cascadas de SQLite tampoco deben destruir evidencia pendiente o preservada.
         if (b.usar { leer("SELECT 1 FROM publicaciones p WHERE (p.cuenta = ? AND p.estado != 'visible') OR EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = p.id AND c.estado != 'visible' AND (c.cuenta = ? OR p.cuenta = ?)) LIMIT 1", yo, yo, yo) { 1 }.isNotEmpty() }) return
+        // Tampoco lo preservado para las autoridades ni lo que tiene un reporte grave sin decidir.
+        if (b.usar { leer("SELECT 1 FROM preservados WHERE cuenta = ? AND liberado = 0 UNION ALL SELECT 1 FROM historias WHERE cuenta = ? AND estado != 'visible' LIMIT 1", yo, yo) { 1 }.isNotEmpty() }) return
+        if (b.usar { leer("SELECT que, objeto, motivo FROM reportes WHERE estado = 'abierto'") { Triple(it.getString(1), it.getString(2), it.getString(3)) } }
+                .any { (que, objeto, motivo) -> Moderacion.esGrave(motivo) && autorReportado(que, objeto) == yo }) return
         val videos = b.usar { leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) } }
         val imagenes = b.usar { leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) } }
         b.usar {
@@ -841,6 +906,8 @@ class Social(
         leer("SELECT usuario, nombre, foto, privada, insignia, tema, marco FROM cuentas WHERE id = ?", id) { Persona(it.getString(1), it.getString(2), it.getInt(3) == 1, it.getInt(4) == 1, it.getString(5), it.getString(6), it.getString(7)) }.first()
             .let { p -> if (p.foto) p.copy(fotoV = java.io.File(dirFotos, "$id.jpg").lastModified() / 1000) else p }
     }
+
+    private fun fotoEnRevision(id: Long) = b.usar { leer("SELECT foto_revision FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false
 
     private fun esPrivada(id: Long) = b.usar { leer("SELECT privada FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.firstOrNull() } ?: false
 
@@ -930,6 +997,10 @@ class Social(
         dirFotos.mkdirs()
         java.io.File(dirFotos, "$yo.jpg").writeBytes(limpia)
         b.usar { cambiar("UPDATE cuentas SET foto = 1, cambio = cambio + 1 WHERE id = ?", yo) }
+        b.usar { cambiar("UPDATE cuentas SET foto_sin_revisar = 0 WHERE id = ?", yo) }
+        revisarFoto(yo, limpia, sinRevisar = { b.usar { cambiar("UPDATE cuentas SET foto_sin_revisar = 1 WHERE id = ?", yo) } }) {
+            b.usar { cambiar("UPDATE cuentas SET foto_revision = 1, cambio = cambio + 1 WHERE id = ?", yo) }
+        }
     }
 
     fun quitarFoto(yo: Long) {
@@ -941,6 +1012,9 @@ class Social(
     fun foto(lector: Long?, usuario: String): ByteArray {
         val id = idDe(usuario)
         if (lector != null && bloqueado(id, lector)) throw Problema(404, "no_existe")
+        // En revisión (reportada o marcada por la revisión automática), solo la ven su dueño y el equipo.
+        if (lector != id && b.usar { leer("SELECT foto_revision FROM cuentas WHERE id = ?", id) { it.getInt(1) == 1 }.first() } &&
+            (lector == null || "ver_reportes" !in equipo.permisos(lector))) throw Problema(404, "sin_foto")
         return java.io.File(dirFotos, "$id.jpg").takeIf { it.exists() }?.readBytes() ?: throw Problema(404, "sin_foto")
     }
 
@@ -968,10 +1042,12 @@ class Social(
         val megusta = b.usar { leer("SELECT COUNT(*) FROM megusta m JOIN publicaciones p ON p.id = m.pub WHERE p.cuenta = ? AND p.app = ?", id, app) { it.getInt(1) }.first() }
         val guardadas = relacion == "yo" || p.partes["guardadas"]?.let { ve(it.visibilidad) } == true
         return PerfilVisto(
-            escaparates.cupo(id).nivel, escaparates.cupo(id).insignias, persona(id), p.bio, if (cerrada && !p.portada.startsWith("banner:")) "" else p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
+            escaparates.cupo(id).nivel, escaparates.cupo(id).insignias, persona(id), p.bio,
+            if ((cerrada || (relacion != "yo" && fotoEnRevision(id))) && !p.portada.startsWith("banner:")) "" else p.portada, p.enlaces, if (cerrada) emptyMap() else p.partes.filterValues { ve(it.visibilidad) }.mapValues { it.value.datos },
             pubs, relacion, meSigue, seguidores, siguiendo, cuantas, cerrada, megusta, guardadas,
             nivelLena = lena.nivelVisible(id), colorBanner = p.colorBanner,
             portadaAnimada = !cerrada && Regex("[A-Za-z0-9_-]{22}").matches(p.portada) && archivoAnimado(p.portada) != null,
+            puedoEscribir = lector != null && lector != id && puedeEscribirle(lector, id),
         )
     }
 
@@ -992,6 +1068,9 @@ class Social(
         dirImagenes.mkdirs()
         java.io.File(dirImagenes, "$nombre.${if (esPng(limpia)) "png" else "jpg"}").writeBytes(limpia)
         b.usar { cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES(?,?,?)", nombre, yo, ahora()) }
+        revisarFoto(yo, limpia, sinRevisar = { b.usar { cambiar("UPDATE imagenes SET sin_revisar = 1 WHERE nombre = ?", nombre) } }) {
+            b.usar { cambiar("UPDATE imagenes SET revision = 1 WHERE nombre = ?", nombre) }
+        }
         return ImagenSubida(nombre)
     }
 
@@ -1036,6 +1115,14 @@ class Social(
     fun imagen(nombre: String, lector: Long? = null, token: String? = null): ByteArray {
         if (!Regex("[A-Za-z0-9_-]{22}").matches(nombre)) throw Problema(404, "no_existe")
         if (b.usar { leer("SELECT 1 FROM mercado WHERE imagen=? AND estado='derechos'", nombre) { 1 }.isNotEmpty() }) throw Problema(404, "no_existe")
+        // Una foto en revisión (la marcó la revisión automática o se reportó) solo la ven quien la subió y el equipo.
+        val enRevision = b.usar { leer("""SELECT 1 FROM imagenes i WHERE i.nombre = ? AND (i.revision = 1
+            OR EXISTS(SELECT 1 FROM mercado m WHERE m.imagen = i.nombre AND m.estado = 'revision' AND m.motivo = 'reportado')
+            OR EXISTS(SELECT 1 FROM cuentas c WHERE c.id = i.cuenta AND c.foto_revision = 1 AND instr(c.perfil, i.nombre) > 0))""", nombre) { 1 }.isNotEmpty() }
+        if (enRevision && lector != b.usar { leer("SELECT cuenta FROM imagenes WHERE nombre = ?", nombre) { it.getLong(1) }.firstOrNull() }) {
+            if (lector == null || "ver_reportes" !in equipo.permisos(lector)) throw Problema(404, "no_existe")
+            equipo.requiere(lector, "ver_reportes", token)
+        }
         val estados = b.usar { leer("SELECT estado FROM publicaciones WHERE estado != 'visible' AND cuenta = (SELECT cuenta FROM imagenes WHERE nombre = ?) AND instr(datos, ?) > 0", nombre, nombre) { it.getString(1) } +
             leer("SELECT estado FROM historias WHERE estado != 'visible' AND cuenta = (SELECT cuenta FROM imagenes WHERE nombre = ?) AND instr(datos, ?) > 0", nombre, nombre) { it.getString(1) } }
         if ("preservado" in estados) throw Problema(404, "no_existe")
@@ -1172,9 +1259,9 @@ class Social(
             val nuevaParaAvisar = buenas.filter { it.clave.take(80) !in yaEstaban && ahora() - it.cuando < 24 * 3600_000L }.maxByOrNull { it.cuando }?.clave?.take(80)
             leer("SELECT id, clave FROM publicaciones WHERE cuenta = ? AND app = ?", yo, app) { it.getLong(1) to it.getString(2) }
                 .filter { if (quitar == null) it.second !in claves else it.second in quitar }.forEach {
-                    cambiar("DELETE FROM publicaciones WHERE id = ? AND estado = 'visible' AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", it.first)
-                    // Si queda como contenedora de evidencia, deja de ser pública hasta su purga.
-                    cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", it.first)
+                    cambiar("DELETE FROM publicaciones WHERE id = ? AND estado = 'visible' AND oculta = 0 AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", it.first)
+                    // Si queda como contenedora de evidencia, deja de ser pública hasta su purga; si estaba en revisión, se conserva 90 días.
+                    cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = CASE WHEN oculta = 1 THEN ? ELSE 0 END WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, it.first)
                 }
             val mias = leer("SELECT nombre FROM imagenes WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
             val videosMios = leer("SELECT nombre FROM videos WHERE cuenta = ?", yo) { it.getString(1) }.toSet()
@@ -1195,11 +1282,12 @@ class Social(
                 val datos = JsonSocial.encodeToString(JsonObject.serializer(), JsonObject(sinPortadasAjenas(p.datos) + ("tipo" to JsonPrimitive(p.tipo.take(20)))))
                 if (datos.length > (if (app == "cucha") 100_000 else 20_000)) { if (estricto) throw Problema(400, "publicacion_grande") else return@forEach }
                 cambiar("""INSERT INTO publicaciones(cuenta, app, clave, visibilidad, cuando, datos) VALUES(?,?,?,?,?,?)
-                    ON CONFLICT(cuenta, app, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible'""",
+                    ON CONFLICT(cuenta, app, clave) DO UPDATE SET visibilidad = excluded.visibilidad, cuando = excluded.cuando, datos = excluded.datos WHERE publicaciones.estado = 'visible' AND publicaciones.oculta = 0""",
                     yo, app, p.clave.take(80), p.visibilidad, p.cuando, datos)
             }
             nuevaParaAvisar?.let { clave -> avisarSeguidores(yo, clave, app) }
         }
+        revisarFotosMarcadas(yo)
     }
 
     /** Avisa a sus seguidores que publicó algo (una vez cada 6 horas por autor, para no llenar de avisos). */
@@ -1282,8 +1370,9 @@ class Social(
             try {
                 if (leer("SELECT 1 FROM publicaciones WHERE id = ? AND cuenta = ? AND estado = 'visible'", id, yo) { 1 }.isEmpty()) throw Problema(404, "no_existe")
                 cambiar("INSERT OR IGNORE INTO retiradas(cuenta, app, clave, cuando) SELECT cuenta, app, clave, ? FROM publicaciones WHERE id = ?", ahora(), id)
-                cambiar("DELETE FROM publicaciones WHERE id = ? AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", id)
-                cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'visible'", id)
+                cambiar("DELETE FROM publicaciones WHERE id = ? AND oculta = 0 AND NOT EXISTS(SELECT 1 FROM comentarios c WHERE c.pub = publicaciones.id AND c.estado != 'visible')", id)
+                // En revisión no se borra: se conserva 90 días por si el equipo la necesita (y las fotos con ella).
+                cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = CASE WHEN oculta = 1 THEN ? ELSE 0 END WHERE id = ? AND estado = 'visible'", ahora() + 90 * DIA, id)
                 commit()
             } catch (x: Exception) { rollback(); throw x } finally { autoCommit = true }
         }
@@ -1308,10 +1397,15 @@ class Social(
     }
 
 
-    /** El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. */
+    /**
+     * El feed: lo último de quienes sigue (y lo suyo), del más reciente al más viejo; [antes] para seguir bajando. Sin
+     * nada de quien bloqueó o fue bloqueado, aunque quede un «seguir» viejo, y sin lo que ya no puede ver.
+     */
     fun actividad(yo: Long, antes: Long?, n: Int = 40, app: String = "cajon"): List<Publicacion> =
-        filas(yo, """p.app = ? AND (p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)))
-                AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", AppsSocial.validar(app), yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100)).map { it.second }
+        filas(yo, """p.app = ? AND (p.cuenta = ? OR (p.oculta = 0 AND p.cuenta IN (SELECT a FROM seguir WHERE de = ? AND aceptada = 1)
+                    AND p.cuenta NOT IN (SELECT a FROM bloqueos WHERE de = ?) AND p.cuenta NOT IN (SELECT de FROM bloqueos WHERE a = ?)))
+                AND p.cuando < ? ORDER BY p.cuando DESC LIMIT ?""", AppsSocial.validar(app), yo, yo, yo, yo, antes ?: Long.MAX_VALUE, n.coerceIn(1, 100))
+            .filter { (autor, p) -> puedeVer(yo, autor, p.visibilidad) }.map { it.second }
 
     /**
      * Para descubrir: candidatos iguales para todos (el servidor no perfila a nadie; el teléfono los ordena según los
@@ -1441,6 +1535,8 @@ class Social(
         if (yo != autor && yo != dueno) throw Problema(403, "no_es_tuyo")
         b.usar {
             val conserva = leer("SELECT 1 FROM comentarios WHERE padre = ? LIMIT 1", id) { 1 }.isNotEmpty()
+            // Lo que está en revisión no se borra ni se vacía: se retira y se conserva 90 días por si el equipo lo necesita.
+            if (cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible' AND oculto = 1", ahora() + 90 * DIA, id) > 0) return@usar
             if (conserva) cambiar("UPDATE comentarios SET borrado = 1, texto = '' WHERE id = ? AND estado = 'visible'", id)
             else cambiar("DELETE FROM comentarios WHERE id = ? AND estado = 'visible'", id)
         }
@@ -1507,6 +1603,36 @@ class Social(
         }
     }
 
+    /** «Juntos» solo entre quienes se siguen los dos y sin bloqueo; si no, como si la otra cuenta no existiera. */
+    private fun otraDeJuntos(yo: Long, usuario: String): Long {
+        val otra = idDe(usuario)
+        if (otra == yo || !visible(otra) || hayBloqueo(yo, otra)) throw Problema(404, "no_existe")
+        if (!sigue(yo, otra) || !sigue(otra, yo)) throw Problema(403, "no_mutuos")
+        return otra
+    }
+
+    /** Marca (o quita, con voto null) lo que [yo] quiere ver con [usuario]. */
+    fun votarJuntos(yo: Long, usuario: String, v: VotoJuntos) {
+        val clave = v.clave.trim()
+        if (clave.isEmpty() || clave.length > 200 || v.voto !in setOf(null, "si", "no")) throw Problema(400, "voto")
+        val otra = otraDeJuntos(yo, usuario)
+        b.transaccion {
+            if (v.voto == null) cambiar("DELETE FROM juntos_votos WHERE cuenta = ? AND otra = ? AND clave = ?", yo, otra, clave)
+            else {
+                if (leer("SELECT 1 FROM juntos_votos WHERE cuenta = ? AND otra = ? AND clave = ?", yo, otra, clave) { 1 }.isEmpty() &&
+                    leer("SELECT COUNT(*) FROM juntos_votos WHERE cuenta = ? AND otra = ?", yo, otra) { it.getInt(1) }.single() >= MAX_VOTOS_JUNTOS) throw Problema(429, "tope_votos")
+                cambiar("INSERT OR REPLACE INTO juntos_votos(cuenta, otra, clave, voto, cuando) VALUES(?,?,?,?,?)", yo, otra, clave, v.voto, ahora())
+            }
+        }
+    }
+
+    /** Los votos de los dos: los de [yo] para [usuario] y los de [usuario] para [yo]. */
+    fun votosJuntos(yo: Long, usuario: String): VotosJuntos {
+        val otra = otraDeJuntos(yo, usuario)
+        fun de(a: Long, para: Long) = b.usar { leer("SELECT clave, voto FROM juntos_votos WHERE cuenta = ? AND otra = ?", a, para) { it.getString(1) to it.getString(2) } }.toMap()
+        return VotosJuntos(de(yo, otra), de(otra, yo))
+    }
+
     fun bloqueados(yo: Long): List<Persona> = b.usar { leer("SELECT a FROM bloqueos WHERE de = ?", yo) { it.getLong(1) } }.filter(::visible).map(::persona)
 
     fun buscar(lector: Long?, q: String): List<Persona> {
@@ -1532,6 +1658,11 @@ class Social(
             if (nueva > 0) b.usar { cambiar("UPDATE publicaciones SET n_vistas = n_vistas + 1 WHERE id = ?", id) }
         }
     }
+
+    /** La huella de una dirección IP (no se guarda la dirección). */
+    internal fun huellaDireccion(ip: String): String =
+        javax.crypto.Mac.getInstance("HmacSHA256").apply { init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256")) }
+            .doFinal("registro:$ip".toByteArray()).take(16).joinToString("") { "%02x".format(it) }
 
     private fun huellaVista(cuenta: Long, pub: Long): String {
         val mac = javax.crypto.Mac.getInstance("HmacSHA256").apply { init(javax.crypto.spec.SecretKeySpec(secreto, "HmacSHA256")) }
@@ -1609,6 +1740,7 @@ class Social(
         // Las menciones reciben aviso (si siguen existiendo y no hay bloqueo).
         menciones.forEach { u -> b.usar { leer("SELECT id FROM cuentas WHERE usuario = ? AND cerrada = 0 AND borrar_el = 0", u) { it.getLong(1) }.firstOrNull() }
             ?.takeIf { it != yo && !bloqueado(it, yo) && !bloqueado(yo, it) }?.let { avisar(it, yo, "historia_mencion", id.toString()) } }
+        revisarFotosMarcadas(yo)
         return Historia(id, datos, ahora(), true, mejores = mejores)
     }
 
@@ -1724,7 +1856,13 @@ class Social(
     fun chispas(yo: Long): Int = b.transaccion {
         if (leer("SELECT 1 FROM chispas WHERE cuenta = ? AND motivo = 'bienvenida'", yo) { 1 }.isEmpty())
             cambiar("INSERT INTO chispas(cuenta, cantidad, motivo, cuando) VALUES(?,?,?,?)", yo, TemasPerfil.BIENVENIDA, "bienvenida", ahora())
+        saldarDeuda(yo, ahora())
         leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", yo) { it.getInt(1) }.first()
+    }
+
+    /** Con deuda de chispas (una compra de Play anulada que ya se había gastado) no se compra nada con chispas. */
+    internal fun sinDeuda(yo: Long): Unit = b.transaccion {
+        if (saldarDeuda(yo, ahora()) > 0) throw Problema(402, "deuda_chispas")
     }
     private fun diaDe(t: Long) = t / (24 * 3600_000L)
     fun temas(yo: Long): TemasCuenta {
@@ -1754,8 +1892,7 @@ class Social(
         if (base == valor) return base to anterior.colorBanner.takeIf { base == anterior.portada }.orEmpty()
         val color = valor.substringAfter('~')
         val id = base.removePrefix("banner:")
-        val admiteColor = TemasPerfil.BANNERS[id] == 0 || id in TemasPerfil.BANNERS_ANIMADOS
-        if (!admiteColor || !base.startsWith("banner:") ||
+        if (!TemasPerfil.admiteColor(id) || !base.startsWith("banner:") ||
             (color != "original" && color !in TemasPerfil.COLORES_BANNER)) throw Problema(400, "banner_no_permitido")
         return base to color.takeUnless { it == "original" }.orEmpty()
     }
@@ -1802,6 +1939,7 @@ class Social(
             if (bloqueado(yo, para) || bloqueado(para, yo)) throw Problema(403, "bloqueado")
             if (leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", para, regalo.item) { 1 }.isNotEmpty()) throw Problema(409, "ya_lo_tiene")
             if (leer("SELECT COUNT(*) FROM chispas WHERE cuenta = ? AND motivo LIKE 'regalo:%' AND cuando >= ?", yo, diaDe(ahora()) * 86400000L) { it.getInt(1) }.single() >= 10) throw Problema(429, "tope_regalos")
+            sinDeuda(yo)
             if (chispas(yo) < precio) throw Problema(402, "sin_chispas")
             cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, -precio, "regalo:${regalo.item}:${persona(para).usuario}", ahora())
             cambiar("INSERT INTO temas(cuenta,tema,cuando) VALUES(?,?,?)", para, regalo.item, ahora())
@@ -1816,6 +1954,7 @@ class Social(
         chispas(yo)
         b.transaccion {
             if (leer("SELECT 1 FROM temas WHERE cuenta = ? AND tema = ?", yo, tema) { 1 }.isNotEmpty()) return@transaccion
+            if (precio > 0) sinDeuda(yo)
             val saldo = leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", yo) { it.getInt(1) }.first()
             if (saldo < precio) throw Problema(402, "sin_chispas")
             cambiar("INSERT INTO chispas(cuenta, cantidad, motivo, cuando) VALUES(?,?,?,?)", yo, -precio, "compra:$tema", ahora())
@@ -2029,6 +2168,8 @@ class Social(
         }.firstOrNull() } ?: throw Problema(404, "no_existe")
         // Lo retirado por moderación se conserva su plazo; la persona deja de verlo igual.
         if (estado != "visible") return
+        // Lo que está en revisión no se borra: se retira y se conserva 90 días por si el equipo lo necesita.
+        if (b.usar { cambiar("UPDATE historias SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND oculta = 1", ahora() + 90 * DIA, id) } > 0) return
         b.usar { cambiar("DELETE FROM historias WHERE id = ?", id) }
         imagen?.let(::borrarImagenSuelta)
     }
@@ -2154,6 +2295,9 @@ class Social(
 
     fun ponerLlaves(yo: Long, l: Llaves) {
         if (l.cifrar.length !in 20..4000 || l.firmar.length !in 20..4000) throw Problema(400, "llaves")
+        // Deben ser el JSON de Tink en base64; algo ilegible solo serviría para romper el chat de los demás.
+        fun legible(b64: String) = runCatching { String(java.util.Base64.getDecoder().decode(b64)).trimStart().startsWith("{") }.getOrDefault(false)
+        if (!legible(l.cifrar) || !legible(l.firmar)) throw Problema(400, "llaves")
         b.usar { cambiar("INSERT INTO llaves(cuenta, cifrar, firmar, cuando) VALUES(?,?,?,?) ON CONFLICT(cuenta) DO UPDATE SET cifrar = excluded.cifrar, firmar = excluded.firmar, cuando = excluded.cuando",
             yo, l.cifrar, l.firmar, ahora()) }
     }
@@ -2169,6 +2313,8 @@ class Social(
         val otro = idDe(usuario)
         if (otro == yo) throw Problema(400, "eres_tu")
         if (bloqueado(otro, yo) || bloqueado(yo, otro)) throw Problema(404, "no_existe")
+        // Un chat nuevo solo si la otra persona lo permite («Quién puede escribirme»); uno que ya existe no se rompe.
+        if (!puedeEscribirle(yo, otro)) throw Problema(403, "no_recibe_mensajes")
         // Hasta ~400 mil caracteres: una nota de voz de dos minutos (cifrada) con lo demás del mensaje.
         if (s.sobre.length > 400_000 || s.firma.length > 2000 || s.sobre.isBlank()) throw Problema(413, "muy_grande")
         val n = b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND cuando > ?", yo, ahora() - 3600_000L) { it.getInt(1) }.first() }
@@ -2176,11 +2322,45 @@ class Social(
         // A quien no te sigue, hasta 20 por hora (frena el acoso y el spam a desconocidos).
         if (!sigue(otro, yo) && b.usar { leer("SELECT COUNT(*) FROM mensajes WHERE de = ? AND para = ? AND cuando > ? AND silencioso = 0", yo, otro, ahora() - 3600_000L) { it.getInt(1) }.first() } >= 20)
             throw Problema(429, "despacio")
-        val id = b.usar { insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma, silencioso) VALUES(?,?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma, if (s.silencioso) 1 else 0) }
+        val id = b.usar {
+            cambiar("INSERT OR IGNORE INTO conversaciones(a, b, desde) VALUES(?,?,?)", minOf(yo, otro), maxOf(yo, otro), ahora())
+            insertar("INSERT INTO mensajes(de, para, cuando, sobre, firma, silencioso) VALUES(?,?,?,?,?,?)", yo, otro, ahora(), s.sobre, s.firma, if (s.silencioso) 1 else 0)
+        }
         timbre(otro).value = id   // quien espera (la app abierta) se entera al instante
         if (!s.silencioso) empujes.tocar(otro)       // y con la app cerrada, su teléfono recibe un toque (FCM)
         return id
     }
+
+    /**
+     * Si [yo] le puede escribir a [otro]: siempre que ya tengan un chat; si no, según lo que [otro] eligió:
+     * "mutuos" (se siguen los dos, lo predeterminado), "sigo" (personas que [otro] sigue) o "nadie". Durante la
+     * transición ([enTransicionChats]), si [otro] sigue en "mutuos" vale la regla de antes (sin bloqueo; el tope a
+     * quien no te sigue lo pone [mandar]), para que los chats que ya existían y no quedaron anotados no se rompan.
+     * Lo que [otro] eligió a propósito ("sigo" o "nadie") se respeta siempre, y si alguna de las dos cuentas se creó
+     * después de empezar la transición no pudo tener un chat de antes: vale la regla nueva.
+     */
+    private fun puedeEscribirle(yo: Long, otro: Long): Boolean {
+        if (bloqueado(otro, yo) || bloqueado(yo, otro)) return false
+        if (b.usar { leer("SELECT 1 FROM conversaciones WHERE a = ? AND b = ?", minOf(yo, otro), maxOf(yo, otro)) { 1 }.isNotEmpty() }) return true
+        val eleccion = b.usar { leer("SELECT escribir FROM cuentas WHERE id = ?", otro) { it.getString(1) }.firstOrNull() }
+        return when (eleccion) {
+            "sigo" -> sigue(otro, yo)
+            "nadie" -> false
+            else -> (enTransicionChats() && !creadaTrasTransicion(yo) && !creadaTrasTransicion(otro)) || (sigue(otro, yo) && sigue(yo, otro))
+        }
+    }
+
+    /** Si [cuenta] se creó después de empezar la transición del chat (no pudo tener chats de antes). */
+    private fun creadaTrasTransicion(cuenta: Long): Boolean =
+        (b.usar { leer("SELECT creada FROM cuentas WHERE id = ?", cuenta) { it.getLong(1) }.firstOrNull() } ?: 0L) > transicionChatsDesde
+
+    /** Desde cuándo rige la regla de «Quién puede escribirme» en esta base (0: base nueva, sin transición). */
+    private val transicionChatsDesde: Long by lazy {
+        b.usar { leer("SELECT valor FROM configuracion WHERE clave = 'chats_transicion_desde'") { it.getString(1).toLongOrNull() }.firstOrNull() } ?: 0L
+    }
+
+    /** Los primeros [TRANSICION_CHATS] tras llegar la regla a una base que ya tenía cuentas. */
+    private fun enTransicionChats(): Boolean = transicionChatsDesde > 0 && ahora() - transicionChatsDesde in 0 until TRANSICION_CHATS
 
     /** Un timbre por cuenta: suena cuando le llega un mensaje (lo escucha [esperarMensajes]). */
     private val timbres = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.flow.MutableStateFlow<Long>>()
@@ -2237,7 +2417,7 @@ class Social(
         leer("SELECT id, de, tipo, objeto, cuando, leido, app FROM avisos WHERE para = ? AND (app IS NULL OR app = ?) AND cuando < ? ORDER BY cuando DESC LIMIT 60", yo, AppsSocial.validar(app), antes ?: Long.MAX_VALUE) {
             arrayOf(it.getLong(1), it.getLong(2), it.getString(3), it.getString(4), it.getLong(5), it.getInt(6) == 1, it.getString(7))
         }
-    }.filter { it[2] in AVISOS_DE_FOGON || (!bloqueado(yo, it[1] as Long) && visible(it[1] as Long)) }
+    }.filter { it[2] in AVISOS_DE_FOGON || (!bloqueado(yo, it[1] as Long) && !bloqueado(it[1] as Long, yo) && visible(it[1] as Long)) }
         .map { Aviso(it[0] as Long, it[2] as String, if (it[2] in AVISOS_DE_FOGON) personaFogon() else persona(it[1] as Long), it[3] as String, it[4] as Long, it[5] as Boolean, it[6] as String?) }
 
     /**
@@ -2257,30 +2437,162 @@ class Social(
         b.usar { if (id == null) cambiar("DELETE FROM avisos WHERE para = ? AND (app IS NULL OR app = ?)", yo, AppsSocial.validar(app)) else cambiar("DELETE FROM avisos WHERE para = ? AND id = ? AND (app IS NULL OR app = ?)", yo, id, AppsSocial.validar(app)) }
     }
 
+    /* ----- Revisión automática de fotos ----- */
+
+    /**
+     * Mira la foto recién subida con el [revisor] (en [revisarEn], sin demorar la subida). Si parece un desnudo
+     * ([Desnudos.UMBRAL]), [marcar] la deja en revisión y lo que ya la usa se oculta hasta que el equipo decida. Si el
+     * modelo falla (también si se queda sin memoria), [sinRevisar] la anota como sin revisar y el servicio sigue: se
+     * atrapa todo solo en este hilo, que es de la revisión y no atiende peticiones.
+     */
+    private fun revisarFoto(cuenta: Long, bytes: ByteArray, sinRevisar: () -> Unit, marcar: () -> Unit) {
+        val r = revisor ?: return
+        revisarEn.execute {
+            val probabilidad = try {
+                val img = javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(bytes)) ?: return@execute
+                r.probabilidad(img)
+            } catch (t: Throwable) {
+                System.err.println("No se pudo revisar una foto (${t.javaClass.simpleName}): queda sin revisar.")
+                runCatching(sinRevisar)
+                return@execute
+            }
+            if (probabilidad < Desnudos.UMBRAL) return@execute
+            try {
+                marcar()
+                revisarFotosMarcadas(cuenta)
+            } catch (e: Exception) {
+                System.err.println("No se pudo marcar una foto en revisión: ${e.javaClass.simpleName}")
+            }
+        }
+    }
+
+    /**
+     * Lo de [cuenta] que usa una foto en revisión pasa a «en revisión» (solo lo ven su autor y el equipo) con un
+     * reporte automático en la cola: publicaciones e historias; la foto o la portada del perfil y sus repisas, como
+     * reporte de la cuenta. El Mercado ya pasa por revisión antes de publicarse.
+     */
+    private fun revisarFotosMarcadas(cuenta: Long) {
+        val motivo = "desnudos: $AUTOMATICO"
+        fun reportarSolo(que: String, objeto: String) = b.usar {
+            if (leer("SELECT 1 FROM reportes WHERE que = ? AND objeto = ? AND estado = 'abierto' AND de IS NULL AND motivo = ?", que, objeto, motivo) { 1 }.isEmpty())
+                insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(NULL,?,?,?,?)", que, objeto, motivo, ahora())
+        }
+        val marcada = "EXISTS(SELECT 1 FROM imagenes i WHERE i.cuenta = x.cuenta AND i.revision = 1 AND instr(x.datos, i.nombre) > 0)"
+        b.usar { leer("SELECT id FROM publicaciones x WHERE x.cuenta = ? AND x.estado = 'visible' AND x.oculta = 0 AND $marcada", cuenta) { it.getLong(1) } }.forEach {
+            b.usar { cambiar("UPDATE publicaciones SET oculta = 1 WHERE id = ?", it) }
+            reportarSolo("publicacion", it.toString())
+        }
+        b.usar { leer("SELECT id FROM historias x WHERE x.cuenta = ? AND x.estado = 'visible' AND x.oculta = 0 AND $marcada", cuenta) { it.getLong(1) } }.forEach {
+            b.usar { cambiar("UPDATE historias SET oculta = 1 WHERE id = ?", it) }
+            reportarSolo("historia", it.toString())
+        }
+        val (usuario, enPerfil) = b.usar { leer("""SELECT c.usuario, c.foto_revision = 1
+                OR EXISTS(SELECT 1 FROM imagenes i WHERE i.cuenta = c.id AND i.revision = 1 AND (instr(c.perfil, i.nombre) > 0
+                    OR EXISTS(SELECT 1 FROM escaparates e WHERE e.cuenta = c.id AND instr(e.datos, i.nombre) > 0)))
+            FROM cuentas c WHERE c.id = ?""", cuenta) { it.getString(1) to it.getBoolean(2) }.firstOrNull() } ?: return
+        if (enPerfil) reportarSolo("cuenta", usuario)
+    }
+
     /* ----- Reportes y moderación ----- */
 
     /**
-     * Un reporte. [NuevoReporte.motivo] empieza por uno de [Moderacion.MOTIVOS] ("acoso: …"). Si lo reportan
-     * [Moderacion.UMBRAL] cuentas distintas que cuentan (más de 7 días y sin sanción), o una sola por un menor en riesgo,
-     * se oculta mientras se revisa (su autor lo sigue viendo).
+     * Un reporte. [NuevoReporte.motivo] empieza por uno de [Moderacion.MOTIVOS] ("acoso: …"). Todo reporte llega a la
+     * cola; lo reportado se oculta mientras se revisa (su autor lo sigue viendo, «en revisión», sin saber quién
+     * reportó) solo si lo respaldan suficientes cuentas que cuentan ([unidadesQueCuentan]): [Moderacion.UMBRAL] para
+     * cualquier motivo y [Moderacion.UMBRAL_GRAVE] para lo grave, o una sola cuenta de confianza ([deConfianza]).
+     * Así una sola cuenta, y menos una recién hecha, no puede tumbar lo de otros. Un reporte grave avisa además al
+     * equipo en el acto (un toque al teléfono, sin contenido).
      */
     fun reportar(yo: Long?, r: NuevoReporte) {
         if (r.que !in setOf("cuenta", "publicacion", "comentario", "mensaje", "imagen", "lugar", "historia", "mercado")) throw Problema(400, "que")
         if (r.que == "mercado" && mercado.detalle(yo, r.objeto.toLongOrNull() ?: throw Problema(400, "objeto")).estado != "aprobado") throw Problema(404, "no_existe")
         if (r.que == "lugar" && verLugar(r.objeto.toLongOrNull() ?: throw Problema(400, "objeto")) == null) throw Problema(404, "no_existe")
         if (r.que == "imagen" && !urlImagenValida(r.objeto)) throw Problema(400, "url")
-        if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= 10)
+        if (yo != null && b.usar { leer("SELECT COUNT(*) FROM reportes WHERE de = ? AND cuando > ?", yo, ahora() - 24 * 3600_000L) { it.getInt(1) }.first() } >= Moderacion.REPORTES_DIA)
             throw Problema(429, "despacio")
         val motivo = r.motivo.trim().take(2000)
         val objeto = r.objeto.take(if (r.que == "imagen") 300 else 80)
+        val grave = Moderacion.esGrave(motivo)
+        val primeroGrave = grave && b.usar { leer("SELECT motivo FROM reportes WHERE que = ? AND objeto = ? AND estado = 'abierto'", r.que, objeto) { it.getString(1) } }.none(Moderacion::esGrave)
         b.usar { insertar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?,?,?,?,?)", yo, r.que, objeto, motivo, ahora()) }
-        val grave = motivo.startsWith(Moderacion.MENOR_EN_RIESGO)
-        val cuentan = b.usar {
-            leer("""SELECT COUNT(DISTINCT r.de) FROM reportes r JOIN cuentas c ON c.id = r.de
-                    WHERE r.que = ? AND r.objeto = ? AND r.estado = 'abierto' AND c.creada < ? AND c.restringida_hasta < ? AND c.suspendida_hasta < ?""",
-                r.que, objeto, ahora() - 7L * 24 * 3600_000, ahora(), ahora()) { it.getInt(1) }.first()
+        if (primeroGrave) avisarReporteUrgente()
+        val autor = autorReportado(r.que, objeto)
+        if (yo != null && yo == autor) return
+        val abiertos = b.usar {
+            leer("SELECT de, motivo FROM reportes WHERE que = ? AND objeto = ? AND estado = 'abierto' AND de IS NOT NULL", r.que, objeto) { it.getLong(1) to it.getString(2) }
         }
-        if (grave || cuentan >= Moderacion.UMBRAL) ocultarReportado(r.que, objeto, true)
+        val graves = abiertos.filter { Moderacion.esGrave(it.second) }.map { it.first }.distinct()
+        val ocultar = unidadesQueCuentan(abiertos.map { it.first }, autor) >= Moderacion.UMBRAL ||
+            unidadesQueCuentan(graves, autor) >= Moderacion.UMBRAL_GRAVE || graves.any { deConfianza(it, autor) }
+        if (ocultar) ocultarReportado(r.que, objeto, true)
+    }
+
+    /**
+     * Si el reporte de [cuenta] cuenta para ocultar: tiene al menos [Moderacion.ANTIGUEDAD_REPORTE], no está cerrada,
+     * suspendida ni restringida, no tiene faltas vigentes, no es quien publicó, esa persona no la bloqueó y no le
+     * descartaron [Moderacion.DESCARTADOS_MAX] reportes en los últimos 90 días (sus reportes siguen llegando a la cola).
+     */
+    private fun cuenta(cuenta: Long, autor: Long?): Boolean = b.usar {
+        val t = ahora()
+        leer("""SELECT 1 FROM cuentas c WHERE c.id = ? AND c.creada <= ? AND c.cerrada = 0 AND c.borrar_el = 0
+                AND c.restringida_hasta < ? AND c.suspendida_hasta < ?
+                AND NOT EXISTS(SELECT 1 FROM faltas f WHERE f.cuenta = c.id AND f.vence > ?)
+                AND c.id != ? AND NOT EXISTS(SELECT 1 FROM bloqueos k WHERE k.de = ? AND k.a = c.id)
+                AND (SELECT COUNT(*) FROM reportes r WHERE r.de = c.id AND r.estado = 'sin_falta' AND r.cuando > ?) < ?""",
+            cuenta, t - Moderacion.ANTIGUEDAD_REPORTE, t, t, t, autor ?: -1, autor ?: -1, t - Moderacion.VENTANA_DESCARTES, Moderacion.DESCARTADOS_MAX) { 1 }.isNotEmpty()
+    }
+
+    /**
+     * Una cuenta de confianza: cuenta ([cuenta]), tiene al menos [Moderacion.ANTIGUEDAD_CONFIANZA], ninguna falta en los
+     * últimos 90 días y ningún reporte descartado en ese tiempo. Su reporte grave basta para ocultar.
+     */
+    private fun deConfianza(id: Long, autor: Long?): Boolean = cuenta(id, autor) && b.usar {
+        val t = ahora()
+        leer("""SELECT 1 FROM cuentas c WHERE c.id = ? AND c.creada <= ?
+                AND NOT EXISTS(SELECT 1 FROM faltas f WHERE f.cuenta = c.id AND f.cuando > ?)
+                AND NOT EXISTS(SELECT 1 FROM reportes r WHERE r.de = c.id AND r.estado = 'sin_falta' AND r.cuando > ?)""",
+            id, t - Moderacion.ANTIGUEDAD_CONFIANZA, t - Moderacion.VENTANA_DESCARTES, t - Moderacion.VENTANA_DESCARTES) { 1 }.isNotEmpty()
+    }
+
+    /**
+     * Cuántas «personas» respaldan un reporte: las cuentas que cuentan, juntando como una sola las que se crearon
+     * desde la misma dirección (su huella) con menos de 24 horas de diferencia entre sí.
+     */
+    private fun unidadesQueCuentan(cuentas: List<Long>, autor: Long?): Int {
+        val buenas = cuentas.distinct().filter { cuenta(it, autor) }
+        val datos = b.usar { buenas.map { id -> leer("SELECT ip_registro, creada FROM cuentas WHERE id = ?", id) { it.getString(1).orEmpty() to it.getLong(2) }.first() } }
+        val sinDireccion = datos.count { it.first.isEmpty() }
+        val grupos = datos.filter { it.first.isNotEmpty() }.groupBy { it.first }.values.sumOf { mismas ->
+            var n = 0; var inicio = Long.MIN_VALUE
+            mismas.map { it.second }.sorted().forEach { creada -> if (inicio == Long.MIN_VALUE || creada - inicio > Moderacion.MISMA_DIRECCION) { n++; inicio = creada } }
+            n
+        }
+        return sinDireccion + grupos
+    }
+
+    /** Un toque al teléfono de cada persona del equipo que ve los reportes: «reporte urgente», sin nada del contenido. */
+    private fun avisarReporteUrgente() {
+        val equipoQueVe = b.usar { leer("SELECT cuenta FROM roles UNION SELECT cuenta FROM permisos WHERE permiso = 'ver_reportes'") { it.getLong(1) } }
+            .filter { "ver_reportes" in equipo.permisos(it) }
+        equipoQueVe.forEach { c ->
+            b.usar { cambiar("INSERT INTO avisos(para, de, tipo, objeto, cuando) VALUES(?,?,?,?,?)", c, c, "reporte_urgente", "", ahora()) }
+            empujes.tocar(c)
+        }
+    }
+
+    /** Quién publicó lo reportado (o la cuenta reportada), si se sabe. */
+    private fun autorReportado(que: String, objeto: String): Long? = b.usar {
+        val id = objeto.toLongOrNull()
+        when (que) {
+            "publicacion" -> leer("SELECT cuenta FROM publicaciones WHERE id = ?", id) { it.getLong(1) }.firstOrNull()
+            "comentario" -> leer("SELECT cuenta FROM comentarios WHERE id = ?", id) { it.getLong(1) }.firstOrNull()
+            "historia" -> leer("SELECT cuenta FROM historias WHERE id = ?", id) { it.getLong(1) }.firstOrNull()
+            "mercado" -> leer("SELECT cuenta FROM mercado WHERE id = ?", id) { it.getLong(1) }.firstOrNull()
+            "lugar" -> leer("SELECT cuenta FROM lugares WHERE id = ?", id) { (it.getObject(1) as? Number)?.toLong() }.firstOrNull()
+            "cuenta" -> leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.lowercase()) { it.getLong(1) }.firstOrNull()
+            "mensaje" -> leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.substringBefore(':').lowercase()) { it.getLong(1) }.firstOrNull()
+            else -> null
+        }
     }
 
     private fun ocultarReportado(que: String, objeto: String, si: Boolean) {
@@ -2292,24 +2604,44 @@ class Social(
             }
             return
         }
-        val id = objeto.toLongOrNull() ?: return
         b.usar {
             when (que) {
-                "lugar" -> cambiar("UPDATE lugares SET retirado = ? WHERE id = ?", if (si) 1 else 0, id)
-                "publicacion" -> cambiar("UPDATE publicaciones SET oculta = ? WHERE id = ?", if (si) 1 else 0, id)
-                "comentario" -> cambiar("UPDATE comentarios SET oculto = ? WHERE id = ?", if (si) 1 else 0, id)
-                "historia" -> cambiar("UPDATE historias SET oculta = ? WHERE id = ?", if (si) 1 else 0, id)
+                // De una cuenta se ocultan la foto y la portada (lo que puede llevar una imagen); el resto sigue.
+                "cuenta" -> cambiar("UPDATE cuentas SET foto_revision = ?, cambio = cambio + 1 WHERE usuario = ?", if (si) 1 else 0, objeto.lowercase())
+                // Un artículo del Mercado vuelve a revisión (sale de la tienda) hasta que el equipo decida.
+                "mercado" -> if (si) cambiar("UPDATE mercado SET estado = 'revision', motivo = 'reportado' WHERE id = ? AND estado = 'aprobado'", objeto.toLongOrNull())
+                    else cambiar("UPDATE mercado SET estado = 'aprobado', motivo = '' WHERE id = ? AND estado = 'revision' AND motivo = 'reportado'", objeto.toLongOrNull())
+                "lugar" -> cambiar("UPDATE lugares SET retirado = ? WHERE id = ?", if (si) 1 else 0, objeto.toLongOrNull())
+                "publicacion" -> {
+                    cambiar("UPDATE publicaciones SET oculta = ? WHERE id = ?", if (si) 1 else 0, objeto.toLongOrNull())
+                    // Al volver a verse, sus fotos dejan de estar en revisión.
+                    if (!si) cambiar("UPDATE imagenes SET revision = 0 WHERE revision = 1 AND cuenta = (SELECT cuenta FROM publicaciones WHERE id = ?) AND instr((SELECT datos FROM publicaciones WHERE id = ?), nombre) > 0", objeto.toLongOrNull(), objeto.toLongOrNull())
+                }
+                "comentario" -> cambiar("UPDATE comentarios SET oculto = ? WHERE id = ?", if (si) 1 else 0, objeto.toLongOrNull())
+                "historia" -> {
+                    cambiar("UPDATE historias SET oculta = ? WHERE id = ?", if (si) 1 else 0, objeto.toLongOrNull())
+                    if (!si) cambiar("UPDATE imagenes SET revision = 0 WHERE revision = 1 AND cuenta = (SELECT cuenta FROM historias WHERE id = ?) AND instr((SELECT datos FROM historias WHERE id = ?), nombre) > 0", objeto.toLongOrNull(), objeto.toLongOrNull())
+                }
             }
+        }
+        // Sin falta sobre una cuenta: sus fotos del perfil (y las de sus repisas) dejan de estar en revisión.
+        if (!si && que == "cuenta") b.usar {
+            val cuenta = leer("SELECT id FROM cuentas WHERE usuario = ?", objeto.lowercase()) { it.getLong(1) }.firstOrNull() ?: return@usar
+            cambiar("""UPDATE imagenes SET revision = 0 WHERE cuenta = ? AND revision = 1
+                AND NOT EXISTS(SELECT 1 FROM publicaciones p WHERE p.cuenta = imagenes.cuenta AND instr(p.datos, imagenes.nombre) > 0)
+                AND NOT EXISTS(SELECT 1 FROM historias h WHERE h.cuenta = imagenes.cuenta AND instr(h.datos, imagenes.nombre) > 0)""", cuenta)
         }
     }
 
-
-    /** La cola de revisión (equipo autorizado): lo de menores primero, después lo que más gente reportó. */
+    /**
+     * La cola de revisión (equipo autorizado): lo grave primero (material sexual con menores, un menor en riesgo),
+     * después lo que ya está oculto y después lo que más gente reportó. Abrir un caso grave o un mensaje queda en el registro.
+     */
     fun casos(yo: Long, token: String? = null): List<Caso> = b.transaccion { casosInterno(yo, token) }
 
     private fun casosInterno(yo: Long, token: String? = null): List<Caso> {
         equipo.requiere(yo, "ver_reportes", token)
-        val filas = b.usar { leer("SELECT que, objeto, motivo, de FROM reportes r WHERE estado = 'abierto' ORDER BY cuando", ) { arrayOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4)) } }
+        val filas = b.usar { leer("SELECT que, objeto, motivo, de FROM reportes r WHERE estado = 'abierto' ORDER BY cuando", ) { arrayOf(it.getString(1), it.getString(2), it.getString(3), it.getObject(4) as? Number) } }
         return filas.groupBy { it[0] as String to it[1] as String }.map { (k, rs) ->
             val (que, objeto) = k
             val motivos = rs.groupingBy { (it[2] as String).substringBefore(':').trim().takeIf { m -> m in Moderacion.MOTIVOS } ?: "otro" }.eachCount()
@@ -2317,6 +2649,7 @@ class Social(
             if (autor != null && equipo.rol(autor) == "principal" && autor != yo) return@map null
             if (autor != null && equipo.rol(autor) == "principal") equipo.registrar(yo.toString(), "principal_reporte_abrir", objeto, "", token)
             if (que == "mensaje") equipo.registrar(yo.toString(), "mensaje_abrir", objeto, "", token)
+            if (motivos.keys.any { it in Moderacion.GRAVES }) equipo.registrar(yo.toString(), "grave_abrir", "$que:$objeto", "", token)
             val tabla = when (que) { "publicacion" -> "publicaciones"; "comentario" -> "comentarios"; "historia" -> "historias"; else -> null }
             val estadoContenido = tabla?.let { b.usar {
                 leer("SELECT estado, retirado_hasta FROM $tabla WHERE id = ?", objeto.toLongOrNull()) {
@@ -2324,9 +2657,24 @@ class Social(
                 }.firstOrNull()
             } }
             val estado = estadoContenido?.first ?: "visible"
-            Caso(que, objeto, motivos, rs.map { it[3] }.distinct().size, oculto, contenido, autor?.let(::persona), autor?.let(::puntosVigentes) ?: 0, estado, estadoContenido?.second?.takeIf { estado == "retirado" },
-                propio = rs.any { it[3] as Long == yo })
-        }.filterNotNull().sortedWith(compareByDescending<Caso> { Moderacion.MENOR_EN_RIESGO in it.motivos }.thenByDescending { it.personas })
+            val radicado = b.usar { leer("SELECT radicado FROM radicados WHERE que = ? AND objeto = ?", que, objeto) { it.getString(1) }.firstOrNull() }.orEmpty()
+            Caso(que, objeto, motivos, rs.mapNotNull { it[3] }.distinct().size, oculto, contenido, autor?.let(::persona), autor?.let(::puntosVigentes) ?: 0, estado, estadoContenido?.second?.takeIf { estado == "retirado" },
+                propio = rs.any { (it[3] as? Number)?.toLong() == yo }, radicado = radicado, automatico = rs.any { it[3] == null && (it[2] as String).endsWith(AUTOMATICO) })
+        }.filterNotNull().sortedWith(compareByDescending<Caso> { c -> c.motivos.keys.any { it in Moderacion.GRAVES } }
+            .thenByDescending { c -> c.motivos.containsKey(Moderacion.MASI) }.thenByDescending { it.oculto }.thenByDescending { it.personas })
+    }
+
+    /** El equipo anota el número de la denuncia de un caso (puede corregirlo); queda en el registro. */
+    fun anotarRadicado(yo: Long, r: Radicado, token: String? = null): Unit = b.transaccion {
+        equipo.requiere(yo, "ver_reportes", token)
+        val numero = r.radicado.filter { !it.isISOControl() }.trim().take(120)
+        if (numero.isEmpty()) throw Problema(400, "radicado")
+        if (r.que.length > 20 || r.objeto.length > 300) throw Problema(400, "objeto")
+        if (leer("SELECT 1 FROM reportes WHERE que = ? AND objeto = ?", r.que, r.objeto) { 1 }.isEmpty() &&
+            leer("SELECT 1 FROM preservados WHERE que = ? AND objeto = ?", r.que, r.objeto) { 1 }.isEmpty()) throw Problema(404, "no_existe")
+        cambiar("INSERT INTO radicados VALUES(?,?,?,?,?) ON CONFLICT(que, objeto) DO UPDATE SET radicado = excluded.radicado, por = excluded.por, cuando = excluded.cuando",
+            r.que, r.objeto, numero, yo, ahora())
+        equipo.registrar(yo.toString(), "radicado_anotar", "${r.que}:${r.objeto}", numero, token)
     }
 
     private fun verReportado(que: String, objeto: String, motivos: List<String>): Triple<String, Long?, Boolean> = b.usar {
@@ -2347,7 +2695,8 @@ class Social(
     /**
      * Lo que decide quien modera: "sin_falta" (vuelve a verse), "advertencia" (se quita, sin puntos), "falta" (se quita
      * y suma 1), "falta_grave" (suma 2) o "cerrar" (se quita y se cierra la cuenta). A la persona le llega un aviso y un
-     * correo con la regla, el mensaje del equipo y cómo apelar.
+     * correo con la regla, el mensaje del equipo y cómo apelar. Si la regla es grave ([Moderacion.GRAVES]), lo
+     * reportado no se borra: queda «preservado» (ver [preservar]) y la cuenta se cierra.
      */
     fun decidir(yo: Long, d: Decision, token: String? = null): Unit = b.transaccion { decidirInterno(yo, d, token) }
 
@@ -2376,17 +2725,22 @@ class Social(
             cambiar("INSERT INTO decisiones(admin, que, objeto, decision, regla, cuando) VALUES(?,?,?,?,?,?)", yo, d.que, d.objeto, d.decision, d.regla.take(100), ahora())
         }
         if (d.decision == "sin_falta") { ocultarReportado(d.que, d.objeto, false); return }
-        equipo.registrar(yo.toString(), "contenido_retirar", d.que + ":" + d.objeto, d.regla, token)
-        // Se quita lo reportado. Lo que pone a un menor en riesgo se conserva oculto un año para las autoridades
-        // (el plazo de referencia de la REPORT Act de 2024); lo demás, 90 días.
         val id = d.objeto.toLongOrNull()
-        val guardar = if (d.regla == Moderacion.MENOR_EN_RIESGO) Moderacion.CONSERVAR_GRAVE else 90 * DIA
+        if (d.regla in Moderacion.GRAVES) {
+            preservar(yo, d.que, d.objeto, autor, d.regla, token)
+            autor ?: return
+            darFalta(autor, yo, "cerrar", d.regla, d.mensaje, "contenido", token)
+            return
+        }
+        equipo.registrar(yo.toString(), "contenido_retirar", d.que + ":" + d.objeto, d.regla, token)
+        // Se quita lo reportado: queda retirado (oculto) 90 días, por si hay una apelación, y después se borra.
         b.usar {
             val retirados = when (d.que) {
                 "lugar" -> cambiar("UPDATE lugares SET retirado = 1 WHERE id = ?", id)
-                "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + guardar, id)
-                "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + guardar, id)
-                "historia" -> cambiar("UPDATE historias SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado = 'visible'", ahora() + guardar, id)
+                "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado IN ('visible', 'retirado')", ahora() + 90 * DIA, id)
+                "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado IN ('visible', 'retirado')", ahora() + 90 * DIA, id)
+                "historia" -> cambiar("UPDATE historias SET estado = 'retirado', retirado_hasta = ? WHERE id = ? AND estado IN ('visible', 'retirado')", ahora() + 90 * DIA, id)
+                "cuenta" -> { quitarImagenesPerfil(d.objeto); 1 }
                 else -> 1
             }
             if (retirados == 0) throw Problema(409, "ya_resuelto")
@@ -2394,6 +2748,238 @@ class Social(
         }
         autor ?: return
         darFalta(autor, yo, d.decision, d.regla, d.mensaje, "contenido", token)
+    }
+
+    /** Quita la foto y la portada de una cuenta que estaban en revisión (si el equipo confirmó el reporte). */
+    private fun quitarImagenesPerfil(usuario: String) {
+        val (cuenta, revision) = b.usar { leer("SELECT id, foto_revision FROM cuentas WHERE usuario = ?", usuario.lowercase()) { it.getLong(1) to (it.getInt(2) == 1) }.firstOrNull() } ?: return
+        if (!revision) return
+        quitarFoto(cuenta)
+        val portada = perfilGuardado(cuenta).portada
+        b.usar {
+            if (portada.isNotEmpty()) cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfilGuardado(cuenta).copy(portada = "")), cuenta)
+            cambiar("UPDATE cuentas SET foto_revision = 0 WHERE id = ?", cuenta)
+        }
+        limpiarPortada(cuenta, portada)
+    }
+
+    /**
+     * Lo grave confirmado no se borra: queda «preservado». Su contenido y los reportes se cifran en `preservados` y sus
+     * archivos (fotos, video, foto y portada del perfil) se cifran por partes en `preservados/<id>/` de la carpeta de
+     * datos ([CifradoPorPartes], memoria fija aunque sea un video), con una llave propia; se quitan de las tablas y, solo
+     * cuando la decisión queda confirmada en la base, del disco (si algo falla antes, nada se pierde). Nadie lo ve (ni la
+     * app ni el equipo); la cuenta principal solo puede generar un paquete cifrado para una autoridad
+     * ([exportarPreservado]). La limpieza diaria no lo toca y no hay plazo automático de borrado: se conserva hasta que
+     * la principal lo libere. De un mensaje se conserva lo que mandó quien lo reportó (el servidor no lo puede leer).
+     */
+    private fun preservar(yo: Long, que: String, objeto: String, autor: Long?, regla: String, token: String?) {
+        val id = objeto.toLongOrNull()
+        val tabla = when (que) { "publicacion" -> "publicaciones"; "comentario" -> "comentarios"; "historia" -> "historias"; else -> null }
+        val contenido = b.usar { when (que) {
+            "publicacion", "historia" -> leer("SELECT datos FROM $tabla WHERE id = ? AND estado IN ('visible', 'retirado')", id) { it.getString(1) }.firstOrNull()
+                ?: throw Problema(409, "ya_resuelto")
+            "comentario" -> leer("SELECT texto FROM comentarios WHERE id = ? AND estado IN ('visible', 'retirado')", id) { it.getString(1) }.firstOrNull()
+                ?: throw Problema(409, "ya_resuelto")
+            "lugar" -> leer("SELECT nombre || ' · ' || ciudad FROM lugares WHERE id = ?", id) { it.getString(1) }.firstOrNull().orEmpty()
+            "cuenta" -> leer("SELECT perfil FROM cuentas WHERE usuario = ?", objeto.lowercase()) { it.getString(1) }.firstOrNull().orEmpty()
+            else -> ""
+        } }
+        val reportes = b.usar { leer("SELECT motivo FROM reportes WHERE que = ? AND objeto = ? ORDER BY cuando", que, objeto) { it.getString(1) } }
+        // Los archivos de la cuenta que aparecen en el contenido (o la foto del perfil), para cifrarlos y quitarlos del disco.
+        val imagenes = autor?.let { a -> b.usar { leer("SELECT nombre FROM imagenes WHERE cuenta = ?", a) { it.getString(1) } } }.orEmpty().filter { contenido.contains(it) }
+        val videos = autor?.let { a -> b.usar { leer("SELECT nombre FROM videos WHERE cuenta = ?", a) { it.getString(1) } } }.orEmpty().filter { contenido.contains(it) }
+        val archivos = buildMap {
+            imagenes.forEach { n -> listOf("png", "jpg", "gif", "webp", "mp4").map { java.io.File(dirImagenes, "$n.$it") }.filter { it.isFile }.forEach { put(it.name, it) } }
+            videos.forEach { n -> java.io.File(dirVideos, "$n.mp4").takeIf { it.isFile }?.let { put("video-$n.mp4", it) } }
+            if (que == "cuenta" && autor != null) java.io.File(dirFotos, "$autor.jpg").takeIf { it.isFile }?.let { put("foto.jpg", it) }
+        }
+        b.usar {
+            val cambiados = when (que) {
+                "publicacion", "historia" -> cambiar("UPDATE $tabla SET estado = 'preservado', retirado_hasta = 0, oculta = 1, datos = '{}' WHERE id = ? AND estado IN ('visible', 'retirado')", id)
+                "comentario" -> cambiar("UPDATE comentarios SET estado = 'preservado', retirado_hasta = 0, oculto = 1, texto = '' WHERE id = ? AND estado IN ('visible', 'retirado')", id)
+                "lugar" -> cambiar("UPDATE lugares SET retirado = 1 WHERE id = ?", id)
+                "cuenta" -> cambiar("UPDATE cuentas SET foto = 0, foto_revision = 0, cambio = cambio + 1 WHERE usuario = ?", objeto.lowercase())
+                else -> 1
+            }
+            if (cambiados == 0) throw Problema(409, "ya_resuelto")
+            if (que == "publicacion") cambiar("INSERT OR IGNORE INTO retiradas(cuenta, app, clave, cuando) SELECT cuenta, app, clave, ? FROM publicaciones WHERE id = ?", ahora(), id)
+            // Lo que mandó quien reportó un mensaje queda solo cifrado.
+            if (que == "mensaje") cambiar("UPDATE reportes SET motivo = substr(motivo, 1, instr(motivo || ':', ':')) || ' (preservado)' WHERE que = ? AND objeto = ?", que, objeto)
+        }
+        // La fila del caso: nueva; la misma si se había liberado; y si ya hay uno guardado (otra vez lo mismo, p. ej. una
+        // cuenta), se le suma lo nuevo sin tocar lo de antes.
+        val previo = b.usar { leer("SELECT id, liberado, sobre FROM preservados WHERE que = ? AND objeto = ?", que, objeto) { Triple(it.getLong(1), it.getInt(2) == 1, it.getString(3)) }.firstOrNull() }
+        val anterior = previo?.takeIf { !it.second && it.third.isNotEmpty() }?.let { JsonSocial.decodeFromString(SobrePreservado.serializer(), String(descifrarPreservado(it.third))) }
+        val caso = when {
+            previo == null -> b.usar { insertar("INSERT INTO preservados(que, objeto, cuenta, regla, decidido_por, cuando) VALUES(?,?,?,?,?,?)", que, objeto, autor, regla, yo, ahora()) }
+            previo.second -> previo.first.also { b.usar { cambiar("UPDATE preservados SET liberado = 0, cuenta = ?, regla = ?, decidido_por = ?, cuando = ? WHERE id = ?", autor, regla, yo, ahora(), it) } }
+            else -> previo.first
+        }
+        val dir = java.io.File(dirPreservados, "$caso")
+        if (previo?.second == true) dir.deleteRecursively()
+        dir.mkdirs()
+        val ocupados = anterior?.lista.orEmpty().toMutableSet()
+        val nuevos = archivos.map { (nombre, archivo) ->
+            var destino = nombre; var i = 1
+            while (destino in ocupados) destino = "${i++}-$nombre"
+            ocupados += destino
+            val cifrado = java.io.File(dir, "$destino.fgp")
+            b.siSeDeshace { cifrado.delete() }
+            archivo.inputStream().buffered().use { entrada -> cifrado.outputStream().buffered().use { CifradoPorPartes.cifrar(llavePreservados, entrada, it) } }
+            destino
+        }
+        val sobre = SobrePreservado(
+            contenido = listOfNotNull(anterior?.contenido?.takeIf { it.isNotEmpty() }, contenido).joinToString("\n---\n"),
+            reportes = anterior?.reportes.orEmpty() + reportes, archivos = anterior?.archivos.orEmpty(), lista = anterior?.lista.orEmpty() + nuevos)
+        b.usar {
+            cambiar("UPDATE preservados SET sobre = ? WHERE id = ?", cifrarPreservado(JsonSocial.encodeToString(SobrePreservado.serializer(), sobre).toByteArray()), caso)
+            imagenes.forEach { cambiar("DELETE FROM imagenes WHERE nombre = ?", it) }
+            videos.forEach { cambiar("DELETE FROM videos WHERE nombre = ?", it) }
+        }
+        if (que == "cuenta" && autor != null) {
+            val portada = perfilGuardado(autor).portada
+            if (portada.isNotEmpty()) b.usar { cambiar("UPDATE cuentas SET perfil = ? WHERE id = ?", JsonSocial.encodeToString(PerfilSubido.serializer(), perfilGuardado(autor).copy(portada = "")), autor) }
+        }
+        // Los originales se borran del disco solo con la decisión ya guardada.
+        b.despuesDeConfirmar { archivos.values.forEach { it.delete() } }
+        equipo.registrar(yo.toString(), "contenido_preservar", "$que:$objeto", regla, token)
+    }
+
+    private val dirPreservados get() = java.io.File(dirFotos.parentFile ?: dirFotos, "preservados")
+    private val dirPaquetes get() = java.io.File(dirFotos.parentFile ?: dirFotos, "paquetes")
+
+    /** La llave de lo preservado: 32 bytes al azar, una vez, en la carpeta de datos (solo la lee el servicio). */
+    private val llavePreservados: ByteArray by lazy {
+        val f = java.io.File(dirFotos.parentFile ?: dirFotos, "llave-preservados")
+        if (f.exists()) f.readBytes().also { check(it.size == 32) { "La llave de lo preservado está incompleta" } }
+        else ByteArray(32).also { java.security.SecureRandom().nextBytes(it); f.parentFile?.mkdirs(); f.writeBytes(it); f.setReadable(false, false); f.setReadable(true, true); f.setWritable(false, false); f.setWritable(true, true) }
+    }
+
+    private fun cifrarPreservado(bytes: ByteArray): String {
+        val iv = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        c.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(llavePreservados, "AES"), javax.crypto.spec.GCMParameterSpec(128, iv))
+        return java.util.Base64.getEncoder().encodeToString(iv + c.doFinal(bytes))
+    }
+
+    private fun descifrarPreservado(texto: String): ByteArray {
+        val bytes = java.util.Base64.getDecoder().decode(texto)
+        val c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        c.init(javax.crypto.Cipher.DECRYPT_MODE, javax.crypto.spec.SecretKeySpec(llavePreservados, "AES"), javax.crypto.spec.GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
+        return c.doFinal(bytes.copyOfRange(12, bytes.size))
+    }
+
+    /** Lo preservado que sigue guardado (solo la cuenta principal). */
+    fun preservados(yo: Long, token: String? = null): List<Preservado> = b.transaccion {
+        soloPrincipal(yo, token)
+        listaPreservados(null)
+    }
+
+    private fun listaPreservados(id: Long?): List<Preservado> = b.usar {
+        leer("""SELECT p.id, p.que, p.objeto, coalesce(c.usuario, ''), p.regla, p.cuando, coalesce(r.radicado, ''), coalesce(d.usuario, '')
+                FROM preservados p LEFT JOIN cuentas c ON c.id = p.cuenta LEFT JOIN cuentas d ON d.id = p.decidido_por
+                LEFT JOIN radicados r ON r.que = p.que AND r.objeto = p.objeto
+                WHERE p.liberado = 0 AND (? IS NULL OR p.id = ?) ORDER BY p.cuando DESC""", id, id) {
+            Preservado(it.getLong(1), it.getString(2), it.getString(3), it.getString(4), it.getString(5), it.getLong(6), it.getString(7), it.getString(8))
+        }
+    }
+
+    private fun soloPrincipal(yo: Long, token: String?) {
+        equipo.requiere(yo, "ver_reportes", token)
+        if (equipo.rol(yo) != "principal") throw Problema(403, "solo_principal")
+    }
+
+    /**
+     * La cuenta principal genera un paquete de un preservado para entregarlo a una autoridad que lo pidió por escrito: un
+     * archivo age (formato abierto, se abre con `age -d`) con el caso, el contenido, los reportes y los archivos en un
+     * ZIP, cifrado con una frase de paso al azar que se devuelve una sola vez y no se guarda. La persona entrega el
+     * archivo y la frase por separado. El servidor nunca devuelve el contenido en claro. Todo pasa por partes (memoria
+     * fija aunque haya videos). Queda en el registro quién lo generó, cuándo, el motivo (el requerimiento) y la huella.
+     */
+    fun exportarPreservado(yo: Long, id: Long, motivo: String, token: String? = null): PaqueteAutoridad {
+        val (caso, d) = b.transaccion {
+            soloPrincipal(yo, token)
+            if (motivo.isBlank() || motivo.length > 500) throw Problema(400, "motivo")
+            val caso = listaPreservados(id).singleOrNull() ?: throw Problema(404, "no_existe")
+            val sobre = leer("SELECT sobre FROM preservados WHERE id = ?", id) { it.getString(1) }.single()
+            caso to (if (sobre.isEmpty()) SobrePreservado("", emptyList())
+                else JsonSocial.decodeFromString(SobrePreservado.serializer(), String(descifrarPreservado(sobre))))
+        }
+        limpiarPaquetes()
+        dirPaquetes.mkdirs()
+        val nombre = Base.tokenNuevo()
+        val archivo = java.io.File(dirPaquetes, "$nombre.age")
+        val frase = EscritorAge.frase()
+        val huella = java.security.MessageDigest.getInstance("SHA-256")
+        try {
+            val salida = java.security.DigestOutputStream(archivo.outputStream().buffered(), huella)
+            java.util.zip.ZipOutputStream(EscritorAge(frase, salida)).use { zip ->
+                val dir = java.io.File(dirPreservados, "$id")
+                val incluidos = d.lista.filter { java.io.File(dir, "$it.fgp").isFile } + d.archivos.keys
+                val faltan = d.lista.filterNot { java.io.File(dir, "$it.fgp").isFile }
+                if (faltan.isNotEmpty()) System.err.println("Paquete del preservado $id: faltan ${faltan.size} archivos cifrados.")
+                zip.putNextEntry(java.util.zip.ZipEntry("caso.json"))
+                zip.write(JsonSocial.encodeToString(CasoExportado.serializer(), CasoExportado(caso, d.contenido, d.reportes, incluidos, ahora(), motivo.trim())).toByteArray())
+                zip.closeEntry()
+                for (n in d.lista) {
+                    val f = java.io.File(dir, "$n.fgp").takeIf { it.isFile } ?: continue
+                    zip.putNextEntry(java.util.zip.ZipEntry("archivos/$n"))
+                    f.inputStream().buffered().use { CifradoPorPartes.descifrar(llavePreservados, it, zip) }
+                    zip.closeEntry()
+                }
+                // Formato de antes: los archivos iban en base64 dentro del sobre.
+                for ((n, contenido) in d.archivos) {
+                    zip.putNextEntry(java.util.zip.ZipEntry("archivos/$n"))
+                    zip.write(java.util.Base64.getDecoder().decode(contenido))
+                    zip.closeEntry()
+                }
+            }
+        } catch (e: Exception) {
+            archivo.delete()
+            throw e
+        }
+        val sha = huella.digest().joinToString("") { "%02x".format(it) }
+        try {
+            b.transaccion { equipo.registrar(yo.toString(), "preservado_exportar", "${caso.que}:${caso.objeto}", "${motivo.trim()} · paquete cifrado sha256:$sha", token) }
+        } catch (e: Exception) {
+            archivo.delete()
+            throw e
+        }
+        return PaqueteAutoridad(nombre, frase, archivo.length(), sha, System.currentTimeMillis() + PAQUETE_DURA)
+    }
+
+    /** El archivo cifrado de un paquete (solo la principal, durante 24 horas); la descarga queda en el registro. */
+    fun paqueteAutoridad(yo: Long, nombre: String, token: String? = null): java.io.File = b.transaccion {
+        soloPrincipal(yo, token)
+        if (!Regex("[A-Za-z0-9_-]{1,64}").matches(nombre)) throw Problema(400, "archivo")
+        limpiarPaquetes()
+        val f = java.io.File(dirPaquetes, "$nombre.age").takeIf { it.isFile } ?: throw Problema(404, "no_existe")
+        equipo.registrar(yo.toString(), "preservado_descargar", nombre, "", token)
+        f
+    }
+
+    /** Los paquetes para autoridades duran 24 horas en el servidor (cifrados); después se borran. */
+    private fun limpiarPaquetes() {
+        dirPaquetes.listFiles().orEmpty().filter { System.currentTimeMillis() - it.lastModified() > PAQUETE_DURA }.forEach { it.delete() }
+    }
+
+    /**
+     * La cuenta principal libera un preservado cuando ya no hace falta (lo entregó y la autoridad no pide más): se
+     * borran el sobre cifrado, sus archivos cifrados y lo que quedaba del contenido. Queda en el registro, con el motivo.
+     */
+    fun liberarPreservado(yo: Long, id: Long, motivo: String, token: String? = null): Unit = b.transaccion {
+        soloPrincipal(yo, token)
+        if (motivo.isBlank() || motivo.length > 500) throw Problema(400, "motivo")
+        val caso = listaPreservados(id).singleOrNull() ?: throw Problema(404, "no_existe")
+        val n = caso.objeto.toLongOrNull()
+        cambiar("UPDATE preservados SET liberado = 1, sobre = '' WHERE id = ?", id)
+        when (caso.que) {
+            "publicacion" -> cambiar("UPDATE publicaciones SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'preservado'", n)
+            "comentario" -> cambiar("UPDATE comentarios SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'preservado'", n)
+            "historia" -> cambiar("UPDATE historias SET estado = 'retirado', retirado_hasta = 0 WHERE id = ? AND estado = 'preservado'", n)
+        }
+        equipo.registrar(yo.toString(), "preservado_liberar", "${caso.que}:${caso.objeto}", motivo, token)
+        b.despuesDeConfirmar { java.io.File(dirPreservados, "$id").deleteRecursively() }
     }
 
     /** Suma la falta (una advertencia vale 0), aplica la sanción que toque y le avisa a la persona en la app y por correo. */
@@ -2664,6 +3250,9 @@ class Social(
     /** [x] sigue a [y] (aceptado). */
     private fun sigue(x: Long, y: Long) = b.usar { leer("SELECT 1 FROM seguir WHERE de = ? AND a = ? AND aceptada = 1", x, y) { 1 }.isNotEmpty() }
 
+    /** Si alguno de los dos bloqueó al otro. */
+    fun hayBloqueo(a: Long, b: Long) = bloqueado(a, b) || bloqueado(b, a)
+
     /** [quien] bloqueó a [aQuien]. */
     private fun bloqueado(quien: Long, aQuien: Long) = b.usar { leer("SELECT 1 FROM bloqueos WHERE de = ? AND a = ?", quien, aQuien) { 1 }.isNotEmpty() }
 
@@ -2739,7 +3328,17 @@ class Social(
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val FALLOS_CODIGO_DIA = 15
         const val MAX_VIDEOS_DIA = 20
-        const val POLITICA = "2026-11-23"
+        const val POLITICA = "2026-11-25"
+        /** Cuántas obras puede marcar una cuenta en «Juntos» con cada persona. */
+        const val MAX_VOTOS_JUNTOS = 2000
+        /** Quién puede abrirle un chat nuevo a una cuenta: se siguen los dos (lo predeterminado), personas que sigue o nadie. */
+        val ESCRIBIR = setOf("mutuos", "sigo", "nadie")
+        /** Cuánto vale la regla de antes en el chat tras llegar «Quién puede escribirme» (ver [puedeEscribirle]). */
+        const val TRANSICION_CHATS = 30L * 24 * 3600_000
+        /** Cuánto queda en el servidor el paquete cifrado para una autoridad. */
+        const val PAQUETE_DURA = 24L * 3600_000
+        /** El final del motivo de un reporte que hizo la revisión automática de fotos (no una persona). */
+        const val AUTOMATICO = "(revisión automática)"
         /** Los votos que necesita una alternativa (y más de la mitad) para ser la imagen de la comunidad. */
         const val VOTOS_COMUNIDAD = 5
         val DOMINIOS_IMAGEN = setOf("image.tmdb.org", "covers.openlibrary.org", "coverartarchive.org", "upload.wikimedia.org", "images.igdb.com")
@@ -2781,4 +3380,4 @@ internal fun resenaValida(datos: Map<String, kotlinx.serialization.json.JsonElem
 }
 
 /** Avisos que firma Fogón y no la persona del equipo que decidió. */
-private val AVISOS_DE_FOGON = setOf("sancion", "mercado_aprobado", "mercado_rechazado")
+private val AVISOS_DE_FOGON = setOf("sancion", "mercado_aprobado", "mercado_rechazado", "reporte_urgente")

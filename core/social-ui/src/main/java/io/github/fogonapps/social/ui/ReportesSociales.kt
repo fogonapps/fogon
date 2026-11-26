@@ -1,7 +1,8 @@
 package io.github.fogonapps.social.ui
 import io.github.fogonapps.social.FaltaSocial
+/** Los motivos de reporte, en el orden del menú: «Material sexual con menores» primero, a un toque. */
 val MOTIVOS_REPORTE = listOf(
-    "menor_en_riesgo" to R.string.social_rep_menor, "desnudos" to R.string.social_rep_desnudos, "acoso" to R.string.social_rep_acoso, "odio" to R.string.social_rep_odio,
+    "masi" to R.string.social_rep_masi, "menor_en_riesgo" to R.string.social_rep_menor, "desnudos" to R.string.social_rep_desnudos, "acoso" to R.string.social_rep_acoso, "odio" to R.string.social_rep_odio,
     "autolesion" to R.string.social_rep_autolesion, "spam" to R.string.social_rep_spam, "menor_de_edad" to R.string.social_rep_menor_de_edad,
     "derechos" to R.string.social_rep_autor, "falso" to R.string.social_rep_falso, "otro" to R.string.social_rep_otro,
 )

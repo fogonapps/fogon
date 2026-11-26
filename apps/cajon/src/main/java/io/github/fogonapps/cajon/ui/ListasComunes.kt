@@ -50,7 +50,7 @@ fun ListasComunes(vm: CajonViewModel) {
     Pista(stringResource(R.string.listas_comunes_pista), Modifier.padding(horizontal = 16.dp))
     val l = listas
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.texto, trackColor = f.linea)
         l.isEmpty() -> Pista(stringResource(R.string.listas_comunes_vacio), Modifier.padding(16.dp))
         else -> l.forEach { lista ->
             FilaVidrio({ vm.abrir(Pantalla.ListaComun(lista.id)) }) {
@@ -63,12 +63,12 @@ fun ListasComunes(vm: CajonViewModel) {
             }
         }
     }
-    if (creando) ModalBottomSheet({ creando = false }, containerColor = f.fondo) {
+    if (creando) ModalBottomSheet({ creando = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = f.fondo) {
         val amigos by vm.red.amigos.collectAsStateWithLifecycle()
         LaunchedEffect(Unit) { vm.red.cargarAmigos() }
         var nombre by remember { mutableStateOf("") }
         val elegidos = remember { mutableStateListOf<String>() }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.listas_comunes_nueva), style = MaterialTheme.typography.titleMedium, color = f.texto)
             OutlinedTextField(nombre, { nombre = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
                 placeholder = { Text(stringResource(R.string.listas_comunes_nombre)) },
@@ -81,7 +81,7 @@ fun ListasComunes(vm: CajonViewModel) {
                     Pildora("@" + a.usuario, if (esta) Iconos.Chulo else null, acento = esta) { if (esta) elegidos.remove(a.usuario) else elegidos.add(a.usuario) }
                 }
             }
-            BotonRiso(stringResource(R.string.listas_comunes_crear), {
+            BotonTinta(stringResource(R.string.listas_comunes_crear), {
                 alcance.launch {
                     val nueva = vm.red.crearListaComun(nombre.trim(), elegidos.toList())
                     if (nueva != null) { creando = false; listas = (listOf(nueva) + listas.orEmpty()); vm.abrir(Pantalla.ListaComun(nueva.id)) }
@@ -107,7 +107,7 @@ fun ListaComun(vm: CajonViewModel, e: Estado, id: Long) {
     LaunchedEffect(id) { recargar() }
     val d = detalle
     Cabecera(d?.lista?.nombre ?: stringResource(R.string.listas_comunes), vm::cerrar)
-    if (d == null) { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
+    if (d == null) { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.texto, trackColor = f.linea); return }
     // Quiénes están.
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) { d.lista.miembros.take(6).forEach { AvatarRed(it, 32.dp) } }
@@ -126,21 +126,21 @@ fun ListaComun(vm: CajonViewModel, e: Estado, id: Long) {
     if (d.obras.isEmpty()) Pista(stringResource(R.string.listas_comunes_sin_obras), Modifier.padding(16.dp))
     d.obras.forEach { o ->
         val tipo = texto(o.datos, "tipoObra").ifBlank { "pelicula" }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).clip(forma(18.dp)).background(f.superficie).border(f.borde, f.linea, forma(18.dp))
+        Row(Modifier.fillMaxWidth()
             .clickable { vm.abrirObraDePerfil(texto(o.datos, "titulo"), tipo, texto(o.datos, "portada"), texto(o.datos, "fuente"), texto(o.datos, "anio").toIntOrNull(), texto(o.datos, "creador")) }
-            .padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Portada(texto(o.datos, "portada"), tipo, texto(o.datos, "titulo"), Modifier.width(48.dp), esquina = 8.dp, conTitulo = false)
+            .padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Portada(texto(o.datos, "portada"), tipo, texto(o.datos, "titulo"), Modifier.width(44.dp), esquina = 6.dp, conTitulo = false)
             Column(Modifier.weight(1f)) {
                 Text(texto(o.datos, "titulo"), style = MaterialTheme.typography.titleSmall, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 o.quien?.let { Text(stringResource(R.string.listas_comunes_agrego, it.usuario), style = MaterialTheme.typography.labelSmall, color = f.textoSuave) }
             }
             // Votar: «la quiero ver». Quitar: lo que agregaste tú (o todo, si armaste la lista).
-            Row(Modifier.clip(FormaPildora).background(if (o.yoVoto) f.tinta1 else f.fondo).border(f.borde, if (o.yoVoto) f.tinta1 else f.linea, FormaPildora)
+            Row(Modifier.clip(FormaPildora).background(if (o.yoVoto) f.texto else f.fondo).border(f.borde, if (o.yoVoto) f.texto else f.linea, FormaPildora)
                 .clickable { alcance.launch { if (vm.red.votarListaComun(id, o.id, !o.yoVoto)) recargar() } }.padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                IconoRiso(Iconos.Corazon, stringResource(R.string.listas_comunes_votar), tamano = 16.dp, tinta = if (o.yoVoto) f.sobreTinta1 else f.texto,
-                    relleno = if (o.yoVoto) f.sobreTinta1 else null)
-                Text("${o.votos}", fontFamily = f.cifras, color = if (o.yoVoto) f.sobreTinta1 else f.texto)
+                IconoRiso(Iconos.Corazon, stringResource(R.string.listas_comunes_votar), tamano = 16.dp, tinta = if (o.yoVoto) f.fondo else f.texto,
+                    relleno = if (o.yoVoto) f.fondo else null)
+                Text("${o.votos}", style = MaterialTheme.typography.labelLarge, color = if (o.yoVoto) f.fondo else f.texto)
             }
             if (o.quien?.usuario == yo || d.lista.creador.usuario == yo) BotonIcono(Iconos.Cerrar, stringResource(R.string.listas_comunes_quitar)) {
                 alcance.launch { if (vm.red.quitarDeListaComun(id, o.id)) recargar() }
@@ -149,12 +149,12 @@ fun ListaComun(vm: CajonViewModel, e: Estado, id: Long) {
     }
     Spacer(Modifier.height(40.dp))
     // Agregar de tu cajón: buscar por el título entre lo tuyo.
-    if (agregando) ModalBottomSheet({ agregando = false }, containerColor = f.fondo) {
+    if (agregando) ModalBottomSheet({ agregando = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = f.fondo) {
         var q by remember { mutableStateOf("") }
         val ya = d.obras.map { texto(it.datos, "fuente").ifBlank { texto(it.datos, "titulo") } }.toSet()
         val lista = e.vivas.filter { it.tipo != io.github.fogonapps.cajon.datos.Tipos.ALBUM && (q.isBlank() || io.github.fogonapps.cajon.datos.Logica.tituloLimpio(it.titulo).contains(io.github.fogonapps.cajon.datos.Logica.tituloLimpio(q))) }
             .sortedWith(compareByDescending<io.github.fogonapps.cajon.datos.Obra> { it.estado == io.github.fogonapps.cajon.datos.Estados.QUIERO }.thenByDescending { it.agregada }).take(40)
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(q, { q = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true, shape = forma(18.dp),
                 placeholder = { Text(stringResource(R.string.listas_comunes_buscar)) })
             androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 420.dp)) {
@@ -173,11 +173,11 @@ fun ListaComun(vm: CajonViewModel, e: Estado, id: Long) {
         }
     }
     // Sumar amigos que aún no están.
-    if (sumando) ModalBottomSheet({ sumando = false }, containerColor = f.fondo) {
+    if (sumando) ModalBottomSheet({ sumando = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = f.fondo) {
         val amigos by vm.red.amigos.collectAsStateWithLifecycle()
         LaunchedEffect(Unit) { vm.red.cargarAmigos() }
         val fuera = amigos.filter { a -> d.lista.miembros.none { it.usuario == a.usuario } }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.listas_comunes_sumar), style = MaterialTheme.typography.titleMedium, color = f.texto)
             if (fuera.isEmpty()) Pista(stringResource(R.string.listas_comunes_sin_amigos))
             fuera.forEach { a -> FilaPersona(a, { alcance.launch { if (vm.red.sumarAListaComun(id, a.usuario)) { sumando = false; recargar() } } }) }
@@ -199,12 +199,41 @@ internal fun ListasComunesParaAgregar(vm: CajonViewModel, o: io.github.fogonapps
     listas.orEmpty().forEach { l ->
         val ya = l.id in agregadas
         FilaVidrio({ if (!ya) alcance.launch { if (vm.red.agregarAListaComun(l.id, io.github.fogonapps.cajon.RedSocial.obraBreve(o))) agregadas = agregadas + l.id } }) {
-            Ficha(if (ya) f.tinta1 else f.linea, if (ya) Iconos.Chulo else Iconos.Gente)
+            Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
+                IconoRiso(if (ya) Iconos.Chulo else Iconos.Gente, null, tamano = 22.dp, tinta = if (ya) f.texto else f.textoSuave)
+            }
             Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-            Text("${l.obras + if (ya) 1 else 0}", fontFamily = f.cifras, color = f.textoSuave)
+            Text("${l.obras + if (ya) 1 else 0}", style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         }
     }
     Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
         BotonSecundario(stringResource(R.string.listas_comunes_ver), { vm.abrir(Pantalla.ListasComunes) }, Modifier.fillMaxWidth())
+    }
+}
+
+/** En «Juntos»: las listas en común con [usuario] (las de siempre, sin cambios) y el acceso a todas. */
+@Composable
+internal fun ListasComunesCon(vm: CajonViewModel, usuario: String) {
+    val f = FogonTema.actual
+    var listas by remember { mutableStateOf<List<ListaComunSocial>?>(null) }
+    LaunchedEffect(usuario) { listas = vm.red.listasComunes() ?: emptyList() }
+    TituloPerfil(stringResource(R.string.listas_comunes))
+    val con = listas?.filter { l -> l.miembros.any { it.usuario == usuario } }
+    when {
+        con == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.texto, trackColor = f.linea)
+        con.isEmpty() -> Pista(stringResource(R.string.juntos_sin_listas))
+        else -> con.forEach { lista ->
+            FilaVidrio({ vm.abrir(Pantalla.ListaComun(lista.id)) }) {
+                Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) { lista.miembros.take(4).forEach { AvatarRed(it, 32.dp) } }
+                Column(Modifier.weight(1f)) {
+                    Text(lista.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(pluralStringResource(R.plurals.listas_comunes_obras, lista.obras, lista.obras), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
+                IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
+            }
+        }
+    }
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+        BotonSecundario(stringResource(if (con.isNullOrEmpty()) R.string.juntos_armar_lista else R.string.listas_comunes_ver), { vm.abrir(Pantalla.ListasComunes) }, Modifier.fillMaxWidth())
     }
 }

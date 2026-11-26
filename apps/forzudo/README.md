@@ -1,11 +1,11 @@
-# El Forzudo · Fogón
+# Forz · Fogón
 
-<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="El Forzudo"></p>
+<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="Forz"></p>
 
-Registro de entrenos de gimnasio. Sin anuncios y gratis de verdad. No vendemos tus datos. Su personaje es una bolita con los bracitos levantados. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`).
+Registro de entrenos de gimnasio. Sin anuncios y gratis de verdad. No vendemos tus datos. Su personaje es una bolita con los bracitos levantados. Hasta la versión 1.2.1 se llamó **Mi Gym** (`io.github.fogonapps.migym`) y después **El Forzudo**.
 
 - Descargar: [fogonapps/el-forzudo](https://github.com/fogonapps/el-forzudo/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/el-forzudo`).
-- Novedades de cada versión: en las [versiones de El Forzudo](https://github.com/fogonapps/el-forzudo/releases).
+- Novedades de cada versión: en las [versiones de Forz](https://github.com/fogonapps/el-forzudo/releases).
 
 ## Qué hace
 
@@ -26,7 +26,7 @@ Registro de entrenos de gimnasio. Sin anuncios y gratis de verdad. No vendemos t
   - semanas del mes;
   - mapa anual de días entrenados.
 - **Medallas:** 16, por entrenos, semanas seguidas, toneladas levantadas y rangos; las nuevas aparecen al terminar un entreno.
-- **Peso corporal** con gráfica. La Cucha (la app de comida de Fogón) lo lee para ajustar tus calorías.
+- **Peso corporal** con gráfica. Ñom (la app de comida de Fogón) lo lee para ajustar tus calorías.
 - **Widget** con la racha de semanas y los entrenos de esta semana.
 - **Tus datos son tuyos:**
   - se guardan en el teléfono;
@@ -72,8 +72,8 @@ De una tabla propia de Fogón, calibrada con resultados reales de competencias d
 **¿Mis datos salen del teléfono?**
 Tu cuaderno se guarda en el teléfono. Si usas Fogón Social, se envía lo que compartes y la copia de tu cuaderno se guarda en tu cuenta cifrada con tu contraseña.
 
-**¿Por qué antes se llamaba Mi Gym?**
-Hasta la versión 1.2.1 se llamó así. Desde la 1.3 se llama El Forzudo.
+**¿Por qué antes se llamaba Mi Gym o El Forzudo?**
+Hasta la versión 1.2.1 se llamó Mi Gym y después El Forzudo, por su personaje. Ahora se llama Forz: un nombre corto y propio.
 
 ## Contacto
 

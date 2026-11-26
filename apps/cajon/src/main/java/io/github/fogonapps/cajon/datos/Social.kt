@@ -47,7 +47,7 @@ typealias DecisionFrase = io.github.fogonapps.social.DecisionFrase
 @Serializable data class NotaSocial(val persona: PersonaSocial, val texto: String, val datos: JsonObject = JsonObject(emptyMap()), val cuando: Long)
 
 class ClienteSocial(token: String? = null, permiteRed: () -> Boolean = { true }) :
-    io.github.fogonapps.social.ClienteSocial(token, permiteRed, io.github.fogonapps.social.ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon")) {
+    io.github.fogonapps.social.ClienteSocial(token, permiteRed, io.github.fogonapps.social.ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon")) {
     suspend fun portadas(fuente: String): PortadasComunidad = leer(PortadasComunidad.serializer(), pedir("/obras/imagen?fuente=${cod(fuente)}"))
     suspend fun votarPortada(fuente: String, url: String?) {
         if (url == null) pedir("/obras/imagen?fuente=${cod(fuente)}", "DELETE")
@@ -107,7 +107,9 @@ fun leerContenidoReporte(contenido: String): ContenidoReporte {
     )
 }
 
+/** Los motivos de reporte, en el orden del menú: «Material sexual con menores» primero, a un toque. */
 val MOTIVOS_REPORTE = listOf(
+    "masi" to io.github.fogonapps.social.ui.R.string.social_rep_masi,
     "menor_en_riesgo" to R.string.rep_menor, "desnudos" to R.string.rep_desnudos, "acoso" to R.string.rep_acoso, "odio" to R.string.rep_odio,
     "autolesion" to R.string.rep_autolesion, "spam" to R.string.rep_spam, "menor_de_edad" to R.string.rep_menor_de_edad,
     "derechos" to R.string.rep_autor, "falso" to R.string.rep_falso, "otro" to R.string.rep_otro,

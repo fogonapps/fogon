@@ -22,6 +22,7 @@ class EmpujesTest {
             val idAna = s.cuentaDe(ana.token)!!; val idBeto = s.cuentaDe(beto.token)!!
             assertEquals(400, assertFailsWith<Problema> { s.empujes.registrar(idAna, EmpujeNuevo("corto")) }.codigo)
             assertEquals(400, assertFailsWith<Problema> { s.empujes.registrar(idAna, EmpujeNuevo("https://x.co/" + "a".repeat(30))) }.codigo)
+            s.seguir(idAna, "roberto")       // para que Beto le pueda escribir (se siguen los dos)
             s.empujes.registrar(idAna, EmpujeNuevo(t1, "cajon"))
             s.empujes.registrar(idAna, EmpujeNuevo(t2, "cucha"))
             // Seguir no es de una app: toca todas. Un mensaje también.

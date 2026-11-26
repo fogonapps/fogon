@@ -24,7 +24,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.Trama
 import io.github.fogonapps.identidad.forma
+import io.github.fogonapps.identidad.FormaPildora
+import io.github.fogonapps.identidad.rebote
+import androidx.compose.foundation.border
 
 /**
  * Una cifra de la cabecera de un perfil (seguidores, seguidos, lo del cajón…), repartida a lo ancho de la fila.
@@ -35,8 +39,15 @@ fun RowScope.CifraPerfil(valor: String, etiqueta: String, onClick: (() -> Unit)?
     val f = FogonTema.actual
     Column(Modifier.weight(1f).clip(forma(12.dp)).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(valor, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = f.texto)
-        Text(etiqueta, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelMedium, color = f.textoSuave, textAlign = TextAlign.Center)
+        // Con el diseño nuevo (la trama apagada, hoy solo Fabs): la cifra en la letra de títulos, grande.
+        if (Trama.apagada) Text(valor, fontFamily = f.titulos, fontWeight = FontWeight.Black, fontSize = 32.sp, color = f.texto)
+        else Text(valor, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = f.texto)
+        // En Fabs, una sola línea que se achica: «en tu colección» bajaba a dos líneas y desalineaba las cifras.
+        if (Trama.apagada) Text(etiqueta, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+            color = f.textoSuave, textAlign = TextAlign.Center, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 13.sp))
+        else Text(etiqueta, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelMedium,
+            color = f.textoSuave, textAlign = TextAlign.Center)
     }
 }
 
@@ -53,6 +64,20 @@ fun BotonPerfilDestacado(texto: String, onClick: () -> Unit, modifier: Modifier 
 @Composable
 private fun BotonPerfilBase(texto: String, onClick: () -> Unit, modifier: Modifier, habilitado: Boolean, destacado: Boolean) {
     val f = FogonTema.actual
+    if (Trama.apagada) {
+        // Con el diseño nuevo: la píldora en la tinta del texto (lo principal) o con borde fino (lo demás), de 48 dp.
+        androidx.compose.foundation.layout.Box(modifier.rebote().heightIn(min = 48.dp).clip(FormaPildora)
+            .then(if (destacado) Modifier.background(if (habilitado) f.texto else f.texto.copy(alpha = 0.28f))
+                else Modifier.border(1.dp, f.texto.copy(alpha = if (habilitado) 1f else 0.3f), FormaPildora))
+            .clickable(enabled = habilitado, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
+            // Una línea que se achica si no cabe: con tres botones en pantalla angosta, «Mensaje» se partía en «Mensaj / e».
+            Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
+                color = if (destacado) f.fondo else f.texto, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize))
+        }
+        return
+    }
     androidx.compose.foundation.layout.Box(modifier.heightIn(min = 36.dp).clip(forma(10.dp))
         .background(if (destacado) f.tinta1 else f.superficie)
         .clickable(enabled = habilitado, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
@@ -90,10 +115,18 @@ fun CabeceraInicio(
     nombre: String, frase: String, perfil: @Composable () -> Unit, modifier: Modifier = Modifier,
     onMantener: () -> Unit = {}, adorno: @Composable () -> Unit = {}, acciones: @Composable RowScope.() -> Unit = {},
 ) {
-    Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        FraseFogon(nombre, frase, Modifier.weight(1f), onMantener, adorno)
-        acciones()
-        perfil()
+    val f = FogonTema.actual
+    Column(modifier.fillMaxWidth().padding(start = 20.dp, end = 16.dp, top = 12.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(nombre, Modifier.weight(1f), fontFamily = f.titulos, fontSize = 30.sp, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            acciones()
+            perfil()
+        }
+        // La frase con todo el ancho debajo: al lado de los botones se partía en dos líneas aunque fuera corta.
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(frase, style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, maxLines = 2,
+                modifier = Modifier.weight(1f, fill = false).clip(forma(8.dp)).combinedClickable(onClick = {}, onLongClick = onMantener).heightIn(min = 32.dp).wrapContentHeight(Alignment.CenterVertically))
+            adorno()
+        }
     }
 }

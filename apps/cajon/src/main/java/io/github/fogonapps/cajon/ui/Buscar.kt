@@ -5,9 +5,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
@@ -105,18 +107,11 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         }
         // Los filtros: todo, películas, series, animes, música, libros, juegos y personas. Todos a la vista, en dos filas si hace falta.
         // Buscando a quién escribirle no hay filtros: solo personas.
-        if (!p.paraMensaje) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Secciones.BUSQUEDA.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.forEach { s ->
-                val elegida = s == b.seccion
-                Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie)
-                    .border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora).clickable(role = androidx.compose.ui.semantics.Role.Tab) { vm.cambiarSeccion(s) }
-                    .semantics { selected = elegida }.padding(horizontal = 16.dp, vertical = 9.dp),
-                    contentAlignment = Alignment.Center) {
-                    Text(nombreSeccion(s), style = MaterialTheme.typography.labelLarge, color = if (elegida) f.sobreTinta1 else f.texto, maxLines = 1)
-                }
-            }
-        }
-        if (b.cargando.isNotEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp), color = f.tinta1, trackColor = f.linea)
+        // En una sola fila que se desliza (antes, dos filas): el elegido en tinta, los demás solo texto, como en Lo tuyo.
+        if (!p.paraMensaje) Chips(Secciones.BUSQUEDA.let { l -> if (b.seccion in l) l else l.dropLast(1) + b.seccion + l.last() }.map { it to nombreSeccion(it) },
+            b.seccion) { vm.cambiarSeccion(it) }
+        // Cargando: una línea fina, sin pista visible (antes parecía un control deslizante roto).
+        if (b.cargando.isNotEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp), color = f.texto, trackColor = Color.Transparent)
 
         if (b.texto.trim().length < 2) {
             if (p.paraMensaje) Pista(stringResource(R.string.red_personas_pista), Modifier.padding(16.dp)) else SinBuscar(vm, e, b)
@@ -224,9 +219,9 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
 
             // Lo que no se pudo buscar (sin internet, la fuente no respondió a tiempo), arriba para que se vea y con
             // «Volver a intentar»: una fuente caída no deja la lista vacía y callada.
-            b.avisos.forEach { error ->
+            if (!b.hayResultados) b.avisos.forEach { error ->
                 item(key = "e-$error") {
-                    Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(error), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                         if (error != R.string.buscar_falta_tmdb && error != R.string.buscar_tmdb_mala)
                             BotonSecundario(stringResource(R.string.inicio_reintentar), { vm.buscar(b.texto) }, Modifier.fillMaxWidth())
@@ -252,7 +247,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
             val cancionesArriba = b.seccion == Secciones.MUSICA
             if (b.canciones.isNotEmpty() && cancionesArriba) {
                 item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
-                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
+                itemsIndexed(b.canciones, key = { i, c -> claveCancion(i, c) }) { _, c -> FilaCancionBuscada(vm, c) }
             }
 
             // En «Todo», primero el grupo cuyo primer resultado se parece más a lo buscado (una película no queda
@@ -270,7 +265,7 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
 
             if (b.canciones.isNotEmpty() && todo) {
                 item(key = "t-canciones") { Titulo(stringResource(io.github.fogonapps.social.ui.R.string.historia_tipo_cancion), null) }
-                items(b.canciones, key = { "c" + it.audio + it.titulo }) { c -> FilaCancionBuscada(vm, c) }
+                itemsIndexed(b.canciones, key = { i, c -> claveCancion(i, c) }) { _, c -> FilaCancionBuscada(vm, c) }
             }
 
             // Lo del momento también debajo de los resultados (en todas las secciones), cuando ya llegó todo: si
@@ -281,6 +276,12 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
                 val vacio = !hayDelCajon && b.seccion != Secciones.PERSONAS && b.mostrarNoEncontrado
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (vacio) Pista(stringResource(R.string.buscar_nada, b.texto.trim()), adentro = true)
+                    // Una fuente que falló, con otras que sí respondieron: el aviso va aquí, discreto, con su reintento.
+                    if (b.hayResultados && b.cargando.isEmpty()) b.avisos.forEach { error ->
+                        Pista(stringResource(error), adentro = true)
+                        if (error != R.string.buscar_falta_tmdb && error != R.string.buscar_tmdb_mala)
+                            Pildora(stringResource(R.string.inicio_reintentar), Iconos.Repetir) { vm.buscar(b.texto) }
+                    }
                     BotonSecundario(stringResource(R.string.no_esta_a_mano), { vm.reemplazar(Pantalla.EditarObra(null, tipoAMano(b.seccion))) }, Modifier.fillMaxWidth())
                     Pista(stringResource(R.string.fuentes_busqueda), adentro = true)
                 }
@@ -289,6 +290,12 @@ fun Buscar(vm: CajonViewModel, e: Estado, p: Pantalla.Buscar) {
         }
     }
 }
+
+/**
+ * La clave de una canción en la lista: con la posición, porque Apple puede devolver dos con el mismo avance y título
+ * (o sin avance), y dos claves iguales en una lista perezosa la cierran.
+ */
+internal fun claveCancion(indice: Int, c: io.github.fogonapps.social.CancionSocial) = "c$indice|${c.audio}|${c.titulo}"
 
 /** Una canción encontrada (de Apple): escucharla 30 segundos, ir a Apple Music o, al tocarla, buscar su álbum. */
 @Composable
@@ -315,9 +322,9 @@ private fun SinBuscar(vm: CajonViewModel, e: Estado, b: Busqueda) {
         Recientes(vm)
         LoDelMomento(vm, b.seccion)
         Secciones.BUSQUEDA.drop(1).forEach { s ->
-            Row(Modifier.fillMaxWidth().vidrio().clickable { vm.cambiarSeccion(s) }.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+            Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { vm.cambiarSeccion(s) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Ficha(if (s == b.seccion) f.tinta1 else f.tinta2, iconoSeccion(s))
+                Ficha(if (s == b.seccion) f.texto else f.textoSuave, iconoSeccion(s), tamano = 40.dp)
                 Column(Modifier.weight(1f)) {
                     Text(nombreSeccion(s), style = MaterialTheme.typography.bodyLarge, color = f.texto)
                     Text(stringResource(when (s) { Secciones.PELICULAS -> R.string.seccion_peliculas_pista; Secciones.SERIES -> R.string.seccion_series_pista
@@ -477,12 +484,12 @@ private fun Titulo(texto: String, onVerMas: (() -> Unit)?) {
 @Composable
 fun FotoArtista(foto: String, nombre: String, tamano: Dp, tipo: String = "") {
     val f = FogonTema.actual
-    Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(tamano).clip(CircleShape).background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.07f)), contentAlignment = Alignment.Center) {
         // Sin foto: sus iniciales (un micrófono repetido en cada artista no dice quién es).
         val iniciales = nombre.split(' ').filter { it.firstOrNull()?.isLetterOrDigit() == true }.take(2).joinToString("") { it.take(1).uppercase() }
         // (Van debajo de la foto: si la foto no carga, se ven igual.)
-        if (iniciales.isNotEmpty()) Text(iniciales, fontFamily = f.titulos, fontSize = (tamano.value * 0.34f).sp, color = f.acentoTexto, maxLines = 1)
-        else IconoRiso(when (tipo) { Personas.AUTOR -> Iconos.Libro; Personas.DIRECTOR -> Iconos.Pelicula; else -> Iconos.Artista }, null, tamano = tamano * 0.4f, tinta = f.acentoTexto)
+        if (iniciales.isNotEmpty()) Text(iniciales, fontFamily = f.titulos, fontSize = (tamano.value * 0.34f).sp, color = f.texto, maxLines = 1)
+        else IconoRiso(when (tipo) { Personas.AUTOR -> Iconos.Libro; Personas.DIRECTOR -> Iconos.Pelicula; else -> Iconos.Artista }, null, tamano = tamano * 0.4f, tinta = f.texto)
         // En listas y cuadrículas, la foto de Wikimedia más chica (200 px en vez de 400): baja el doble de rápido.
         val url = if (tamano < 100.dp) foto.replace("?width=400", "?width=200") else foto
         // Recortada un poco hacia arriba: en los retratos la cabeza está arriba, no en el centro.
@@ -495,7 +502,7 @@ fun FotoArtista(foto: String, nombre: String, tamano: Dp, tipo: String = "") {
 private fun MejorArtista(vm: CajonViewModel, e: Estado, a: ArtistaEncontrado) {
     val f = FogonTema.actual
     val ya = e.artistasVivos.any { it.fuente == a.fuente }
-    Row(Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio().clickable { vm.abrir(Pantalla.PreviaArtista(a)) }.padding(16.dp),
+    Row(Modifier.aparecer(0).fillMaxWidth().clickable { vm.abrir(Pantalla.PreviaArtista(a)) }.padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         FotoArtista(a.foto, a.nombre, 76.dp, a.tipo)
         Column(Modifier.weight(1f)) {
@@ -503,7 +510,7 @@ private fun MejorArtista(vm: CajonViewModel, e: Estado, a: ArtistaEncontrado) {
             Text(listOf(nombreTipo(if (a.tipo == Personas.AUTOR || a.tipo == Personas.DIRECTOR) a.tipo else CajonViewModel.TIPO_ARTISTA, plural = false), a.pais, a.desde?.toString() ?: "").filter { it.isNotBlank() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
-        if (ya) IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 20.dp, tinta = f.acentoTexto)
+        if (ya) IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 20.dp, tinta = f.texto)
     }
 }
 
@@ -528,7 +535,7 @@ private fun FilaArtista(vm: CajonViewModel, e: Estado, a: ArtistaEncontrado, mod
             Text(listOf(tipoArtista(a.tipo), a.pais, a.desde?.toString() ?: "", a.detalle).filter { it.isNotBlank() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (ya) IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.acentoTexto)
+        if (ya) IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.texto)
     }
 }
 
@@ -543,12 +550,13 @@ private fun FilaEncontrado(vm: CajonViewModel, e: Estado, r: Encontrado, modifie
             Text(r.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val nota = r.publica?.let { "★ " + String.format(LocalConfiguration.current.locales[0], "%.1f", it) } ?: ""
             // La nota va antes de lo largo (plataformas, formato): al final quedaba cortada en unos y en otros no.
-            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", nota, r.creador, r.detalle).filter { it.isNotBlank() }.joinToString(" · "),
+            Text(listOf(nombreTipo(r.tipo, plural = false), r.anio?.toString() ?: "", nota, r.creador, r.detalle).flatMap { it.split(" · ") }
+                .filter { it.isNotBlank() }.distinctBy { it.trim().lowercase() }.joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         when {
             trayendo == r.fuente -> CircularProgressIndicator(Modifier.size(20.dp), color = f.tinta1, strokeWidth = 2.dp)
-            ya -> IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.acentoTexto)
+            ya -> IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.texto)
         }
     }
 }

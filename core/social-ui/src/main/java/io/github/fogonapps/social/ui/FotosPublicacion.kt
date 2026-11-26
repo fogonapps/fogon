@@ -1,4 +1,5 @@
 package io.github.fogonapps.social.ui
+import io.github.fogonapps.identidad.BarrasDelDialogo
 import io.github.fogonapps.identidad.BotonIconoSocial as BotonIcono
 
 import androidx.compose.foundation.background
@@ -53,6 +54,7 @@ fun VisorFotos(fotos: List<String>, inicial: Int, cerrar: () -> Unit) {
     var escala by remember(paginas.currentPage) { mutableFloatStateOf(1f) }
     var desplazamiento by remember(paginas.currentPage) { mutableStateOf(Offset.Zero) }
     Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        BarrasDelDialogo(if (f.oscuro) f.fondo else f.texto)
         // En temas claros, la tinta del texto ofrece el fondo oscuro del visor.
         Box(Modifier.fillMaxSize().background(if (f.oscuro) f.fondo else f.texto)) {
             HorizontalPager(paginas, userScrollEnabled = escala == 1f, modifier = Modifier.fillMaxSize()) { i ->

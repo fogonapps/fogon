@@ -102,8 +102,9 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
         val nuevo = lienzo.agregar(clase,contenido,color)
         cambiar(nuevo); seleccion = nuevo.capas.lastOrNull()?.id
     }
-    Dialog({ salir() }, DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = !ocupado, dismissOnClickOutside = false)) {
-        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
+    Dialog({ salir() }, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = !ocupado, dismissOnClickOutside = false)) {
+        BarrasDelDialogo()
+        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().imePadding()) {
             Cabecera(stringResource(if (tipoInicial == "marco") R.string.social_editor_marco else R.string.social_editor_banner), { salir() })
             Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().aspectRatio(lienzo.ancho.toFloat()/lienzo.alto)
                 .background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.14f)).border(1.dp, f.textoSuave).semantics { contentDescription = descripcionLienzo }
@@ -137,7 +138,7 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                 capa?.let { c -> BoxWithConstraints(Modifier.fillMaxSize()) {
                     val r = dibujante.limites(c,lienzo)
                     Box(Modifier.offset(maxWidth*(r.left/lienzo.ancho),maxHeight*(r.top/lienzo.alto))
-                        .size(maxWidth*(r.width()/lienzo.ancho),maxHeight*(r.height()/lienzo.alto)).border(2.dp,f.tinta1))
+                        .size(maxWidth*(r.width()/lienzo.ancho),maxHeight*(r.height()/lienzo.alto)).border(2.dp,f.acentoSocial))
                 } }
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -153,7 +154,7 @@ internal fun EditorMercado(tipoInicial: String, fotoEjemplo: String?, cerrar: ()
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     colores.forEachIndexed { i,tinta ->
                         val nombre = stringResource(R.string.social_editor_color,i+1)
-                        Box(Modifier.size(48.dp).clip(CircleShape).background(tinta).border(if(color==i) 2.dp else 1.dp,if(color==i) f.tinta1 else f.linea,CircleShape)
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(tinta).border(if(color==i) 2.dp else 1.dp,if(color==i) f.acentoSocial else f.linea,CircleShape)
                             .semantics { contentDescription=nombre; selected=color==i }.clickable {
                                 color=i
                                 if (herramienta=="fondo") cambiar(lienzo.copy(fondo=i))

@@ -34,7 +34,7 @@ class VideosTest {
             val token = s.crearCuenta(NuevaCuenta("ana")).token
             val ana = s.cuentaDe(token)!!
             val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
-            b.usar { cambiar("INSERT INTO imagenes VALUES('poster', ?, 0)", ana) }
+            b.usar { cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES('poster', ?, 0)", ana) }
             prueba(s, b, ana, beto, token)
         } finally { b.cerrar(); dir.deleteRecursively() }
     }

@@ -13,8 +13,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -30,6 +34,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,11 +47,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import io.github.fogonapps.identidad.tarjetaFogon
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,14 +79,12 @@ import io.github.fogonapps.identidad.BotonSecundario
 import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
-import io.github.fogonapps.identidad.NumeroRiso
 import io.github.fogonapps.identidad.aparecer
 import io.github.fogonapps.identidad.forma
-import io.github.fogonapps.identidad.haloPuntos
 
 /** Un apartado de la app: Cine, Música, Libros o Juegos, con sus cifras, lo que está en curso y su cajón. */
 @Composable
-fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
+fun Apartado(vm: CajonViewModel, e: Estado, seccion: String, conTitulo: Boolean = true) {
     val f = FogonTema.actual
     val tipos = Secciones.tipos(seccion)
     val musica = seccion == Secciones.MUSICA
@@ -97,19 +102,18 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
     LaunchedEffect(seccion) { vm.completarFotos() }
 
     AvanceEnlace(vm)
-    Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp))
+    if (conTitulo) Seccion(nombreSeccion(seccion), Modifier.padding(top = 12.dp))
 
     // Las cifras del apartado: lo terminado este año en grande, y lo demás al lado.
     val anio = vm.hoy().year
     val delAnio = vm.L.cifras(e, anio)
     val obras = e.vivas.filter { it.tipo in tipos }
     val terminadasAnio = tipos.sumOf { delAnio.porTipo[it] ?: 0 }
-    Row(Modifier.aparecer(0).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).vidrio(forma(24.dp))
-        .haloPuntos(f.tinta2.copy(alpha = 0.3f), centro = androidx.compose.ui.geometry.Offset(0.2f, 0.5f))
-        .clickable { vm.abrir(Pantalla.CifrasDe(seccion)) }.padding(18.dp),
+    Row(Modifier.aparecer(0).fillMaxWidth().clip(forma(20.dp))
+        .clickable { vm.abrir(Pantalla.CifrasDe(seccion)) }.padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f)) {
-            NumeroRiso("$terminadasAnio", 48.sp)
+            Text("$terminadasAnio", fontFamily = f.titulos, fontWeight = androidx.compose.ui.text.font.FontWeight.Black, fontSize = 54.sp, lineHeight = 56.sp, color = f.texto)
             Text(stringResource(when (seccion) {
                 Secciones.MUSICA -> R.string.escuchados_en; Secciones.LIBROS -> R.string.leidos_en; Secciones.JUEGOS -> R.string.jugados_en; else -> R.string.vistas_en
             }, anio),
@@ -133,7 +137,8 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         Carrusel(enCurso, vm, conProgreso = true)
     }
 
-    Seccion(stringResource(R.string.tu_cajon))
+    // «Todo lo tuyo» solo hace falta como título si arriba hay un carrusel «En curso» del que separarlo.
+    if (enCurso.isNotEmpty()) Seccion(stringResource(R.string.tu_cajon)) else Spacer(Modifier.height(4.dp))
     if (seccion == Secciones.CINE) {
         // Las obras por tipo y, al final, los directores.
         val opciones = listOf<Pair<String?, String>>(null to stringResource(R.string.todo)) + tipos.map { it to nombreTipo(it) } + (Personas.DIRECTOR to nombreTipo(Personas.DIRECTOR))
@@ -157,12 +162,13 @@ fun Apartado(vm: CajonViewModel, e: Estado, seccion: String) {
         Pildora(stringResource(nombreOrden(orden)), Iconos.Ordenar) { orden = siguiente }
     }
     if (lista.isEmpty()) {
-        Pista(stringResource(when { obras.isNotEmpty() -> R.string.cajon_nada; juegos -> R.string.juegos_vacio; else -> R.string.apartado_vacio }),
-            centro = true, modifier = Modifier.padding(top = 16.dp))
+        if (obras.isNotEmpty()) Pista(stringResource(R.string.cajon_nada), centro = true, modifier = Modifier.padding(top = 16.dp))
+        else Vacio(Iconos.de(tipos.first()), stringResource(R.string.vacio_apartado_titulo), stringResource(R.string.vacio_apartado_texto),
+            boton = stringResource(R.string.buscar)) { vm.abrir(Pantalla.Buscar(Secciones.paraBuscar(seccion))) }
         return
     }
     BarraSeleccion(vm, e, tipoEstados, deObras = true)
-    Cuadricula(lista, vm, conSeleccion = true)
+    Cuadricula(lista, vm, conSeleccion = true, porTandas = true)
 }
 
 /**
@@ -252,8 +258,8 @@ private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String, esDeAqui
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) {
                             FotoArtista(a.foto, a.nombre, 96.dp, a.tipo)
-                            if (elegido) Box(Modifier.align(Alignment.TopEnd).size(26.dp).clip(FormaPildora).background(f.tinta1),
-                                contentAlignment = Alignment.Center) { IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = f.sobreTinta1) }
+                            if (elegido) Box(Modifier.align(Alignment.TopEnd).size(26.dp).clip(FormaPildora).background(f.pildora),
+                                contentAlignment = Alignment.Center) { IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = f.sobrePildora) }
                         }
                         Text(a.nombre, style = MaterialTheme.typography.labelLarge, color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                         if (a.nota > 0) Estrellas(a.nota, 12.sp)
@@ -266,31 +272,44 @@ private fun CajonArtistas(vm: CajonViewModel, e: Estado, texto: String, esDeAqui
     }
 }
 
-/** Las portadas en cuadrícula de tres, con sus estrellas y el corazón. */
+/**
+ * Las portadas en cuadrícula de tres, con sus estrellas y el corazón. Con [porTandas] (el cajón entero, que puede tener
+ * miles), se arman de a [TANDA] y se suman más cuando el final se acerca a la pantalla: la pestaña tiene un solo scroll
+ * (el de `App.kt`), así que no puede ser una cuadrícula perezosa adentro sin romperlo.
+ */
 @Composable
-fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false, conSeleccion: Boolean = false) {
+fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false, conSeleccion: Boolean = false, porTandas: Boolean = false) {
     val f = FogonTema.actual
     val elegidas by vm.seleccion.collectAsStateWithLifecycle()
     // Si son solo discos, marcos cuadrados; si hay de todo, verticales (los discos se apoyan abajo).
     val marco = if (obras.all { it.tipo == Tipos.ALBUM }) 1f else 2f / 3f
+    var tope by rememberSaveable { mutableIntStateOf(TANDA) }
+    val visibles = if (porTandas) obras.take(tope) else obras
+    val altoPantalla = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    // Mantener apretada una portada abre el registro en dos toques (ver [RegistroRapido]).
+    var rapida by rememberSaveable { mutableStateOf<String?>(null) }
+    val registrarRapido = stringResource(R.string.rapido_registrar)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        obras.chunked(3).forEachIndexed { fila, grupo ->
+        visibles.chunked(3).forEachIndexed { fila, grupo ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 grupo.forEachIndexed { k, o ->
                     val n = fila * 3 + k
-                    // Mantener presionado elige (para borrar o cambiar varios); con algo elegido, tocar también elige.
+                    // Mantener presionado abre el registro rápido (que también deja elegir varias, para borrarlas o
+                    // cambiarlas); con algo elegido, tocar o mantener elige.
                     val elegida = o.id in elegidas
+                    val eligiendo = conSeleccion && elegidas.isNotEmpty()
                     Column(Modifier.weight(1f).aparecer(n.coerceAtMost(12)).clip(forma(12.dp))
-                        .combinedClickable(onLongClick = if (conSeleccion) ({ vm.alternarSeleccion(o.id) }) else null) {
-                            if (conSeleccion && elegidas.isNotEmpty()) vm.alternarSeleccion(o.id) else vm.abrir(Pantalla.Ficha(o.id))
+                        .combinedClickable(onLongClickLabel = if (eligiendo) null else registrarRapido,
+                            onLongClick = { if (eligiendo) vm.alternarSeleccion(o.id) else rapida = o.id }) {
+                            if (eligiendo) vm.alternarSeleccion(o.id) else vm.abrir(Pantalla.Ficha(o.id))
                         }
-                        .then(if (elegida) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier),
+                        .then(if (elegida) Modifier.border(2.dp, f.texto, forma(12.dp)) else Modifier),
                         verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         // Todas en el mismo marco vertical; los discos (cuadrados) se apoyan abajo, así los títulos quedan parejos.
                         Box(Modifier.fillMaxWidth().aspectRatio(marco), contentAlignment = Alignment.BottomCenter) {
-                            Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
-                            if (elegida) Box(Modifier.align(Alignment.TopEnd).padding(6.dp).size(26.dp).clip(FormaPildora).background(f.tinta1),
-                                contentAlignment = Alignment.Center) { IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = f.sobreTinta1) }
+                            Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false, natural = marco == 1f)
+                            if (elegida) Box(Modifier.align(Alignment.TopEnd).padding(6.dp).size(26.dp).clip(FormaPildora).background(f.pildora),
+                                contentAlignment = Alignment.Center) { IconoRiso(Iconos.Chulo, null, tamano = 16.dp, tinta = f.sobrePildora) }
                             if (numerada) Text("${n + 1}", fontFamily = f.cifras, fontSize = 15.sp, color = f.sobrePildora,
                                 modifier = Modifier.align(Alignment.TopStart).padding(6.dp).clip(FormaPildora).background(f.pildora).padding(horizontal = 8.dp, vertical = 2.dp))
                         }
@@ -298,7 +317,7 @@ fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false,
                             textAlign = TextAlign.Start, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Estrellas(o.nota, 12.sp)
-                            if (o.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 12.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
+                            if (o.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 12.dp, tinta = f.texto, relleno = f.texto)
                             if (o.nota == 0 && !o.meGusta) Text(nombreEstado(o.estado, o.tipo), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 1)
                         }
                     }
@@ -306,17 +325,33 @@ fun Cuadricula(obras: List<Obra>, vm: CajonViewModel, numerada: Boolean = false,
                 repeat(3 - grupo.size) { Spacer(Modifier.weight(1f)) }
             }
         }
+        // El final: cuando entra (o casi) en la pantalla, se arma la tanda siguiente.
+        if (porTandas && visibles.size < obras.size) Spacer(Modifier.fillMaxWidth().height(1.dp).onGloballyPositioned { c ->
+            if (c.boundsInWindow().top < altoPantalla * 2) tope = visibles.size + TANDA
+        })
     }
+    rapida?.let { id -> obras.firstOrNull { it.id == id }?.let { o ->
+        RegistroRapido(vm, o, onElegirVarias = if (conSeleccion) ({ vm.alternarSeleccion(o.id) }) else null) { rapida = null }
+    } }
 }
 
-/** Píldoras para filtrar, en una fila que se desliza. */
+/** Cuántas portadas se arman de una vez en el cajón entero. */
+private const val TANDA = 60
+
+/** Píldoras para filtrar, en una fila que se desliza; si sigue a un lado, ese borde se desvanece. */
 @Composable
 fun <T> Chips(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -> Unit) {
     val f = FogonTema.actual
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val desliza = rememberScrollState()
+    Row(Modifier.fillMaxWidth().desvanecerBordes(desliza.canScrollBackward, desliza.canScrollForward).horizontalScroll(desliza)
+        .padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         opciones.forEach { (v, t) ->
-            FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = FormaPildora,
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
+            val elegido0 = v == elegido
+            val fondo by androidx.compose.animation.animateColorAsState(if (elegido0) f.texto else Color.Transparent, label = "chip")
+            Text(t, style = MaterialTheme.typography.labelLarge, color = if (elegido0) f.fondo else f.textoSuave,
+                modifier = Modifier.clip(FormaPildora).background(fondo).clickable { onElegir(v) }
+                    .semantics { selected = elegido0; role = androidx.compose.ui.semantics.Role.Tab }
+                    .heightIn(min = 40.dp).padding(horizontal = 14.dp, vertical = 10.dp))
         }
     }
 }
@@ -348,7 +383,7 @@ private fun EscuchadoHacePoco(vm: CajonViewModel) {
     }
     Seccion(stringResource(R.string.escuchado_poco), derecha = {
         if (lista.size > 8) TextButton({ vm.abrir(Pantalla.OidosPendientes) }) {
-            Text(stringResource(R.string.ver_mas), color = f.acentoTexto)
+            Text(stringResource(R.string.ver_mas), color = f.texto)
         }
     })
     val estado = rememberLazyListState()
@@ -385,7 +420,7 @@ private fun TarjetaAlbumOido(a: io.github.fogonapps.cajon.datos.AlbumOido, vm: C
     val descripcion = stringResource(R.string.album_oido_descripcion, a.album, a.artista)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
-            Portada(a.portada, Tipos.ALBUM, a.album, Modifier.matchParentSize().clearAndSetSemantics { contentDescription = descripcion }, conTitulo = false)
+            Portada(a.portada, Tipos.ALBUM, a.album, Modifier.matchParentSize().clearAndSetSemantics { contentDescription = descripcion }, conTitulo = false, natural = true)
             AccionAlbumOido(Iconos.Cerrar, stringResource(R.string.descartar_album_oido, a.album), Modifier.align(Alignment.TopEnd)) { vm.descartarOido(a.clave) }
             AccionAlbumOido(Iconos.Mas, stringResource(R.string.agregar_album_oido, a.album), Modifier.align(Alignment.BottomEnd)) { vm.agregarOido(a.clave) }
         }
@@ -401,7 +436,7 @@ private fun AccionAlbumOido(icono: io.github.fogonapps.identidad.Dibujo, descrip
     // El área táctil es de 48 dp; el círculo visible, más chico, tapa menos la portada.
     Box(modifier.size(48.dp).clickable(role = Role.Button, onClickLabel = descripcion, onClick = accion)
         .semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(32.dp).background(f.fondo, CircleShape).vidrio(CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(32.dp).background(f.fondo.copy(alpha = 0.9f), CircleShape), contentAlignment = Alignment.Center) {
             IconoRiso(icono, null, tamano = 16.dp, tinta = f.texto)
         }
     }

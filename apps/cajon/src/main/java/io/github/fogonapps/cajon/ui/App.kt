@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -48,6 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -57,6 +62,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
@@ -73,7 +79,6 @@ import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PantallaApariencia
 import io.github.fogonapps.identidad.PestanaAnimada
 import io.github.fogonapps.identidad.PilaAnimada
-import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.fondoFogon
 import io.github.fogonapps.identidad.rebote
 import io.github.fogonapps.identidad.R as RId
@@ -131,13 +136,19 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
 
     val estado = e
     if (estado == null) {
+        val cargando = stringResource(R.string.cargando)
         Box(Modifier.fillMaxSize().background(f.fondo), contentAlignment = Alignment.Center) {
-            Personaje(io.github.fogonapps.identidad.Quien.CAJON, stringResource(R.string.cargando), tamano = 90.dp)
+            Text(stringResource(R.string.app_name).lowercase(), fontFamily = f.titulos, fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
+                fontSize = 48.sp, color = f.texto, modifier = Modifier.clearAndSetSemantics { contentDescription = cargando })
         }
         return
     }
 
-    CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones) {
+    val vuelos = remember { Vuelos() }
+    CompositionLocalProvider(LocalConfirmar provides { t, x, si -> pregunta = Pregunta(t, x, si) }, LocalAcciones provides acciones,
+        LocalVuelos provides vuelos.takeIf { !f.menosMovimiento }) {
+        // Al ganar una insignia nueva, su talón entra con un resorte (dentro de las acciones, para poder compartirla).
+        CelebracionInsignias(estado)
         val guia = io.github.fogonapps.identidad.rememberGuia("cajon")
         val contadores = io.github.fogonapps.social.ui.contadoresDeLaApp()
         io.github.fogonapps.social.ui.ContarEntrada(when (pila.lastOrNull()) {
@@ -162,7 +173,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             else -> null
         })
         io.github.fogonapps.identidad.ConGuia(guia, pasosGuia(), disponible = estado.listo && pila.isEmpty() && pestana == Pestana.INICIO, alTerminar = { completa -> contadores.contar(if (completa) "guia.terminada" else "guia.omitida") }) {
-        Box(Modifier.fillMaxSize().fondoFogon(f)) {
+        Box(Modifier.fillMaxSize().fondoFogon(f).anotarToques(vuelos)) {
             // Con una pantalla encima, lo de abajo queda tapado: tampoco lo lee el lector de pantalla.
             Box(Modifier.fillMaxSize().then(if (pila.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier)) {
                 if (!estado.listo) {
@@ -174,8 +185,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                     PestanaAnimada(pestana) { p ->
                         // X-09: deslizar hacia abajo recarga el feed (Para ti) o arma otras recomendaciones (Inicio).
                         val recargar: (suspend () -> Unit)? = when (p) {
-                            Pestana.INICIO -> ({ vm.recargarRecomendaciones() })
-                            Pestana.PARA_TI -> ({ vm.red.recargarFeed() })
+                            Pestana.DESCUBRIR -> ({ vm.recargarRecomendaciones() })
+                            Pestana.GENTE -> ({ vm.red.recargarFeed() })
                             else -> null
                         }
                         io.github.fogonapps.identidad.DeslizarParaRecargar(recargar, Modifier.fillMaxSize().statusBarsPadding()) {
@@ -188,26 +199,29 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                                         AvisoApoyo(stringResource(R.string.app_name), enTutorial = guia.activo)
                                     }
                                 }
-                                Pestana.PARA_TI -> PantallaRed(vm, estado, enPestana = true)
-                                Pestana.CINE -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.CINE)
-                                Pestana.MUSICA -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.MUSICA)
-                                Pestana.LIBROS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.LIBROS)
-                                Pestana.JUEGOS -> Apartado(vm, estado, io.github.fogonapps.cajon.Secciones.JUEGOS)
+                                Pestana.LO_TUYO -> LoTuyo(vm, estado)
+                                Pestana.DESCUBRIR -> Descubrir(vm, estado)
+                                Pestana.GENTE -> PantallaRed(vm, estado, enPestana = true)
                             }
-                            Espacio(120.dp)
+                            // Lo último no queda bajo la barra flotante, tampoco con la navegación de tres botones.
+                            androidx.compose.foundation.layout.Spacer(Modifier.navigationBarsPadding().height(120.dp))
                         }
                         }
                     }
-                    if (pila.isEmpty()) BarraFlotante(pestana, Pestana.visibles(estado.ajustes.barra, estado.ajustes.ordenPestanas), vm::irA, { vm.abrir(agregarDesde(pestana)) }, Modifier.align(Alignment.BottomCenter))
+                    // Debajo de la barra, el papel se funde hacia abajo: lo que pasa por detrás no se lee a medias.
+                    if (pila.isEmpty()) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().height(96.dp)
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(FogonTema.actual.fondo.copy(alpha = 0f), FogonTema.actual.fondo.copy(alpha = 0.92f)))))
+                    if (pila.isEmpty()) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsBottomHeight(androidx.compose.foundation.layout.WindowInsets.Companion.navigationBars).background(FogonTema.actual.fondo.copy(alpha = 0.92f)))
+                    if (pila.isEmpty()) BarraFlotante(pestana, Pestana.entries, vm::irA, { vm.abrir(agregarDesde(pestana, vm.seccionLoTuyo.value)) }, Modifier.align(Alignment.BottomCenter))
                     SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 92.dp)) { Aviso(it.visuals.message) }
                 }
             }
 
             // Pantallas encima de las pestañas
-            PilaAnimada(pila.lastOrNull(), pila.size) { p ->
+            PilaAnimada(pila.lastOrNull(), pila.size, entraSuave = { it is Pantalla.Ficha && vuelos.hayTocada() }) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
                     // Las que tienen lista propia (buscar, el cajón de una lista larga) manejan su scroll.
-                    val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion && p != Pantalla.OidosPendientes
+                    val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion && p != Pantalla.OidosPendientes && p !is Pantalla.Resumen
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         AvisoPolitica(vm)
                         when (p) {
@@ -227,7 +241,9 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Listas -> Listas(vm, estado)
                             Pantalla.ListasComunes -> ListasComunes(vm)
                             is Pantalla.ListaComun -> ListaComun(vm, estado, p.id)
+                            is Pantalla.Juntos -> Juntos(vm, estado, p.usuario)
                             Pantalla.Cifras -> Tu(vm, estado)
+                            is Pantalla.Resumen -> Resumen(vm, estado, p.anio)
                             is Pantalla.CifrasDe -> Tu(vm, estado, p.seccion)
                             Pantalla.Artistas -> Artistas(vm, estado)
                             Pantalla.Retos -> Retos(vm, estado)
@@ -292,6 +308,8 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                     dismissButton = { TextButton({ pregunta = null }) { Text(stringResource(R.string.volver)) } },
                 )
             }
+            // La portada que vuela hasta la ficha, encima de todo.
+            CapaVuelo(vuelos)
         }
         }
     }
@@ -299,16 +317,16 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
 
 /** El ícono y el nombre de cada pestaña. */
 fun iconoPestana(p: Pestana): Dibujo = when (p) {
-    Pestana.INICIO -> Iconos.Inicio; Pestana.PARA_TI -> Iconos.Gente; Pestana.CINE -> Iconos.Pelicula
-    Pestana.MUSICA -> Iconos.Disco; Pestana.LIBROS -> Iconos.Libro; Pestana.JUEGOS -> Iconos.Juego
+    Pestana.INICIO -> Iconos.Inicio; Pestana.LO_TUYO -> Iconos.Cajon; Pestana.DESCUBRIR -> Iconos.Buscar; Pestana.GENTE -> Iconos.Gente
 }
 fun textoPestana(p: Pestana): Int = when (p) {
-    Pestana.INICIO -> R.string.pestana_inicio; Pestana.PARA_TI -> R.string.red_titulo; Pestana.CINE -> R.string.seccion_cine
-    Pestana.MUSICA -> R.string.seccion_musica; Pestana.LIBROS -> R.string.seccion_libros; Pestana.JUEGOS -> R.string.seccion_juegos
+    Pestana.INICIO -> R.string.pestana_inicio; Pestana.LO_TUYO -> R.string.pestana_lo_tuyo
+    Pestana.DESCUBRIR -> R.string.pestana_descubrir; Pestana.GENTE -> R.string.red_titulo
 }
 
-/** Lo que abre el + de la barra: el buscador en la sección de la pestaña (en Juegos, el de juegos). */
-fun agregarDesde(p: Pestana): Pantalla = Pantalla.Buscar(io.github.fogonapps.cajon.Secciones.dePestana(p))
+/** Lo que abre el + de la barra: el buscador, en el apartado que se mira en «Lo tuyo» si se está ahí. */
+fun agregarDesde(p: Pestana, seccion: String = io.github.fogonapps.cajon.Secciones.TODO): Pantalla =
+    Pantalla.Buscar(if (p == Pestana.LO_TUYO) io.github.fogonapps.cajon.Secciones.paraBuscar(seccion) else io.github.fogonapps.cajon.Secciones.TODO)
 
 /**
  * La barra de pestañas: una píldora que flota, con las pestañas en el orden elegido y el botón de agregar al final.
@@ -324,7 +342,9 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
     val alActual by rememberUpdatedState(actual)
     Row(
         modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth()
-            .clip(FormaPildora).background(f.barra).border(f.borde, f.linea, FormaPildora).padding(8.dp)
+            // Papel casi opaco con una sombra suave, no una píldora gris: flota sobre lo que pasa por detrás.
+            .shadow(18.dp, FormaPildora, clip = false, ambientColor = Color.Black.copy(alpha = 0.18f), spotColor = Color.Black.copy(alpha = 0.18f))
+            .clip(FormaPildora).background(f.fondo.copy(alpha = 0.94f)).border(1.dp, f.texto.copy(alpha = 0.08f), FormaPildora).padding(8.dp)
             .pointerInput(Unit) {
                 var ultima: Pestana? = null
                 fun bajo(x: Float) = bordes.entries.firstOrNull { x in it.value }?.key
@@ -335,16 +355,14 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
             },
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Cinco pestañas y el +: se apretan un poco para que quepan en un teléfono angosto; con seis, un poco más.
-        val apretada = pestanas.size > 5
         pestanas.forEach { pe ->
             Box(Modifier.destinoGuia("pestana_${pe.name}").onGloballyPositioned { c -> val x = c.positionInParent().x; bordes[pe] = x..(x + c.size.width) }) {
-                BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual, apretada) { onIr(pe) }
+                BotonPestana(iconoPestana(pe), stringResource(textoPestana(pe)), pe == actual) { onIr(pe) }
             }
         }
         val agregar = stringResource(R.string.buscar_y_agregar)
         Box(
-            Modifier.destinoGuia("agregar").rebote(0.9f).size(if (apretada) 46.dp else 50.dp).clip(CircleShape).background(f.tinta1)
+            Modifier.destinoGuia("agregar").rebote(0.9f).size(50.dp).clip(CircleShape).background(f.tinta1)
                 .clickable(onClick = onAgregar).semantics { contentDescription = agregar; role = Role.Button },
             contentAlignment = Alignment.Center,
         ) { IconoRiso(Iconos.Mas, null, tamano = 24.dp, tinta = f.sobreTinta1) }
@@ -353,14 +371,20 @@ private fun BarraFlotante(actual: Pestana, pestanas: List<Pestana>, onIr: (Pesta
 
 /** Una pestaña: solo el ícono; la elegida, en una píldora más clara con el ícono en la primera tinta. */
 @Composable
-private fun BotonPestana(icono: Dibujo, texto: String, elegida: Boolean, apretada: Boolean, onClick: () -> Unit) {
+private fun BotonPestana(icono: Dibujo, texto: String, elegida: Boolean, onClick: () -> Unit) {
     val f = FogonTema.actual
-    val fondo by animateColorAsState(if (elegida) f.tinta1.copy(alpha = 0.16f) else Color.Transparent, label = "pestana")
+    // La elegida: el ícono en tinta y lleno, con un punto debajo; las otras, en gris de línea.
+    val punto by androidx.compose.animation.core.animateFloatAsState(if (elegida) 1f else 0f, androidx.compose.animation.core.spring(0.6f, 500f), label = "punto")
     Box(
-        Modifier.rebote(0.9f).size(if (apretada) 42.dp else 44.dp).clip(CircleShape).background(fondo)
+        Modifier.rebote(0.9f).size(48.dp).clip(CircleShape)
             .clickable(onClick = onClick).semantics { contentDescription = texto; selected = elegida; role = Role.Tab },
         contentAlignment = Alignment.Center,
-    ) { IconoRiso(icono, null, tamano = 22.dp, tinta = if (elegida) f.acentoTexto else f.textoSuave) }
+    ) {
+        IconoRiso(icono, null, tamano = 24.dp, tinta = if (elegida) f.texto else f.textoSuave, relleno = if (elegida) f.texto.copy(alpha = 0.12f) else null,
+            modifier = Modifier.padding(bottom = 4.dp))
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(4.dp).graphicsLayer { scaleX = punto; scaleY = punto; alpha = punto }
+            .clip(CircleShape).background(f.texto))
+    }
 }
 
 /** Aviso con la identidad: una píldora. */
@@ -376,7 +400,7 @@ private fun Aviso(mensaje: String) {
 @Composable
 private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> = listOf(
     "agregar" to (R.string.guia_agregar to R.string.guia_agregar_texto),
-    "pestana_PARA_TI" to (R.string.guia_para_ti to R.string.guia_para_ti_texto),
-    "pestana_CINE" to (R.string.guia_secciones to R.string.guia_secciones_texto),
+    "pestana_GENTE" to (R.string.guia_para_ti to R.string.guia_para_ti_texto),
+    "pestana_LO_TUYO" to (R.string.guia_secciones to R.string.guia_secciones_texto),
     "perfil" to (R.string.guia_perfil to R.string.guia_perfil_texto),
 ).map { (d, tx) -> io.github.fogonapps.identidad.PasoGuia(d, stringResource(tx.first), stringResource(tx.second)) }

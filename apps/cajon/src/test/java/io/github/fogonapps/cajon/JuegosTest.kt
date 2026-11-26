@@ -46,7 +46,6 @@ class JuegosTest {
     @Test fun lasSeccionesDeJuegos() {
         assertEquals(Secciones.JUEGOS, Secciones.de(Tipos.JUEGO))
         assertEquals(listOf(Tipos.JUEGO), Secciones.tipos(Secciones.JUEGOS))
-        assertEquals(Secciones.JUEGOS, Secciones.dePestana(Pestana.JUEGOS))
         assertTrue(Tipos.JUEGO in Secciones.tipos(Secciones.TODO))
         // Los de antes siguen donde estaban (y nada de juegos cae en películas).
         assertEquals(Secciones.PELICULAS, Secciones.de(Tipos.PELICULA))
@@ -56,14 +55,10 @@ class JuegosTest {
         assertEquals(listOf(Secciones.JUEGOS, Secciones.PERSONAS), Secciones.BUSQUEDA.takeLast(2))
     }
 
-    @Test fun laBarraDeSiempreTraeJuegos() {
-        val deSiempre = Pestana.visibles(emptyList())
-        assertEquals(listOf(Pestana.INICIO, Pestana.PARA_TI, Pestana.CINE, Pestana.MUSICA, Pestana.LIBROS, Pestana.JUEGOS), deSiempre)
-        // Con el orden viejo también (al final).
-        assertEquals(Pestana.JUEGOS, Pestana.visibles(emptyList(), listOf("LIBROS", "CINE")).last())
-        // La barra que alguien ya eligió no cambia aquí (la suma la hace la migración, una vez).
-        val elegida = listOf("INICIO", "LIBROS", "MUSICA")
-        assertEquals(listOf(Pestana.INICIO, Pestana.LIBROS, Pestana.MUSICA), Pestana.visibles(elegida))
+    @Test fun losJuegosSeVenSalvoQueLaBarraGuardadaLosQuitara() {
+        assertTrue(Pestana.juegosVisibles(emptyList()))
+        assertTrue(Pestana.juegosVisibles(listOf("INICIO", "JUEGOS")))
+        assertFalse(Pestana.juegosVisibles(listOf("INICIO", "LIBROS", "MUSICA")))
     }
 
     @Test fun juegosLlegaUnaVezALaBarraElegida() {
@@ -74,11 +69,11 @@ class JuegosTest {
         // Normalizar otra vez no la repite.
         assertEquals(migrada.ajustes, Logica.normalizar(migrada).ajustes)
         // Si la quita en Ajustes, no vuelve: ni al leer de nuevo ni tras pasar por el JSON guardado.
-        val sin = Pestana.conPestana(migrada.ajustes.barra, emptyList(), Pestana.JUEGOS, false).map { it.name }
+        val sin = migrada.ajustes.barra - "JUEGOS"
         val quitada = migrada.copy(ajustes = migrada.ajustes.copy(barra = sin, cambio = 8))
         val leida = Logica.normalizar(JsonCajon.decodeFromString(Estado.serializer(), JsonCajon.encodeToString(Estado.serializer(), quitada)))
         assertFalse("JUEGOS" in leida.ajustes.barra)
-        assertFalse(Pestana.JUEGOS in Pestana.visibles(leida.ajustes.barra))
+        assertFalse(Pestana.juegosVisibles(leida.ajustes.barra))
         // Quien ya la tenía o usa la barra de siempre queda igual, solo con la marca.
         val conJuegos = Ajustes(barra = listOf("INICIO", "JUEGOS", "CINE"))
         assertEquals(conJuegos.barra, Logica.conJuegosEnBarra(conJuegos).barra)
@@ -97,26 +92,6 @@ class JuegosTest {
         assertEquals("Caro", unida.ajustes.nombre)
         assertFalse("JUEGOS" in unida.ajustes.barra)
         assertTrue(unida.ajustes.juegosEnBarra)
-    }
-
-    @Test fun juegosSePoneYSeQuitaComoLasDemas() {
-        val con = Pestana.conPestana(emptyList(), emptyList(), Pestana.JUEGOS, true)
-        assertEquals(Pestana.JUEGOS, con.last())
-        assertEquals(6, con.size)
-        val nombres = con.map { it.name }
-        assertEquals(con, Pestana.visibles(nombres))
-        val sin = Pestana.conPestana(nombres, emptyList(), Pestana.JUEGOS, false)
-        assertFalse(Pestana.JUEGOS in sin)
-        assertEquals(5, sin.size)
-        // En una barra elegida de tres, se suma al final y se puede volver a quitar.
-        val tres = listOf("INICIO", "CINE", "LIBROS")
-        val conJuegos = Pestana.conPestana(tres, emptyList(), Pestana.JUEGOS, true)
-        assertEquals(listOf(Pestana.INICIO, Pestana.CINE, Pestana.LIBROS, Pestana.JUEGOS), conJuegos)
-        assertEquals(listOf(Pestana.INICIO, Pestana.CINE, Pestana.LIBROS), Pestana.conPestana(conJuegos.map { it.name }, emptyList(), Pestana.JUEGOS, false))
-        // Inicio nunca se quita y no se baja de tres.
-        assertEquals(conJuegos, Pestana.conPestana(conJuegos.map { it.name }, emptyList(), Pestana.INICIO, false))
-        assertEquals(listOf(Pestana.INICIO, Pestana.CINE, Pestana.JUEGOS),
-            Pestana.conPestana(listOf("INICIO", "CINE", "JUEGOS"), emptyList(), Pestana.JUEGOS, false))
     }
 
     @Test fun losJuegosSalenEnCifrasYRetosSoloSiHayAlgoDeJuegos() {
@@ -154,9 +129,10 @@ class JuegosTest {
         assertEquals(listOf(Secciones.JUEGOS, Secciones.PERSONAS), Secciones.BUSQUEDA.takeLast(2))
     }
 
-    @Test fun elMasDeJuegosAbreElBuscadorDeJuegos() {
-        assertEquals(Pantalla.Buscar(Secciones.JUEGOS), io.github.fogonapps.cajon.ui.agregarDesde(Pestana.JUEGOS))
-        assertEquals(Pantalla.Buscar(Secciones.LIBROS), io.github.fogonapps.cajon.ui.agregarDesde(Pestana.LIBROS))
+    @Test fun elMasBuscaEnElApartadoQueSeMiraEnLoTuyo() {
+        assertEquals(Pantalla.Buscar(Secciones.JUEGOS), io.github.fogonapps.cajon.ui.agregarDesde(Pestana.LO_TUYO, Secciones.JUEGOS))
+        assertEquals(Pantalla.Buscar(Secciones.PELICULAS), io.github.fogonapps.cajon.ui.agregarDesde(Pestana.LO_TUYO, Secciones.CINE))
+        assertEquals(Pantalla.Buscar(Secciones.TODO), io.github.fogonapps.cajon.ui.agregarDesde(Pestana.INICIO, Secciones.LIBROS))
     }
 
     @Test fun elCreditoDeLaPortadaSeVeSoloSiEsLaDeCommonsYTieneAutor() {

@@ -8,11 +8,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -142,9 +146,14 @@ fun fogonDe(paleta: Paleta, a: Apariencia): Fogon {
 fun FogonTema(
     paleta: Paleta,
     apariencia: Apariencia = Apariencia(),
+    /** Letra propia de los títulos de la app (Fabs: Fraunces). Sin ella, Bricolage. */
+    letraTitulos: FontFamily? = null,
+    /** Letra propia del texto de la app (Fabs: Figtree). Sin ella, Bricolage. */
+    letraTexto: FontFamily? = null,
     contenido: @Composable () -> Unit,
 ) {
-    val f = fogonDe(paleta, apariencia)
+    val texto = letraTexto ?: Bricolage
+    val f = fogonDe(paleta, apariencia).copy(titulos = letraTitulos ?: texto, cifras = texto)
     val esquema = if (f.oscuro) {
         darkColorScheme(
             primary = f.acentoTexto, onPrimary = legibleSobre(f.acentoTexto, listOf(f.sobreTinta1, Color.White, Tintas.Tinta)),
@@ -180,18 +189,26 @@ fun FogonTema(
             error = Color(0xFFB3261E), onError = Color.White,
         )
     }
-    // Una sola letra para todo (Bricolage); el número grande de cada pantalla va aparte, en puntos.
+    // La letra del texto para todo (Bricolage, o la propia de la app); los títulos grandes, en la de títulos si la app
+    // tiene una (Fabs). El número grande de cada pantalla va aparte, en puntos.
     val base = Typography()
+    val grande = letraTitulos ?: texto
+    // Con letra de títulos propia (Fabs: una serifa de cartel), los grandes van en negrita y también los títulos de
+    // sección; sin ella, todo sale de la letra del texto.
+    val propia = letraTitulos != null
+    val pesoGrande = if (propia) FontWeight.Bold else FontWeight.SemiBold
+    val apretarGrande = if (propia) (-0.015).em else (-0.02).em
     fun TextStyle.fogon(peso: FontWeight? = null, apretada: Boolean = false) =
-        copy(fontFamily = Bricolage, fontWeight = peso ?: fontWeight, letterSpacing = if (apretada) (-0.02).em else letterSpacing)
+        copy(fontFamily = texto, fontWeight = peso ?: fontWeight, letterSpacing = if (apretada) (-0.02).em else letterSpacing)
+    fun TextStyle.grande() = copy(fontFamily = grande, fontWeight = pesoGrande, letterSpacing = apretarGrande)
     val tipografia = Typography(
-        displayLarge = base.displayLarge.fogon(FontWeight.SemiBold, true),
-        displayMedium = base.displayMedium.fogon(FontWeight.SemiBold, true),
-        displaySmall = base.displaySmall.fogon(FontWeight.SemiBold, true),
-        headlineLarge = TextStyle(fontFamily = Bricolage, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 34.sp, letterSpacing = (-0.02).em),
-        headlineMedium = TextStyle(fontFamily = Bricolage, fontWeight = FontWeight.SemiBold, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-0.02).em),
-        headlineSmall = TextStyle(fontFamily = Bricolage, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, letterSpacing = (-0.01).em),
-        titleLarge = TextStyle(fontFamily = Bricolage, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = (-0.01).em),
+        displayLarge = base.displayLarge.grande(),
+        displayMedium = base.displayMedium.grande(),
+        displaySmall = base.displaySmall.grande(),
+        headlineLarge = TextStyle(fontSize = 30.sp, lineHeight = 36.sp).grande(),
+        headlineMedium = TextStyle(fontSize = 26.sp, lineHeight = 32.sp).grande(),
+        headlineSmall = TextStyle(fontFamily = if (propia) grande else texto, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, letterSpacing = (-0.01).em),
+        titleLarge = TextStyle(fontFamily = if (propia) grande else texto, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = (-0.01).em),
         titleMedium = base.titleMedium.fogon(FontWeight.SemiBold),
         titleSmall = base.titleSmall.fogon(FontWeight.SemiBold),
         bodyLarge = base.bodyLarge.fogon(),
@@ -208,5 +225,24 @@ fun FogonTema(
         LocalDensity provides Density(d.density, d.fontScale * apariencia.escalaTexto),
     ) {
         MaterialTheme(colorScheme = esquema, typography = tipografia, content = contenido)
+    }
+}
+
+/**
+ * Los íconos de las barras del sistema de un diálogo a pantalla completa, oscuros sobre un [fondo] claro y claros sobre
+ * uno oscuro. Un `Dialog` tiene su propia ventana: no hereda lo que la actividad puso con `enableEdgeToEdge` y deja
+ * los íconos claros aunque el fondo sea claro. Se llama dentro del contenido del `Dialog`, con el color que de verdad
+ * queda detrás de la barra de estado.
+ */
+@Composable
+fun BarrasDelDialogo(fondo: Color = FogonTema.actual.fondo) {
+    val vista = LocalView.current
+    val claro = fondo.luminance() > 0.5f
+    SideEffect {
+        val ventana = (vista.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(ventana, vista).run {
+            isAppearanceLightStatusBars = claro
+            isAppearanceLightNavigationBars = claro
+        }
     }
 }

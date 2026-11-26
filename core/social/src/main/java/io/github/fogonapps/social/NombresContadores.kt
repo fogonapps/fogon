@@ -93,9 +93,12 @@ internal val nombresContadores = setOf(
     "social.entrar",
     "social.registro",
     "tienda.abrir",
+    "tienda.lo_quiero",
     "tienda.pago_iniciado",
     "tienda.pago_vuelto",
     "tienda.paquete_elegido",
+    "tienda.paquete_justo",
+    "tienda.probar",
     "tienda.tema_comprado",
     "widget.agregado",
 )

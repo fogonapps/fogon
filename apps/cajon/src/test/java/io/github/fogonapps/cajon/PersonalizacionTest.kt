@@ -20,10 +20,8 @@ class PersonalizacionTest {
         val a = json.decodeFromString<AparienciaCuenta>("""{"estilo":"CLARO","ajustes":{"CLARO":{"transparencia":30}}}""").paraTelefono()
         assertNull(a.de().luz); assertTrue(a.guardadas.isEmpty()); assertEquals(30, a.transparencia())
     }
-    @Test fun barraConservaInicioYMinimoTres() {
-        assertEquals(3, Pestana.visibles(listOf("MUSICA")).size)
-        assertTrue(Pestana.INICIO in Pestana.visibles(listOf("CINE", "LIBROS", "MUSICA")))
-        assertEquals(Pestana.entries, Pestana.visibles(emptyList()))
-        assertEquals(listOf(Pestana.MUSICA, Pestana.INICIO, Pestana.CINE), Pestana.visibles(listOf("MUSICA", "INICIO", "CINE", "CINE", "desconocida")))
+    @Test fun laBarraTieneCuatroDestinosFijos() {
+        // Las guías piden de tres a cinco destinos; los tipos de obra pasaron a «Lo tuyo».
+        assertEquals(listOf(Pestana.INICIO, Pestana.LO_TUYO, Pestana.DESCUBRIR, Pestana.GENTE), Pestana.entries)
     }
 }

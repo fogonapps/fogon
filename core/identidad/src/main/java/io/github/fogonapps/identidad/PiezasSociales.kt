@@ -86,6 +86,20 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 
+/** El acento de lo social: la primera tinta; con el diseño nuevo (trama apagada, hoy solo Fabs), la tinta del texto. */
+val Fogon.acentoSocial: Color get() = if (Trama.apagada) texto else tinta1
+/** Lo que va encima de [acentoSocial]. */
+val Fogon.sobreAcentoSocial: Color get() = if (Trama.apagada) fondo else sobreTinta1
+/** Letra destacada (enlaces, avisos sin leer): la tinta legible de la app; con el diseño nuevo, la del texto. */
+val Fogon.letraAcentoSocial: Color get() = if (Trama.apagada) texto else acentoTexto
+/** El papel apenas más hondo del diseño nuevo, para cajas sin borde; [hondura] lo oscurece más (burbujas, campos). */
+fun Fogon.papelHondo(hondura: Float = 1f): Color = lerp(fondo, texto, (if (oscuro) 0.06f else 0.035f) * hondura)
+/** El fondo de un botón o una caja sin borde: el vidrio; con el diseño nuevo, el papel más hondo. */
+val Fogon.superficieSocial: Color get() = if (Trama.apagada) papelHondo(1.8f) else superficie
+/** Una caja de vidrio con borde fino; con el diseño nuevo, un papel apenas más hondo, sin borde. */
+fun Modifier.cajaSocial(f: Fogon, forma: androidx.compose.ui.graphics.Shape, hondura: Float = 1f): Modifier =
+    if (Trama.apagada) clip(forma).background(f.papelHondo(hondura)) else clip(forma).background(f.superficie).border(f.borde, f.linea, forma)
+
 @Composable
 fun SeccionSocial(titulo: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}) {
     Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -122,12 +136,15 @@ fun CabeceraSocial(titulo: String, onAtras: (() -> Unit)?, descripcionAtras: Str
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (onAtras != null) Box(Modifier.size(46.dp).brillo(f.tinta1, CircleShape).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
+        // Con el diseño nuevo, la flecha sola, sin círculo de vidrio.
+        if (onAtras != null) Box(Modifier.size(if (Trama.apagada) 48.dp else 46.dp).then(if (Trama.apagada) Modifier.clip(CircleShape)
+            else Modifier.brillo(f.tinta1, CircleShape).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape))
             .clickable(onClick = onAtras), contentAlignment = Alignment.Center) {
             IconoRiso(icono, descripcionAtras, tamano = 22.dp, corrida = null)
         }
         if (chico) Text(titulo, style = MaterialTheme.typography.titleMedium, color = FogonTema.actual.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        else Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 26.sp, modifier = Modifier.weight(1f))
+        else Text(titulo, fontFamily = FogonTema.actual.titulos, fontSize = 22.sp, color = FogonTema.actual.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 26.sp,
+            modifier = Modifier.weight(1f).semantics { heading() })
         derecha()
     }
 }
@@ -136,13 +153,13 @@ fun CabeceraSocial(titulo: String, onAtras: (() -> Unit)?, descripcionAtras: Str
 fun PildoraSocial(texto: String, icono: Dibujo? = null, acento: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val f = FogonTema.actual
     Row(
-        modifier.rebote().clip(FormaPildora).background(if (acento) f.tinta1 else f.superficie)
-            .border(f.borde, if (acento) f.tinta1 else f.linea, FormaPildora)
-            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp),
+        modifier.rebote().clip(FormaPildora).background(if (acento) f.acentoSocial else if (Trama.apagada) Color.Transparent else f.superficie)
+            .border(f.borde, if (acento) f.acentoSocial else if (Trama.apagada) f.texto.copy(alpha = 0.3f) else f.linea, FormaPildora)
+            .clickable(onClick = onClick).heightIn(min = if (Trama.apagada) 40.dp else 0.dp).padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (icono != null) IconoRiso(icono, null, tamano = 16.dp, tinta = if (acento) f.sobreTinta1 else f.texto)
-        Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = if (acento) f.sobreTinta1 else f.texto, maxLines = 1)
+        if (icono != null) IconoRiso(icono, null, tamano = 16.dp, tinta = if (acento) f.sobreAcentoSocial else f.texto)
+        Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = if (acento) f.sobreAcentoSocial else f.texto, maxLines = 1)
     }
 }
 
@@ -163,7 +180,8 @@ fun <T> ChipsSocial(opciones: List<Pair<T, String>>, elegido: T, onElegir: (T) -
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         opciones.forEach { (v, t) ->
             FilterChip(v == elegido, { onElegir(v) }, { Text(t) }, shape = FormaPildora,
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
+                colors = if (Trama.apagada) FilterChipDefaults.filterChipColors(selectedContainerColor = f.texto, selectedLabelColor = f.fondo)
+                else FilterChipDefaults.filterChipColors(selectedContainerColor = f.paleta.tinta, selectedLabelColor = f.paleta.sobreTinta))
         }
     }
 }
@@ -173,7 +191,7 @@ fun BotonIconoSocial(icono: Dibujo, descripcion: String, grande: Boolean = false
     val f = FogonTema.actual
     Box(
         Modifier.rebote(0.9f).size(if (grande) 46.dp else 40.dp).clip(CircleShape)
-            .then(if (grande) Modifier.background(f.superficie).border(f.borde, f.linea, CircleShape) else Modifier)
+            .then(if (grande && !Trama.apagada) Modifier.background(f.superficie).border(f.borde, f.linea, CircleShape) else Modifier)
             .clickable(enabled = activo, onClick = onClick).semantics { contentDescription = descripcion; role = Role.Button },
         contentAlignment = Alignment.Center,
     ) { IconoRiso(icono, null, tamano = if (grande) 22.dp else 20.dp, tinta = tinta ?: f.texto, relleno = if (lleno) tinta ?: f.texto else null) }
@@ -185,8 +203,8 @@ fun ConCuentaSocial(n: Int, boton: @Composable () -> Unit) {
     val f = FogonTema.actual
     Box {
         boton()
-        if (n > 0) Box(Modifier.align(Alignment.TopEnd).clip(CircleShape).background(f.tinta1).padding(horizontal = 5.dp, vertical = 1.dp)) {
-            Text(if (n > 9) "9+" else "$n", style = MaterialTheme.typography.labelSmall, color = f.sobreTinta1)
+        if (n > 0) Box(Modifier.align(Alignment.TopEnd).clip(CircleShape).background(f.acentoSocial).padding(horizontal = 5.dp, vertical = 1.dp)) {
+            Text(if (n > 9) "9+" else "$n", style = MaterialTheme.typography.labelSmall, color = f.sobreAcentoSocial)
         }
     }
 }
@@ -196,6 +214,6 @@ fun OpcionSocial(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { onCambio(!si) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-        Switch(si, onCambio, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
+        Switch(si, onCambio, colors = SwitchDefaults.colors(checkedTrackColor = f.acentoSocial, checkedThumbColor = f.sobreAcentoSocial))
     }
 }

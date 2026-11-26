@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                 val barra = if (oscuro) SystemBarStyle.dark(t) else SystemBarStyle.light(t, t)
                 enableEdgeToEdge(barra, barra)
             }
-            FogonTema(Paleta.Cajon, apariencia) {
+            FogonTema(Paleta.Cajon, apariencia, letraTitulos = io.github.fogonapps.cajon.ui.Fraunces, letraTexto = io.github.fogonapps.cajon.ui.Figtree) {
                 // Los campos de texto redondeados, como el resto de Fogón (por defecto vienen casi rectos).
                 androidx.compose.material3.MaterialTheme(shapes = androidx.compose.material3.MaterialTheme.shapes.copy(
                     extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(18.dp))) {
@@ -180,8 +180,8 @@ class MainActivity : ComponentActivity() {
                     else if (uri != null) {
                         val bytes = leer(uri)
                         if (bytes == null) aviso(getString(R.string.aviso_no_es_de_otra_app))
-                        else if (Importar.perfilesNetflix(bytes.decodeToString()).size > 1) netflixPendiente = bytes to (uri.lastPathSegment ?: "")
-                        else vm.importarDeOtraApp(bytes, uri.lastPathSegment ?: "")
+                        else if (Importar.perfilesNetflix(bytes.decodeToString()).size > 1) netflixPendiente = bytes to nombreDe(uri)
+                        else vm.importarDeOtraApp(bytes, nombreDe(uri))
                     }
                 }
                 // La foto para una portada: el selector de fotos del sistema (sin permisos; si no hay, el de archivos).
@@ -236,6 +236,17 @@ class MainActivity : ComponentActivity() {
             if (bytes.size > MAX_ARCHIVO) null else bytes
         }
     }.getOrNull()
+
+    /** El nombre real del archivo elegido (el selector da rutas como "msf:123"); la ruta solo si el sistema no lo dice. */
+    private fun nombreDe(uri: android.net.Uri): String {
+        val mostrado = runCatching {
+            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                val i = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (i >= 0 && c.moveToFirst()) c.getString(i) else null
+            }
+        }.getOrNull()
+        return Importar.nombreArchivo(mostrado, uri.lastPathSegment)
+    }
 
     private fun aviso(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
 

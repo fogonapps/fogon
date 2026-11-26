@@ -203,7 +203,7 @@ class AlmacenApariencia private constructor(c: Context) {
             )
         }.filterValues { it != AjustesEstilo() }
         return Apariencia(
-            estilo = prefs.getString("estilo", null)?.let { s -> Estilo.entries.firstOrNull { it.name == s } } ?: Estilo.GRAFITO,
+            estilo = prefs.getString("estilo", null)?.let { s -> Estilo.entries.firstOrNull { it.name == s } } ?: estiloInicial,
             ajustes = ajustes,
             guardadas = leerGuardadas(prefs.getString("guardadas", null)),
             tamanoTexto = prefs.getInt("tamanoTexto", 1),
@@ -307,6 +307,11 @@ class AlmacenApariencia private constructor(c: Context) {
 
     companion object {
         @Volatile private var unico: AlmacenApariencia? = null
+        /**
+         * El estilo de quien nunca eligió uno. Grafito para todas, salvo la app que lo cambie al arrancar, antes de
+         * crear el almacén (Fabs arranca en el suyo, con su amarillo, desde el rebranding de 2026-11).
+         */
+        @Volatile var estiloInicial: Estilo = Estilo.GRAFITO
         fun de(c: Context): AlmacenApariencia = unico ?: synchronized(this) { unico ?: AlmacenApariencia(c.applicationContext).also { unico = it } }
     }
 }

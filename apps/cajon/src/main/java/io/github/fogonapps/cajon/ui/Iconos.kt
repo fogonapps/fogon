@@ -39,6 +39,8 @@ object Iconos {
     val Imagen = IconosFogon.Imagen
     val Corazon = dibujo("corazon", relleno("M12 20s-7.6-4.6-7.6-10a4.2 4.2 0 0 1 7.6-2.6A4.2 4.2 0 0 1 19.6 10c0 5.4-7.6 10-7.6 10z"))
     val Estrella = IconosFogon.Estrella
+    /** Una corona: favorita (distinta de las estrellas de la nota). */
+    val Favorita = io.github.fogonapps.identidad.Dibujo("favorita", IconosFogon.Estrella.partes)
     val Buscar = dibujo("buscar", trazo("M10.6 4.4a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4zM15.2 15.2l4.6 4.6", 2.8f))
     /** Una flecha que sale de una caja: compartir. */
     /** Abrir afuera (un enlace a otro servicio): una flecha que sale de un cuadro. */
@@ -87,6 +89,7 @@ object Iconos {
     val Lapiz = IconosFogon.Lapiz
     val Repetir = IconosFogon.Repetir
     val Persona = IconosFogon.Perfil
+    val Chispa = IconosFogon.Chispa
     val Racha = IconosFogon.Racha
     val Reloj = IconosFogon.Reloj
 

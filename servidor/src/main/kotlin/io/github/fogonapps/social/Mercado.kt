@@ -31,14 +31,19 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
     private val consulta = """SELECT m.*, c.usuario, (SELECT COUNT(*) FROM mercado_compras v WHERE v.articulo=m.id) AS ventas
         FROM mercado m JOIN cuentas c ON c.id=m.cuenta"""
     fun detalle(yo: Long?, id: Long, equipo: Boolean = false): ArticuloMercado = b.usar {
-        leer("$consulta WHERE m.id=?", id) { fila(it, yo) }.singleOrNull()?.takeIf {
-            equipo || it.estado in setOf("aprobado", "retirado") || it.propio
+        val encontrado = leer("$consulta WHERE m.id=?", id) { fila(it, yo) to it.getLong("cuenta") }.singleOrNull()
+        encontrado?.first?.takeIf {
+            equipo || it.propio || it.estado in setOf("aprobado", "retirado") && (yo == null || it.adquirido || !s.hayBloqueo(yo, encontrado.second))
         } ?: throw Problema(404, "no_existe")
     }
     fun listar(yo: Long?, tipo: String = "", orden: String = "nuevo", oficial: Boolean = false, pagina: Int = 0, mios: Boolean = false, revision: Boolean = false, adquiridos: Boolean = false): PaginaMercado = b.transaccion {
         if (tipo !in setOf("", "banner", "marco") || orden !in setOf("nuevo", "vendidos") || pagina !in 0..100000) throw Problema(400, "filtro")
-        val condicion = when { revision -> "m.estado='revision'"; mios -> "m.cuenta=?"; adquiridos -> "m.estado!='derechos' AND EXISTS(SELECT 1 FROM temas t WHERE t.cuenta=? AND t.tema=m.tipo || ':m' || m.id)"; else -> "m.estado='aprobado'" }
-        val argumentos = mutableListOf<Any?>().apply { if ((mios || adquiridos) && !revision) add(yo); add(tipo); add(tipo); add(if (oficial) 1 else 0); add(pagina * 20) }
+        // En la vitrina no sale lo de quien bloqueó o fue bloqueado por quien mira (lo propio y lo ya adquirido, sí).
+        val vitrina = !revision && !mios && !adquiridos && yo != null
+        val condicion = when { revision -> "m.estado='revision'"; mios -> "m.cuenta=?"; adquiridos -> "m.estado!='derechos' AND EXISTS(SELECT 1 FROM temas t WHERE t.cuenta=? AND t.tema=m.tipo || ':m' || m.id)"
+            vitrina -> "m.estado='aprobado' AND m.cuenta NOT IN (SELECT a FROM bloqueos WHERE de=?) AND m.cuenta NOT IN (SELECT de FROM bloqueos WHERE a=?)"
+            else -> "m.estado='aprobado'" }
+        val argumentos = mutableListOf<Any?>().apply { if ((mios || adquiridos) && !revision) add(yo); if (vitrina) { add(yo); add(yo) }; add(tipo); add(tipo); add(if (oficial) 1 else 0); add(pagina * 20) }
         val filas = leer("$consulta WHERE $condicion AND (?='' OR m.tipo=?) AND (?=0 OR m.oficial=1) ORDER BY ${if (orden == "vendidos") "ventas DESC," else ""} m.id DESC LIMIT 21 OFFSET ?", *argumentos.toTypedArray()) { fila(it, yo) }
         PaginaMercado(filas.take(20), if (filas.size > 20) pagina + 1 else null)
     }
@@ -56,6 +61,7 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
         s.validarImagenMercado(d.imagen, d.tipo)
         if (leer("SELECT COUNT(*) FROM mercado WHERE cuenta=? AND cuando>=?", yo, ahora() / 86400000L * 86400000L) { it.getInt(1) }.single() >= 5) throw Problema(429, "tope_publicaciones")
         val oficial = s.equipo.rol(yo) == "principal"
+        if (!oficial) s.sinDeuda(yo)
         if (!oficial && s.chispas(yo) < TARIFA_PUBLICAR) throw Problema(402, "sin_chispas")
         val id = insertar("INSERT INTO mercado(cuenta,clave,imagen,nombre,tipo,precio,oficial,estado,motivo,cuando) VALUES(?,?,?,?,?,?,?,?,?,?)",
             yo, d.clave, d.imagen, d.nombre.trim(), d.tipo, d.precio, if (oficial) 1 else 0, if (oficial) "aprobado" else "revision", "", ahora())
@@ -89,6 +95,7 @@ class Mercado(private val b: Base, private val s: Social, private val ahora: () 
             throw Problema(409, "ya_lo_tiene")
         }
         if (destino != yo && leer("SELECT COUNT(*) FROM mercado_compras WHERE comprador=? AND destino!=comprador AND cuando>=?", yo, ahora()/86400000L*86400000L) { it.getInt(1) }.single() >= 10) throw Problema(429, "tope_regalos")
+        s.sinDeuda(yo)
         if (s.chispas(yo) < a.precio) throw Problema(402, "sin_chispas")
         insertar("INSERT INTO mercado_compras(articulo,comprador,destino,clave,precio,cuando) VALUES(?,?,?,?,?,?)", id, yo, destino, d.clave, a.precio, ahora())
         cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", yo, -a.precio, "mercado:compra:$id", ahora())

@@ -18,6 +18,21 @@ class PrivacidadTest {
         assertEquals(Social.POLITICA, s.miCuenta(ana).politica)
     }
 
+    @Test fun conLaPoliticaViejaLaCuentaQuedaPendienteDeAceptarLaNueva() {
+        val dir = Files.createTempDirectory("privacidad").toFile()
+        val base = Base(java.io.File(dir, "s.db").path)
+        val s = Social(base, java.io.File(dir, "fotos"))
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        base.usar { cambiar("UPDATE cuentas SET acepto = '2026-11-23' WHERE id = ?", ana) }
+        // La app compara lo aceptado con la versión de /v1/estado y, si difieren, muestra la hoja para aceptar.
+        assertEquals("2026-11-25", Social.POLITICA)
+        assertEquals("2026-11-23", s.miCuenta(ana).politica)
+        assertEquals("politica", assertFailsWith<Problema> { s.aceptarPolitica(ana, "2026-11-23") }.mensaje)
+        s.aceptarPolitica(ana, Social.POLITICA)
+        assertEquals(Social.POLITICA, s.miCuenta(ana).politica)
+        dir.deleteRecursively()
+    }
+
     @Test fun losReportesResueltosYLasDecisionesSeBorranAlAnioYLoAbiertoNo() {
         val dir = Files.createTempDirectory("privacidad").toFile()
         val base = Base(java.io.File(dir, "s.db").path)

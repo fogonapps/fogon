@@ -46,6 +46,15 @@ class LetterboxdTest {
         assertEquals(Estados.QUIERO, importar(cabecera + "\n" + peli, "watchlist.csv")!!.obras.single().estado)
     }
 
+    @Test fun csvSueltoDelSelectorSeReconocePorSuNombreReal() {
+        val nombre = Importar.nombreArchivo("watchlist.csv", "msf:123")
+        assertEquals("watchlist.csv", nombre)
+        assertEquals(Estados.QUIERO, importar(cabecera + "\n" + peli, nombre)!!.obras.single().estado)
+        assertEquals("msf:123", Importar.nombreArchivo(null, "msf:123"))
+        assertEquals("msf:123", Importar.nombreArchivo("  ", "msf:123"))
+        assertEquals("", Importar.nombreArchivo(null, null))
+    }
+
     @Test fun resenasSueltasConservanNotaYFechaDelVisionado() {
         val csv = cabecera + ",Rating,Rewatch,Review,Tags,Watched Date\n" +
             filaCsv("2024-02-03", "El niño", "2023", "https://boxd.it/abc", "4", "Yes", "Sí, mañana", "", "2024-01-02")

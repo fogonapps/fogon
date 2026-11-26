@@ -30,6 +30,8 @@ internal fun interfazSocial(vm: CajonViewModel, motivo: io.github.fogonapps.cajo
         override fun stickersApp() = vm.chat.stickers.value.map { it.imagen }
         override suspend fun buscarAdjuntos(q: String) = vm.buscarAdjuntos(q)
         override val fotosDeObras = true
+        // Fabs no usa historias de 24 horas: ni barra, ni aro en las fotos, ni crearlas o verlas, ni sus avisos.
+        override val conHistorias = false
         override val respondeHistorias = true
         override fun responderHistoria(usuario: String, texto: String) { vm.responderHistoria(usuario, texto) }
         override suspend fun detallarAdjunto(a: kotlinx.serialization.json.JsonObject) = vm.detallarAdjunto(a)

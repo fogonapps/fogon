@@ -7,7 +7,7 @@ class LenaTest {
     @Test fun cadaNivelTieneSuNombreYSilueta() {
         val esperados = mapOf(
             "chispa" to (R.string.lena_chispa to FormaLena.CHISPA),
-            "brasa" to (R.string.lena_brasa to FormaLena.TRONCO),
+            "brasa" to (R.string.lena_brasa to FormaLena.BRASA),
             "fogata" to (R.string.lena_fogata to FormaLena.FOGATA),
             "fogon" to (R.string.lena_fogon to FormaLena.FOGON),
         )

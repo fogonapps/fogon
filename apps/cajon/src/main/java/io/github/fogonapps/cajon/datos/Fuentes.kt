@@ -963,6 +963,24 @@ object MusicBrainz {
     fun caratula(mbid: String, t: Int = 500) = Imagenes.url("https://coverartarchive.org/release-group/$mbid/front-1200",
         if (t <= 500) Imagenes.Lugar.LISTA else Imagenes.Lugar.FICHA)
 
+    /** Para preguntar a Cover Art Archive sin bajar la imagen: la respuesta de la carátula del grupo basta. */
+    private val sinSeguir = http.newBuilder().followRedirects(false).followSslRedirects(false).build()
+
+    /**
+     * Si el álbum [rg] tiene carátula: Cover Art Archive redirige la carátula del grupo si alguna de sus ediciones tiene
+     * frente y da 404 si ninguna lo tiene (no hay otra edición de dónde sacarla). Null si no se pudo saber.
+     */
+    suspend fun tieneCaratula(rg: String): Boolean? {
+        if (!rg.matches(Regex("[0-9a-f-]{36}"))) return false
+        val pedido = Request.Builder().url("https://coverartarchive.org/release-group/$rg/front-250").head().header("User-Agent", AGENTE).build()
+        return try { sinSeguir.newCall(pedido).esperar().use { Imagenes.hayCaratula(it.code) } } catch (_: IOException) { null }
+    }
+
+    /** Los álbumes encontrados sin la carátula que no existe (queda vacía) y, sin perder el orden, primero los que la tienen. */
+    private suspend fun conCaratulaVerificada(l: List<Encontrado>): List<Encontrado> = kotlinx.coroutines.coroutineScope {
+        Imagenes.conCaratulas(l, l.map { e -> async { tieneCaratula(e.fuente.removePrefix("mb:rg:")) } }.awaitAll())
+    }
+
     /** Cover Art Archive informa la miniatura real: solo se consulta al hacerse visible el álbum. */
     /** La carátula directa del álbum: pedir antes su índice (que redirige a archive.org) tardaba o fallaba. */
     @Suppress("RedundantSuspendModifier")
@@ -994,12 +1012,15 @@ object MusicBrainz {
         pedir("release-group", "query" to "tag:\"${genero.replace("\"", " ")}\" AND primarytype:album", "limit" to "25")
             .arr("release-groups").map { deGrupo(it.jsonObject) }
 
-    /** Un álbum por su título y su artista (para completar lo que llegó sin fuente): los candidatos más parecidos. */
+    /**
+     * Un álbum por su título y su artista (para completar lo que llegó sin fuente): los candidatos más parecidos, con la
+     * carátula vacía si no tiene y los que la tienen primero (así no se enlaza ni se hereda una carátula que no existe).
+     */
     suspend fun buscarAlbum(titulo: String, artista: String): List<Encontrado> {
         fun limpio(s: String) = s.replace(Regex("[\"\\\\]"), " ").trim()
         val q = "releasegroup:\"${limpio(titulo)}\"" + if (artista.isNotBlank()) " AND artist:\"${limpio(artista)}\"" else ""
-        return pedir("release-group", "query" to q, "limit" to "5").arr("release-groups").map { it.jsonObject }
-            .filter { (it["score"].entero() ?: 0) >= 80 }.map { deGrupo(it) }
+        return conCaratulaVerificada(pedir("release-group", "query" to q, "limit" to "5").arr("release-groups").map { it.jsonObject }
+            .filter { (it["score"].entero() ?: 0) >= 80 }.map { deGrupo(it) })
     }
 
     /** Ordena por relevancia; entre los igual de relevantes, los álbumes antes que los sencillos y lo conocido (más ediciones) primero. */
@@ -1053,7 +1074,14 @@ object MusicBrainz {
      * Como [detalles], y además todos los artistas que firman el álbum (su "artist-credit": "A & B", "A feat. C"),
      * para mostrarlos en la previa antes de guardar nada. La obra solo guarda el primero ([Obra.artista]).
      */
-    suspend fun detallesConArtistas(e: Encontrado): Pair<Obra, List<ArtistaEncontrado>> {
+    suspend fun detallesConArtistas(e: Encontrado): Pair<Obra, List<ArtistaEncontrado>> = kotlinx.coroutines.coroutineScope {
+        // Sin carátula en Cover Art Archive, la obra queda sin portada (y al actualizar se conserva la que tenía).
+        val conCaratula = async { tieneCaratula(e.fuente.removePrefix("mb:rg:")) }
+        val (o, firman) = datosDeAlbum(e)
+        (if (conCaratula.await() == false) o.copy(portada = "") else o) to firman
+    }
+
+    private suspend fun datosDeAlbum(e: Encontrado): Pair<Obra, List<ArtistaEncontrado>> {
         val mbid = e.fuente.removePrefix("mb:rg:")
         val g = pedir("release-group/$mbid", "inc" to "genres+artist-credits+ratings")
         val firman = g.arr("artist-credit").mapNotNull { c -> (c.jsonObject["artist"] as? JsonObject)?.let { a ->

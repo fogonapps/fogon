@@ -43,7 +43,7 @@ class SeguridadTest {
         }
     }
 
-    @Test fun adivinarElCodigoTieneTopeDiarioPorCorreo() = Entorno().use { e ->
+    @Test fun adivinarElCodigoTieneTopeDiarioPorCorreo(): Unit = Entorno().use { e ->
         e.alta()
         var fallos = 0
         // Pide códigos nuevos una y otra vez y prueba 5 por código: al llegar al tope del día, ni el bueno entra.
@@ -84,7 +84,7 @@ class SeguridadTest {
         assertEquals("", e.s.verPerfil(null, "ana").portada)
     }
 
-    @Test fun verificacionEnDosPasosOpcional() = Entorno().use { e ->
+    @Test fun verificacionEnDosPasosOpcional(): Unit = Entorno().use { e ->
         val yo = e.s.cuentaDe(e.alta().token)!!
         assertEquals(400, assertFailsWith<Problema> { e.s.ponerDosPasos(yo, DosPasos(true, "otra cosa larga")) }.codigo)
         e.s.ponerDosPasos(yo, DosPasos(true, "una frase bastante larga"))

@@ -16,7 +16,7 @@ class MercadoTest {
         var reloj = 2_000_000_000_000L
         val s = Social(b,File(dir,"fotos"), { reloj })
         val creador = alta("creadora").also { c -> b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,20000,'prueba',1)", c.first) } }
-        val comprador = alta("compradora")
+        val comprador = alta("compradora").also { c -> s.chispas(c.first); b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,'prueba',1)", c.first, 1500 - TemasPerfil.BIENVENIDA) } }
         val equipo = alta("revisora")
         fun alta(nombre: String): Pair<Long,String> { val t=s.crearCuenta(NuevaCuenta(nombre)).token; return s.cuentaDe(t)!! to t }
         fun elevar() {
@@ -176,5 +176,22 @@ class MercadoTest {
             assertEquals(HttpStatusCode.Forbidden,client.get("/v1/admin/mercado") {header(HttpHeaders.Authorization,"Bearer ${e.comprador.second}")}.status)
             assertEquals(HttpStatusCode.OK,client.get("/v1/admin/mercado") {header(HttpHeaders.Authorization,"Bearer ${e.equipo.second}")}.status)
         }
+    }
+    @Test fun bloqueosFueraDeLaVitrina() = Entorno().use { e ->
+        e.elevar()
+        val a=e.publicar(); e.decidir(a,"aprobar")
+        assertEquals(a.id,e.s.mercado.listar(e.comprador.first).articulos.single().id)
+        // Quien bloquea (o fue bloqueado) no ve lo de la otra persona ni puede comprarlo; el creador sí lo sigue viendo.
+        for (de in listOf("creadora","compradora")) {
+            val (quien, otro) = if (de == "creadora") e.creador.first to "compradora" else e.comprador.first to "creadora"
+            e.s.bloquear(quien,otro,true)
+            assertTrue(e.s.mercado.listar(e.comprador.first).articulos.isEmpty())
+            assertEquals(404,assertFailsWith<Problema>{ e.s.mercado.detalle(e.comprador.first,a.id) }.codigo)
+            assertEquals(404,assertFailsWith<Problema>{ e.s.mercado.comprar(e.comprador.first,a.id,CompraMercado("compra_bloqueada")) }.codigo)
+            assertEquals(a.id,e.s.mercado.listar(e.creador.first,mios=true).articulos.single().id)
+            assertEquals(a.id,e.s.mercado.listar(null).articulos.single().id)
+            e.s.bloquear(quien,otro,false)
+        }
+        assertEquals(a.id,e.s.mercado.listar(e.comprador.first).articulos.single().id)
     }
 }

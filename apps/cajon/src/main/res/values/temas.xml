@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Tema.Cajon" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/noche</item>
+        <item name="android:windowBackground">@color/papel</item>
     </style>
     <style name="Tema.Cajon.Arranque" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/noche</item>

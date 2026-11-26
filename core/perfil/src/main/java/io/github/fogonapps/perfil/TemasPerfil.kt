@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.fogonapps.identidad.*
@@ -41,12 +42,37 @@ import kotlin.math.sin
 /** La paleta de un fondo: el color de base, los paneles (semitransparentes), el texto y el acento. */
 data class EstiloPerfil(val base: Color, val panel: Color, val texto: Color, val textoSuave: Color, val acento: Color, val sobreAcento: Color, val linea: Color)
 
+/**
+ * Una colección del catálogo oficial de Fabs: dos banners, un banner animado, un marco y un fondo con el mismo tema.
+ * Los ids van sin prefijo; [articulos] da los que se compran en la tienda ("banner:…", "marco:…" y el fondo).
+ */
+class ColeccionFabs(val id: String, val nombre: Int, val lema: Int, val banners: List<String>, val animado: String, val marco: String, val fondo: String) {
+    val articulos: List<String> get() = banners.map { "banner:$it" } + "banner:$animado" + "marco:$marco" + fondo
+}
+
 object TemasPerfil {
     val EXTRAS = (1..3).map { "escaparate:extra$it" }
     const val PESOS_POR_CHISPA = 10
-    val BANNERS_ANIMADOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia")
+
+    /** El catálogo oficial de Fabs. En Fabs solo se vende esto; en las otras apps no aparece. */
+    val COLECCIONES = listOf(
+        ColeccionFabs("negro", R.string.coleccion_negro, R.string.coleccion_negro_lema, listOf("negro-persiana", "negro-hotel"), "negro-ventilador", "negro-diafragma", "negro-estreno"),
+        ColeccionFabs("videoclub", R.string.coleccion_videoclub, R.string.coleccion_videoclub_lema, listOf("videoclub-estanteria", "videoclub-rebobinar"), "videoclub-abierto", "videoclub-rebobine", "videoclub-pasillo"),
+        ColeccionFabs("biblioteca", R.string.coleccion_biblioteca, R.string.coleccion_biblioteca_lema, listOf("biblioteca-lomos", "biblioteca-marmolado"), "biblioteca-polvo", "biblioteca-exlibris", "biblioteca-sala"),
+        ColeccionFabs("vinilo", R.string.coleccion_vinilo, R.string.coleccion_vinilo_lema, listOf("vinilo-surco", "vinilo-sello"), "vinilo-giradiscos", "vinilo-disco", "vinilo-funda"),
+        ColeccionFabs("arcade", R.string.coleccion_arcade, R.string.coleccion_arcade_lema, listOf("arcade-puntajes", "arcade-vector"), "arcade-hiperespacio", "arcade-fosforo", "arcade-moqueta"),
+    )
+    /** Los banners gratis de Fabs: sobrios, de papel, grano y tinta (en las otras apps siguen los de siempre). */
+    val GRATIS_FABS = listOf("fabs-papel", "fabs-grano", "fabs-tinta")
+
+    val BANNERS_ANIMADOS = listOf("deriva", "ascenso", "estelar", "olas", "lluvia") + COLECCIONES.map { it.animado }
     val BANNERS = listOf("papel", "riso-rosa", "riso-azul", "riso-amarillo", "puntos", "chispas", "ranita", "forzudo", "nube", "cajita", "noche", "pasto").associateWith { 0 } +
-        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) + BANNERS_ANIMADOS.associateWith { 600 }
+        mapOf("neon" to 1200, "videoclub" to 1000, "arcade" to 1000, "plastilina" to 1200, "aero" to 800, "pizzeria" to 800) +
+        listOf("deriva", "ascenso", "estelar", "olas", "lluvia").associateWith { 600 } + GRATIS_FABS.associateWith { 0 } +
+        mapOf("negro-persiana" to 1000, "negro-hotel" to 1200, "videoclub-estanteria" to 1000, "videoclub-rebobinar" to 900,
+            "biblioteca-lomos" to 1100, "biblioteca-marmolado" to 1000, "vinilo-surco" to 1200, "vinilo-sello" to 900,
+            "arcade-puntajes" to 1000, "arcade-vector" to 1100,
+            "negro-ventilador" to 1800, "videoclub-abierto" to 1600, "biblioteca-polvo" to 1600, "vinilo-giradiscos" to 2000, "arcade-hiperespacio" to 1800)
     /** Referencias directas (no por nombre) para que la versión publicada no descarte las imágenes. */
     val RECURSOS_BANNER = mapOf(
         "oficial" to R.drawable.banner_oficial,
@@ -56,13 +82,52 @@ object TemasPerfil {
         "cajita" to R.drawable.banner_cajita, "noche" to R.drawable.banner_noche, "pasto" to R.drawable.banner_pasto,
         "neon" to R.drawable.banner_neon, "videoclub" to R.drawable.banner_videoclub, "arcade" to R.drawable.banner_arcade,
         "plastilina" to R.drawable.banner_plastilina, "aero" to R.drawable.banner_aero, "pizzeria" to R.drawable.banner_pizzeria,
+        "fabs-papel" to R.drawable.banner_fabs_papel, "fabs-grano" to R.drawable.banner_fabs_grano, "fabs-tinta" to R.drawable.banner_fabs_tinta,
+        "negro-persiana" to R.drawable.banner_negro_persiana, "negro-hotel" to R.drawable.banner_negro_hotel,
+        "videoclub-estanteria" to R.drawable.banner_videoclub_estanteria, "videoclub-rebobinar" to R.drawable.banner_videoclub_rebobinar,
+        "biblioteca-lomos" to R.drawable.banner_biblioteca_lomos, "biblioteca-marmolado" to R.drawable.banner_biblioteca_marmolado,
+        "vinilo-surco" to R.drawable.banner_vinilo_surco, "vinilo-sello" to R.drawable.banner_vinilo_sello,
+        "arcade-puntajes" to R.drawable.banner_arcade_puntajes, "arcade-vector" to R.drawable.banner_arcade_vector,
+    )
+    /** Los marcos que son imagen (el catálogo de Fabs); los demás se dibujan con código. */
+    val RECURSOS_MARCO = mapOf(
+        "negro-diafragma" to R.drawable.marco_negro_diafragma, "videoclub-rebobine" to R.drawable.marco_videoclub_rebobine,
+        "biblioteca-exlibris" to R.drawable.marco_biblioteca_exlibris, "vinilo-disco" to R.drawable.marco_vinilo_disco,
+        "arcade-fosforo" to R.drawable.marco_arcade_fosforo,
+    )
+    /** Los fondos que son imagen (el catálogo de Fabs): la escena de arriba, alto = ancho × 2,1. */
+    val RECURSOS_FONDO = mapOf(
+        "negro-estreno" to R.drawable.fondo_negro_estreno, "videoclub-pasillo" to R.drawable.fondo_videoclub_pasillo,
+        "biblioteca-sala" to R.drawable.fondo_biblioteca_sala, "vinilo-funda" to R.drawable.fondo_vinilo_funda,
+        "arcade-moqueta" to R.drawable.fondo_arcade_moqueta,
     )
 
-    val FONDOS = listOf("nieve", "carmesi", "niebla", "ojos", "atardecer", "ciudad", "selva", "cosmos")
-    val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna")
+    val FONDOS = listOf("nieve", "carmesi", "niebla", "ojos", "atardecer", "ciudad", "selva", "cosmos") + COLECCIONES.map { it.fondo }
+    val MARCOS = listOf("doble", "llamas", "pixel", "estrellas", "espinas", "luna") + COLECCIONES.map { it.marco }
     /** Los precios en chispas (los mismos del servidor, que es el que cobra). */
     val PRECIOS = mapOf("nieve" to 1200, "carmesi" to 1200, "niebla" to 1000, "ojos" to 900, "atardecer" to 1000, "ciudad" to 1500, "selva" to 1000, "cosmos" to 1500,
-        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600) + BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 2500, "portada:animada" to 5000)
+        "marco:doble" to 400, "marco:llamas" to 800, "marco:pixel" to 600, "marco:estrellas" to 700, "marco:espinas" to 800, "marco:luna" to 600,
+        "negro-estreno" to 1200, "videoclub-pasillo" to 1200, "biblioteca-sala" to 1200, "vinilo-funda" to 1000, "arcade-moqueta" to 1200) +
+        COLECCIONES.associate { "marco:${it.marco}" to 500 } +
+        BANNERS.mapKeys { "banner:${it.key}" } + EXTRAS.associateWith { 1000 } + mapOf("portada:propia" to 2500, "portada:animada" to 5000)
+
+    /** Los ids (sin prefijo) del catálogo de Fabs, con sus gratis. */
+    private val DE_FABS: Set<String> = (COLECCIONES.flatMap { it.banners + it.animado + it.marco + it.fondo } + GRATIS_FABS).toSet()
+    fun deFabs(id: String): Boolean = id.removePrefix("banner:").removePrefix("marco:").substringBefore('~') in DE_FABS
+    /**
+     * Si un artículo se ofrece en la tienda de esta app: con el diseño nuevo (Fabs) solo el catálogo de Fabs; en las
+     * demás, solo lo de siempre. Lo ya comprado se sigue pudiendo usar en todas.
+     */
+    fun seOfrece(id: String): Boolean = if (Trama.apagada) deFabs(id) else !deFabs(id)
+    /** Los banners riso gratis y los animados de puntos se pueden teñir; los del catálogo de Fabs van como son. */
+    fun admiteColor(id: String): Boolean = (BANNERS[id] == 0 || id in BANNERS_ANIMADOS) && !deFabs(id)
+    /** La colección de la vitrina: cambia cada semana (lunes a domingo, hora universal). */
+    fun coleccionDeLaSemana(ahora: Long = System.currentTimeMillis()): ColeccionFabs =
+        COLECCIONES[Math.floorMod((ahora / 86_400_000L + 3) / 7, COLECCIONES.size.toLong()).toInt()]
+    fun coleccionDe(id: String): ColeccionFabs? {
+        val base = id.removePrefix("banner:").removePrefix("marco:").substringBefore('~')
+        return COLECCIONES.firstOrNull { base in it.banners || base == it.animado || base == it.marco || base == it.fondo }
+    }
 
     fun estilo(tema: String): EstiloPerfil? = when (tema) {
         "nieve" -> EstiloPerfil(Color(0xFF0E1A27), Color(0xA61A2B3D), Color(0xFFE8F1FA), Color(0xFF9DB4CC), Color(0xFF7FC4FF), Color(0xFF0E1A27), Color(0x557FA8D0))
@@ -73,6 +138,11 @@ object TemasPerfil {
         "ciudad" -> EstiloPerfil(Color(0xFF0B0D1A), Color(0xA6151A33), Color(0xFFEDEBFF), Color(0xFFA7A3D6), Color(0xFFB98CFF), Color(0xFF0B0D1A), Color(0x55B98CFF))
         "selva" -> EstiloPerfil(Color(0xFF0B2016), Color(0xA6123222), Color(0xFFE9F7EE), Color(0xFF9CC7AD), Color(0xFF5FDB8F), Color(0xFF0B2016), Color(0x555FDB8F))
         "cosmos" -> EstiloPerfil(Color(0xFF05040F), Color(0xA612102A), Color(0xFFF0EEFF), Color(0xFFA9A4D9), Color(0xFFFFD166), Color(0xFF05040F), Color(0x55FFD166))
+        "negro-estreno" -> EstiloPerfil(Color(0xFF0E0E0F), Color(0xA61A1A1D), Color(0xFFEDEDED), Color(0xFF9C9C9C), Color(0xFFE8D6B0), Color(0xFF0E0E0F), Color(0x40FFFFFF))
+        "videoclub-pasillo" -> EstiloPerfil(Color(0xFF0D0C12), Color(0xA6191722), Color(0xFFF4EEF6), Color(0xFFB9A9BE), Color(0xFFFF4FA0), Color(0xFF0D0C12), Color(0x55FF4FA0))
+        "biblioteca-sala" -> EstiloPerfil(Color(0xFF120D0A), Color(0xA6231A13), Color(0xFFF3EADB), Color(0xFFC2AE92), Color(0xFFDDB15C), Color(0xFF120D0A), Color(0x55DDB15C))
+        "vinilo-funda" -> EstiloPerfil(Color(0xFFEEE8DA), Color(0xD9F7F3EA), Color(0xFF141414), Color(0xFF5E5A52), Color(0xFFE2512A), Color(0xFFFFFFFF), Color(0x33141414))
+        "arcade-moqueta" -> EstiloPerfil(Color(0xFF0E0C1E), Color(0xB3161430), Color(0xFFF3F0FF), Color(0xFFABA6CF), Color(0xFF3CE6FF), Color(0xFF0E0C1E), Color(0x553CE6FF))
         else -> null
     }
 
@@ -82,6 +152,10 @@ object TemasPerfil {
         "atardecer" -> R.string.tema_atardecer; "ciudad" -> R.string.tema_ciudad; "selva" -> R.string.tema_selva; "cosmos" -> R.string.tema_cosmos
         "doble" -> R.string.marco_doble; "llamas" -> R.string.marco_llamas; "pixel" -> R.string.marco_pixel; "estrellas" -> R.string.marco_estrellas
         "espinas" -> R.string.marco_espinas; "luna" -> R.string.marco_luna
+        "negro-estreno" -> R.string.fondo_negro_estreno; "videoclub-pasillo" -> R.string.fondo_videoclub_pasillo; "biblioteca-sala" -> R.string.fondo_biblioteca_sala
+        "vinilo-funda" -> R.string.fondo_vinilo_funda; "arcade-moqueta" -> R.string.fondo_arcade_moqueta
+        "negro-diafragma" -> R.string.marco_negro_diafragma; "videoclub-rebobine" -> R.string.marco_videoclub_rebobine; "biblioteca-exlibris" -> R.string.marco_biblioteca_exlibris
+        "vinilo-disco" -> R.string.marco_vinilo_disco; "arcade-fosforo" -> R.string.marco_arcade_fosforo
         else -> R.string.tema_clasico
     })
 }
@@ -97,9 +171,24 @@ fun Fogon.conEstilo(e: EstiloPerfil): Fogon = copy(
 @Composable
 fun FondoTemaPerfil(tema: String, modifier: Modifier = Modifier) {
     val e = TemasPerfil.estilo(tema) ?: return
+    TemasPerfil.RECURSOS_FONDO[tema]?.let { FondoImagen(it, e.base, modifier); return }
     val quieto = FogonTema.actual.menosMovimiento
     val t = if (quieto) 0f else rememberInfiniteTransition(label = "fondo").animateFloat(0f, 1f, infiniteRepeatable(tween(14000, easing = LinearEasing)), label = "t").value
     Canvas(modifier) { drawRect(e.base); escena(tema, e, t) }
+}
+
+/** Un fondo del catálogo de Fabs: la escena arriba a todo lo ancho y, abajo, se funde con el color de base. */
+@Composable
+private fun FondoImagen(recurso: Int, base: Color, modifier: Modifier) {
+    val imagen = androidx.compose.ui.graphics.ImageBitmap.imageResource(recurso)
+    Canvas(modifier) {
+        drawRect(base)
+        val alto = size.width * imagen.height / imagen.width
+        drawImage(imagen, dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), alto.toInt()),
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium)
+        drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, base), startY = alto * 0.86f, endY = alto),
+            Offset(0f, alto * 0.86f), Size(size.width, alto * 0.14f + 1f))
+    }
 }
 
 // Sin lunas, soles ni planetas sueltos: un círculo arriba se confunde con un botón. La escena es el cielo, el paisaje y
@@ -214,6 +303,11 @@ fun MarcoFoto(marco: String, tamano: Dp, modifier: Modifier = Modifier) {
         ArteMercado(marco.drop(1), modifier.size(tamano + 22.dp), androidx.compose.ui.layout.ContentScale.Fit)
         return
     }
+    TemasPerfil.RECURSOS_MARCO[marco]?.let {
+        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(it), null, modifier.size(tamano + 22.dp),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+        return
+    }
     if (marco !in TemasPerfil.MARCOS) return
     val f = FogonTema.actual
     val acento = f.tinta1; val texto = f.texto
@@ -296,6 +390,7 @@ fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
     if (Regex("m[1-9][0-9]*").matches(id)) { ArteMercado(id.drop(1), modifier); return }
     val base = id.substringBefore('~')
     val tinta = tintasBanner[id.substringAfter('~', "")]?.first
+    if (base in ANIMADOS_FABS) { BannerAnimadoFabs(base, modifier); return }
     if (base in TemasPerfil.BANNERS_ANIMADOS) {
         BannerAnimado(base, tinta, modifier)
         return
@@ -312,7 +407,7 @@ fun BannerPerfil(id: String, modifier: Modifier = Modifier) {
 }
 
 internal fun bannersDisponibles(reclamados: List<String>, insignia: String): List<String> = buildList {
-    addAll(TemasPerfil.BANNERS.filter { (id, precio) -> precio == 0 || "banner:$id" in reclamados }.keys)
+    addAll(TemasPerfil.BANNERS.filter { (id, precio) -> precio == 0 && TemasPerfil.seOfrece(id) || "banner:$id" in reclamados }.keys)
     addAll(reclamados.filter { Regex("banner:m[1-9][0-9]*").matches(it) }.map { it.removePrefix("banner:") })
     if (insignia == "fogon") add("oficial")
 }
@@ -325,13 +420,13 @@ fun BannersGratis(
 ) {
     var seleccion by androidx.compose.runtime.saveable.rememberSaveable(portada) { mutableStateOf(portada) }
     val idActivo = seleccion.substringBefore('~').removePrefix("banner:")
-    val admiteColor = TemasPerfil.BANNERS[idActivo] == 0 || idActivo in TemasPerfil.BANNERS_ANIMADOS
+    val admiteColor = TemasPerfil.admiteColor(idActivo)
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         bannersDisponibles(reclamados, insignia).forEach { id ->
             androidx.compose.material3.TextButton(onClick = {
                 val valor = if (id == idActivo) seleccion else "banner:$id"
                 seleccion = valor
-                if (!guardarAlElegir || (TemasPerfil.BANNERS[id] != 0 && id !in TemasPerfil.BANNERS_ANIMADOS)) onElegir(valor)
+                if (!guardarAlElegir || !TemasPerfil.admiteColor(id)) onElegir(valor)
             }, modifier = Modifier.width(128.dp)) {
                 Column {
                     val miniatura = Modifier.fillMaxWidth().height(40.dp)
@@ -395,6 +490,24 @@ fun nombreBanner(id: String): String = stringResource(when (id) {
     "plastilina" -> R.string.banner_plastilina
     "aero" -> R.string.banner_aero
     "pizzeria" -> R.string.banner_pizzeria
+    "fabs-papel" -> R.string.banner_fabs_papel
+    "fabs-grano" -> R.string.banner_fabs_grano
+    "fabs-tinta" -> R.string.banner_fabs_tinta
+    "negro-persiana" -> R.string.banner_negro_persiana
+    "negro-hotel" -> R.string.banner_negro_hotel
+    "negro-ventilador" -> R.string.banner_negro_ventilador
+    "videoclub-estanteria" -> R.string.banner_videoclub_estanteria
+    "videoclub-rebobinar" -> R.string.banner_videoclub_rebobinar
+    "videoclub-abierto" -> R.string.banner_videoclub_abierto
+    "biblioteca-lomos" -> R.string.banner_biblioteca_lomos
+    "biblioteca-marmolado" -> R.string.banner_biblioteca_marmolado
+    "biblioteca-polvo" -> R.string.banner_biblioteca_polvo
+    "vinilo-surco" -> R.string.banner_vinilo_surco
+    "vinilo-sello" -> R.string.banner_vinilo_sello
+    "vinilo-giradiscos" -> R.string.banner_vinilo_giradiscos
+    "arcade-puntajes" -> R.string.banner_arcade_puntajes
+    "arcade-vector" -> R.string.banner_arcade_vector
+    "arcade-hiperespacio" -> R.string.banner_arcade_hiperespacio
     else -> R.string.tema_clasico
 })
 

@@ -13,7 +13,8 @@ import io.github.fogonapps.identidad.*
 /** Formato aditivo del cajón; no incluye el idioma del teléfono. */
 @Serializable
 data class AparienciaCuenta(
-    val estilo: String = "GRAFITO",
+    /** Vacío: nunca eligió (o eligió el de siempre antes del rebranding); se usa el estilo inicial de la app. */
+    val estilo: String = "",
     val ajustes: Map<String, AjusteApariencia> = emptyMap(),
     val tamanoTexto: Int = 1,
     val menosMovimiento: Boolean = false,
@@ -44,7 +45,7 @@ fun Apariencia.paraCuenta(cambio: Long) = AparienciaCuenta(estilo.name,
 
 fun AparienciaCuenta.paraTelefono() = Apariencia(
     guardadas = guardadas.take(12).map { TintasGuardadas(it.nombre, it.ajuste.paraTelefono()) },
-    estilo = Estilo.entries.firstOrNull { it.name == estilo } ?: Estilo.GRAFITO,
+    estilo = Estilo.entries.firstOrNull { it.name == estilo } ?: AlmacenApariencia.estiloInicial,
     ajustes = ajustes.mapNotNull { (nombre, a) -> Estilo.entries.firstOrNull { it.name == nombre }?.let { it to a.paraTelefono() } }.toMap(),
     tamanoTexto = tamanoTexto.coerceIn(0, 3), menosMovimiento = menosMovimiento, masContraste = masContraste,
 )

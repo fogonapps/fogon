@@ -59,7 +59,7 @@ class LenaTest {
             if (estado != "pendiente") transacciones[ref] = TransaccionWompi(ref, "tx_$estado", estado, 5_000_000, "COP")
         }
         pagos.conciliar(e.id)
-        assertEquals(5500 + TemasPerfil.BIENVENIDA, e.social.chispas(e.id))
+        assertEquals(5750 + TemasPerfil.BIENVENIDA, e.social.chispas(e.id))
         assertEquals("brasa", e.social.miCuenta(e.id).nivelLena)
 
         e.elevar(e.jefe, e.principal.token)

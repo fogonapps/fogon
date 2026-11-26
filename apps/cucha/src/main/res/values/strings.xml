@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name" translatable="false">La Cucha</string>
+  <string name="app_name" translatable="false">Ñom</string>
   <string name="cargando">Loading…</string>
   <string name="pestana_hoy">Today</string>
   <string name="pestana_recetas">Recipes</string>
@@ -36,8 +36,8 @@
   <string name="proteina_g">%1$d g protein</string>
   <string name="forzudo_hoy">You trained today: %1$s</string>
   <string name="forzudo_entreno">workout</string>
-  <string name="forzudo_peso">Your weight in El Forzudo: %1$s kg</string>
-  <string name="forzudo_sin_peso">Log your weight in El Forzudo and you’ll see it here.</string>
+  <string name="forzudo_peso">Your weight in Forz: %1$s kg</string>
+  <string name="forzudo_sin_peso">Log your weight in Forz and you’ll see it here.</string>
   <string name="agua">Water</string>
   <string name="agua_lleva">%1$s of %2$s L</string>
   <string name="agua_sumar">A glass of water (250 ml)</string>
@@ -122,17 +122,17 @@
   <string name="peso">Weight</string>
   <string name="peso_cambio">Last 4 weeks: %1$s kg</string>
   <string name="peso_pocos">With two weights logged you’ll see how it changes here.</string>
-  <string name="peso_de_forzudo">Weight comes from El Forzudo: log it there.</string>
+  <string name="peso_de_forzudo">Weight comes from Forz: log it there.</string>
   <string name="peso_hoy">Your weight today (kg)</string>
-  <string name="peso_sin_forzudo">If you install El Forzudo, the weight is taken from there.</string>
+  <string name="peso_sin_forzudo">If you install Forz, the weight is taken from there.</string>
   <string name="tus_datos">About you</string>
   <string name="tus_metas">Your goals</string>
   <string name="metas_a_mano">You set them yourself.</string>
   <string name="metas_calculadas">Calculated from your data; they change when your weight does.</string>
   <string name="cambiar_metas">Change goals</string>
-  <string name="forzudo">El Forzudo</string>
-  <string name="forzudo_conectado">Connected: La Cucha reads your weight and workouts from El Forzudo, offline.</string>
-  <string name="forzudo_no_esta">If you install El Forzudo, La Cucha takes your weight from it and shows when you trained.</string>
+  <string name="forzudo">Forz</string>
+  <string name="forzudo_conectado">Connected: Ñom reads your weight and workouts from Forz, offline.</string>
+  <string name="forzudo_no_esta">If you install Forz, Ñom takes your weight from it and shows when you trained.</string>
   <string name="opciones">Options</string>
   <string name="codigo_barras">Look up barcodes</string>
   <string name="codigo_barras_pista">When you scan with the camera, the app looks up the barcode on Open Food Facts.</string>
@@ -151,11 +151,11 @@
   <string name="recuperar_pregunta">Restore a backup?</string>
   <string name="recuperar_texto">You’ll pick a file. I’ll ask again before replacing anything.</string>
   <string name="importar_titulo">Restore this backup?</string>
-  <string name="importar_texto">Everything in La Cucha is replaced by what’s in the file.</string>
+  <string name="importar_texto">Everything in Ñom is replaced by what’s in the file.</string>
   <string name="importar_si">Yes, restore</string>
   <string name="fogon">Fogón</string>
   <string name="manifiesto">Fogón manifesto</string>
-  <string name="acerca_de">About La Cucha</string>
+  <string name="acerca_de">About Ñom</string>
   <string name="acerca_de_corto">About</string>
   <string name="licencias">Licenses</string>
   <string name="tu_nombre">Your name (optional)</string>
@@ -164,7 +164,7 @@
   <string name="edad">Age</string>
   <string name="altura_cm">Height (cm)</string>
   <string name="peso_kg">Weight (kg)</string>
-  <string name="peso_lo_trae_forzudo">Weight updates itself with the latest from El Forzudo.</string>
+  <string name="peso_lo_trae_forzudo">Weight updates itself with the latest from Forz.</string>
   <string name="actividad">How active are you?</string>
   <string name="objetivo">What do you want?</string>
   <string name="bajar">Lose</string>
@@ -179,7 +179,7 @@
   <string name="si_continuar">Yes, continue</string>
   <string name="volver">Back</string>
   <string name="siguiente">Next</string>
-  <string name="tut_hola">Hi! I’m La Cucha</string>
+  <string name="tut_hola">Hi! I’m Ñom</string>
   <string name="tut_hola_texto">I help you keep track of what you eat: calories, protein and your everyday recipes. No ads. Your food diary is saved on your phone.</string>
   <string name="tut_tengo_respaldo">I have a backup</string>
   <string name="tut_datos">Tell me about you</string>
@@ -199,14 +199,14 @@
   <string name="aviso_buscando">Searching Open Food Facts…</string>
   <string name="aviso_sin_red">No internet. Add it as a new product.</string>
   <string name="aviso_no_encontrado">That barcode isn’t on Open Food Facts. Type its data from the package.</string>
-  <string name="aviso_no_son_recetas">That file has no recipes La Cucha understands.</string>
+  <string name="aviso_no_son_recetas">That file has no recipes Ñom understands.</string>
   <string name="aviso_importado">Done, the backup was restored.</string>
   <string name="aviso_respaldo_guardado">Backup saved.</string>
   <string name="aviso_no_exportado">Couldn’t save the file.</string>
-  <string name="aviso_no_es_respaldo">That file isn’t a valid La Cucha backup: it may be damaged or incomplete.</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a valid Ñom backup: it may be damaged or incomplete.</string>
   <string name="escanear_pista">Point at the package’s barcode</string>
   <string name="aviso_salud_titulo">Health notice</string>
-  <string name="aviso_salud">La Cucha is a food diary, not medical or nutrition advice. Goals are general estimates that don’t know your health, and food values are approximate. If you have an illness, are pregnant, or have or had an eating disorder, talk to a health professional. You use the app at your own risk.</string>
+  <string name="aviso_salud">Ñom is a food diary, not medical or nutrition advice. Goals are general estimates that don’t know your health, and food values are approximate. If you have an illness, are pregnant, or have or had an eating disorder, talk to a health professional. You use the app at your own risk.</string>
   <string name="lic_usda">Food values come from USDA FoodData Central (SR Legacy 2018 and FNDDS 2024), by the U.S. Department of Agriculture. They are in the public domain (CC0 1.0).</string>
   <string name="lic_off">Scanned products come from Open Food Facts: the database is under the Open Database License (ODbL) and its contents under the Database Contents License (DbCL). It is only queried when scanning.</string>
   <string name="lic_zxing">The barcode reader: ZXing and zxing-android-embedded. Apache License 2.0.</string>
@@ -215,8 +215,8 @@
     <item quantity="other">%d recipes imported</item>
   </plurals>
   <plurals name="forzudo_semana">
-    <item quantity="one">This week: %d workout in El Forzudo</item>
-    <item quantity="other">This week: %d workouts in El Forzudo</item>
+    <item quantity="one">This week: %d workout in Forz</item>
+    <item quantity="other">This week: %d workouts in Forz</item>
   </plurals>
   <plurals name="porciones_n">
     <item quantity="one">%d serving</item>
@@ -240,7 +240,7 @@
   <string-array name="creditos">
     <item>Food values: USDA FoodData Central (public domain).</item>
     <item>Scanned products: Open Food Facts (ODbL).</item>
-    <item>Sample recipes written for La Cucha, from everyday Colombian cooking.</item>
+    <item>Sample recipes written for Ñom, from everyday Colombian cooking.</item>
   </string-array>
   <string name="macro_pasado">%1$d g over the goal</string>
   <string name="anotar_rapido">Quick add</string>
@@ -257,7 +257,7 @@
   <string name="foto_quitar">Remove photo</string>
   <string name="foto_receta_pista">The photo is kept on this phone only.</string>
     <string name="ajustes">Settings</string>
-    <string name="aj_como_usas">How you use La Cucha</string>
+    <string name="aj_como_usas">How you use Ñom</string>
     <string name="aj_tu_cocina">Your kitchen</string>
     <string name="aj_todo_fogon">All of Fogón in one file</string>
     <string name="aj_apariencia_idioma">Appearance and language</string>
@@ -300,16 +300,16 @@
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
     <string name="cuenta_local">Your diary, goals, weight, recipes and products stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
-    <string name="cuenta_intro">La Cucha’s network: your Fogón Social account, the same in every app. Follow other people and share dishes, recipes and restaurants.</string>
+    <string name="cuenta_intro">Ñom’s network: your Fogón Social account, the same in every app. Follow other people and share dishes, recipes and restaurants.</string>
     <string name="cuenta_que_sale">Only what you choose to share appears on the network: never your goals, your weight or what you eat each day. Your diary is saved to your account encrypted with your password: nobody else can read it, not even Fogón. A dish’s or recipe’s calories and macros only go out if you include them. A restaurant’s location only goes out if you add it.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your diary is still available.</string>
     <string name="cuenta_politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
     <string name="cuenta_compartido">One Fogón Social account for every app, with separate sessions. Name, photo, cover and bio are global. Only the dishes, recipes and reviews you choose are shared, with their visibility. Signing out other sessions and deleting the account affect every app.</string>
     <string name="cuenta_borrado">Deleting your social account has a grace period and affects every app. Your local diary is kept until you remove the profile.</string>
     <string name="cuenta_servicio_social">Fogón Social: identity, account, sessions and what you share.</string>
-    <string name="cuenta_servicio_forzudo">El Forzudo (on this phone): weight and this week’s workouts from the linked profile.</string>
-    <string name="forzudo_perfil_titulo">Your El Forzudo profile</string>
-    <string name="forzudo_perfil_pista">El Forzudo has several profiles. Choose yours to read your weight and workouts; it is never guessed from the number.</string>
+    <string name="cuenta_servicio_forzudo">Forz (on this phone): weight and this week’s workouts from the linked profile.</string>
+    <string name="forzudo_perfil_titulo">Your Forz profile</string>
+    <string name="forzudo_perfil_pista">Forz has several profiles. Choose yours to read your weight and workouts; it is never guessed from the number.</string>
     <string name="forzudo_ninguno">None</string>
     <string name="forzudo_perfil_sin_nombre">Profile %1$s</string>
     <string name="red_tu_gente">Your people</string>
@@ -322,7 +322,7 @@
     <string name="red_avisos">Notifications</string>
     <string name="red_moderacion">Moderation</string>
     <string name="red_guardados">Saved</string>
-    <string name="red_feed_pie">Dishes, recipes and restaurants shared on La Cucha</string>
+    <string name="red_feed_pie">Dishes, recipes and restaurants shared on Ñom</string>
     <string name="red_seguir">Follow</string>
     <string name="red_dejar_seguir">Following</string>
     <string name="red_borrar">Delete post?</string>

@@ -43,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
@@ -56,7 +58,6 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.forma
-import io.github.fogonapps.identidad.haloPuntos
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -77,6 +78,12 @@ fun FilasDeGustos(vm: CajonViewModel, e: Estado) {
 
 /** Cuántas de la lista para empezar dijo que le gustan. */
 fun elegidasIniciales(e: Estado): Int = Catalogo.cantidadElegida(e)
+
+/** Si el cajón ya trae obras (de otra app o de un respaldo) antes de elegir gustos: entonces elegir es opcional. */
+fun traidoDeOtraApp(e: Estado): Boolean = e.vivas.size >= 3
+
+/** Se puede seguir: tres gustos elegidos o el historial ya traído de otra app. */
+fun gustosSuficientes(e: Estado): Boolean = Catalogo.minimoCumplido(elegidasIniciales(e)) || traidoDeOtraApp(e)
 
 @Composable
 private fun FilaDeGustos(vm: CajonViewModel, e: Estado, tipo: String, titulo: String) {
@@ -127,7 +134,8 @@ private fun FilaDeGustos(vm: CajonViewModel, e: Estado, tipo: String, titulo: St
     Text(titulo, style = MaterialTheme.typography.titleMedium, color = f.texto,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp))
     // Una sola línea que se desliza: con seis filas, dos líneas de píldoras por fila alargaban demasiado la pantalla.
-    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val desliza = rememberScrollState()
+    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().desvanecerBordes(desliza.canScrollBackward, desliza.canScrollForward).horizontalScroll(desliza).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
             SeccionCatalogo.ICONICAS to stringResource(R.string.catalogo_iconicas),
             SeccionCatalogo.TENDENCIAS to stringResource(R.string.catalogo_tendencias),
@@ -167,7 +175,7 @@ private fun FilaDeGustos(vm: CajonViewModel, e: Estado, tipo: String, titulo: St
     }
 }
 
-/** Una obra o artista para elegir: su portada (o, sin portada, una tarjeta con el título en la trama de puntos). */
+/** Una obra o artista para elegir: su portada (o, sin portada, una tapa gris con el título en la letra de los títulos). */
 @Composable
 private fun TarjetaInicial(o: ObraInicial, imagen: String, elegida: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val f = FogonTema.actual
@@ -176,12 +184,12 @@ private fun TarjetaInicial(o: ObraInicial, imagen: String, elegida: Boolean, mod
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Box {
             if (artista) FotoArtista(imagen, o.titulo, 92.dp)
-            else Box(Modifier.fillMaxWidth().aspectRatio(if (o.tipo == Tipos.ALBUM) 1f else 2f / 3f).clip(forma(12.dp)).background(f.superficie)
-                .then(if (elegida) Modifier.border(3.dp, f.tinta1, forma(12.dp)) else Modifier.border(f.borde, f.linea, forma(12.dp))),
+            else Box(Modifier.fillMaxWidth().aspectRatio(if (o.tipo == Tipos.ALBUM) 1f else 2f / 3f).clip(forma(12.dp)).background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.07f))
+                .then(if (elegida) Modifier.border(3.dp, f.texto, forma(12.dp)) else Modifier),
                 contentAlignment = Alignment.Center) {
                 if (imagen.isNotBlank()) coil3.compose.AsyncImage(imagen, o.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                else Box(Modifier.fillMaxSize().haloPuntos(f.tinta2.copy(alpha = 0.35f)).padding(10.dp), contentAlignment = Alignment.Center) {
-                    Text(o.titulo, style = MaterialTheme.typography.titleSmall, color = f.texto, textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
+                else Box(Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
+                    Text(o.titulo, fontFamily = f.titulos, fontSize = 15.sp, lineHeight = 18.sp, color = f.texto, textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (elegida) Box(Modifier.align(Alignment.TopEnd).padding(6.dp).size(28.dp).clip(FormaPildora).background(f.tinta1), contentAlignment = Alignment.Center) {
@@ -189,7 +197,7 @@ private fun TarjetaInicial(o: ObraInicial, imagen: String, elegida: Boolean, mod
             }
         }
         // Sin portada, el título ya va en la tarjeta: abajo no se repite.
-        if (artista || imagen.isNotBlank()) Text(o.titulo, style = MaterialTheme.typography.labelLarge, color = if (elegida) f.acentoTexto else f.texto, maxLines = 2,
+        if (artista || imagen.isNotBlank()) Text(o.titulo, style = MaterialTheme.typography.labelLarge, color = f.texto, fontWeight = if (elegida) FontWeight.Bold else null, maxLines = 2,
             overflow = TextOverflow.Ellipsis, textAlign = if (artista) TextAlign.Center else TextAlign.Start, modifier = Modifier.fillMaxWidth())
         o.anio?.let { Text("$it", style = MaterialTheme.typography.labelSmall, color = f.textoSuave, modifier = Modifier.fillMaxWidth()) }
     }

@@ -7,6 +7,33 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BaseTest {
+    @Test fun losGanchosQueSeRegistranAlConfirmarCorrenEnLaMismaTanda() {
+        val dir = Files.createTempDirectory("ganchos").toFile()
+        val base = Base(java.io.File(dir, "s.db").path)
+        try {
+            val orden = mutableListOf<String>()
+            base.transaccion {
+                base.despuesDeConfirmar {
+                    orden += "primero"
+                    // Registrado mientras corren los de esta transacción: corre ya, no en la siguiente.
+                    base.despuesDeConfirmar { orden += "segundo"; base.despuesDeConfirmar { orden += "tercero" } }
+                }
+            }
+            assertEquals(listOf("primero", "segundo", "tercero"), orden)
+            // La transacción siguiente no arrastra nada de la anterior.
+            orden.clear()
+            base.transaccion { }
+            assertTrue(orden.isEmpty())
+            // Un gancho que se registra a sí mismo sin fin no cuelga la transacción: se corta.
+            var vueltas = 0
+            fun otraVez() { vueltas++; base.despuesDeConfirmar { otraVez() } }
+            base.transaccion { base.despuesDeConfirmar { otraVez() } }
+            assertEquals(100, vueltas)
+            base.transaccion { }
+            assertEquals(100, vueltas)
+        } finally { base.cerrar(); dir.deleteRecursively() }
+    }
+
     @Test fun migraMensajesViejosSinPerderFilasNiRepetirSecuencia() {
         val dir = Files.createTempDirectory("migracion-chat").toFile()
         val ruta = java.io.File(dir, "s.db").path

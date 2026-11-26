@@ -64,13 +64,14 @@ fun <T> resorteAlegre() = spring<T>(dampingRatio = 0.55f, stiffness = 260f)
 
 /**
  * La pantalla de encima de la pila, animada. Al abrir una más profunda entra desde la derecha y la de atrás
- * se hunde y se apaga; al volver, al revés. [profundidad] es cuántas pantallas hay en la pila.
+ * se hunde y se apaga; al volver, al revés. [profundidad] es cuántas pantallas hay en la pila. Con [entraSuave], la
+ * nueva solo se aclara (algo vuela hasta ella).
  *
  * Las pantallas de atrás guardan lo suyo (lo escrito en una búsqueda, el scroll): al volver a ellas sigue ahí.
  * Lo de las que se cierran se olvida, para que al abrirlas de nuevo empiecen en blanco.
  */
 @Composable
-fun <T> PilaAnimada(pantalla: T?, profundidad: Int, contenido: @Composable (T) -> Unit) {
+fun <T> PilaAnimada(pantalla: T?, profundidad: Int, entraSuave: (T?) -> Boolean = { false }, contenido: @Composable (T) -> Unit) {
     val quieto = FogonTema.actual.menosMovimiento
     val guardado = rememberSaveableStateHolder()
     val claves = remember { mutableMapOf<Int, String>() }
@@ -82,6 +83,8 @@ fun <T> PilaAnimada(pantalla: T?, profundidad: Int, contenido: @Composable (T) -
         transitionSpec = {
             val adelante = targetState.second >= initialState.second
             if (quieto) fadeIn(tween(120)) togetherWith fadeOut(tween(120))
+            // Cuando algo de la pantalla vuela hasta la nueva (una portada que crece hasta su ficha), la nueva se aclara sin deslizarse.
+            else if (adelante && entraSuave(targetState.first)) ContentTransform(fadeIn(tween(260)), fadeOut(tween(260)), targetContentZIndex = targetState.second.toFloat())
             else if (adelante) ContentTransform(
                 slideInHorizontally(resorte()) { it } + fadeIn(tween(160)),
                 scaleOut(resorte(), targetScale = 0.94f) + fadeOut(tween(220)),

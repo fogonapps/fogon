@@ -1,6 +1,8 @@
 package io.github.fogonapps.identidad
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
@@ -94,6 +96,8 @@ fun Modifier.brillo(color: Color, forma: Shape = FormaRiso, intensidad: Dp = 18.
 @Composable
 fun Modifier.tarjetaFogon(forma: Shape = FormaRiso, sombra: Boolean = true): Modifier {
     val f = FogonTema.actual
+    // Con el diseño nuevo (trama apagada, hoy solo Fabs): sin vidrio ni borde, un papel apenas más hondo.
+    if (Trama.apagada) return clip(forma).background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, if (f.oscuro) 0.06f else 0.035f))
     return clip(forma).background(f.superficie).border(f.borde, f.linea, forma)
 }
 
@@ -101,7 +105,7 @@ fun Modifier.tarjetaFogon(forma: Shape = FormaRiso, sombra: Boolean = true): Mod
 @Composable
 fun Modifier.tarjetaDestacada(forma: Shape = FormaRiso): Modifier {
     val f = FogonTema.actual
-    return clip(forma).background(f.tinta1)
+    return clip(forma).background(if (Trama.apagada) f.texto else f.tinta1)
 }
 
 /**
@@ -119,11 +123,14 @@ fun Modifier.decoracion(f: Fogon): Modifier = if (f.brillo.alpha <= 0f) this els
 /** El fondo de cada pantalla: el papel del tema y su luz. */
 fun Modifier.fondoFogon(f: Fogon): Modifier = background(f.fondo).decoracion(f)
 
+/** Las apps ya rediseñadas (Fabs, 2026-11) apagan la trama de puntos: su único adorno es el color de las portadas. */
+object Trama { @Volatile var apagada = false }
+
 /**
  * El halo de puntos: una trama que se apaga hacia el borde, detrás del número grande. Es la trama riso de
  * Fogón convertida en luz. [centro] en fracciones del ancho y del alto.
  */
-fun Modifier.haloPuntos(color: Color, paso: Dp = 10.dp, centro: Offset = Offset(0.35f, 0.45f)): Modifier = drawWithCache {
+fun Modifier.haloPuntos(color: Color, paso: Dp = 10.dp, centro: Offset = Offset(0.35f, 0.45f)): Modifier = if (Trama.apagada) this else drawWithCache {
     val p = paso.toPx(); val r = p * 0.15f
     val puntos = puntosHalo(size.width, size.height, p, centro)
     onDrawBehind { puntos.forEach { (o, t) -> drawCircle(color.copy(alpha = color.alpha * 0.55f * t), r, o) } }
@@ -178,7 +185,10 @@ fun BotonRiso(
         onClick = onClick,
         enabled = habilitado,
         shape = FormaPildora,
-        colors = ButtonDefaults.buttonColors(containerColor = f.tinta1, contentColor = f.sobreTinta1),
+        // Con el diseño nuevo (trama apagada, hoy solo Fabs): la píldora en la tinta del texto, letra del color del papel.
+        colors = if (Trama.apagada) ButtonDefaults.buttonColors(containerColor = f.texto, contentColor = f.fondo,
+            disabledContainerColor = f.texto.copy(alpha = 0.28f), disabledContentColor = f.fondo)
+        else ButtonDefaults.buttonColors(containerColor = f.tinta1, contentColor = f.sobreTinta1),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
         modifier = modifier.rebote().heightIn(min = 50.dp),
     ) { Text(texto, style = MaterialTheme.typography.labelLarge) }
@@ -202,10 +212,11 @@ fun BotonSecundario(
         border = BorderStroke(f.borde, when {
             !habilitado -> f.textoSecundarioDeshabilitado
             peligro -> color.copy(alpha = 0.6f)
+            Trama.apagada -> f.texto.copy(alpha = 0.6f)
             else -> f.linea
         }),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = f.superficie,
+            containerColor = if (Trama.apagada) androidx.compose.ui.graphics.Color.Transparent else f.superficie,
             contentColor = color,
             disabledContainerColor = f.fondoSecundarioDeshabilitado,
             disabledContentColor = f.textoSecundarioDeshabilitado,
@@ -317,8 +328,17 @@ private val IMAGENES: Map<Quien, Map<Cara, Int>> = mapOf(
  * Está vivo: aparece con un rebote, respira (sube y baja muy poquito), parpadea cada tanto y, al cambiar de cara,
  * pasa de una a otra con un fundido. Con "Menos movimiento" se queda quieto.
  */
+/**
+ * Las apps que ya no usan personaje (rebranding 2026-11: Fabs lo quitó, «eso es viejo»). Cada app se anota al
+ * arrancar; entonces [Personaje], la celebración, los vacíos y el widget no lo dibujan.
+ */
+object Personajes {
+    @Volatile var apagados: Set<Quien> = emptySet()
+}
+
 @Composable
 fun Personaje(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, cara: Cara = Cara.NORMAL, tamano: Dp = 160.dp) {
+    if (quien in Personajes.apagados) return
     val f = FogonTema.actual
     val quieto = f.menosMovimiento
     // El parpadeo: los ojos cerrados (una rayita) un instante, cada 3 a 6 segundos, de golpe y sin fundido. No en las
@@ -389,7 +409,14 @@ fun BotonPerfilMascota(quien: Quien, descripcion: String, cara: Cara = Cara.NORM
         Modifier.rebote(0.9f).size(48.dp).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape)
             .clickable(onClick = onClick).semantics { contentDescription = descripcion; role = Role.Button },
         contentAlignment = Alignment.Center,
-    ) { if (foto != null) foto() else Personaje(quien, null, cara = cara, tamano = 40.dp) }
+    ) {
+        when {
+            foto != null -> foto()
+            // Sin personaje (Fabs): la silueta de una persona, en la letra del texto.
+            quien in Personajes.apagados -> IconoRiso(IconosFogon.Perfil, null, tamano = 22.dp, tinta = f.texto)
+            else -> Personaje(quien, null, cara = cara, tamano = 40.dp)
+        }
+    }
 }
 
 /** La celebración de cada personaje: 24 cuadros en una tira (salen de Blender). */
@@ -406,6 +433,7 @@ private const val CUADROS = 24
 @Composable
 fun Celebracion(quien: Quien, descripcion: String?, modifier: Modifier = Modifier, tamano: Dp = 96.dp, veces: Int = 2) {
     val f = FogonTema.actual
+    if (quien in Personajes.apagados) return
     var termino by remember { mutableStateOf(f.menosMovimiento) }
     if (termino) { Personaje(quien, descripcion, modifier, cara = Cara.FELIZ, tamano = tamano); return }
     val tira = androidx.compose.ui.graphics.ImageBitmap.imageResource(TIRAS.getValue(quien))
@@ -473,6 +501,51 @@ fun Logro(texto: String, modifier: Modifier = Modifier) {
     }
 }
 
+/** El logotipo de cada app: la palabra y su detalle (raya, tilde, moneda), en dos capas. */
+private fun logotipoDe(quien: Quien): Pair<Int, Int> = when (quien) {
+    Quien.CAJON -> R.drawable.logotipo_fabs_palabra to R.drawable.logotipo_fabs_detalle
+    Quien.CUCHA -> R.drawable.logotipo_nom_palabra to R.drawable.logotipo_nom_detalle
+    Quien.AHORRADOR -> R.drawable.logotipo_pezi_palabra to R.drawable.logotipo_pezi_detalle
+    Quien.FORZUDO -> R.drawable.logotipo_forz_palabra to R.drawable.logotipo_forz_detalle
+}
+
+/** El color del detalle del logotipo: el de su marca (raya amarilla, tilde naranja…); si no se ve sobre el papel, la tinta del tema. */
+private fun colorDetalle(quien: Quien, f: Fogon): Color {
+    val propio = when (quien) {
+        Quien.CAJON -> Paleta.Cajon.tinta
+        Quien.CUCHA -> Paleta.Cucha.tinta
+        Quien.AHORRADOR -> Paleta.Ahorrador.segunda
+        Quien.FORZUDO -> Paleta.Forzudo.tinta
+    }
+    return if (contraste(propio, f.fondo) >= 1.4) propio else f.tintaIlustracion
+}
+
+/**
+ * La marca de la app donde se presenta (bienvenida, Acerca de): su logotipo y, debajo, el sello discreto
+ * «de Fogón». La palabra va en el color del texto y el detalle en el color de su marca, así se lee en todos los temas.
+ */
+@Composable
+fun LogotipoApp(quien: Quien, nombreApp: String, modifier: Modifier = Modifier, alto: Dp = 56.dp) {
+    val f = FogonTema.actual
+    val (palabra, detalle) = logotipoDe(quien)
+    val pintor = painterResource(palabra)
+    val proporcion = pintor.intrinsicSize.let { if (it.height > 0f) it.width / it.height else 3f }
+    Column(
+        modifier.semantics(mergeDescendants = true) { contentDescription = nombreApp; heading() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box(Modifier.height(alto).aspectRatio(proporcion)) {
+            Image(pintor, null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(f.texto))
+            Image(painterResource(detalle), null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(colorDetalle(quien, f)))
+        }
+        Text(
+            stringResource(R.string.fogon_sello), style = MaterialTheme.typography.bodyMedium,
+            color = f.texto.copy(alpha = 0.6f), modifier = Modifier.clearAndSetSemantics { },
+        )
+    }
+}
+
 /** Pantalla "Acerca de", igual en todas las apps de Fogón. */
 @Composable
 fun AcercaDeFogon(
@@ -493,8 +566,8 @@ fun AcercaDeFogon(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Personaje(quien, nombreApp, cara = Cara.FELIZ, tamano = 96.dp)
-        Text(nombreApp, style = MaterialTheme.typography.headlineMedium, color = f.texto)
+        Personaje(quien, null, cara = Cara.FELIZ, tamano = 96.dp)
+        LogotipoApp(quien, nombreApp)
         Text(stringResource(R.string.fogon_version, version), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
         Image(
             painterResource(if (f.oscuro) R.drawable.fogon_logotipo_claro else R.drawable.fogon_logotipo),

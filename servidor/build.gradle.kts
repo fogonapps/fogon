@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.fogonapps"
-version = "0.49"
+version = "0.51"
 
 kotlin { jvmToolchain(21) }
 
@@ -29,6 +29,8 @@ val temporalPruebas = File(System.getProperty("user.home"), ".cache/fogon-prueba
 val limpiarTemporalPruebas by tasks.registering { doLast { temporalPruebas.deleteRecursively() } }
 tasks.test {
     useJUnitPlatform()
+    // `-PmemoriaPruebas=256m` corre las pruebas con la memoria del servicio (fogon-social.service).
+    providers.gradleProperty("memoriaPruebas").orNull?.let { maxHeapSize = it }
     systemProperty("java.io.tmpdir", temporalPruebas.absolutePath)
     doFirst { temporalPruebas.deleteRecursively(); temporalPruebas.mkdirs() }
     finalizedBy(limpiarTemporalPruebas)

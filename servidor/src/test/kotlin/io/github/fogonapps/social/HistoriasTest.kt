@@ -174,6 +174,7 @@ class HistoriasTest {
             val s = Social(b, File(dir, "fotos"))
             val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("anabel")).token)!!
             val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("roberto")).token)!!
+            s.seguir(ana, "roberto"); s.seguir(beto, "anabel")
             b.usar { cambiar("INSERT INTO sesiones(huella, cuenta, creada, ultimo_uso, app) VALUES('cajon', ?, 0, 0, 'cajon'), ('forzudo', ?, 0, 0, 'forzudo')", ana, ana) }
             s.mensajesSinLeer(ana, "forzudo")
             s.mandar(beto, "anabel", SobreNuevo("x".repeat(40), "f".repeat(40)))

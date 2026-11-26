@@ -29,10 +29,10 @@ No copiamos marcas ni hablamos mal de nadie. Hacemos las cosas a nuestra manera 
 
 | | App | Qué hace | Descargar |
 |---|-----|----------|-----------|
-| <img src="apps/forzudo/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [El Forzudo](apps/forzudo/) | Tu cuaderno de entrenos: rutinas, descanso, récords y rangos de fuerza | [Última versión](https://github.com/fogonapps/el-forzudo/releases/latest) |
-| <img src="apps/ahorrador/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [La Alcancía](apps/ahorrador/) | Gastos, presupuesto (sobres, 50/30/20, kakeibo), tarjeta de crédito, metas y pagos fijos; tus logros con Fogón Social, opcional | [Última versión](https://github.com/fogonapps/la-alcancia/releases/latest) |
-| <img src="apps/cucha/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [La Cucha](apps/cucha/) | Calorías, recetas colombianas, menú de la semana y lista de mercado | [Última versión](https://github.com/fogonapps/la-cucha/releases/latest) |
-| <img src="apps/cajon/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [El Cajón](apps/cajon/) | Películas, series, animes, libros y música: tu nota, tu diario, tus listas y recomendaciones | [Última versión](https://github.com/fogonapps/el-cajon/releases/latest) |
+| <img src="apps/forzudo/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Forz](apps/forzudo/) | Tu cuaderno de entrenos: rutinas, descanso, récords y rangos de fuerza | [Última versión](https://github.com/fogonapps/el-forzudo/releases/latest) |
+| <img src="apps/ahorrador/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Pezi](apps/ahorrador/) | Gastos, presupuesto (sobres, 50/30/20, kakeibo), tarjeta de crédito, metas y pagos fijos; tus logros con Fogón Social, opcional | [Última versión](https://github.com/fogonapps/la-alcancia/releases/latest) |
+| <img src="apps/cucha/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Ñom](apps/cucha/) | Calorías, recetas colombianas, menú de la semana y lista de mercado | [Última versión](https://github.com/fogonapps/la-cucha/releases/latest) |
+| <img src="apps/cajon/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Fabs](apps/cajon/) | Películas, series, animes, libros y música: tu nota, tu diario, tus listas y recomendaciones | [Google Play](https://play.google.com/store/apps/details?id=io.github.fogonapps.cajon) |
 
 Para Android. Con [Obtainium](https://github.com/ImranR98/Obtainium) las actualizaciones llegan solas: Añadir aplicación → pegar el enlace del repo de la app (por ejemplo `https://github.com/fogonapps/el-cajon`).
 

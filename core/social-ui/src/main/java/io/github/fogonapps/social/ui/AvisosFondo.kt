@@ -38,6 +38,8 @@ interface AppConAvisos {
     val avisosConfiguracion: ConfiguracionSocial
     /** Las cuatro apps tienen el chat (el mismo, con las llaves de la cuenta compartidas). */
     val avisosConMensajes: Boolean get() = true
+    /** Si la app usa historias: sin ellas, sus avisos (me gusta, menciones, respuestas a una historia) no se notifican. */
+    val avisosConHistorias: Boolean get() = true
     val avisosIcono: Int
     fun avisosCuentas(): List<CuentaAvisos>
     fun avisosAbrir(perfil: String): Intent
@@ -63,7 +65,8 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
                 val conteo = cliente.sinLeer() to (if (app.avisosConMensajes) cliente.mensajesSinLeer() else 0)
                 // Quién y qué, solo si hay algo nuevo (para no pedir de más).
                 val p = cuenta.perfil
-                val ultimos = if (conteo.first > prefs.getInt("p$p.avisos", 0)) runCatching { cliente.avisos().filter { !it.leido } }.getOrDefault(emptyList()) else emptyList()
+                val ultimos = (if (conteo.first > prefs.getInt("p$p.avisos", 0)) runCatching { cliente.avisos().filter { !it.leido } }.getOrDefault(emptyList()) else emptyList())
+                    .let { l -> if (app.avisosConHistorias) l else l.filterNot { Avisos.deHistoria(it) } }
                 // Los chats silenciados (los guarda la app en "p<perfil>.silenciados") no avisan.
                 val silenciados = prefs.getStringSet("p$p.silenciados", emptySet()).orEmpty()
                 val todos = if (app.avisosConMensajes && conteo.second > prefs.getInt("p$p.mensajes", 0)) cliente.remitentesConUsuario() else emptyList()
@@ -78,7 +81,8 @@ open class AvisosFondo(contexto: Context, params: WorkerParameters) : Worker(con
             val p = cuenta.perfil
             val antes = prefs.getInt("p$p.avisos", 0) to prefs.getInt("p$p.mensajes", 0)
             prefs.edit().putInt("p$p.avisos", avisos).putInt("p$p.mensajes", mensajes).apply()
-            val nuevosAvisos = avisos > antes.first && Avisos.activo(prefs, p, Avisos.AVISOS)
+            // Sin historias, los avisos nuevos que eran solo de historias no suenan.
+            val nuevosAvisos = avisos > antes.first && Avisos.activo(prefs, p, Avisos.AVISOS) && (app.avisosConHistorias || ultimos.isNotEmpty())
             val nuevosMensajes = app.avisosConMensajes && mensajes > antes.second && Avisos.activo(prefs, p, Avisos.MENSAJES)
             if (!nuevosAvisos && !nuevosMensajes) continue
             // En la pantalla bloqueada solo se ve cuántos; desbloqueado, quién y qué (nunca el texto de un mensaje).
@@ -158,10 +162,14 @@ object Avisos {
         }.apply()
     }
 
+    /** Si el aviso es de una historia (me gusta, voto, mención o respuesta). */
+    fun deHistoria(a: io.github.fogonapps.social.AvisoSocial) = a.tipo.startsWith("historia_")
+
     /** Un aviso en palabras, con el nombre de la persona (no su @): «Pedro empezó a seguirte». */
     internal fun frase(c: Context, a: io.github.fogonapps.social.AvisoSocial): String {
         textoAvisoMercado(c, a)?.let { return it }
         if (a.tipo == "sancion") return c.getString(R.string.social_red_aviso_sancion)
+        if (a.tipo == "reporte_urgente") return c.getString(R.string.social_red_aviso_urgente)
         val que = c.getString(when (a.tipo) {
             "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta
             "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir

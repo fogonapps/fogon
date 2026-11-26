@@ -14,7 +14,7 @@ import java.time.Duration
  */
 class Cine(private val clave: String?, private val ahora: () -> Long = System::currentTimeMillis) {
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build()
-    private val guardadas = CacheTemporal(SEIS_HORAS, MAX_ENTRADAS, MAX_CACHE, ahora)
+    private val guardadas = CacheTemporal.respuestas(SEIS_HORAS, MAX_ENTRADAS, MAX_CACHE, ahora)
 
     data class Respuesta(val codigo: Int, val cuerpo: String)
 

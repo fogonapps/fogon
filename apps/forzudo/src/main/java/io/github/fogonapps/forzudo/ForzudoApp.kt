@@ -12,7 +12,7 @@ import io.github.fogonapps.identidad.Idioma
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
 class ForzudoApp : Application(), io.github.fogonapps.social.ui.AppConAvisos {
     /* X-10: los avisos de la red con la app cerrada (revisión común en social-ui). */
-    override val avisosConfiguracion get() = io.github.fogonapps.social.ConfiguracionSocial("forzudo", "El Forzudo", "ElForzudo-Fogon")
+    override val avisosConfiguracion get() = io.github.fogonapps.social.ConfiguracionSocial("forzudo", "Forz", "ElForzudo-Fogon")
     override val avisosIcono = R.drawable.ic_notificacion
     override fun avisosCuentas() = perfiles.lista.perfiles.mapNotNull { perfil ->
         val sesion = runCatching { sesionForzudo(this, perfiles, perfil.id) }.getOrNull() ?: return@mapNotNull null

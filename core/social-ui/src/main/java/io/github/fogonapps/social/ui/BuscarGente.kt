@@ -68,7 +68,7 @@ fun BuscarGente(vm: InterfazSocial, recientes: File, volver: () -> Unit) {
                 }
             } else Pista(stringResource(R.string.gente_vacio), Modifier.padding(16.dp))
             error -> Pista(stringResource(R.string.gente_error), Modifier.padding(16.dp))
-            r == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+            r == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
             r.isEmpty() -> Pista(stringResource(R.string.gente_sin_resultados), Modifier.padding(16.dp))
             else -> r.forEach { p -> FilaPersona(p, { guardadas.anotar(texto); vm.navegacion.perfil(p.usuario) }) }
         }

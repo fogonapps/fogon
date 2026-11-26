@@ -20,11 +20,13 @@ class TemasTest {
             assertFalse(s.temas(ana).diario)
             reloj += 24 * 3600_000L
             assertFalse(s.temas(ana).diario)
+            // Con la bienvenida de 500 no alcanza un fondo: se suman 1.000 de prueba (como la bienvenida de antes).
+            b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,1000,'prueba',1)", ana) }
             // Sin tenerlo no se pone; lo que no existe no se compra; comprar descuenta (una sola vez).
             assertEquals(403, assertFailsWith<Problema> { s.ponerTema(ana, "nieve") }.codigo)
             assertEquals(404, assertFailsWith<Problema> { s.reclamarTema(ana, "inventado") }.codigo)
             s.reclamarTema(ana, "nieve"); s.reclamarTema(ana, "nieve")
-            assertEquals(TemasPerfil.BIENVENIDA - TemasPerfil.FONDOS.getValue("nieve"), s.temas(ana).chispas)
+            assertEquals(TemasPerfil.BIENVENIDA + 1000 - TemasPerfil.FONDOS.getValue("nieve"), s.temas(ana).chispas)
             // Lo que no alcanza no se compra.
             assertEquals(402, assertFailsWith<Problema> { s.reclamarTema(ana, "ciudad") }.codigo)
             s.ponerTema(ana, "nieve")

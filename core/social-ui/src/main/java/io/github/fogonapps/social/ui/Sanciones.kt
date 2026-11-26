@@ -1,5 +1,7 @@
 package io.github.fogonapps.social.ui
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.foundation.background
 import io.github.fogonapps.identidad.PistaSocial as Pista
 import io.github.fogonapps.identidad.PildoraSocial as Pildora
@@ -25,7 +27,7 @@ private val DECISIONES = listOf(
     "advertencia" to R.string.sancion_advertencia, "falta" to R.string.sancion_falta,
     "falta_grave" to R.string.social_mod_grave, "cerrar" to R.string.social_mod_cerrar,
 )
-internal val CIERRE_DIRECTO = setOf("menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
+internal val CIERRE_DIRECTO = setOf("masi", "menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
 
 private fun fechaCorta(t: Long): String = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(t))
 
@@ -84,7 +86,7 @@ internal fun ImagenesReporte(c: CasoModeracion, vm: InterfazSocial? = null) {
             val imagen = t("imagen"); val video = t("video")
             var viendo by remember { mutableStateOf(false) }
             if (imagen.isNotBlank()) coil3.compose.AsyncImage(io.github.fogonapps.social.ClienteSocial.imagen(imagen), null,
-                Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)).then(Modifier.background(f.superficie)), contentScale = ContentScale.Fit)
+                Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)).then(Modifier.background(f.superficieSocial)), contentScale = ContentScale.Fit)
             if (video.isNotBlank() && vm != null) {
                 if (viendo) VideoHistoria(vm::cabeceras, video, false, Modifier.fillMaxWidth(0.6f).aspectRatio(9f / 16f).clip(forma(14.dp)))
                 else Pildora(stringResource(R.string.social_mod_ver_video), IconosMultimedia.Reproducir) { viendo = true }
@@ -132,14 +134,14 @@ internal fun SancionesEquipo(vm: InterfazSocial, permisos: Set<String>) {
         Text(stringResource(R.string.sancion_recientes), style = MaterialTheme.typography.titleSmall, color = f.texto, modifier = Modifier.padding(top = 8.dp))
         val l = lista
         when {
-            l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.acentoSocial, trackColor = f.linea)
             l.isEmpty() -> Pista(stringResource(R.string.sancion_ninguna))
             else -> l.forEach { s ->
                 val ahora = System.currentTimeMillis()
                 Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("@${s.usuario}" + s.nombre.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(), style = MaterialTheme.typography.titleSmall, color = f.texto)
                     Text(textoFalta(FaltaSocial(s.regla, when (s.decision) { "advertencia" -> 0; "falta_grave" -> 2; "cerrar" -> 99; else -> 1 }, s.cuando, 0, decision = s.decision)) { vm.tx(it) } + " · " + fechaCorta(s.cuando),
-                        style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
+                        style = MaterialTheme.typography.bodySmall, color = f.letraAcentoSocial)
                     if (s.mensaje.isNotBlank()) Text("«${s.mensaje}»", style = MaterialTheme.typography.bodyMedium, color = f.texto)
                     val estado = when {
                         s.cerrada -> stringResource(R.string.sancion_estado_cerrada)
@@ -172,7 +174,7 @@ internal fun ApelacionesEquipo(vm: InterfazSocial, permisos: Set<String>) {
         Pista(stringResource(R.string.apelacion_explica_equipo))
         val l = lista
         when {
-            l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+            l == null -> LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.acentoSocial, trackColor = f.linea)
             l.isEmpty() -> Pista(stringResource(R.string.apelacion_ninguna))
             else -> l.forEach { a ->
                 Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -200,7 +202,7 @@ internal fun PedirTexto(titulo: String, etiqueta: String, onCerrar: () -> Unit, 
     AlertDialog(onCerrar, containerColor = f.fondo,
         title = { Text(titulo, color = f.texto) },
         text = { OutlinedTextField(texto, { texto = it.take(500) }, Modifier.fillMaxWidth(), minLines = 3, label = { Text(etiqueta) }, shape = forma(18.dp)) },
-        confirmButton = { TextButton({ onListo(texto.trim()); onCerrar() }, enabled = texto.isNotBlank()) { Text(stringResource(R.string.sancion_listo), color = f.acentoTexto) } },
+        confirmButton = { TextButton({ onListo(texto.trim()); onCerrar() }, enabled = texto.isNotBlank()) { Text(stringResource(R.string.sancion_listo), color = f.letraAcentoSocial) } },
         dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.sancion_cancelar), color = f.textoSuave) } })
 }
 
@@ -253,7 +255,8 @@ internal fun PantallaSancion(vm: InterfazSocial, s: ControladorCuentaSocial.Sanc
     val f = FogonTema.actual
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.sancion_pantalla_titulo), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.sancion_pantalla_titulo), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { heading() })
         Text(s.correo, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         val e = s.estado
         if (e == null) Pista(stringResource(R.string.sancion_pantalla_sin_detalle))
@@ -262,7 +265,7 @@ internal fun PantallaSancion(vm: InterfazSocial, s: ControladorCuentaSocial.Sanc
             ListaFaltas(e.estado.faltas.take(3)) { vm.tx(it) }
             BloqueApelar(e.estado, e.apelacion ?: e.estado.apelacion) { vm.red.apelarSancion(it) }
         }
-        androidx.compose.material3.TextButton({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos#normas") }) { Text(stringResource(R.string.sancion_ver_normas), color = f.acentoTexto) }
+        androidx.compose.material3.TextButton({ uri.openUri(ClienteSocial.SERVIDOR + "/terminos#normas") }) { Text(stringResource(R.string.sancion_ver_normas), color = f.letraAcentoSocial) }
         BotonSecundario(stringResource(R.string.sancion_otra_cuenta), { vm.red.cerrarSancion() }, Modifier.fillMaxWidth())
     }
 }

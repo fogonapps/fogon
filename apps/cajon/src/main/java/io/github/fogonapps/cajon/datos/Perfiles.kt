@@ -214,4 +214,4 @@ internal class VigenciaPerfil {
 /** Solo se descarta el perfil de entrada sin contenido, ajustes ni apariencia propios. */
 internal fun perfilProvisionalVacio(estado: Estado?, escuchas: Oidos): Boolean = estado != null &&
     estado.copy(listo = false, apariencia = null) == Estado() &&
-    (estado.apariencia == null || estado.apariencia.copy(cambio = 0) == AparienciaCuenta()) && escuchas == Oidos()
+    (estado.apariencia == null || estado.apariencia.copy(cambio = 0, estilo = estado.apariencia.estilo.takeUnless { it == io.github.fogonapps.identidad.AlmacenApariencia.estiloInicial.name }.orEmpty()) == AparienciaCuenta()) && escuchas == Oidos()

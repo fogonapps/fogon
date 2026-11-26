@@ -121,4 +121,32 @@ class CancionesTest {
         canciones.buscar("neverita bad bunny", "CO")
         assertEquals(3, consultasCatalogo)
     }
+
+    @Test fun llenaSinBorrarTodoYBarridoDeVencidas() {
+        var reloj = 0L
+        var busquedas = 0
+        var consultasCatalogo = 0
+        val canciones = Canciones(ahora = { reloj }, pedir = {
+            if ("/search?" in it) { busquedas++; respuesta(cancion("Otra", 1)) }
+            else { consultasCatalogo++; respuesta(cancion("Neverita", 2)) }
+        })
+        canciones.buscar("primera")
+        // Antes, al pasar de 5000 se borraba todo; ahora solo se van las más viejas y lo reciente sigue guardado.
+        repeat(5_100) { reloj++; canciones.buscar("consulta $it") }
+        val antes = busquedas
+        canciones.buscar("consulta 100")   // la más vieja que queda
+        canciones.buscar("consulta 4999")  // con el borrado total de antes se perdía
+        canciones.buscar("consulta 5099")
+        assertEquals(antes, busquedas)
+        canciones.buscar("primera")
+        assertEquals(antes + 1, busquedas)
+        // Un catálogo de artista también queda en memoria hasta el barrido.
+        canciones.buscar("neverita bad bunny")
+        assertEquals(1, consultasCatalogo)
+        assertTrue(canciones.guardadasEnMemoria > 5_000)
+        // El barrido de cada minuto se lleva lo vencido de las dos cachés sin que nadie lo vuelva a buscar.
+        reloj += 24 * 3600_000L
+        canciones.barrer()
+        assertEquals(0, canciones.guardadasEnMemoria)
+    }
 }

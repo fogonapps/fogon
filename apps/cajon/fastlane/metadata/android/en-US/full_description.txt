@@ -1,26 +1,25 @@
-<p><b>Beta:</b> El Cajón may still change and have bugs. Known issues are listed at <a href="https://github.com/fogonapps/el-cajon#problemas-conocidos">github.com/fogonapps/el-cajon</a>.</p>
-<p>El Cajón keeps everything you watch, read and listen to: films, series, anime, books, video games, albums and artists, in one place, with your rating and your diary. No ads. We don’t sell your data. It’s part of <b>Fogón</b>, everyday apps with no subscriptions: yours from day one.</p>
-<p><b>The network (optional):</b> create your @username, follow people, see what they share on Home and post your reviews, photos and games in your stories, with likes, comments and saves. Only what you mark as public or for your followers is uploaded.</p>
-
+<p>Fabs is your diary of what you watch, read, listen to and play: films, series, anime, books, records, artists and video games, in one place, with your rating and your dates. No ads. We don’t sell your data. It’s part of <b>Fogón</b>: everyday apps with no subscriptions.</p>
+<p><b>What’s new</b></p>
 <ul>
-<li><b>Everything in one cajón:</b> films, series, anime, books, records and video games, with cover (change it or upload your own), year, director or author, genres and synopsis.</li>
-<li><b>Search and add:</b> books from Open Library and records and artists from MusicBrainz, no key needed; films, series and anime from TMDB with your own free key. Or add them by hand.</li>
-<li><b>Video games:</b> search for a game (cover, screenshots, critic and player ratings, summary and links, from IGDB) and mark it playing, finished, want to play or dropped, with a rating and review. They have their own tab, Games.</li>
-<li><b>Star ratings</b> (in halves), likes, reviews, trivia, tags for everything and favorite episodes.</li>
-<li><b>Diary:</b> every time you watch, read or listen to something, with date, rating and whether it was a rewatch.</li>
+<li><b>Log in two taps:</b> add your rating and a like and, if you finished it today, it lands in your diary.</li>
+<li><b>Diary as a grid:</b> your covers by month, with the rating from each time. Prefer a list? That works too.</li>
+<li><b>Year in review:</b> what you finished, your top rated, your busiest month and your streak, ready to share as an image.</li>
+<li><b>Bring what you already logged:</b> import from Letterboxd, Goodreads, The StoryGraph, Trakt, TV Time, Netflix and Steam. Nothing gets duplicated.</li>
+<li><b>Together:</b> with someone you follow back, see what to watch with them: what you both have on your lists, where each of you is up to, and what you both finished.</li>
+<li><b>Community reviews:</b> in People, read what others write, even without an account.</li>
+<li><b>Profile store (optional):</b> banners, frames and backgrounds for your profile. They’re bought with sparks (chispas), which you purchase inside the app. These are optional purchases: everything else works without them.</li>
+</ul>
+<p><b>The essentials</b></p>
+<ul>
+<li><b>Everything in one place:</b> films, series, anime, books, records and video games, with cover (change it or upload your own), year, creator, genres and synopsis.</li>
+<li><b>Search and add:</b> books from Open Library, records and artists from MusicBrainz, films, series and anime from TMDB, games from IGDB. Or add them by hand.</li>
+<li><b>Star ratings</b> (in halves), likes, reviews, tags and the public rating next to yours.</li>
 <li><b>To watch, to read, to listen:</b> what’s up next, what you’re in the middle of and what you finished.</li>
-<li><b>Public ratings</b> next to yours: TMDB, Open Library or MusicBrainz.</li>
-<li><b>Progress:</b> pages for books and every album track with its own rating and heart.</li>
-<li><b>Film, Music, Books and Games</b>, each with its own section, and a Home with everything you’ve watched, listened to, read and played.</li>
-<li><b>Artists, writers and directors</b> with their photo and their records, books or films, to add them with one tap.</li>
-<li><b>Your own lists</b>, ranked if you like, and your top four on your profile, with your favorite game.</li>
-<li><b>Your stats:</b> what you finished this year, hours of film and series, pages, tracks, games, your ratings, months, genres and creators. Plus yearly challenges.</li>
-<li><b>Share</b> a review or a list as an image.</li>
-<li><b>Bring what you had:</b> import from Letterboxd (ZIP or CSV), Netflix (viewing activity CSV), Trakt (ZIP or JSON), TV Time (ZIP or CSV), Goodreads and The StoryGraph (CSV), plus your Steam library with your playtime (from your profile link, if your game details are public). Nothing gets duplicated.</li>
-<li><b>Encrypted copy:</b> if you use a Fogón account, you can keep an encrypted copy of your collection.</li>
+<li><b>Your own lists</b> and your top four on your profile.</li>
+<li><b>Your stats:</b> what you finished this year, hours, pages, tracks, genres and creators, plus yearly challenges.</li>
+<li><b>Optional network:</b> create your @username, follow people and post your reviews. Only what you mark as public or for your followers is uploaded.</li>
+<li><b>Encrypted copy</b> of your collection with your Fogón account, if you want it.</li>
 <li><b>In Spanish and English.</b></li>
 </ul>
-
-<p><b>Your data is yours.</b> Everything stays on your phone. Internet is only used to search, fetch covers and, if you turn it on, sync. Save a backup any time.</p>
-
-<p>El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB. Video game data and images from IGDB (igdb.com); games not on IGDB come from Wikidata (CC0), with covers from Wikimedia Commons credited to their author and license.</p>
+<p><b>Your data is yours.</b> Everything stays on your phone. Internet is only used to search, fetch covers and, if you turn them on, the network and the encrypted copy. You can download a copy of your data any time.</p>
+<p>Fabs uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB. Video game data and images from IGDB (igdb.com); games not on IGDB come from Wikidata (CC0), with covers from Wikimedia Commons credited to their author and license.</p>

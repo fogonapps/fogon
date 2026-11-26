@@ -195,7 +195,7 @@ fun Preguntas(vm: AhorradorViewModel) {
 fun Reporte(vm: AhorradorViewModel) {
     Column {
         Cabecera(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_titulo), vm::cerrar)
-        io.github.fogonapps.identidad.ReporteFogon("La Alcancía", BuildConfig.VERSION_NAME)
+        io.github.fogonapps.identidad.ReporteFogon("Pezi", BuildConfig.VERSION_NAME)
         Spacer(Modifier.height(40.dp))
     }
 }

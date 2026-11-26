@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name" translatable="false">La Alcancía</string>
+  <string name="app_name" translatable="false">Pezi</string>
   <string name="a_quien_debes">Who do you owe?</string>
   <string name="abonar">Add money</string>
   <string name="abonar_a">Add to %1$s</string>
   <string name="abonar_texto">The money leaves an account and is set aside for this goal.</string>
   <string name="abone">I paid part</string>
   <string name="abonos">Payments</string>
-  <string name="acerca_de">About La Alcancía</string>
+  <string name="acerca_de">About Pezi</string>
   <string name="acerca_de_corto">About</string>
   <string name="activo">Active</string>
   <string name="agregar_fijo">Add a fixed payment</string>
@@ -33,19 +33,19 @@
   <string name="aviso_meta_cumplida">Goal reached: %1$s!</string>
   <string name="aviso_monto">Enter an amount</string>
   <string name="aviso_no_es_extracto">I couldn’t find entries in that file. It has to be a CSV with a date and an amount.</string>
-  <string name="aviso_no_es_respaldo">That file isn’t a La Alcancía backup</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a Pezi backup</string>
   <string name="aviso_no_exportado">Couldn’t save the file</string>
   <string name="aviso_otra_cuenta">Pick the account it goes to</string>
   <string name="aviso_pago_linea">%1$s %2$s (%3$s)</string>
   <string name="aviso_pagos_titulo">Payments coming up</string>
-  <string name="aviso_plata">La Alcancía helps you keep track of your money; it isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</string>
+  <string name="aviso_plata">Pezi helps you keep track of your money; it isn’t financial advice. Card minimum payments and interest are estimates: the real figures are on your bank statement.</string>
   <string name="aviso_plata_titulo">Notice</string>
   <string name="aviso_reparto">The three must add up to 100</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
   <string name="aviso_sin_sobres_antes">Last month has no envelopes</string>
   <string name="aviso_sobres_copiados">Envelopes copied</string>
   <string name="aviso_una_cuenta">You need at least one account</string>
-  <string name="bloqueada">La Alcancía is locked</string>
+  <string name="bloqueada">Pezi is locked</string>
   <string name="borrar">Delete</string>
   <string name="borrar_deuda">Delete debt</string>
   <string name="borrar_deuda_pregunta">Delete the debt with %1$s?</string>
@@ -68,7 +68,7 @@
   <string name="cancelar">Cancel</string>
   <string name="candado">Lock</string>
   <string name="candado_pista">Asks for your fingerprint or phone lock when you open the app.</string>
-  <string name="candado_titulo">Open La Alcancía</string>
+  <string name="candado_titulo">Open Pezi</string>
   <string name="cargando">Loading</string>
   <string name="cat_casa">Home</string>
   <string name="cat_cesantias">Severance fund</string>
@@ -320,7 +320,7 @@
   <string name="tut_billetera">Digital wallet</string>
   <string name="tut_deuda_tarjeta">How much do you owe on it today?</string>
   <string name="tut_empezar">Start</string>
-  <string name="tut_hola">Hi, I’m La Alcancía</string>
+  <string name="tut_hola">Hi, I’m Pezi</string>
   <string name="tut_hola_texto">I help you see where your money goes and save for what you want. No ads, and no bank passwords.</string>
   <string name="tut_privado">Your transactions are saved on this phone. If you sign in with your Fogón Social account, your notebook is saved there encrypted with your password, and nobody else can read it.</string>
   <string name="tut_saldos">What are you starting with?</string>
@@ -415,7 +415,7 @@
   <string name="vas_menos">You’re spending %1$d %% less than at this point in %2$s.</string>
   <string name="vas_igual">You’re spending the same as at this point in %1$s.</string>
     <string name="banco_titulo">Record from your bank</string>
-    <string name="banco_explicacion">Android lets this access see all your notifications. La Alcancía filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands; from Nequi, Daviplata, Davivienda, Banco de Bogotá and BBVA it reads their app and texts that name them, and always asks before saving. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
+    <string name="banco_explicacion">Android lets this access see all your notifications. Pezi filters by app first: from Messages it only reads texts starting with “Bancolombia:”, if you chose that bank; from Nu it only keeps what a rule understands; from Nequi, Daviplata, Davivienda, Banco de Bogotá and BBVA it reads their app and texts that name them, and always asks before saving. Everything else is ignored and never stored. Only new alerts are read, never SMS history. Turn it off here or revoke access in Android.</string>
     <string name="banco_activar">Enable</string>
     <string name="banco_local">Alerts are read and kept only on this phone.</string>
     <string name="banco_permiso">Open notification access in Android</string>
@@ -458,7 +458,7 @@
     <string name="banco_bogota">Banco de Bogotá</string>
     <string name="banco_bbva">BBVA</string>
     <string name="banco_otro">Other</string>
-    <string name="aj_como_usas">How you use La Alcancía</string>
+    <string name="aj_como_usas">How you use Pezi</string>
     <string name="aj_tu_alcancia">Your piggy bank</string>
     <string name="aj_apariencia_idioma">Appearance and language</string>
     <string name="aj_privacidad">Privacy</string>
@@ -474,7 +474,7 @@
     <string name="banco_reconectar">Reconnect access</string>
     <string name="banco_contadores">Alerts seen: %1$d · understood: %2$d · last: %3$s</string>
     <string name="banco_nunca">never</string>
-    <string name="banco_restringidos">If Android prevents you from enabling access: Settings → Apps → La Alcancía → ⋮ → Allow restricted settings, then return here</string>
+    <string name="banco_restringidos">If Android prevents you from enabling access: Settings → Apps → Pezi → ⋮ → Allow restricted settings, then return here</string>
   <string name="ajustes">Settings</string>
   <string name="editar_perfil">Edit profile</string>
   <string name="todo_fogon">All Fogón in one file</string>
@@ -573,7 +573,7 @@
     <string name="cuenta_perfil_cambio">The profile changed in another app. It has been reloaded; check the changes before saving.</string>
     <string name="cuenta_edicion_pendiente">Load the social profile before editing it.</string>
     <string name="cuenta_local">Your accounts, transactions, envelopes, goals and balances stay in this profile on the phone and, with your account, are saved there automatically, encrypted with your password: if you reinstall or change phones, they come back. Save a backup before removing a profile.</string>
-    <string name="cuenta_intro">La Alcancía’s network: your Fogón Social account, the same in every app. Follow other people and celebrate your saving achievements.</string>
+    <string name="cuenta_intro">Pezi’s network: your Fogón Social account, the same in every app. Follow other people and celebrate your saving achievements.</string>
     <string name="cuenta_que_sale">Only what you choose to share appears on the network: an achievement and, if you want, your goals’ progress as a percentage. Never balances, amounts, accounts, banks or transactions. Your notebook is saved to your account encrypted with your password: nobody else can read it, not even Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
     <string name="cuenta_politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
@@ -586,7 +586,7 @@
     <string name="red_avisos">Notifications</string>
     <string name="red_moderacion">Moderation</string>
     <string name="red_guardados">Saved</string>
-    <string name="red_feed_pie">Saving achievements shared on La Alcancía</string>
+    <string name="red_feed_pie">Saving achievements shared on Pezi</string>
     <string name="red_seguir">Follow</string>
     <string name="red_dejar_seguir">Following</string>
     <string name="red_borrar">Delete post?</string>

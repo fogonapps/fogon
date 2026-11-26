@@ -22,12 +22,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Tipos
@@ -44,12 +46,10 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.Paleta
 import io.github.fogonapps.identidad.PasoDaleVida
-import io.github.fogonapps.identidad.Personaje
 import io.github.fogonapps.identidad.aparecer
-import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.R as RId
 
-/** Primera vez: bienvenida, el nombre, cómo se usa (los gestos que no se ven) y, al final, "¡Dale vida!" para elegir el estilo. */
+/** Primera vez: bienvenida, el nombre, traer el historial de otra app, cómo se usa (los gestos que no se ven) y, al final, "¡Dale vida!" para elegir el estilo. */
 @Composable
 fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
     val f = FogonTema.actual
@@ -62,7 +62,9 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
     ) {
         when (paso) {
             0 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Personaje(io.github.fogonapps.identidad.Quien.CAJON, null, Modifier.align(Alignment.CenterHorizontally), cara = io.github.fogonapps.identidad.Cara.FELIZ, tamano = 116.dp)
+                // El logotipo de Fabs (L1): «fabs» en Fraunces negra, minúscula, sin personaje.
+                Text(stringResource(R.string.app_name).lowercase(), fontFamily = f.titulos, fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
+                    fontSize = 64.sp, color = f.texto, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 32.dp))
                 Text(stringResource(R.string.tut_hola), style = MaterialTheme.typography.headlineLarge, color = f.texto,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.tut_hola_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,
@@ -71,7 +73,7 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                     Tipos.TODOS.forEachIndexed { i, t ->
                         Column(Modifier.aparecer(i), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconoRiso(Iconos.de(t), null, tamano = 26.dp, tinta = f.acentoTexto)
+                            IconoRiso(Iconos.de(t), null, tamano = 26.dp, tinta = f.texto)
                             Text(nombreTipo(t), style = MaterialTheme.typography.labelSmall, color = f.textoSuave)
                         }
                     }
@@ -83,18 +85,33 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 Text(stringResource(R.string.tut_nombre), style = MaterialTheme.typography.headlineSmall, color = f.texto)
                 CampoTexto(nombre, { nombre = it }, stringResource(R.string.tu_nombre))
                 Text(stringResource(R.string.tut_privado), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
-                BotonRiso(stringResource(R.string.siguiente), { vm.cambiarNombre(nombre); paso = 2 }, Modifier.fillMaxWidth())
+                BotonRiso(stringResource(R.string.siguiente), { vm.cambiarNombre(nombre); paso = 6 }, Modifier.fillMaxWidth())
+            }
+            // ¿Vienes de otra app? Traer el historial desde el primer minuto (saltable); con eso, elegir gustos es opcional.
+            6 -> Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                val traidas by vm.recienImportado.collectAsStateWithLifecycle()
+                val n = traidas
+                if (n == null) TraerHistorial(acciones, saltar = stringResource(R.string.ahora_no) to { paso = 2 })
+                else {
+                    Text(pluralStringResource(R.plurals.resumen_importadas, n, n), style = MaterialTheme.typography.headlineSmall, color = f.texto,
+                        modifier = Modifier.semantics { heading() })
+                    Text(stringResource(R.string.gustos_opcional_importado), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave)
+                    BotonRiso(stringResource(R.string.siguiente), { paso = 2 }, Modifier.fillMaxWidth())
+                    BotonSecundario(stringResource(R.string.traer_elegir), acciones.deOtraApp, Modifier.fillMaxWidth())
+                }
             }
             // Lo que te gusta: obras y artistas concretos (con eso el cajón no arranca vacío). Al menos 3.
             2 -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val e by vm.estado.collectAsStateWithLifecycle()
                 Text(stringResource(R.string.cuentame_gustos), style = MaterialTheme.typography.headlineSmall, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp))
-                Text(stringResource(R.string.gustos_elige_minimo), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
+                Text(stringResource(if (e?.let { traidoDeOtraApp(it) } == true) R.string.gustos_opcional_importado else R.string.gustos_elige_minimo),
+                    style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, modifier = Modifier.padding(horizontal = 24.dp))
                 e?.let { estado ->
                     FilasDeGustos(vm, estado)
                     val n = elegidasIniciales(estado)
+                    val basta = gustosSuficientes(estado)
                     Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-                        BotonRiso(if (Catalogo.minimoCumplido(n)) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); vm.agregarIniciales(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = Catalogo.minimoCumplido(n))
+                        BotonRiso(if (basta) stringResource(R.string.siguiente) else stringResource(R.string.gustos_faltan, 3 - n), { vm.gustosListos(); vm.agregarIniciales(); paso = 3 }, Modifier.fillMaxWidth(), habilitado = basta)
                     }
                 }
             }
@@ -105,25 +122,22 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                     Iconos.Cajon to R.string.tut_funcion_cajon, Iconos.Gente to R.string.tut_funcion_red, Iconos.Racha to R.string.tut_funcion_momento,
                     Iconos.Cifras to R.string.tut_funcion_cifras, Iconos.Compartir to R.string.tut_funcion_compartir,
                 ).forEachIndexed { i, (icono, texto) ->
-                    Row(Modifier.aparecer(i).fillMaxWidth().tarjetaFogon().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(Modifier.aparecer(i).fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Ficha(f.tinta1, icono)
                         Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
                     }
                 }
-                // Cómo se ve, con obras de verdad: sus portadas y estrellas, una entrada del diario y una reseña.
-                val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true,
-                    portada = "https://image.tmdb.org/t/p/w342/d1QKiYtceF3GDtxvTFXFAqwwah9.jpg")
-                val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true,
-                    portada = "https://image.tmdb.org/t/p/w342/2RcxjDykOssx4SfqshewyI9vfSl.jpg")
-                val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8,
-                    portada = "https://covers.openlibrary.org/b/id/13009946-M.jpg")
+                // Cómo se ve: portadas, estrellas, una entrada del diario y una reseña. Las portadas son las inventadas de la
+                // app (la tapa gris con el título): en el tutorial no se pide nada a TMDB ni a Open Library por mostrar un ejemplo.
+                val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true)
+                val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true)
+                val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8)
                 val descripcion = stringResource(R.string.tut_muestra_descripcion)
                 Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         listOf(peli, anime, libro).forEach { o ->
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                coil3.compose.AsyncImage(o.portada, null, Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(io.github.fogonapps.identidad.forma(10.dp)),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                Portada("", o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
                                 Text(o.titulo, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                 Estrellas(o.nota ?: 0)

@@ -1,11 +1,11 @@
-# La Cucha · Fogón
+# Ñom · Fogón
 
-<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="La Cucha"></p>
+<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="Ñom"></p>
 
-Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios. No vendemos tus datos. Usa internet para las estadísticas anónimas, que puedes apagar en Ajustes, y cuando buscas un código de barras o usas Fogón Social. La Cucha es como se le dice con cariño en Antioquia a la señora de la casa, la que sabe cocinar.
+Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anuncios. No vendemos tus datos. Usa internet para las estadísticas anónimas, que puedes apagar en Ajustes, y cuando buscas un código de barras o usas Fogón Social. Ñom, como el ñom ñom de comer con gusto. Antes se llamaba La Cucha.
 
 - Descargar: [fogonapps/la-cucha](https://github.com/fogonapps/la-cucha/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-cucha`).
-- Novedades de cada versión: en las [versiones de La Cucha](https://github.com/fogonapps/la-cucha/releases).
+- Novedades de cada versión: en las [versiones de Ñom](https://github.com/fogonapps/la-cucha/releases).
 
 ## Qué hace
 
@@ -20,7 +20,7 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 - **Lista de mercado:** sale sola del menú (esta semana o la próxima), sumando los ingredientes; se tacha, se le agrega lo que falte y se comparte.
 - **Metas:** calculadas con tus datos (fórmula de Mifflin-St Jeor, tu actividad y si quieres bajar, mantener o subir), o puestas a mano si tienes un plan de nutricionista.
 - **Progreso:** días seguidos anotando, promedio de la semana, las calorías de los últimos 14 días contra la meta y la curva del peso.
-- **Conectada con El Forzudo** desde el principio: si está instalado, La Cucha toma de allá el peso (y recalcula las metas) y muestra cuándo entrenaste. Sin internet: las dos apps se hablan dentro del teléfono.
+- **Conectada con Forz** desde el principio: si está instalado, Ñom toma de allá el peso (y recalcula las metas) y muestra cuándo entrenaste. Sin internet: las dos apps se hablan dentro del teléfono.
 - **Widget:** las calorías que quedan hoy, la proteína y un botón para anotar.
 - **Tus datos son tuyos:** respaldo en JSON, y el respaldo de todo Fogón en un solo archivo.
 - **Reportar un fallo o sugerir algo** desde Perfil: abre GitHub o el correo con el mensaje listo.
@@ -34,7 +34,7 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 | Internet | Para buscar un código de barras en Open Food Facts, si activas esa opción, y para Fogón Social, si entras con tu cuenta (Tu gente y la copia de tu diario, cifrada con tu contraseña). Las estadísticas de uso anónimas se pueden apagar en Ajustes. |
 | Ubicación (aproximada o precisa) | Solo al tocar «Usar mi ubicación» al reseñar un restaurante: propone la dirección del lugar, que puedes corregir o quitar antes de publicar. Nunca se toma sola ni va en un plato sin restaurante. |
 | Cámara | La pide el lector de códigos de barras la primera vez que escaneas. Sin ella la app funciona igual. |
-| Datos de las apps de Fogón | Leer el peso y los entrenos de El Forzudo, y que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de La Cucha en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
+| Datos de las apps de Fogón | Leer el peso y los entrenos de Forz, y que otra app de Fogón (firmada con la misma llave) guarde o recupere los datos de Ñom en el respaldo de todo Fogón. Ninguna otra app puede usarlo. |
 
 - **Sin copias automáticas a la nube de Google:** solo se copian los datos al pasar a un teléfono nuevo.
 - **Lo que se manda a Open Food Facts** es solo el número del código de barras.
@@ -44,4 +44,4 @@ Lo que comes: calorías, proteína, tus recetas y el menú de la semana. Sin anu
 - Valores de los alimentos: [USDA FoodData Central](https://fdc.nal.usda.gov/) (SR Legacy 2018 y FNDDS 2024), de dominio público (CC0 1.0).
 - Productos escaneados: [Open Food Facts](https://world.openfoodfacts.org/), ODbL / DbCL.
 - Lector de códigos de barras: ZXing y zxing-android-embedded, Apache 2.0.
-- Recetas de ejemplo escritas para La Cucha.
+- Recetas de ejemplo escritas para Ñom.

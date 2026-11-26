@@ -107,7 +107,7 @@
   <string name="descanso_siguiente">¡A la siguiente serie!</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
   <string name="aviso_no_exportado">No se pudo exportar</string>
-  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de El Forzudo</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de Forz</string>
   <string name="importar_titulo">¿Importar el respaldo?</string>
   <string name="importar_si">Sí, importar</string>
   <string name="cancelar">Cancelar</string>
@@ -127,7 +127,7 @@
   <string name="grafica">Gráfica</string>
   <string name="dias_entrenados">Días entrenados en %1$d</string>
   <string name="listo">Listo</string>
-  <string name="tut_hola">¡Hola! Soy El Forzudo</string>
+  <string name="tut_hola">¡Hola! Soy Forz</string>
   <string name="tut_hola_texto">Tu cuaderno de entrenos. Sin anuncios y gratis de verdad. No vendemos tus datos: se quedan en tu teléfono y, si entras con tu cuenta de Fogón, también en una copia cifrada.</string>
   <string name="tut_anota">Entrena y anota</string>
   <string name="tut_anota_texto">En Entrenar escoge tu rutina y toca Empezar. Escribe el peso y las repeticiones de cada serie y márcala con ✓. Al marcarla arranca el descanso y te aviso cuando termine. Si tocas lo que hiciste la vez anterior, se copia solo.</string>
@@ -206,7 +206,7 @@
   <string name="sin_registros_todavia">Sin registros todavía</string>
   <string name="proxima_meta">Para subir: %1$s a %2$s, %3$s</string>
   <string name="rango_maximo">¡Rango máximo!</string>
-  <string name="creditos_rangos">Estándares: modelo de Fogón con datos de OpenPowerlifting (dominio público) · Dibujos: Everkinetic (CC BY-SA) · Modelo muscular: react-body-highlighter (licencia MIT). Detalles en Perfil → Acerca de El Forzudo → Licencias</string>
+  <string name="creditos_rangos">Estándares: modelo de Fogón con datos de OpenPowerlifting (dominio público) · Dibujos: Everkinetic (CC BY-SA) · Modelo muscular: react-body-highlighter (licencia MIT). Detalles en Perfil → Acerca de Forz → Licencias</string>
   <string name="sin_nombre">Sin nombre</string>
   <string name="cambiar_nombre">Cambiar nombre</string>
   <string name="volumen_total">Volumen total</string>
@@ -229,7 +229,7 @@
   <string name="ver_tutorial">Ver el tutorial</string>
   <string name="manifiesto_fogon">Manifiesto de Fogón</string>
   <string name="preguntas_frecuentes">Preguntas frecuentes</string>
-  <string name="acerca_de">Acerca de El Forzudo</string>
+  <string name="acerca_de">Acerca de Forz</string>
   <string name="tu_nombre">Tu nombre</string>
   <plurals name="semanas_seguidas">
     <item quantity="one">semana seguida</item>
@@ -374,7 +374,7 @@
   <string name="no_encontrado">No encontré ese ejercicio.</string>
   <string name="cerrar">Cerrar</string>
   <string name="acerca_de_corto">Acerca de</string>
-  <string name="aviso_salud">El Forzudo es un cuaderno de entrenos, no un consejo médico. Las rutinas, metas y rangos son guías generales que no conocen tu salud. Si tienes una lesión, una enfermedad o hace mucho que no entrenas, consulta a un profesional de la salud antes de empezar. Si sientes dolor, mareo o falta de aire, detente. Usas la app bajo tu propia responsabilidad.</string>
+  <string name="aviso_salud">Forz es un cuaderno de entrenos, no un consejo médico. Las rutinas, metas y rangos son guías generales que no conocen tu salud. Si tienes una lesión, una enfermedad o hace mucho que no entrenas, consulta a un profesional de la salud antes de empezar. Si sientes dolor, mareo o falta de aire, detente. Usas la app bajo tu propia responsabilidad.</string>
   <string name="licencias">Licencias</string>
   <string name="lic_modelo">Modelo muscular</string>
   <string name="lic_modelo_texto">Dibujo del cuerpo de react-body-highlighter (© 2020 GV79), que lo tomó de react-native-body-highlighter (© 2022 ELABBASSI Hicham). Licencia MIT.</string>
@@ -409,7 +409,7 @@
     <item>¿Qué significan los colores?</item>
     <item>¿De dónde salen los rangos de fuerza?</item>
     <item>¿Mis datos salen del teléfono?</item>
-    <item>¿Por qué antes se llamaba Mi Gym?</item>
+    <item>¿Por qué antes se llamaba Mi Gym o El Forzudo?</item>
   </string-array>
   <string-array name="respuestas">
     <item>Los dibujos salen de Everkinetic, un banco de ilustraciones de ejercicios con licencia libre, y todas sus figuras son de hombre. No encontramos ilustraciones libres con figuras de mujer. Preferimos no poner algo a medias. El ejercicio y el músculo que trabaja son los mismos para todas las personas. Si alguien quiere dibujar las versiones de mujer con licencia libre, son bienvenidas.</item>
@@ -418,7 +418,7 @@
     <item>Cada grupo muscular tiene su color, el mismo en toda la app: la mancha del dibujo marca el músculo que trabaja. La sombra del dibujo dice la zona: rosa para el tren superior, amarillo para los brazos y azul para las piernas.</item>
     <item>De una tabla propia de Fogón, calibrada con resultados reales de competencias de powerlifting (OpenPowerlifting, de dominio público). Los demás ejercicios se estiman a partir de banca, sentadilla y peso muerto, así que en máquinas el rango es aproximado.</item>
     <item>No. Todo se guarda en el teléfono. Solo si creas una cuenta de Fogón, tu cuaderno se guarda también en ella, cifrado: solo tu contraseña lo abre.</item>
-    <item>Hasta la versión 1.2.1 se llamó así. Desde la 1.3 lleva el nombre de su personaje, El Forzudo, como todas las apps de Fogón.</item>
+    <item>Hasta la versión 1.2.1 se llamó Mi Gym y después El Forzudo, por su personaje. Ahora se llama Forz: un nombre corto y propio, que se recuerda fácil.</item>
   </string-array>
   <string name="idioma">Idioma</string>
   <string name="idioma_telefono">El del teléfono</string>
@@ -438,7 +438,7 @@
   <string name="ver_y_corregir">Ver y corregir las series</string>
   <string name="quitar_serie">Quitar la serie %1$d</string>
   <string name="ajustes">Ajustes</string>
-  <string name="ajustes_uso">Cómo usas El Forzudo</string>
+  <string name="ajustes_uso">Cómo usas Forz</string>
   <string name="ajustes_entrenamiento">Unidades, descansos y rutinas</string>
   <string name="ajustes_entrenamiento_pista">Los pesos se registran en kg. Cambia el descanso de cada ejercicio al editar la rutina; el temporizador y sus avisos aparecen durante el entreno.</string>
   <string name="ajustes_cuaderno">Tu cuaderno</string>
@@ -463,7 +463,7 @@
     <string name="cuenta_operacion_lista">Operación completada.</string>
     <string name="cuenta_otro_perfil">Esta cuenta necesita otro perfil del teléfono. Usa «Perfiles en este teléfono».</string>
     <string name="cuenta_local">Tu cuaderno se queda en este perfil del teléfono y, con tu cuenta, se guarda solo en ella, cifrado con tu contraseña: si reinstalas o cambias de teléfono, entras con tu correo y tu contraseña y vuelve. Exporta una copia antes de retirar un perfil.</string>
-    <string name="cuenta_intro">La red de El Forzudo: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
+    <string name="cuenta_intro">La red de Forz: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte tus rangos y tus medallas.</string>
     <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir; nunca tu peso corporal ni tus medidas. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón. Los entrenos que compartes, sus fotos y vídeos también se envían a Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
     <string name="cuenta_politica_resumen">Ahora, si tienes los avisos prendidos, llegan al instante: cuando tienes algo nuevo, Google (Firebase) le manda a tu teléfono un toque vacío, sin texto ni de quién, y la app pregunta el resto a Fogón. Además, contamos cuánto se guarda lo que se denuncia por poner a un menor en riesgo: un año, para las autoridades.</string>
@@ -499,7 +499,7 @@
     <string name="entreno_avisos">Avisos</string>
     <string name="entreno_guardados">Guardados</string>
     <string name="entreno_moderacion">Moderación</string>
-    <string name="entreno_feed_pie">Entrenos compartidos en El Forzudo</string>
+    <string name="entreno_feed_pie">Entrenos compartidos en Forz</string>
     <string name="entreno_borrar">¿Borrar publicación?</string>
     <string name="entreno_privado">¿Volver privada? Se retirará de la red; tu entreno local se conserva.</string>
     <string name="entreno_publicado">Publicación de entreno</string>

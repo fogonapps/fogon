@@ -32,6 +32,7 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.IconosFogon
 import io.github.fogonapps.identidad.IconosSociales
+import io.github.fogonapps.identidad.Trama
 import io.github.fogonapps.identidad.haloPuntos
 
 @Composable
@@ -56,9 +57,27 @@ fun MedallaInsignia(
         progreso != null -> stringResource(R.string.medalla_progreso, etiqueta, cantidad, objetivo)
         else -> stringResource(R.string.medalla_pendiente, etiqueta)
     }
+    val toque = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier
+    // Sin trama (Fabs), la medalla es un talón de cine: ver TalonInsignia.kt.
+    if (Trama.apagada) {
+        Column(
+            Modifier.width(maxOf(80.dp, tamano + 8.dp)).then(toque).clearAndSetSemantics { contentDescription = descripcion },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            val numero = when {
+                ganada -> meta?.takeIf { it > 1 }?.toString()
+                progreso != null -> "$cantidad/$objetivo"
+                else -> null
+            }
+            TalonInsignia(icono, ganada, numero = numero, lleva = cantidad, meta = objetivo.coerceAtLeast(1), lado = tamano + 8.dp)
+            Text(nombre, color = if (ganada) f.texto else f.textoSuave, style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        return
+    }
     val opacidad = if (ganada) 1f else 0.5f
     val tinta = if (ganada) f.tinta1 else f.textoSuave
-    val toque = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier
 
     Column(
         Modifier.width(maxOf(84.dp, tamano)).then(toque).clearAndSetSemantics { contentDescription = descripcion },

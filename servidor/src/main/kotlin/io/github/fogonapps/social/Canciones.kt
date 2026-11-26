@@ -8,7 +8,6 @@ import java.net.http.HttpResponse
 import java.text.Normalizer
 import java.time.Duration
 import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
@@ -17,14 +16,24 @@ import kotlinx.serialization.json.*
 
 /**
  * Buscar canciones en la búsqueda pública de Apple (iTunes Search API, sin clave). Pasa por el servidor para que el
- * teléfono no le diga a Apple qué busca; los resultados se guardan un día (Apple pide unas 20 consultas por minuto).
+ * teléfono no le diga a Apple qué busca; los resultados se guardan un día (Apple pide unas 20 consultas por minuto) en
+ * una [CacheTemporal]: lo vencido se barre cada minuto, así que ni las búsquedas ni sus resultados viven más de un día.
  * El avance se usa solo para mostrar la canción, junto al botón «Escuchar en Apple Music».
  */
 class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
                 private val pedir: (String) -> String? = ::pedirApple) {
-    private val guardadas = ConcurrentHashMap<String, Pair<Long, List<Cancion>>>()
+    private val guardadas = CacheTemporal<List<Cancion>>(DIA, MAX_ENTRADAS, MAX_CACHE, ahora) { l -> l.sumOf { peso(it) } }
 
-    private val catalogos = ConcurrentHashMap<String, Pair<Long, List<Resultado>>>()
+    private val catalogos = CacheTemporal<List<Resultado>>(DIA, MAX_ENTRADAS, MAX_CACHE, ahora) { l -> l.sumOf { peso(it.cancion) } }
+
+    /** Borra lo vencido (lo llama el servidor cada minuto). */
+    fun barrer() {
+        guardadas.barrer()
+        catalogos.barrer()
+    }
+
+    /** Cuántas búsquedas y catálogos hay en memoria (para las pruebas). */
+    internal val guardadasEnMemoria: Int get() = guardadas.cantidad + catalogos.cantidad
 
     private data class Resultado(val artistaId: Long?, val cancion: Cancion) {
         fun coincide(palabras: List<String>): Boolean =
@@ -36,12 +45,11 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
 
     private fun catalogo(artistaId: Long, pais: String): List<Resultado> {
         val llave = "$pais:$artistaId"
-        catalogos[llave]?.let { (cuando, lista) -> if (ahora() - cuando < DIA) return lista }
+        catalogos.leer(llave)?.let { return it }
         val cuerpo = pedir("https://itunes.apple.com/lookup?id=$artistaId&entity=song&limit=200&country=$pais")
             ?: return emptyList()
         val lista = leerCrudo(cuerpo)
-        if (catalogos.size > 5000) catalogos.clear()
-        catalogos[llave] = ahora() to lista
+        catalogos.guardar(llave, lista)
         return lista
     }
 
@@ -50,7 +58,7 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
         if (q.length < 2) return emptyList()
         val p = pais.uppercase().takeIf { Regex("[A-Z]{2}").matches(it) } ?: "CO"
         val llave = "$p:${q.lowercase()}"
-        guardadas[llave]?.let { (cuando, l) -> if (ahora() - cuando < DIA) return l }
+        guardadas.leer(llave)?.let { return it }
         val url = "https://itunes.apple.com/search?media=music&entity=song&limit=15&country=$p&term=" + URLEncoder.encode(q, "UTF-8")
         val cuerpo = pedir(url) ?: return emptyList()
         val resultados = leerCrudo(cuerpo)
@@ -80,13 +88,18 @@ class Canciones(private val ahora: () -> Long = System::currentTimeMillis,
                 true
             }
         }.take(15)
-        if (guardadas.size > 5000) guardadas.clear()
-        guardadas[llave] = ahora() to lista
+        guardadas.guardar(llave, lista)
         return lista
     }
 
     companion object {
         private const val DIA = 24 * 3600_000L
+        private const val MAX_ENTRADAS = 5_000
+        /** Caracteres por caché (unos 16 MB cada una): un catálogo de 200 canciones pesa unos 90 000. */
+        private const val MAX_CACHE = 8_000_000L
+
+        private fun peso(c: Cancion): Long =
+            (c.titulo.length + c.artista.length + c.portada.length + c.audio.length + c.enlace.length + c.album.length).toLong()
         private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
         private fun pedirApple(url: String): String? = runCatching {
             val r = http.send(HttpRequest.newBuilder(URI(url)).timeout(Duration.ofSeconds(15)).header("User-Agent", "FogonSocial/$VERSION (+https://fogonapps.duckdns.org)").GET().build(),

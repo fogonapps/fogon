@@ -55,6 +55,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -98,8 +100,9 @@ private fun JsonObject.texto(clave: String) = (this[clave] as? JsonPrimitive)?.c
 @Composable
 fun AvatarRed(p: PersonaSocial, tamano: Dp = 44.dp) {
     val f = FogonTema.actual
-    Box(Modifier.size(tamano).clip(CircleShape).background(f.superficie).border(f.borde, f.linea, CircleShape), contentAlignment = Alignment.Center) {
-        Text((p.nombre.ifBlank { p.usuario }).take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto,
+    Box(Modifier.size(tamano).then(if (Trama.apagada) Modifier.clip(CircleShape).background(f.papelHondo(2.5f))
+        else Modifier.cajaSocial(f, CircleShape)), contentAlignment = Alignment.Center) {
+        Text((p.nombre.ifBlank { p.usuario }).take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = f.letraAcentoSocial,
             fontSize = androidx.compose.ui.unit.TextUnit(maxOf(16f, tamano.value * 0.4f), androidx.compose.ui.unit.TextUnitType.Sp))
         if (p.foto) coil3.compose.AsyncImage(ClienteSocial.foto(p.usuario, p.fotoV), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
     }
@@ -150,7 +153,7 @@ internal fun TextoConEtiquetas(vm: InterfazSocial, texto: String, maxLineas: Int
             append(texto.substring(desde, m.range.first))
             val etiqueta = m.groupValues[1].lowercase()
             withLink(androidx.compose.ui.text.LinkAnnotation.Clickable(etiqueta,
-                androidx.compose.ui.text.TextLinkStyles(androidx.compose.ui.text.SpanStyle(color = f.acentoTexto, fontWeight = FontWeight.SemiBold))) {
+                androidx.compose.ui.text.TextLinkStyles(androidx.compose.ui.text.SpanStyle(color = f.letraAcentoSocial, fontWeight = FontWeight.SemiBold))) {
                 vm.navegacion.etiqueta(etiqueta)
             }) { append(m.value) }
             desde = m.range.last + 1
@@ -188,7 +191,7 @@ fun PublicacionRed(vm: InterfazSocial, id: Long) {
     LaunchedEffect(id) { vm.red.cargarPublicacion(id) }
     Cabecera(stringResource(R.string.social_red_publicacion), vm.navegacion.volver)
     val p = vistas[id] ?: vm.red.buscarPublicacion(id)
-    if (p == null) { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
+    if (p == null) { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea); return }
     TarjetaPublicacion(vm, p, abrir = false)
     if (p.autor.usuario == yo) {
         val clave = p.datos.texto("clave").ifBlank { p.datos.texto("propia").takeIf { it.isNotBlank() }?.let { "f:$it" }.orEmpty() }
@@ -214,7 +217,7 @@ fun PublicacionRed(vm: InterfazSocial, id: Long) {
                         if (yo != null) Pildora(stringResource(R.string.social_publicacion_responder)) { respondiendo = c }
                         BotonIcono(Iconos.Corazon, stringResource(R.string.social_publicacion_megusta_estado, c.megusta,
                             stringResource(if (c.yoMeGusta) R.string.social_publicacion_gusta_si else R.string.social_publicacion_gusta_no)),
-                            tinta = if (c.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = c.yoMeGusta) {
+                            tinta = if (c.yoMeGusta) f.letraAcentoSocial else f.textoSuave, lleno = c.yoMeGusta) {
                             if (yo == null) vm.navegacion.cuenta() else vm.red.meGustaComentario(id, c)
                         }
                         val nombreMeGusta = stringResource(R.string.social_publicacion_megusta, c.megusta)
@@ -278,10 +281,11 @@ fun AvisosRed(vm: InterfazSocial) {
         }
         Seccion(stringResource(R.string.social_red_lo_ultimo))
     }
-    val lista = avisos
+    // Sin historias en la app, sus avisos tampoco se ven.
+    val lista = avisos?.let { l -> if (vm.conHistorias) l else l.filterNot { Avisos.deHistoria(it) } }
     when {
-        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        lista.isEmpty() -> Pista(stringResource(R.string.social_red_sin_avisos), Modifier.padding(16.dp))
+        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
+        lista.isEmpty() -> EstadoVacioSocial(IconosFogon.Campana, stringResource(R.string.social_vacio_avisos_titulo), stringResource(R.string.social_red_sin_avisos))
         else -> lista.groupBy { a ->
             val h = (System.currentTimeMillis() - a.cuando) / 3600_000
             when { h < 24 -> R.string.social_red_hoy; h < 24 * 7 -> R.string.social_red_ultimos_7; else -> R.string.social_red_antes }
@@ -291,6 +295,10 @@ fun AvisosRed(vm: InterfazSocial) {
             val idArticulo = articuloDelAviso(a)
             val textoMercado = textoAvisoMercado(contexto, a)
             if (textoMercado != null && (idArticulo != null || a.tipo != "regalo")) {
+                if (Trama.apagada) {
+                    FilaAviso(a, textoMercado, { vm.red.borrarAviso(a.id) }, conNombre = false) { if (idArticulo != null) articuloAbierto = idArticulo else vm.navegacion.perfil(a.de.usuario) }
+                    return@aviso
+                }
                 Row(
                     Modifier.fillMaxWidth().clip(forma(18.dp)).clickable {
                         if (idArticulo != null) articuloAbierto = idArticulo else vm.navegacion.perfil(a.de.usuario)
@@ -300,7 +308,7 @@ fun AvisosRed(vm: InterfazSocial) {
                 ) {
                     AvatarRed(a.de)
                     Column(Modifier.weight(1f)) {
-                        Text(textoMercado, color = if (a.leido) f.textoSuave else f.acentoTexto)
+                        Text(textoMercado, color = if (a.leido) f.textoSuave else f.letraAcentoSocial)
                         Text(haceCuanto(a.cuando), color = f.textoSuave, style = MaterialTheme.typography.bodySmall)
                     }
                     BotonIcono(Iconos.Cerrar, stringResource(R.string.social_red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
@@ -309,14 +317,17 @@ fun AvisosRed(vm: InterfazSocial) {
             }
             val que = textoMercado ?: stringResource(when (a.tipo) {
                 "respuesta" -> R.string.social_publicacion_aviso_respuesta; "megusta" -> R.string.social_red_aviso_megusta; "comentario" -> R.string.social_red_aviso_comentario; "seguir" -> R.string.social_red_aviso_seguir
-                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "historia_voto" -> R.string.social_red_aviso_voto; "historia_mencion" -> R.string.social_red_aviso_mencion; "historia_respuesta" -> R.string.social_red_aviso_respuesta; "sancion" -> R.string.social_red_aviso_sancion; else -> R.string.social_red_aviso_otro
+                "solicitud" -> R.string.social_red_aviso_solicitud; "aceptada" -> R.string.social_red_aviso_aceptada; "publico" -> R.string.social_red_aviso_publico; "historia_megusta" -> R.string.social_red_aviso_historia; "historia_voto" -> R.string.social_red_aviso_voto; "historia_mencion" -> R.string.social_red_aviso_mencion; "historia_respuesta" -> R.string.social_red_aviso_respuesta; "sancion" -> R.string.social_red_aviso_sancion; "reporte_urgente" -> R.string.social_red_aviso_urgente; else -> R.string.social_red_aviso_otro
             })
-            FilaPersona(a.de, {
+            val abrirAviso = {
                 val pub = a.objeto.toLongOrNull()
                 if (a.tipo == "sancion") vm.navegacion.ajustes(AjusteSocial.ESTADO_CUENTA)
+                else if (a.tipo == "reporte_urgente") Unit   // se atiende en Moderación (Ajustes); el aviso no lleva nada del caso
                 else if (pub != null && a.tipo in setOf("megusta", "comentario", "respuesta", "publico")) vm.navegacion.publicacion(pub) else vm.navegacion.perfil(a.de.usuario)
-            }) {
-                Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.acentoTexto, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
+            }
+            if (Trama.apagada) { FilaAviso(a, que, { vm.red.borrarAviso(a.id) }, conNombre = textoMercado == null, abrir = abrirAviso); return@aviso }
+            FilaPersona(a.de, abrirAviso) {
+                Text("$que · ${haceCuanto(a.cuando)}", style = MaterialTheme.typography.bodySmall, color = if (a.leido) f.textoSuave else f.letraAcentoSocial, maxLines = 2, modifier = Modifier.width(130.dp), textAlign = TextAlign.End)
                 BotonIcono(Iconos.Cerrar, stringResource(R.string.social_red_borrar_aviso), tinta = f.textoSuave) { vm.red.borrarAviso(a.id) }
             }
           }
@@ -332,8 +343,8 @@ fun GuardadosRed(vm: InterfazSocial) {
     Cabecera(stringResource(R.string.social_red_guardadas), vm.navegacion.volver)
     val l = lista
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.social_red_sin_guardadas), Modifier.padding(16.dp))
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
+        l.isEmpty() -> EstadoVacioSocial(Iconos.Guardar, stringResource(R.string.social_vacio_guardadas_titulo), stringResource(R.string.social_red_sin_guardadas))
         else -> l.forEach { TarjetaPublicacion(vm, it) }
     }
 }
@@ -347,8 +358,8 @@ fun GenteRed(vm: InterfazSocial, usuario: String, seguidores: Boolean) {
     Cabecera(stringResource(if (seguidores) R.string.social_red_tus_seguidores_titulo else R.string.social_red_pestana_siguiendo), vm.navegacion.volver)
     val l = gente[(if (seguidores) "seguidores:" else "siguiendo:") + usuario]
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.social_red_nadie), Modifier.padding(16.dp))
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
+        l.isEmpty() -> EstadoVacioSocial(IconosFogon.Gente, stringResource(R.string.social_vacio_gente_titulo), stringResource(R.string.social_red_nadie))
         else -> l.forEach { p ->
             FilaPersona(p, { vm.navegacion.perfil(p.usuario) }) {
                 if (seguidores && usuario == yo) Pildora(stringResource(R.string.social_red_quitar)) { vm.red.quitarSeguidor(p.usuario) }
@@ -365,8 +376,8 @@ fun BloqueadosRed(vm: InterfazSocial) {
     Cabecera(stringResource(R.string.social_red_bloqueadas), vm.navegacion.volver)
     val l = gente["bloqueados"]
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.social_red_nadie_bloqueado), Modifier.padding(16.dp))
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
+        l.isEmpty() -> EstadoVacioSocial(Iconos.Candado, stringResource(R.string.social_vacio_bloqueados_titulo), stringResource(R.string.social_red_nadie_bloqueado))
         else -> l.forEach { p -> FilaPersona(p, {}) { Pildora(stringResource(R.string.social_red_desbloquear)) { vm.red.bloquear(p.usuario, false) } } }
     }
 }
@@ -379,8 +390,8 @@ fun EtiquetaRed(vm: InterfazSocial, etiqueta: String) {
     Cabecera("#$etiqueta", vm.navegacion.volver)
     val l = listas["#$etiqueta"]
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
-        l.isEmpty() -> Pista(stringResource(R.string.social_red_etiqueta_vacia), Modifier.padding(16.dp))
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
+        l.isEmpty() -> EstadoVacioSocial(IconosFogon.Comentario, stringResource(R.string.social_vacio_etiqueta_titulo), stringResource(R.string.social_red_etiqueta_vacia))
         else -> l.forEach { TarjetaPublicacion(vm, it) }
     }
 }
@@ -410,9 +421,9 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (conIntro) {
             Text(vm.textosApp.introduccion, style = MaterialTheme.typography.bodyMedium, color = f.texto)
-            Pista(vm.textosApp.contenido)
+            Pista(vm.textosApp.contenido, adentro = Trama.apagada)
         }
-        if (correo == false) Pista(stringResource(R.string.social_red_codigo_no_disponible))
+        if (correo == false) Pista(stringResource(R.string.social_red_codigo_no_disponible), adentro = Trama.apagada)
         val oculta = androidx.compose.ui.text.input.PasswordVisualTransformation()
         @Composable
         fun CampoClave(valor: String, onCambio: (String) -> Unit, etiqueta: String) =
@@ -435,18 +446,18 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
                 androidx.compose.material3.TextButton({ if (correoValido) vm.red.olvideClave(correoTexto) else faltaCorreo = true }, enabled = !acceso.ocupado) {
                     Text(stringResource(R.string.social_red_olvide), color = f.textoSuave)
                 }
-                if (faltaCorreo) Pista(stringResource(R.string.acceso_olvide_falta_correo))
+                if (faltaCorreo) Pista(stringResource(R.string.acceso_olvide_falta_correo), adentro = Trama.apagada)
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                     Text(stringResource(R.string.acceso_sin_cuenta), color = f.textoSuave, style = MaterialTheme.typography.bodyMedium)
                     androidx.compose.material3.TextButton({ if (correoValido) vm.red.revisarCorreo(correoTexto) else faltaCorreo = true }, enabled = !acceso.ocupado) {
-                        Text(stringResource(R.string.acceso_crear), color = f.acentoTexto)
+                        Text(stringResource(R.string.acceso_crear), color = f.letraAcentoSocial)
                     }
                 }
                 return
             }
             // Verificación en dos pasos: la contraseña era buena; falta el código que llegó al correo.
             PasoAcceso.CODIGO_ENTRAR -> {
-                Pista(stringResource(R.string.acceso_codigo_dos, acceso.correo))
+                Pista(stringResource(R.string.acceso_codigo_dos, acceso.correo), adentro = Trama.apagada)
                 OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acceso_codigo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 BotonRiso(stringResource(R.string.social_red_entrar), { vm.red.entrarConCodigoDosPasos(codigo) }, Modifier.fillMaxWidth(),
@@ -472,12 +483,12 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
                 var nueva by rememberSaveable { mutableStateOf("") }
                 val conClaveNueva = acceso.motivo != MotivoCodigo.NUEVA
                 if (acceso.motivo == MotivoCodigo.SIN_CLAVE) Text(vm.textosApp.sinClave, style = MaterialTheme.typography.titleMedium, color = f.texto)
-                Pista(stringResource(R.string.social_red_revisa_correo, acceso.correo))
+                Pista(stringResource(R.string.social_red_revisa_correo, acceso.correo), adentro = Trama.apagada)
                 OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_codigo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 if (conClaveNueva) {
                     CampoClave(nueva, { nueva = it }, stringResource(R.string.social_red_clave_nueva))
-                    if (acceso.motivo == MotivoCodigo.OLVIDO) Pista(vm.textosApp.recuperacion)
+                    if (acceso.motivo == MotivoCodigo.OLVIDO) Pista(vm.textosApp.recuperacion, adentro = Trama.apagada)
                 }
                 BotonRiso(stringResource(R.string.social_red_entrar), { vm.red.entrar(codigo, nueva) }, Modifier.fillMaxWidth(),
                     habilitado = !acceso.ocupado && codigo.length == 6 && (!conClaveNueva || nueva.length >= 8))
@@ -490,7 +501,7 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
                 val crear = acceso.paso == PasoAcceso.CREAR_CLAVE
                 var clave by rememberSaveable { mutableStateOf("") }
                 Text(stringResource(if (crear) R.string.social_acceso_crear_clave else R.string.social_acceso_clave_datos), style = MaterialTheme.typography.titleMedium, color = f.texto)
-                Pista(stringResource(if (crear) R.string.social_acceso_crear_clave_pista else R.string.social_acceso_clave_datos_pista))
+                Pista(stringResource(if (crear) R.string.social_acceso_crear_clave_pista else R.string.social_acceso_clave_datos_pista), adentro = Trama.apagada)
                 if (crear) CampoClave(clave, { clave = it }, stringResource(R.string.social_red_clave_nueva))
                 else CampoContrasena(clave, { clave = it }, stringResource(R.string.social_red_clave))
                 BotonRiso(stringResource(R.string.social_red_entrar), { if (crear) vm.red.crearClaveDatos(clave) else vm.red.entrarConClaveDatos(clave) },
@@ -509,7 +520,7 @@ fun EntrarRed(vm: InterfazSocial, usuarioInicial: String, nombreInicial: String,
             label = { Text(stringResource(R.string.social_red_usuario)) }, prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.social_red_nombre_visible))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(acepto, { acepto = it }, colors = CheckboxDefaults.colors(checkedColor = f.tinta1, checkmarkColor = f.sobreTinta1))
+            Checkbox(acepto, { acepto = it }, colors = CheckboxDefaults.colors(checkedColor = f.acentoSocial, checkmarkColor = f.sobreAcentoSocial))
             Text(stringResource(R.string.social_red_acepto), style = MaterialTheme.typography.bodySmall, color = f.texto, modifier = Modifier.weight(1f).clickable { acepto = !acepto })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -553,24 +564,25 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
     SeguridadEquipo(vm)
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("@$usuario", style = MaterialTheme.typography.headlineSmall, color = f.texto)
-        Text(ClienteSocial.enlacePerfil(usuario), style = MaterialTheme.typography.bodySmall, color = f.acentoTexto)
+        Text(ClienteSocial.enlacePerfil(usuario), style = MaterialTheme.typography.bodySmall, color = f.letraAcentoSocial)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pildora(stringResource(R.string.social_red_compartir_perfil), Iconos.Compartir, acento = true) { compartirTexto(ctx, ClienteSocial.enlacePerfil(usuario)) }
             Pildora(stringResource(R.string.social_red_ver_mi_perfil), Iconos.Persona) { vm.navegacion.perfil(usuario) }
         }
         Opcion(stringResource(R.string.social_red_cuenta_privada), privada) { vm.red.cambiarPrivada(it) }
-        Pista(stringResource(R.string.social_red_cuenta_privada_pista))
-        Pista(vm.textosApp.compartido)
-        if (correoCuenta.isBlank()) Pista(stringResource(R.string.social_red_vincula_pista))
+        Pista(stringResource(R.string.social_red_cuenta_privada_pista), adentro = Trama.apagada)
+        QuienPuedeEscribirme(vm)
+        Pista(vm.textosApp.compartido, adentro = Trama.apagada)
+        if (correoCuenta.isBlank()) Pista(stringResource(R.string.social_red_vincula_pista), adentro = Trama.apagada)
         if (correo == true) {
-            if (correoCuenta.isNotBlank()) Pista(stringResource(R.string.social_red_correo_de_cuenta, correoCuenta))
+            if (correoCuenta.isNotBlank()) Pista(stringResource(R.string.social_red_correo_de_cuenta, correoCuenta), adentro = Trama.apagada)
             else if (acceso.paso == PasoAcceso.CODIGO) {
                 OutlinedTextField(codigo, { codigo = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_codigo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
                 ReenviarCodigo(vm)
                 BotonRiso(stringResource(R.string.social_red_vincular), { vm.vincularCorreo(codigo) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && codigo.length == 6)
             } else {
-                Pista(stringResource(R.string.social_red_vincula_pista))
+                Pista(stringResource(R.string.social_red_vincula_pista), adentro = Trama.apagada)
                 OutlinedTextField(correoTexto, { correoTexto = it.trim().take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_red_tu_correo)) },
                     singleLine = true, shape = forma(18.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
                 BotonSecundario(stringResource(R.string.social_red_mandar_codigo), { vm.red.pedirCodigoVincular(correoTexto) }, Modifier.fillMaxWidth(), habilitado = !acceso.ocupado && "@" in correoTexto)
@@ -581,9 +593,9 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
         val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
         Desplegable(Iconos.Persona, stringResource(R.string.social_red_cambiar_usuario), "@$usuario") {
             var nuevo by rememberSaveable { mutableStateOf(usuario) }
-            Pista(stringResource(R.string.social_red_usuario_regla))
+            Pista(stringResource(R.string.social_red_usuario_regla), adentro = Trama.apagada)
             val desde = cuenta?.usuarioDesde ?: 0
-            if (desde > System.currentTimeMillis()) Pista(stringResource(R.string.social_red_usuario_desde, java.text.DateFormat.getDateInstance().format(java.util.Date(desde))))
+            if (desde > System.currentTimeMillis()) Pista(stringResource(R.string.social_red_usuario_desde, java.text.DateFormat.getDateInstance().format(java.util.Date(desde))), adentro = Trama.apagada)
             else {
                 OutlinedTextField(nuevo, { nuevo = it.lowercase().filter { c -> c.isLetterOrDigit() && c.code < 128 || c == '.' || c == '_' }.take(30) }, Modifier.fillMaxWidth(),
                     prefix = { Text("@") }, singleLine = true, shape = forma(18.dp))
@@ -597,13 +609,13 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
             if (cuenta?.conClave == true) CampoContrasena(actual, { actual = it }, stringResource(R.string.social_red_clave_actual))
             CampoContrasena(nueva, { nueva = it }, stringResource(R.string.social_red_clave_nueva), ayuda = stringResource(R.string.social_red_clave_regla))
             BotonRiso(stringResource(R.string.social_guardar), { vm.ponerClave(nueva, actual) { nueva = ""; actual = "" } }, Modifier.fillMaxWidth(), habilitado = nueva.length >= 8)
-        } else Pista(stringResource(R.string.social_red_clave_pide_correo))
+        } else Pista(stringResource(R.string.social_red_clave_pide_correo), adentro = Trama.apagada)
         // Verificación en dos pasos: la activa la persona; pide la contraseña para cambiarla.
         if (correoCuenta.isNotBlank() && cuenta?.conClave == true) Desplegable(Iconos.Candado, stringResource(R.string.dos_pasos_titulo),
             if (cuenta?.dosPasos == true) stringResource(R.string.dos_pasos_activa) else null) {
             var claveDos by rememberSaveable { mutableStateOf("") }
             val ocupadaSeg by vm.red.seguridadOcupada.collectAsStateWithLifecycle()
-            Pista(stringResource(R.string.dos_pasos_explica))
+            Pista(stringResource(R.string.dos_pasos_explica), adentro = Trama.apagada)
             CampoContrasena(claveDos, { claveDos = it }, stringResource(R.string.dos_pasos_clave))
             val activa = cuenta?.dosPasos == true
             if (activa) BotonSecundario(stringResource(R.string.dos_pasos_apagar), { vm.red.ponerDosPasos(false, claveDos); claveDos = "" }, Modifier.fillMaxWidth(), habilitado = !ocupadaSeg && claveDos.length >= 8)
@@ -618,6 +630,8 @@ internal fun ConfigCuenta(vm: InterfazSocial, usuario: String) {
         FilaVidrio({ vm.navegacion.ajustes(AjusteSocial.BLOQUEADOS) }) { Text(stringResource(R.string.social_red_bloqueadas), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaPolitica) }) { Text(stringResource(R.string.social_red_politica), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaTerminos) }) { Text(stringResource(R.string.social_red_terminos), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
+        val rutaSeguridadInfantil = stringResource(R.string.social_ruta_seguridad_infantil)
+        FilaVidrio({ uri.openUri(ClienteSocial.SERVIDOR + rutaSeguridadInfantil) }) { Text(stringResource(R.string.social_red_seguridad_infantil), color = f.texto, modifier = Modifier.weight(1f)); IconoRiso(Iconos.Enlace, null, tamano = 18.dp, tinta = f.textoSuave) }
         BotonSecundario(stringResource(R.string.social_red_salir), { vm.salir() }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.social_red_borrar_cuenta), { borrar = true }, Modifier.fillMaxWidth(), peligro = true)
     }
@@ -753,7 +767,7 @@ fun Moderacion(vm: InterfazSocial) {
     if ("ver_reportes" !in permisos) return
     val l = casos
     when {
-        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+        l == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
         l.isEmpty() -> Pista(stringResource(R.string.social_mod_vacio), Modifier.padding(16.dp))
         else -> l.forEach { c ->
             if (c.que == "mercado") { ReporteMercado(vm, c); return@forEach }
@@ -768,15 +782,18 @@ fun Moderacion(vm: InterfazSocial) {
                 val motivos = c.motivos.entries.map { (codigo, cantidad) ->
                     stringResource(MOTIVOS_REPORTE.firstOrNull { it.first == codigo }?.second ?: R.string.social_rep_otro) + " ×$cantidad"
                 }.joinToString()
+                val grave = c.motivos.keys.any { it in MOTIVOS_GRAVES }
                 Text("$tipo · $motivos", style = MaterialTheme.typography.labelMedium,
-                    color = if ("menor_en_riesgo" in c.motivos) MaterialTheme.colorScheme.error else f.acentoTexto)
+                    color = if (grave) MaterialTheme.colorScheme.error else f.letraAcentoSocial)
+                if (c.automatico) Text(stringResource(R.string.social_mod_automatico), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                if (grave) RadicadoCaso(vm, c)
                 c.autor?.let { Text("@${it.usuario} · ${stringResource(R.string.social_mod_faltas, c.faltasAutor)}", style = MaterialTheme.typography.bodySmall, color = f.textoSuave) }
                 if (c.que == "mensaje") Text(limpiarReporteMensaje(c.contenido).take(600),
                     style = MaterialTheme.typography.bodyMedium, color = f.texto)
                 else if (c.que != "historia") vm.contenidoReporte(c.contenido)
                 ImagenesReporte(c, vm)
                 Text(pluralStringResource(R.plurals.social_mod_personas, c.personas, c.personas) + if (c.oculto) " · " + stringResource(R.string.social_mod_oculto) else "", style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                val reglaCaso = c.motivos.maxByOrNull { it.value }?.key.orEmpty()
+                val reglaCaso = MOTIVOS_GRAVES.firstOrNull { it in c.motivos } ?: c.motivos.maxByOrNull { it.value }?.key.orEmpty()
                 val acciones = accionesModeracion(permisos, reglaCaso, c.faltasAutor)
                 // La hoja se abre con la advertencia elegida («Advertir») o con la falta («Sancionar»).
                 var sancionando by remember(c.que, c.objeto) { mutableStateOf<String?>(null) }
@@ -789,14 +806,28 @@ fun Moderacion(vm: InterfazSocial) {
                 // Lo que reportaste tú no lo decides tú (el servidor no lo deja): se dice, en vez de botones que no harían nada.
                 if (c.propio) Pista(stringResource(R.string.social_mod_reporte_propio))
                 else androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.social_mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
-                    if ("sin_falta" in acciones && c.estado != "retirado" && reglaCaso !in CIERRE_DIRECTO) Pildora(stringResource(R.string.sancion_advertir)) { sancionando = "advertencia" }
-                    if ("sin_falta" in acciones && c.estado != "retirado") Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = "falta" }
+                    // Lo grave se decide aunque su autor lo haya borrado (queda retenido para esto).
+                    val decidible = c.estado != "retirado" || grave
+                    if ("sin_falta" in acciones && decidible) Pildora(stringResource(R.string.social_mod_sin_falta), acento = true) { vm.red.decidir(c, "sin_falta") }
+                    if ("sin_falta" in acciones && decidible && reglaCaso !in CIERRE_DIRECTO) Pildora(stringResource(R.string.sancion_advertir)) { sancionando = "advertencia" }
+                    if ("sin_falta" in acciones && decidible) Pildora(stringResource(R.string.sancion_sancionar), Iconos.Bandera) { sancionando = "falta" }
                 }
             }
         }
     }
-    Pista(stringResource(R.string.social_mod_menores), Modifier.padding(16.dp))
+    Pista(stringResource(R.string.social_mod_menores), Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp))
+    Pista(stringResource(R.string.social_mod_guia), Modifier.padding(16.dp))
+}
+
+/** En un caso grave: el ID para la denuncia, lo que hay que hacer y el número de radicado (queda en el registro). */
+@Composable
+private fun RadicadoCaso(vm: InterfazSocial, c: CasoModeracion) {
+    val f = FogonTema.actual
+    var numero by remember(c.que, c.objeto, c.radicado) { mutableStateOf(c.radicado) }
+    Text(stringResource(R.string.social_mod_id_caso, "${c.que}:${c.objeto}"), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    OutlinedTextField(numero, { numero = it.take(120) }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.social_mod_radicado)) },
+        singleLine = true, shape = forma(18.dp))
+    if (numero.isNotBlank() && numero.trim() != c.radicado) Pildora(stringResource(R.string.social_mod_radicado_guardar)) { vm.red.anotarRadicado(c, numero) }
 }
 
 @Composable
@@ -808,14 +839,16 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
     var menu by remember(p.id) { mutableStateOf(false) }
     LaunchedEffect(p.id) { vm.vista(p.id) }
     if (menu) vm.menu(p) { menu = false }
-    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon()
-        .then(if (abrir) Modifier.combinedClickable(onLongClick = { menu = true }) { vm.navegacion.publicacion(p.id) } else Modifier).padding(14.dp),
+    // Con el diseño nuevo la publicación va plana, sin tarjeta; una línea fina la separa de la siguiente.
+    Column(modifier.fillMaxWidth().then(if (Trama.apagada) Modifier else Modifier.padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon())
+        .then(if (abrir) Modifier.combinedClickable(onLongClick = { menu = true }) { vm.navegacion.publicacion(p.id) } else Modifier)
+        .then(if (Trama.apagada) Modifier.lineaAbajo(f.texto.copy(alpha = 0.08f)).padding(horizontal = 20.dp, vertical = 16.dp) else Modifier.padding(14.dp)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().clip(FormaPildora).clickable { vm.navegacion.perfil(p.autor.usuario) },
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             // Con historias vigentes, el avatar lleva su aro y tocarlo las abre.
             val grupos by vm.red.historias.collectAsStateWithLifecycle()
-            val grupo = grupos.firstOrNull { it.persona.usuario == p.autor.usuario && it.historias.isNotEmpty() }
+            val grupo = if (!vm.conHistorias) null else grupos.firstOrNull { it.persona.usuario == p.autor.usuario && it.historias.isNotEmpty() }
             var verHistorias by remember(p.id) { mutableStateOf(false) }
             if (grupo != null) AvatarConAro(p.autor, 32.dp, if (grupo.todasVistas) 2 else 1) { verHistorias = true } else AvatarRed(p.autor, 36.dp)
             if (verHistorias && grupo != null) VisorHistorias(vm, listOf(grupo), 0) { verHistorias = false }
@@ -827,7 +860,7 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
             BotonIcono(Iconos.Opciones, stringResource(R.string.social_red_mas_opciones), tinta = f.textoSuave) { menu = true }
         }
         // Por qué ves esto (en Explorar).
-        motivo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = f.acentoTexto, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        motivo?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = f.letraAcentoSocial, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         if (!vm.contenido.multimediaEnCuerpo(p.tipo) && (d.texto("spoiler") != "true" || destapado)) {
             if (d.texto("video").isNotBlank()) VideoPublicacion(vm::cabeceras, d.texto("video"), d.texto("poster"), d.texto("duracion").toIntOrNull() ?: 0)
             else CarruselFotos(imagenesPublicacion(d))
@@ -837,13 +870,13 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
         val texto = d.texto("texto")
         if (texto.isNotBlank() || (d.texto("spoiler") == "true" && !destapado)) {
             if (d.texto("spoiler") == "true" && !destapado) {
-                Box(Modifier.clip(FormaPildora).background(f.superficie).border(f.borde, f.linea, FormaPildora).clickable { destapado = true }.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                Box(Modifier.cajaSocial(f, FormaPildora, hondura = 2f).clickable { destapado = true }.padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(stringResource(R.string.social_red_spoiler_tocar), style = MaterialTheme.typography.labelLarge, color = f.texto)
                 }
             } else TextoConEtiquetas(vm, texto, if (abrir) 6 else Int.MAX_VALUE)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            BotonIcono(Iconos.Corazon, stringResource(R.string.social_publicacion_megusta_estado, p.megusta, stringResource(if (p.yoMeGusta) R.string.social_publicacion_gusta_si else R.string.social_publicacion_gusta_no)), tinta = if (p.yoMeGusta) f.acentoTexto else f.textoSuave, lleno = p.yoMeGusta) { vm.red.meGusta(p) }
+            BotonIcono(Iconos.Corazon, stringResource(R.string.social_publicacion_megusta_estado, p.megusta, stringResource(if (p.yoMeGusta) R.string.social_publicacion_gusta_si else R.string.social_publicacion_gusta_no)), tinta = if (p.yoMeGusta) f.letraAcentoSocial else f.textoSuave, lleno = p.yoMeGusta) { if (vm.red.usuario.value == null) vm.navegacion.cuenta() else vm.red.meGusta(p) }
             val nombreMeGusta = stringResource(R.string.social_publicacion_megusta, p.megusta)
             if (p.megusta > 0) Text("${p.megusta}", style = MaterialTheme.typography.labelLarge, color = f.texto, modifier = Modifier.semantics { contentDescription = nombreMeGusta })
             Box(Modifier.width(8.dp))
@@ -855,10 +888,53 @@ fun TarjetaPublicacion(vm: InterfazSocial, p: PublicacionSocial, modifier: Modif
                 IconoRiso(Iconos.Anime, stringResource(R.string.social_red_vistas), tamano = 18.dp, tinta = f.textoSuave)
                 Text(cifraCorta(p.vistas), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
             }
-            BotonIcono(Iconos.Guardar, stringResource(if (p.yoGuardo) R.string.social_red_quitar_guardada else R.string.social_red_guardar), tinta = if (p.yoGuardo) f.acentoTexto else f.textoSuave, lleno = p.yoGuardo) { vm.red.guardar(p) }
+            BotonIcono(Iconos.Guardar, stringResource(if (p.yoGuardo) R.string.social_red_quitar_guardada else R.string.social_red_guardar), tinta = if (p.yoGuardo) f.letraAcentoSocial else f.textoSuave, lleno = p.yoGuardo) { if (vm.red.usuario.value == null) vm.navegacion.cuenta() else vm.red.guardar(p) }
             BotonIcono(Iconos.Compartir, stringResource(R.string.social_compartir), tinta = f.textoSuave) { compartirTexto(ctx, ClienteSocial.enlacePublicacion(p.id)) }
         }
     }
+}
+
+/** Una línea fina al pie, que separa una publicación de la siguiente. */
+private fun Modifier.lineaAbajo(color: androidx.compose.ui.graphics.Color) = drawBehind {
+    drawLine(color, androidx.compose.ui.geometry.Offset(20.dp.toPx(), size.height), androidx.compose.ui.geometry.Offset(size.width - 20.dp.toPx(), size.height), 1.dp.toPx())
+}
+
+/** Un aviso como fila plana: la foto, quién y qué hizo, cuándo; sin leer, un punto en la tinta. */
+@Composable
+private fun FilaAviso(a: AvisoSocial, que: String, borrar: () -> Unit, conNombre: Boolean = true, abrir: () -> Unit) {
+    val f = FogonTema.actual
+    val nombre = a.de.nombre.ifBlank { a.de.usuario }
+    Row(Modifier.fillMaxWidth().clickable(onClick = abrir).heightIn(min = 64.dp).padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        AvatarRed(a.de, 44.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(androidx.compose.ui.text.buildAnnotatedString {
+                if (conNombre) { withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.SemiBold)) { append(nombre) }; append(" ") }
+                append(que)
+            }, style = MaterialTheme.typography.bodyMedium, color = f.texto, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(haceCuanto(a.cuando), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+        }
+        if (!a.leido) Box(Modifier.size(8.dp).clip(CircleShape).background(f.texto))
+        BotonIcono(Iconos.Cerrar, stringResource(R.string.social_red_borrar_aviso), tinta = f.textoSuave, onClick = borrar)
+    }
+}
+
+/** «Quién puede escribirme»: quién puede abrirme un chat nuevo (lo hace cumplir el servidor; los chats que ya tengo siguen). */
+@Composable
+fun QuienPuedeEscribirme(vm: InterfazSocial) {
+    val f = FogonTema.actual
+    val cuenta by vm.red.cuenta.collectAsStateWithLifecycle()
+    val actual = cuenta?.escribir ?: "mutuos"
+    Text(stringResource(R.string.social_red_escribir_titulo), style = MaterialTheme.typography.titleSmall, color = f.texto)
+    listOf("mutuos" to R.string.social_red_escribir_mutuos, "sigo" to R.string.social_red_escribir_sigo, "nadie" to R.string.social_red_escribir_nadie).forEach { (valor, texto) ->
+        Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { if (valor != actual) vm.red.cambiarEscribir(valor) }.padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.RadioButton(valor == actual, { if (valor != actual) vm.red.cambiarEscribir(valor) },
+                colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = f.acentoSocial, unselectedColor = f.textoSuave))
+            Text(stringResource(texto), style = MaterialTheme.typography.bodyMedium, color = f.texto)
+        }
+    }
+    Pista(stringResource(R.string.social_red_escribir_pista), adentro = Trama.apagada)
 }
 
 @Composable
@@ -866,7 +942,7 @@ private fun Opcion(texto: String, si: Boolean, onCambio: (Boolean) -> Unit) {
     val f = FogonTema.actual
     Row(Modifier.fillMaxWidth().clip(forma(14.dp)).clickable { onCambio(!si) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(texto, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f))
-        Switch(si, onCambio, colors = SwitchDefaults.colors(checkedTrackColor = f.tinta1, checkedThumbColor = f.sobreTinta1))
+        Switch(si, onCambio, colors = SwitchDefaults.colors(checkedTrackColor = f.acentoSocial, checkedThumbColor = f.sobreAcentoSocial))
     }
 }
 private fun compartirTexto(ctx: android.content.Context, texto: String) {
@@ -932,7 +1008,7 @@ fun MenuPublicacion(vm: InterfazSocial, p: PublicacionSocial, motivo: String, on
                         Fila(Iconos.Cerrar, stringResource(R.string.social_menu_no_me_interesa)) { vm.interesa(p, false); onCerrar() }
                         Fila(Iconos.Persona, stringResource(R.string.social_menu_silenciar, p.autor.usuario)) { vm.silenciar(p.autor.usuario); onCerrar() }
                     }
-                    if (yo != null) Fila(Iconos.Mas, stringResource(R.string.social_menu_a_historia)) { aHistoria = true }
+                    if (yo != null && vm.conHistorias) Fila(Iconos.Mas, stringResource(R.string.social_menu_a_historia)) { aHistoria = true }
                     if (p.autor.usuario == yo) Fila(Iconos.Estrella, stringResource(R.string.social_menu_fijar)) { vm.red.fijarPublicacion(p.id, true); onCerrar() }
                     Fila(Iconos.Enlace, stringResource(R.string.social_menu_copiar_enlace)) {
                         (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
@@ -955,14 +1031,14 @@ fun EstadoCuenta(vm: InterfazSocial) {
     val estado by vm.red.estadoCuenta.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.red.cargarEstadoCuenta() }
     Cabecera(stringResource(R.string.social_mod_estado), vm.navegacion.volver)
-    val e = estado ?: run { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea); return }
+    val e = estado ?: run { LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea); return }
     val fecha = { t: Long -> java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(t)) }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val ahora = System.currentTimeMillis()
         when {
             e.cerrada -> Text(stringResource(R.string.social_mod_cerrada), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
             e.suspendidaHasta > ahora -> Text(stringResource(R.string.social_mod_suspendida_hasta, fecha(e.suspendidaHasta)), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-            e.restringidaHasta > ahora -> Text(stringResource(R.string.social_mod_restringida_hasta, fecha(e.restringidaHasta)), style = MaterialTheme.typography.titleMedium, color = f.acentoTexto)
+            e.restringidaHasta > ahora -> Text(stringResource(R.string.social_mod_restringida_hasta, fecha(e.restringidaHasta)), style = MaterialTheme.typography.titleMedium, color = f.letraAcentoSocial)
             e.faltas.isEmpty() -> Text(stringResource(R.string.social_mod_todo_bien), style = MaterialTheme.typography.titleMedium, color = f.texto)
         }
         ListaFaltas(e.faltas) { vm.tx(it) }

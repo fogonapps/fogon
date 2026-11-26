@@ -79,7 +79,7 @@ sealed interface Pantalla {
 enum class Pestana { INICIO, GENTE, RESUMEN, SOBRES, METAS }
 
 /** La red de La Alcancía: rutas /v2/apps/alcancia y correos con su nombre. */
-val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("alcancia", "La Alcancía", "LaAlcancia-Fogon")
+val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("alcancia", "Pezi", "LaAlcancia-Fogon")
 
 class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }

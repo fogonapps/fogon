@@ -62,7 +62,7 @@ class CuchaTest {
         }
         assertFailsWith<Problema> { validarComida("receta", JsonObject(d + ("ingredientes" to JsonArray(List(101) { json("""{"nombre":"a","cantidad":1,"unidad":"g"}""") })))) }
     }
-    @Test fun lugaresDuplicadosCoordenadasPermisosLimiteYReportes() = Entorno().use { e ->
+    @Test fun lugaresDuplicadosCoordenadasPermisosLimiteYReportes(): Unit = Entorno().use { e ->
         val l = e.s.crearLugar(e.yo, json("""{"nombre":"Café","ciudad":"Bogotá","direccion":"Calle <uno>","lat":4.123456,"lon":-74.123456}"""))
         assertEquals(4.1235, l.lat); assertEquals(-74.1235, l.lon)
         assertEquals(l.id, e.s.crearLugar(e.yo, json("""{"nombre":"CAFE","ciudad":"BOGOTA"}""")).id)

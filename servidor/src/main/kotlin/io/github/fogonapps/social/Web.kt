@@ -11,17 +11,21 @@ import kotlinx.serialization.json.doubleOrNull
 
 /**
  * Las páginas web: lo que ve quien abre un enlace compartido sin tener El Cajón (con El Cajón instalado, Android abre
- * la app directo gracias a `assetlinks.json`), y la política de privacidad y los términos. Solo muestran lo público.
+ * la app directo gracias a `assetlinks.json`), y la política de privacidad, los términos, los estándares de seguridad infantil y cómo borrar la cuenta. Solo muestran lo público.
  */
 fun Routing.paginasWeb(social: Social) {
     get("/.well-known/assetlinks.json") {
         call.respondText(ASSETLINKS, ContentType.Application.Json)
     }
     get("/") { call.respondText(pagina("Fogón", "<h1>Fogón</h1><p class=\"suave\">Tuya desde el primer día.</p>$BOTONES"), ContentType.Text.Html) }
-    get("/privacidad") { call.respondText(pagina("Privacidad", recurso("privacidad.html")), ContentType.Text.Html) }
-    get("/terminos") { call.respondText(pagina("Términos", recurso("terminos.html")), ContentType.Text.Html) }
-    get("/privacy") { call.respondText(pagina("Privacy", recurso("privacy.html")), ContentType.Text.Html) }
-    get("/terms") { call.respondText(pagina("Terms", recurso("terms.html")), ContentType.Text.Html) }
+    get("/privacidad") { call.respondText(pagina("Privacidad", recurso("privacidad.html") + PIE), ContentType.Text.Html) }
+    get("/terminos") { call.respondText(pagina("Términos", recurso("terminos.html") + PIE), ContentType.Text.Html) }
+    get("/privacy") { call.respondText(pagina("Privacy", recurso("privacy.html") + PIE_EN), ContentType.Text.Html) }
+    get("/terms") { call.respondText(pagina("Terms", recurso("terms.html") + PIE_EN), ContentType.Text.Html) }
+    get("/seguridad-infantil") { call.respondText(pagina("Seguridad infantil", recurso("seguridad-infantil.html") + PIE), ContentType.Text.Html) }
+    get("/child-safety") { call.respondText(pagina("Child safety", recurso("child-safety.html") + PIE_EN), ContentType.Text.Html) }
+    get("/borrar-cuenta") { call.respondText(pagina("Borrar tu cuenta", recurso("borrar-cuenta.html") + PIE), ContentType.Text.Html) }
+    get("/delete-account") { call.respondText(pagina("Delete your account", recurso("delete-account.html") + PIE_EN), ContentType.Text.Html) }
 
     get("/{arroba}") {
         val arroba = call.parameters["arroba"] ?: ""
@@ -145,8 +149,10 @@ private fun recurso(nombre: String): String =
 private fun e(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
 
 private const val DESCARGA = "https://github.com/fogonapps/el-cajon/releases/latest"
-private val BOTONES = "<p class=\"botones\"><a class=\"boton\" href=\"$DESCARGA\">Descargar El Cajón</a></p>" +
-    "<p class=\"pie\"><a href=\"/privacidad\">Privacidad</a> · <a href=\"/terminos\">Términos</a></p>"
+/** El pie con las páginas legales, en español y en inglés. */
+private const val PIE = "<p class=\"pie\"><a href=\"/privacidad\">Privacidad</a> · <a href=\"/terminos\">Términos</a> · <a href=\"/seguridad-infantil\">Seguridad infantil</a> · <a href=\"/borrar-cuenta\">Borrar tu cuenta</a></p>"
+private const val PIE_EN = "<p class=\"pie\"><a href=\"/privacy\">Privacy</a> · <a href=\"/terms\">Terms</a> · <a href=\"/child-safety\">Child safety</a> · <a href=\"/delete-account\">Delete your account</a></p>"
+private val BOTONES = "<p class=\"botones\"><a class=\"boton\" href=\"$DESCARGA\">Descargar El Cajón</a></p>" + PIE
 
 private const val SERVIDOR_WEB = "https://fogonapps.duckdns.org"
 

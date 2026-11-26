@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.fogonapps.identidad.*
@@ -21,9 +24,9 @@ fun PestanasFeedSocial(pestana: Int, usuario: String?, cambiarPestana: (Int) -> 
     Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(R.string.social_red_pestana_siguiendo, R.string.social_red_explorar).forEachIndexed { i, t ->
             val elegida = pestana == i
-            Box(Modifier.clip(FormaPildora).background(if (elegida) f.tinta1 else f.superficie).border(f.borde, if (elegida) f.tinta1 else f.linea, FormaPildora)
+            Box(Modifier.clip(FormaPildora).background(if (elegida) f.acentoSocial else f.superficieSocial).border(f.borde, if (elegida) f.acentoSocial else f.linea, FormaPildora)
                 .clickable { cambiarPestana(i) }.padding(horizontal = 16.dp, vertical = 9.dp)) {
-                Text(stringResource(t), style = MaterialTheme.typography.labelLarge, color = if (elegida) f.sobreTinta1 else f.texto)
+                Text(stringResource(t), style = MaterialTheme.typography.labelLarge, color = if (elegida) f.sobreAcentoSocial else f.texto)
             }
         }
         Box(Modifier.weight(1f))
@@ -39,15 +42,18 @@ fun <M> ListaFeedSocial(
 ) {
     val f = FogonTema.actual
     when {
-        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.tinta1, trackColor = f.linea)
+        lista == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp), color = f.acentoSocial, trackColor = f.linea)
         lista.isEmpty() -> Pista(stringResource(if (pestana == 0) vacio else R.string.social_red_explorar_vacio), Modifier.padding(16.dp))
         else -> {
             lista.forEach { (p, motivo) -> tarjeta(p, motivo) }
             if (pestana == 0 && lista.size >= 40) BotonSecundario(stringResource(R.string.social_red_mas), { mas() }, Modifier.fillMaxWidth().padding(16.dp))
             // Sin scroll infinito: al final, estás al día.
             Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
-                Text(stringResource(R.string.social_red_al_dia), style = MaterialTheme.typography.titleMedium, color = f.texto)
+                // Con el diseño nuevo, sin la chispa de color: un visto en la tinta y la frase en la letra de los títulos.
+                if (Trama.apagada) IconoRiso(IconosFogon.Chulo, null, tamano = 28.dp, tinta = f.texto) else io.github.fogonapps.identidad.Chispa(tamano = 22.dp)
+                Text(stringResource(R.string.social_red_al_dia), style = MaterialTheme.typography.titleMedium, color = f.texto,
+                    fontFamily = if (Trama.apagada) f.titulos else null, fontSize = if (Trama.apagada) 20.sp else androidx.compose.ui.unit.TextUnit.Unspecified,
+                    modifier = Modifier.semantics { heading() })
                 Text(pie, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
             }
         }

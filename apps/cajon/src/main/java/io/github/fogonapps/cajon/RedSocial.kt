@@ -91,7 +91,11 @@ class RedSocial(
         recuperacionCajon.reiniciar()
         sincronizacionesCajon.cancelar()
     }
-    init { caja.redPermitida = false; caja.migrarPerfilRed() }
+    init {
+        caja.redPermitida = false; caja.migrarPerfilRed()
+        // Solo la versión de Play trae su pasarela (Google Play Billing); la de GitHub devuelve null.
+        pasarelaDeLaVersion(app)?.let(::conectarPlay)
+    }
 
     /** El cajón guardado en la cuenta necesita la contraseña para abrirse en este teléfono (entró con el código). */
     private val _cajonBloqueado = MutableStateFlow(false)
@@ -245,6 +249,9 @@ class RedSocial(
                     "no_existe" -> R.string.red_no_existe
                     else -> R.string.red_error
                 })
+            } else if (x.message == "politica_pendiente") {
+                // La red está en pausa hasta aceptar la política nueva: se muestra la hoja para aceptarla, no un error.
+                if (avisar && _politicaPendiente.value) _hojaPolitica.value = true
             } else if (avisar) decir(R.string.red_sin_conexion)
         }
 

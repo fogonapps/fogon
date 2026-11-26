@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name" translatable="false">El Forzudo</string>
+  <string name="app_name" translatable="false">Forz</string>
   <string name="calentamiento">Warm-up</string>
   <string name="calentamiento_texto">Before your first set of %1$s kg:</string>
   <string name="discos">Plates</string>
@@ -108,7 +108,7 @@
   <string name="descanso_siguiente">On to the next set!</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
   <string name="aviso_no_exportado">Couldn’t export</string>
-  <string name="aviso_no_es_respaldo">That file isn’t an El Forzudo backup</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a Forz backup</string>
   <string name="importar_titulo">Import the backup?</string>
   <string name="importar_si">Yes, import</string>
   <string name="cancelar">Cancel</string>
@@ -128,7 +128,7 @@
   <string name="grafica">Chart</string>
   <string name="dias_entrenados">Days trained in %1$d</string>
   <string name="listo">Done</string>
-  <string name="tut_hola">Hi! I’m El Forzudo</string>
+  <string name="tut_hola">Hi! I’m Forz</string>
   <string name="tut_hola_texto">Your workout notebook. No ads and truly free. We don\'t sell your data: it stays on your phone and, if you sign in with your Fogón account, in an encrypted copy too.</string>
   <string name="tut_anota">Train and log</string>
   <string name="tut_anota_texto">In Train, pick your routine and tap Start. Enter the weight and reps for each set and tick it with ✓. Ticking it starts the rest timer and I’ll let you know when it’s over. Tap what you did last time and it’s copied over.</string>
@@ -205,7 +205,7 @@
   <string name="sin_registros_todavia">Nothing logged yet</string>
   <string name="proxima_meta">To rank up: %1$s to %2$s, %3$s</string>
   <string name="rango_maximo">Top rank!</string>
-  <string name="creditos_rangos">Standards: Fogón model with OpenPowerlifting data (public domain) · Drawings: Everkinetic (CC BY-SA) · Muscle model: react-body-highlighter (MIT license). Details in Profile → About El Forzudo → Licenses</string>
+  <string name="creditos_rangos">Standards: Fogón model with OpenPowerlifting data (public domain) · Drawings: Everkinetic (CC BY-SA) · Muscle model: react-body-highlighter (MIT license). Details in Profile → About Forz → Licenses</string>
   <string name="sin_nombre">No name</string>
   <string name="cambiar_nombre">Change name</string>
   <string name="volumen_total">Total volume</string>
@@ -228,7 +228,7 @@
   <string name="ver_tutorial">See the tutorial</string>
   <string name="manifiesto_fogon">Fogón manifesto</string>
   <string name="preguntas_frecuentes">Frequently asked questions</string>
-  <string name="acerca_de">About El Forzudo</string>
+  <string name="acerca_de">About Forz</string>
   <string name="tu_nombre">Your name</string>
   <plurals name="semanas_seguidas">
     <item quantity="one">week in a row</item>
@@ -366,7 +366,7 @@
   <string name="no_encontrado">I couldn’t find that exercise.</string>
   <string name="cerrar">Close</string>
   <string name="acerca_de_corto">About</string>
-  <string name="aviso_salud">El Forzudo is a workout notebook, not medical advice. The routines, goals and ranks are general guides that don’t know your health. If you have an injury, an illness or haven’t trained in a long time, see a health professional before you start. If you feel pain, dizziness or shortness of breath, stop. You use the app at your own risk.</string>
+  <string name="aviso_salud">Forz is a workout notebook, not medical advice. The routines, goals and ranks are general guides that don’t know your health. If you have an injury, an illness or haven’t trained in a long time, see a health professional before you start. If you feel pain, dizziness or shortness of breath, stop. You use the app at your own risk.</string>
   <string name="licencias">Licenses</string>
   <string name="lic_modelo">Muscle model</string>
   <string name="lic_modelo_texto">Body drawing from react-body-highlighter (© 2020 GV79), which took it from react-native-body-highlighter (© 2022 ELABBASSI Hicham). MIT license.</string>
@@ -398,7 +398,7 @@
     <item>What do the colors mean?</item>
     <item>Where do the strength ranks come from?</item>
     <item>Does my data leave the phone?</item>
-    <item>Why was it called Mi Gym before?</item>
+    <item>Why was it called Mi Gym or El Forzudo before?</item>
   </string-array>
   <string-array name="respuestas">
     <item>The drawings come from Everkinetic, a freely licensed bank of exercise illustrations, and all its figures are male. We found no free illustrations with female figures. We’d rather not ship something half-done. The exercise and the muscle it works are the same for everyone. If anyone wants to draw the female versions under a free license, they’re welcome.</item>
@@ -407,7 +407,7 @@
     <item>Each muscle group has its own color, the same throughout the app: the patch on the drawing marks the muscle being worked. The drawing’s shadow tells the area: pink for the upper body, yellow for the arms and blue for the legs.</item>
     <item>From Fogón’s own table, calibrated with real powerlifting meet results (OpenPowerlifting, public domain). The other exercises are estimated from bench press, squat and deadlift, so on machines the rank is approximate.</item>
     <item>No. Everything is stored on the phone. Only if you create a Fogón account is your notebook also kept there, encrypted: only your password opens it.</item>
-    <item>It had that name up to version 1.2.1. Since 1.3 it carries the name of its character, El Forzudo, like all Fogón apps.</item>
+    <item>It was called Mi Gym up to version 1.2.1, and then El Forzudo, after its character. Now it’s called Forz: a short name of its own that’s easy to remember.</item>
   </string-array>
   <string name="idioma">Language</string>
   <string name="idioma_telefono">Phone’s language</string>
@@ -427,7 +427,7 @@
   <string name="ver_y_corregir">See and fix the sets</string>
   <string name="quitar_serie">Remove set %1$d</string>
   <string name="ajustes">Settings</string>
-  <string name="ajustes_uso">How you use El Forzudo</string>
+  <string name="ajustes_uso">How you use Forz</string>
   <string name="ajustes_entrenamiento">Units, rest and routines</string>
   <string name="ajustes_entrenamiento_pista">Weights are recorded in kg. Change rest for each exercise when editing a routine; the timer and its alerts appear during workouts.</string>
   <string name="ajustes_cuaderno">Your notebook</string>
@@ -452,7 +452,7 @@
     <string name="cuenta_operacion_lista">Operation completed.</string>
     <string name="cuenta_otro_perfil">This account needs another phone profile. Use “Profiles on this phone”.</string>
     <string name="cuenta_local">Your notebook stays in this profile on the phone and, with your account, is saved there automatically, encrypted with your password: if you reinstall or change phones, sign in with your email and password and it comes back. Export a copy before removing a profile.</string>
-    <string name="cuenta_intro">El Forzudo’s network: your Fogón Social account, the same in every app. Follow other people and share your ranks and medals.</string>
+    <string name="cuenta_intro">Forz’s network: your Fogón Social account, the same in every app. Follow other people and share your ranks and medals.</string>
     <string name="cuenta_que_sale">Only what you choose to share appears on the network; never your body weight or measurements. Your notebook is saved to your account encrypted with your password: nobody else can read it, not even Fogón. The workouts you share, their photos and videos are also sent to Fogón Social.</string>
     <string name="cuenta_politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is shared. Your notebook is still available.</string>
     <string name="cuenta_politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
@@ -488,7 +488,7 @@
     <string name="entreno_avisos">Notifications</string>
     <string name="entreno_guardados">Saved</string>
     <string name="entreno_moderacion">Moderation</string>
-    <string name="entreno_feed_pie">Workouts shared in El Forzudo</string>
+    <string name="entreno_feed_pie">Workouts shared in Forz</string>
     <string name="entreno_borrar">Delete post?</string>
     <string name="entreno_privado">Make private? It will be removed from the network; your local workout is kept.</string>
     <string name="entreno_publicado">Workout post</string>

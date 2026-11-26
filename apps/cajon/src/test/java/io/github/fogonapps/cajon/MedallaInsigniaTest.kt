@@ -42,7 +42,8 @@ class MedallaInsigniaTest {
         regla.setContent {
             FogonTema(Paleta.Cajon, Apariencia(estilo = estilo)) {
                 Column(Modifier.fillMaxWidth().fondoFogon(FogonTema.actual)) {
-                    FilaInsignias(listOf(Insignia("cine", 10, 10), Insignia("series", 4, 10)), propias = true)
+                    FilaInsignias(listOf(Insignia("cine", 50, 50), Insignia("series", 4, 10), Insignia("constancia", 30, 30),
+                        Insignia("explorador", 5, 5), Insignia("critico", 0, 10)), propias = true)
                     Escaparates(listOf(EscaparateVista("insignias", insignias = Insignias.IDS))) { _, _ -> }
                 }
             }

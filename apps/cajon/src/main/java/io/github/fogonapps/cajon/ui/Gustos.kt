@@ -37,6 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
@@ -71,37 +75,46 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
     LaunchedEffect(Unit) { vm.cargarRecomendaciones() }
     val r by vm.recomendaciones.collectAsStateWithLifecycle()
     var menu by remember { mutableStateOf<Sobre?>(null) }
+    val cargandoTexto = stringResource(R.string.cargando_recomendaciones)
     Seccion(stringResource(R.string.para_ti)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             if (r?.vacias == false) BotonIcono(Iconos.Repetir, stringResource(R.string.actualizar)) { vm.cargarRecomendaciones(otraVez = true) }
-            Pildora(stringResource(R.string.tus_gustos), Iconos.Corazon) { vm.abrir(Pantalla.TusGustos) }
+            BotonIcono(Iconos.Corazon, stringResource(R.string.tus_gustos)) { vm.abrir(Pantalla.TusGustos) }
         }
     }
-    if (!e.ajustes.gustosListos) Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().vidrio().padding(16.dp),
+    if (!e.ajustes.gustosListos) Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(stringResource(R.string.cuentame_gustos), style = MaterialTheme.typography.titleMedium, color = f.texto)
+        Text(stringResource(R.string.cuentame_gustos), fontFamily = f.titulos, fontSize = 20.sp, color = f.texto)
         Text(stringResource(R.string.cuentame_gustos_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         BotonRiso(stringResource(R.string.empezar), { vm.abrir(Pantalla.ElegirGustos) }, Modifier.fillMaxWidth())
         BotonSecundario(stringResource(R.string.ahora_no), { vm.gustosListos() }, Modifier.fillMaxWidth())
     }
     val rec = r ?: return
+    // Recargando con sugerencias a la vista: una línea fina arriba, sin tapar nada.
+    if (rec.cargando && !rec.vacias) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(2.dp)
+        .semantics { contentDescription = cargandoTexto }, color = f.texto, trackColor = f.linea)
     if (rec.cargando && rec.vacias) {
         LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), color = f.tinta1, trackColor = f.linea)
         return
     }
     // Sin internet, Inicio no falla: explica qué falta y que lo guardado sigue ahí.
-    rec.avisos.forEach { Pista(stringResource(if (it == R.string.buscar_sin_red) R.string.inicio_sin_red else it)) }
+    // Un fallo de una parte (un póster, una foto) no se avisa si hay sugerencias a la vista.
+    if (rec.vacias) rec.avisos.forEach { Pista(stringResource(if (it == R.string.buscar_sin_red) R.string.inicio_sin_red else it)) }
     if (rec.vacias && rec.avisos.isNotEmpty()) {
         BotonSecundario(stringResource(R.string.inicio_reintentar), { vm.cargarRecomendaciones(otraVez = true) }, Modifier.padding(horizontal = 20.dp))
         return
     }
-    if (rec.vacias) { Pista(stringResource(R.string.para_ti_vacio)); return }
+    if (rec.vacias) {
+        Vacio(Iconos.Corazon, stringResource(R.string.para_ti_vacio_titulo), stringResource(R.string.para_ti_vacio),
+            boton = stringResource(R.string.cuentame_gustos)) { vm.abrir(Pantalla.ElegirGustos) }
+        return
+    }
     // Decir que no se aprende en el tutorial y al elegir gustos; aquí queda solo para lectores de pantalla.
     val decirNo = stringResource(R.string.decir_no)
 
     @Composable
     fun porque(p: Recomendar.Por, persona: Boolean = false): String = when (p.tipo) {
-        Recomendar.Por.SEMILLA -> stringResource(if (persona) R.string.como_artista else R.string.porque_te_gusto, p.texto)
+        Recomendar.Por.SEMILLA -> stringResource(if (persona) R.string.como_artista else R.string.porque_te_gusto, nombreConMayusculas(p.texto))
         Recomendar.Por.GENERO -> stringResource(R.string.porque_genero, p.texto)
         Recomendar.Por.EXPLORAR -> stringResource(R.string.para_explorar)
         else -> stringResource(R.string.lo_mas_visto)
@@ -116,7 +129,7 @@ fun ParaTi(vm: CajonViewModel, e: Estado) {
                 // «De <autor>» solo si el motivo es su autor; si vino de un libro parecido, «Porque te gustó <libro>».
                 val esAutor = libros && por.tipo == Recomendar.Por.SEMILLA && por.texto.isNotBlank() &&
                     io.github.fogonapps.cajon.datos.Logica.tituloLimpio(x.creador).contains(io.github.fogonapps.cajon.datos.Logica.tituloLimpio(por.texto))
-                val motivo = if (esAutor) stringResource(R.string.de_autor, por.texto) else porque(por)
+                val motivo = if (esAutor) stringResource(R.string.de_autor, nombreConMayusculas(por.texto)) else porque(por)
                 Column(Modifier.width(112.dp).clip(forma(12.dp)).combinedClickable(
                     onClick = { vm.abiertaRecomendacion("obra:" + x.fuente); vm.abrirEncontrado(x) },
                     onLongClickLabel = decirNo,
@@ -345,3 +358,8 @@ private fun FilaGusto(vm: CajonViewModel, g: PesoGusto) {
         else Pildora(stringResource(R.string.no_es_asi)) { vm.decirGusto(g.clave, g.nombre, Senales.QUITADO) }
     }
 }
+
+/** Un nombre que llegó todo en minúsculas («mary shelley», de Open Library) se muestra con mayúsculas iniciales. */
+internal fun nombreConMayusculas(nombre: String): String =
+    if (nombre != nombre.lowercase()) nombre
+    else nombre.split(" ").joinToString(" ") { p -> p.replaceFirstChar { it.titlecase() } }

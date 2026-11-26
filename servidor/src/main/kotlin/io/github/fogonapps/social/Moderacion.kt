@@ -4,20 +4,42 @@ import kotlinx.serialization.Serializable
 
 /**
  * La moderación de Fogón Social: la hace una persona (el equipo con permiso, MFA y sesión elevada) sobre los reportes; no se vigila todo lo
- * que se publica. Lo que reportan varias cuentas se oculta mientras se revisa; las faltas suben de a una (las graves,
+ * que se publica (solo se mira si las fotos subidas parecen desnudos, ver [Desnudos]). Lo que reportan [UMBRAL] cuentas que cuentan se
+ * oculta mientras se revisa, y lo grave ([GRAVES]) con [UMBRAL_GRAVE] o con una de confianza; las faltas suben de a una (las graves,
  * de a dos), vencen a los 90 días y traen: aviso, 24 h sin publicar, 7 días de suspensión y, a la cuarta, cierre.
  * Hay casos que cierran a la primera (ver [Moderacion.CIERRE_DIRECTO]). Cada decisión queda en `decisiones` y en el registro encadenado del equipo.
  */
 object Moderacion {
     /** Los motivos de reporte (los mismos para cuentas, publicaciones, comentarios y mensajes). */
     const val MENOR_EN_RIESGO = "menor_en_riesgo"
-    /** Cuánto se conserva oculto lo retirado por poner a un menor en riesgo, para entregarlo a las autoridades: un año. */
-    const val CONSERVAR_GRAVE = 365L * 86400_000
-    val MOTIVOS = setOf(MENOR_EN_RIESGO, "desnudos", "acoso", "odio", "autolesion", "spam", "menor_de_edad", "derechos", "falso", "otro")
-    /** Con cuántas cuentas distintas (de más de 7 días y sin sanción) se oculta algo mientras se revisa. */
-    const val UMBRAL = 10
+    /** Material sexual con menores: el primero de la lista en la app. */
+    const val MASI = "masi"
+    /**
+     * Lo que va primero en la cola, avisa al equipo en el acto, se oculta con menos reportes ([UMBRAL_GRAVE]) y, si el equipo lo confirma, queda «preservado» (no se borra: ver
+     * [Social.decidir]) y cierra la cuenta.
+     */
+    val GRAVES = setOf(MASI, MENOR_EN_RIESGO)
+    val MOTIVOS = setOf(MASI, MENOR_EN_RIESGO, "desnudos", "acoso", "odio", "autolesion", "spam", "menor_de_edad", "derechos", "falso", "otro")
+    /**
+     * Con cuántas cuentas distintas que cuentan se oculta algo mientras se revisa (ver Social.reportar): una cuenta
+     * cuenta si tiene al menos [ANTIGUEDAD_REPORTE], no está sancionada ni bloqueada por quien publicó, no es quien
+     * publicó y no le descartaron [DESCARTADOS_MAX] reportes en [VENTANA_DESCARTES]. Las creadas desde la misma
+     * dirección con menos de [MISMA_DIRECCION] de diferencia cuentan como una.
+     */
+    const val UMBRAL = 3
+    /** Lo grave se oculta con 2 cuentas que cuentan, o con 1 de confianza ([ANTIGUEDAD_CONFIANZA], sin faltas ni descartes en 90 días). */
+    const val UMBRAL_GRAVE = 2
+    const val ANTIGUEDAD_REPORTE = 7L * 24 * 3600_000
+    const val ANTIGUEDAD_CONFIANZA = 30L * 24 * 3600_000
+    const val MISMA_DIRECCION = 24L * 3600_000
+    const val VENTANA_DESCARTES = 90L * 24 * 3600_000
+    const val DESCARTADOS_MAX = 3
+    /** Reportes por cuenta al día. */
+    const val REPORTES_DIA = 10
     const val VENCE = 90L * 24 * 3600_000
-    val CIERRE_DIRECTO = setOf(MENOR_EN_RIESGO, "menor_de_edad", "evadir_sancion", "amenaza_real")
+    val CIERRE_DIRECTO = setOf(MASI, MENOR_EN_RIESGO, "menor_de_edad", "evadir_sancion", "amenaza_real")
+    /** Si el motivo de un reporte ("masi: …") es grave. */
+    fun esGrave(motivo: String) = motivo.substringBefore(':').trim() in GRAVES
     val DECISIONES = setOf("advertencia", "falta", "falta_grave", "cerrar")
     /** Las reglas con las que se puede sancionar: los motivos de reporte y los de cierre directo. */
     val REGLAS = MOTIVOS + CIERRE_DIRECTO
@@ -28,6 +50,7 @@ object Moderacion {
 
     /** El nombre de una regla para el correo a la persona. */
     fun nombreRegla(regla: String) = when (regla) {
+        MASI -> "material sexual con menores"
         MENOR_EN_RIESGO -> "poner a un menor en riesgo"
         "desnudos" -> "desnudos o contenido sexual"
         "acoso" -> "acoso o amenazas"
@@ -53,7 +76,35 @@ object Moderacion {
     val estado: String, val retiradoHasta: Long?,
     /** Lo reportó quien mira la cola: no lo puede decidir (lo decide otra persona del equipo). */
     val propio: Boolean = false,
+    /** El número de la denuncia ante las autoridades, si el equipo ya lo anotó (casos graves). */
+    val radicado: String = "",
+    /** Lo marcó la revisión automática de fotos (no una persona). */
+    val automatico: Boolean = false,
 )
+/** El número de la denuncia de un caso (lo anota el equipo después de denunciar). */
+@Serializable data class Radicado(val que: String, val objeto: String, val radicado: String)
+/**
+ * Lo preservado para las autoridades (material sexual con menores o un menor en riesgo): solo lo ve la cuenta
+ * principal, que lo puede exportar o, cuando ya no haga falta, liberar (borrar).
+ */
+@Serializable data class Preservado(val id: Long, val que: String, val objeto: String, val usuario: String, val regla: String,
+    val cuando: Long, val radicado: String, val decididoPor: String)
+/** Por qué la cuenta principal libera (borra) o exporta un preservado (p. ej., el número del requerimiento de la autoridad). */
+@Serializable data class Liberacion(val motivo: String)
+/**
+ * Lo que se cifra en la base al preservar: el contenido, los reportes y la [lista] de archivos, que van cifrados por
+ * partes en `preservados/<id>/` de la carpeta de datos. [archivos] (base64 dentro del sobre) es el formato de antes.
+ */
+@Serializable data class SobrePreservado(val contenido: String, val reportes: List<String>, val archivos: Map<String, String> = emptyMap(),
+    val lista: List<String> = emptyList())
+/**
+ * El paquete para una autoridad: un archivo age cifrado con [frase] (al azar, se muestra una sola vez y no se guarda),
+ * que se descarga en `/v1/admin/paquetes/{[archivo]}` durante 24 horas. El servidor nunca entrega el contenido en claro.
+ */
+@Serializable data class PaqueteAutoridad(val archivo: String, val frase: String, val bytes: Long, val sha256: String, val vence: Long)
+/** Lo que va en `caso.json` dentro del paquete. */
+@Serializable data class CasoExportado(val caso: Preservado, val contenido: String, val reportes: List<String>, val archivos: List<String>,
+    val exportado: Long, val motivo: String)
 /**
  * [decision]: "sin_falta", "advertencia" (se quita lo reportado, sin puntos: un aviso con el motivo), "falta",
  * "falta_grave" o "cerrar". [mensaje]: lo que el equipo le explica a la persona (lo ve en el estado de su cuenta).

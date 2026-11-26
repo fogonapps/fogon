@@ -18,13 +18,18 @@ import java.security.MessageDigest
 /** Sin valores por defecto: JsonSocial los omitiría y la app recibiría `{}`. [regalo]: chispas extra por paquete. */
 @Serializable data class PaquetesWompi(val paquetes: List<Int>, val regalo: Map<String, Int>)
 /**
- * Paquetes a la venta. La comisión de la pasarela tiene un cobro fijo por pago, que en paquetes chicos pesa mucho:
- * el más chico es de 2.000 y los grandes traen chispas de regalo para que convenga comprar una sola vez.
+ * Paquetes a la venta: los mismos de la versión de Play ([CATALOGO_PLAY]), con el mismo regalo escalonado (5 %, 10 % y
+ * 15 %) para que convenga comprar una sola vez.
  */
-val PAQUETES_WOMPI = listOf(2000, 5000, 10000)
-val REGALO_WOMPI = mapOf(5000 to 500, 10000 to 1500)
+val PAQUETES_WOMPI = listOf(500, 1000, 2500, 5000)
+val REGALO_WOMPI = mapOf(1000 to 50, 2500 to 250, 5000 to 750)
+/**
+ * El regalo de antes del cambio de paquetes. Cada orden nueva guarda su regalo; las creadas antes no lo tienen (NULL)
+ * y se acreditan con este, también la de 5.000, que entonces traía 500.
+ */
+private val REGALO_ANTERIOR = mapOf(1000 to 0, 2000 to 0, 5000 to 500, 10000 to 1500)
 /** Lo que se acredita: también los paquetes que ya no se venden (órdenes viejas pendientes). */
-val PAQUETES_VALIDOS = PAQUETES_WOMPI + 1000
+val PAQUETES_VALIDOS = PAQUETES_WOMPI + REGALO_ANTERIOR.keys
 fun ofertaWompi() = PaquetesWompi(PAQUETES_WOMPI, REGALO_WOMPI.mapKeys { it.key.toString() })
 
 class ConfiguracionWompi(val publica: String, val integridad: String, val eventos: String, val privada: String = "") {
@@ -119,8 +124,8 @@ class PagosWompi(private val base: Base, private val configuracion: Configuracio
         if (paquete !in PAQUETES_WOMPI) throw Problema(400, "paquete")
         val monto = paquete.toLong() * TemasPerfil.PESOS_POR_CHISPA * 100
         val referencia = java.util.UUID.randomUUID().toString()
-        base.usar { cambiar("INSERT INTO ordenes_pago(referencia,cuenta,paquete,monto,cuando) VALUES(?,?,?,?,?)",
-            referencia, cuenta, paquete, monto, System.currentTimeMillis()) }
+        base.usar { cambiar("INSERT INTO ordenes_pago(referencia,cuenta,paquete,monto,cuando,regalo) VALUES(?,?,?,?,?,?)",
+            referencia, cuenta, paquete, monto, System.currentTimeMillis(), REGALO_WOMPI[paquete] ?: 0) }
         val parametros = listOf("public-key" to c.publica, "currency" to "COP", "amount-in-cents" to "$monto",
             "reference" to referencia, "signature:integrity" to firmaWompi(referencia, monto, c.integridad),
             "redirect-url" to "https://fogonapps.github.io/#gracias")
@@ -166,6 +171,7 @@ class PagosWompi(private val base: Base, private val configuracion: Configuracio
             val orden = leer("SELECT cuenta,paquete,monto,acreditada,transaccion FROM ordenes_pago WHERE referencia=?", referencia) {
                 Triple(it.getLong(1), it.getInt(2), it.getLong(3)) to ((it.getInt(4) == 1) to it.getString(5))
             }.firstOrNull() ?: return@transaccion rechazar("orden desconocida")
+            val regaloGuardado = leer("SELECT regalo FROM ordenes_pago WHERE referencia=?", referencia) { r -> r.getInt(1).takeUnless { r.wasNull() } }.single()
             val (compra, registro) = orden
             val (acreditada, transaccion) = registro
             val (cuenta, paquete, guardado) = compra
@@ -175,7 +181,7 @@ class PagosWompi(private val base: Base, private val configuracion: Configuracio
             cambiar("UPDATE ordenes_pago SET estado=?,transaccion=?,acreditada=? WHERE referencia=?",
                 estado, id, if (acreditada || estado == "APPROVED") 1 else 0, referencia)
             if (estado == "APPROVED" && !acreditada) registrarChispas(
-                cuenta, (paquete + (REGALO_WOMPI[paquete] ?: 0)).toLong(), "wompi:$id", System.currentTimeMillis())
+                cuenta, (paquete + (regaloGuardado ?: REGALO_ANTERIOR[paquete] ?: 0)).toLong(), "wompi:$id", System.currentTimeMillis())
             estado == "APPROVED" && !acreditada
         }
     }

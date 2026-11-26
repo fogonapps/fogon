@@ -1,7 +1,6 @@
 package io.github.fogonapps.cajon.ui
 
 import androidx.compose.foundation.clickable
-import io.github.fogonapps.identidad.tarjetaFogon
 import io.github.fogonapps.identidad.IconoRiso
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.LinearProgressIndicator
@@ -45,7 +44,6 @@ import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.WidgetCursoReceptor
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Tmdb
-import io.github.fogonapps.identidad.SeccionAjustes
 import io.github.fogonapps.identidad.AcercaDeFogon
 import io.github.fogonapps.identidad.BotonRiso
 import io.github.fogonapps.identidad.BotonSecundario
@@ -56,12 +54,15 @@ import io.github.fogonapps.identidad.LicenciasFogon
 import io.github.fogonapps.identidad.RespaldoTodoFogon
 import io.github.fogonapps.identidad.pedirWidget
 import kotlinx.coroutines.launch
-import io.github.fogonapps.identidad.R as RId
+import io.github.fogonapps.social.ui.R as SocialR
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun Ajustes(vm: CajonViewModel, e: Estado) {
     val rutaPolitica = stringResource(R.string.ruta_politica)
     val rutaTerminos = stringResource(R.string.ruta_terminos)
+    val rutaSeguridadInfantil = stringResource(io.github.fogonapps.social.ui.R.string.social_ruta_seguridad_infantil)
     val f = FogonTema.actual
     val confirmar = LocalConfirmar.current
     val acciones = LocalAcciones.current
@@ -72,86 +73,84 @@ fun Ajustes(vm: CajonViewModel, e: Estado) {
 
     Cabecera(stringResource(R.string.ajustes), vm::cerrar)
 
-    // Tu cuenta: lo primero.
-    SeccionAjustes(stringResource(R.string.aj_tu_cuenta))
+    // Cinco grupos, sin cajas: Cuenta, Tu colección, Apariencia, Privacidad y seguridad, y Acerca de.
+    GrupoAjustes(stringResource(R.string.aj_grupo_cuenta))
     val u = usuario
     val cuentaRed by vm.red.cuenta.collectAsStateWithLifecycle()
     if (!cuentaRed?.permisos.isNullOrEmpty()) FilaAjuste(Iconos.Bandera, stringResource(R.string.mod_titulo), stringResource(R.string.mod_pista)) { vm.abrir(Pantalla.Moderacion) }
     if (u == null) FilaAjuste(Iconos.Persona, stringResource(R.string.red_crear_cuenta), null) { vm.abrir(Pantalla.CuentaRed) }
     else {
         FilaAjuste(Iconos.Persona, stringResource(R.string.aj_cuenta_red), stringResource(R.string.aj_cuenta_red_pista, u)) { vm.abrir(Pantalla.CuentaRed) }
+        // Sin contraseña el cajón no se guarda cifrado en la cuenta: se crea aquí mismo (antes iba en el perfil).
+        CrearClaveAviso(vm)
         FilaAjuste(Iconos.Guardar, stringResource(R.string.parte_guardadas), null) { vm.abrir(Pantalla.GuardadosRed) }
-        FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
+        FilaAjuste(Iconos.Candado, stringResource(SocialR.string.social_red_sesiones), null) { vm.abrir(Pantalla.Sesiones) }
+        // «Estado de la cuenta» solo si hay algo que ver (una falta o una restricción), como en la cuenta de la red.
+        val estadoCuenta by vm.red.estadoCuenta.collectAsStateWithLifecycle()
+        LaunchedEffect(u) { vm.red.cargarEstadoCuenta() }
+        if (estadoCuenta?.let { it.faltas.isNotEmpty() || it.cerrada || it.suspendidaHasta > System.currentTimeMillis() || it.restringidaHasta > System.currentTimeMillis() } == true)
+            FilaAjuste(Iconos.Bandera, stringResource(SocialR.string.social_mod_estado), null) { vm.abrir(Pantalla.EstadoCuenta) }
     }
     // Cambiar de cuenta (o agregar otra) va aquí, con lo de la cuenta, y no en el perfil.
     SelectorPerfiles(vm)
+    if (u != null) FilaAjuste(Iconos.Borrar, stringResource(SocialR.string.social_red_borrar_cuenta), null) { vm.abrir(Pantalla.BorrarCuenta) }
 
-    SeccionAjustes(stringResource(R.string.aj_como_usas))
-    FilaAjuste(Iconos.Campana, stringResource(R.string.aj_notificaciones), stringResource(R.string.aj_notificaciones_pista)) { vm.abrir(Pantalla.AjustesAvisos) }
-    if (u != null) {
-        FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloqueadas), null) { vm.abrir(Pantalla.BloqueadosRed) }
-    }
-    FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
-    FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
-
-    SeccionAjustes(stringResource(R.string.aj_tu_cajon))
-    Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
-    // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
-    if (acciones != null) {
-        FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista), acciones.exportar)
-        FilaAjuste(Iconos.Repetir, stringResource(R.string.importar_respaldo), null, acciones.importar)
-    }
+    GrupoAjustes(stringResource(R.string.aj_grupo_coleccion))
     Desplegable(Iconos.Repetir, stringResource(R.string.traer_de_otras), stringResource(R.string.aj_traer_pista)) {
         ImportacionSteam(vm)
         ImportacionLastfm(vm)
         Pista(stringResource(R.string.traer_de_otras_pista), adentro = true)
         if (acciones != null) BotonSecundario(stringResource(R.string.elegir_archivo), acciones.deOtraApp, Modifier.fillMaxWidth())
     }
+    // Tus datos son tuyos: una copia en un archivo abierto (JSON), cuando quieras.
+    if (acciones != null) {
+        FilaAjuste(Iconos.Compartir, stringResource(R.string.descargar_copia), stringResource(R.string.descargar_copia_pista), acciones.exportar)
+        FilaAjuste(Iconos.Nube, stringResource(R.string.importar_respaldo), null, acciones.importar)
+    }
+    if (u != null) FilaAjuste(Iconos.Nube, stringResource(R.string.nube_titulo), stringResource(if (vm.hayLlaveCajon()) R.string.nube_pista_activo else R.string.nube_pista)) { vm.abrir(Pantalla.CajonEnCuenta) }
+    Desplegable(Iconos.Disco, stringResource(R.string.musica_que_escuchas), stringResource(R.string.aj_musica_pista)) { MusicaQueEscuchas(vm) }
+    io.github.fogonapps.identidad.FilaAjuste(Iconos.Juego, stringResource(R.string.aj_mostrar_juegos), stringResource(R.string.aj_mostrar_juegos_texto),
+        io.github.fogonapps.cajon.Pestana.juegosVisibles(e.ajustes.barra)) { vm.mostrarJuegos(it) }
+    FilaAjuste(Iconos.Corazon, stringResource(R.string.tus_gustos), stringResource(R.string.aj_gustos_pista)) { vm.abrir(Pantalla.TusGustos) }
+    FilaAjuste(Iconos.Imagen, stringResource(R.string.widget_poner), null) { alcance.launch { if (pedirWidget(c, WidgetCursoReceptor::class.java)) io.github.fogonapps.social.Contadores.de(c).contar("widget.agregado") } }
     // Las portadas de lo que llegó sin fuente se buscan solas; aquí solo se ve cómo va.
     AvanceEnlace(vm)
 
-    SeccionAjustes(stringResource(R.string.aj_apariencia_idioma))
-    FilaAjuste(Iconos.Imagen, stringResource(RId.string.fogon_ap_titulo), stringResource(R.string.aj_apariencia_pista)) { vm.abrir(Pantalla.Apariencia) }
+    GrupoAjustes(stringResource(R.string.aj_grupo_apariencia))
+    FilaAjuste(Iconos.Imagen, stringResource(R.string.aj_tema), stringResource(R.string.aj_tema_pista)) { vm.abrir(Pantalla.Apariencia) }
     Desplegable(Iconos.Comentario, stringResource(R.string.idioma), null) { SelectorIdioma(vm) }
-    Desplegable(Iconos.Lista, stringResource(R.string.aj_orden_pestanas), null) { OrdenPestanas(vm, e) }
-    FilaAjuste(Iconos.Cajon, stringResource(R.string.widget_poner), null) { alcance.launch { if (pedirWidget(c, WidgetCursoReceptor::class.java)) io.github.fogonapps.social.Contadores.de(c).contar("widget.agregado") } }
 
-    SeccionAjustes(stringResource(R.string.fogon))
-    FilaAjuste(Iconos.Estrella, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
-    val guia = io.github.fogonapps.identidad.LocalGuia.current
-    FilaAjuste(Iconos.Estrella, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO); guia?.empezar() }
-    SeccionAjustes(stringResource(R.string.privacidad_grupo))
-    io.github.fogonapps.social.ui.AjustesContadores()
-    FilaAjuste(Iconos.Candado, stringResource(R.string.quien_lo_ve), null) { vm.abrir(Pantalla.PrivacidadPerfil) }
+    GrupoAjustes(stringResource(R.string.aj_grupo_privacidad))
+    FilaAjuste(Iconos.Gente, stringResource(R.string.quien_lo_ve), null) { vm.abrir(Pantalla.PrivacidadPerfil) }
     FilaAjuste(Iconos.Candado, stringResource(R.string.privacidad_titulo), null) { vm.abrir(Pantalla.Privacidad) }
-    FilaAjuste(Iconos.Candado, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }
+    io.github.fogonapps.social.ui.AjustesContadores()
+    FilaAjuste(Iconos.Campana, stringResource(R.string.aj_notificaciones), stringResource(R.string.aj_notificaciones_pista)) { vm.abrir(Pantalla.AjustesAvisos) }
+    if (u != null) FilaAjuste(Iconos.Cerrar, stringResource(R.string.red_bloqueadas), null) { vm.abrir(Pantalla.BloqueadosRed) }
+    FilaAjuste(Iconos.Bandera, stringResource(R.string.aj_palabras_ocultas), stringResource(R.string.aj_palabras_ocultas_pista)) { vm.abrir(Pantalla.PalabrasOcultas) }
+    FilaAjuste(Iconos.Enlace, stringResource(R.string.red_politica), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaPolitica) }
     FilaAjuste(Iconos.Lista, stringResource(R.string.red_terminos), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaTerminos) }
+    FilaAjuste(Iconos.Enlace, stringResource(io.github.fogonapps.social.ui.R.string.social_red_seguridad_infantil), null) { uri.openUri(io.github.fogonapps.cajon.datos.ClienteSocial.SERVIDOR + rutaSeguridadInfantil) }
+
+    GrupoAjustes(stringResource(R.string.acerca_de_corto))
+    FilaAjuste(Iconos.Chispa, stringResource(R.string.manifiesto), null) { vm.abrir(Pantalla.Manifiesto) }
+    val guia = io.github.fogonapps.identidad.LocalGuia.current
+    FilaAjuste(Iconos.Reproducir, stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver), stringResource(io.github.fogonapps.identidad.R.string.fogon_guia_ver_pista)) { vm.irA(io.github.fogonapps.cajon.Pestana.INICIO); guia?.empezar() }
     FilaAjuste(Iconos.Bandera, stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_boton), null) { vm.abrir(Pantalla.Reporte) }
+    // Fabs es código abierto (GPL): el botón lleva a su carpeta en el repositorio público.
+    io.github.fogonapps.identidad.URL_CODIGO?.let { codigo ->
+        FilaAjuste(Iconos.Enlace, stringResource(R.string.codigo_abierto), stringResource(R.string.codigo_abierto_pista)) { uri.openUri("$codigo/tree/main/apps/cajon") }
+    }
+    FilaAjuste(Iconos.Lista, stringResource(R.string.licencias), null) { vm.abrir(Pantalla.Licencias) }
     FilaAjuste(Iconos.Cajon, stringResource(R.string.acerca_de), null) { vm.abrir(Pantalla.AcercaDe) }
+    Espacio(40.dp)
 }
 
-/** El orden de las pestañas de abajo: cada una con flechas para moverla. */
+/** El nombre de un grupo de Ajustes, en la letra de los títulos y sin caja; para el lector de pantalla, un encabezado. */
 @Composable
-private fun OrdenPestanas(vm: CajonViewModel, e: Estado) {
+private fun GrupoAjustes(titulo: String) {
     val f = FogonTema.actual
-    val lista = io.github.fogonapps.cajon.Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas)
-    Text(stringResource(R.string.barra_minimo), color = f.textoSuave)
-    io.github.fogonapps.cajon.Pestana.entries.forEach { p ->
-        val visible = p in lista
-        io.github.fogonapps.identidad.Interruptor(stringResource(textoPestana(p)), "", visible,
-            habilitado = p != io.github.fogonapps.cajon.Pestana.INICIO && (!visible || lista.size > 3)) { vm.mostrarPestana(p, it) }
-    }
-    BotonSecundario(stringResource(R.string.barra_restablecer), onClick = { vm.restablecerBarra() })
-    lista.forEachIndexed { i, p ->
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconoRiso(iconoPestana(p), null, tamano = 20.dp, tinta = f.acentoTexto)
-            Text(stringResource(textoPestana(p)), color = f.texto, modifier = Modifier.weight(1f))
-            if (i > 0) BotonIcono(Iconos.Arriba, "${stringResource(R.string.mover_antes)} ${stringResource(textoPestana(p))}") { vm.moverPestana(p, -1) }
-            else Spacer(Modifier.size(40.dp))
-            if (i < lista.lastIndex) BotonIcono(Iconos.Abajo, "${stringResource(R.string.mover_despues)} ${stringResource(textoPestana(p))}") { vm.moverPestana(p, 1) }
-            else Spacer(Modifier.size(40.dp))
-        }
-    }
+    Text(titulo, fontFamily = f.titulos, fontSize = 22.sp, lineHeight = 26.sp, color = f.texto,
+        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 4.dp).semantics { heading() })
 }
 
 @Composable
@@ -167,7 +166,7 @@ fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pis
 fun Reporte(vm: CajonViewModel) {
     Column {
         Cabecera(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_titulo), vm::cerrar)
-        io.github.fogonapps.identidad.ReporteFogon("El Cajón", BuildConfig.VERSION_NAME)
+        io.github.fogonapps.identidad.ReporteFogon("Fabs", BuildConfig.VERSION_NAME)
         androidx.compose.foundation.layout.Spacer(Modifier.height(40.dp))
     }
 }
@@ -199,7 +198,7 @@ fun ConectarSpotify(vm: CajonViewModel) {
         }
         PasoSpotify(2, stringResource(R.string.spotify_paso2), stringResource(R.string.spotify_paso2_pista)) {
             Text(io.github.fogonapps.cajon.datos.Spotify.VUELTA, style = MaterialTheme.typography.bodyLarge, color = f.texto,
-                modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
             BotonSecundario(stringResource(if (copiada) R.string.spotify_copiada else R.string.spotify_copiar), {
                 runCatching { portapapeles?.setPrimaryClip(android.content.ClipData.newPlainText("Redirect URI", io.github.fogonapps.cajon.datos.Spotify.VUELTA)) }
                 copiada = true
@@ -225,7 +224,7 @@ fun ConectarSpotify(vm: CajonViewModel) {
                 if (tarda) {
                     Pista(stringResource(R.string.spotify_esperando_pista), adentro = true)
                     Text(io.github.fogonapps.cajon.datos.Spotify.VUELTA, style = MaterialTheme.typography.bodyLarge, color = f.texto,
-                        modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
                 }
                 BotonSecundario(stringResource(R.string.cancelar), { vm.cancelarSpotify() }, Modifier.fillMaxWidth())
             } else {
@@ -242,7 +241,7 @@ fun ConectarSpotify(vm: CajonViewModel) {
                 else -> null
             }
             if (error != null) Text(stringResource(error, vm.spotifyErrorVuelta), style = MaterialTheme.typography.bodyMedium, color = f.tinta1,
-                modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
         }
         Pista(stringResource(R.string.spotify_privacidad), adentro = true)
     }
@@ -253,9 +252,9 @@ fun ConectarSpotify(vm: CajonViewModel) {
 @Composable
 private fun PasoSpotify(n: Int, titulo: String, pista: String, contenido: @Composable () -> Unit) {
     val f = FogonTema.actual
-    Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("$n", style = MaterialTheme.typography.titleLarge, color = f.tinta1)
+            Text("$n", style = MaterialTheme.typography.titleLarge, color = f.texto)
             Text(titulo, style = MaterialTheme.typography.titleSmall, color = f.texto)
         }
         Text(pista, style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -314,6 +313,9 @@ fun Licencias(vm: CajonViewModel) {
         Cabecera(stringResource(R.string.licencias), vm::cerrar)
         // Las fuentes de datos y la biblioteca de imágenes; lo común lo pone core.
         LicenciasFogon(propias = listOf(
+            Licencia("Fraunces", stringResource(R.string.lic_fraunces), "ofl-fraunces.txt"),
+            Licencia("Figtree", stringResource(R.string.lic_figtree), "ofl-figtree.txt"),
+            Licencia("Lucide", stringResource(R.string.lic_lucide), "isc-lucide.txt"),
             Licencia("TMDB", stringResource(R.string.lic_tmdb)),
             Licencia("IGDB", stringResource(R.string.lic_igdb)),
             Licencia("Steam Web API", stringResource(R.string.lic_steam)),
@@ -354,7 +356,7 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FilaInterruptorCajon(stringResource(R.string.anotar_escuchas), anotar, stringResource(R.string.anotar_escuchas_pista)) { anotar = it; vm.anotarEscuchas(it) }
         }
-        if (anotar && !permiso) Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (anotar && !permiso) Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.dar_acceso_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             BotonRiso(stringResource(R.string.dar_acceso), {
                 runCatching { c.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
@@ -372,13 +374,13 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
         // Spotify: pide crear una app de desarrollador y Premium, así que va escondido en «Avanzado» (salvo si ya está conectado).
         var avanzado by rememberSaveable { mutableStateOf(conectado) }
         if (!avanzado) androidx.compose.material3.TextButton({ avanzado = true }) { Text(stringResource(R.string.aj_avanzado), color = f.textoSuave) }
-        if (avanzado) Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (avanzado) Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.spotify_titulo), style = MaterialTheme.typography.titleSmall, color = f.texto)
             if (conectado) {
                 Text(stringResource(R.string.spotify_conectado), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 val revisar by vm.spotifyRevisar.collectAsStateWithLifecycle()
                 if (revisar) Text(stringResource(R.string.aviso_spotify_permiso), style = MaterialTheme.typography.bodyMedium, color = f.tinta1,
-                    modifier = Modifier.fillMaxWidth().vidrio().padding(12.dp))
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
                 BotonRiso(stringResource(R.string.spotify_traer), { vm.traerSpotify(todo = true) }, Modifier.fillMaxWidth())
                 BotonSecundario(stringResource(R.string.spotify_desconectar), { vm.desconectarSpotify() }, Modifier.fillMaxWidth())
             } else {

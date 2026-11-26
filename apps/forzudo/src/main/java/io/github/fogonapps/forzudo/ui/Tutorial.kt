@@ -100,6 +100,7 @@ fun Tutorial(vm: GymViewModel, nombreActual: String?) {
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     Personaje(Quien.FORZUDO, null, cara = p.cara, tamano = 140.dp)
+                    if (i == 0) io.github.fogonapps.identidad.LogotipoApp(Quien.FORZUDO, stringResource(R.string.app_name))
                     Text(stringResource(p.titulo), style = MaterialTheme.typography.headlineMedium, color = f.texto, textAlign = TextAlign.Center)
                     Text(stringResource(p.texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave, textAlign = TextAlign.Center)
                     if (i == 0) OutlinedTextField(nombre, { nombre = it.take(30) }, singleLine = true, label = { Text(stringResource(R.string.tut_nombre)) }, modifier = Modifier.fillMaxWidth())

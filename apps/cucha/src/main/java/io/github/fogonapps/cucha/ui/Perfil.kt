@@ -45,7 +45,7 @@ import io.github.fogonapps.identidad.R as RId
 fun Reporte(vm: CuchaViewModel) {
     Column {
         Cabecera(stringResource(io.github.fogonapps.identidad.R.string.fogon_reportar_titulo), vm::cerrar)
-        io.github.fogonapps.identidad.ReporteFogon("La Cucha", BuildConfig.VERSION_NAME)
+        io.github.fogonapps.identidad.ReporteFogon("Ñom", BuildConfig.VERSION_NAME)
         Espacio(40.dp)
     }
 }

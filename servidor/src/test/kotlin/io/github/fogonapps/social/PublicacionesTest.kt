@@ -92,6 +92,8 @@ class PublicacionesTest {
         val pub = s.actividad(ana, null).first().id
         val raiz = s.comentar(beto, pub, "raíz")
         val respuesta = s.comentar(cami, pub, "respuesta", raiz)
+        // Una cuenta de confianza (más de 30 días, sin faltas ni reportes descartados) oculta lo grave con un reporte.
+        b.usar { cambiar("UPDATE cuentas SET creada = 0 WHERE id = ?", ana) }
         s.reportar(ana, NuevoReporte("comentario", "$respuesta", Moderacion.MENOR_EN_RIESGO))
         assertEquals(0, s.comentarios(ana, pub).single().respuestas)
         assertEquals(1, s.comentarios(cami, pub).first { it.id == raiz }.respuestas)

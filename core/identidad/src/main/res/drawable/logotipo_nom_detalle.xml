@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por identidad/marca/logotipos_android.py desde identidad/marca/<app>/logotipo.svg; no editar a mano. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="298.0dp" android:height="100.5dp"
+    android:viewportWidth="298.00" android:viewportHeight="100.50">
+  <group android:translateX="-5.00" android:translateY="97.25">
+    <path android:pathData="M14.5 -84.0 q16.9 -14 33.8 0 t33.8 0" android:strokeColor="#FFFFFFFF" android:strokeWidth="10" android:strokeLineCap="round" />
+  </group>
+</vector>

@@ -1,11 +1,11 @@
-# La Alcancía · Fogón
+# Pezi · Fogón
 
-<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="La Alcancía"></p>
+<p align="center"><img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="Pezi"></p>
 
-Gastos, presupuesto y ahorro. Sin anuncios y sin pedirte las claves del banco. No vendemos tus datos. Su personaje es una ranita tranquila.
+Gastos, presupuesto y ahorro. Sin anuncios y sin pedirte las claves del banco. No vendemos tus datos. Su personaje es una ranita tranquila. Antes se llamaba La Alcancía.
 
 - Descargar: [fogonapps/la-alcancia](https://github.com/fogonapps/la-alcancia/releases/latest) (con [Obtainium](https://github.com/ImranR98/Obtainium) llegan solas las actualizaciones: pegar `https://github.com/fogonapps/la-alcancia`).
-- Novedades de cada versión: en las [versiones de La Alcancía](https://github.com/fogonapps/la-alcancia/releases).
+- Novedades de cada versión: en las [versiones de Pezi](https://github.com/fogonapps/la-alcancia/releases).
 
 ## Qué hace
 
@@ -53,7 +53,7 @@ Gastos, presupuesto y ahorro. Sin anuncios y sin pedirte las claves del banco. N
 
 ## Por qué no se conecta al banco
 
-En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. La Alcancía no se conecta al banco ni te pide tus claves. En cambio, la app importa el extracto que descargas del banco (CSV), sin salir del teléfono.
+En Colombia, las finanzas abiertas (Decreto 368 de 2026) obligan solo a entidades vigiladas por la Superintendencia Financiera. Pezi no se conecta al banco ni te pide tus claves. En cambio, la app importa el extracto que descargas del banco (CSV), sin salir del teléfono.
 
 ## Preguntas frecuentes
 

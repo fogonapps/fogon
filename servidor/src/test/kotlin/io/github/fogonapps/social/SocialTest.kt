@@ -199,6 +199,7 @@ class SocialTest {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
         val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.seguir(ana, "beto"); s.seguir(beto, "ana")   // el chat es entre quienes se siguen
         val espera = async(kotlinx.coroutines.Dispatchers.Default) { s.esperarMensajes(beto, 0, 10_000) }
         kotlinx.coroutines.delay(300)
         val inicio = System.currentTimeMillis()
@@ -274,6 +275,7 @@ class SocialTest {
             val s = Social(b, java.io.File(dir, "fotos"))
             val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
             val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+            s.seguir(ana, "beto"); s.seguir(beto, "ana")
             var ultimo = 0L
             repeat(3) {
                 val id = s.mandar(beto, "ana", SobreNuevo("sobre$it", "firma"))
@@ -290,9 +292,13 @@ class SocialTest {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
         val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        s.seguir(ana, "beto"); s.seguir(beto, "ana")   // el chat es entre quienes se siguen
         assertFailsWith<Problema> { s.llaves(beto, "ana") }                       // todavía no puso llaves
-        s.ponerLlaves(ana, Llaves("c".repeat(40), "f".repeat(40)))
-        assertEquals("c".repeat(40), s.llaves(beto, "ana").cifrar)
+        assertFailsWith<Problema> { s.ponerLlaves(ana, Llaves("c".repeat(40), "f".repeat(40))) }   // ilegibles
+        val c = java.util.Base64.getEncoder().encodeToString("{\"key\":[\"cifrar\"]}".toByteArray())
+        val f = java.util.Base64.getEncoder().encodeToString("{\"key\":[\"firmar\"]}".toByteArray())
+        s.ponerLlaves(ana, Llaves(c, f))
+        assertEquals(c, s.llaves(beto, "ana").cifrar)
         val id = s.mandar(beto, "ana", SobreNuevo("cerrado", "firma"))
         val llegan = s.recibir(ana, 0)
         assertEquals(listOf("beto"), llegan.map { it.de.usuario })
@@ -505,6 +511,16 @@ class SocialTest {
         assertTrue("Privacy policy" in client.get("/privacy").bodyAsText() && "/privacidad" in client.get("/privacy").bodyAsText())
         assertTrue("Terms of use" in client.get("/terms").bodyAsText())
         assertTrue("/privacy" in client.get("/privacidad").bodyAsText())
+        // La página para borrar la cuenta (la pide Google Play), en los dos idiomas y enlazada desde el pie y la política.
+        val borrar = client.get("/borrar-cuenta")
+        assertEquals(HttpStatusCode.OK, borrar.status)
+        assertTrue(borrar.bodyAsText().let { "Borrar tu cuenta" in it && "fogonapps@gmail.com" in it && "/delete-account" in it && "7 días" in it })
+        val borrarEn = client.get("/delete-account")
+        assertEquals(HttpStatusCode.OK, borrarEn.status)
+        assertTrue(borrarEn.bodyAsText().let { "Delete your account" in it && "/borrar-cuenta" in it && "7 days" in it })
+        assertTrue("/borrar-cuenta" in client.get("/privacidad").bodyAsText() && "/borrar-cuenta" in client.get("/terminos").bodyAsText())
+        assertTrue("/delete-account" in client.get("/privacy").bodyAsText() && "/delete-account" in client.get("/child-safety").bodyAsText())
+        assertTrue("/borrar-cuenta" in client.get("/@eva").bodyAsText())
     }
 
     @Test fun limiteDePeticiones() = testApplication {

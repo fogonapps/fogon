@@ -82,6 +82,15 @@ object Generos {
     private fun igual(a: String, b: String) = Logica.tituloLimpio(a) == Logica.tituloLimpio(b)
 
     /** El género de cine que es [texto] (sin importar tildes ni mayúsculas), o null. */
+    /**
+     * Un género de cine, serie o anime en el idioma de la app («Science Fiction» → «Ciencia ficción»). Solo para
+     * mostrar: lo guardado no cambia (se guardó en el idioma que tenía la app al agregarla).
+     */
+    fun etiquetaCine(texto: String, idioma: String): String {
+        val g = cine(texto) ?: return texto
+        return if (idioma == "en") g.nombres.getOrElse(1) { g.nombres[0] } else g.nombres[0]
+    }
+
     fun cine(texto: String): Cine? = CINE.firstOrNull { g -> g.nombres.any { igual(it, texto) } }
 
     /** El género de libros que es [texto], o null. */

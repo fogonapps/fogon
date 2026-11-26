@@ -20,6 +20,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.header
 import io.ktor.server.response.respondOutputStream
 import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
@@ -62,7 +63,13 @@ fun main(args: Array<String>) {
     val fcm = System.getenv("FCM_CUENTA")?.takeIf { it.isNotBlank() }?.let { ruta ->
         runCatching { Fcm(File(ruta).readText()) }.onFailure { System.err.println("FCM_CUENTA no se pudo leer: sin avisos al instante.") }.getOrNull()
     }
-    val social = Social(base, File(datos, "fotos"), cartero = avisos, principal = System.getenv("PRINCIPAL"), mensajero = fcm)
+    // La revisión automática de fotos: el modelo en la carpeta de datos (lo baja instalar.sh). Sin él, apagada. Si no
+    // carga (archivo dañado, sin memoria), también: el servicio arranca igual.
+    val revisor = runCatching { Desnudos.cargar(File(datos, "modelos/${Desnudos.ARCHIVO}")) }
+        .onFailure { System.err.println("El modelo de fotos no se pudo cargar (${it.javaClass.simpleName}: ${it.message}): la revisión automática de desnudos queda apagada.") }
+        .onSuccess { if (it == null) System.err.println("Sin el modelo de fotos: la revisión automática de desnudos queda apagada.") }
+        .getOrNull()
+    val social = Social(base, File(datos, "fotos"), cartero = avisos, principal = System.getenv("PRINCIPAL"), mensajero = fcm, revisor = revisor)
     correoListo = cartero != null
     Momento.empezar()
     embeddedServer(CIO, port = System.getenv("PUERTO")?.toIntOrNull() ?: 8080, host = "127.0.0.1") { fogonSocial(social) }.start(wait = true)
@@ -79,23 +86,23 @@ internal class LimiteDiario(private val porDia: Int) {
     }
 }
 
-/** Cuántas peticiones por minuto deja hacer a cada quien (por token o, sin él, por dirección). */
-private class Limite(private val porMinuto: Int) {
+/** Cuántas peticiones por minuto (o por [ventana]) deja hacer a cada quien (por token o, sin él, por dirección). */
+private class Limite(private val porMinuto: Int, private val ventana: Long = 60_000) {
     private val cuentas = ConcurrentHashMap<String, Pair<Long, Int>>()
     fun limpiar() {
-        val minuto = System.currentTimeMillis() / 60_000
+        val minuto = System.currentTimeMillis() / ventana
         cuentas.entries.removeIf { it.value.first != minuto }
     }
 
     fun pasa(clave: String): Boolean {
-        val minuto = System.currentTimeMillis() / 60_000
+        val minuto = System.currentTimeMillis() / ventana
         val (m, n) = cuentas.compute(clave) { _, v -> if (v == null || v.first != minuto) minuto to 1 else v.first to v.second + 1 }!!
         if (cuentas.size > 50_000) cuentas.entries.removeIf { it.value.first != minuto }
         return m == minuto && n <= porMinuto
     }
 }
 
-const val VERSION = "0.49"
+const val VERSION = "0.51"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -114,7 +121,8 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     igdb: Igdb = Igdb(System.getenv("IGDB_CLIENT_ID"), System.getenv("IGDB_CLIENT_SECRET")),
     steam: Steam = Steam(System.getenv("STEAM_API_KEY"), igdb),
     portadas: Portadas = Portadas(java.io.File(System.getenv("DATOS") ?: "datos-social", "portadas")),
-    pagos: PagosWompi = PagosWompi(social.b, delEquipo = { social.equipo.rol(it).isNotEmpty() })) {
+    pagos: PagosWompi = PagosWompi(social.b, delEquipo = { social.equipo.rol(it).isNotEmpty() }),
+    pagosPlay: PagosPlay = PagosPlay(social.b, idCuenta = social::idPlay)) {
     runCatching { social.quitarPortadasAjenas() }.onFailure { environment.log.error("No se pudieron quitar las portadas ajenas") }
     launch {
         while (isActive) {
@@ -125,6 +133,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             runCatching { Contadores(social.b).limpiarLotes() }
             try { social.limpiarSeguridad() } catch (_: Exception) {
                 environment.log.error("No se pudo completar la limpieza de seguridad")
+            }
+            // Las compras de Play que Google anuló (reembolsos): sin cuenta de servicio, no hace nada.
+            try { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { pagosPlay.revisarAnuladas() } } catch (_: Exception) {
+                environment.log.error("No se pudieron revisar las compras anuladas de Play")
             }
             kotlinx.coroutines.delay(24 * 3600_000L)
         }
@@ -142,9 +154,10 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         while (isActive) {
             kotlinx.coroutines.delay(60_000)
             limiteContadores.limpiar()
-            // Lo guardado de TMDB e IGDB (con el texto de las búsquedas) no se queda más de 6 horas.
+            // Lo guardado de TMDB e IGDB (con el texto de las búsquedas) no se queda más de 6 horas; lo de Apple, un día.
             cine.barrer()
             igdb.barrer()
+            canciones.barrer()
         }
     }
     val imagenes = Limite(900)
@@ -157,6 +170,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
     // Importar la biblioteca de Steam es de vez en cuando: pocas por minuto y por IP (los topes por día, por hora de
     // IGDB y de a una en todo el servidor están en Steam).
     val pedidosSteam = Limite(6)
+    val verificacionesPlay = Limite(20, 3600_000)
     install(createApplicationPlugin("Limite") {
         onCall { call ->
             val ruta = call.request.local.uri.substringBefore('?')
@@ -227,6 +241,16 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 pagos.evento(evento)
                 call.respond(HttpStatusCode.OK)
             }
+            // Google Play Billing (solo la versión de Play): el catálogo y la verificación de cada compra.
+            get("/pagos/play/paquetes") { call.respond(pagosPlay.oferta(call.yo())) }
+            post("/pagos/play/verificar") {
+                val yo = call.yo()
+                // Cada verificación consulta a Google con la cuota de Fogón: 20 por hora y cuenta bastan para reintentos.
+                if (!verificacionesPlay.pasa("c:$yo")) throw Problema(429, "despacio")
+                val pedido = call.receive<PedidoPlay>()
+                val estado = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { pagosPlay.verificar(yo, pedido) }
+                call.respond(RespuestaPlay(estado, social.chispas(yo)))
+            }
             // Portadas de Open Library y Cover Art Archive desde la caché del servidor (ver Portadas).
             get("/portada") {
                 val u = call.request.queryParameters["u"].orEmpty()
@@ -250,7 +274,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/acceso") {
                 if (!registros.pasa("acceso:${call.ip()}")) throw Problema(429, "despacio")
                 val ip = call.ip()
-                call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty()) { cuentasNuevas.pasa("nueva:$ip") })
+                call.respond(social.entrar(call.receive(), call.request.header("X-Fogon-Dispositivo").orEmpty(), ip) { cuentasNuevas.pasa("nueva:$ip") })
             }
             get("/lastfm") {
                 if (!pedidosLastfm.pasa("lastfm:${call.ip()}")) throw Problema(429, "despacio")
@@ -535,6 +559,9 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             delete("/listas-comunes/{id}/obras/{item}/voto") { social.votarListaComun(call.yo(), call.id(), call.parameters["item"]?.toLongOrNull() ?: throw Problema(400, "item"), false); call.respond(HttpStatusCode.NoContent) }
             post("/listas-comunes/{id}/miembros/{usuario}") { social.sumarAListaComun(call.yo(), call.id(), call.usuario()); call.respond(HttpStatusCode.NoContent) }
             delete("/listas-comunes/{id}/yo") { social.salirDeListaComun(call.yo(), call.id()); call.respond(HttpStatusCode.NoContent) }
+            // «Juntos» (Fabs): lo que cada uno quiere ver con la otra persona; solo entre quienes se siguen los dos.
+            get("/juntos/{usuario}/votos") { call.respond(social.votosJuntos(call.yo(), call.usuario())) }
+            put("/juntos/{usuario}/votos") { social.votarJuntos(call.yo(), call.usuario(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             get("/mejores-amigos") { call.respond(ListaUsuarios(social.mejoresAmigos(call.yo()))) }
             put("/mejores-amigos") { social.ponerMejoresAmigos(call.yo(), call.receive()); call.respond(HttpStatusCode.NoContent) }
             post("/historias/silenciar/{usuario}") { social.silenciarHistorias(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
@@ -587,6 +614,26 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             post("/admin/apelaciones") { social.decidirApelacion(call.requiere("sancionar"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
             get("/admin/casos") { call.respond(social.casos(call.requiere("ver_reportes"), call.token())) }
             post("/admin/decidir") { social.decidir(call.requiere("sancionar"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            post("/admin/radicado") { social.anotarRadicado(call.requiere("ver_reportes"), call.receive(), call.token()); call.respond(HttpStatusCode.NoContent) }
+            // Lo preservado para las autoridades: solo la cuenta principal lo ve (en lista), genera el paquete cifrado
+            // para una autoridad (la frase se devuelve una sola vez; el contenido nunca sale en claro) o lo libera.
+            get("/admin/preservados") { call.respond(social.preservados(call.requiere("ver_reportes"), call.token())) }
+            post("/admin/preservados/{id}/exportar") {
+                val motivo = call.receive<Liberacion>().motivo
+                val yo = call.requiere("ver_reportes")
+                val id = call.parameters["id"]?.toLongOrNull() ?: throw Problema(400, "id")
+                call.respond(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { social.exportarPreservado(yo, id, motivo, call.token()) })
+            }
+            get("/admin/paquetes/{clave}") {
+                val f = social.paqueteAutoridad(call.requiere("ver_reportes"), call.parameters["clave"].orEmpty(), call.token())
+                call.response.header("Content-Disposition", "attachment; filename=\"fogon-paquete-${f.nameWithoutExtension.take(8)}.age\"")
+                call.respondFile(f)
+            }
+            post("/admin/preservados/{id}/liberar") {
+                val motivo = call.receive<Liberacion>().motivo
+                social.liberarPreservado(call.requiere("ver_reportes"), call.parameters["id"]?.toLongOrNull() ?: throw Problema(400, "id"), motivo, call.token())
+                call.respond(HttpStatusCode.NoContent)
+            }
             get("/bloqueos") { call.respond(social.bloqueados(call.yo())) }
             post("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), true); call.respond(HttpStatusCode.NoContent) }
             delete("/bloqueos/{usuario}") { social.bloquear(call.yo(), call.usuario(), false); call.respond(HttpStatusCode.NoContent) }

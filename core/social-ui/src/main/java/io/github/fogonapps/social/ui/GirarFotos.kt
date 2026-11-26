@@ -1,5 +1,6 @@
 package io.github.fogonapps.social.ui
 
+import io.github.fogonapps.identidad.BarrasDelDialogo
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -92,6 +93,7 @@ fun GirarFotos(uris: List<Uri>, onListo: (List<Uri>) -> Unit, onCancelar: () -> 
     val giros = remember(uris) { mutableStateListOf(*Array(uris.size) { 0 }) }
     var guardando by remember { mutableStateOf(false) }
     Dialog(onCancelar, DialogProperties(usePlatformDefaultWidth = false)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.social_fotos_girar_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -99,9 +101,9 @@ fun GirarFotos(uris: List<Uri>, onListo: (List<Uri>) -> Unit, onCancelar: () -> 
                     var miniatura by remember(uri) { mutableStateOf<Bitmap?>(null) }
                     LaunchedEffect(uri) { miniatura = withContext(Dispatchers.IO) { leerFoto(ctx, uri, 900) } }
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(forma(18.dp)).background(f.superficie), contentAlignment = Alignment.Center) {
+                        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(forma(18.dp)).background(f.superficieSocial), contentAlignment = Alignment.Center) {
                             val m = miniatura
-                            if (m == null) CircularProgressIndicator(color = f.tinta1)
+                            if (m == null) CircularProgressIndicator(color = f.acentoSocial)
                             else Image(m.asImageBitmap(), stringResource(R.string.social_fotos_foto_n, i + 1), Modifier.fillMaxSize().graphicsLayer { rotationZ = giros[i].toFloat() },
                                 contentScale = ContentScale.Fit)
                         }

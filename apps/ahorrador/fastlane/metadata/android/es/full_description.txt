@@ -1,4 +1,4 @@
-<p>La Alcancía te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco. No vendemos tus datos. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
+<p>Pezi te ayuda a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco. No vendemos tus datos. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
 
 <ul>
 <li><b>Anota en segundos</b> con un teclado grande: gastos, ingresos, plata que pasas entre cuentas y ahorros.</li>
@@ -17,7 +17,7 @@
 
 <p><b>Tus datos son tuyos.</b> La app usa internet solo para las estadísticas anónimas, que puedes apagar en Ajustes, y para Fogón Social si entras con tu cuenta. Tus movimientos se quedan en tu teléfono y solo viajan en la copia cifrada con tu contraseña si usas tu cuenta. Puedes guardar un respaldo cuando quieras y exportar tus movimientos a una hoja de cálculo.</p>
 
-<p>La Alcancía no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
+<p>Pezi no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</p>
 
 <p><b>Anotar desde el banco (opcional):</b> reconoce pagos y transferencias de Bancolombia por SMS y envíos de Nu. Enlaza tus cuentas y confirma antes de anotar, o activa «Anotar solo» por banco para revisar y deshacer después. Detecta movimientos entre tus cuentas.</p>
-<p><b>Acceso a notificaciones:</b> Android permite ver todas las notificaciones. La Alcancía filtra primero por app y banco elegido: solo procesa SMS que empiezan por «Bancolombia:» y envíos reconocidos de la app de Nu. Lo demás no se guarda. No lee el historial de SMS. Puedes apagarlo en Perfil o revocar el acceso en Android. Las alertas se procesan en el teléfono.</p>
+<p><b>Acceso a notificaciones:</b> Android permite ver todas las notificaciones. Pezi filtra primero por app y banco elegido: solo procesa SMS que empiezan por «Bancolombia:» y envíos reconocidos de la app de Nu. Lo demás no se guarda. No lee el historial de SMS. Puedes apagarlo en Perfil o revocar el acceso en Android. Las alertas se procesan en el teléfono.</p>

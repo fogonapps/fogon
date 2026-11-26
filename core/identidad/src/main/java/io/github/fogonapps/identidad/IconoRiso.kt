@@ -103,9 +103,10 @@ fun IconoRiso(
     relleno: Color? = null,
 ) {
     val sem = if (descripcion != null) Modifier.semantics { contentDescription = descripcion; role = Role.Image } else Modifier
+    val elegido = Iconografia.reemplazos[dibujo.nombre] ?: dibujo
     Canvas(modifier.size(tamano).then(sem)) {
         val escala = size.minDimension / 24f
-        with(dibujo) {
+        with(elegido) {
             if (relleno != null) scale(escala, escala, Offset.Zero) { pintarCuerpo(relleno, 24f) }
             scale(escala, escala, Offset.Zero) { pintarContorno(tinta) }
         }

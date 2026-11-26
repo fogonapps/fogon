@@ -52,6 +52,13 @@ data class Importado(val obras: List<Obra>, val deDonde: String)
 object Importar {
 
     /**
+     * El nombre del archivo elegido: el que muestra el sistema (DISPLAY_NAME, p. ej. "ratings.csv"); si no lo da,
+     * el último trozo de la ruta, que en el selector suele ser algo como "msf:123" y no sirve para reconocerlo.
+     */
+    fun nombreArchivo(mostrado: String?, segmento: String?): String =
+        mostrado?.trim()?.takeIf { it.isNotEmpty() } ?: segmento.orEmpty()
+
+    /**
      * El historial de Netflix (Cuenta → Perfil → Actividad → Descargar todo: NetflixViewingHistory.csv, con "Title" y
      * "Date"). Lo que tiene "Temporada", "Capítulo"… es una serie (se junta por su nombre, en curso, con un registro por
      * día); lo demás, una película vista. Null si no parece de Netflix.

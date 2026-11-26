@@ -67,6 +67,7 @@ fun Mercado(vm: InterfazSocial, onCerrar: () -> Unit) {
         catch (_: Exception) { destacados = emptyList() }
     }
     Dialog(onCerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
             Cabecera(stringResource(R.string.social_mercado), onCerrar)
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -124,10 +125,10 @@ private fun TarjetaMercado(vm: InterfazSocial, a: ArticuloMercado, modifier: Mod
     val f = FogonTema.actual
     Column(modifier.tarjetaFogon().clickable(onClick = abrir).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         ImagenMercado(vm, a, Modifier.fillMaxWidth().height(90.dp))
-        if (a.oficial) Text(stringResource(R.string.social_mercado_oficial), color = f.tinta1, style = MaterialTheme.typography.labelSmall)
+        if (a.oficial) Text(stringResource(R.string.social_mercado_oficial), color = f.acentoSocial, style = MaterialTheme.typography.labelSmall)
         Text(a.nombre, color = f.texto, style = MaterialTheme.typography.titleSmall)
         Text(stringResource(R.string.social_mercado_por, a.creador), color = f.textoSuave, style = MaterialTheme.typography.bodySmall)
-        Text(numeroSocial(a.precio), color = f.tinta1, fontFamily = f.puntos, style = MaterialTheme.typography.titleMedium)
+        Text(numeroSocial(a.precio), color = f.acentoSocial, fontFamily = if (Trama.apagada) f.titulos else f.puntos, style = MaterialTheme.typography.titleMedium)
         if (mostrarEstado) {
             EstadoMercado(a.estado)
             Text(stringResource(R.string.social_mercado_ventas, numeroSocial(a.ventas)), color = f.textoSuave)
@@ -151,7 +152,8 @@ internal fun AbrirFichaMercado(vm: InterfazSocial, id: Long, cerrar: () -> Unit)
     if (a != null) {
         FichaMercado(vm, a, cerrar, cerrar)
     } else {
-        Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+        Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            BarrasDelDialogo()
             Column(Modifier.fillMaxSize().background(FogonTema.actual.fondo).systemBarsPadding()) {
                 Cabecera(stringResource(R.string.social_mercado), cerrar)
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -185,6 +187,7 @@ private fun ImagenMercado(vm: InterfazSocial, a: ArticuloMercado, modifier: Modi
 
 @Composable private fun ErrorMercado(error: String) { Text(stringResource(when (error) {
     "sin_chispas" -> R.string.social_regalo_sin_chispas
+    "deuda_chispas" -> R.string.social_deuda_chispas
     "tope_publicaciones" -> R.string.social_mercado_tope
     "mfa_requerida", "elevacion_requerida" -> R.string.social_mercado_elevar
     "marco_sin_alfa", "imagen", "dimensiones" -> R.string.social_mercado_imagen_error
@@ -204,10 +207,11 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
     var destino by remember { mutableStateOf("") }
     var motivo by remember { mutableStateOf("") }
     var conseguirChispas by remember { mutableStateOf(false) }
-    val permiteCompraChispas = ofrecePagosExternos(BuildConfig.TIENDA_PLAY)
+    val permiteCompraChispas = ofrecePagosExternos(BuildConfig.TIENDA_PLAY) || ofrecePagosPlay(BuildConfig.TIENDA_PLAY, vm.red.tiendaPlay != null)
     val faltan = (a.precio - temas.chispas).coerceAtLeast(0)
     LaunchedEffect(vm.red) { vm.red.cargarTemas() }
     var regalar by remember { mutableStateOf(false) }
+    var probar by remember { mutableStateOf(false) }
     val clave = remember(a.id) { UUID.randomUUID().toString() }
     fun accion(bloque: suspend () -> Unit) { scope.launch {
         ocupada = true; error = null
@@ -215,8 +219,9 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
         catch (e: Exception) { error = (e as? ErrorSocial)?.error ?: "conexion" }
         finally { ocupada = false }
     } }
-    Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding()) {
+    Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        BarrasDelDialogo()
+        Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().imePadding()) {
             Cabecera(a.nombre, cerrar)
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Vista previa: el arte sobre la cabecera y foto de mi perfil.
@@ -231,8 +236,10 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
                         Text("@${usuario.orEmpty()}", color = f.texto)
                     }
                 }
+                // «Probar»: el artículo en tu perfil a pantalla completa, con «Comprar» y «Quitar».
+                if (a.estado == "aprobado" && usuario != null) BotonSecundario(stringResource(R.string.social_probar), { probar = true; contadores.contar("tienda.probar") }, Modifier.fillMaxWidth())
                 Text(stringResource(R.string.social_mercado_por,a.creador), color = f.textoSuave)
-                Text(numeroSocial(a.precio), fontFamily = f.puntos, color = f.tinta1, style = MaterialTheme.typography.headlineLarge)
+                Text(numeroSocial(a.precio), fontFamily = if (Trama.apagada) f.titulos else f.puntos, color = f.acentoSocial, style = MaterialTheme.typography.headlineLarge)
                 EstadoMercado(a.estado)
                 if (a.motivo.isNotBlank()) Text(a.motivo, color = f.texto)
                 Text(stringResource(R.string.social_mercado_ventas,numeroSocial(a.ventas)), color = f.textoSuave)
@@ -261,6 +268,8 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(motivo,{ motivo=it.take(2000) }, label={ Text(stringResource(R.string.social_mercado_motivo)) }, modifier=Modifier.fillMaxWidth(), enabled = !ocupada)
                     if (a.estado == "aprobado" && !a.propio) BotonSecundario(stringResource(R.string.social_mercado_reportar), { accion { vm.red.reportarArticuloMercado(a.id,motivo) } }, modifier = Modifier.fillMaxWidth(), peligro = true, habilitado = !ocupada && motivo.isNotBlank())
+                    // A un toque y sin escribir nada: material sexual con menores.
+                    if (a.estado == "aprobado" && !a.propio) BotonSecundario(stringResource(R.string.social_mercado_reportar_masi), { accion { vm.red.reportarArticuloMercado(a.id, "", "masi") } }, modifier = Modifier.fillMaxWidth(), peligro = true, habilitado = !ocupada)
                     if (!a.propio && "revisar_mercado" in cuenta?.permisos.orEmpty()) {
                         if (a.estado == "revision") Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             BotonRiso(stringResource(R.string.social_mercado_aprobar), { accion { vm.red.decidirMercado(a.id,"aprobar",motivo) } }, modifier = Modifier.weight(1f), habilitado = !ocupada)
@@ -276,6 +285,8 @@ private fun FichaMercado(vm: InterfazSocial, a: ArticuloMercado, cerrar: () -> U
         }
     }
     if (conseguirChispas && permiteCompraChispas) TiendaTemas(vm, soloChispas = true) { conseguirChispas = false }
+    if (probar) Probador(vm, a.item, a.nombre, a.precio, tiene = a.adquirido || a.propio,
+        comprar = { vm.red.comprarMercado(a.id, clave); contadores.contar("mercado.pieza_comprada") }) { probar = false }
 }
 
 @Composable
@@ -299,6 +310,7 @@ private fun PublicarMercadoPantalla(vm: InterfazSocial, cerrar: () -> Unit, arte
     val clave = remember { UUID.randomUUID().toString() }
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { if (it != null) { uri=it; usarEditor=false; error=null } }
     Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = !ocupada, dismissOnClickOutside = !ocupada)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().imePadding()) {
             Cabecera(stringResource(R.string.social_mercado_publicar), { if (!ocupada) cerrar() })
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -311,12 +323,12 @@ private fun PublicarMercadoPantalla(vm: InterfazSocial, cerrar: () -> Unit, arte
                 BotonSecundario(stringResource(R.string.social_mercado_elegir), { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, modifier = Modifier.fillMaxWidth(), habilitado = !ocupada && borrador==null)
                 Text(stringResource(R.string.social_mercado_limites), color=f.textoSuave)
                 OutlinedTextField(nombre,{ nombre=it.take(40) },label={ Text(stringResource(R.string.social_mercado_nombre)) }, modifier=Modifier.fillMaxWidth(),enabled = !ocupada && borrador==null)
-                Text(numeroSocial(precio.toInt()),fontFamily=f.puntos,color=f.tinta1,style=MaterialTheme.typography.headlineLarge)
+                Text(numeroSocial(precio.toInt()),fontFamily=if (Trama.apagada) f.titulos else f.puntos,color=f.acentoSocial,style=MaterialTheme.typography.headlineLarge)
                 Slider(precio,{ precio=it },valueRange=300f..2000f,steps=1699,enabled = !ocupada && borrador==null)
                 Text(stringResource(R.string.social_mercado_rango),color=f.textoSuave)
                 val paraCreador = precio.toInt() * 30 / 100
                 Row(Modifier.fillMaxWidth().height(16.dp)) {
-                    Box(Modifier.weight(0.3f).fillMaxHeight().background(f.tinta1))
+                    Box(Modifier.weight(0.3f).fillMaxHeight().background(f.acentoSocial))
                     Box(Modifier.weight(0.7f).fillMaxHeight().background(f.linea))
                 }
                 Text(stringResource(R.string.social_mercado_reparto, numeroSocial(paraCreador), numeroSocial(precio.toInt() - paraCreador)), color = f.texto)

@@ -4,6 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Fabs solo se publica en Google Play (D-039): siempre vende chispas con Google Play Billing (src/play).
+// Los módulos compartidos (core/identidad, core/social-ui) leen la misma propiedad, por eso Fabs se compila
+// siempre con -Ptienda=play (./fogon la agrega sola); sin ella, preBuild se detiene.
+val tiendaPlay = providers.gradleProperty("tienda").orNull == "play"
+
 android {
     // El idioma se elige dentro de la app (Idioma.envolver): el AAB de Play trae todos los idiomas,
     // si no, quien elige un idioma distinto al del teléfono podría no tener sus textos.
@@ -14,12 +19,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        buildConfigField("boolean", "TIENDA_PLAY", (providers.gradleProperty("tienda").orNull == "play").toString())
+        buildConfigField("boolean", "TIENDA_PLAY", "true")
         applicationId = "io.github.fogonapps.cajon"
         minSdk = 26
         targetSdk = 37
-        versionCode = 131
-        versionName = "3.4"
+        versionCode = 136
+        versionName = "4.0.4"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).
@@ -50,6 +55,8 @@ android {
             vcsInfo.include = false
         }
     }
+
+    sourceSets.getByName("main").kotlin.directories.add("src/play/java")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -93,9 +100,16 @@ dependencies {
     implementation(libs.media3.effect)
 
     implementation(libs.work.runtime)
+    implementation(libs.billing.ktx)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(project(":core:revision"))
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+// Sin -Ptienda=play los módulos compartidos ofrecerían el pago en pesos (Wompi), que Fabs ya no tiene.
+tasks.named("preBuild") {
+    val conPlay = tiendaPlay
+    doFirst { if (!conPlay) throw GradleException("Fabs solo se compila para Google Play: agrega -Ptienda=play o usa ./fogon.") }
 }

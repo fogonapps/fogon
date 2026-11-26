@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- El fondo del ícono: el degradado del color de la app. -->
+<!-- El fondo del ícono: color plano de la app (lo escribe identidad/marca/marca.py). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient android:angle="315" android:startColor="#4FD98A" android:endColor="#16A04E" android:type="linear" />
+    <solid android:color="#C6F24E" />
 </shape>

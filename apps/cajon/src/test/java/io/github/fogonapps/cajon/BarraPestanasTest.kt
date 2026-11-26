@@ -61,8 +61,8 @@ class BarraPestanasTest {
         regla.waitForIdle()
 
         val ancho = regla.onRoot().fetchSemanticsNode().boundsInRoot.width
-        val nombres = Pestana.visibles(emptyList()).map { app.getString(textoPestana(it)) } + app.getString(R.string.buscar_y_agregar)
-        assertEquals(7, nombres.size)
+        val nombres = Pestana.entries.map { app.getString(textoPestana(it)) } + app.getString(R.string.buscar_y_agregar)
+        assertEquals(5, nombres.size)
         val cajas = nombres.map { n ->
             val nodos = regla.onAllNodesWithContentDescription(n).fetchSemanticsNodes()
             assertTrue("No está «$n» en la barra", nodos.isNotEmpty())

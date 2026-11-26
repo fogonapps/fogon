@@ -1,26 +1,25 @@
-<p><b>Beta:</b> El Cajón todavía puede cambiar y tener fallos. Los problemas conocidos están en <a href="https://github.com/fogonapps/el-cajon#problemas-conocidos">github.com/fogonapps/el-cajon</a>.</p>
-<p>El Cajón guarda todo lo que ves, lees y escuchas: películas, series, animes, libros, videojuegos, álbumes y artistas, en un mismo lugar, con tu nota y tu diario. Sin anuncios. No vendemos tus datos. Es parte de <b>Fogón</b>, apps para el día a día sin suscripciones: tuya desde el primer día.</p>
-<p><b>La red (opcional):</b> crea tu @usuario, sigue a otras personas, mira lo que comparten en el Inicio y publica tus reseñas, fotos y juegos en tus historias, con me gusta, comentarios y guardados. Solo sube lo que tú marcas como público o para tus seguidores.</p>
-
+<p>Fabs es tu diario de lo que ves, lees, escuchas y juegas: películas, series, animes, libros, discos, artistas y videojuegos, en un solo lugar, con tu nota y tus fechas. Sin anuncios. No vendemos tus datos. Es parte de <b>Fogón</b>: apps para el día a día, sin suscripciones.</p>
+<p><b>Lo nuevo</b></p>
 <ul>
-<li><b>Todo en un cajón:</b> películas, series, animes, libros, discos y videojuegos, con su portada (cámbiala o sube la tuya), año, director o autor, géneros y sinopsis.</li>
-<li><b>Busca y agrega:</b> libros en Open Library y discos y artistas en MusicBrainz, sin clave; películas, series y animes en TMDB con tu propia clave gratuita. O agrégalos a mano.</li>
-<li><b>Videojuegos:</b> busca un juego (portada, capturas, notas de la crítica y del público, resumen y enlaces, de IGDB) y márcalo como jugando, terminado, quiero jugar o abandonado, con nota y reseña. Tienen su propia pestaña, Juegos.</li>
-<li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, datos curiosos, etiquetas para todo y episodios favoritos.</li>
-<li><b>Diario:</b> cada vez que ves, lees o escuchas algo, con fecha, nota y si fue otra vez.</li>
+<li><b>Registra con dos toques:</b> pon tu nota y un me gusta y, si lo terminaste hoy, queda anotado en tu diario.</li>
+<li><b>Diario en cuadrícula:</b> tus portadas por mes, con la nota de cada vez. Si prefieres, en lista.</li>
+<li><b>Resumen del año:</b> lo que terminaste, lo mejor calificado, tu mes más activo y tu racha, listo para compartir como imagen.</li>
+<li><b>Trae lo que ya anotaste:</b> importa desde Letterboxd, Goodreads, The StoryGraph, Trakt, TV Time, Netflix y Steam. Sin repetir lo que ya tienes.</li>
+<li><b>Juntos:</b> con alguien con quien se siguen, mira qué ver con esa persona: lo que los dos tienen por ver, por dónde va cada uno y lo que terminaron los dos.</li>
+<li><b>Reseñas de la comunidad:</b> en Gente, lee lo que otras personas escriben, incluso sin cuenta.</li>
+<li><b>Tienda de perfil (opcional):</b> banners, marcos y fondos para tu perfil. Se pagan con chispas, que se compran dentro de la app. Son compras opcionales: todo lo demás funciona sin ellas.</li>
+</ul>
+<p><b>Lo de siempre</b></p>
+<ul>
+<li><b>Todo en un lugar:</b> películas, series, animes, libros, discos y videojuegos, con su portada (cámbiala o sube la tuya), año, creador, géneros y sinopsis.</li>
+<li><b>Busca y agrega:</b> libros en Open Library, discos y artistas en MusicBrainz, películas, series y animes en TMDB, juegos en IGDB. O agrégalos a mano.</li>
+<li><b>Tu nota en estrellas</b> (de media en media), me gusta, reseña, etiquetas y la nota del público al lado de la tuya.</li>
 <li><b>Por ver, por leer, por escuchar:</b> tus pendientes, lo que llevas en curso y lo terminado.</li>
-<li><b>La nota del público</b> junto a la tuya: TMDB, Open Library o MusicBrainz.</li>
-<li><b>Progreso:</b> páginas en libros y cada canción de un álbum con su nota y su corazón.</li>
-<li><b>Cine, Música, Libros y Juegos</b>, cada uno con su apartado, y un Inicio con todo lo que has visto, escuchado, leído y jugado.</li>
-<li><b>Artistas, escritores y directores</b> con su foto y sus discos, libros o películas, para sumarlos con un toque.</li>
-<li><b>Listas propias</b>, con ranking si quieres, y tus cuatro favoritas en el perfil, con tu juego favorito.</li>
-<li><b>Tus cifras:</b> lo terminado en el año, horas de cine y de series, páginas, canciones, juegos, tus notas, meses, géneros y creadores. Y retos del año.</li>
-<li><b>Comparte</b> una reseña o una lista como imagen.</li>
-<li><b>Trae lo que tenías:</b> importa desde Letterboxd (ZIP o CSV), Netflix (CSV de actividad de visionado), Trakt (ZIP o JSON), TV Time (ZIP o CSV), Goodreads y The StoryGraph (CSV), y tu biblioteca de Steam con las horas jugadas (con el enlace de tu perfil, si tus detalles de juego son públicos). Sin repetir lo que ya tienes.</li>
-<li><b>Copia cifrada:</b> si usas una cuenta de Fogón, puedes guardar una copia cifrada de tu cajón.</li>
+<li><b>Listas propias</b> y tus cuatro favoritas en el perfil.</li>
+<li><b>Tus cifras:</b> lo terminado en el año, horas, páginas, canciones, géneros y creadores, con retos del año.</li>
+<li><b>Red opcional:</b> crea tu @usuario, sigue a otras personas y publica tus reseñas. Solo se sube lo que marcas como público o para tus seguidores.</li>
+<li><b>Copia cifrada</b> de tu colección con tu cuenta de Fogón, si quieres.</li>
 <li><b>En español e inglés.</b></li>
 </ul>
-
-<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Internet solo se usa para buscar, traer portadas y, si lo activas, sincronizar. Puedes guardar un respaldo cuando quieras.</p>
-
-<p>El Cajón usa TMDB y su API, pero no está respaldado, certificado ni aprobado por TMDB. Datos e imágenes de videojuegos de IGDB (igdb.com); los juegos que no están en IGDB, de Wikidata (CC0), con portadas de Wikimedia Commons con el crédito de su autor y su licencia.</p>
+<p><b>Tus datos son tuyos.</b> Todo se guarda en tu teléfono. Internet solo se usa para buscar, traer portadas y, si lo activas, para la red y la copia cifrada. Puedes descargar una copia de tus datos cuando quieras.</p>
+<p>Fabs usa TMDB y su API, pero no está respaldado, certificado ni aprobado por TMDB. Datos e imágenes de videojuegos de IGDB (igdb.com); los juegos que no están en IGDB, de Wikidata (CC0), con portadas de Wikimedia Commons con el crédito de su autor y su licencia.</p>

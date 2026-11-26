@@ -129,6 +129,11 @@ class CajaFuerte(context: Context, val perfilId: String) {
         get() = prefs.getString(prefijo + "frase_guardada", null)
         set(v) = prefs.edit { if (v == null) remove(prefijo + "frase_guardada") else putString(prefijo + "frase_guardada", v) }
 
+    /** El diario en cuadrícula de portadas (true, como viene) o en lista. Solo de este teléfono. */
+    var diarioEnCuadricula: Boolean
+        get() = prefs.getBoolean(prefijo + "diario_cuadricula", true)
+        set(v) = prefs.edit { putBoolean(prefijo + "diario_cuadricula", v) }
+
     /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
     var tokenSocial: String?
         get() = leer("social")

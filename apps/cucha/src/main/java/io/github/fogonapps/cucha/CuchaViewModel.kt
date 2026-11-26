@@ -77,7 +77,7 @@ sealed interface Pantalla {
 enum class Pestana { HOY, GENTE, RECETAS, PLAN, PROGRESO }
 
 /** La red de La Cucha: rutas /v2/apps/cucha y correos con su nombre. */
-val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("cucha", "La Cucha", "LaCucha-Fogon")
+val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("cucha", "Ñom", "LaCucha-Fogon")
 
 class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }

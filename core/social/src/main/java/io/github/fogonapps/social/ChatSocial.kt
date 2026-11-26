@@ -326,8 +326,11 @@ class ChatSocial(
             cliente().mandar(usuario, sobre, firma, silencioso)
             return true
         } catch (x: ErrorSocial) {
-            decir(when (x.error) { "no_existe" -> "no_se_puede"; "muy_grande" -> "muy_grande"; else -> "error" }); return false
+            decir(when (x.error) { "no_existe", "no_recibe_mensajes" -> "no_se_puede"; "muy_grande" -> "muy_grande"; else -> "error" }); return false
         } catch (x: IOException) { decir("sin_conexion"); return false }
+        // Llaves de la otra persona dañadas o ilegibles: no se manda, sin cerrar la app.
+        catch (x: java.security.GeneralSecurityException) { decir("error"); return false }
+        catch (x: IllegalArgumentException) { decir("error"); return false }
         finally { _enviando.value = false }
     }
 

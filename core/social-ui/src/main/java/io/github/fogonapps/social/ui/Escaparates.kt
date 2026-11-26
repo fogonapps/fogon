@@ -1,5 +1,6 @@
 package io.github.fogonapps.social.ui
 
+import io.github.fogonapps.identidad.BarrasDelDialogo
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -283,6 +284,7 @@ private fun EdicionEscaparates(
         } catch (e: CancellationException) { throw e } catch (_: Exception) { error = true }
     }
     Dialog({ if (!ocupado) cerrar() }, DialogProperties(usePlatformDefaultWidth = false)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().fondoFogon(FogonTema.actual).systemBarsPadding()) {
             Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(RP.string.escaparates_titulo), Modifier.weight(1f), color = FogonTema.actual.texto)

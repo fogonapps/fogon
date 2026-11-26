@@ -3,7 +3,6 @@ package io.github.fogonapps.cajon.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.text.style.TextOverflow
-import io.github.fogonapps.identidad.tarjetaFogon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +35,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.drawBehind
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.Pantalla
@@ -179,7 +179,9 @@ fun ResenasDeLaGente(vm: CajonViewModel, o: Obra) {
     val opciones = (listas[vm.red.claveResenas(o.fuente, "", orden)].orEmpty() + todas).mapNotNull {
         (it.datos["parte"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { p -> p.isNotBlank() }
     }.distinct()
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Los filtros solo cuando hay reseñas de la gente que filtrar (o ya se eligió uno): vacíos, solo hacen ruido.
+    val ajenas = todas.any { it.autor.usuario != yo && !io.github.fogonapps.social.ui.esCalificacion(it) }
+    if (ajenas || orden != "utiles" || calificacion != Resenas.FILTRO_TODAS || parte.isNotEmpty()) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SelectorResena(listOf("utiles" to stringResource(R.string.resena_mas_utiles), "recientes" to stringResource(R.string.resena_recientes)), orden, { orden = it })
         SelectorResena(listOf(Resenas.FILTRO_TODAS to stringResource(R.string.resena_filtro_todas), Resenas.FILTRO_BUENAS to stringResource(R.string.resena_filtro_buenas),
             Resenas.FILTRO_MALAS to stringResource(R.string.resena_filtro_malas)), calificacion, { calificacion = it })
@@ -191,7 +193,7 @@ fun ResenasDeLaGente(vm: CajonViewModel, o: Obra) {
         Resenas.pasaFiltroNota((it.datos["nota"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull(), calificacion) }
         .forEach { TarjetaPublicacion(vm, it) }
     if (clave in cargando) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
-    else if (clave !in fin) BotonSecundario(stringResource(R.string.resena_cargar_mas), {
+    else if (clave !in fin && ajenas) BotonSecundario(stringResource(R.string.resena_cargar_mas), {
         vm.red.cargarResenas(o.fuente, parte, orden, mas = true)
     }, Modifier.fillMaxWidth().padding(16.dp))
 }
@@ -236,15 +238,17 @@ internal fun ResenasDelPerfil(vm: CajonViewModel, e: Estado) {
     resenas.forEach { r ->
         val o = Resenas.obra(e, r.obra)
         var destapada by rememberSaveable(r.id, r.spoiler) { mutableStateOf(false) }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp).tarjetaFogon()
+        // Plana, sin tarjeta: una línea fina la separa de la siguiente (como las publicaciones del feed).
+        Column(Modifier.fillMaxWidth()
             .clickable {
                 if (e.artistasVivos.any { it.id == r.obra }) vm.abrir(Pantalla.VerArtista(r.obra))
                 else vm.abrir(Pantalla.Ficha(r.obra))
-            }.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            }.drawBehind { drawLine(f.texto.copy(alpha = 0.08f), androidx.compose.ui.geometry.Offset(0f, size.height), androidx.compose.ui.geometry.Offset(size.width, size.height), 1.dp.toPx()) }
+            .padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Portada(o?.portada.orEmpty(), o?.tipo.orEmpty(), o?.titulo.orEmpty(), Modifier.width(64.dp), conTitulo = false)
+                Portada(o?.portada.orEmpty(), o?.tipo.orEmpty(), o?.titulo.orEmpty(), Modifier.width(56.dp), esquina = 6.dp, conTitulo = false)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(o?.titulo ?: stringResource(R.string.resena_obra_entera), style = MaterialTheme.typography.titleMedium,
+                    Text(o?.titulo ?: stringResource(R.string.resena_obra_entera), fontFamily = f.titulos, fontSize = 18.sp, lineHeight = 22.sp,
                         color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     val parte = Resenas.etiqueta(r.parte, o, vm.idioma() == "en")
                     if (parte.isNotBlank()) Text(parte, style = MaterialTheme.typography.labelMedium, color = f.textoSuave)
@@ -262,7 +266,7 @@ internal fun ResenasDelPerfil(vm: CajonViewModel, e: Estado) {
 @Composable
 fun TarjetaResena(texto: String, nota: Int?) {
     val f = FogonTema.actual
-    Column(Modifier.fillMaxWidth().tarjetaFogon().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         nota?.let { NotaResena(it) }
         Text(texto, style = MaterialTheme.typography.bodyLarge, color = f.texto)
     }

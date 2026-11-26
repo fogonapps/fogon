@@ -15,6 +15,9 @@ import java.util.Base64
  */
 class Base(ruta: String) {
     private val con: Connection = DriverManager.getConnection("jdbc:sqlite:$ruta")
+    /** Lo que corre después de confirmar o al deshacer una transacción ([despuesDeConfirmar], [siSeDeshace]). */
+    private val alConfirmar = mutableListOf<() -> Unit>()
+    private val alDeshacer = mutableListOf<() -> Unit>()
 
     init {
         usar {
@@ -145,6 +148,13 @@ class Base(ruta: String) {
                     anulado INTEGER NOT NULL DEFAULT 0)""")
                 s.execute("CREATE INDEX IF NOT EXISTS aportes_cuenta ON aportes(cuenta, anulado)")
                 s.execute("CREATE INDEX IF NOT EXISTS ordenes_pago_cuenta_estado ON ordenes_pago(cuenta, estado)")
+                // Compras de Google Play ya acreditadas: el token es único, así ninguna se acredita dos veces. Si se
+                // borra la cuenta, la fila queda (sin cuenta) para que el mismo token no pueda acreditarse en otra.
+                s.execute("""CREATE TABLE IF NOT EXISTS compras_play(
+                    token TEXT PRIMARY KEY, cuenta INTEGER REFERENCES cuentas(id) ON DELETE SET NULL,
+                    producto TEXT NOT NULL, orden TEXT NOT NULL, chispas INTEGER NOT NULL, prueba INTEGER NOT NULL DEFAULT 0,
+                    cuando INTEGER NOT NULL)""")
+                s.execute("CREATE INDEX IF NOT EXISTS compras_play_cuenta ON compras_play(cuenta)")
                 // Las chispas: cada movimiento (bienvenida, aportes, compras y regalos); el saldo es la suma.
                 s.execute("CREATE TABLE IF NOT EXISTS chispas(id INTEGER PRIMARY KEY, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, cantidad INTEGER NOT NULL, motivo TEXT NOT NULL, cuando INTEGER NOT NULL)")
                 s.execute("CREATE INDEX IF NOT EXISTS chispas_cuenta ON chispas(cuenta, motivo)")
@@ -296,6 +306,9 @@ class Base(ruta: String) {
                     columna(s, "codigos", "app TEXT NOT NULL DEFAULT 'cajon'")
                     columna(s, "cambios_correo", "app TEXT NOT NULL DEFAULT 'cajon'")
                 }
+                transaccion { migrarSeguridadInfantil(s) }
+                transaccion { migrarJuntos(s) }
+                transaccion { migrarPagos(s) }
             }
         }
     }
@@ -439,6 +452,73 @@ class Base(ruta: String) {
         }
     }
 
+    /**
+     * Seguridad infantil y moderación: la huella de la dirección de registro, quién puede escribirle a cada cuenta ("mutuos", "sigo" o "nadie"; para todas,
+     * también las que ya existían, "mutuos"), los chats que ya existen (no se rompen al cambiar la regla), la foto
+     * y la portada del perfil en revisión, la revisión automática de las fotos subidas, lo preservado para las
+     * autoridades y el número de la denuncia de cada caso.
+     */
+    private fun Connection.migrarSeguridadInfantil(s: java.sql.Statement) {
+        columna(s, "cuentas", "escribir TEXT NOT NULL DEFAULT 'mutuos'")
+        columna(s, "cuentas", "foto_revision INTEGER NOT NULL DEFAULT 0")
+        // La huella (HMAC con el secreto del servidor, no la dirección) de la IP desde la que se creó la cuenta: los
+        // reportes de cuentas creadas desde la misma dirección casi a la vez cuentan como uno. Se borra a los 90 días.
+        columna(s, "cuentas", "ip_registro TEXT")
+        columna(s, "imagenes", "revision INTEGER NOT NULL DEFAULT 0")
+        // La foto que el programa no pudo mirar (falló o se quedó sin memoria): queda sin revisar, a la vista del equipo.
+        columna(s, "imagenes", "sin_revisar INTEGER NOT NULL DEFAULT 0")
+        columna(s, "cuentas", "foto_sin_revisar INTEGER NOT NULL DEFAULT 0")
+        s.execute("""CREATE TABLE IF NOT EXISTS conversaciones(
+            a INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, b INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+            desde INTEGER NOT NULL, PRIMARY KEY(a, b))""")
+        if (leer("SELECT 1 FROM migraciones WHERE nombre = 'conversaciones'") { 1 }.isEmpty()) {
+            // Los chats con sobres todavía en el servidor ya existen; los demás se anotan con el próximo mensaje.
+            s.execute("INSERT OR IGNORE INTO conversaciones SELECT min(de, para), max(de, para), min(cuando) FROM mensajes GROUP BY min(de, para), max(de, para)")
+            s.execute("INSERT INTO migraciones VALUES('conversaciones')")
+        }
+        // Los chats viejos casi no quedaron en `conversaciones` (los mensajes se borran al entregarse): durante
+        // [Social.TRANSICION_CHATS] desde que llega esta regla a una base con cuentas, vale la de antes y cada chat se
+        // anota con su próximo mensaje ([Social.mandar]). En una base nueva no hay transición (0).
+        s.execute("CREATE TABLE IF NOT EXISTS configuracion(clave TEXT PRIMARY KEY, valor TEXT NOT NULL)")
+        if (leer("SELECT 1 FROM configuracion WHERE clave = 'chats_transicion_desde'") { 1 }.isEmpty()) {
+            val hayCuentas = leer("SELECT 1 FROM cuentas LIMIT 1") { 1 }.isNotEmpty()
+            cambiar("INSERT INTO configuracion VALUES('chats_transicion_desde', ?)", if (hayCuentas) System.currentTimeMillis().toString() else "0")
+        }
+        // Sin borrado en cascada: lo preservado no se va aunque se borre la cuenta (no se borra mientras haya algo aquí).
+        s.execute("""CREATE TABLE IF NOT EXISTS preservados(
+            id INTEGER PRIMARY KEY, que TEXT NOT NULL, objeto TEXT NOT NULL, cuenta INTEGER, regla TEXT NOT NULL,
+            decidido_por INTEGER NOT NULL, cuando INTEGER NOT NULL, liberado INTEGER NOT NULL DEFAULT 0, UNIQUE(que, objeto))""")
+        // El contenido preservado, cifrado (AES-GCM) con la llave `llave-preservados` de la carpeta de datos.
+        columna(s, "preservados", "sobre TEXT NOT NULL DEFAULT ''")
+        s.execute("""CREATE TABLE IF NOT EXISTS radicados(
+            que TEXT NOT NULL, objeto TEXT NOT NULL, radicado TEXT NOT NULL, por INTEGER NOT NULL, cuando INTEGER NOT NULL, PRIMARY KEY(que, objeto))""")
+    }
+
+    /**
+     * Pagos: el regalo con que se creó cada orden de Wompi (NULL en las de antes: se acreditan con el regalo de
+     * entonces), las compras de Play que Google anuló (reembolso o contracargo) y lo que una cuenta debe en chispas
+     * porque ya las había gastado: mientras deba, no compra nada con chispas.
+     */
+    private fun migrarPagos(s: java.sql.Statement) {
+        columna(s, "ordenes_pago", "regalo INTEGER")
+        columna(s, "compras_play", "anulada INTEGER NOT NULL DEFAULT 0")
+        // Lo ya descontado de cada compra por reembolsos parciales (por cantidad): nunca se descuenta más que la compra.
+        columna(s, "compras_play", "anulado_chispas INTEGER NOT NULL DEFAULT 0")
+        s.execute("""CREATE TABLE IF NOT EXISTS deudas_chispas(
+            cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, cantidad INTEGER NOT NULL CHECK(cantidad >= 0), cuando INTEGER NOT NULL)""")
+    }
+
+    /**
+     * «Juntos» (Fabs): lo que cada cuenta marcó (sí o no) para ver con otra, por obra. Se borra con cualquiera de las
+     * dos cuentas.
+     */
+    private fun migrarJuntos(s: java.sql.Statement) {
+        s.execute("""CREATE TABLE IF NOT EXISTS juntos_votos(
+            cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, otra INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+            clave TEXT NOT NULL, voto TEXT NOT NULL CHECK(voto IN ('si','no')), cuando INTEGER NOT NULL, PRIMARY KEY(cuenta, otra, clave))""")
+        s.execute("CREATE INDEX IF NOT EXISTS juntos_votos_otra ON juntos_votos(otra, cuenta)")
+    }
+
     /** Agrega una columna a una tabla que ya existía (de una versión anterior); si ya está, no hace nada. */
     private fun columna(s: java.sql.Statement, tabla: String, definicion: String) {
         val nombre = definicion.substringBefore(' ')
@@ -453,10 +533,42 @@ class Base(ruta: String) {
     fun <T> transaccion(f: Connection.() -> T): T = usar {
         if (!autoCommit) return@usar f()
         autoCommit = false
-        try { val resultado = f(); commit(); resultado }
-        catch (e: Throwable) { rollback(); throw e }
+        try {
+            val resultado = f(); commit()
+            alDeshacer.clear()
+            correr(alConfirmar)
+            resultado
+        }
+        catch (e: Throwable) {
+            rollback()
+            alConfirmar.clear()
+            correr(alDeshacer)
+            throw e
+        }
         finally { autoCommit = true }
     }
+
+    /**
+     * Corre los ganchos de [lista] y la deja vacía. Los que se registran mientras corren otros (un gancho que llama a
+     * [despuesDeConfirmar]) corren en esta misma tanda: se repite hasta vaciarla, con un tope para no quedar en un ciclo.
+     */
+    private fun correr(lista: MutableList<() -> Unit>) {
+        var vueltas = 0
+        while (lista.isNotEmpty()) {
+            if (++vueltas > 100) { System.err.println("Tras la transacción: ganchos en ciclo, se descartan ${lista.size}"); lista.clear(); return }
+            val pendientes = lista.toList(); lista.clear()
+            pendientes.forEach { runCatching(it).onFailure { e -> System.err.println("Tras la transacción: ${e.javaClass.simpleName}") } }
+        }
+    }
+
+    /**
+     * Lo que toca el disco y no se puede deshacer (borrar archivos) va después de confirmar: si la transacción se
+     * deshace, no corre. Fuera de una transacción, corre en el acto.
+     */
+    fun despuesDeConfirmar(f: () -> Unit): Unit = usar { if (autoCommit) f() else alConfirmar += f }
+
+    /** Lo que hay que limpiar si la transacción se deshace (archivos escritos a medias). Fuera de una, no hace nada. */
+    fun siSeDeshace(f: () -> Unit): Unit = usar { if (!autoCommit) alDeshacer += f }
 
     fun cerrar() = con.close()
 
@@ -490,4 +602,19 @@ fun Connection.insertar(sql: String, vararg p: Any?): Long = prepareStatement(sq
 
 internal fun Connection.registrarChispas(cuenta: Long, cantidad: Long, motivo: String, cuando: Long) {
     cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,?,?)", cuenta, cantidad, motivo, cuando)
+}
+
+/**
+ * Lo que la cuenta debe en chispas (de una compra de Play anulada cuando ya las había gastado) se salda primero con lo
+ * que tenga: queda en el historial como «deuda_play». Devuelve lo que sigue debiendo.
+ */
+internal fun Connection.saldarDeuda(cuenta: Long, cuando: Long): Long {
+    val deuda = leer("SELECT cantidad FROM deudas_chispas WHERE cuenta = ?", cuenta) { it.getLong(1) }.firstOrNull() ?: return 0
+    val saldo = leer("SELECT COALESCE(SUM(cantidad), 0) FROM chispas WHERE cuenta = ?", cuenta) { it.getLong(1) }.single()
+    val pago = minOf(deuda, saldo.coerceAtLeast(0))
+    if (pago > 0) registrarChispas(cuenta, -pago, "deuda_play", cuando)
+    val queda = deuda - pago
+    if (queda == 0L) cambiar("DELETE FROM deudas_chispas WHERE cuenta = ?", cuenta)
+    else if (pago > 0) cambiar("UPDATE deudas_chispas SET cantidad = ? WHERE cuenta = ?", queda, cuenta)
+    return queda
 }

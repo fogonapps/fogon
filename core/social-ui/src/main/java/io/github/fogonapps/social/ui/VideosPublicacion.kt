@@ -1,5 +1,6 @@
 package io.github.fogonapps.social.ui
 
+import io.github.fogonapps.identidad.BarrasDelDialogo
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -104,6 +105,7 @@ fun ReproductorVideo(cabecerasVideo: () -> Map<String, String>, nombre: String, 
         onDispose { propietario.lifecycle.removeObserver(observador); reproductor?.release() }
     }
     Dialog(cerrar, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        BarrasDelDialogo()
         Column(Modifier.fillMaxSize().background(f.fondo).systemBarsPadding().padding(16.dp)) {
             BotonSecundario(stringResource(R.string.social_video_cerrar), cerrar)
             if (error) Text(stringResource(R.string.social_video_error), color = f.texto)
@@ -113,7 +115,7 @@ fun ReproductorVideo(cabecerasVideo: () -> Map<String, String>, nombre: String, 
             Slider(value = posicion.coerceAtMost(duracion).toFloat(), onValueChange = { reproductor?.seekTo(it.toLong()) },
                 valueRange = 0f..duracion.coerceAtLeast(1).toFloat(), enabled = duracion > 0,
                 modifier = Modifier.semantics { contentDescription = etiquetaBarra },
-                colors = SliderDefaults.colors(thumbColor = f.tinta1, activeTrackColor = f.tinta1, inactiveTrackColor = f.linea))
+                colors = SliderDefaults.colors(thumbColor = f.acentoSocial, activeTrackColor = f.acentoSocial, inactiveTrackColor = f.linea))
             BotonRiso(stringResource(if (sonando) R.string.social_video_pausa else R.string.social_video_play), {
                 if (reproductor?.playbackState == Player.STATE_ENDED) { reproductor.seekTo(0); reproductor.play() }
                 else if (reproductor?.playWhenReady == true) reproductor.pause() else reproductor?.play()

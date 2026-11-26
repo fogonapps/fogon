@@ -1,5 +1,6 @@
 package io.github.fogonapps.social.ui
 
+import io.github.fogonapps.identidad.letraAcentoSocial
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,7 +45,7 @@ fun MenuFrase(
         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             Text(texto, style = MaterialTheme.typography.titleMedium, color = f.texto, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             FilaVidrioSocial({ onGusta(); cerrar() }) {
-                IconoRiso(IconosSociales.Corazon, null, tamano = 20.dp, tinta = f.acentoTexto)
+                IconoRiso(IconosSociales.Corazon, null, tamano = 20.dp, tinta = f.letraAcentoSocial)
                 Text(stringResource(if (gusta) R.string.social_frase_ya_no_gusta else R.string.social_frase_me_gusta), color = f.texto, modifier = Modifier.weight(1f))
             }
             FilaVidrioSocial({

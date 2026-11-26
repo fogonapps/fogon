@@ -30,6 +30,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,12 +51,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,73 +88,100 @@ import io.github.fogonapps.identidad.forma
 /** Lo de arriba de la ficha: el fondo (cine), la portada y los datos de afuera. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, conCreadores: Boolean = true) {
+private fun Encabezado(o: Obra, vm: CajonViewModel, conGeneros: Boolean = true, conCreadores: Boolean = true, arriba: @Composable () -> Unit = {}) {
     val f = FogonTema.actual
-    // Como en las apps de cine: el fondo arriba, la portada montada sobre su borde de abajo y el título siempre
-    // debajo del fondo (nunca la mitad sobre la imagen y la mitad afuera), con la letra según lo largo que sea.
-    val conFondo = o.fondo.isNotBlank()
+    // Como un cartel de cine: la portada grande y centrada sobre su propio color difuminado (el de la portada, como
+    // en el inicio), y debajo el título en la letra de títulos. El resto de la interfaz va en blanco y negro.
     Box(Modifier.fillMaxWidth()) {
-        if (conFondo) coil3.compose.AsyncImage(
-            model = o.fondo, contentDescription = null, contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().height(170.dp).padding(horizontal = 16.dp).clip(forma(18.dp)).background(f.superficie),
-        )
-        Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 16.dp, top = if (conFondo) 104.dp else 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
+        FondoDePortada(Imagenes.url(o.portada, Imagenes.Lugar.LISTA, true), Modifier.matchParentSize())
+        Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // La barra de arriba (atrás y acciones) va sobre el mismo color, sin corte.
+            arriba()
             var visor by remember { mutableStateOf(false) }
-            Portada(o.portada, o.tipo, o.titulo, Modifier.width(112.dp).aparecer(0).clickable { visor = true }, lugar = Imagenes.Lugar.FICHA)
-            if (visor) androidx.compose.ui.window.Dialog(onDismissRequest = { visor = false }) {
-                // La portada grande; debajo, de dónde salió y, plegado, reportarla.
-                Column(Modifier.clip(forma(24.dp)).background(f.fondo).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(o.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        BotonIcono(Iconos.Cerrar, stringResource(R.string.volver)) { visor = false }
-                    }
-                    Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), lugar = Imagenes.Lugar.VISOR)
-                    SobreImagen(vm, o.id, o.portada, o.fuente)
-                    if (Imagenes.autorizada(Imagenes.clave(o.portada))) {
-                        var reportar by remember { mutableStateOf(false) }
-                        Pildora(stringResource(R.string.imagen_reportar), Iconos.Bandera, acento = reportar) { reportar = !reportar }
-                        if (reportar) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("no_corresponde" to R.string.imagen_no_corresponde, "ofensiva" to R.string.imagen_ofensiva, "derechos" to R.string.imagen_derechos).forEach { (motivo, texto) ->
-                                Pildora(stringResource(texto)) { vm.red.reportar("imagen", Imagenes.clave(o.portada), motivo); visor = false }
-                            }
+        if (visor) androidx.compose.ui.window.Dialog(onDismissRequest = { visor = false }) {
+            // La portada grande; debajo, de dónde salió y, plegado, reportarla.
+            Column(Modifier.clip(forma(24.dp)).background(f.fondo).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(o.titulo, style = MaterialTheme.typography.titleMedium, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    BotonIcono(Iconos.Cerrar, stringResource(R.string.volver)) { visor = false }
+                }
+                Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), lugar = Imagenes.Lugar.VISOR, natural = true)
+                SobreImagen(vm, o.id, o.portada, o.fuente)
+                if (Imagenes.autorizada(Imagenes.clave(o.portada))) {
+                    var reportar by remember { mutableStateOf(false) }
+                    Pildora(stringResource(R.string.imagen_reportar), Iconos.Bandera, acento = reportar) { reportar = !reportar }
+                    if (reportar) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("no_corresponde" to R.string.imagen_no_corresponde, "ofensiva" to R.string.imagen_ofensiva, "derechos" to R.string.imagen_derechos).forEach { (motivo, texto) ->
+                            Pildora(stringResource(texto)) { vm.red.reportar("imagen", Imagenes.clave(o.portada), motivo); visor = false }
                         }
                     }
                 }
             }
-            Column(Modifier.weight(1f).padding(top = if (conFondo) 74.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                val largo = o.titulo.length
-                Text(o.titulo, fontFamily = f.titulos, fontSize = if (largo <= 22) 22.sp else if (largo <= 40) 19.sp else 17.sp,
-                    lineHeight = if (largo <= 22) 26.sp else if (largo <= 40) 23.sp else 21.sp, color = f.texto, maxLines = 4, overflow = TextOverflow.Ellipsis)
-                if (o.original.isNotBlank()) Text(o.original, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                o.anio?.let { Text("$it", style = MaterialTheme.typography.bodyMedium, color = f.texto) }
-                // Una imagen de Wikimedia Commons lleva su crédito a la vista (autor y licencia); el detalle, al tocarla.
-                creditoImagen(o)?.let { Text(stringResource(R.string.imagen_de, it), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
-                    maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp)) }
-            }
+        }
+            val cuadrada = o.tipo == Tipos.ALBUM
+            // Si se abrió tocando una portada, esa portada vuela hasta aquí (la de la ficha espera a que llegue).
+            val vuelos = LocalVuelos.current
+            var volo by remember(o.id) { mutableStateOf(false) }
+            Portada(o.portada, o.tipo, o.titulo, Modifier.width(if (cuadrada) 240.dp else 200.dp)
+                .then(if (vuelos == null) Modifier.aparecer(0) else Modifier.onGloballyPositioned { c ->
+                    if (volo) return@onGloballyPositioned
+                    volo = true
+                    val origen = vuelos.origen(o.portada) ?: return@onGloballyPositioned
+                    // Al entrar, la ficha se desliza desde el lado: el destino se calcula centrado, donde quedará.
+                    // (Sin recortar: al empezar a entrar la ficha está fuera de la pantalla.)
+                    val arriba = c.positionInRoot().y; val ancho = c.findRootCoordinates().size.width
+                    val izq = (ancho - c.size.width) / 2f
+                    vuelos.activo = Vuelo(o.portada, origen.first,
+                        androidx.compose.ui.geometry.Rect(izq, arriba, izq + c.size.width, arriba + c.size.height), origen.second)
+                })
+                .graphicsLayer { alpha = if (vuelos?.activo?.url == o.portada) 0f else 1f }
+                .shadow(24.dp, forma(16.dp), clip = false).clickable { visor = true }, esquina = 16.dp, lugar = Imagenes.Lugar.FICHA, natural = true)
+            val largo = o.titulo.length
+            Text(o.titulo, style = MaterialTheme.typography.headlineLarge.copy(
+                fontSize = if (largo <= 22) 30.sp else if (largo <= 40) 24.sp else 20.sp, lineHeight = if (largo <= 22) 34.sp else if (largo <= 40) 28.sp else 24.sp),
+                color = f.texto, textAlign = TextAlign.Center, maxLines = 4, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 14.dp))
+            if (o.original.isNotBlank()) Text(o.original, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center,
+                maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 24.dp))
+            Text(listOfNotNull(o.anio?.toString(), medida(o).takeIf { it.isNotBlank() }).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp))
+            // Una imagen de Wikimedia Commons lleva su crédito a la vista (autor y licencia); el detalle, al tocarla.
+            creditoImagen(o)?.let { Text(stringResource(R.string.imagen_de, it), style = MaterialTheme.typography.labelSmall, color = f.textoSuave,
+                textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 24.dp)) }
         }
     }
     // Quién la hizo: cada nombre se toca para abrir su ficha (director, escritor o artista), sin guardarlo.
     val nombres = o.creador.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     val buscando by vm.buscandoPersona.collectAsStateWithLifecycle()
     // (Un estudio de juegos abre el buscador de juegos con sus juegos.)
-    if (conCreadores && nombres.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    if (conCreadores && nombres.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         nombres.take(6).forEach { n ->
             Pildora(if (buscando == n.trimEnd('.')) stringResource(R.string.buscando) else n,
                 when (o.tipo) { Tipos.ALBUM -> Iconos.Artista; Tipos.JUEGO -> Iconos.Gente; else -> Iconos.Persona }) { vm.abrirPersona(n, o.tipo) }
         }
     }
-    Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(medida(o), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
         NotaPublica(o.fuente, o.publica, o.votos)
         NotaPublica(o.fuente, o.criticos, o.votosCriticos, critica = true)
     }
     // A Spotify, Wikipedia, IMDb, Letterboxd, Goodreads… (los que tenga).
     Enlaces(vm, o.fuente)
-    if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    if (conGeneros && o.generos.isNotEmpty()) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // Tocar un género lo busca en la sección de la obra: lo del cajón y lo de afuera con ese género (en todos los tipos).
-        o.generos.forEach { g -> vm.generoVisible(o, g).let { n -> Pildora(n) { vm.buscarEtiqueta(if (o.tipo == Tipos.JUEGO) n else g, Secciones.de(o.tipo)) } } }
+        // Sin título ni píldoras: una línea de palabras que se tocan, como en una contraportada.
+        // Dos géneros de la fuente pueden verse igual (Thriller y Suspenso salen «Suspenso»): se muestra uno.
+        o.generos.map { it to vm.generoVisible(o, it) }.distinctBy { it.second.trim().lowercase() }.take(6).forEachIndexed { i, (g, n) ->
+            if (i > 0) Text("·", style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.textoSuave, modifier = Modifier.padding(vertical = 12.dp))
+            run {
+                Text(n, style = MaterialTheme.typography.labelLarge, color = FogonTema.actual.texto,
+                    modifier = Modifier.clip(forma(8.dp)).clickable { vm.buscarEtiqueta(if (o.tipo == Tipos.JUEGO) n else g, Secciones.de(o.tipo)) }
+                        .heightIn(min = 44.dp).padding(horizontal = 8.dp, vertical = 12.dp))
+            }
+        }
     }
 }
 
@@ -228,8 +265,7 @@ private fun QuienLaHizo(vm: CajonViewModel, o: Obra, personas: List<io.github.fo
     @Composable
     fun Fila(nombre: String, foto: String, tipo: String, onClick: () -> Unit) = FilaVidrio(onClick) {
         // Un estudio de juegos lleva el mismo ícono que su píldora del encabezado (no las iniciales de una persona).
-        if (o.tipo == Tipos.JUEGO) Box(Modifier.size(46.dp).clip(androidx.compose.foundation.shape.CircleShape).background(f.superficie).border(f.borde, f.linea, androidx.compose.foundation.shape.CircleShape),
-            contentAlignment = Alignment.Center) { IconoRiso(Iconos.Gente, null, tamano = 20.dp, tinta = f.acentoTexto) }
+        if (o.tipo == Tipos.JUEGO) Box(Modifier.size(46.dp), contentAlignment = Alignment.Center) { IconoRiso(Iconos.Gente, null, tamano = 24.dp, tinta = f.texto) }
         else FotoArtista(foto, nombre, 46.dp, tipo)
         Text(if (buscando == nombre.trimEnd('.')) stringResource(R.string.buscando) else nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto,
             maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -245,11 +281,12 @@ private fun QuienLaHizo(vm: CajonViewModel, o: Obra, personas: List<io.github.fo
 fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon.datos.ArtistaEncontrado> = emptyList()) {
     val f = FogonTema.actual
     val trayendo by vm.trayendo.collectAsStateWithLifecycle()
-    Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar)
-    // Mientras llegan la sinopsis, las canciones y los géneros, una línea fina arriba (la ficha ya se puede usar).
-    if (trayendo == o.fuente) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(2.dp), color = f.tinta1, trackColor = f.linea)
     // Quién la hizo va en su sección, con foto, antes de la sinopsis (como en la ficha).
-    Encabezado(o, vm, conCreadores = false)
+    Encabezado(o, vm, conCreadores = false) {
+        Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar)
+        // Mientras llegan la sinopsis, las canciones y los géneros, una línea fina arriba (la ficha ya se puede usar).
+        if (trayendo == o.fuente) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(2.dp), color = f.tinta1, trackColor = f.linea)
+    }
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         BotonRiso(nombreEstado(Estados.QUIERO, o.tipo), { vm.agregar(o, Estados.QUIERO) }, Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -265,7 +302,7 @@ fun Previa(vm: CajonViewModel, o: Obra, personas: List<io.github.fogonapps.cajon
         // Cada canción con su avance (si Apple la tiene) y, al mantenerla, sus acciones.
         var avances by remember(o.titulo) { mutableStateOf<List<io.github.fogonapps.social.CancionSocial>>(emptyList()) }
         LaunchedEffect(o.titulo) { avances = vm.cancionesApple(o.titulo, o.creador) }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 6.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
             o.canciones.forEachIndexed { i, c ->
                 FilaCancionAlbum(vm, o, i, c.titulo, avances.firstOrNull { vm.L.tituloLimpio(it.titulo) == vm.L.tituloLimpio(c.titulo) })
             }
@@ -344,19 +381,20 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     val acciones = LocalAcciones.current
 
     var compartiendo by rememberSaveable { mutableStateOf(false) }
-    Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar) {
-        if (acciones != null) BotonIcono(Iconos.Compartir, stringResource(R.string.compartir), grande = true) { compartiendo = true }
-        // Lo que viene de una fuente oficial (TMDB, Open Library, MusicBrainz) no se edita: solo se puede cambiar la portada.
-        BotonIcono(Iconos.Imagen, stringResource(R.string.cambiar_portada), grande = true) { vm.abrir(Pantalla.CambiarPortada(o.id)) }
-        if (o.fuente.isEmpty()) BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
-    }
     // La tarjeta se puede editar antes de compartirla (fondo, formato, frase, nota).
     if (compartiendo && acciones != null) DialogoTarjetaObra(vm, o, e.resenas.firstOrNull { it.obra == o.id && !it.borrada && !it.spoiler && it.parte.isBlank() }?.texto.orEmpty(),
         { compartiendo = false }) { acciones.compartir(it, o.titulo) }
-    Encabezado(o, vm, conGeneros = false)
+    Encabezado(o, vm, conGeneros = o.fuente.isNotEmpty()) {
+        Cabecera(nombreTipo(o.tipo, plural = false), vm::cerrar) {
+            if (acciones != null) BotonIcono(Iconos.Compartir, stringResource(R.string.compartir), grande = true) { compartiendo = true }
+            // Lo que viene de una fuente oficial (TMDB, Open Library, MusicBrainz) no se edita: solo se puede cambiar la portada.
+            BotonIcono(Iconos.Imagen, stringResource(R.string.cambiar_portada), grande = true) { vm.abrir(Pantalla.CambiarPortada(o.id)) }
+            if (o.fuente.isEmpty()) BotonIcono(Iconos.Lapiz, stringResource(R.string.corregir_datos), grande = true) { vm.abrir(Pantalla.EditarObra(o.id, o.tipo)) }
+        }
+    }
     if (o.fuente.startsWith("ol:")) {
         var elegir by rememberSaveable(id) { mutableStateOf(false) }
-        Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { Pildora(stringResource(R.string.imagen_edicion), Iconos.Libro, acento = elegir) { elegir = !elegir } }
+        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = Alignment.Center) { Pildora(stringResource(R.string.imagen_edicion), Iconos.Libro, acento = elegir) { elegir = !elegir } }
         val ediciones by vm.ediciones.collectAsStateWithLifecycle()
         val comunidades by vm.portadasComunidad.collectAsStateWithLifecycle()
         // Las ediciones como portadas en fila (se desliza): debajo, editorial, año e idioma.
@@ -378,44 +416,52 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     // Los géneros: de la fuente, solo informativos (tocar uno abre esa sección con lo de ese género); a mano, editables.
     val tituloEtiquetas = stringResource(if (o.tipo == Tipos.LIBRO) R.string.temas else R.string.generos)
     val textoAgregar = stringResource(if (o.tipo == Tipos.LIBRO) R.string.agregar_tema else R.string.agregar_genero)
-    EditorEtiquetas("g" + o.id, tituloEtiquetas, o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
+    if (o.fuente.isEmpty()) EditorEtiquetas("g" + o.id, tituloEtiquetas, o.generos, { vm.sugerenciasEtiquetas(Secciones.tipos(Secciones.de(o.tipo).let { if (it in Secciones.DE_CINE) Secciones.CINE else it })) },
         { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, textoAgregar,
         textoVisible = { vm.generoVisible(o, it) }, editable = o.fuente.isEmpty())
 
     // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
     var celebrando by remember(id) { mutableStateOf(false) }
-    Selector(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado, {
+    SegmentosEstado(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado) {
         if (it == Estados.TERMINADO && o.estado != Estados.TERMINADO) celebrando = true
         vm.ponerEstado(o.id, it)
-    }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-    if (celebrando) {
-        io.github.fogonapps.identidad.TarjetaPersonaje(io.github.fogonapps.identidad.Quien.CAJON, io.github.fogonapps.identidad.Cara.FELIZ, Modifier.padding(vertical = 8.dp).aparecer(0), tamano = 88.dp, celebrar = true) {
-            Text(stringResource(R.string.terminaste_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
-            Text(stringResource(R.string.terminaste_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+    }
+    // Sin personaje (Fabs no tiene): unas palabras centradas que se van solas.
+    androidx.compose.animation.AnimatedVisibility(celebrando, enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.terminaste_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.terminaste_texto), style = MaterialTheme.typography.bodySmall, color = f.textoSuave, textAlign = TextAlign.Center)
         }
     }
+    LaunchedEffect(celebrando) { if (celebrando) { kotlinx.coroutines.delay(4000); celebrando = false } }
 
-    // Tu reseña, el corazón y las favoritas.
+    // Lo principal, sin tarjeta: tu nota grande y centrada (con favorita y me gusta) y, debajo, las cuatro acciones con
+    // ícono. Lo que se usa menos queda plegado al final, en «Más».
     val resenaEntera = io.github.fogonapps.cajon.datos.Resenas.deObra(e, o.id)
-    Column(Modifier.aparecer(1).fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.tu_resena), style = MaterialTheme.typography.labelLarge, color = f.textoSuave, modifier = Modifier.weight(1f))
-            val fav = o.id in e.ajustes.favoritas
-            BotonIcono(Iconos.Estrella, stringResource(if (fav) R.string.quitar_favorita else R.string.poner_favorita), tinta = if (fav) f.acentoTexto else f.textoSuave, lleno = fav) { vm.favorita(o.id) }
-            BotonIcono(Iconos.Corazon, stringResource(R.string.me_gusta), tinta = if (o.meGusta) f.acentoTexto else f.textoSuave, lleno = o.meGusta) { vm.meGusta(o.id) }
+    // Las estrellas solas, grandes y centradas; debajo, favorita y me gusta con su nombre (antes eran una estrella y un
+    // corazón sueltos a los lados, y la estrella parecía una sexta).
+    Column(Modifier.aparecer(1).fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ElegirEstrellas(o.nota, { vm.ponerNota(o.id, it) }, tamano = 44.dp, descripcion = stringResource(R.string.tu_nota))
+        val fav = o.id in e.ajustes.favoritas
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pildora(stringResource(R.string.me_gusta), Iconos.Corazon, acento = o.meGusta) { vm.meGusta(o.id) }
+            Pildora(stringResource(R.string.favorita_corta), Iconos.Favorita, acento = fav) { vm.favorita(o.id) }
         }
-        ElegirEstrellas(o.nota, { vm.ponerNota(o.id, it) }, descripcion = stringResource(R.string.tu_nota))
-        if (!resenaEntera?.texto.isNullOrBlank()) {
-            Text(resenaEntera.texto, style = MaterialTheme.typography.bodyMedium, color = f.texto,
-                maxLines = 3, overflow = TextOverflow.Ellipsis)
-            BotonSecundario(stringResource(R.string.editar), { vm.escribirResena(o.id, editar = resenaEntera.id) }, Modifier.fillMaxWidth())
-        } else BotonSecundario(stringResource(R.string.resena_escribir_algo), { vm.escribirResena(o.id) }, Modifier.fillMaxWidth())
-        ElegirVisibilidad(resenaEntera?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) {
-            vm.visibilidadResenaObra(o.id, it)
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        AccionFicha(Iconos.Diario, textoAnotar(o.tipo), principal = true) { vm.abrir(Pantalla.Registrar(o.id)) }
+        AccionFicha(Iconos.Lapiz, stringResource(if (resenaEntera?.texto.isNullOrBlank()) R.string.accion_resena else R.string.editar)) {
+            if (resenaEntera?.texto.isNullOrBlank()) vm.escribirResena(o.id) else vm.escribirResena(o.id, editar = resenaEntera.id)
         }
-        BotonRiso(textoAnotar(o.tipo), { vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.agregar_a_lista), { vm.abrir(Pantalla.AgregarALista(o.id)) }, Modifier.fillMaxWidth())
-        BotonSecundario(stringResource(R.string.chat_mandar_a_alguien), { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Chats(o.id)) }, Modifier.fillMaxWidth())
+        AccionFicha(Iconos.Lista, stringResource(R.string.accion_lista)) { vm.abrir(Pantalla.AgregarALista(o.id)) }
+        AccionFicha(Iconos.Enviar, stringResource(R.string.accion_enviar)) { vm.abrir(if (vm.red.usuario.value == null) Pantalla.CuentaRed else Pantalla.Chats(o.id)) }
+    }
+    if (!resenaEntera?.texto.isNullOrBlank()) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(resenaEntera.texto, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 4, overflow = TextOverflow.Ellipsis)
+        ElegirVisibilidad(resenaEntera.visibilidad) { vm.visibilidadResenaObra(o.id, it) }
     }
 
     // El progreso: páginas o canciones.
@@ -429,20 +475,16 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
 
     // Reseñas: la tuya (con tu nota, privada o para la red, y para compartir) y las de la gente.
     Seccion(stringResource(R.string.resenas))
-    if (o.notas.isNotBlank()) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        var notas by rememberSaveable(o.id, o.notas) { mutableStateOf(o.notas) }
+    // Si tenía notas al abrir, el campo se queda aunque se borren (si no, desaparece bajo el dedo).
+    val teniaNotas = remember(o.id) { o.notas.isNotBlank() }
+    if (teniaNotas || o.notas.isNotBlank()) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        var notas by rememberSaveable(o.id) { mutableStateOf(o.notas) }
         OutlinedTextField(notas, { notas = it; vm.ponerNotas(o.id, it) }, Modifier.fillMaxWidth(), minLines = 2,
             label = { Text(stringResource(R.string.datos_curiosos)) })
     }
     ResenasPropias(vm, e, o)
     ResenasDeLaGente(vm, o)
 
-    // Las etiquetas propias ("para ver con amigos", "favorita de 2024"…): como los géneros, sin comas.
-    EditorEtiquetas("e" + o.id, stringResource(R.string.etiquetas), o.etiquetas, { vm.sugerenciasEtiquetas(null) },
-        { vm.ponerEtiquetasObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_etiqueta))
-
-    // Los episodios favoritos de una serie o un anime.
-    if (Tipos.porEpisodios(o.tipo)) EpisodiosFavoritos(vm, o)
 
     // Las veces que la vio, leyó o escuchó, con su fecha (el diario).
     if (o.registros.isNotEmpty()) {
@@ -458,10 +500,11 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
             }
         }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        o.empezada?.let { Dato(stringResource(R.string.empezada), fechaCorta(it, idioma), Modifier.weight(1f)) }
-        o.terminada?.let { Dato(stringResource(R.string.terminada), fechaCorta(it, idioma), Modifier.weight(1f)) }
-    }
+    // Las fechas, en una sola línea discreta («Empezada 15 nov 2026 · Terminada 20 nov 2026»).
+    val fechas = listOfNotNull(o.empezada?.let { stringResource(R.string.empezada) + " " + fechaCorta(it, idioma) },
+        o.terminada?.let { stringResource(R.string.terminada) + " " + fechaCorta(it, idioma) })
+    if (fechas.isNotEmpty()) Text(fechas.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp))
 
     // El artista del álbum.
     o.artista?.let { aid -> e.artistasVivos.firstOrNull { it.id == aid } }?.let { a ->
@@ -473,14 +516,24 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         }
     }
 
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (o.fuente.isNotEmpty()) {
-            CreditoFuente(o, adentro = true)
-            BotonSecundario(stringResource(R.string.actualizar_datos), { vm.actualizarDatos(o.id) }, Modifier.fillMaxWidth())
+    // «Más»: lo que se usa poco (etiquetas, episodios favoritos, actualizar, borrar), plegado.
+    Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Desplegable(Iconos.Opciones, stringResource(R.string.mas), null) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Las etiquetas propias ("para ver con amigos", "favorita de 2024"…): como los géneros, sin comas.
+                EditorEtiquetas("e" + o.id, stringResource(R.string.etiquetas), o.etiquetas, { vm.sugerenciasEtiquetas(null) },
+                    { vm.ponerEtiquetasObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, stringResource(R.string.agregar_etiqueta))
+                // Los episodios favoritos de una serie o un anime.
+                if (Tipos.porEpisodios(o.tipo)) EpisodiosFavoritos(vm, o)
+                if (o.fuente.isNotEmpty()) {
+                    CreditoFuente(o, adentro = true)
+                    BotonSecundario(stringResource(R.string.actualizar_datos), { vm.actualizarDatos(o.id) }, Modifier.fillMaxWidth())
+                }
+                BotonSecundario(stringResource(R.string.borrar), {
+                    confirmar(vm.tx(R.string.borrar_obra_pregunta, o.titulo), vm.tx(R.string.borrar_obra_texto)) { vm.borrarObra(o.id) }
+                }, Modifier.fillMaxWidth(), peligro = true)
+            }
         }
-        BotonSecundario(stringResource(R.string.borrar), {
-            confirmar(vm.tx(R.string.borrar_obra_pregunta, o.titulo), vm.tx(R.string.borrar_obra_texto)) { vm.borrarObra(o.id) }
-        }, Modifier.fillMaxWidth(), peligro = true)
     }
 }
 
@@ -575,7 +628,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
                             Box(Modifier.weight(1f).clip(forma(12.dp)).semantics { contentDescription = elegirLocal; selected = url == actual }.clickable { vm.elegirImagen(id, que, url) }
                                 .then(if (url == actual) Modifier.border(2.dp, f.tinta1, forma(12.dp)) else Modifier)) {
                                 when {
-                                    o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false)
+                                    o != null && !fondo -> Portada(url, o.tipo, o.titulo, Modifier.fillMaxWidth(), conTitulo = false, natural = true)
                                     else -> coil3.compose.AsyncImage(url, null, contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxWidth().semantics { contentDescription = nombreOpcion }.aspectRatio(if (fondo) 16f / 9f else 1f).background(f.superficie))
                                 }
@@ -621,7 +674,7 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
 private fun Paginas(vm: CajonViewModel, o: Obra) {
     val f = FogonTema.actual
     Seccion(stringResource(R.string.tu_lectura))
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (o.paginas != null) stringResource(R.string.pagina_de, o.pagina, o.paginas) else stringResource(R.string.va_en_pagina, o.pagina),
             style = MaterialTheme.typography.bodyLarge, color = f.texto)
         vm.L.progreso(o)?.let { Barra(it, f.tinta1) }
@@ -652,7 +705,7 @@ private fun FilaCancionAlbum(vm: CajonViewModel, o: Obra, i: Int, titulo: String
 
 /**
  * Lo que se puede hacer con una canción (como en una app de música): escucharla 30 segundos en Apple Music, ponerla en
- * tu perfil, en tu nota o en una historia.
+ * tu perfil, en tu nota o en una historia (si la app las usa).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -677,8 +730,7 @@ private fun AccionesCancion(vm: CajonViewModel, o: Obra, titulo: String, avance:
             FilaAccion(Iconos.Persona, stringResource(R.string.cancion_al_perfil)) {
                 vm.ponerCancion(listOf("v3", titulo, o.creador, o.titulo, avance?.portada ?: o.portada, avance?.audio.orEmpty(), avance?.enlace.orEmpty()).joinToString("|") { it.replace("|", "/") }); onCerrar()
             }
-            FilaAccion(Iconos.Comentario, stringResource(R.string.cancion_a_la_nota)) { vm.red.ponerNotaGente("", adjunto); onCerrar() }
-            FilaAccion(Iconos.Mas, stringResource(R.string.cancion_a_historia)) { historia = true }
+            if (interfaz.conHistorias) FilaAccion(Iconos.Mas, stringResource(R.string.cancion_a_historia)) { historia = true }
         }
     }
     if (historia) io.github.fogonapps.social.ui.CrearHistoria(interfaz, adjunto) { historia = false; onCerrar() }
@@ -703,7 +755,7 @@ private fun Canciones(vm: CajonViewModel, e: Estado, o: Obra) {
     // Los avances de Apple de este álbum (si los encuentra), para escuchar 30 segundos de cada canción.
     var avances by remember(o.id) { mutableStateOf<List<io.github.fogonapps.social.CancionSocial>>(emptyList()) }
     LaunchedEffect(o.id) { avances = vm.cancionesApple(o.titulo, o.creador) }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).vidrio().padding(vertical = 6.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         o.canciones.forEachIndexed { i, c ->
             val avance = avances.firstOrNull { vm.L.tituloLimpio(it.titulo) == vm.L.tituloLimpio(c.titulo) }
             var acciones by remember { mutableStateOf(false) }
@@ -712,21 +764,27 @@ private fun Canciones(vm: CajonViewModel, e: Estado, o: Obra) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(28.dp))
                     Text(c.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    if (c.segundos > 0) Text("%d:%02d".format(c.segundos / 60, c.segundos % 60), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                    // Aire a los lados del tiempo: el botón de reproducir lo tocaba.
+                    if (c.segundos > 0) Text("%d:%02d".format(c.segundos / 60, c.segundos % 60), style = MaterialTheme.typography.bodySmall, color = f.textoSuave,
+                        maxLines = 1, softWrap = false, modifier = Modifier.padding(horizontal = 8.dp))
                     avance?.let { io.github.fogonapps.social.ui.BotonAvance(it.audio) }
                     BotonIcono(Iconos.Corazon, stringResource(R.string.cancion_favorita), tinta = if (c.favorita) f.acentoTexto else f.linea, lleno = c.favorita) { vm.cancionFavorita(o.id, i) }
                 }
                 avance?.let { Box(Modifier.padding(start = 24.dp)) { io.github.fogonapps.social.ui.EnlaceAppleMusic(it.enlace) } }
-                Box(Modifier.padding(start = 28.dp)) {
-                    ElegirEstrellas(c.nota, { vm.notaCancion(o.id, i, it) }, tamano = 20.dp, descripcion = stringResource(R.string.nota_de, c.titulo))
-                }
+                // Las estrellas y, al lado, escribir (un enlace, no un botón por canción); quién la ve, solo si ya hay reseña.
                 val resena = io.github.fogonapps.cajon.datos.Resenas.deCancion(e, o, i)
+                Row(Modifier.padding(start = 28.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ElegirEstrellas(c.nota, { vm.notaCancion(o.id, i, it) }, tamano = 20.dp, descripcion = stringResource(R.string.nota_de, c.titulo))
+                    Spacer(Modifier.weight(1f))
+                    androidx.compose.material3.TextButton({ vm.resenaCancion(o.id, i) }) {
+                        Text(stringResource(if (resena?.texto.isNullOrBlank()) R.string.resena_escribir_algo else R.string.editar),
+                            style = MaterialTheme.typography.labelLarge, color = f.texto)
+                    }
+                }
                 if (!resena?.texto.isNullOrBlank()) Text(resena.texto, style = MaterialTheme.typography.bodySmall,
-                    color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                BotonSecundario(stringResource(if (resena?.texto.isNullOrBlank()) R.string.resena_escribir_algo else R.string.editar),
-                    { vm.resenaCancion(o.id, i) }, Modifier.fillMaxWidth())
-                ElegirVisibilidad(resena?.visibilidad ?: io.github.fogonapps.cajon.datos.Visibilidad.PRIVADA) {
-                    vm.visibilidadResenaCancion(o.id, i, it)
+                    color = f.texto, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 28.dp))
+                if (resena != null) Box(Modifier.padding(start = 28.dp)) {
+                    ElegirVisibilidad(resena.visibilidad) { vm.visibilidadResenaCancion(o.id, i, it) }
                 }
             }
         }
@@ -761,7 +819,7 @@ fun Registrar(vm: CajonViewModel, e: Estado, p: Pantalla.Registrar) {
         BotonFecha(fecha, vm.idioma(), { fecha = it }, vm.hoy())
         Text(stringResource(R.string.tu_resena), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(nota, { nota = it }, descripcion = stringResource(R.string.tu_nota))
-        Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             FilaInterruptorCajon(stringResource(if (o.tipo == Tipos.JUEGO) R.string.otra_vez_pregunta_juego else R.string.otra_vez_pregunta), otraVez) { otraVez = it }
         }
         OutlinedTextField(texto, { texto = io.github.fogonapps.cajon.datos.Logica.recortarSinPartir(it, 5000) }, Modifier.fillMaxWidth(), minLines = 3,
@@ -860,5 +918,135 @@ private fun SobreImagen(vm: CajonViewModel, id: String, url: String, fuenteObra:
         }
         Text(texto, color = f.texto)
         if (i.fuente != "local") BotonSecundario(stringResource(R.string.imagen_fuente), { uri.openUri(Imagenes.enlace(i, fuenteObra)) })
+    }
+}
+
+/** Una acción de la ficha: un círculo con su ícono y el nombre debajo; la principal (anotar), en tinta llena. */
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.AccionFicha(icono: io.github.fogonapps.identidad.Dibujo, texto: String, principal: Boolean = false, onClick: () -> Unit) {
+    val f = FogonTema.actual
+    // Cada acción toma su parte del ancho (no 84 dp fijos): en pantalla angosta «Anotar cuándo lo vi» salía «…lo…».
+    Column(Modifier.weight(1f).clip(forma(16.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.size(54.dp).clip(androidx.compose.foundation.shape.CircleShape)
+            .then(if (principal) Modifier.background(f.tinta1) else Modifier.border(1.dp, f.texto.copy(alpha = 0.14f), androidx.compose.foundation.shape.CircleShape)),
+            contentAlignment = Alignment.Center) {
+            IconoRiso(icono, null, tamano = 24.dp, tinta = if (principal) f.sobreTinta1 else f.texto)
+        }
+        // Dos líneas si caben con la letra mínima (10 sp); si no («Anotar cuándo lo escuché» en pantalla angosta), tres.
+        // Así «vi» y «leí» no quedan solos en una tercera línea.
+        val estilo = MaterialTheme.typography.labelMedium
+        val medidor = androidx.compose.ui.text.rememberTextMeasurer()
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+            val ancho = constraints.maxWidth
+            val lineas = remember(texto, ancho, estilo) {
+                if (medidor.measure(texto, estilo.copy(fontSize = 10.sp), constraints = androidx.compose.ui.unit.Constraints(maxWidth = ancho.coerceAtLeast(1))).lineCount <= 2) 2 else 3
+            }
+            Text(texto, style = estilo, color = f.texto, textAlign = TextAlign.Center, maxLines = lineas, overflow = TextOverflow.Ellipsis,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = estilo.fontSize))
+        }
+    }
+}
+
+/** El estado de la obra en una sola fila de segmentos iguales: el elegido en tinta llena. */
+@Composable
+private fun SegmentosEstado(opciones: List<Pair<String, String>>, elegido: String, onElegir: (String) -> Unit) {
+    val f = FogonTema.actual
+    // Todas con la misma letra: la que necesita la más larga para caber en una línea. Antes cada una se achicaba sola
+    // y «Abandonado» quedaba mucho más chica que «Por ver», «Viendo» y «Visto».
+    val estiloBase = MaterialTheme.typography.labelLarge
+    val medidor = androidx.compose.ui.text.rememberTextMeasurer()
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    val anchoTexto = (maxWidth - 8.dp - 4.dp * (opciones.size - 1)) / opciones.size.coerceAtLeast(1) - 8.dp
+    // Si en una línea la letra tendría que bajar de 11 sp («Por escuchar» en pantalla angosta), pasan a dos líneas
+    // partiendo solo entre palabras, todas con la misma letra.
+    val (tamano, lineas) = remember(opciones, anchoTexto, estiloBase, densidad) {
+        fun ancho(texto: String, t: Float) = with(densidad) { medidor.measure(texto, estiloBase.copy(fontSize = t.sp), maxLines = 1, softWrap = false).size.width.toDp() }
+        var t = estiloBase.fontSize.value
+        while (t > 11f && opciones.any { ancho(it.second, t) > anchoTexto }) t -= 0.5f
+        if (opciones.none { ancho(it.second, t) > anchoTexto }) t.sp to 1
+        else {
+            var d = estiloBase.fontSize.value
+            fun cabeEnDos(texto: String): Boolean = texto.split(' ').all { ancho(it, d) <= anchoTexto } &&
+                medidor.measure(texto, estiloBase.copy(fontSize = d.sp), constraints = androidx.compose.ui.unit.Constraints(maxWidth = with(densidad) { anchoTexto.roundToPx().coerceAtLeast(1) })).lineCount <= 2
+            while (d > 9f && !opciones.all { cabeEnDos(it.second) }) d -= 0.5f
+            d.sp to 2
+        }
+    }
+    Row(Modifier.fillMaxWidth().clip(forma(24.dp))
+        .background(androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.06f)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        opciones.forEach { (v, t) ->
+            val si = v == elegido
+            Box(Modifier.weight(1f).heightIn(min = 48.dp).clip(forma(20.dp)).background(if (si) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent)
+                .selectable(si, role = androidx.compose.ui.semantics.Role.RadioButton) { onElegir(v) }.padding(horizontal = 4.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center) {
+                // Una sola línea que se achica si no cabe («Abandonado» con letra grande no se parte a la mitad).
+                androidx.compose.foundation.text.BasicText(t, style = estiloBase.copy(fontSize = tamano, color = if (si) f.sobreTinta1 else f.texto, textAlign = TextAlign.Center),
+                    maxLines = lineas, softWrap = lineas > 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+    }
+}
+
+/**
+ * Registrar en dos toques: al mantener apretada una portada (Lo tuyo, Inicio) se abre esta hoja breve, con las
+ * estrellas (se tocan o se arrastra el dedo, de media en media), «Terminé hoy», «Otra vez» y «Me gusta», y se guarda
+ * con un toque. Las reglas son las de la ficha y el diario ([CajonViewModel.registroRapido]); «Más detalles» abre el
+ * registro completo. [onElegirVarias]: en el cajón, lo que antes hacía el dedo apretado (elegir varias).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegistroRapido(vm: CajonViewModel, o: Obra, onElegirVarias: (() -> Unit)? = null, onCerrar: () -> Unit) {
+    val f = FogonTema.actual
+    var nota by rememberSaveable(o.id) { mutableIntStateOf(o.nota) }
+    var hoy by rememberSaveable(o.id) { mutableStateOf(o.estado != Estados.TERMINADO) }
+    var otraVez by rememberSaveable(o.id) { mutableStateOf(o.registros.isNotEmpty()) }
+    var gusta by rememberSaveable(o.id) { mutableStateOf(o.meGusta) }
+    ModalBottomSheet(onCerrar, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = f.fondo, contentColor = f.texto) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Portada(o.portada, o.tipo, o.titulo, Modifier.width(52.dp), esquina = 6.dp, conTitulo = false)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(o.titulo, fontFamily = f.titulos, fontSize = 20.sp, lineHeight = 24.sp, color = f.texto, maxLines = 2,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.semantics { heading() })
+                    Text(listOfNotNull(nombreTipo(o.tipo, plural = false), o.anio?.toString()).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                }
+            }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                ElegirEstrellas(nota, { nota = it }, tamano = 44.dp, descripcion = stringResource(R.string.tu_nota), arrastrar = true)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OpcionRapida(Iconos.Chulo, stringResource(R.string.rapido_termine_hoy), hoy, Modifier.weight(1f)) { hoy = it }
+                OpcionRapida(Iconos.Repetir, stringResource(R.string.otra_vez), otraVez && hoy, Modifier.weight(1f), habilitada = hoy) { otraVez = it }
+                OpcionRapida(Iconos.Corazon, stringResource(R.string.me_gusta), gusta, Modifier.weight(1f)) { gusta = it }
+            }
+            BotonRiso(stringResource(R.string.guardar), { vm.registroRapido(o.id, nota, hoy, otraVez && hoy, gusta); onCerrar() }, Modifier.fillMaxWidth())
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BotonSecundario(stringResource(R.string.rapido_mas_detalles), { onCerrar(); vm.abrir(Pantalla.Registrar(o.id)) }, Modifier.weight(1f))
+                if (onElegirVarias != null) BotonSecundario(stringResource(R.string.rapido_elegir_varias), { onCerrar(); onElegirVarias() }, Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Una opción de [RegistroRapido] que se prende y se apaga: el ícono sobre su nombre, llena en tinta si está prendida. */
+@Composable
+private fun OpcionRapida(icono: io.github.fogonapps.identidad.Dibujo, texto: String, prendida: Boolean, modifier: Modifier = Modifier,
+    habilitada: Boolean = true, onCambio: (Boolean) -> Unit) {
+    val f = FogonTema.actual
+    val forma = io.github.fogonapps.identidad.forma(14.dp)
+    Column(modifier.graphicsLayer { alpha = if (habilitada) 1f else 0.4f }.heightIn(min = 72.dp).clip(forma)
+        .then(if (prendida) Modifier.background(f.pildora) else Modifier.border(1.dp, f.texto.copy(alpha = 0.25f), forma))
+        .toggleable(prendida, enabled = habilitada, role = Role.Checkbox, onValueChange = onCambio)
+        .padding(horizontal = 6.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)) {
+        val tinta = if (prendida) f.sobrePildora else f.texto
+        IconoRiso(icono, null, tamano = 22.dp, tinta = tinta, relleno = if (prendida && icono == Iconos.Corazon) tinta else null)
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = tinta, maxLines = 2, textAlign = TextAlign.Center,
+            overflow = TextOverflow.Ellipsis)
     }
 }

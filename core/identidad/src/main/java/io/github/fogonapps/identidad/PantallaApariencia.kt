@@ -194,7 +194,7 @@ fun PasoDaleVida(paleta: Paleta, almacen: AlmacenApariencia, modifier: Modifier 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(stringResource(R.string.fogon_dale_vida), style = MaterialTheme.typography.headlineMedium, color = f.texto,
             modifier = Modifier.padding(horizontal = 20.dp).semantics { heading() })
-        Text(stringResource(R.string.fogon_dale_vida_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,
+        Text(stringResource(if (Trama.apagada) R.string.fogon_dale_vida_texto_blanco else R.string.fogon_dale_vida_texto), style = MaterialTheme.typography.bodyLarge, color = f.textoSuave,
             modifier = Modifier.padding(horizontal = 20.dp))
         SelectorEstilos(paleta, almacen)
         TextButton({ mas = !mas }, Modifier.padding(horizontal = 8.dp)) {

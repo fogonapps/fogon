@@ -36,7 +36,9 @@ internal fun sembrarSocialLocal(carpeta: File): String {
             cambiar("UPDATE cuentas SET acepto=?, acepto_cuando=? WHERE id=?", Social.POLITICA, ahora, yo)
             if (leer("SELECT 1 FROM chispas WHERE cuenta=? AND motivo='semilla_local'", yo) { 1 }.isEmpty())
                 cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,50000,'semilla_local',?)", yo, ahora)
-            vecinos.forEach { cambiar("INSERT OR IGNORE INTO seguir(de,a,cuando,aceptada) VALUES(?,?,?,1)", yo, it, ahora) }
+            // Sin volver a seguir a quien se bloqueó en una corrida anterior.
+            vecinos.forEach { cambiar("""INSERT OR IGNORE INTO seguir(de,a,cuando,aceptada) SELECT ?,?,?,1
+                WHERE NOT EXISTS(SELECT 1 FROM bloqueos WHERE (de=? AND a=?) OR (de=? AND a=?))""", yo, it, ahora, yo, it, it, yo) }
         }
         social.subirPerfil(yo, PerfilSubido(nombre = "Cuenta ficticia de prueba", partes = mapOf("insignias" to Parte(Vis.PUBLICA,
             JsonArray(listOf("series", "anime", "lector").map(::JsonPrimitive))))))

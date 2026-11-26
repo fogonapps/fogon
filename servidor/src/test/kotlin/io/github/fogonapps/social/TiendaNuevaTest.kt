@@ -10,7 +10,10 @@ class TiendaNuevaTest {
         val b = Base(File(dir, "social.db").path)
         var reloj = 2_000_000_000_000L
         val s = Social(b, File(dir, "fotos"), { reloj })
-        fun alta(nombre: String) = s.cuentaDe(s.crearCuenta(NuevaCuenta(nombre)).token)!!
+        /** Con 1.000 de prueba además de la bienvenida (las cuentas de estas pruebas arrancan con 1.500). */
+        fun alta(nombre: String) = s.cuentaDe(s.crearCuenta(NuevaCuenta(nombre)).token)!!.also { c ->
+            s.chispas(c); b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,?,'prueba',1)", c, 1500 - TemasPerfil.BIENVENIDA) }
+        }
         override fun close() { b.cerrar(); dir.deleteRecursively() }
     }
 
@@ -44,7 +47,7 @@ class TiendaNuevaTest {
         assertFalse(e.s.temas(yo).diario)
     }
 
-    @Test fun portadaPropiaCompraAutorAccesoYLimpieza() = Entorno().use { e ->
+    @Test fun portadaPropiaCompraAutorAccesoYLimpieza(): Unit = Entorno().use { e ->
         val yo = e.alta("anabel"); val otra = e.alta("beatriz")
         fun foto(cuenta: Long): String {
             val imagen = java.awt.image.BufferedImage(34, 10, java.awt.image.BufferedImage.TYPE_INT_RGB)
@@ -56,8 +59,9 @@ class TiendaNuevaTest {
         assertEquals("", e.s.verPerfil(yo, "anabel").portada)
         assertFailsWith<Problema> { e.s.imagen(sinCompra, yo) }
         e.b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,10000,'prueba',?)", yo, e.reloj) }
+        val antes = e.s.chispas(yo)
         e.s.reclamarTema(yo, "portada:propia")
-        assertEquals(1500, e.s.chispas(yo))
+        assertEquals(antes - TemasPerfil.precio("portada:propia")!!, e.s.chispas(yo))
         val propia = foto(yo)
         e.s.subirPerfil(yo, PerfilSubido(portada = propia))
         assertEquals(propia, e.s.verPerfil(otra, "anabel").portada)
@@ -77,7 +81,7 @@ class TiendaNuevaTest {
         assertFailsWith<Problema> { e.s.imagen(propia, yo) }
     }
 
-    @Test fun equiparRechazaYLimpiaYConservaFotosEnUso() = Entorno().use { e ->
+    @Test fun equiparRechazaYLimpiaYConservaFotosEnUso(): Unit = Entorno().use { e ->
         val yo = e.alta("anabel")
         fun foto(): String {
             val imagen = java.awt.image.BufferedImage(34, 10, java.awt.image.BufferedImage.TYPE_INT_RGB)

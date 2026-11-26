@@ -97,7 +97,7 @@ class Igdb(
 
     val lista get() = !clienteId.isNullOrBlank() && !secreto.isNullOrBlank()
 
-    private val guardadas = CacheTemporal(SEIS_HORAS, MAX_ENTRADAS, MAX_CACHE, ahora)
+    private val guardadas = CacheTemporal.respuestas(SEIS_HORAS, MAX_ENTRADAS, MAX_CACHE, ahora)
     private val fila = Any()
     private var proximo = 0L
     private val abiertos = Semaphore(8)

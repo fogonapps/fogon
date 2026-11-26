@@ -7,7 +7,7 @@ class CacheTemporalTest {
 
     @Test fun topeDeEntradas() {
         var reloj = 0L
-        val c = CacheTemporal(1000, 3, 1_000_000, { reloj })
+        val c = CacheTemporal.respuestas(1000, 3, 1_000_000, { reloj })
         listOf("a", "b", "c", "d").forEach { reloj++; c.guardar(it, r) }
         assertEquals(3, c.cantidad)
         // Se fue la más vieja.
@@ -16,7 +16,7 @@ class CacheTemporalTest {
     }
 
     @Test fun cuentaLlaveYCuerpo() {
-        val c = CacheTemporal(1000, 1000, 2_000, { 0L })
+        val c = CacheTemporal.respuestas(1000, 1000, 2_000, { 0L })
         // Búsquedas vacías con llaves grandes: antes no pesaban nada y crecían sin límite.
         repeat(100) { c.guardar("games|search \"${"x".repeat(500)}$it\";", r) }
         assertTrue(c.caracteres <= 2_000, "${c.caracteres}")
@@ -30,7 +30,7 @@ class CacheTemporalTest {
 
     @Test fun loVencidoSeBorra() {
         var reloj = 0L
-        val c = CacheTemporal(1000, 100, 1_000_000, { reloj })
+        val c = CacheTemporal.respuestas(1000, 100, 1_000_000, { reloj })
         c.guardar("zelda", r)
         reloj = 500
         c.guardar("mario", r)
@@ -47,7 +47,7 @@ class CacheTemporalTest {
 
     @Test fun guardarOtraVezNoDuplica() {
         var reloj = 0L
-        val c = CacheTemporal(1000, 100, 1_000_000, { reloj })
+        val c = CacheTemporal.respuestas(1000, 100, 1_000_000, { reloj })
         c.guardar("a", r)
         reloj = 900
         c.guardar("a", Cine.Respuesta(200, "[1]"))

@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import io.github.fogonapps.identidad.forma
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,11 +35,29 @@ import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.Estados
 import io.github.fogonapps.cajon.datos.Lista
 import io.github.fogonapps.cajon.datos.Obra
-import io.github.fogonapps.identidad.BotonRiso
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import io.github.fogonapps.identidad.BotonSecundario
+import io.github.fogonapps.identidad.Dibujo
 import io.github.fogonapps.identidad.FogonTema
+import io.github.fogonapps.identidad.FormaPildora
 import io.github.fogonapps.identidad.IconoRiso
 import io.github.fogonapps.identidad.aparecer
+import io.github.fogonapps.identidad.rebote
 
 /** Las obras de una lista, en su orden (sin las que se borraron). */
 fun obrasDe(e: Estado, l: Lista): List<Obra> = l.obras.mapNotNull { id -> e.vivas.firstOrNull { it.id == id } }
@@ -50,7 +70,7 @@ fun Listas(vm: CajonViewModel, e: Estado) {
     }
     // Con cuenta: las listas en común con amigos.
     if (vm.red.usuario.collectAsState().value != null) FilaVidrio({ vm.abrir(Pantalla.ListasComunes) }) {
-        Ficha(f.tinta2, Iconos.Gente)
+        IconoFila(Iconos.Gente)
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.listas_comunes), style = MaterialTheme.typography.bodyLarge, color = f.texto)
             Text(stringResource(R.string.listas_comunes_corta), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
@@ -58,17 +78,15 @@ fun Listas(vm: CajonViewModel, e: Estado) {
         IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
     }
     val listas = e.listasVivas.sortedByDescending { it.cambio }
-    if (listas.isEmpty()) Pista(stringResource(R.string.listas_vacio))
+    if (listas.isEmpty()) VacioListas { vm.abrir(Pantalla.EditarLista(null)) }
     listas.forEachIndexed { i, l ->
         val obras = obrasDe(e, l)
         FilaVidrio({ vm.abrir(Pantalla.VerLista(l.id)) }, Modifier.aparecer(i)) {
-            // Tres portadas montadas: la elegida como portada de la lista primero.
-            Row(horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
-                obras.sortedByDescending { it.id == l.portada }.take(3).forEach { Portada(it.portada, it.tipo, it.titulo, Modifier.width(40.dp), esquina = 6.dp, conTitulo = false) }
-                if (obras.isEmpty()) Ficha(f.tinta1, Iconos.Lista)
-            }
-            Column(Modifier.weight(1f).padding(start = 8.dp)) {
-                Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // Una pila de tres portadas, la elegida como portada de la lista delante.
+            PilaPortadas(obras.sortedByDescending { it.id == l.portada }.take(3))
+            Column(Modifier.weight(1f).padding(start = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(l.nombre, fontFamily = f.titulos, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 22.sp, color = f.texto,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(pluralStringResource(R.plurals.obras_n, obras.size, obras.size), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
             }
             IconoRiso(Iconos.Siguiente, null, tamano = 18.dp, tinta = f.textoSuave)
@@ -79,14 +97,14 @@ fun Listas(vm: CajonViewModel, e: Estado) {
     Seccion(stringResource(R.string.listas_automaticas))
     val gustadas = e.vivas.filter { it.meGusta }
     FilaVidrio {
-        Ficha(f.tinta1, Iconos.Corazon)
+        IconoFila(Iconos.Corazon)
         Text(stringResource(R.string.lo_que_me_gusto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-        Text("${gustadas.size}", fontFamily = f.cifras, color = f.textoSuave)
+        Text("${gustadas.size}", style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
     }
     FilaVidrio({ vm.abrir(Pantalla.Diario) }) {
-        Ficha(f.tinta2, Iconos.Diario)
+        IconoFila(Iconos.Diario)
         Text(stringResource(R.string.tu_diario), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-        Text("${e.vivas.sumOf { it.registros.size }}", fontFamily = f.cifras, color = f.textoSuave)
+        Text("${e.vivas.sumOf { it.registros.size }}", style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
     }
     if (gustadas.isNotEmpty()) {
         Seccion(stringResource(R.string.lo_que_me_gusto))
@@ -95,6 +113,50 @@ fun Listas(vm: CajonViewModel, e: Estado) {
     val pendientes = e.vivas.count { it.estado == Estados.QUIERO }
     if (pendientes > 0) Pista(pluralStringResource(R.plurals.pendientes_n, pendientes, pendientes), Modifier.padding(top = 12.dp))
 }
+
+/** El ícono de una fila, en tinta y sin círculo, en el mismo ancho que una portada chica para que los textos alineen. */
+@Composable
+private fun IconoFila(icono: Dibujo, tinta: androidx.compose.ui.graphics.Color = FogonTema.actual.texto) {
+    Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) { IconoRiso(icono, null, tamano = 22.dp, tinta = tinta) }
+}
+
+/**
+ * Una lista en su fila: hasta tres portadas apiladas, la primera delante y las otras asomando detrás (como en el
+ * Inicio, más chicas). Sin obras, el hueco de una portada con el ícono de lista.
+ */
+@Composable
+private fun PilaPortadas(obras: List<Obra>) {
+    val f = FogonTema.actual
+    Box(Modifier.width(68.dp).height(74.dp)) {
+        obras.reversed().forEachIndexed { i, o ->
+            val atras = obras.size - 1 - i
+            Portada(o.portada, o.tipo, o.titulo, Modifier.width(44.dp).align(Alignment.BottomStart).offset(x = (12 * atras).dp, y = (-4 * atras).dp)
+                .graphicsLayer { alpha = 1f - 0.2f * atras }.shadow(if (atras == 0) 4.dp else 1.dp, forma(6.dp), clip = false), esquina = 6.dp, conTitulo = false)
+        }
+        if (obras.isEmpty()) Box(Modifier.size(44.dp, 66.dp).align(Alignment.BottomStart).clip(forma(6.dp)).background(f.superficie), contentAlignment = Alignment.Center) {
+            IconoRiso(Iconos.Lista, null, tamano = 20.dp, tinta = f.textoSuave)
+        }
+    }
+}
+
+/** Sin listas todavía: el ícono, dos líneas y el botón para armar la primera. Sin tarjeta. */
+@Composable
+private fun VacioListas(nueva: () -> Unit) {
+    val f = FogonTema.actual
+    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        IconoRiso(Iconos.Lista, null, tamano = 40.dp, tinta = f.texto)
+        Text(stringResource(R.string.listas_vacio_titulo), fontFamily = f.titulos, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = f.texto,
+            textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp).semantics { heading() })
+        Text(stringResource(R.string.listas_vacio_texto), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, textAlign = TextAlign.Center)
+        BotonTinta(stringResource(R.string.nueva_lista), nueva, Modifier.padding(top = 8.dp))
+    }
+}
+
+/** El botón principal del diseño limpio: una píldora en la tinta del texto con la letra del papel. */
+@Composable
+internal fun BotonTinta(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true) =
+    io.github.fogonapps.identidad.BotonRiso(texto, onClick, modifier, habilitado)
 
 @Composable
 fun VerLista(vm: CajonViewModel, e: Estado, id: String) {
@@ -120,7 +182,7 @@ fun VerLista(vm: CajonViewModel, e: Estado, id: String) {
     if (ordenando) {
         obras.forEachIndexed { i, o ->
             FilaVidrio {
-                Text("${i + 1}", fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(24.dp))
+                Text("${i + 1}", fontFamily = f.titulos, fontWeight = FontWeight.SemiBold, color = f.textoSuave, modifier = Modifier.width(24.dp))
                 Portada(o.portada, o.tipo, o.titulo, Modifier.width(36.dp), esquina = 6.dp, conTitulo = false)
                 Text(o.titulo, style = MaterialTheme.typography.bodyMedium, color = f.texto, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 BotonIcono(Iconos.Arriba, stringResource(R.string.subir), activo = i > 0) { vm.moverEnLista(l.id, l.obras.indexOf(o.id), l.obras.indexOf(o.id) - 1) }
@@ -142,11 +204,11 @@ fun EditarLista(vm: CajonViewModel, e: Estado, id: String?) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         CampoTexto(nombre, { nombre = it }, stringResource(R.string.nombre), max = 60)
         OutlinedTextField(descripcion, { descripcion = it.take(500) }, Modifier.fillMaxWidth(), minLines = 2, label = { Text(stringResource(R.string.descripcion)) })
-        Row(Modifier.fillMaxWidth().vidrio().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             FilaInterruptorCajon(stringResource(R.string.numerada), numerada, stringResource(R.string.numerada_pista)) { numerada = it }
         }
         if (l != null) {
-            Column(Modifier.fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.quien_ve_lista), style = MaterialTheme.typography.bodyLarge, color = f.texto)
                 ElegirVisibilidad(l.visibilidad) { vm.visibilidadLista(l.id, it) }
             }
@@ -158,7 +220,7 @@ fun EditarLista(vm: CajonViewModel, e: Estado, id: String?) {
                         val o = obras[i]
                         val elegida = o.id == l.portada || (l.portada.isEmpty() && i == 0)
                         androidx.compose.foundation.layout.Box(Modifier.width(72.dp).clip(forma(8.dp))
-                            .border(if (elegida) 3.dp else 0.dp, if (elegida) f.tinta1 else androidx.compose.ui.graphics.Color.Transparent, forma(8.dp))
+                            .border(if (elegida) 3.dp else 0.dp, if (elegida) f.texto else androidx.compose.ui.graphics.Color.Transparent, forma(8.dp))
                             .clickable { vm.portadaLista(l.id, o.id) }) {
                             Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 8.dp, conTitulo = false)
                         }
@@ -166,7 +228,7 @@ fun EditarLista(vm: CajonViewModel, e: Estado, id: String?) {
                 }
             }
         }
-        BotonRiso(stringResource(R.string.guardar), { vm.guardarLista(l?.id, nombre, descripcion, numerada) }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank())
+        BotonTinta(stringResource(R.string.guardar), { vm.guardarLista(l?.id, nombre, descripcion, numerada) }, Modifier.fillMaxWidth(), habilitado = nombre.isNotBlank())
         if (l != null) BotonSecundario(stringResource(R.string.borrar_lista), {
             confirmar(vm.tx(R.string.borrar_lista_pregunta, l.nombre), vm.tx(R.string.borrar_lista_texto)) { vm.borrarLista(l.id) }
         }, Modifier.fillMaxWidth(), peligro = true)
@@ -185,9 +247,9 @@ fun AgregarALista(vm: CajonViewModel, e: Estado, obra: String) {
     listas.forEach { l ->
         val esta = obra in l.obras
         FilaVidrio({ vm.alternarEnLista(l.id, obra) }) {
-            Ficha(if (esta) f.tinta1 else f.linea, if (esta) Iconos.Chulo else Iconos.Lista)
-            Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
-            Text("${l.obras.size}", fontFamily = f.cifras, color = f.textoSuave)
+            IconoFila(if (esta) Iconos.Chulo else Iconos.Lista, if (esta) f.texto else f.textoSuave)
+            Text(l.nombre, style = MaterialTheme.typography.bodyLarge, color = f.texto, fontWeight = if (esta) FontWeight.SemiBold else null, modifier = Modifier.weight(1f))
+            Text("${l.obras.size}", style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         }
     }
     Column(Modifier.padding(16.dp)) {
@@ -196,21 +258,73 @@ fun AgregarALista(vm: CajonViewModel, e: Estado, obra: String) {
     if (o != null) ListasComunesParaAgregar(vm, o)
 }
 
-/** Todo el diario, por meses. */
+/**
+ * Todo el diario, por meses: el mes en la letra de los títulos y debajo sus registros, en una cuadrícula de portadas
+ * con la nota de esa vez debajo (como viene) o en filas planas. Cómo se ve se recuerda en el teléfono.
+ */
 @Composable
 fun Diario(vm: CajonViewModel, e: Estado) {
     val f = FogonTema.actual
     val idioma = vm.idioma()
     Cabecera(stringResource(R.string.tu_diario), vm::cerrar)
     val entradas = vm.L.diario(e)
-    if (entradas.isEmpty()) { Pista(stringResource(R.string.diario_vacio)); return }
+    if (entradas.isEmpty()) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconoRiso(Iconos.Diario, null, tamano = 40.dp, tinta = f.texto)
+            Text(stringResource(R.string.diario_vacio), style = MaterialTheme.typography.bodyMedium, color = f.textoSuave, textAlign = TextAlign.Center)
+        }
+        return
+    }
+    var cuadricula by rememberSaveable { mutableStateOf(vm.diarioEnCuadricula) }
+    Selector(listOf(true to stringResource(R.string.diario_cuadricula), false to stringResource(R.string.diario_lista)), cuadricula,
+        { cuadricula = it; vm.diarioEnCuadricula = it }, Modifier.padding(horizontal = 20.dp))
     entradas.groupBy { it.registro.fecha.take(7) }.forEach { (mes, lista) ->
-        Seccion(runCatching {
+        val titulo = runCatching {
             java.time.YearMonth.parse(mes).format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale.forLanguageTag(idioma))).replaceFirstChar { it.uppercase() }
-        }.getOrDefault(mes))
-        lista.forEach { d ->
+        }.getOrDefault(mes)
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 4.dp), verticalAlignment = Alignment.Bottom) {
+            Text(titulo, fontFamily = f.titulos, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, color = f.texto,
+                modifier = Modifier.weight(1f).semantics { heading() })
+            Text("${lista.size}", style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
+        }
+        if (cuadricula) CuadriculaDiario(vm, lista)
+        else lista.forEach { d ->
             EntradaDiario(d.obra, d.registro,
                 { vm.abrir(Pantalla.Ficha(d.obra.id)) }, { vm.escribirResena(d.obra.id, d.registro.id) })
+        }
+    }
+}
+
+/**
+ * Un mes del diario en portadas, de a cuatro: debajo de cada una, la nota de esa vez (y si fue otra vez o te gustó).
+ * Tocar abre la ficha; mantener apretado, la reseña de ese registro.
+ */
+@Composable
+private fun CuadriculaDiario(vm: CajonViewModel, lista: List<io.github.fogonapps.cajon.datos.EntradaDiario>) {
+    val f = FogonTema.actual
+    val idioma = LocalConfiguration.current.locales[0].language
+    val escribir = stringResource(R.string.resena_escribir)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        lista.chunked(4).forEach { fila ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                fila.forEach { d ->
+                    val fecha = fechaCorta(d.registro.fecha, idioma)
+                    Column(Modifier.weight(1f).clip(forma(8.dp))
+                        .combinedClickable(onLongClickLabel = escribir, onLongClick = { vm.escribirResena(d.obra.id, d.registro.id) }) {
+                            vm.abrir(Pantalla.Ficha(d.obra.id))
+                        }.semantics { stateDescription = fecha },
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Portada(d.obra.portada, d.obra.tipo, d.obra.titulo, Modifier.fillMaxWidth(), esquina = 6.dp, conTitulo = false)
+                        Row(Modifier.heightIn(min = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Estrellas(d.registro.nota, 11.sp)
+                            if (d.registro.otraVez) IconoRiso(Iconos.Repetir, stringResource(R.string.otra_vez), tamano = 11.dp, tinta = f.textoSuave)
+                            if (d.obra.meGusta) IconoRiso(Iconos.Corazon, stringResource(R.string.me_gusta), tamano = 11.dp, tinta = f.texto, relleno = f.texto)
+                        }
+                    }
+                }
+                repeat(4 - fila.size) { androidx.compose.foundation.layout.Spacer(Modifier.weight(1f)) }
+            }
         }
     }
 }
@@ -219,18 +333,18 @@ fun Diario(vm: CajonViewModel, e: Estado) {
 @Composable
 fun EntradaDiario(o: Obra, registro: io.github.fogonapps.cajon.datos.Registro, abrir: (() -> Unit)? = null, escribir: (() -> Unit)? = null) {
     val f = FogonTema.actual
+    val idioma = LocalConfiguration.current.locales[0].language
     FilaVidrio(abrir) {
-        Text(registro.fecha.takeLast(2), fontFamily = f.cifras, color = f.textoSuave, modifier = Modifier.width(26.dp))
-        Portada(o.portada, o.tipo, o.titulo, Modifier.width(38.dp), esquina = 6.dp, conTitulo = false)
-        Column(Modifier.weight(1f)) {
-            Text(o.titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(nombreTipo(o.tipo, plural = false), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
-                Estrellas(registro.nota)
+        Portada(o.portada, o.tipo, o.titulo, Modifier.width(40.dp), esquina = 5.dp, conTitulo = false)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(o.titulo, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(fechaCorta(registro.fecha, idioma), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+                Estrellas(registro.nota, 12.sp)
                 if (registro.otraVez) IconoRiso(Iconos.Repetir, stringResource(R.string.otra_vez), tamano = 14.dp, tinta = f.textoSuave)
             }
         }
+        if (o.meGusta) IconoRiso(Iconos.Corazon, stringResource(R.string.me_gusta), tamano = 18.dp, tinta = f.texto, relleno = f.texto)
         if (escribir != null) BotonIcono(Iconos.Lapiz, stringResource(R.string.resena_escribir), onClick = escribir)
-        if (o.meGusta) IconoRiso(Iconos.Corazon, null, tamano = 16.dp, tinta = f.acentoTexto, relleno = f.acentoTexto)
     }
 }

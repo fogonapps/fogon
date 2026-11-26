@@ -89,16 +89,21 @@ data class Paleta(
             nombreTema = R.string.fogon_tema_cocina,
         )
 
-        /** Vinilo: violeta de disco con amarillo de cajón sobre casi negro violeta (El Cajón). */
+        /**
+         * Fabs (antes El Cajón; rebranding 2026-11): el amarillo de su estrella como acento, el violeta como segunda
+         * tinta, sobre el casi negro violeta de su ícono.
+         */
         val Cajon = Paleta(
-            tinta = Color(0xFF8A63FF),
+            // Monocromo: diseño limpio, las personas y las cosas son las que le dan el estilo:
+            // papel casi blanco y tinta casi negra; el único color es el de las portadas, que tiñe el fondo de arriba.
+            tinta = Color(0xFF111111),
             sobreTinta = Color(0xFFFFFFFF),
-            textoEnPapel = Color(0xFF6C39FF),
-            textoEnTinta = Color(0xFFA68BFF),
-            segunda = Color(0xFFFFC93C),
-            luz2 = Color(0xFFFFC93C),
-            fondo = Color(0xFF0E0B16),
-            brillo = Color(0xFF5B3BCC),
+            textoEnPapel = Color(0xFF111111),
+            textoEnTinta = Color(0xFFEDEDED),
+            segunda = Color(0xFF8A8A8A),
+            luz2 = Color(0xFF8A8A8A),
+            fondo = Color(0xFFF7F7F5),
+            brillo = Color(0xFFFFFFFF),
             nombreTema = R.string.fogon_tema_vinilo,
         )
     }

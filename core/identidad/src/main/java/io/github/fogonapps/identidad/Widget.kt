@@ -67,7 +67,7 @@ fun TarjetaWidget(
                 }
             }
         }
-        Box(GlanceModifier.size(76.dp), contentAlignment = Alignment.Center) {
+        if (quien !in Personajes.apagados) Box(GlanceModifier.size(76.dp), contentAlignment = Alignment.Center) {
             Image(ImageProvider(imagenPersonaje(quien)), null, GlanceModifier.size(76.dp))
         }
     }

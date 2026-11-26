@@ -55,20 +55,16 @@ class EscaparatesPantallaTest {
     @Config(qualifiers = "en-w360dp-h3000dp-xxhdpi")
     fun editorEnInglesClaro() = revisarEditor("en", Apariencia(estilo = Estilo.CLARO))
 
-    @Test fun cabeceraMuestraNivelYAbreExplicacionPropia() {
-        var abierto = false
+    // En Fabs la leña no se ve en ninguna parte: ni junto al nombre propio ni en el de otra persona.
+    @Test fun cabeceraNoMuestraLenaPropia() {
         regla.setContent {
             FogonTema(Paleta.Cajon, Apariencia()) {
                 PerfilCabecera(PerfilVista("Ana", "ana", "", "", "", emptyList(), false, "yo",
-                    nivel = 5, abrirNivel = { abierto = true }), portada = {}, foto = {})
+                    nivel = 5, abrirNivel = {}), portada = {}, foto = {})
             }
         }
-        val pildora = regla.onNodeWithContentDescription("Nivel 5").assertExists()
-        val limites = pildora.fetchSemanticsNode().boundsInRoot
-        assertTrue(limites.width >= with(regla.density) { 48.dp.toPx() })
-        assertTrue(limites.height >= with(regla.density) { 48.dp.toPx() })
-        pildora.performClick()
-        regla.runOnIdle { assertTrue(abierto) }
+        regla.onNodeWithContentDescription("Nivel 5").assertDoesNotExist()
+        regla.onNodeWithText("Nivel 5").assertDoesNotExist()
     }
 
     @Test fun nivelYBotonDeTiendaQuedanSeparadosConLetraGrande() {
@@ -109,17 +105,14 @@ class EscaparatesPantallaTest {
         regla.onNodeWithText("Nivel 0").assertDoesNotExist()
     }
 
-    @Test fun nivelAjenoAbreDetalleSinProgreso() {
+    @Test fun cabeceraNoMuestraLenaAjena() {
         regla.setContent {
             FogonTema(Paleta.Cajon, Apariencia()) {
                 PerfilCabecera(PerfilVista("Ana", "ana", "", "", "", emptyList(), false, "",
                     nivel = 5, insigniasNivel = listOf("cine")), portada = {}, foto = {})
             }
         }
-        regla.onNodeWithContentDescription("Nivel 5").performClick()
-        regla.onNodeWithText("Cómo subir").assertExists()
-        regla.onNodeWithContentDescription("cinéfilo, ganada").assertExists()
-        regla.onNodeWithText("Te falta 1 insignia para tu próxima repisa").assertDoesNotExist()
+        regla.onNodeWithContentDescription("Nivel 5").assertDoesNotExist()
     }
 
     @Test fun detallePropioUsaSingularYExplicaCupo() {
@@ -164,9 +157,9 @@ class EscaparatesPantallaTest {
         regla.runOnIdle { assertTrue(quitada) }
     }
 
-    @Test fun galeriaDeUnaFotoUsaTodoElAncho() = comprobarGaleria(1, 312.dp)
+    @Test fun galeriaDeUnaFotoUsaTodoElAncho() = comprobarGaleria(1, 320.dp)
 
-    @Test fun galeriaDeDosFotosReparteElAncho() = comprobarGaleria(2, 151.dp)
+    @Test fun galeriaDeDosFotosReparteElAncho() = comprobarGaleria(2, 155.dp)
 
     @Test fun galeriaDeTresFotosMantieneLasMiniaturas() = comprobarGaleria(3, 112.dp)
 

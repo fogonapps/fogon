@@ -47,11 +47,13 @@ fun convertirRegistro(texto: String): RegistroEquipo {
         sobre["cadenaIntegra"]?.jsonPrimitive?.booleanOrNull ?: true, sobre["siguiente"]?.jsonPrimitive?.longOrNull)
 }
 fun puedeRestaurar(estado: String, permisos: Set<String>) = estado == "retirado" && "gestionar_publicaciones" in permisos
+/** Material sexual con menores o un menor en riesgo: va primero, se denuncia y, si se confirma, queda preservado. */
+val MOTIVOS_GRAVES = setOf("masi", "menor_en_riesgo")
 fun necesitaElevar(mfa: Boolean, elevadaHasta: Long, ahora: Long) = !mfa || elevadaHasta <= ahora
 fun accionesModeracion(permisos: Set<String>, regla: String = "", faltas: Int = 0): Set<String> = buildSet {
     if ("sancionar" in permisos) {
         add("sin_falta")
-        val cierreDirecto = regla in setOf("menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
+        val cierreDirecto = regla in setOf("masi", "menor_en_riesgo", "menor_de_edad", "evadir_sancion", "amenaza_real")
         if ((!cierreDirecto && faltas + 1 < 4) || "cerrar_cuentas" in permisos) add("falta")
         if ("sancion_grave" in permisos && ((!cierreDirecto && faltas + 2 < 4) || "cerrar_cuentas" in permisos)) add("falta_grave")
         if ("cerrar_cuentas" in permisos) add("cerrar")

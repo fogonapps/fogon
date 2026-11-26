@@ -6,7 +6,7 @@
   <string name="abonar_texto">La plata sale de una cuenta y queda guardada para esta meta.</string>
   <string name="abone">Pagué una parte</string>
   <string name="abonos">Abonos</string>
-  <string name="acerca_de">Acerca de La Alcancía</string>
+  <string name="acerca_de">Acerca de Pezi</string>
   <string name="acerca_de_corto">Acerca de</string>
   <string name="activo">Activo</string>
   <string name="agregar_fijo">Agregar pago fijo</string>
@@ -32,19 +32,19 @@
   <string name="aviso_meta_cumplida">¡Cumpliste la meta %1$s!</string>
   <string name="aviso_monto">Escribe cuánto</string>
   <string name="aviso_no_es_extracto">No encontré movimientos en ese archivo. Tiene que ser un CSV con fecha y valor.</string>
-  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de La Alcancía</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo de Pezi</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo</string>
   <string name="aviso_otra_cuenta">Elige a qué cuenta va</string>
   <string name="aviso_pago_linea">%1$s %2$s (%3$s)</string>
   <string name="aviso_pagos_titulo">Pagos por vencer</string>
-  <string name="aviso_plata">La Alcancía te ayuda a llevar tus cuentas; no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</string>
+  <string name="aviso_plata">Pezi te ayuda a llevar tus cuentas; no es asesoría financiera. El pago mínimo y los intereses de las tarjetas son aproximados: el valor real está en el extracto de tu banco.</string>
   <string name="aviso_plata_titulo">Aviso</string>
   <string name="aviso_reparto">Los tres tienen que sumar 100</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado</string>
   <string name="aviso_sin_sobres_antes">El mes pasado no tiene sobres</string>
   <string name="aviso_sobres_copiados">Sobres copiados</string>
   <string name="aviso_una_cuenta">Necesitas al menos una cuenta</string>
-  <string name="bloqueada">La Alcancía tiene candado</string>
+  <string name="bloqueada">Pezi tiene candado</string>
   <string name="borrar">Borrar</string>
   <string name="borrar_deuda">Borrar deuda</string>
   <string name="borrar_deuda_pregunta">¿Borrar lo de %1$s?</string>
@@ -67,7 +67,7 @@
   <string name="cancelar">Cancelar</string>
   <string name="candado">Candado</string>
   <string name="candado_pista">Pide tu huella o el bloqueo del teléfono al abrir la app.</string>
-  <string name="candado_titulo">Abrir La Alcancía</string>
+  <string name="candado_titulo">Abrir Pezi</string>
   <string name="cargando">Cargando</string>
   <string name="cat_casa">Casa</string>
   <string name="cat_cesantias">Cesantías</string>
@@ -319,7 +319,7 @@
   <string name="tut_billetera">Billetera digital</string>
   <string name="tut_deuda_tarjeta">¿Cuánto debes hoy en la tarjeta?</string>
   <string name="tut_empezar">Empezar</string>
-  <string name="tut_hola">Hola, soy La Alcancía</string>
+  <string name="tut_hola">Hola, soy Pezi</string>
   <string name="tut_hola_texto">Te ayudo a ver en qué se va tu plata y a guardar para lo que quieres. Sin anuncios y sin pedirte las claves del banco.</string>
   <string name="tut_privado">Tus movimientos se guardan en este teléfono. Si entras con tu cuenta de Fogón Social, tu cuaderno se guarda en ella cifrado con tu contraseña, y nadie más lo puede leer.</string>
   <string name="tut_saldos">¿Con cuánto empiezas?</string>
@@ -416,7 +416,7 @@
   <string name="vas_menos">Vas gastando %1$d %% menos que a esta altura de %2$s.</string>
   <string name="vas_igual">Vas gastando lo mismo que a esta altura de %1$s.</string>
     <string name="banco_titulo">Anotar desde el banco</string>
-    <string name="banco_explicacion">Android permite a este acceso ver todas tus notificaciones. La Alcancía filtra primero por app: de Mensajes solo lee textos que empiezan por «Bancolombia:», si elegiste ese banco; de Nu solo conserva lo que entiende una regla; de Nequi, Daviplata, Davivienda, Banco de Bogotá y BBVA lee su app y los SMS que los nombran, y siempre te pregunta antes de anotar. Todo lo demás se ignora y no se guarda. Solo lee alertas nuevas, no el historial de SMS. Puedes apagarlo aquí o revocar el acceso en Android.</string>
+    <string name="banco_explicacion">Android permite a este acceso ver todas tus notificaciones. Pezi filtra primero por app: de Mensajes solo lee textos que empiezan por «Bancolombia:», si elegiste ese banco; de Nu solo conserva lo que entiende una regla; de Nequi, Daviplata, Davivienda, Banco de Bogotá y BBVA lee su app y los SMS que los nombran, y siempre te pregunta antes de anotar. Todo lo demás se ignora y no se guarda. Solo lee alertas nuevas, no el historial de SMS. Puedes apagarlo aquí o revocar el acceso en Android.</string>
     <string name="banco_activar">Activar</string>
     <string name="banco_local">Las alertas se leen y se guardan solo en este teléfono.</string>
     <string name="banco_permiso">Abrir acceso a notificaciones en Android</string>
@@ -459,7 +459,7 @@
     <string name="banco_bogota">Banco de Bogotá</string>
     <string name="banco_bbva">BBVA</string>
     <string name="banco_otro">Otro</string>
-    <string name="aj_como_usas">Cómo usas La Alcancía</string>
+    <string name="aj_como_usas">Cómo usas Pezi</string>
     <string name="aj_tu_alcancia">Tu alcancía</string>
     <string name="aj_apariencia_idioma">Apariencia e idioma</string>
     <string name="aj_privacidad">Privacidad</string>
@@ -475,7 +475,7 @@
     <string name="banco_reconectar">Reconectar acceso</string>
     <string name="banco_contadores">Alertas vistas: %1$d · entendidas: %2$d · última: %3$s</string>
     <string name="banco_nunca">nunca</string>
-    <string name="banco_restringidos">Si Android no te deja activarlo: Ajustes → Apps → La Alcancía → ⋮ → Permitir ajustes restringidos, y vuelve aquí</string>
+    <string name="banco_restringidos">Si Android no te deja activarlo: Ajustes → Apps → Pezi → ⋮ → Permitir ajustes restringidos, y vuelve aquí</string>
   <string name="ajustes">Ajustes</string>
   <string name="editar_perfil">Editar perfil</string>
   <string name="todo_fogon">Todo Fogón en un archivo</string>
@@ -574,7 +574,7 @@
     <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
     <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
     <string name="cuenta_local">Tus cuentas, movimientos, sobres, metas y saldos se quedan en este perfil del teléfono y, con tu cuenta, se guardan solos en ella, cifrados con tu contraseña: si reinstalas o cambias de teléfono, vuelven. Guarda un respaldo antes de retirar un perfil.</string>
-    <string name="cuenta_intro">La red de La Alcancía: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y celebren sus logros de ahorro.</string>
+    <string name="cuenta_intro">La red de Pezi: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y celebren sus logros de ahorro.</string>
     <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir: un logro y, si quieres, el avance de tus metas en porcentaje. Nunca saldos, montos, cuentas, bancos ni movimientos. Tu cuaderno se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu cuaderno sigue disponible.</string>
     <string name="cuenta_politica_resumen">Ahora, si tienes los avisos prendidos, llegan al instante: cuando tienes algo nuevo, Google (Firebase) le manda a tu teléfono un toque vacío, sin texto ni de quién, y la app pregunta el resto a Fogón. Además, contamos cuánto se guarda lo que se denuncia por poner a un menor en riesgo: un año, para las autoridades.</string>
@@ -587,7 +587,7 @@
     <string name="red_avisos">Avisos</string>
     <string name="red_moderacion">Moderación</string>
     <string name="red_guardados">Guardados</string>
-    <string name="red_feed_pie">Logros de ahorro compartidos en La Alcancía</string>
+    <string name="red_feed_pie">Logros de ahorro compartidos en Pezi</string>
     <string name="red_seguir">Seguir</string>
     <string name="red_dejar_seguir">Siguiendo</string>
     <string name="red_borrar">¿Borrar publicación?</string>

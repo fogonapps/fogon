@@ -260,6 +260,11 @@ class EquipoTest {
         Ruta(HttpMethod.Get, "mercado", "revisar_mercado"),
         Ruta(HttpMethod.Post, "mercado/123", "revisar_mercado", { """{"accion":"aprobar"}""" }),
         Ruta(HttpMethod.Post, "decidir", "sancionar", { """{"que":"cuenta","objeto":"destino","decision":"sin_falta"}""" }),
+        Ruta(HttpMethod.Post, "radicado", "ver_reportes", { """{"que":"cuenta","objeto":"destino","radicado":"NUNC-1"}""" }),
+        Ruta(HttpMethod.Get, "preservados", "ver_reportes", soloPrincipal = true),
+        Ruta(HttpMethod.Post, "preservados/123/exportar", "ver_reportes", { """{"motivo":"Requerimiento"}""" }, soloPrincipal = true),
+        Ruta(HttpMethod.Post, "preservados/123/liberar", "ver_reportes", { """{"motivo":"Entregado"}""" }, soloPrincipal = true),
+        Ruta(HttpMethod.Get, "paquetes/prueba", "ver_reportes", soloPrincipal = true),
         Ruta(HttpMethod.Get, "frases", "gestionar_frases"),
         Ruta(HttpMethod.Put, "frases", "gestionar_frases", { """{"texto":"Una frase de prueba","idioma":"es"}""" }),
         Ruta(HttpMethod.Post, "frases", "gestionar_frases", { """{"clave":"c1","aprobar":true}""" }),
@@ -289,6 +294,7 @@ class EquipoTest {
             val a = e.alta("actora"); val destino = e.alta("destino"); e.rol(a, rol)
             val pub = e.pub(destino)
             val arte = e.s.subirImagen(destino.id, jpegDePrueba()).nombre
+            e.b.usar { cambiar("INSERT INTO chispas(cuenta,cantidad,motivo,cuando) VALUES(?,1000,'prueba',1)", destino.id) }
             val articulo = e.s.mercado.publicar(destino.id, PublicarMercado("publicar_prueba", arte, "arte", "banner", 600))
             e.b.usar {
                 cambiar("UPDATE mercado SET id=123 WHERE id=?", articulo.id)
@@ -307,6 +313,9 @@ class EquipoTest {
                     }
                     for (r in rutas) {
                         if (r.ruta == "apelaciones" && r.metodo == HttpMethod.Post) e.b.usar { cambiar("INSERT OR REPLACE INTO apelaciones(id, cuenta, texto, cuando) VALUES(77, ?, 'Me equivoqué', ?)", destino.id, e.reloj) }
+                        if (r.ruta == "radicado") e.b.usar { cambiar("INSERT INTO reportes(de, que, objeto, motivo, cuando, estado) VALUES(?, 'cuenta', 'destino', 'spam', ?, 'confirmado')", destino.id, e.reloj) }
+                        if (r.ruta.startsWith("paquetes/")) File(e.dir, "paquetes").apply { mkdirs() }.resolve("prueba.age").writeText("cifrado")
+                        if (r.ruta.startsWith("preservados/")) e.b.usar { cambiar("INSERT OR REPLACE INTO preservados(id, que, objeto, cuenta, regla, decidido_por, cuando) VALUES(123, 'mensaje', 'destino:1', ?, 'masi', ?, ?)", destino.id, a.id, e.reloj) }
                         if (r.ruta == "decidir") e.b.usar { cambiar("INSERT INTO reportes(de, que, objeto, motivo, cuando) VALUES(?, 'cuenta', 'destino', 'spam', ?)", destino.id, e.reloj) }
                         val codigo = if (estado == "elevada") e.siguiente(secreto) else "000000"
                         val respuesta = client.request("/v1/admin/${r.ruta}") {
@@ -471,6 +480,8 @@ class EquipoTest {
     }
     @Test fun compatibilidad149FlujoNormalSinMfa() = Entorno().use { e ->
         val otra = e.alta("otra")
+        // El chat es entre quienes se siguen (lo predeterminado): «otra» deja escribir a quien siga, y sigue a «ana».
+        e.s.ajustar(otra.id, Ajustes(escribir = "sigo"))
         testApplication {
             application { fogonSocial(e.s) }
             suspend fun peticion(metodo: HttpMethod, ruta: String, cuerpo: String = "", token: String = "") = client.request("/v1/$ruta") {
@@ -487,7 +498,8 @@ class EquipoTest {
             assertEquals(HttpStatusCode.OK, peticion(HttpMethod.Get, "perfiles/ana").status)
             assertEquals(HttpStatusCode.OK, peticion(HttpMethod.Put, "cajon", """{"sobre":"cifrado","llave":"envuelta"}""", token).status)
             assertTrue(peticion(HttpMethod.Get, "cajon", token = token).bodyAsText().contains("cifrado"))
-            assertEquals(HttpStatusCode.NoContent, peticion(HttpMethod.Put, "llaves", """{"cifrar":"${"a".repeat(25)}","firmar":"${"b".repeat(25)}"}""", token).status)
+            assertEquals(HttpStatusCode.NoContent, peticion(HttpMethod.Put, "llaves", """{"cifrar":"${java.util.Base64.getEncoder().encodeToString("{\"k\":\"cifrar-de-prueba\"}".toByteArray())}","firmar":"${java.util.Base64.getEncoder().encodeToString("{\"k\":\"firmar-de-prueba\"}".toByteArray())}"}""", token).status)
+            e.s.seguir(otra.id, "ana")
             assertEquals(HttpStatusCode.Created, peticion(HttpMethod.Post, "mensajes/otra", """{"sobre":"mensaje cifrado","firma":"firma"}""", token).status)
             assertTrue(peticion(HttpMethod.Get, "mensajes", token = otra.token).bodyAsText().contains("mensaje cifrado"))
             assertEquals(HttpStatusCode.NoContent, peticion(HttpMethod.Put, "publicaciones", """[{"clave":"a","visibilidad":"publica","cuando":${e.reloj},"tipo":"diario","datos":{"texto":"Hola"}}]""", token).status)
@@ -542,7 +554,7 @@ class EquipoTest {
         val u = e.alta("usuaria"); val otro = e.alta("otra")
         val nombre = "a".repeat(22)
         val archivo = File(e.dir, "fotos/i/$nombre.jpg").apply { parentFile.mkdirs(); writeBytes(byteArrayOf(1, 2, 3)) }
-        e.b.usar { cambiar("INSERT INTO imagenes VALUES(?,?,?)", nombre, u.id, e.reloj) }
+        e.b.usar { cambiar("INSERT INTO imagenes(nombre, cuenta, cuando) VALUES(?,?,?)", nombre, u.id, e.reloj) }
         val pub = e.pub(u, datos = buildJsonObject { put("imagen", nombre) })
         val comentario = e.s.comentar(otro.id, pub, "Preservado")
         e.b.usar { cambiar("UPDATE comentarios SET estado = 'preservado' WHERE id = ?", comentario) }
@@ -717,7 +729,7 @@ class EquipoTest {
             val pub = e.pub(u, "reporte$i")
             e.s.reportar(r.id, NuevoReporte("publicacion", "$pub", "spam"))
             e.s.decidir(m.id, Decision("publicacion", "$pub", if (i == 0) "sin_falta" else "advertencia", "spam"), m.token)
-            assertEquals(1500 + minOf(i, 4) * 50, e.s.chispas(r.id))
+            assertEquals(TemasPerfil.BIENVENIDA + minOf(i, 4) * 50, e.s.chispas(r.id))
             assertEquals(409, assertFailsWith<Problema> { e.s.decidir(m.id, Decision("publicacion", "$pub", "advertencia", "spam"), m.token) }.codigo)
         }
         e.reloj += 7 * 86400000L
@@ -725,7 +737,7 @@ class EquipoTest {
         val pub = e.pub(u, "semana")
         e.s.reportar(r.id, NuevoReporte("publicacion", "$pub", "spam"))
         e.s.decidir(m.id, Decision("publicacion", "$pub", "advertencia", "spam"), m.token)
-        assertEquals(1750, e.s.chispas(r.id))
+        assertEquals(TemasPerfil.BIENVENIDA + 250, e.s.chispas(r.id))
     }
 
 }

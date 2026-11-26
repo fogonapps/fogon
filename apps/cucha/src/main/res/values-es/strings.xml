@@ -35,8 +35,8 @@
   <string name="proteina_g">%1$d g de proteína</string>
   <string name="forzudo_hoy">Hoy entrenaste: %1$s</string>
   <string name="forzudo_entreno">entreno</string>
-  <string name="forzudo_peso">Tu peso en El Forzudo: %1$s kg</string>
-  <string name="forzudo_sin_peso">Anota tu peso en El Forzudo y aquí lo verás.</string>
+  <string name="forzudo_peso">Tu peso en Forz: %1$s kg</string>
+  <string name="forzudo_sin_peso">Anota tu peso en Forz y aquí lo verás.</string>
   <string name="agua">Agua</string>
   <string name="agua_lleva">%1$s de %2$s L</string>
   <string name="agua_sumar">Un vaso de agua (250 ml)</string>
@@ -121,17 +121,17 @@
   <string name="peso">Peso</string>
   <string name="peso_cambio">En las últimas 4 semanas: %1$s kg</string>
   <string name="peso_pocos">Con dos pesos anotados verás aquí cómo cambia.</string>
-  <string name="peso_de_forzudo">El peso viene de El Forzudo: anótalo allá.</string>
+  <string name="peso_de_forzudo">El peso viene de Forz: anótalo allá.</string>
   <string name="peso_hoy">Tu peso hoy (kg)</string>
-  <string name="peso_sin_forzudo">Si instalas El Forzudo, el peso se toma de allá.</string>
+  <string name="peso_sin_forzudo">Si instalas Forz, el peso se toma de allá.</string>
   <string name="tus_datos">Tus datos</string>
   <string name="tus_metas">Tus metas</string>
   <string name="metas_a_mano">Las pusiste a mano.</string>
   <string name="metas_calculadas">Calculadas con tus datos; cambian si cambia tu peso.</string>
   <string name="cambiar_metas">Cambiar las metas</string>
-  <string name="forzudo">El Forzudo</string>
-  <string name="forzudo_conectado">Conectada: La Cucha lee tu peso y tus entrenos de El Forzudo, sin internet.</string>
-  <string name="forzudo_no_esta">Si instalas El Forzudo, La Cucha toma tu peso de allá y te muestra cuándo entrenaste.</string>
+  <string name="forzudo">Forz</string>
+  <string name="forzudo_conectado">Conectada: Ñom lee tu peso y tus entrenos de Forz, sin internet.</string>
+  <string name="forzudo_no_esta">Si instalas Forz, Ñom toma tu peso de allá y te muestra cuándo entrenaste.</string>
   <string name="opciones">Opciones</string>
   <string name="codigo_barras">Buscar por código de barras</string>
   <string name="codigo_barras_pista">Al escanear con la cámara, la app busca el código en Open Food Facts.</string>
@@ -150,11 +150,11 @@
   <string name="recuperar_pregunta">¿Recuperar un respaldo?</string>
   <string name="recuperar_texto">Vas a elegir un archivo. Antes de reemplazar nada te pregunto otra vez.</string>
   <string name="importar_titulo">¿Recuperar este respaldo?</string>
-  <string name="importar_texto">Se reemplaza todo lo que hay en La Cucha por lo del archivo.</string>
+  <string name="importar_texto">Se reemplaza todo lo que hay en Ñom por lo del archivo.</string>
   <string name="importar_si">Sí, recuperar</string>
   <string name="fogon">Fogón</string>
   <string name="manifiesto">Manifiesto de Fogón</string>
-  <string name="acerca_de">Acerca de La Cucha</string>
+  <string name="acerca_de">Acerca de Ñom</string>
   <string name="acerca_de_corto">Acerca de</string>
   <string name="licencias">Licencias</string>
   <string name="tu_nombre">Tu nombre (opcional)</string>
@@ -163,7 +163,7 @@
   <string name="edad">Edad</string>
   <string name="altura_cm">Altura (cm)</string>
   <string name="peso_kg">Peso (kg)</string>
-  <string name="peso_lo_trae_forzudo">El peso se actualiza solo con el último de El Forzudo.</string>
+  <string name="peso_lo_trae_forzudo">El peso se actualiza solo con el último de Forz.</string>
   <string name="actividad">¿Cuánto te mueves?</string>
   <string name="objetivo">¿Qué quieres?</string>
   <string name="bajar">Bajar</string>
@@ -178,7 +178,7 @@
   <string name="si_continuar">Sí, continuar</string>
   <string name="volver">Volver</string>
   <string name="siguiente">Siguiente</string>
-  <string name="tut_hola">¡Hola! Soy La Cucha</string>
+  <string name="tut_hola">¡Hola! Soy Ñom</string>
   <string name="tut_hola_texto">Te ayudo a llevar lo que comes: calorías, proteína y tus recetas de siempre. Sin anuncios. Tu diario se guarda en tu teléfono.</string>
   <string name="tut_tengo_respaldo">Tengo un respaldo</string>
   <string name="tut_datos">Cuéntame de ti</string>
@@ -198,14 +198,14 @@
   <string name="aviso_buscando">Buscando en Open Food Facts…</string>
   <string name="aviso_sin_red">No hay internet. Escríbelo como producto nuevo.</string>
   <string name="aviso_no_encontrado">Ese código no está en Open Food Facts. Escribe sus datos del empaque.</string>
-  <string name="aviso_no_son_recetas">Ese archivo no tiene recetas que La Cucha entienda.</string>
+  <string name="aviso_no_son_recetas">Ese archivo no tiene recetas que Ñom entienda.</string>
   <string name="aviso_importado">Listo, se recuperó el respaldo.</string>
   <string name="aviso_respaldo_guardado">Respaldo guardado.</string>
   <string name="aviso_no_exportado">No se pudo guardar el archivo.</string>
-  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo válido de La Cucha: puede estar dañado o incompleto.</string>
+  <string name="aviso_no_es_respaldo">Ese archivo no es un respaldo válido de Ñom: puede estar dañado o incompleto.</string>
   <string name="escanear_pista">Apunta al código de barras del empaque</string>
   <string name="aviso_salud_titulo">Aviso de salud</string>
-  <string name="aviso_salud">La Cucha es un cuaderno de comidas, no un consejo médico ni nutricional. Las metas son cálculos generales que no conocen tu salud, y los valores de los alimentos son aproximados. Si tienes una enfermedad, estás embarazada o tienes o tuviste un trastorno de la conducta alimentaria, consulta a un profesional de la salud. Usas la app bajo tu propia responsabilidad.</string>
+  <string name="aviso_salud">Ñom es un cuaderno de comidas, no un consejo médico ni nutricional. Las metas son cálculos generales que no conocen tu salud, y los valores de los alimentos son aproximados. Si tienes una enfermedad, estás embarazada o tienes o tuviste un trastorno de la conducta alimentaria, consulta a un profesional de la salud. Usas la app bajo tu propia responsabilidad.</string>
   <string name="lic_usda">Los valores de los alimentos salen de USDA FoodData Central (SR Legacy 2018 y FNDDS 2024), del Departamento de Agricultura de los Estados Unidos. Son de dominio público (CC0 1.0).</string>
   <string name="lic_off">Los productos escaneados vienen de Open Food Facts: la base de datos tiene licencia Open Database License (ODbL) y sus contenidos, Database Contents License (DbCL). Solo se consulta al escanear.</string>
   <string name="lic_zxing">El lector de códigos de barras: ZXing y zxing-android-embedded. Apache License 2.0.</string>
@@ -214,8 +214,8 @@
     <item quantity="other">Se importaron %d recetas</item>
   </plurals>
   <plurals name="forzudo_semana">
-    <item quantity="one">Esta semana: %d entreno en El Forzudo</item>
-    <item quantity="other">Esta semana: %d entrenos en El Forzudo</item>
+    <item quantity="one">Esta semana: %d entreno en Forz</item>
+    <item quantity="other">Esta semana: %d entrenos en Forz</item>
   </plurals>
   <plurals name="porciones_n">
     <item quantity="one">%d porción</item>
@@ -239,7 +239,7 @@
   <string-array name="creditos">
     <item>Valores de alimentos: USDA FoodData Central (dominio público).</item>
     <item>Productos escaneados: Open Food Facts (ODbL).</item>
-    <item>Recetas de ejemplo escritas para La Cucha, de la cocina colombiana de siempre.</item>
+    <item>Recetas de ejemplo escritas para Ñom, de la cocina colombiana de siempre.</item>
   </string-array>
   <string name="macro_pasado">%1$d g por encima de la meta</string>
   <string name="anotar_rapido">Anotar rápido</string>
@@ -256,7 +256,7 @@
   <string name="foto_quitar">Quitar foto</string>
   <string name="foto_receta_pista">La foto se guarda solo en este teléfono.</string>
     <string name="ajustes">Ajustes</string>
-    <string name="aj_como_usas">Cómo usas La Cucha</string>
+    <string name="aj_como_usas">Cómo usas Ñom</string>
     <string name="aj_tu_cocina">Tu cocina</string>
     <string name="aj_todo_fogon">Todo Fogón en un archivo</string>
     <string name="aj_apariencia_idioma">Apariencia e idioma</string>
@@ -299,16 +299,16 @@
     <string name="cuenta_perfil_cambio">El perfil cambió en otra app. Se ha recargado; revisa los cambios antes de guardar.</string>
     <string name="cuenta_edicion_pendiente">Carga el perfil social antes de editarlo.</string>
     <string name="cuenta_local">Tu diario, tus metas, tu peso, tus recetas y tus productos se quedan en este perfil del teléfono y, con tu cuenta, se guardan solos en ella, cifrados con tu contraseña: si reinstalas o cambias de teléfono, vuelven. Guarda un respaldo antes de retirar un perfil.</string>
-    <string name="cuenta_intro">La red de La Cucha: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte platos, recetas y restaurantes.</string>
+    <string name="cuenta_intro">La red de Ñom: tu cuenta de Fogón Social, la misma en todas las apps. Sigue a otras personas y comparte platos, recetas y restaurantes.</string>
     <string name="cuenta_que_sale">En la red solo aparece lo que elijas compartir: nunca tus metas, tu peso ni lo que comes cada día. Tu diario se guarda en tu cuenta cifrado con tu contraseña: nadie más lo puede leer, ni Fogón. Las calorías y los macros de un plato o una receta solo salen si los incluyes tú. La ubicación de un restaurante solo sale si la pones.</string>
     <string name="cuenta_politica_pausa">Fogón Social está en pausa hasta que aceptes la política vigente. No se comparte nada. Tu diario sigue disponible.</string>
     <string name="cuenta_politica_resumen">Ahora, si tienes los avisos prendidos, llegan al instante: cuando tienes algo nuevo, Google (Firebase) le manda a tu teléfono un toque vacío, sin texto ni de quién, y la app pregunta el resto a Fogón. Además, contamos cuánto se guarda lo que se denuncia por poner a un menor en riesgo: un año, para las autoridades.</string>
     <string name="cuenta_compartido">Una cuenta de Fogón Social para todas las apps, con sesiones independientes. Nombre, foto, portada y bio son globales. Solo se comparten los platos, recetas y reseñas que elijas, con su visibilidad. Cerrar otras sesiones y borrar la cuenta afecta a todas las apps.</string>
     <string name="cuenta_borrado">El borrado social tiene un periodo de gracia y afecta a todas las apps. Tu diario local se conserva hasta que retires el perfil.</string>
     <string name="cuenta_servicio_social">Fogón Social: identidad, cuenta, sesiones y lo que compartes.</string>
-    <string name="cuenta_servicio_forzudo">El Forzudo (en este teléfono): el peso y los entrenos de la semana del perfil enlazado.</string>
-    <string name="forzudo_perfil_titulo">Tu perfil de El Forzudo</string>
-    <string name="forzudo_perfil_pista">El Forzudo tiene varios perfiles. Elige el tuyo para leer tu peso y tus entrenos; nunca se adivina por el número.</string>
+    <string name="cuenta_servicio_forzudo">Forz (en este teléfono): el peso y los entrenos de la semana del perfil enlazado.</string>
+    <string name="forzudo_perfil_titulo">Tu perfil de Forz</string>
+    <string name="forzudo_perfil_pista">Forz tiene varios perfiles. Elige el tuyo para leer tu peso y tus entrenos; nunca se adivina por el número.</string>
     <string name="forzudo_ninguno">Ninguno</string>
     <string name="forzudo_perfil_sin_nombre">Perfil %1$s</string>
     <string name="red_tu_gente">Tu gente</string>
@@ -321,7 +321,7 @@
     <string name="red_avisos">Avisos</string>
     <string name="red_moderacion">Moderación</string>
     <string name="red_guardados">Guardados</string>
-    <string name="red_feed_pie">Platos, recetas y restaurantes compartidos en La Cucha</string>
+    <string name="red_feed_pie">Platos, recetas y restaurantes compartidos en Ñom</string>
     <string name="red_seguir">Seguir</string>
     <string name="red_dejar_seguir">Siguiendo</string>
     <string name="red_borrar">¿Borrar publicación?</string>

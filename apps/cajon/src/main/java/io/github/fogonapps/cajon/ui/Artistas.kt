@@ -75,7 +75,7 @@ private fun Enlazar(vm: CajonViewModel, a: io.github.fogonapps.cajon.datos.Artis
     val f = FogonTema.actual
     val c by vm.candidatosArtista.collectAsStateWithLifecycle()
     val lista = c?.takeIf { it.first == a.id }
-    Column(Modifier.padding(16.dp).fillMaxWidth().vidrio().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.enlazar_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         when {
             lista == null -> BotonSecundario(stringResource(when (a.tipo) { Personas.AUTOR -> R.string.enlazar_open_library; Personas.DIRECTOR -> R.string.enlazar_tmdb; else -> R.string.enlazar_musicbrainz }),
@@ -186,7 +186,7 @@ private fun ObrasDeAfuera(vm: CajonViewModel, e: Estado, fuente: String, tipo: S
                 }
                 when {
                     trayendo == r.fuente -> CircularProgressIndicator(Modifier.width(20.dp), color = f.tinta1, strokeWidth = 2.dp)
-                    ya -> IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.acentoTexto)
+                    ya -> IconoRiso(Iconos.Chulo, stringResource(R.string.ya_en_cajon), tamano = 18.dp, tinta = f.texto)
                 }
             }
         }
@@ -204,7 +204,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
 
     Cabecera(a.nombre, vm::cerrar) {
         BotonIcono(Iconos.Estrella, stringResource(if (a.favorito) R.string.quitar_favorita else R.string.poner_favorita), grande = true,
-            tinta = if (a.favorito) f.acentoTexto else f.textoSuave) { vm.cambiarArtista(a.id) { it.copy(favorito = !it.favorito) } }
+            tinta = if (a.favorito) f.texto else f.textoSuave, lleno = a.favorito) { vm.cambiarArtista(a.id) { it.copy(favorito = !it.favorito) } }
     }
     LaunchedEffect(a.id, a.foto) { vm.completarCredito(a.id) }
     LaunchedEffect(a.id, a.fuente) { vm.completarBio(a.id) }
@@ -237,7 +237,7 @@ fun VerArtista(vm: CajonViewModel, e: Estado, id: String) {
         Pista(stringResource(creditoBio(a.bioFuente)))
     }
 
-    Column(Modifier.fillMaxWidth().padding(16.dp).vidrio().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.tu_nota), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         ElegirEstrellas(a.nota, { n -> vm.cambiarArtista(a.id) { it.copy(nota = n) } }, descripcion = stringResource(R.string.tu_nota))
         // Los datos curiosos solo se muestran si hay algo (o si la persona quiere escribir).

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name" translatable="false">El Cajón</string>
+  <string name="app_name" translatable="false">Fabs</string>
   <string name="cargando">Loading</string>
   <string name="hola">Hi!</string>
   <string name="hola_nombre">Hi, %1$s</string>
@@ -8,7 +8,7 @@
   <string name="agregar">Add</string>
   <string name="pestana_inicio">Home</string>
   <string name="pestana_listas">Lists</string>
-  <string name="vacio_titulo">Your cajón is empty</string>
+  <string name="vacio_titulo">Nothing saved yet</string>
   <string name="vacio_texto">This is where you keep everything you watch, read, listen to and play: films, series, anime, books, records and video games, with your rating and your diary.</string>
   <string name="agregar_lo_primero">Add your first one</string>
   <string name="este_anio">In %1$d</string>
@@ -17,11 +17,12 @@
   <string name="ver_todo">See all</string>
   <string name="otra_vez">Again</string>
   <string name="me_gusta">Liked</string>
+  <string name="favorita_corta">Favorite</string>
   <string name="pendientes">Up next</string>
   <string name="retos_del_anio">%1$d challenges</string>
   <string name="cambiar">Change</string>
   <string name="va_en_pagina">On page %1$d</string>
-  <string name="buscar_en_cajon">Search your cajón</string>
+  <string name="buscar_en_cajon">Search your things</string>
   <string name="todo">All</string>
   <string name="cajon_nada">Nothing matches those filters.</string>
   <string name="orden_recientes">Recent</string>
@@ -70,7 +71,7 @@
   <string name="buscar_sin_tmdb">Film data isn’t available right now.</string>
   <string name="agregar_a_mano">Add by hand</string>
   <string name="buscar_nada">Nothing found for “%1$s”.</string>
-  <string name="ya_en_cajon">Already in your cajón</string>
+  <string name="ya_en_cajon">Already saved</string>
   <string name="no_esta_a_mano">Not there? Add it by hand</string>
   <string name="fuente_tmdb">Films, series and anime: TMDB.</string>
   <string name="fuente_open_library">Books: Open Library (Internet Archive), open data.</string>
@@ -126,7 +127,7 @@
   <string name="canciones_campo">Tracks, one per line</string>
   <string name="a_mano_pista">Genres, tags and the cover are added afterwards, on its page.</string>
   <string name="y_mas">and %1$d more</string>
-  <string name="marca_compartir">El Cajón · Fogón</string>
+  <string name="marca_compartir">by Fogón</string>
   <string name="nueva">New</string>
   <string name="listas_vacio">No lists yet. Make your first: “Ghibli in order”, “My top 10 horror”…</string>
   <string name="listas_automaticas">Always there</string>
@@ -144,10 +145,10 @@
   <string name="numerada_pista">For lists where order matters: your top 10, a saga in order.</string>
   <string name="borrar_lista">Delete list</string>
   <string name="borrar_lista_pregunta">Delete the list “%1$s”?</string>
-  <string name="borrar_lista_texto">What’s in it stays in your cajón.</string>
+  <string name="borrar_lista_texto">What’s in it stays in your collection.</string>
   <string name="diario_vacio">Your diary is empty. On any title, tap “Log it”.</string>
   <string name="parte_cuatro_favoritas">Top four favorites</string>
-  <string name="favoritas_pista">On any title, tap the star at the top to put it here.</string>
+  <string name="favoritas_pista">On any title, tap Favorite under the stars to put it here.</string>
   <string name="siempre">All time</string>
   <string name="en_el_anio">In %1$d</string>
   <string name="desde_siempre">All time</string>
@@ -172,17 +173,17 @@
   <string name="artistas_vacio">The artists of your albums show up here on their own. You can also search for them.</string>
   <string name="guardar_artista">Save artist</string>
   <string name="desde_anio">since %1$d</string>
-  <string name="en_tu_cajon">In your cajón</string>
+  <string name="en_tu_cajon">Saved</string>
   <string name="discografia">Discography</string>
   <string name="borrar_artista_pregunta">Delete %1$s?</string>
-  <string name="borrar_artista_texto">Their albums stay in your cajón.</string>
+  <string name="borrar_artista_texto">Their albums stay in your collection.</string>
   <string name="tu_nombre">Your name</string>
   <string name="opciones">Options</string>
   <string name="widget_poner">Add the widget to your home screen</string>
   <string name="idioma">Language</string>
   <string name="idioma_telefono">Phone’s</string>
   <string name="traer_de_otras">Bring from other apps</string>
-  <string name="traer_de_otras_pista">Pick an El Cajón copy or the file Netflix exports (your viewing activity CSV), Letterboxd (the ZIP or a CSV), Goodreads (the CSV), The StoryGraph (the CSV), Trakt (the ZIP or a JSON), TV Time (the ZIP or a CSV) or Spotify (your history ZIP). From Netflix, Spotify and other apps you can also share something straight to El Cajón.</string>
+  <string name="traer_de_otras_pista">Pick a Fabs copy or the file Netflix exports (your viewing activity CSV), Letterboxd (the ZIP or a CSV), Goodreads (the CSV), The StoryGraph (the CSV), Trakt (the ZIP or a JSON), TV Time (the ZIP or a CSV) or Spotify (your history ZIP). From Netflix, Spotify and other apps you can also share something straight to Fabs.</string>
   <string name="elegir_archivo">Choose file</string>
   <string name="respaldo">Backup</string>
   <string name="respaldo_pista">Save everything to a file whenever you like (keys aren’t included).</string>
@@ -190,22 +191,24 @@
   <string name="recuperar_respaldo">Restore a backup</string>
   <string name="recuperar_pregunta">Restore a backup?</string>
   <string name="recuperar_texto">It’s merged with what you have; if something is in both, the newest wins.</string>
-  <string name="fogon">Fogón</string>
   <string name="manifiesto">Manifesto</string>
-  <string name="acerca_de">About El Cajón</string>
+  <string name="acerca_de">About Fabs</string>
   <string name="acerca_de_corto">About</string>
-  <string name="tmdb_aviso">El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
+  <string name="tmdb_aviso">Fabs uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="licencias">Licenses</string>
-  <string name="lic_tmdb">Film, series and anime data from the TMDB API, through the Fogón server (free non-commercial license). El Cajón uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
+  <string name="codigo_abierto">Open source</string>
+  <string name="codigo_abierto_pista">See how Fabs is built, line by line</string>
+  <string name="lic_tmdb">Film, series and anime data from the TMDB API, through the Fogón server (free non-commercial license). Fabs uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</string>
   <string name="lic_open_library">Book data and covers from Open Library, an Internet Archive project.</string>
   <string name="lic_musicbrainz">Music data from MusicBrainz (core data CC0, public domain). Covers from the Cover Art Archive (MusicBrainz and Internet Archive); each cover belongs to its owner.</string>
   <string name="lic_coil">Coil, to load covers. Apache License 2.0.</string>
+  <string name="lic_lucide">Lucide, the icons. ISC License.</string>
   <string name="si_continuar">Yes, continue</string>
   <string name="volver">Back</string>
   <string name="cancelar">Cancel</string>
   <string name="siguiente">Next</string>
   <string name="empezar">Start</string>
-  <string name="tut_hola">Hi! I’m El Cajón</string>
+  <string name="tut_hola">Hi! I’m Fabs</string>
   <string name="tut_hola_texto">I keep everything you watch, read and listen to, with your rating, review and diary. No ads. We don\'t sell your data.</string>
   <string name="tut_tengo_respaldo">I already have an account</string>
   <string name="tut_nombre">What should I call you?</string>
@@ -218,13 +221,13 @@
   <string name="aviso_sin_detalles">Couldn’t get all the details; it’ll be added with what’s there.</string>
   <string name="aviso_datos_al_dia">Details refreshed</string>
   <string name="aviso_registrado">Logged in your diary</string>
-  <string name="aviso_no_es_de_otra_app">That file doesn’t look like an El Cajón copy or a Letterboxd, Goodreads, The StoryGraph, Trakt, TV Time, Netflix or Spotify export.</string>
+  <string name="aviso_no_es_de_otra_app">That file doesn’t look like a Fabs copy or a Letterboxd, Goodreads, The StoryGraph, Trakt, TV Time, Netflix or Spotify export.</string>
   <string name="aviso_importado">Backup restored</string>
   <string name="aviso_respaldo_guardado">Backup saved</string>
   <string name="aviso_no_exportado">Couldn’t save the file</string>
-  <string name="aviso_no_es_respaldo">That file isn’t an El Cajón backup</string>
+  <string name="aviso_no_es_respaldo">That file isn’t a Fabs backup</string>
   <string name="aviso_no_compartido">Couldn’t share</string>
-  <string name="widget_nombre">El Cajón</string>
+  <string name="widget_nombre">Fabs</string>
   <string name="widget_descripcion">What you’ve finished this year and what you’re watching, reading or listening to</string>
   <string name="widget_este_anio">Finished in %1$d</string>
   <string name="widget_en_curso">Now: %1$s</string>
@@ -266,11 +269,11 @@
     <item quantity="other">%1$d from %2$s (%3$d new) · We will find covers and details.</item>
   </plurals>
   <string-array name="creditos">
-    <item>Character and design: Fogón (GPL-3.0-or-later).</item>
+    <item>Design: Fogón (GPL-3.0-or-later).</item>
     <item>Films, series and anime: TMDB.</item>
     <item>Books: Open Library.</item>
     <item>Music: MusicBrainz and Cover Art Archive.</item>
-    <item>Steam library: Steam Web API. Valve and Steam are trademarks of Valve Corporation. El Cajón is not endorsed by Valve.</item>
+    <item>Steam library: Steam Web API. Valve and Steam are trademarks of Valve Corporation. Fabs is not endorsed by Valve.</item>
   </string-array>
   <string name="buscar">Search</string>
   <string name="buscar_y_agregar">Search and add</string>
@@ -288,10 +291,8 @@
   <string name="leidos_en">read in %1$d</string>
   <string name="jugados_en">played in %1$d</string>
   <string name="escuchados_en">listened in %1$d</string>
-  <string name="tu_cajon">Your cajón</string>
-  <string name="apartado_vacio">Nothing here yet. Tap Search to add something.</string>
-  <string name="juegos_vacio">No games yet. Tap + to add one.</string>
-  <string name="todo_tu_cajon">Your whole cajón</string>
+  <string name="tu_cajon">All of it</string>
+  <string name="todo_tu_cajon">Everything you saved</string>
   <string name="tus_cifras">Your stats</string>
   <string name="foto_de">Photo: %1$s</string>
   <string name="imagen_de">Image: %1$s</string>
@@ -356,7 +357,7 @@
   <string name="temas">Topics</string>
   <string name="agregar_tema">Add topic</string>
   <string name="editar">Edit</string>
-  <string name="genero_en_tu_cajon">%1$s in your cajón</string>
+  <string name="genero_en_tu_cajon">%1$s in your collection</string>
     <string name="cambiar_portada">Choose image</string>
       <string name="agregar_etiqueta">Add tag</string>
     <string name="agregar_episodio_favorito">Add a favorite episode</string>
@@ -396,18 +397,18 @@
   <string name="seccion_peliculas_pista">Films from everywhere, with poster and synopsis</string>
   <string name="seccion_series_pista">Series with their seasons and episodes</string>
   <string name="seccion_animes_pista">Japanese anime, series or films</string>
-  <string name="escucha_servicio">El Cajón: what you listen to</string>
-  <string name="aviso_agregado_cajon">Added to your cajón: %1$s</string>
+  <string name="escucha_servicio">Fabs: what you listen to</string>
+  <string name="aviso_agregado_cajon">Saved: %1$s</string>
   <string name="aviso_spotify_no">Couldn’t connect to Spotify.</string>
   <string name="aviso_spotify_listo">Spotify connected. Bringing your stuff…</string>
-  <string name="aviso_spotify_traido">Brought from Spotify: %1$d new in your cajón.</string>
+  <string name="aviso_spotify_traido">Brought from Spotify: %1$d new in your collection.</string>
   <string name="aviso_spotify_basico">That history doesn’t include albums. Ask Spotify for the “extended streaming history”.</string>
   <string name="aviso_spotify_historial">Spotify history: %1$d songs from %2$d albums.</string>
   <string name="musica_que_escuchas">The music you listen to</string>
   <string name="anotar_escuchas">Log what I listen to</string>
   <string name="anotar_escuchas_pista">Spotify, YouTube Music or any app: what plays (at least 30 seconds) goes to “Recently heard”. It stays on this phone only.</string>
   <string name="dar_acceso">Grant access</string>
-  <string name="dar_acceso_pista">Android requires notification access to query media sessions: song, artist, album and playback time. El Cajón does not read notification text. Listening history stays on this phone.</string>
+  <string name="dar_acceso_pista">Android requires notification access to query media sessions: song, artist, album and playback time. Fabs does not read notification text. Listening history stays on this phone.</string>
   <string name="agregar_solos">Add the albums I listen to automatically</string>
   <string name="agregar_solos_pista">With 5 different songs of an album, it’s added as listened, with its day in the diary.</string>
   <string name="apps_que_suenan">Log from these apps</string>
@@ -418,9 +419,9 @@
   <string name="spotify_traer">Bring from Spotify now</string>
   <string name="spotify_desconectar">Disconnect Spotify</string>
   <string name="spotify_resumen">Optional, if you have Premium: brings what you listen to, your saved albums and the artists you follow. Connects in 4 steps.</string>
-  <string name="spotify_explica">Spotify doesn’t let a free app connect on its own: each person creates their own “app” on Spotify (free, a couple of minutes) and El Cajón uses it only to read. You need Spotify Premium.</string>
+  <string name="spotify_explica">Spotify doesn’t let a free app connect on its own: each person creates their own “app” on Spotify (free, a couple of minutes) and Fabs uses it only to read. You need Spotify Premium.</string>
   <string name="spotify_paso1">Create your app on Spotify</string>
-  <string name="spotify_paso1_pista">Sign in with your Spotify account. Give it any name and description, for example “My cajón”.</string>
+  <string name="spotify_paso1_pista">Sign in with your Spotify account. Give it any name and description, for example “My collection”.</string>
   <string name="spotify_crear_app">Open Spotify to create the app</string>
   <string name="spotify_paso2">Add the redirect address</string>
   <string name="spotify_paso2_pista">In the same form, under “Redirect URIs” paste this address and tap Add. Further down tick “Web API”, accept the terms and save.</string>
@@ -431,7 +432,7 @@
   <string name="spotify_pegar">Paste what I copied</string>
   <string name="spotify_no_es_cliente">That doesn’t look like a Client ID: it’s 32 letters (a to f) and numbers.</string>
   <string name="spotify_paso4">Connect</string>
-  <string name="spotify_paso4_pista">Spotify opens so you can accept. When done, come back to El Cajón.</string>
+  <string name="spotify_paso4_pista">Spotify opens so you can accept. When done, come back to Fabs.</string>
   <string name="spotify_esperando">Waiting for Spotify…</string>
   <string name="spotify_esperando_pista">If Spotify showed an error, it’s almost always the address from step 2 (it must be exact) or the Client ID. Cancel, check them and connect again.</string>
   <string name="spotify_err_cancelado">It wasn’t accepted on Spotify. Connect again whenever you want.</string>
@@ -439,15 +440,15 @@
   <string name="spotify_err_cliente">Spotify doesn’t recognize that Client ID. Copy it again from your app (step 3).</string>
   <string name="spotify_err_permiso">Spotify didn’t allow reading your account: it needs Premium and signing in with the same account you created the app with.</string>
   <string name="spotify_err_red">Couldn’t reach Spotify. Check your internet and try again.</string>
-  <string name="spotify_vuelta_listo">Done. Go back to El Cajón.</string>
-  <string name="spotify_vuelta_no">Not connected. Go back to El Cajón.</string>
-  <string name="spotify_vuelta_ajena">This address is only for El Cajón’s connection to Spotify.</string>
+  <string name="spotify_vuelta_listo">Done. Go back to Fabs.</string>
+  <string name="spotify_vuelta_no">Not connected. Go back to Fabs.</string>
+  <string name="spotify_vuelta_ajena">This address is only for the Fabs connection to Spotify.</string>
   <string name="spotify_err_vuelta">Spotify returned an error (%1$s). Check steps 2 and 3 and connect again.</string>
   <string name="spotify_limites">Since 2026 Spotify requires the app owner to have Premium, allows up to 5 accounts per app (add them under “User Management” in the dashboard) and one Client ID per person.</string>
   <string name="aviso_spotify_permiso">Spotify won’t let your app read: check in its dashboard that the owner has Premium and your account is in “User Management”.</string>
   <string name="aviso_spotify_ocupado">Spotify asks to wait a bit. Try later.</string>
   <string name="aviso_spotify_fallo">Couldn’t bring from Spotify: it answered something unexpected. Try again in a moment.</string>
-  <string name="spotify_privacidad">The Client ID and the permission are stored encrypted only on this phone. El Cajón only reads: it never changes anything in your Spotify. You can disconnect it in Settings.</string>
+  <string name="spotify_privacidad">The Client ID and the permission are stored encrypted only on this phone. Fabs only reads: it never changes anything in your Spotify. You can disconnect it in Settings.</string>
   <string name="spotify_historial_pista">Further back? Ask Spotify for your “extended streaming history” (Account → Privacy) and pick the ZIP in “Bring from other apps”.</string>
   <string name="escuchado_poco">Recently heard</string>
   <string name="descartar">Dismiss</string>
@@ -482,14 +483,14 @@
   <string name="excluir_a">Nothing by %1$s</string>
   <string name="excluir_pista">Nothing of theirs is ever recommended.</string>
   <string name="excluir_genero">Nothing of this genre:</string>
-  <string name="elegir_gustos_explica">Everything is optional and can be changed anytime in “Your taste”. What you pick here doesn’t go into your cajón: it’s only used for recommendations.</string>
+  <string name="elegir_gustos_explica">Everything is optional and can be changed anytime in “Your taste”. What you pick here doesn’t go into your collection: it’s only used for recommendations.</string>
   <string name="que_recomiendo">What you want in “You might like”</string>
   <string name="generos_que_te_gustan">Genres</string>
   <string name="generos_pista">Tap once if you like it and again if you don’t; a third tap leaves it as it was.</string>
   <string name="lo_que_te_gusta">What you like</string>
   <string name="lo_que_te_gusta_pista">Tap what you like from the most watched, listened to and read.</string>
   <string name="artistas">Artists</string>
-  <string name="tus_gustos_explica">What you said and what El Cajón learned from what you save, rate and listen to, with recent things weighing more. Fix what’s wrong: what you say always wins.</string>
+  <string name="tus_gustos_explica">What you said and what Fabs learned from what you save, rate and listen to, with recent things weighing more. Fix what’s wrong: what you say always wins.</string>
   <string name="elegir_mis_gustos">Pick my taste</string>
   <string name="gustos_ahora">Yours lately</string>
   <string name="gustos_generos">Genres</string>
@@ -604,7 +605,7 @@
   <string name="editar_perfil">Edit profile</string>
   <string name="como_lo_ves">As you see it</string>
   <string name="como_lo_verian">As others would see it</string>
-  <string name="vista_publica_pista">This is how your profile would look once public profiles exist: without private things or what El Cajón learned about your taste. This preview stays on your phone.</string>
+  <string name="vista_publica_pista">This is how your profile would look once public profiles exist: without private things or what Fabs learned about your taste. This preview stays on your phone.</string>
   <string name="completar_perfil">Complete your profile</string>
   <string name="parte_destacados">Yours</string>
   <string name="destacados_pista">Tap a slot to pick; long-press to change it.</string>
@@ -624,7 +625,7 @@
   <string name="descubrimientos_recientes">Recent discoveries</string>
   <string name="anio_resumen">%1$d in the diary</string>
   <string name="solo_tu">Only you see this</string>
-  <string name="solo_tu_pista">What El Cajón learned about your taste. It’s used for recommendations and never shows on your profile.</string>
+  <string name="solo_tu_pista">What Fabs learned about your taste. It’s used for recommendations and never shows on your profile.</string>
   <string name="gustos_siempre">Yours, always</string>
   <string name="vis_privada">Private</string>
   <string name="vis_amigos">Friends only</string>
@@ -632,10 +633,10 @@
   <string name="foto_y_portada">Photo and cover</string>
   <string name="quitar_foto">Remove photo</string>
   <string name="quitar_portada">Remove cover</string>
-  <string name="portada_del_cajon">Cover from your cajón</string>
+  <string name="portada_del_cajon">Cover from your collection</string>
   <string name="portada_del_cajon_pista">The backdrop of one of your films, series or anime.</string>
   <string name="sin_fondos">No backdrops yet: they come from TMDB films, series and anime.</string>
-  <string name="foto_perfil_pista">The photo and cover you upload stay on this phone. A cover from your cajón also syncs.</string>
+  <string name="foto_perfil_pista">The photo and cover you upload stay on this phone. A cover from your collection also syncs.</string>
   <string name="quien_eres">Who you are</string>
   <string name="nombre_usuario">Username</string>
   <string name="bio">A few words about you</string>
@@ -647,7 +648,7 @@
   <string name="por_que">Why</string>
   <string name="por_que_pista">A few words (optional). If it’s already chosen, tap Save; if not, pick it below.</string>
   <string name="quitar_de_aqui">Remove from here</string>
-  <string name="buscar_en_tu_cajon">Search your cajón</string>
+  <string name="buscar_en_tu_cajon">Search your things</string>
   <string name="quien_ve_entrada">Who would see this entry</string>
   <string name="como_el_diario">Like the diary</string>
   <string name="portada_lista">List cover</string>
@@ -670,8 +671,8 @@
     <item>Magical girl</item>
   </string-array>
   <plurals name="cifra_en_cajon">
-    <item quantity="one">in your cajón</item>
-    <item quantity="other">in your cajón</item>
+    <item quantity="one">in your collection</item>
+    <item quantity="other">in your collection</item>
   </plurals>
   <plurals name="cifra_terminadas_anio">
     <item quantity="one">finished in %2$d</item>
@@ -712,8 +713,8 @@
   <string name="tut_funcion_red">In For you, follow your people, post reviews and chat with stickers</string>
   <string name="tut_funcion_momento">Trending in every search: what is hot on Netflix, Prime, Crunchyroll and more</string>
   <string name="tut_funcion_cifras">Your stats per section: film hours, pages, your favorite genre and artist</string>
-  <string name="tut_funcion_compartir">Share from Netflix or Spotify straight to your cajón, or bring your history</string>
-  <string name="tut_cuenta_titulo">Keep your cajón in your account</string>
+  <string name="tut_funcion_compartir">Share from Netflix or Spotify straight to your collection, or bring your history</string>
+  <string name="tut_cuenta_titulo">Keep your collection in your account</string>
   <string name="tut_cuenta_texto">With your email and a password, everything is saved (encrypted) and you have it on any phone</string>
   <string name="gustos_elige_minimo">Pick at least 3: what you watch, listen to or read.</string>
   <string name="gustos_faltan">%1$d to go</string>
@@ -721,7 +722,7 @@
   <string name="red_correo_no_existe">%1$s doesn\'t have an account yet</string>
   <string name="red_registrarme">Create my account with this email</string>
   <string name="red_olvide">Forgot your password?</string>
-  <string name="red_sin_clave_crea">Your account has no password: create one to keep your cajón in your account</string>
+  <string name="red_sin_clave_crea">Your account has no password: create one to keep your collection in your account</string>
   <string name="red_olvido_aviso">What this phone has is saved to your account with the new password. What was saved with the old one can only be opened from a phone where you are already signed in.</string>
   <string name="nada_aqui">Nothing here yet</string>
   <string name="red_por_que">Why you\'re seeing this</string>
@@ -783,7 +784,7 @@
   <string name="frase_19">Just one episode? Sure…</string>
   <string name="frase_20">Which world are we diving into today?</string>
   <string name="frase_21">Something for the heart or the brain?</string>
-  <string name="frase_22">Good stuff goes in the cajón</string>
+  <string name="frase_22">Good stuff stays in your collection</string>
   <string name="frase_te_gusto">%1$s left you thinking, right?</string>
   <string name="frase_play">Have you hit play on %1$s yet?</string>
   <string name="frase_artista">Another round with %1$s?</string>
@@ -818,17 +819,9 @@
   <string name="chat_stickers_tuyos">Your stickers</string>
   <string name="chat_stickers_vacio">Make one from a photo or save the ones you get (press and hold on one).</string>
   <string name="chat_stickers_nada">None with that name</string>
-  <string name="chat_stickers_fogon">From Fogón</string>
-  <string name="chat_sticker_cajon">Cajón</string>
-  <string name="chat_sticker_forzudo">Strong weight</string>
-  <string name="chat_sticker_ahorrador">Piggy bank</string>
-  <string name="chat_sticker_cucha">Pot</string>
-  <string name="chat_sticker_chispa">Spark</string>
   <string name="chat_muy_grande">It\'s too big to send</string>
   <string name="chat_lo_que_se_mandaron">What you\'ve shared</string>
   <string name="chat_personalizar">Customize the chat</string>
-  <string name="chat_color_burbujas">Color of your messages</string>
-  <string name="chat_fondo_puntos">Dotted background</string>
   <string name="chat_letra_grande">Bigger text</string>
   <string name="chat_acciones">More options</string>
   <string name="chat_vaciar">Clear chat</string>
@@ -857,29 +850,29 @@
   <string name="frase_5">What’s playing today?</string>
   <string name="frase_6">Today we read, watch or listen</string>
   <string name="frase_7">Something to cry over or to laugh at?</string>
-  <string name="frase_8">The perfect plan is in your cajón</string>
+  <string name="frase_8">The perfect plan is in your collection</string>
   <string name="frase_9">How about discovering something new today?</string>
-  <string name="frase_10">Relax, the cajón doesn’t judge</string>
-  <string name="nube_titulo">Your cajón in your account</string>
-  <string name="nube_pista">Save your whole cajón with your email, encrypted</string>
+  <string name="frase_10">Relax, nobody judges here</string>
+  <string name="nube_titulo">Your collection in your account</string>
+  <string name="nube_pista">Save your whole collection with your email, encrypted</string>
   <string name="nube_pista_activo">Saved and encrypted with your password</string>
-  <string name="nube_explica">Your whole cajón (titles, notes, diary, lists, taste, profile and what you listen to) is saved with your account. If you change phones, sign in with your email and password and everything comes back. If you use two phones, they stay in sync.</string>
+  <string name="nube_explica">Your whole collection (titles, notes, diary, lists, taste, profile and what you listen to) is saved with your account. If you change phones, sign in with your email and password and everything comes back. If you use two phones, they stay in sync.</string>
   <string name="nube_cifrado">It’s encrypted with your password before leaving your phone: neither Fogón nor anyone else can read it.</string>
-  <string name="nube_falta_clave">To save it, create a password: it’s the key to your cajón.</string>
+  <string name="nube_falta_clave">To save it, create a password: it’s the key to your collection.</string>
   <string name="nube_falta_correo">First link your email in your account; then create the password.</string>
   <string name="nube_ya_tienes_clave">You already have a password: type it to turn on saving on this phone.</string>
-  <string name="nube_activar">Create the password and save my cajón</string>
-  <string name="nube_bloqueado">Your cajón is already saved in your account. Type your password to bring it to this phone.</string>
-  <string name="nube_abrir">Bring my cajón</string>
+  <string name="nube_activar">Create the password and save my collection</string>
+  <string name="nube_bloqueado">Your collection is already saved in your account. Type your password to bring it to this phone.</string>
+  <string name="nube_abrir">Bring my collection</string>
   <string name="nube_guardando">Saving…</string>
   <string name="nube_sin_conexion">Couldn’t save right now; it will retry on its own.</string>
-  <string name="nube_no_se_pudo_abrir">Could not decrypt the saved cajón with this phone’s key. It has not been overwritten.</string>
+  <string name="nube_no_se_pudo_abrir">Could not decrypt the saved collection with this phone’s key. It has not been overwritten.</string>
   <string name="nube_guardado">Saved %1$s</string>
   <string name="nube_listo">Done: it saves on its own with every change.</string>
   <string name="nube_guardar_ya">Save now</string>
   <string name="nube_olvido">Important: if you forget your password, what’s saved in your account can’t be recovered (that’s why nobody else can read it). What’s on this phone stays here.</string>
   <string name="descargar_copia">Download a copy of your data</string>
-  <string name="descargar_copia_pista">Your whole cajón in an open file (JSON), whenever you want</string>
+  <string name="descargar_copia_pista">Your whole collection in an open file (JSON), whenever you want</string>
   <string name="rep_autolesion">Suicide or self-harm</string>
   <string name="rep_menor_de_edad">It belongs to someone under 18</string>
   <string name="rep_ayuda">If someone is in danger, call 123 now (emergencies in Colombia).</string>
@@ -904,13 +897,11 @@
   <string name="mod_falta">Remove + strike</string>
   <string name="mod_grave">Serious strike</string>
   <string name="mod_cerrar">Close account</string>
-  <string name="mod_menores">For child sexual abuse: close the account, report it to the Police CAI Virtual or the Prosecutor’s Office, and do not download or forward the content. The server keeps it isolated for the authorities.</string>
+  <string name="mod_menores">Sexual material involving minors or a minor at risk: if you confirm the report with that reason, the server does not delete it. It encrypts it and keeps it preserved: no one on the team sees it in the app; only the main account can generate an encrypted copy to hand over to an authority that requests it in writing, and it goes in the log. The daily cleanup does not touch it and it is never deleted on its own. The author’s account is closed. Opening these cases also goes in the log.</string>
   <string name="chat_reportar_explica">When you report, Fogón will see @%1$s’s latest messages in this conversation (you send them: they’re encrypted and nobody else can read them).</string>
-  <string name="aj_tu_cuenta">Your account</string>
   <string name="aj_cuenta_red">Your network account</string>
   <string name="aj_cuenta_red_pista">@%1$s · email, password, username, privacy</string>
   <string name="aj_editar_perfil_pista">Photo, bio and links</string>
-  <string name="aj_como_usas">How you use El Cajón</string>
   <string name="aj_notificaciones">Notifications</string>
   <string name="aj_notificaciones_pista">Notifications and messages with the app closed</string>
   <string name="aj_privacidad">Account privacy</string>
@@ -918,12 +909,9 @@
   <string name="aj_palabras_ocultas">Hidden words</string>
   <string name="aj_palabras_ocultas_pista">Don’t see posts or comments with certain words</string>
   <string name="aj_gustos_pista">What you like and don’t: it orders For you</string>
-  <string name="aj_tu_cajon">Your cajón</string>
   <string name="aj_musica_pista">Log what you listen to and Spotify</string>
-  <string name="aj_respaldo_pista">Save or restore your whole cajón to a file</string>
+  <string name="aj_respaldo_pista">Save or restore your whole collection to a file</string>
   <string name="aj_traer_pista">Netflix, Letterboxd, Trakt, TV Time, Goodreads, The StoryGraph, Spotify, Last.fm and Steam</string>
-  <string name="aj_apariencia_idioma">Appearance and language</string>
-  <string name="aj_apariencia_pista">Theme, colors and type</string>
   <string name="notif_explica">Permission to show notifications lets you know about network updates and messages: who and what (“@pedro started following you”, “@ana sent you a message”). With the app closed they arrive right away; on phones without Google services, every 15 minutes or more. It does not grant access to other apps’ notifications.</string>
   <string name="notif_de_avisos">Likes, comments, followers and posts from your people</string>
   <string name="notif_de_mensajes">New messages</string>
@@ -942,7 +930,7 @@
   <string name="rep_autor">It violates copyright</string>
   <string name="rep_otro">Something else</string>
   <string name="menu_por_que">Why you see this</string>
-  <string name="menu_por_que_explica">Explore is ordered on your phone using your cajón and your taste; the server doesn’t know what you like.</string>
+  <string name="menu_por_que_explica">Explore is ordered on your phone using your collection and your taste; the server doesn’t know what you like.</string>
   <string name="menu_por_que_sigues">Because you follow this person.</string>
   <string name="menu_me_interesa">Interested</string>
   <string name="menu_no_me_interesa">Not interested</string>
@@ -970,8 +958,8 @@
   <string name="red_suspendida">Your account is suspended. The reason and the option to appeal are in Your account → Account status</string>
   <string name="red_aviso_publico">posted something new</string>
   <string name="red_al_dia">You’re all caught up</string>
-  <string name="red_al_dia_texto">You’ve seen what’s new. Come back later, or log something in your cajón.</string>
-  <string name="red_porque_obra">Because you have “%1$s” in your cajón</string>
+  <string name="red_al_dia_texto">You’ve seen what’s new. Come back later, or log something in your collection.</string>
+  <string name="red_porque_obra">Because you have “%1$s” in your collection</string>
   <string name="red_porque_creador">Because you like %1$s</string>
   <string name="red_porque_etiqueta">Because you like #%1$s</string>
   <string name="red_porque_nueva">New: give it a chance</string>
@@ -995,7 +983,7 @@
   <string name="cancion_elegir_pista">Search for any song. It shows on your profile and whoever taps it hears it in their music app.</string>
   <string name="cancion_buscar">Search for a song</string>
   <string name="cancion_quitar">Remove the song</string>
-  <string name="cancion_sin_albumes">Add albums to your cajón and their songs show up here.</string>
+  <string name="cancion_sin_albumes">Add albums to your collection and their songs show up here.</string>
   <string name="cancion_poner">Add a song</string>
   <string name="lo_del_momento">Trending now</string>
   <string name="red_borrar_avisos">Delete notifications</string>
@@ -1013,11 +1001,6 @@
   <string name="red_paso2_titulo">Create your account</string>
   <string name="red_paso2_texto">To follow people, post, comment and send messages. Meanwhile, see what people share in Explore.</string>
   <string name="red_feed_sin_cuenta">With your account, posts from people you follow show up here.</string>
-  <string name="red_tu_nota">Your status</string>
-  <string name="red_nota_pon">Add a status</string>
-  <string name="red_nota_pista">What are you watching, reading or listening to? (24 h)</string>
-  <string name="red_nota_poner">Post status</string>
-  <string name="red_nota_quitar">Remove status</string>
   <string name="red_vistas">views</string>
   <string name="red_millones">%1$sM</string>
   <string name="red_miles">%1$sK</string>
@@ -1034,15 +1017,15 @@
   <string name="chat_tu">You:</string>
   <string name="chat_numero">Safety number</string>
   <string name="chat_numero_pista">If @%1$s sees the same number on their phone, nobody got in the middle of the conversation.</string>
-  <string name="chat_primero">Say something, or send a title from your cajón.</string>
+  <string name="chat_primero">Say something, or send a title from your collection.</string>
   <string name="chat_elige_obra">What are you sending?</string>
-  <string name="chat_mandar_una_obra">Send a title from your cajón</string>
+  <string name="chat_mandar_una_obra">Send a title from your collection</string>
   <string name="chat_escribe">Write a message</string>
-  <string name="chat_en_tu_cajon">In your cajón · open</string>
+  <string name="chat_en_tu_cajon">In your collection · open</string>
   <string name="chat_agregar">Search to add</string>
   <string name="chat_mensaje">Message</string>
   <string name="chat_mandar_a_alguien">Send it to someone</string>
-  <string name="chat_sin_llaves">That person can’t receive messages yet (they need El Cajón 1.18)</string>
+  <string name="chat_sin_llaves">That person can’t receive messages yet (they need Fabs 1.18)</string>
   <string name="chat_no_se_puede">You can’t message that account</string>
   <string name="red_ver_perfil">See their profile</string>
   <string name="lic_tink">Tink, for end-to-end encrypted chat. Apache License 2.0.</string>
@@ -1069,7 +1052,7 @@
   <string name="red_bloquear">Block</string>
   <string name="red_borrar_comentario">Delete comment</string>
   <string name="red_borrar_cuenta">Delete my network account</string>
-  <string name="red_borrar_cuenta_seguro">Everything of yours is deleted from the server: profile, posts, comments, followers. Your cajón stays on your phone.</string>
+  <string name="red_borrar_cuenta_seguro">Everything of yours is deleted from the server: profile, posts, comments, followers. Your collection stays on your phone.</string>
   <string name="red_si_borrar">Yes, delete it</string>
   <string name="red_borrar_publicacion">Delete this post</string>
   <string name="red_buscar_gente">Find people</string>
@@ -1085,7 +1068,7 @@
   <string name="red_correo_vinculado">Email linked: you can sign in on another phone</string>
   <string name="red_crear_cuenta">Create my account</string>
   <string name="red_crear_para_seguir">Create your account to follow</string>
-  <string name="red_cuenta_borrada">Your account will be deleted in 7 days. Sign in before then to keep it. Your cajón stays on this phone.</string>
+  <string name="red_cuenta_borrada">Your account will be deleted in 7 days. Sign in before then to keep it. Your collection stays on this phone.</string>
   <string name="red_cuenta_privada">Private account</string>
   <string name="red_cuenta_privada_pista">With a private account, only approved followers see what you post; anyone who wants to follow you has to ask.</string>
   <string name="red_cuenta_privada_texto">This account is private. Follow it to see what it posts.</string>
@@ -1112,7 +1095,7 @@
   <string name="red_hace_dias">%1$d d ago</string>
   <string name="red_hace_horas">%1$d h ago</string>
   <string name="red_hace_min">%1$d min ago</string>
-  <string name="red_invita_titulo">Your people on El Cajón</string>
+  <string name="red_invita_titulo">Your people on Fabs</string>
   <string name="red_invita_texto">Create your network account to follow people, see what they share and share yours. The account is optional.</string>
   <string name="red_lo_ultimo">Latest</string>
   <string name="red_mandar_codigo">Send me the code</string>
@@ -1134,11 +1117,11 @@
   <string name="red_terminos">Terms of use</string>
   <string name="red_privada_corto">private</string>
   <string name="red_publicacion">Post</string>
-  <string name="red_publicaciones">posts</string>
+  <string name="red_publicaciones">Posts</string>
   <string name="red_publicada">Posted</string>
   <string name="red_publicar">Post</string>
-  <string name="red_que_es">The El Cajón network: follow people, see what they watch, read, listen to and play, and share your reviews, diary, lists and photos.</string>
-  <string name="red_que_sube">Your cajón is saved encrypted in your account: nobody else can read it. Only what you mark as public or for your followers, and what you post, shows on the network.</string>
+  <string name="red_que_es">The Fabs network: follow people, see what they watch, read, listen to and play, and share your reviews, diary, lists and photos.</string>
+  <string name="red_que_sube">Your collection is saved encrypted in your account: nobody else can read it. Only what you mark as public or for your followers, and what you post, shows on the network.</string>
   <string name="red_que_quieres_decir">What do you want to say?</string>
   <string name="red_que_se_comparte">You choose what’s shared in your profile (who sees each part), in each diary entry and in each list.</string>
   <string name="red_quitar">Remove</string>
@@ -1167,7 +1150,7 @@
   <string name="red_tipo_lista">a list</string>
   <string name="red_tipo_publico">posted</string>
   <string name="red_tipo_resena">a review</string>
-  <string name="red_titulo">For you</string>
+  <string name="red_titulo">People</string>
   <string name="red_tu_correo">Your email</string>
   <string name="red_tu_cuenta">Your network account</string>
   <string name="red_usuario">Username</string>
@@ -1178,7 +1161,7 @@
   <string name="red_vincula_pista">Link your email to sign in to this account on another phone.</string>
   <string name="red_vincular">Link</string>
   <string name="terminaste_titulo">Finished!</string>
-  <string name="terminaste_texto">One more for your drawer.</string>
+  <string name="terminaste_texto">One more for your collection.</string>
   <string name="mod_tipo_cuenta">Account</string>
   <string name="mod_tipo_comentario">Comment</string>
   <string name="mod_tipo_mensaje">Message</string>
@@ -1221,7 +1204,7 @@
     <string name="red_conservar_pregunta">Your account will be deleted on %1$s. Do you want to keep it?</string>
     <string name="red_conservar">Keep my account</string>
     <string name="red_seguir_borrado">Continue with deletion</string>
-    <string name="red_borrado_explicacion">Your account will be hidden for 7 days. Then your profile, posts, comments, photos, messages and encrypted cajón will be deleted from the network. The cajón on this phone stays. Sign in before that date to keep your account. Do not include personal information in your reason.</string>
+    <string name="red_borrado_explicacion">Your account will be hidden for 7 days. Then your profile, posts, comments, photos, messages and encrypted collection will be deleted from the network. The collection on this phone stays. Sign in before that date to keep your account. Do not include personal information in your reason.</string>
     <string name="red_motivo_ninguno">No reason</string>
     <string name="red_motivo_no_uso">I do not use it</string>
     <string name="red_motivo_privacidad">Privacy</string>
@@ -1355,22 +1338,21 @@
     <string name="catalogo_error">Could not load the catalog. Try another section.</string>
     <string name="catalogo_elige_primero">Choose something you like to find similar works.</string>
     <string name="catalogo_vacio">No more works in this section.</string>
-  <string name="privacidad_grupo">Privacy</string>
   <string name="privacidad_titulo">What leaves your phone</string>
   <string name="politica_actualizada">We updated the privacy policy</string>
   <string name="politica_resumen">Now, if notifications are on, they arrive right away: when you have something new, Google (Firebase) sends your phone an empty signal, with no text and no sender, and the app asks Fogón for the rest. We also now say how long content reported for putting a minor at risk is kept: one year, for the authorities.</string>
   <string name="politica_aceptar">Accept</string>
   <string name="politica_ahora_no">Not now</string>
   <string name="politica_revisar">Review the policy</string>
-  <string name="politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is published and the encrypted copy does not sync. Your local drawer remains available.</string>
+  <string name="politica_pausa">Fogón Social is paused until you accept the current policy. Nothing is published and the encrypted copy does not sync. Your local collection remains available.</string>
   <string name="privacidad_local">On this phone: your private diary and reviews, notes, listening history, tastes and recommendations.\nConversations stay on this phone.\nIf you enable a backup, its included data also leaves as described below.</string>
   <string name="privacidad_social">With an account, Fogón Social receives your email and identity, sessions and acceptance record; what you share according to its visibility, interactions, blocks and reports.\nMessages travel encrypted until delivery (up to 30 days).\nAn optional account copy is encrypted and only your password unlocks it.\nModeration may retain removed content as evidence.</string>
-  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or drawer.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nIGDB: video games, through the Fogón server; IGDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from images.igdb.com are fetched directly.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLast.fm: only if you import your history, through the Fogón server; it does not store your username or what you listen to.\nSteam: only if you import your library. When you tap “Import”, the Fogón server asks Steam for your list of games and does not store it. What you import stays in your drawer: on this phone and in your encrypted copy, if you have one.\nLinks to other services open in your browser.</string>
+  <string name="privacidad_servicios">To find and complete works, direct services see your IP and the requested query or image, but not your account or collection.\n\nTMDB: movies, series and anime through the Fogón server; TMDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from image.tmdb.org are fetched directly.\nTVmaze: series and premieres.\nOpen Library: books and covers.\nMusicBrainz: music and artists.\nListenBrainz: popular music.\nCover Art Archive: album covers.\nIGDB: video games, through the Fogón server; IGDB does not see your IP. Fogón keeps responses for a few hours and then deletes them, along with what was searched. Images from images.igdb.com are fetched directly.\nWikidata: people and works data and links.\nWikipedia: information.\nWikimedia Commons: photos.\nLast.fm: only if you import your history, through the Fogón server; it does not store your username or what you listen to.\nSteam: only if you import your library. When you tap “Import”, the Fogón server asks Steam for your list of games and does not store it. What you import stays in your drawer: on this phone and in your encrypted copy, if you have one.\nLinks to other services open in your browser.</string>
   <string name="privacidad_opciones">Current options and permissions</string>
   <string name="privacidad_activa">Enabled</string>
   <string name="privacidad_inactiva">Disabled</string>
   <string name="privacidad_lectura">Notification reading permission</string>
-  <string name="privacidad_opcionales">Spotify optionally reads your listening history, albums and artists without changing your account.\nNotification access reads playback information to record music locally; recording is enabled separately in Settings → Your drawer.\nAlerts show counts of updates and messages when Android allows them and you have an account.\nThe encrypted copy requires an account and its key; it does not sync while the network is paused.\nLast.fm: importing a public profile sends its username and period to Fogón and Last.fm. Fogón caches responses for five minutes; imported listens stay on your phone.</string>
+  <string name="privacidad_opcionales">Spotify optionally reads your listening history, albums and artists without changing your account.\nNotification access reads playback information to record music locally; recording is enabled separately in Settings → Your things.\nAlerts show counts of updates and messages when Android allows them and you have an account.\nThe encrypted copy requires an account and its key; it does not sync while the network is paused.\nLast.fm: importing a public profile sends its username and period to Fogón and Last.fm. Fogón caches responses for five minutes; imported listens stay on your phone.</string>
   <string name="privacidad_contacto">Your data: fogonapps@gmail.com</string>
   <string name="barra_minimo">At least 3 tabs. Home is always visible.</string>
   <string name="barra_restablecer">Restore default order</string>
@@ -1463,22 +1445,22 @@
   <string name="steam_error_ocupado">Another import is in progress. Try again in a few minutes.</string>
   <string name="steam_recortada">Your library has %2$d games: the %1$d most played came in.</string>
   <string name="steam_horas">%1$d h on Steam</string>
-  <string name="lic_steam">Steam library: Steam Web API, through the Fogón server and only when you import. Valve and Steam are trademarks of Valve Corporation; El Cajón is not endorsed by Valve.</string>
+  <string name="lic_steam">Steam library: Steam Web API, through the Fogón server and only when you import. Valve and Steam are trademarks of Valve Corporation; Fabs is not endorsed by Valve.</string>
   <string name="lastfm_listo">Last.fm import complete.</string>
-  <string name="beta_aviso">Beta: El Cajón may still change and have bugs. If something doesn’t work, tell us in “Report a problem or suggest something”.</string>
+  <string name="beta_aviso">Beta: Fabs may still change and have bugs. If something doesn’t work, tell us in “Report a problem or suggest something”.</string>
   <string name="beta_problemas">Known issues</string>
-  <string name="app_cajon">El Cajón</string>
-  <string name="app_forzudo">El Forzudo</string>
-  <string name="app_cucha">La Cucha</string>
-  <string name="app_alcancia">La Alcancía</string>
+  <string name="app_cajon">Fabs</string>
+  <string name="app_forzudo">Forz</string>
+  <string name="app_cucha">Ñom</string>
+  <string name="app_alcancia">Pezi</string>
     <string name="ruta_politica" translatable="false">/privacy</string>
     <string name="ruta_terminos" translatable="false">/terms</string>
     <string name="guia_agregar">Search and add</string>
-    <string name="guia_agregar_texto">Tap + to search for a film, series, album or book and save it in your drawer.</string>
-    <string name="guia_para_ti">For you</string>
-    <string name="guia_para_ti_texto">Recommendations based on your taste and what you rate.</string>
-    <string name="guia_secciones">Your sections</string>
-    <string name="guia_secciones_texto">Film, music and books, each with your things. Press and hold the bar and slide to switch quickly.</string>
+    <string name="guia_agregar_texto">Tap + to search for a film, series, album or book and save it in your collection.</string>
+    <string name="guia_para_ti">Your people</string>
+    <string name="guia_para_ti_texto">What the people you follow watch, read and listen to.</string>
+    <string name="guia_secciones">Yours</string>
+    <string name="guia_secciones_texto">Everything you saved: films and series, music, books and games, with your lists and diary.</string>
     <string name="guia_perfil">Your profile and settings</string>
     <string name="guia_perfil_texto">Your profile, your people and, in the gear, settings, account and this tour again.</string>
     <string name="copia_titulo">Your data in your account</string>
@@ -1489,9 +1471,9 @@
     <string name="copia_abrir">Bring and save my data</string>
     <string name="copia_mala">That’s not the password.</string>
     <string name="copia_sin_clave">Create a password once and your data is saved automatically to your account, encrypted.</string>
-  <string name="nube_aviso_titulo">Your drawer isn’t being saved to your account</string>
-  <string name="nube_aviso_bloqueado">Enter your password once and your drawer is saved automatically again, encrypted.</string>
-  <string name="nube_aviso_sin_clave">Create a password once and your drawer is saved automatically to your account, encrypted.</string>
+  <string name="nube_aviso_titulo">Your collection isn’t being saved to your account</string>
+  <string name="nube_aviso_bloqueado">Enter your password once and your collection is saved automatically again, encrypted.</string>
+  <string name="nube_aviso_sin_clave">Create a password once and your collection is saved automatically to your account, encrypted.</string>
     <string name="acceso_clave_datos">Now your password</string>
     <string name="acceso_clave_datos_pista">It opens the data saved in your account and keeps saving it automatically, encrypted.</string>
     <string name="acceso_crear_clave">Create a password</string>
@@ -1670,7 +1652,6 @@
     <item quantity="other">%1$d votes</item>
   </plurals>
   <string name="cancion_al_perfil">Set on my profile</string>
-  <string name="cancion_a_la_nota">Put in my status</string>
   <string name="cancion_a_historia">Share in a story</string>
   <string name="cumple_hoy_aviso">Today is %1$s’s birthday</string>
   <string name="cumple_hoy_perfil">Birthday today</string>
@@ -1702,7 +1683,7 @@
   <string name="historia_tu_respuesta">Your answer</string>
   <string name="historia_sin_respuestas">No answers yet.</string>
   <string name="historia_tipo_publicacion">Post</string>
-  <string name="chat_abre_cajon">To use your messages here, open El Cajón once with your account (so your keys are shared, encrypted).</string>
+  <string name="chat_abre_cajon">To use your messages here, open Fabs once with your account (so your keys are shared, encrypted).</string>
   <string name="chat_guardar_apodo">Save the nickname</string>
     <string name="historia_video">Video</string>
     <string name="historia_video_no_se_pudo">The video could not be prepared</string>
@@ -1752,7 +1733,7 @@
     <string name="tienda_sin_marco">No frame</string>
     <string name="tienda_comprar">%1$s sparks</string>
     <string name="chispas_reglas">Sparks cannot be transferred or exchanged for money. You can gift store items.</string>
-    <string name="chat_sin_llaves_aqui">This app doesn’t have the keys for your encrypted messages yet. Open El Cajón once (they’re there, and it shares them using your password) or start with new keys here.</string>
+    <string name="chat_sin_llaves_aqui">This app doesn’t have the keys for your encrypted messages yet. Open Fabs once (they’re there, and it shares them using your password) or start with new keys here.</string>
     <string name="chat_llaves_nuevas">Use new keys here</string>
     <string name="chat_llaves_nuevas_seguro">From now on you’ll be able to write from this app. Old messages encrypted with your previous keys won’t be readable on any phone.</string>
     <string name="cifra_seguidores">followers</string>
@@ -1779,12 +1760,6 @@
     <string name="insignia_explorador">Explorer</string>
     <string name="insignia_reto">Challenge done</string>
     <string name="viendo_ahora">Watching now</string>
-    <string name="viendo_los_dos">You are both watching it</string>
-    <string name="viendo_tu_vas">You are at %1$s</string>
-    <string name="maraton_titulo">Marathon for two</string>
-    <string name="maraton_juntos">%1$d you both want to watch</string>
-    <string name="maraton_juntos_horas">%1$d you both want to watch · about %2$d h of films</string>
-    <string name="maraton_recomendar">@%1$s wants to watch these and you loved them: recommend them</string>
     <string name="semana_red_titulo">This week in your network</string>
     <string name="gente_gustos_titulo">People with your taste</string>
     <string name="gente_gustos_comparten">Also likes: %1$s</string>
@@ -1793,13 +1768,13 @@
         <item quantity="other">%1$s and %2$d more people</item>
     </plurals>
     <string name="tarjeta_cuadrada">Square</string>
-    <string name="tarjeta_historia">Story</string>
+    <string name="tarjeta_historia">Vertical</string>
     <string name="tarjeta_con_nota">With my rating</string>
-    <string name="tarjeta_fondo_cajon">El Cajón</string>
+    <string name="tarjeta_fondo_cajon">Fabs</string>
     <string name="tarjeta_frase">The quote shown</string>
     <string name="listas_comunes">Shared lists</string>
     <string name="listas_comunes_corta">With friends: add, vote and pick what to watch</string>
-    <string name="listas_comunes_pista">Make them with friends (people who follow each other): everyone adds from their cajón and votes for what they want to watch.</string>
+    <string name="listas_comunes_pista">Make them with friends (people who follow each other): everyone adds from their collection and votes for what they want to watch.</string>
     <string name="listas_comunes_vacio">You have no shared lists yet.</string>
     <string name="listas_comunes_nueva">New shared list</string>
     <string name="listas_comunes_nombre">For example: Friday movie night</string>
@@ -1812,11 +1787,11 @@
     <string name="listas_comunes_borrar">Delete the list</string>
     <string name="listas_comunes_salir_pregunta">Leave this list?</string>
     <string name="listas_comunes_borrar_pregunta">Delete the list for everyone?</string>
-    <string name="listas_comunes_sin_obras">Add something from your cajón to start.</string>
+    <string name="listas_comunes_sin_obras">Add something from your collection to start.</string>
     <string name="listas_comunes_agrego">Added by @%1$s</string>
     <string name="listas_comunes_votar">I want to watch it</string>
     <string name="listas_comunes_quitar">Remove from the list</string>
-    <string name="listas_comunes_buscar">Search your cajón</string>
+    <string name="listas_comunes_buscar">Search your collection</string>
     <string name="listas_comunes_ver">See your shared lists</string>
     <plurals name="listas_comunes_obras">
         <item quantity="one">%1$d work</item>
@@ -1860,4 +1835,217 @@
     <item>Quiz</item>
     <item>Pinball</item>
   </string-array>
+    <string name="lic_fraunces">Title font. © 2018 The Fraunces Project Authors. SIL Open Font License 1.1.</string>
+    <string name="lic_figtree">Text font. © 2022 The Figtree Project Authors. SIL Open Font License 1.1.</string>
+  <plurals name="terminadas_en">
+    <item quantity="one">finished in %2$d</item>
+    <item quantity="other">finished in %2$d</item>
+  </plurals>
+  <string name="aj_mostrar_juegos">Show games</string>
+  <string name="aj_mostrar_juegos_texto">Video games in Yours, your numbers and your challenges.</string>
+  <string name="pestana_lo_tuyo">Yours</string>
+  <string name="pestana_descubrir">Discover</string>
+  <string name="buscar_algo">Films, books, music, games…</string>
+  <string name="accion_resena">Review</string>
+  <string name="accion_lista">Add to list</string>
+  <string name="accion_enviar">Send</string>
+  <string name="red_franja_cuenta">Create your account to follow people and post</string>
+  <string name="red_franja_crear">Create</string>
+  <string name="red_vacio_titulo">This is where what people share will show up</string>
+  <string name="red_invita_corta">Follow your people on Fabs</string>
+  <string name="red_crear_cuenta_corto">Create account</string>
+  <string name="cifras_mejor_nota">Top rated</string>
+  <string name="cifras_mas_repetido">Most revisited</string>
+  <plurals name="cifras_veces">
+    <item quantity="one">%d time</item>
+    <item quantity="other">%d times</item>
+  </plurals>
+  <string name="listas_vacio_titulo">No lists yet</string>
+  <string name="listas_vacio_texto">Make your first: “Ghibli in order”, “My top 10 horror”…</string>
+  <!-- Badges as movie ticket stubs -->
+  <string name="insignias_cuenta">%1$d of %2$d</string>
+  <string name="insignia_voz_ganada">%1$s, earned</string>
+  <string name="insignia_voz_nivel">%1$s, earned, level %2$d of %3$d</string>
+  <string name="insignia_voz_progreso">%1$s, %2$d of %3$d</string>
+  <string name="insignia_voz_pendiente">%1$s, not started</string>
+  <string name="talon_admite">Admit one</string>
+  <string name="insignia_unidad_cine">movies</string>
+  <string name="insignia_unidad_series">series</string>
+  <string name="insignia_unidad_anime">anime</string>
+  <string name="insignia_unidad_lector">books</string>
+  <string name="insignia_unidad_discos">albums</string>
+  <string name="insignia_unidad_constancia">days</string>
+  <string name="insignia_unidad_critico">reviews</string>
+  <string name="insignia_unidad_explorador">types</string>
+  <string name="insignia_unidad_reto">yearly challenge</string>
+  <string name="insignia_nivel">Level %1$d of %2$d</string>
+  <string name="insignia_proximo_nivel">Level %1$d of %2$d · next one at %3$d</string>
+  <string name="insignia_nuevo_nivel">New level</string>
+  <string name="insignia_desc_cine">Finish %1$d movies.</string>
+  <string name="insignia_desc_series">Finish %1$d series.</string>
+  <string name="insignia_desc_anime">Finish %1$d anime.</string>
+  <string name="insignia_desc_lector">Finish %1$d books.</string>
+  <string name="insignia_desc_discos">Rate %1$d albums.</string>
+  <string name="insignia_desc_constancia">Log something on %1$d different days.</string>
+  <string name="insignia_desc_critico">Write %1$d reviews of at least 280 characters.</string>
+  <string name="insignia_desc_explorador">Finish works of %1$d different types.</string>
+  <string name="insignia_desc_reto">Meet every goal of your yearly challenge.</string>
+  <plurals name="insignia_faltan">
+    <item quantity="one">%d to go</item>
+    <item quantity="other">%d to go</item>
+  </plurals>
+  <string name="insignia_ganada_el">Earned on %1$s</string>
+  <string name="insignia_nueva">New badge</string>
+  <string name="insignia_compartir_texto">I earned the “%1$s” badge on %2$s.</string>
+  <string name="chat_vacio_titulo">No conversations yet</string>
+  <string name="chat_sin_cuenta_titulo">Message your people</string>
+  <string name="vacio_apartado_titulo">Nothing here yet</string>
+  <string name="vacio_apartado_texto">Search for what you watched, read, listened to or played and save it with your rating.</string>
+  <string name="para_ti_vacio_titulo">I don’t know what you like yet</string>
+  <string name="cargando_recomendaciones">Finding new recommendations</string>
+  <string name="fogon_tema_vinilo">White</string>
+  <string name="fogon_estilo_claro">Paper</string>
+  <string name="fogon_estilo_marca_texto">White paper and black text: your covers bring the color. How Fabs comes.</string>
+  <string name="fogon_estilo_claro_texto">Warm grey paper with near-black text.</string>
+  <string name="fogon_estilo_grafito_texto">Near-black with white text: easy on the eyes at night.</string>
+  <string name="fogon_estilo_contraste_texto">Pure black with white text: the easiest to read.</string>
+  <!-- Perfil: favoritas protagonistas y portada -->
+  <string name="perfil_favoritas">Favorites</string>
+  <string name="perfil_elegir_favoritas">Pick your four favorites</string>
+  <string name="perfil_elegir_favoritas_pista">A film, a series, an album… whatever says the most about you.</string>
+  <string name="perfil_elegir_hueco">Choose: %1$s</string>
+  <string name="perfil_cambiar">Change</string>
+  <string name="perfil_cambiar_portada">Change banner</string>
+  <string name="perfil_tus_favoritas_pista">They show big on your profile. They come from your four favorites (“Favorite” on each page).</string>
+  <string name="perfil_cancion">Profile song</string>
+  <!-- Year in review and importing from the first minute -->
+  <string name="resumen_titulo">Your %1$d in Fabs</string>
+  <string name="resumen_acceso_texto">Your year in slides, to look at and share</string>
+  <string name="resumen_poco_titulo">Your %1$d is just starting here</string>
+  <string name="resumen_poco_texto">With this little logged, the recap would be thin. If you keep your history in another app, bring it over and see all your numbers in one place.</string>
+  <string name="resumen_ver_igual">See it anyway</string>
+  <string name="resumen_siguiente">Next slide</string>
+  <string name="resumen_anterior">Previous slide</string>
+  <string name="resumen_compartir_lamina">Share this slide</string>
+  <string name="resumen_compartir_anio">Share your year</string>
+  <string name="resumen_ver_de_nuevo">Watch it again</string>
+  <string name="resumen_compartir_texto">My %1$d on fabs · https://fogonapps.github.io</string>
+  <string name="resumen_tipos">Your year, piece by piece</string>
+  <string name="resumen_tiempo">The time you gave it</string>
+  <string name="resumen_mejores">The best of your year</string>
+  <string name="resumen_genero">Your genre of the year</string>
+  <string name="resumen_creador">Your creator of the year</string>
+  <string name="resumen_mes">Your busiest month</string>
+  <string name="resumen_racha">Your longest streak</string>
+  <string name="resumen_favoritas">The ones you loved</string>
+  <string name="resumen_dato_horas">Screen hours</string>
+  <string name="resumen_formato_historia">Vertical 9:16</string>
+  <string name="resumen_formato_cuadrada">Square 1:1</string>
+  <string name="resumen_mira_tus_numeros">See your numbers</string>
+  <plurals name="resumen_terminadas">
+    <item quantity="one">title finished</item>
+    <item quantity="other">titles finished</item>
+  </plurals>
+  <plurals name="resumen_en_diario">
+    <item quantity="one">and %d entry in your diary</item>
+    <item quantity="other">and %d entries in your diary</item>
+  </plurals>
+  <plurals name="resumen_horas">
+    <item quantity="one">hour of movies and shows</item>
+    <item quantity="other">hours of movies and shows</item>
+  </plurals>
+  <plurals name="resumen_paginas">
+    <item quantity="one">page read</item>
+    <item quantity="other">pages read</item>
+  </plurals>
+  <plurals name="resumen_canciones">
+    <item quantity="one">song on your albums</item>
+    <item quantity="other">songs on your albums</item>
+  </plurals>
+  <plurals name="resumen_en_obras">
+    <item quantity="one">in %d title</item>
+    <item quantity="other">in %d titles</item>
+  </plurals>
+  <plurals name="resumen_anotaciones">
+    <item quantity="one">%d entry</item>
+    <item quantity="other">%d entries</item>
+  </plurals>
+  <plurals name="resumen_dias_seguidos">
+    <item quantity="one">day in a row</item>
+    <item quantity="other">days in a row</item>
+  </plurals>
+  <plurals name="resumen_dias">
+    <item quantity="one">%d day</item>
+    <item quantity="other">%d days</item>
+  </plurals>
+  <plurals name="resumen_importadas">
+    <item quantity="one">You brought %d title</item>
+    <item quantity="other">You brought %d titles</item>
+  </plurals>
+  <string name="traer_titulo">Coming from another app?</string>
+  <string name="traer_texto">Bring your history and see all your numbers in one place. Tap an app to see how to export.</string>
+  <string name="traer_elegir">Choose the exported file</string>
+  <string name="traer_abierto">expanded</string>
+  <string name="traer_cerrado">collapsed</string>
+  <string name="traer_como_letterboxd">On the Letterboxd website: Settings → Data → Export your data. Choose the ZIP you download (or one of its CSVs).</string>
+  <string name="traer_como_goodreads">On the Goodreads website: My Books → Import and export → Export Library. Choose the CSV.</string>
+  <string name="traer_como_storygraph">On The StoryGraph website, in your account settings, request your library export. Choose the CSV you get.</string>
+  <string name="traer_como_trakt">On the Trakt website, in your account settings (Data), export your data. Choose the ZIP or one of its JSON files.</string>
+  <string name="traer_como_tvtime">Request a copy of your data on the TV Time privacy page. Choose the ZIP you get or one of its CSVs.</string>
+  <string name="traer_como_netflix">On the Netflix website: Account → your profile → Viewing activity → Download all. Choose the CSV.</string>
+  <string name="gustos_opcional_importado">You already brought your history: picking more is optional.</string>
+  <string name="rapido_registrar">Quick log</string>
+  <string name="rapido_termine_hoy">Finished today</string>
+  <string name="rapido_mas_detalles">More details</string>
+  <string name="rapido_elegir_varias">Select several</string>
+  <string name="diario_cuadricula">Grid</string>
+  <string name="diario_lista">List</string>
+  <string name="aj_grupo_cuenta">Account</string>
+  <string name="aj_grupo_coleccion">Your collection</string>
+  <string name="aj_grupo_apariencia">Appearance</string>
+  <string name="aj_grupo_privacidad">Privacy and security</string>
+  <string name="aj_tema">Theme</string>
+  <string name="aj_tema_pista">Colors, type and motion</string>
+    <string name="juntos">Together</string>
+    <string name="juntos_titulo">You and %1$s</string>
+    <string name="juntos_que_vemos">What should we watch?</string>
+    <string name="juntos_que_vemos_pista">What you both, and each of you, want to watch. What you share comes first.</string>
+    <string name="juntos_sin_por_ver">%1$s doesn\'t share a watchlist, so for now it\'s just yours.</string>
+    <string name="juntos_duracion_todo">All</string>
+    <string name="juntos_menos_2h">Under 2 h</string>
+    <string name="juntos_una_tarde">An afternoon</string>
+    <string name="juntos_temporada_corta">A short season</string>
+    <string name="juntos_nada_duracion">Nothing that long. Try another length.</string>
+    <string name="juntos_nada_por_ver">Neither of you has anything to watch yet.</string>
+    <string name="juntos_me_apunto">I\'m in</string>
+    <string name="juntos_te_apuntaste">You\'re in</string>
+    <string name="juntos_paso">Pass</string>
+    <string name="juntos_pasaste">You passed</string>
+    <string name="juntos_los_dos">You both want to watch it</string>
+    <string name="juntos_de_los_dos_corto">Both</string>
+    <string name="juntos_la_tienes">On your list</string>
+    <string name="juntos_la_tiene">On %1$s\'s list</string>
+    <string name="juntos_los_demas">The rest</string>
+    <string name="juntos_voto_local">Your picks stay on this phone. Send them over so they can be seen.</string>
+    <string name="juntos_voto_compartido">%1$s sees your picks in their Together with you, and you see theirs. Offline, they\'re saved here and sent later.</string>
+    <string name="juntos_se_apunto">%1$s is in</string>
+    <string name="juntos_se_apuntaron_los_dos">You\'re both in</string>
+    <string name="juntos_mandar">Send my picks</string>
+    <string name="juntos_mensaje">To watch together, I\'m in for: %1$s</string>
+    <string name="juntos_minutos">%1$d min</string>
+    <string name="juntos_horas">%1$d h</string>
+    <string name="juntos_horas_minutos">%1$d h %2$d min</string>
+    <string name="juntos_van_juntos">Watching together</string>
+    <string name="juntos_avances">You: %1$s · %2$s: %3$s</string>
+    <string name="juntos_en_curso">in progress</string>
+    <string name="juntos_nada_a_la_vez">You\'re not watching anything at the same time right now.</string>
+    <string name="juntos_sin_viendo">What %1$s is watching isn\'t shared.</string>
+    <string name="juntos_maraton">Your marathon</string>
+    <string name="juntos_en_comun_tipo">%1$s in common this year</string>
+    <string name="juntos_coincidieron">Both in %1$s</string>
+    <string name="juntos_nada_en_comun">You haven\'t finished anything in common yet.</string>
+    <string name="juntos_maraton_pista">From your shelf and the diary %1$s shares.</string>
+    <string name="juntos_sin_listas">You don\'t have a shared list yet.</string>
+    <string name="juntos_armar_lista">Make a shared list</string>
+    <string name="gente_resenas_comunidad">Community reviews</string>
 </resources>

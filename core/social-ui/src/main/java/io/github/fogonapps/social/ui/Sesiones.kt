@@ -1,4 +1,5 @@
 package io.github.fogonapps.social.ui
+import io.github.fogonapps.identidad.acentoSocial
 import io.github.fogonapps.identidad.PistaSocial as Pista
 
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +53,7 @@ fun Sesiones(vm: InterfazSocial) {
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         BotonSecundario(stringResource(R.string.social_red_actualizar_sesiones), { vm.red.cargarSesiones() }, Modifier.fillMaxWidth())
         val lista = sesiones
-        if (lista == null) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.tinta1, trackColor = f.linea)
+        if (lista == null) LinearProgressIndicator(Modifier.fillMaxWidth(), color = f.acentoSocial, trackColor = f.linea)
         else {
             lista.forEach { sesion ->
                 Text(sesion.dispositivo ?: stringResource(R.string.social_red_dispositivo_desconocido), color = f.texto)

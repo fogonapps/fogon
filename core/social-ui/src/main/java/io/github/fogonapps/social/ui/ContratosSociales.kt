@@ -78,6 +78,11 @@ interface InterfazSocial {
     @Composable fun textoBuscarAdjunto(): String? = null
     /** Si la app ofrece fotos de obras o personas para el fondo de una historia (El Cajón: pósteres, escenas, portadas, retratos). */
     val fotosDeObras: Boolean get() = false
+    /**
+     * Si la app usa historias de 24 horas. Con false no se ven en ningún lado: ni la barra, ni el aro de las fotos de
+     * perfil, ni crear o ver historias, ni sus avisos. El chat, sus notas y las publicaciones siguen igual.
+     */
+    val conHistorias: Boolean get() = true
     /** Responder una historia por mensaje (solo si la app tiene chat, como El Cajón). */
     val respondeHistorias: Boolean get() = false
     fun responderHistoria(usuario: String, texto: String) {}

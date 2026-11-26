@@ -79,19 +79,22 @@ private fun ContenidoFilaAjuste(
 fun Desplegable(icono: io.github.fogonapps.identidad.Dibujo, titulo: String, pista: String?, contenido: @Composable () -> Unit) {
     val f = FogonTema.actual
     var abierto by rememberSaveable(titulo) { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable { abierto = !abierto }.padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
-        Column(Modifier.weight(1f)) {
-            Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
-            // Cerrado, la pista va en dos líneas; abierto, entera.
-            pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = if (abierto) Int.MAX_VALUE else 2,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+    // En una columna propia: dentro de un Box el contenido se pintaba encima del encabezado.
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().clip(io.github.fogonapps.identidad.forma(16.dp)).clickable { abierto = !abierto }.padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            IconoRiso(icono, null, tamano = 22.dp, tinta = f.texto)
+            Column(Modifier.weight(1f)) {
+                Text(titulo, style = MaterialTheme.typography.bodyLarge, color = f.texto)
+                // Cerrado, la pista va en dos líneas; abierto, entera.
+                pista?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = f.textoSuave, maxLines = if (abierto) Int.MAX_VALUE else 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
+            }
+            IconoRiso(if (abierto) flechaArriba else IconosFogon.Abajo, null, tamano = 18.dp, tinta = f.textoSuave)
         }
-        IconoRiso(if (abierto) flechaArriba else IconosFogon.Abajo, null, tamano = 18.dp, tinta = f.textoSuave)
-    }
-    androidx.compose.animation.AnimatedVisibility(abierto) {
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { contenido() }
+        androidx.compose.animation.AnimatedVisibility(abierto) {
+            Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { contenido() }
+        }
     }
 }
 

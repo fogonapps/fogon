@@ -303,6 +303,9 @@ abstract class ControladorSocial(
         }
     }
     fun restaurar(c: CasoModeracion) = lanzar { cliente().restaurar(c); cargarCasos() }
+    fun anotarRadicado(c: CasoModeracion, radicado: String) = lanzar { cliente().anotarRadicado(c.que, c.objeto, radicado.trim()); cargarCasos() }
+    /** Quién puede abrirme un chat ("mutuos", "sigo" o "nadie"). */
+    fun cambiarEscribir(quien: String) = lanzar { cliente().escribir(quien); _cuenta.value = _cuenta.value?.copy(escribir = quien) }
 
     protected val _estadoCuenta = MutableStateFlow<EstadoCuentaSocial?>(null)
     val estadoCuenta: StateFlow<EstadoCuentaSocial?> = _estadoCuenta
@@ -431,6 +434,16 @@ abstract class ControladorSocial(
             catch (e: ErrorSocial) { if (e.codigo != 503 || e.error != "pagos_apagados") throw e }
         } }
     }
+    /** Compras con Google Play: solo existe en la versión de Play de la app, que trae su [PasarelaPlay]. */
+    var tiendaPlay: TiendaPlay? = null
+        private set
+    fun conectarPlay(pasarela: PasarelaPlay) {
+        if (tiendaPlay != null) return
+        val tienda = TiendaPlay(scope, pasarela, { cliente() }) { saldo -> _temas.value = _temas.value.copy(chispas = saldo) }
+        tiendaPlay = tienda
+        // Al abrir la app (y al entrar a una cuenta) se mandan las compras que quedaron sin confirmar.
+        scope.launch { usuario.collect { if (it != null) tienda.revisar() } }
+    }
     fun comprarChispas(paquete: Int, resultado: (String?) -> Unit) = scope.launch {
         var url: String? = null
         intentar {
@@ -448,7 +461,7 @@ abstract class ControladorSocial(
         _temas.value = cliente().temas()
         if (item.startsWith("banner:")) alCambiarBanner()
     }
-    suspend fun reportarArticuloMercado(id: Long, motivo: String) = cliente().reportar("mercado", id.toString(), "otro: $motivo")
+    suspend fun reportarArticuloMercado(id: Long, motivo: String, codigo: String = "otro") = cliente().reportar("mercado", id.toString(), "$codigo: $motivo")
     suspend fun mercado(tipo: String, orden: String, oficial: Boolean, pagina: Int, modo: String) = cliente().mercado(tipo, orden, oficial, pagina, modo)
     suspend fun publicarMercado(d: PublicarMercado): ArticuloMercado = cliente().publicarMercado(d).also { cargarTemas() }
     suspend fun comprarMercado(id: Long, clave: String) { cliente().comprarMercado(id, clave); cargarTemas() }
@@ -471,6 +484,11 @@ abstract class ControladorSocial(
     fun reclamarTema(tema: String, alComprar: () -> Unit = {}) = lanzar {
         cliente().reclamarTema(tema)
         alComprar()
+        _temas.value = cliente().temas()
+    }
+    /** Comprar un artículo de la tienda esperando la respuesta (el probador lo compra y se lo pone enseguida). */
+    suspend fun comprarTema(tema: String) {
+        cliente().reclamarTema(tema)
         _temas.value = cliente().temas()
     }
     protected open fun alCambiarBanner() {}
@@ -507,6 +525,9 @@ abstract class ControladorSocial(
     suspend fun votarListaComun(id: Long, item: Long, si: Boolean) = runCatching { cliente().votarListaComun(id, item, si) }.isSuccess
     suspend fun sumarAListaComun(id: Long, usuario: String) = runCatching { cliente().sumarAListaComun(id, usuario) }.isSuccess
     suspend fun salirDeListaComun(id: Long) = runCatching { cliente().salirDeListaComun(id) }.isSuccess
+    /* «Juntos»: votos compartidos con alguien que se sigue contigo. Null o false si falló (sin internet o sin permiso). */
+    suspend fun votosJuntos(usuario: String): VotosJuntosSocial? = runCatching { cliente().votosJuntos(usuario) }.getOrNull()
+    suspend fun votarJuntos(usuario: String, clave: String, voto: String?) = runCatching { cliente().votarJuntos(usuario, clave, voto) }.isSuccess
     suspend fun amigosParaListas(): List<PersonaSocial> = runCatching { cliente().amigos() }.getOrDefault(emptyList())
     fun ponerMejoresAmigos(l: List<String>) = lanzar { cliente().ponerMejoresAmigos(l) }
     fun silenciarHistorias(usuario: String, si: Boolean) = lanzar {

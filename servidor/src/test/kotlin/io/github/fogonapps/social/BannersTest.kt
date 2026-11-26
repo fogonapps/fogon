@@ -20,7 +20,34 @@ class BannersTest {
     @Test fun preciosDeLaFotoYDelAnimadoPropio() {
         assertEquals(2500, TemasPerfil.precio("portada:propia"))
         assertEquals(5000, TemasPerfil.precio("portada:animada"))
-        TemasPerfil.BANNERS_ANIMADOS.forEach { assertEquals(600, TemasPerfil.precio("banner:$it")) }
+        TemasPerfil.ANIMADOS_PUNTOS.forEach { assertEquals(600, TemasPerfil.precio("banner:$it")) }
+    }
+
+    @Test fun catalogoDeFabsConSusPrecios() {
+        TemasPerfil.ANIMADOS_FABS.keys.forEach { assertTrue(TemasPerfil.precio("banner:$it")!! in 1500..2000, it) }
+        TemasPerfil.BANNERS_FABS.filterKeys { it !in TemasPerfil.ANIMADOS_FABS && !it.startsWith("fabs-") }.keys
+            .forEach { assertTrue(TemasPerfil.precio("banner:$it")!! in 800..1200, it) }
+        listOf("negro-diafragma", "videoclub-rebobine", "biblioteca-exlibris", "vinilo-disco", "arcade-fosforo").forEach { assertEquals(500, TemasPerfil.precio("marco:$it")) }
+        assertEquals(1000, TemasPerfil.precio("vinilo-funda"))
+        assertEquals(1000, TemasPerfil.precio("escaparate:extra1"))
+        assertEquals(0, TemasPerfil.precio("banner:fabs-papel"))
+        // Los de Fabs no se tiñen; los riso gratis y los animados de puntos sí.
+        assertFalse(TemasPerfil.admiteColor("fabs-papel")); assertFalse(TemasPerfil.admiteColor("vinilo-giradiscos"))
+        assertTrue(TemasPerfil.admiteColor("papel")); assertTrue(TemasPerfil.admiteColor("deriva"))
+    }
+
+    @Test fun seCompraYSePoneUnArticuloDeFabs() = conSocial { s, _, yo ->
+        s.reclamarTema(yo, "banner:vinilo-giradiscos")
+        s.ponerTema(yo, "banner:vinilo-giradiscos")
+        assertEquals("banner:vinilo-giradiscos", s.temas(yo).banner)
+        assertFailsWith<Problema> { s.ponerTema(yo, "banner:vinilo-giradiscos~azul") }
+        s.reclamarTema(yo, "marco:vinilo-disco"); s.ponerTema(yo, "marco:vinilo-disco")
+        s.reclamarTema(yo, "vinilo-funda"); s.ponerTema(yo, "vinilo-funda")
+        val t = s.temas(yo)
+        assertEquals("vinilo-disco", t.marco); assertEquals("vinilo-funda", t.puesto)
+        // El gratis sobrio se pone sin comprarlo.
+        s.ponerTema(yo, "banner:fabs-tinta")
+        assertEquals("banner:fabs-tinta", s.temas(yo).banner)
     }
 
     @Test fun colorGratisSeGuardaYSeValida() = conSocial { s, _, yo ->

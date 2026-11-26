@@ -2,6 +2,7 @@ package io.github.fogonapps.cajon
 
 import android.app.Application
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.ResponseBody.Companion.toResponseBody
 import androidx.datastore.core.DataStore
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -17,8 +18,10 @@ import io.github.fogonapps.cajon.datos.limpiarClavesRetiradas
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
 class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapps.social.ui.AppConAvisos, io.github.fogonapps.social.ui.AppConTrabajador {
     /* X-10: los avisos con la app cerrada (la revisión común; El Cajón conserva el nombre AvisosRed). */
-    override val avisosConfiguracion = io.github.fogonapps.social.ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon")
+    override val avisosConfiguracion = io.github.fogonapps.social.ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon")
     override val avisosConMensajes = true
+    // Fabs no usa historias de 24 horas: sus avisos no suenan.
+    override val avisosConHistorias = false
     override val avisosIcono = R.drawable.ic_notificacion
     override val trabajadorAvisos: Class<out io.github.fogonapps.social.ui.AvisosFondo> = AvisosRed::class.java
     override fun avisosCuentas() = perfiles.lista.perfiles.mapNotNull { perfil ->
@@ -40,6 +43,12 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
     private var confirmarMigracion = false
     override fun onCreate() {
         super.onCreate()
+        // Fabs arranca en su propio tema (amarillo sobre casi negro violeta) para quien nunca eligió otro.
+        io.github.fogonapps.identidad.AlmacenApariencia.estiloInicial = io.github.fogonapps.identidad.Estilo.MARCA
+        // Fabs ya no tiene personaje: la cajita con ojos era del diseño anterior.
+        io.github.fogonapps.identidad.Personajes.apagados += io.github.fogonapps.identidad.Quien.CAJON
+        io.github.fogonapps.identidad.Trama.apagada = true
+        io.github.fogonapps.identidad.Iconografia.usarLucide()
         nombresGenerosJuego()
         confirmarMigracion = java.io.File(filesDir, "migracion-perfiles.json").let { it.exists() && it.readText() == "terminada" }
         limpiarClavesRetiradas(this)
@@ -99,14 +108,30 @@ class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapp
                     // servidor de Fogón, que las entrega al instante después de la primera vez. Si falla, directo.
                     val pedido = c.request()
                     val host = pedido.url.host
-                    if (host == "covers.openlibrary.org" || host == "coverartarchive.org") {
-                        val porServidor = pedido.newBuilder().url(io.github.fogonapps.social.ClienteSocial.SERVIDOR.toHttpUrl().newBuilder()
-                            .addPathSegments("v1/portada").addQueryParameter("u", pedido.url.toString()).build()).build()
-                        val r = runCatching { c.proceed(porServidor) }.getOrNull()
-                        if (r != null && r.isSuccessful) return@addInterceptor r
-                        r?.close()
+                    if (host != "covers.openlibrary.org" && host != "coverartarchive.org") return@addInterceptor c.proceed(pedido)
+                    // La imagen vacía de Open Library (un GIF de 1×1) se trata como «no hay»: así queda la portada
+                    // inventada con su ícono y no una tapa en blanco.
+                    fun sinVacia(r: okhttp3.Response): okhttp3.Response {
+                        if (!r.isSuccessful || !io.github.fogonapps.cajon.datos.Imagenes.vaciaDeOpenLibrary(host, r.header("Content-Type"))) return r
+                        r.close()
+                        return r.newBuilder().code(404).message("Sin portada").removeHeader("Content-Length").body("".toResponseBody(null)).build()
                     }
-                    c.proceed(pedido)
+                    val porServidor = pedido.newBuilder().url(io.github.fogonapps.social.ClienteSocial.SERVIDOR.toHttpUrl().newBuilder()
+                        .addPathSegments("v1/portada").addQueryParameter("u", pedido.url.toString()).build()).build()
+                    val r = runCatching { c.proceed(porServidor) }.getOrNull()
+                    if (r != null && r.isSuccessful) return@addInterceptor sinVacia(r)
+                    r?.close()
+                    // Directo, con un segundo intento si Internet Archive no respondió a tiempo o estaba ocupado: si no,
+                    // la portada quedaba vacía hasta salir y volver a la pantalla.
+                    val primera = try { c.proceed(pedido) } catch (x: java.io.IOException) {
+                        if (c.call().isCanceled()) throw x
+                        null
+                    }
+                    if (primera != null && !io.github.fogonapps.cajon.datos.Imagenes.reintentable(primera.code)) return@addInterceptor sinVacia(primera)
+                    if (c.call().isCanceled()) return@addInterceptor primera ?: throw java.io.IOException("Canceled")
+                    primera?.close()
+                    Thread.sleep(1_000)
+                    sinVacia(c.proceed(pedido))
                 }.build()
             }))
         }

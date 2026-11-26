@@ -125,6 +125,8 @@ open class ClienteSocial(
     suspend fun cambiarInsignia(usuario: String, insignia: String, motivo: String) { pedir("/admin/insignias", "POST", json(CambioInsignia.serializer(), CambioInsignia(usuario, insignia, motivo))) }
     suspend fun levantarSanciones(usuario: String, motivo: String) { pedir("/admin/sanciones/levantar", "POST", json(SancionEquipo.serializer(), SancionEquipo(usuario, motivo))) }
     suspend fun casos() = leer(ListSerializer(CasoModeracion.serializer()), pedir("/admin/casos"))
+    /** El número de la denuncia de un caso (queda en el registro del equipo). */
+    suspend fun anotarRadicado(que: String, objeto: String, radicado: String) { pedir("/admin/radicado", "POST", json(Radicado.serializer(), Radicado(que, objeto, radicado))) }
     suspend fun decidir(que: String, objeto: String, decision: String, regla: String, mensaje: String = "") { pedir("/admin/decidir", "POST", json(Decision.serializer(), Decision(que, objeto, decision, regla, mensaje))) }
     /** Advertir o sancionar una cuenta sin reporte de por medio, con el mensaje que le llega a la persona. */
     suspend fun sancionar(usuario: String, decision: String, regla: String, mensaje: String) { pedir("/admin/sanciones", "POST", json(SancionDirecta.serializer(), SancionDirecta(usuario, decision, regla, mensaje))) }
@@ -159,6 +161,8 @@ open class ClienteSocial(
         pedir("/cuenta/correo/confirmar", "POST", json(CambioCorreo.serializer(), CambioCorreo(nuevo, codigo = codigo)))
     }
     suspend fun privada(si: Boolean) { pedir("/cuenta", "PUT", json(Privada.serializer(), Privada(si))) }
+    /** Quién puede abrirme un chat: "mutuos", "sigo" o "nadie" (lo hace cumplir el servidor). */
+    suspend fun escribir(quien: String) { pedir("/cuenta", "PUT", json(AjusteEscribir.serializer(), AjusteEscribir(quien))) }
 
     /* Perfil */
     suspend fun subirPerfil(p: PerfilSubido) {
@@ -281,6 +285,9 @@ open class ClienteSocial(
     suspend fun destacadas(usuario: String) = leer(ListSerializer(GrupoDestacadasSocial.serializer()), pedir("/destacadas/${cod(usuario)}?app=${cod(configuracion.idApp)}"))
     suspend fun paquetesWompi() = leer(OfertaWompi.serializer(), pedir("/pagos/wompi/paquetes"))
     suspend fun ordenWompi(paquete: Int) = leer(CheckoutWompi.serializer(), pedir("/pagos/wompi/orden", "POST", json(PedidoPagoWompi.serializer(), PedidoPagoWompi(paquete)))).url
+    suspend fun paquetesPlay() = leer(OfertaPlay.serializer(), pedir("/pagos/play/paquetes"))
+    suspend fun verificarPlay(paquete: String, producto: String, token: String) =
+        leer(RespuestaPlay.serializer(), pedir("/pagos/play/verificar", "POST", json(PedidoPlay.serializer(), PedidoPlay(paquete, producto, token))))
     private fun unirColorBanner(banner: String, color: String): String =
         if (banner.startsWith("banner:") && color.isNotEmpty()) "$banner~$color" else banner
 
@@ -311,6 +318,10 @@ open class ClienteSocial(
     suspend fun votarListaComun(id: Long, item: Long, si: Boolean) { pedir("/listas-comunes/$id/obras/$item/voto", if (si) "POST" else "DELETE") }
     suspend fun sumarAListaComun(id: Long, usuario: String) { pedir("/listas-comunes/$id/miembros/${cod(usuario)}", "POST") }
     suspend fun salirDeListaComun(id: Long) { pedir("/listas-comunes/$id/yo", "DELETE") }
+    /** «Juntos»: tus votos y los de [usuario] (solo si se siguen los dos y no hay bloqueo). */
+    suspend fun votosJuntos(usuario: String) = leer(VotosJuntosSocial.serializer(), pedir("/juntos/${cod(usuario)}/votos"))
+    /** Marca (o quita, con [voto] null) lo que quieres ver con [usuario]: "si" o "no". */
+    suspend fun votarJuntos(usuario: String, clave: String, voto: String?) { pedir("/juntos/${cod(usuario)}/votos", "PUT", json(VotoJuntosSocial.serializer(), VotoJuntosSocial(clave, voto))) }
     suspend fun ponerMejoresAmigos(l: List<String>) { pedir("/mejores-amigos", "PUT", json(ListaUsuarios.serializer(), ListaUsuarios(l))) }
     suspend fun silenciarHistorias(usuario: String, si: Boolean) { pedir("/historias/silenciar/${cod(usuario)}", if (si) "POST" else "DELETE") }
     suspend fun meGustaHistoria(id: Long, si: Boolean) { pedir("/historias/$id/megusta", if (si) "POST" else "DELETE") }

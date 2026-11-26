@@ -2,6 +2,7 @@ package io.github.fogonapps.perfil
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.combinedClickable
@@ -61,14 +62,17 @@ fun Escaparates(
 ) {
     val f = FogonTema.actual
     lista.forEachIndexed { indice, e ->
+        // Con el diseño nuevo una repisa sin nada no deja un hueco en el perfil.
+        if (Trama.apagada && e.texto.isBlank() && e.numero.isBlank() && e.elementos.isEmpty() && e.fotos.isEmpty() && e.insignias.isEmpty()) return@forEachIndexed
         val opciones = acciones(indice)
         var menu by remember(e) { mutableStateOf(false) }
         val interaccion = if (alTocar != null) Modifier.combinedClickable(
             onClick = alTocar,
             onLongClick = if (opciones.isNotEmpty()) ({ menu = true }) else null,
         ).semantics { if (opciones.isNotEmpty()) customActions = opciones } else Modifier
-        BoxWithConstraints(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth()
-            .background(f.fondo, forma(24.dp)).tarjetaFogon().then(interaccion)) {
+        // Con el diseño nuevo la repisa va sobre el papel, sin caja: su título y lo que muestra, alineados con el perfil.
+        BoxWithConstraints(Modifier.padding(horizontal = if (Trama.apagada) 0.dp else 16.dp, vertical = 6.dp).fillMaxWidth()
+            .then(if (Trama.apagada) Modifier else Modifier.background(f.fondo, forma(24.dp)).tarjetaFogon()).then(interaccion)) {
             if (opciones.isNotEmpty()) DropdownMenu(
                 menu, { menu = false }, shape = forma(24.dp), containerColor = f.fondo,
                 border = BorderStroke(f.borde, f.linea),
@@ -81,10 +85,10 @@ fun Escaparates(
                 }
             }
             val altoMinimo = if (maxWidth >= 600.dp) maxWidth / 3.4f else 0.dp
-            Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = 0.18f), centro = Offset(1f, 0.5f)))
+            if (!Trama.apagada) Box(Modifier.matchParentSize().haloPuntos(f.tinta2.copy(alpha = 0.18f), centro = Offset(1f, 0.5f)))
             // Las repisas van limpias: un título discreto y el contenido; la galería, solo las fotos.
             val limpia = e.tipo == "galeria"
-            Column(Modifier.fillMaxWidth().heightIn(min = altoMinimo).padding(if (limpia) 8.dp else 20.dp),
+            Column(Modifier.fillMaxWidth().heightIn(min = altoMinimo).padding(if (Trama.apagada) PaddingValues(horizontal = 20.dp, vertical = 10.dp) else PaddingValues(if (limpia) 8.dp else 20.dp)),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val titulo = when (e.tipo) {
                     "forzudo:records" -> stringResource(R.string.escaparate_mis_marcas)
@@ -99,9 +103,9 @@ fun Escaparates(
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.widthIn(min = 140.dp, max = 420.dp).weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 Text(e.texto.ifBlank { titulo }, color = f.texto, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                                Box(Modifier.fillMaxWidth().height(22.dp).clip(forma(50.dp)).background(f.superficie)
+                                Box(Modifier.fillMaxWidth().height(22.dp).clip(forma(50.dp)).background(if (Trama.apagada) androidx.compose.ui.graphics.lerp(f.fondo, f.texto, 0.08f) else f.superficie)
                                     .semantics { progressBarRangeInfo = ProgressBarRangeInfo(porcentaje / 100f, 0f..1f) }) {
-                                    Box(Modifier.fillMaxHeight().fillMaxWidth(porcentaje / 100f).background(f.acentoTexto))
+                                    Box(Modifier.fillMaxHeight().fillMaxWidth(porcentaje / 100f).background(if (Trama.apagada) f.texto else f.acentoTexto))
                                 }
                             }
                             CifraEscaparate(porcentaje.toInt().toString(), "%")
@@ -162,9 +166,9 @@ fun Escaparates(
                         }
                         if (e.texto.isNotBlank()) {
                             if (e.tipo == "texto") Column {
-                                Text(stringResource(R.string.escaparate_comilla_abre), color = f.acentoTexto, fontSize = 36.sp)
+                                Text(stringResource(R.string.escaparate_comilla_abre), color = if (Trama.apagada) f.textoSuave else f.acentoTexto, fontSize = 36.sp)
                                 Text(e.texto, color = f.texto, style = MaterialTheme.typography.headlineSmall)
-                                Text(stringResource(R.string.escaparate_comilla_cierra), color = f.acentoTexto, fontSize = 36.sp, modifier = Modifier.align(Alignment.End))
+                                Text(stringResource(R.string.escaparate_comilla_cierra), color = if (Trama.apagada) f.textoSuave else f.acentoTexto, fontSize = 36.sp, modifier = Modifier.align(Alignment.End))
                             } else Text(e.texto, color = f.texto)
                         }
                         e.elementos.forEach { elemento ->
@@ -189,7 +193,8 @@ private fun CifraEscaparate(numero: String, unidad: String = "") {
     val f = FogonTema.actual
     FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // Cifras largas se parten sin ocultarlas ni reducirlas por debajo del tamaño accesible.
-        numero.chunked(5).forEach { NumeroRiso(it, 52.sp, color = f.numero) }
+        // Con el diseño nuevo la cifra va en la letra de los títulos, no en puntos.
+        numero.chunked(5).forEach { if (Trama.apagada) Text(it, fontFamily = f.titulos, fontWeight = FontWeight.Black, fontSize = 48.sp, lineHeight = 52.sp, color = f.texto) else NumeroRiso(it, 52.sp, color = f.numero) }
         if (unidad.isNotBlank()) Text(unidad, color = f.textoSuave, style = MaterialTheme.typography.titleSmall)
     }
 }
@@ -206,7 +211,7 @@ private fun CifraNumeroEscaparate(numero: String) {
         gruposNumeroFormateado(numero).forEach { grupo ->
             val tieneSeparador = grupo.lastOrNull() == '.' || grupo.lastOrNull() == ','
             val texto = buildAnnotatedString {
-                withStyle(SpanStyle(fontFamily = f.puntos, fontSize = 52.sp)) {
+                withStyle(if (Trama.apagada) SpanStyle(fontFamily = f.titulos, fontWeight = FontWeight.Black, fontSize = 48.sp, color = f.texto) else SpanStyle(fontFamily = f.puntos, fontSize = 52.sp)) {
                     append(if (tieneSeparador) grupo.dropLast(1) else grupo)
                 }
                 if (tieneSeparador) {

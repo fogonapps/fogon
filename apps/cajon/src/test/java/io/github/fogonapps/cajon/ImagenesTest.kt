@@ -56,4 +56,33 @@ class ImagenesTest {
         val propia = ImagenElegida("wikimedia", "foto", "Autor", "CC BY-SA")
         assertEquals(propia, Imagenes.migrar(o.copy(imagen = propia)).imagen)
     }
+
+    @Test fun caratulaDeAlbumSegunLaRespuesta() {
+        // Cover Art Archive: 307 a archive.org si alguna edición tiene frente; 404 si ninguna.
+        assertEquals(true, Imagenes.hayCaratula(307))
+        assertEquals(true, Imagenes.hayCaratula(200))
+        assertEquals(false, Imagenes.hayCaratula(404))
+        assertEquals(false, Imagenes.hayCaratula(400))
+        assertNull(Imagenes.hayCaratula(503))
+    }
+
+    @Test fun albumesSinCaratulaQuedanVaciosYAlFinal() {
+        fun a(id: String) = Encontrado(Tipos.ALBUM, id, null, "", "https://coverartarchive.org/release-group/$id/front-500", "mb:rg:$id")
+        val l = Imagenes.conCaratulas(listOf(a("1"), a("2"), a("3"), a("4")), listOf(false, true, null, false))
+        assertEquals(listOf("2", "3", "1", "4"), l.map { it.titulo })
+        assertEquals(listOf(false, false, true, true), l.map { it.portada.isBlank() })
+        // Si no se pudo saber, la carátula se conserva.
+        assertEquals("https://coverartarchive.org/release-group/3/front-500", l[1].portada)
+        assertEquals(listOf("1"), Imagenes.conCaratulas(listOf(a("1")), emptyList()).map { it.titulo })
+    }
+
+    @Test fun imagenVaciaDeOpenLibraryYReintentos() {
+        assertTrue(Imagenes.vaciaDeOpenLibrary("covers.openlibrary.org", "image/gif"))
+        assertTrue(Imagenes.vaciaDeOpenLibrary("covers.openlibrary.org", "Image/GIF; charset=binary"))
+        assertFalse(Imagenes.vaciaDeOpenLibrary("covers.openlibrary.org", "image/jpeg"))
+        assertFalse(Imagenes.vaciaDeOpenLibrary("covers.openlibrary.org", null))
+        assertFalse(Imagenes.vaciaDeOpenLibrary("coverartarchive.org", "image/gif"))
+        assertTrue(listOf(408, 429, 500, 502, 503, 504).all(Imagenes::reintentable))
+        assertFalse(listOf(200, 304, 400, 404).any(Imagenes::reintentable))
+    }
 }

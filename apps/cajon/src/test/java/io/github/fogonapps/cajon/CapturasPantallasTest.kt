@@ -89,6 +89,8 @@ class CapturasPantallasTest {
             ver.performScrollTo()
             assertEquals(ver.fetchSemanticsNode().boundsInRoot.left, enviar.fetchSemanticsNode().boundsInRoot.left, 0.5f)
             regla.guardarCaptura("ajustes-contadores-alineados", variante)
+            regla.onNodeWithText(app.getString(R.string.codigo_abierto), useUnmergedTree = true).performScrollTo().assertExists()
+            regla.guardarCaptura("ajustes-codigo-abierto", variante)
             abrir(Pantalla.Privacidad)
             regla.guardarCaptura("privacidad", variante)
             abrir(Pantalla.EditarPerfil)

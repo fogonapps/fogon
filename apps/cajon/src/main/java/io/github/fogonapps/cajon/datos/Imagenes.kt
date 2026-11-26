@@ -53,6 +53,33 @@ object Imagenes {
         }
     }
     /**
+     * Lo que dice la respuesta (sin seguir redirecciones) de la carátula de un álbum en Cover Art Archive: una
+     * redirección o la imagen, que la tiene; 404 (o 400, un id que no es de un álbum), que no; lo demás, no se sabe.
+     */
+    fun hayCaratula(codigo: Int): Boolean? = when (codigo) {
+        in 200..399 -> true
+        400, 404 -> false
+        else -> null
+    }
+
+    /**
+     * Los álbumes [l] con lo que se supo de su carátula ([tiene], en el mismo orden): sin la que no existe (queda vacía)
+     * y los que la tienen primero, sin cambiar el orden entre ellos.
+     */
+    fun conCaratulas(l: List<Encontrado>, tiene: List<Boolean?>): List<Encontrado> =
+        l.mapIndexed { i, e -> if (tiene.getOrNull(i) == false) e.copy(portada = "") else e }.sortedBy { it.portada.isBlank() }
+
+    /**
+     * Si una respuesta de [host] es la imagen vacía de Open Library: cuando no tiene la portada pedida responde 200 con
+     * un GIF de 1×1 transparente (sus portadas son siempre JPEG), que se vería como una portada en blanco.
+     */
+    fun vaciaDeOpenLibrary(host: String, tipo: String?): Boolean =
+        host == "covers.openlibrary.org" && tipo?.substringBefore(';')?.trim()?.lowercase() == "image/gif"
+
+    /** Si vale la pena pedir otra vez una portada que falló con [codigo] (Internet Archive, ocupado o caído un momento). */
+    fun reintentable(codigo: Int): Boolean = codigo == 408 || codigo == 429 || codigo in 500..599
+
+    /**
      * La forma de comparar imágenes y de votarlas: el tamaño grande y, de Commons (FilePath, miniatura u original), una
      * sola por archivo: su original en upload.wikimedia.org (así los votos de una misma imagen no se reparten).
      */

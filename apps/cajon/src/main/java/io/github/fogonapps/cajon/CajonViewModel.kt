@@ -67,6 +67,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.isActive
@@ -171,8 +172,12 @@ sealed interface Pantalla {
     /** Las listas en común (entre amigos, en Fogón Social) y una de ellas. */
     data object ListasComunes : Pantalla
     data class ListaComun(val id: Long) : Pantalla
+    /** «Juntos» con alguien que sigues: qué ven, lo que ven a la vez, lo que ya vieron los dos y sus listas en común. */
+    data class Juntos(val usuario: String) : Pantalla
     /** Las cifras y el perfil (las cuatro favoritas). */
     data object Cifras : Pantalla
+    /** El resumen de un año en historias a pantalla completa, para mirarlo y compartirlo. */
+    data class Resumen(val anio: Int) : Pantalla
     data object Artistas : Pantalla
     data object Retos : Pantalla
     data object Ajustes : Pantalla
@@ -230,24 +235,15 @@ sealed interface Pantalla {
     data object Licencias : Pantalla
 }
 
-enum class Pestana { INICIO, PARA_TI, CINE, MUSICA, LIBROS, JUEGOS;
+/**
+ * Las pestañas de abajo (rediseño 2026-11): cuatro destinos fijos y el + de agregar. Las guías de navegación (NN/g,
+ * Material) piden de tres a cinco; las cuatro de tipo de obra (Cine, Música, Libros, Juegos) pasaron a ser el selector
+ * de «Lo tuyo».
+ */
+enum class Pestana { INICIO, LO_TUYO, DESCUBRIR, GENTE;
     companion object {
-        /** Las pestañas en el orden que eligió la persona (las que falten van al final, en su orden de siempre). */
-        fun visibles(barra: List<String>, orden: List<String> = emptyList()): List<Pestana> {
-            if (barra.isEmpty()) return enOrden(orden)
-            val elegidas = barra.mapNotNull { n -> entries.firstOrNull { it.name == n } }.distinct().toMutableList()
-            if (INICIO !in elegidas) elegidas.add(0, INICIO)
-            entries.forEach { if (elegidas.size < 3 && it !in elegidas) elegidas.add(it) }
-            return elegidas
-        }
-        /** La barra con [p] puesta o quitada. Inicio no se quita y quedan al menos tres. */
-        fun conPestana(barra: List<String>, orden: List<String>, p: Pestana, mostrar: Boolean): List<Pestana> {
-            val lista = visibles(barra, orden)
-            return if (mostrar) (lista + p).distinct() else if (p != INICIO && lista.size > 3) lista - p else lista
-        }
-        /** La barra de siempre (todas), con el orden viejo de [orden] si lo hay. */
-        fun enOrden(orden: List<String>): List<Pestana> =
-            (orden.mapNotNull { n -> entries.firstOrNull { it.name == n } } + entries).distinct()
+        /** Si los juegos se muestran: la barra vieja guardada sin «JUEGOS» quería decir que la persona no juega. */
+        fun juegosVisibles(barra: List<String>) = barra.isEmpty() || "JUEGOS" in barra
     }
 }
 
@@ -280,13 +276,12 @@ object Secciones {
      * el cajón o un reto de juegos (a quien no juega no se le llenan esas pantallas de ceros).
      */
     fun tiposVisibles(e: io.github.fogonapps.cajon.datos.Estado): List<String> {
-        val juegos = Pestana.JUEGOS in Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas) ||
+        val juegos = Pestana.juegosVisibles(e.ajustes.barra) ||
             e.vivas.any { it.tipo == Tipos.JUEGO } || (e.ajustes.retos[Tipos.JUEGO] ?: 0) > 0
         return if (juegos) Tipos.TODOS else Tipos.TODOS - Tipos.JUEGO
     }
     /** El buscador no tiene "Cine": abierto desde el apartado Cine, empieza en películas. */
     fun paraBuscar(s: String) = if (s == CINE) PELICULAS else s
-    fun dePestana(p: Pestana) = when (p) { Pestana.CINE -> CINE; Pestana.MUSICA -> MUSICA; Pestana.LIBROS -> LIBROS; Pestana.JUEGOS -> JUEGOS; else -> TODO }
 }
 
 /**
@@ -312,7 +307,14 @@ data class Busqueda(
     val errores: Map<String, Int> = emptyMap(),
 ) {
     /** Un aviso por mensaje, aunque fallen varias fuentes por la misma causa. */
-    val avisos: List<Int> get() = resumirAvisos(errores.values)
+    val avisos: List<Int> get() = resumirAvisos(errores.filterKeys { it !in ADORNOS }.values)
+    /** Hay algo que mostrar: entonces un aviso de fallo va discreto, al final, y no tapa los resultados. */
+    val hayResultados: Boolean get() = personas.isNotEmpty() || artistas.isNotEmpty() || autores.isNotEmpty() || directores.isNotEmpty() ||
+        canciones.isNotEmpty() || obras.values.any { it.isNotEmpty() }
+    private companion object {
+        /** Consultas de adorno (géneros, fotos): si fallan, los resultados siguen bien y no se avisa. */
+        val ADORNOS = setOf("generos", "fotos_autores", "fotos_artistas")
+    }
     /**
      * Cambia cada vez que llega algo que va arriba en la lista (resultados o un aviso): el buscador vuelve arriba con
      * cada cambio, para que lo nuevo no quede escondido sobre lo que ya estaba a la vista.
@@ -448,6 +450,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _pila = MutableStateFlow<List<Pantalla>>(emptyList())
     val pila: StateFlow<List<Pantalla>> = _pila
+    /** El apartado elegido en «Lo tuyo» (Cine, Música, Libros o Juegos); el + busca en ese. */
+    val seccionLoTuyo = androidx.compose.runtime.mutableStateOf(Secciones.CINE)
     private val _pestana = MutableStateFlow(Pestana.INICIO)
     val pestana: StateFlow<Pestana> = _pestana
 
@@ -479,6 +483,10 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private val claveCine: String? get() = caja.claveTmdb ?: ""
 
     private val _mensajes = Channel<String>(Channel.BUFFERED)
+    /** Cuántas obras se trajeron de otra app hace un momento: el Inicio ofrece mirar el resumen del año. */
+    private val _recienImportado = MutableStateFlow<Int?>(null)
+    val recienImportado: StateFlow<Int?> = _recienImportado
+    fun olvidarImportado() { _recienImportado.value = null }
     val mensajes = _mensajes.receiveAsFlow()
 
     private var guardado: Job? = null
@@ -599,6 +607,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun fraseGuardada(franja: String): Pair<String, String?>? =
         caja.fraseGuardada?.split('\t')?.takeIf { it.size == 3 && it[0] == franja }?.let { it[1] to it[2].ifEmpty { null } }
 
+    /** Cómo se ve el diario (cuadrícula de portadas o lista), recordado en el teléfono. */
+    var diarioEnCuadricula: Boolean
+        get() = caja.diarioEnCuadricula
+        set(v) { caja.diarioEnCuadricula = v }
+
     fun guardarFrase(franja: String, clave: String, obra: String?) { caja.fraseGuardada = "$franja\t$clave\t${obra.orEmpty().replace('\t', ' ')}" }
 
     /** Manda una frase para que el equipo la revise (con cuenta). */
@@ -667,7 +680,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     private fun aplicarApariencia(e: Estado) {
         if (!vigenciaPerfil.vigente()) return
         // El perfil migrado conserva la apariencia anterior aunque aún no estuviera dentro del estado.
-        (e.apariencia?.paraTelefono() ?: if (recursos.id == "1") almacenApariencia.estado.value else io.github.fogonapps.identidad.Apariencia()).let { if (it != almacenApariencia.estado.value) almacenApariencia.aplicar(it) }
+        (e.apariencia?.paraTelefono() ?: if (recursos.id == "1") almacenApariencia.estado.value else io.github.fogonapps.identidad.Apariencia(estilo = io.github.fogonapps.identidad.AlmacenApariencia.estiloInicial)).let { if (it != almacenApariencia.estado.value) almacenApariencia.aplicar(it) }
     }
 
     init {
@@ -952,7 +965,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { traer() }.avisarFallo(aviso(nombre)).getOrDefault(emptyList())
         fun poner(r: List<Encontrado>) {
             val grupos = r.groupBy { it.tipo }
-            _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos)
+            // Se suman a lo que ya había de cada tipo: películas y series traen animes los dos, y no se pisan.
+            _busqueda.value = _busqueda.value.copy(obras = _busqueda.value.obras + grupos.mapValues { (tipo, nuevas) ->
+                (_busqueda.value.obras[tipo].orEmpty() + nuevas).distinctBy { it.fuente } })
         }
         // ¿Es un género? Entonces se busca lo más visto, leído o escuchado de ese género en cada fuente (desde
         // la 1.15 en todas las secciones; antes, solo en la música). Primero sale lo del cajón que lo lleva.
@@ -1522,8 +1537,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     if ((i + 1) % 10 == 0) caja.portadasRevisadas = revisadas
                     if (r != null) {
                         encontradas++
-                        val portada = if (o.tipo == Tipos.ALBUM) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
-                        cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
+                        // Un álbum sin carátula en Cover Art Archive llega con la portada vacía: queda la que tenía.
+                        val portada = if (o.tipo == Tipos.ALBUM && r.portada.isNotBlank()) MusicBrainz.caratula(r.fuente.removePrefix("mb:rg:"), 500) else r.portada
+                        cambiarObra(o.id) { it.copy(fuente = r.fuente, portada = if (o.tipo == Tipos.ALBUM) portada.ifBlank { it.portada } else portada, publica = r.publica ?: it.publica, votos = if (r.publica != null) r.votos else it.votos) }
                         // Y el resto de los datos de afuera (sinopsis, páginas, temporadas, canciones…), sin tocar lo de la persona.
                         try { traerDatos(o.id, callado = true) }
                         catch (x: Exception) { fallo(x) }
@@ -1697,7 +1713,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
 
     /* ----- Diario ----- */
 
-    fun registrar(id: String, r: Registro, texto: String = ""): String {
+    /** [cerrarPantalla]: false si se anota desde una hoja (el registro en dos toques), sin pantalla que cerrar. */
+    fun registrar(id: String, r: Registro, texto: String = "", cerrarPantalla: Boolean = true): String {
         if (!puedeCompartirResena(r.visibilidad)) return ""
         val nuevo = if (r.id.isEmpty()) r.copy(id = nuevoId("g")) else r
         cambiarResenas { e ->
@@ -1707,10 +1724,24 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     L.cambiarEstado(o, Estados.TERMINADO, hoy()).copy(terminada = nuevo.fecha) else o
             })
         }
-        cerrar()
+        if (cerrarPantalla) cerrar()
         if (r.id.isEmpty()) contadores.contar("cajon.diario_anotado")
         avisar(tx(R.string.aviso_registrado))
         return nuevo.id
+    }
+
+    /**
+     * Registrar en dos toques (mantener apretada una portada): la nota de la obra (como en su ficha), «Me gusta» y,
+     * con [terminadaHoy], una entrada de hoy en el diario con la misma nota (como [registrar]) y la obra terminada.
+     */
+    fun registroRapido(id: String, nota: Int, terminadaHoy: Boolean, otraVez: Boolean, gusta: Boolean) {
+        val o = _estado.value?.vivas?.firstOrNull { it.id == id } ?: return
+        if (nota != o.nota) ponerNota(id, nota)
+        if (gusta != o.meGusta) meGusta(id)
+        if (!terminadaHoy) return
+        registrar(id, Registro("", hoy().toString(), nota, otraVez, visibilidad = Visibilidad.PRIVADA), cerrarPantalla = false)
+        // `registrar` termina películas, discos y libros; una serie, un anime o un juego se terminan aquí (con el registro de hoy ya puesto).
+        if (_estado.value?.vivas?.firstOrNull { it.id == id }?.estado != Estados.TERMINADO) ponerEstado(id, Estados.TERMINADO)
     }
 
     fun borrarRegistro(id: String, registro: String) = cambiarResenas { e ->
@@ -1959,12 +1990,19 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun generoVisible(o: Obra, g: String): String = when (o.tipo) {
         Tipos.LIBRO -> io.github.fogonapps.cajon.datos.Generos.etiquetaLibro(g, idioma())
         Tipos.JUEGO -> GenerosJuego.visible(g)
+        Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME -> io.github.fogonapps.cajon.datos.Generos.etiquetaCine(g, idioma())
         else -> g
     }
 
     /** Las obras con los géneros de sus juegos en el idioma de la app (para contarlos juntos en las cifras). */
     fun conGenerosVisibles(obras: List<Obra>): List<Obra> = obras.map { o ->
-        if (o.tipo != Tipos.JUEGO || o.generos.isEmpty()) o else o.copy(generos = GenerosJuego.visibles(o))
+        when {
+            o.generos.isEmpty() -> o
+            o.tipo == Tipos.JUEGO -> o.copy(generos = GenerosJuego.visibles(o))
+            // (Las de cine también: si no, «Drama» y «Science Fiction» de antes contaban aparte de «Ciencia ficción».)
+            o.tipo in setOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME) -> o.copy(generos = o.generos.map { generoVisible(o, it) }.distinct())
+            else -> o
+        }
     }
 
     /** El último estudio que se tocó en una ficha: buscarlo trae sus juegos en vez de los que se llaman así. */
@@ -2262,7 +2300,9 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         val titulos = e.obras.map { L.tituloLimpio(it.titulo) }.toSet()
         val nombres = e.artistas.map { L.tituloLimpio(it.nombre) }.toSet()
         val cineQuiere = listOf(Tipos.PELICULA, Tipos.SERIE, Tipos.ANIME).filter { perfil.quiere(it) }
-        _recomendaciones.value = Recomendaciones(pendientes = Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, cargando = true)
+        // Al recargar, lo que ya se veía se queda (con «cargando», que la pantalla marca con una línea fina) hasta que llega lo nuevo.
+        val pendientes = Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }
+        _recomendaciones.update { viejas -> viejas?.copy(pendientes = pendientes, cargando = true) ?: Recomendaciones(pendientes = pendientes, cargando = true) }
         recomendando = viewModelScope.launch {
             val avisos = mutableListOf<Int>()
             val registrar: (Int) -> Unit = { avisos.add(it) }
@@ -2344,8 +2384,11 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
                     Rec.elegir(c, perfil, vistos, 12)
                 }.avisarFallo(registrar).getOrDefault(emptyList())
             }
-            val r = Recomendaciones(cine.await(), musica.await(), libros.await(), Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, avisos = resumirAvisos(avisos))
-            _recomendaciones.value = r
+            // Lo que dijo mientras se armaba («No me interesa» sobre lo que se veía) no vuelve a aparecer: se filtra con el
+            // estado de ahora, no con el que había al empezar.
+            val r = sinDescartes(Recomendaciones(cine.await(), musica.await(), libros.await(),
+                Rec.pendientes(e, perfil).filter { perfil.quiere(it.tipo) }, avisos = resumirAvisos(avisos)))
+            _recomendaciones.update { r }
             historial.mostrado(r.cine.map { "obra:" + it.first.fuente } + r.libros.map { "obra:" + it.first.fuente } + r.artistas.map { Rec.clavePersona(it.first.nombre) })
         }
     }
@@ -2380,29 +2423,30 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         }
         if (senal != null && senal != Senales.GUSTA) {
             if (desdeParaTi) avisar(tx(R.string.gusto_anotado))
-            val p = perfil()
-            _recomendaciones.value = _recomendaciones.value?.let { r ->
-                r.copy(cine = r.cine.filter { (x, _) -> "obra:" + x.fuente != clave && !p.excluido(x.generos, "") },
-                    artistas = r.artistas.filter { (a, _) -> Rec.clavePersona(a.nombre) != clave && !p.excluido(emptyList(), a.nombre) },
-                    libros = r.libros.filter { (x, _) -> "obra:" + x.fuente != clave && !p.excluido(emptyList(), x.creador) },
-                    pendientes = r.pendientes.filter { o -> "obra:" + o.fuente != clave && !p.excluido(GenerosJuego.visibles(o) + o.etiquetas, o.creador) })
-            }
+            _recomendaciones.update { r -> r?.let { sinDescartes(it) } }
         }
     }
 
-    /** Las categorías que quiere en "Para ti" (vacío = todas). */
-    /** Mueve una pestaña de abajo un lugar ([paso] -1 a la izquierda, 1 a la derecha). */
-    fun moverPestana(p: Pestana, paso: Int) = cambiar { e ->
-        val l = Pestana.visibles(e.ajustes.barra, e.ajustes.ordenPestanas).toMutableList()
-        val i = l.indexOf(p); val j = i + paso
-        if (j !in l.indices) e else { l.add(j, l.removeAt(i)); e.copy(ajustes = e.ajustes.copy(barra = l.map { it.name }, juegosEnBarra = true, cambio = ahora())) }
+    /**
+     * Sin lo que la persona descartó (cualquier señal que no sea «me gusta») ni lo que su perfil excluye, mirado en el
+     * estado de ahora: sirve al decir que no y al terminar de cargar «Para ti».
+     */
+    private fun sinDescartes(r: Recomendaciones): Recomendaciones {
+        val e = _estado.value ?: return r
+        val no = e.gustosVivos.filter { it.senal != io.github.fogonapps.cajon.datos.Senales.GUSTA }.map { it.clave }.toSet()
+        if (no.isEmpty()) return r
+        val p = perfil()
+        return r.copy(cine = r.cine.filter { (x, _) -> "obra:" + x.fuente !in no && !p.excluido(x.generos, "") },
+            artistas = r.artistas.filter { (a, _) -> Rec.clavePersona(a.nombre) !in no && !p.excluido(emptyList(), a.nombre) },
+            libros = r.libros.filter { (x, _) -> "obra:" + x.fuente !in no && !p.excluido(emptyList(), x.creador) },
+            pendientes = r.pendientes.filter { o -> "obra:" + o.fuente !in no && !p.excluido(GenerosJuego.visibles(o) + o.etiquetas, o.creador) })
     }
 
-    fun mostrarPestana(p: Pestana, mostrar: Boolean) = cambiar { e ->
-        val nueva = Pestana.conPestana(e.ajustes.barra, e.ajustes.ordenPestanas, p, mostrar)
-        e.copy(ajustes = e.ajustes.copy(barra = nueva.map { it.name }, juegosEnBarra = true, cambio = ahora()))
+    /** Las categorías que quiere en "Para ti" (vacío = todas). */
+    /** Mostrar u ocultar los juegos (en «Lo tuyo», las cifras y los retos). Se guarda en la barra de antes, sin «JUEGOS». */
+    fun mostrarJuegos(mostrar: Boolean) = cambiar { e ->
+        e.copy(ajustes = e.ajustes.copy(barra = if (mostrar) emptyList() else listOf("INICIO", "CINE", "MUSICA", "LIBROS"), juegosEnBarra = true, cambio = ahora()))
     }
-    fun restablecerBarra() = cambiar { e -> e.copy(ajustes = e.ajustes.copy(barra = emptyList(), ordenPestanas = emptyList(), cambio = ahora())) }
 
     fun elegirCategorias(tipos: List<String>) = cambiar { e -> e.copy(ajustes = e.ajustes.copy(categorias = tipos.distinct(), cambio = ahora())) }
 
@@ -3375,6 +3419,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
         var nuevas = 0
         cambiar { e -> val (x, n) = Importar.sumar(e, r.obras, ahora()); nuevas = n; x }
         avisar(txPlural(R.plurals.aviso_importadas, r.obras.size, r.obras.size, r.deDonde, nuevas))
+        _recienImportado.value = r.obras.size
         buscarPortadas()
     }
 
