@@ -50,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
@@ -468,6 +469,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
     when {
         o.tipo == Tipos.LIBRO -> Paginas(vm, o)
         o.tipo == Tipos.ALBUM && o.canciones.isNotEmpty() -> Canciones(vm, e, o)
+        o.tipo == Tipos.JUEGO -> DondeLoJuegas(vm, o)
     }
 
     Sinopsis(o.sinopsis, o.sinopsisFuente)
@@ -667,6 +669,30 @@ fun CambiarPortada(vm: CajonViewModel, e: Estado, id: String, que: String = Cajo
         }
     }
     Espacio(24.dp)
+}
+
+/** Dónde juega la persona este juego: donde sale (o las consolas comunes) para tocar, y «Otra» para escribirla. */
+@Composable
+private fun DondeLoJuegas(vm: CajonViewModel, o: Obra) {
+    Seccion(stringResource(R.string.donde_juegas))
+    var otra by rememberSaveable(o.id) { mutableStateOf<String?>(null) }
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        io.github.fogonapps.cajon.datos.Logica.opcionesDondeJuego(o).forEach { p ->
+            Pildora(p, acento = o.dondeJuego.any { it.equals(p, ignoreCase = true) }) { vm.alternarDondeJuego(o.id, p) }
+        }
+        if (otra == null) Pildora(stringResource(R.string.donde_juegas_otra), Iconos.Mas) { otra = "" }
+    }
+    otra?.let { texto ->
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            val foco = remember { androidx.compose.ui.focus.FocusRequester() }
+            CampoTexto(texto, { otra = it }, stringResource(R.string.donde_juegas_campo),
+                Modifier.weight(1f).focusRequester(foco), max = 40)
+            LaunchedEffect(Unit) { foco.requestFocus() }
+            BotonSecundario(stringResource(R.string.agregar), { if (texto.isNotBlank()) vm.alternarDondeJuego(o.id, texto); otra = null })
+        }
+    }
 }
 
 /** Por qué página va (libros). */

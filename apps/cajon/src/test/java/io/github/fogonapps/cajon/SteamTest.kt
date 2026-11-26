@@ -66,6 +66,7 @@ class SteamTest {
         // Lo que viene de la ficha de IGDB: fuente, portada y cuándo se trajo.
         val a = e.obras[0]
         assertEquals("igdb:11", a.fuente)
+        assertEquals(listOf("PC"), a.dondeJuego)
         assertTrue(a.portada.isNotEmpty())
         assertEquals(123L, a.traida)
         assertEquals(600, a.minutosSteam)

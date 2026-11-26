@@ -205,6 +205,10 @@ fun Tu(vm: CajonViewModel, todo: Estado, seccion: String? = null) {
         Seccion(stringResource(if (seccion == io.github.fogonapps.cajon.Secciones.JUEGOS) R.string.tus_estudios else R.string.tus_creadores))
         Tops(c.creadores)
     }
+    if (seccion == io.github.fogonapps.cajon.Secciones.JUEGOS && c.plataformas.isNotEmpty()) {
+        Seccion(stringResource(R.string.tus_plataformas))
+        Tops(c.plataformas)
+    }
 
     if (seccion != null) return
     Seccion(stringResource(R.string.mas))

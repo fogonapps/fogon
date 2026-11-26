@@ -2075,4 +2075,8 @@
   <string name="steam_o_enlace">Or paste your profile link</string>
   <string name="steam_entrar_trayendo">Steam recognized you. Bringing your games…</string>
   <string name="steam_entrar_fallo">Steam sign-in wasn’t completed. Try again from Settings.</string>
+  <string name="donde_juegas">Where you play it</string>
+  <string name="donde_juegas_otra">Other</string>
+  <string name="donde_juegas_campo">Another platform</string>
+  <string name="tus_plataformas">Your platforms</string>
 </resources>

@@ -1232,6 +1232,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             io.github.fogonapps.cajon.datos.Resenas.aplicarNota(nuevo, id, nota, cambio) else nuevo
     }
 
+    fun alternarDondeJuego(id: String, plataforma: String) = cambiarObra(id) { L.alternarDondeJuego(it, plataforma) }
+
     fun ponerEstado(id: String, estado: String) = cambiarObra(id) { L.cambiarEstadoConRegistro(it, estado, hoy(), nuevoId("g")) }
     fun ponerNota(id: String, nota: Int) = cambiarResenas { e ->
         io.github.fogonapps.cajon.datos.Resenas.aplicarNota(e, id, nota, ahora())

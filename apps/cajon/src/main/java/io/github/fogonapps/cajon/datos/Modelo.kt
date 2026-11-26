@@ -131,6 +131,8 @@ data class Obra(
     val resenaVisibilidad: String = "",
     /** Episodios favoritos de una serie o un anime: "1x5" o "1x5|Nombre del episodio". */
     val episodiosFavoritos: List<String> = emptyList(),
+    /** Dónde la persona juega este juego ("PC", "PlayStation 5"…), aparte de [plataformas] (donde existe). */
+    val dondeJuego: List<String> = emptyList(),
     /** La portada la eligió la persona (otra edición, otro póster o una imagen suya): al renovar los datos no se cambia. */
     val portadaPropia: Boolean = false,
     /** El fondo lo eligió la persona: al renovar los datos no se cambia. */

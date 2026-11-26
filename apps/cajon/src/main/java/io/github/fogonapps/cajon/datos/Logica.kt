@@ -41,6 +41,8 @@ data class Cifras(
     /** Registros por mes (índice 0 = enero). */
     val porMes: IntArray,
     val notaMedia: Double?,
+    /** Dónde se jugó lo terminado (juegos, por [Obra.dondeJuego]). */
+    val plataformas: List<Pair<String, Int>> = emptyList(),
 )
 
 object Logica {
@@ -181,6 +183,7 @@ object Logica {
             etiquetas = todas.flatMap { it.etiquetas }.distinct(),
             vistos = todas.flatMap { it.vistos }.distinct(),
             episodiosFavoritos = todas.flatMap { it.episodiosFavoritos }.distinct(),
+            dondeJuego = todas.flatMap { it.dondeJuego }.distinctBy { it.lowercase() }.take(MAX_DONDE_JUEGO),
             pagina = todas.maxOf { it.pagina },
             registros = todas.flatMap { it.registros }.distinctBy { it.id },
             empezada = todas.mapNotNull { it.empezada?.takeIf { f -> f.isNotBlank() } }.minOrNull() ?: queda.empezada,
@@ -422,6 +425,31 @@ object Logica {
         e.vivas.flatMap { o -> o.registros.map { EntradaDiario(o, it) } }
             .sortedWith(compareByDescending<EntradaDiario> { it.registro.fecha }.thenByDescending { it.registro.id })
 
+    /** Las consolas que se ofrecen en «Dónde lo juegas» si la fuente no dice en qué sale el juego. */
+    val PLATAFORMAS_COMUNES = listOf("PC", "PlayStation 5", "PlayStation 4", "Xbox Series X|S", "Xbox One", "Nintendo Switch",
+        "Nintendo Switch 2", "Android", "iOS")
+    const val MAX_DONDE_JUEGO = 6
+
+    /**
+     * Lo que se ofrece en «Dónde lo juegas»: donde sale el juego (o las consolas comunes), PC si vino de Steam y al final
+     * las escritas a mano. El orden no depende de lo elegido, para que las píldoras no salten al tocarlas.
+     */
+    fun opcionesDondeJuego(o: Obra): List<String> =
+        (o.plataformas.ifEmpty { PLATAFORMAS_COMUNES } + (if (o.minutosSteam != null) listOf("PC") else emptyList()) + o.dondeJuego)
+            .distinctBy { it.lowercase() }
+
+    /** Pone o quita [plataforma] de donde se juega (sin vacías, corta, sin repetir y hasta [MAX_DONDE_JUEGO]). */
+    fun alternarDondeJuego(o: Obra, plataforma: String): Obra {
+        val p = recortar(plataforma.trim(), 40)
+        if (p.isEmpty()) return o
+        val ya = o.dondeJuego.any { it.equals(p, ignoreCase = true) }
+        return when {
+            ya -> o.copy(dondeJuego = o.dondeJuego.filterNot { it.equals(p, ignoreCase = true) })
+            o.dondeJuego.size >= MAX_DONDE_JUEGO -> o
+            else -> o.copy(dondeJuego = o.dondeJuego + p)
+        }
+    }
+
     /** Las plataformas de un juego escritas a mano ("PC, Switch,, pc"): sin vacías ni repetidas, cada una corta y como mucho 12. */
     fun plataformas(texto: String): List<String> =
         texto.split(',', '·', '\n').map { it.trim().take(40) }.filter { it.isNotEmpty() }.distinctBy { tituloLimpio(it) }.take(12)
@@ -568,6 +596,7 @@ object Logica {
             creadores = top { o -> if (o.tipo == Tipos.JUEGO) o.creador.split(',').map { it.trim() } else listOf(o.creador) },
             porMes = porMes,
             notaMedia = if (conNota.isEmpty()) null else conNota.sumOf { it.nota } / 2.0 / conNota.size,
+            plataformas = top { o -> if (o.tipo == Tipos.JUEGO) o.dondeJuego else emptyList() },
         )
     }
 

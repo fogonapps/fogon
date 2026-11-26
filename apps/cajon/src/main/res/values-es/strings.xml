@@ -2078,4 +2078,8 @@
   <string name="steam_o_enlace">O pega el enlace de tu perfil</string>
   <string name="steam_entrar_trayendo">Steam te reconoció. Trayendo tus juegos…</string>
   <string name="steam_entrar_fallo">No se completó la entrada con Steam. Inténtalo otra vez desde Ajustes.</string>
+  <string name="donde_juegas">Dónde lo juegas</string>
+  <string name="donde_juegas_otra">Otra</string>
+  <string name="donde_juegas_campo">Otra plataforma</string>
+  <string name="tus_plataformas">Tus plataformas</string>
 </resources>

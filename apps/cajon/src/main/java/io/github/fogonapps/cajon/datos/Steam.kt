@@ -204,6 +204,7 @@ object Steam {
             val base = j.igdb?.let { fichas[it] }
                 ?: Obra(id = "", tipo = Tipos.JUEGO, titulo = j.nombre, fuente = fuente.orEmpty())
             obras += base.copy(id = nuevoId("o"), estado = estadoDe(minutos, dos), minutosSteam = minutos, minutosSteamCuando = ahora,
+                dondeJuego = base.dondeJuego.ifEmpty { listOf("PC") },
                 agregada = ahora, cambio = ahora, silenciosa = true, traida = if (renovar) 0L else base.traida)
             val n = obras.size - 1
             if (fuente != null) porFuente[fuente] = n
