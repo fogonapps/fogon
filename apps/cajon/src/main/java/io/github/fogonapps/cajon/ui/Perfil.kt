@@ -322,7 +322,17 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
                 Box(Modifier.padding(vertical = 4.dp)) { TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) }) }
             }
-            FavoritasDelPerfil(favoritasPropias(vm, e)) { vm.abrir(Pantalla.EditarVitrina) }
+            val favoritas = favoritasPropias(vm, e)
+            var compartirFavoritas by rememberSaveable { mutableStateOf(false) }
+            val acciones = LocalAcciones.current
+            if (compartirFavoritas && acciones != null) {
+                val titulo = stringResource(R.string.vitrina_compartir_titulo)
+                DialogoCompartirEnFormato({ compartirFavoritas = false }, { acciones.compartir(it, titulo) }) { historia ->
+                    TarjetaFavoritas(favoritas, e.ajustes.nombre, yo, historia)
+                }
+            }
+            FavoritasDelPerfil(favoritas, { vm.abrir(Pantalla.EditarVitrina) },
+                compartir = if (acciones != null) ({ compartirFavoritas = true }) else null)
             obra(p.destacados[Destacados.MARCO])?.let { o ->
                 DestacadoConPalabras(nombreHueco(Destacados.MARCO), o.titulo, p.porQue[Destacados.MARCO], { vm.abrir(Pantalla.Ficha(o.id)) },
                     { vm.abrir(Pantalla.ElegirDestacado(Destacados.MARCO)) }) { m -> Portada(o.portada, o.tipo, o.titulo, m, esquina = 10.dp, conTitulo = false) }

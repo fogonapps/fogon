@@ -118,7 +118,7 @@ internal class Favorita(
  * una sola invitación discreta con [invitar]).
  */
 @Composable
-internal fun FavoritasDelPerfil(favoritas: List<Favorita>, invitar: (() -> Unit)? = null) {
+internal fun FavoritasDelPerfil(favoritas: List<Favorita>, invitar: (() -> Unit)? = null, compartir: (() -> Unit)? = null) {
     val f = FogonTema.actual
     if (favoritas.isEmpty()) {
         if (invitar == null) return
@@ -138,6 +138,7 @@ internal fun FavoritasDelPerfil(favoritas: List<Favorita>, invitar: (() -> Unit)
     }
     var todas by rememberSaveable { mutableStateOf(false) }
     TituloPerfil(stringResource(R.string.perfil_favoritas)) {
+        if (compartir != null) BotonIcono(Iconos.Compartir, stringResource(R.string.vitrina_compartir), onClick = compartir)
         if (favoritas.size > 4) Text(stringResource(if (todas) R.string.lotuyo_ver_menos else R.string.lotuyo_ver_todos, favoritas.size),
             style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = f.texto,
             modifier = Modifier.clip(forma(8.dp)).clickable(role = Role.Button) { todas = !todas }.heightIn(min = 48.dp).padding(horizontal = 8.dp, vertical = 14.dp))

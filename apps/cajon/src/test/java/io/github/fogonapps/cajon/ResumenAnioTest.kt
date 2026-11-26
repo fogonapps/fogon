@@ -35,6 +35,22 @@ class ResumenAnioTest {
         assertEquals(100, r.minutos)
     }
 
+    @Test fun laminaDeJuegos() {
+        val juego = { id: String, nota: Int, donde: List<String>, estudio: String, steam: Int? ->
+            obra(id, tipo = Tipos.JUEGO, nota = nota, creador = estudio, minutos = null).copy(dondeJuego = donde, minutosSteam = steam) }
+        val e = Estado(obras = listOf(
+            juego("a", 6, listOf("PC"), "Team Cherry", 600), juego("b", 9, listOf("PC", "Nintendo Switch"), "Maddy Makes Games, Team Cherry", 120),
+            juego("c", 8, listOf("Nintendo Switch", "PC"), "Supergiant", null), obra("p")))
+        val r = ResumenAnio.de(e, 2026)
+        assertTrue(Lamina.JUEGOS in r.laminas)
+        assertEquals(listOf("b", "c", "a"), r.juegos.map { it.id })
+        assertEquals("PC" to 3, r.plataforma)
+        assertEquals("Team Cherry" to 2, r.estudio)
+        assertEquals(12, r.horasSteam)
+        // Sin juegos en el año, no hay lámina.
+        assertFalse(Lamina.JUEGOS in ResumenAnio.de(Estado(obras = listOf(obra("p"))), 2026).laminas)
+    }
+
     @Test fun conMenosDeCincoInvitaATraer() {
         val pocas = Estado(obras = (1..4).map { obra("p$it", fechas = listOf("2026-05-0$it")) })
         assertTrue(ResumenAnio.de(pocas, 2026).pocosDatos)
@@ -96,6 +112,7 @@ class ResumenAnioTest {
             obra("b", tipo = Tipos.LIBRO, paginas = 200, minutos = null, nota = 7, meGusta = true),
             obra("c", tipo = Tipos.LIBRO, paginas = 100, minutos = null, nota = 8),
             obra("d", nota = 6, meGusta = true),
+            obra("j", tipo = Tipos.JUEGO, minutos = null, nota = 5),
         ))
         assertEquals(Lamina.entries.toList(), ResumenAnio.de(e, 2026).laminas)
     }

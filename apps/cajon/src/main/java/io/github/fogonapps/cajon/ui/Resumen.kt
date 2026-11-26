@@ -288,6 +288,32 @@ private fun ColumnScope.ContenidoLamina(r: ResumenAnio, lamina: Lamina, nombre: 
                     Linea(pluralStringResource(R.plurals.resumen_en_obras, n, n))
                 }
             }
+            Lamina.JUEGOS -> {
+                Etiqueta(stringResource(R.string.resumen_titulo, r.anio))
+                Titulo(stringResource(R.string.resumen_juegos))
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Enorme("${r.juegos.size}", 88, 48)
+                    Text(pluralStringResource(R.plurals.resumen_juegos_terminados, r.juegos.size), style = MaterialTheme.typography.titleMedium,
+                        color = f.texto, modifier = Modifier.padding(bottom = if (compacto) 8.dp else 16.dp))
+                }
+                if (r.juegos.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.clearAndSetSemantics {}) {
+                    r.juegos.take(if (compacto) 5 else 4).forEach { o ->
+                        Portada(o.portada, o.tipo, o.titulo, Modifier.width(if (compacto) 44.dp else 70.dp), esquina = if (compacto) 5.dp else 8.dp, conTitulo = false)
+                    }
+                }
+                val datos = buildList {
+                    r.plataforma?.let { add(stringResource(R.string.resumen_plataforma) to it.first) }
+                    r.estudio?.let { add(stringResource(R.string.resumen_estudio) to it.first) }
+                    if (r.horasSteam > 0) add(stringResource(R.string.resumen_horas_steam) to "${r.horasSteam}")
+                    r.juegos.firstOrNull { it.nota > 0 }?.let { add(stringResource(R.string.resumen_mejor_juego) to it.titulo) }
+                }.take(4)
+                datos.chunked(2).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        fila.forEach { (etiqueta, valor) -> Dato(etiqueta, valor, compacto, Modifier.weight(1f)) }
+                        if (fila.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
             Lamina.MES -> {
                 val mes = r.mes ?: 1
                 Etiqueta(stringResource(R.string.resumen_mes))
@@ -325,6 +351,7 @@ private fun ColumnScope.ContenidoLamina(r: ResumenAnio, lamina: Lamina, nombre: 
                     if (r.paginas > 0) add(stringResource(R.string.paginas_leidas) to "${r.paginas}")
                     r.genero?.let { add(stringResource(R.string.resumen_genero) to it.first) }
                     r.creador?.let { add(stringResource(R.string.resumen_creador) to it.first) }
+                    r.plataforma?.let { add(stringResource(R.string.resumen_plataforma) to it.first) }
                     r.mes?.let { add(stringResource(R.string.resumen_mes) to java.time.Month.of(it).getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, idioma).replaceFirstChar { c -> c.titlecase(idioma) }) }
                     if (r.racha >= 2) add(stringResource(R.string.resumen_racha) to pluralStringResource(R.plurals.resumen_dias, r.racha, r.racha))
                 }.take(if (compacto) 4 else 6)
@@ -348,7 +375,7 @@ private fun ColumnScope.ContenidoLamina(r: ResumenAnio, lamina: Lamina, nombre: 
  * entera en vez de cortarla o encimar sus partes.
  */
 @Composable
-private fun Encajar(modifier: Modifier, contenido: @Composable ColumnScope.() -> Unit) {
+internal fun Encajar(modifier: Modifier, contenido: @Composable ColumnScope.() -> Unit) {
     androidx.compose.ui.layout.Layout({ Column(Modifier.fillMaxWidth()) { contenido() } }, modifier) { medibles, c ->
         val p = medibles.first().measure(c.copy(minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
         val alto = if (c.hasBoundedHeight) c.maxHeight else p.height
@@ -453,7 +480,15 @@ private fun TarjetaResumen(r: ResumenAnio, lamina: Lamina, perfil: PerfilDelResu
  * comparte es la tarjeta entera, a la resolución del teléfono.
  */
 @Composable
-private fun DialogoCompartirResumen(r: ResumenAnio, lamina: Lamina, perfil: PerfilDelResumen, onCerrar: () -> Unit, onCompartir: (Bitmap) -> Unit) {
+private fun DialogoCompartirResumen(r: ResumenAnio, lamina: Lamina, perfil: PerfilDelResumen, onCerrar: () -> Unit, onCompartir: (Bitmap) -> Unit) =
+    DialogoCompartirEnFormato(onCerrar, onCompartir) { historia -> TarjetaResumen(r, lamina, perfil, historia) }
+
+/**
+ * Elegir el formato (historia 360 × 640 dp o cuadrada 360 × 360 dp) y compartir: la tarjeta se dibuja a su tamaño real
+ * y se ve achicada; lo que se comparte es la tarjeta entera. La usan el resumen del año y las favoritas.
+ */
+@Composable
+internal fun DialogoCompartirEnFormato(onCerrar: () -> Unit, onCompartir: (Bitmap) -> Unit, tarjeta: @Composable (historia: Boolean) -> Unit) {
     val f = FogonTema.actual
     val capa = rememberGraphicsLayer()
     val alcance = rememberCoroutineScope()
@@ -468,7 +503,7 @@ private fun DialogoCompartirResumen(r: ResumenAnio, lamina: Lamina, perfil: Perf
                 Box(Modifier.size(360.dp * escala, alto * escala).clip(forma(16.dp)), contentAlignment = Alignment.Center) {
                     Box(Modifier.requiredSize(360.dp, alto).graphicsLayer { scaleX = escala; scaleY = escala }
                         .drawWithContent { capa.record { this@drawWithContent.drawContent() }; drawLayer(capa) }) {
-                        TarjetaResumen(r, lamina, perfil, historia)
+                        tarjeta(historia)
                     }
                 }
             }

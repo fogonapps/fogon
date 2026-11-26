@@ -2082,4 +2082,16 @@
   <string name="donde_juegas_otra">Otra</string>
   <string name="donde_juegas_campo">Otra plataforma</string>
   <string name="tus_plataformas">Tus plataformas</string>
+  <string name="vitrina_compartir">Compartir tus favoritas</string>
+  <string name="vitrina_compartir_titulo">Mis favoritas</string>
+  <string name="resumen_juegos">Tu año jugando</string>
+  <string name="resumen_plataforma">Tu plataforma</string>
+  <string name="resumen_estudio">Tu estudio del año</string>
+  <string name="resumen_horas_steam">Horas en Steam</string>
+  <string name="resumen_mejor_juego">Tu mejor juego</string>
+  <plurals name="resumen_juegos_terminados">
+    <item quantity="one">juego terminado</item>
+    <item quantity="many">juegos terminados</item>
+    <item quantity="other">juegos terminados</item>
+  </plurals>
 </resources>

@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Estado
@@ -136,4 +137,41 @@ fun EditarVitrina(vm: CajonViewModel, e: Estado) {
         }
     }
     Espacio(40.dp)
+}
+
+/**
+ * Las favoritas del perfil como imagen para compartir: tu nombre, «Mis favoritas» y las portadas (en la de historia
+ * hasta 12 en tres columnas, con su título; en la cuadrada hasta 8 en cuatro, solo portadas; si no caben, se achican), con la marca de Fabs. Mide 360 × 640 dp o 360 × 360 dp.
+ */
+@Composable
+internal fun TarjetaFavoritas(favoritas: List<Favorita>, nombre: String, usuario: String?, historia: Boolean) {
+    val f = FogonTema.actual
+    val columnas = if (historia) 3 else 4
+    val lista = favoritas.take(if (historia) 12 else 8)
+    Column(Modifier.size(360.dp, if (historia) 640.dp else 360.dp).background(f.fondo)
+        .padding(horizontal = if (historia) 26.dp else 20.dp, vertical = if (historia) 28.dp else 16.dp)) {
+        Encajar(Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(if (historia) 14.dp else 8.dp)) {
+                Column {
+                    Text(stringResource(R.string.vitrina_compartir_titulo), fontFamily = f.titulos, fontWeight = FontWeight.Bold,
+                        fontSize = if (historia) 34.sp else 24.sp, lineHeight = if (historia) 38.sp else 28.sp, color = f.texto)
+                    val quien = listOfNotNull(nombre.takeIf { it.isNotBlank() }, usuario?.let { "@$it" }).joinToString("  ")
+                    if (quien.isNotEmpty()) Text(quien, style = if (historia) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium,
+                        color = f.textoSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                lista.chunked(columnas).forEach { fila ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(if (historia) 10.dp else 8.dp)) {
+                        fila.forEach { fav ->
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                fav.imagen(Modifier.fillMaxWidth())
+                                if (historia) Text(fav.titulo, style = MaterialTheme.typography.labelSmall, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                        repeat(columnas - fila.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
+        Box(Modifier.padding(top = 8.dp)) { MarcaCompartir() }
+    }
 }

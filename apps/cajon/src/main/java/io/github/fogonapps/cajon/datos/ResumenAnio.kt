@@ -3,7 +3,7 @@ package io.github.fogonapps.cajon.datos
 import java.time.LocalDate
 
 /** Las láminas del resumen del año, en el orden en que se ven. Cada una sale solo si tiene datos. */
-enum class Lamina { TOTAL, TIPOS, TIEMPO, MEJORES, GUSTOS, MES, RACHA, FAVORITAS, CIERRE }
+enum class Lamina { TOTAL, TIPOS, TIEMPO, MEJORES, GUSTOS, JUEGOS, MES, RACHA, FAVORITAS, CIERRE }
 
 /**
  * Lo que cuenta el resumen de un año: sale de [Logica.cifras] y de lo terminado en ese año (con el mismo criterio que
@@ -36,6 +36,13 @@ data class ResumenAnio(
     val favoritas: List<Obra>,
     /** Lo último terminado, para el abanico de portadas; hasta siete. */
     val recientes: List<Obra>,
+    /** Los juegos terminados en el año, los mejor calificados primero. */
+    val juegos: List<Obra> = emptyList(),
+    /** Dónde más se jugó lo terminado ([Obra.dondeJuego]) y el estudio que más se repite entre esos juegos. */
+    val plataforma: Pair<String, Int>? = null,
+    val estudio: Pair<String, Int>? = null,
+    /** Las horas en Steam de esos juegos (las de siempre, no solo las del año: Steam no las da por año). */
+    val horasSteam: Int = 0,
 ) {
     /** Con menos de cinco cosas en el año, el resumen sería pobre: mejor invitar a traer el historial. */
     val pocosDatos: Boolean get() = maxOf(total, registros) < MINIMO
@@ -47,6 +54,7 @@ data class ResumenAnio(
         if (minutos >= 60 || paginas > 0 || canciones > 0) add(Lamina.TIEMPO)
         if (mejores.isNotEmpty()) add(Lamina.MEJORES)
         if (genero != null || creador != null) add(Lamina.GUSTOS)
+        if (juegos.isNotEmpty()) add(Lamina.JUEGOS)
         if (mes != null) add(Lamina.MES)
         if (racha >= 2) add(Lamina.RACHA)
         if (favoritas.isNotEmpty()) add(Lamina.FAVORITAS)
@@ -56,7 +64,8 @@ data class ResumenAnio(
     override fun equals(other: Any?) = other is ResumenAnio && anio == other.anio && total == other.total && registros == other.registros &&
         porTipo == other.porTipo && minutos == other.minutos && paginas == other.paginas && canciones == other.canciones &&
         mejores == other.mejores && genero == other.genero && creador == other.creador && mes == other.mes && enMes == other.enMes &&
-        porMes.contentEquals(other.porMes) && racha == other.racha && favoritas == other.favoritas && recientes == other.recientes
+        porMes.contentEquals(other.porMes) && racha == other.racha && favoritas == other.favoritas && recientes == other.recientes &&
+        juegos == other.juegos && plataforma == other.plataforma && estudio == other.estudio && horasSteam == other.horasSteam
     override fun hashCode() = 31 * anio + total * 17 + registros + porMes.contentHashCode()
 
     companion object {
@@ -80,6 +89,11 @@ data class ResumenAnio(
             val porMes = if (c.porMes.sum() > 0) c.porMes.copyOf() else IntArray(12).also { m ->
                 terminadas.forEach { o -> Logica.ultimaVez(o)?.substring(5, 7)?.toIntOrNull()?.let { if (it in 1..12) m[it - 1]++ } }
             }
+            val juegos = terminadas.filter { it.tipo == Tipos.JUEGO }
+                .sortedWith(compareByDescending<Obra> { it.nota }.thenByDescending { Logica.ultimaVez(it) })
+            // Un juego guarda hasta tres estudios separados por comas: cada uno cuenta aparte, como en las cifras.
+            val estudio = juegos.flatMap { o -> o.creador.split(',').map { it.trim() } }.filter { it.isNotEmpty() }
+                .groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.firstOrNull()?.toPair()
             val maximo = porMes.max()
             val mes = if (maximo > 0) porMes.indexOfFirst { it == maximo } + 1 else null
             return ResumenAnio(
@@ -99,6 +113,10 @@ data class ResumenAnio(
                 racha = rachaMasLarga(e, anio),
                 favoritas = favoritas,
                 recientes = terminadas.sortedByDescending { Logica.ultimaVez(it) }.take(7),
+                juegos = juegos,
+                plataforma = c.plataformas.firstOrNull(),
+                estudio = estudio,
+                horasSteam = juegos.sumOf { it.minutosSteam ?: 0 } / 60,
             )
         }
 
