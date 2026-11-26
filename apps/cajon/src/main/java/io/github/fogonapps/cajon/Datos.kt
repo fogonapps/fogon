@@ -12,8 +12,8 @@ fun leerRespaldoCajon(texto: String): Estado? =
     runCatching { JsonCajon.decodeFromString(Estado.serializer(), texto) }.getOrNull()?.takeIf { it.listo }
 
 /**
- * Los datos de Fabs para las otras apps de Fogón (respaldo de todo Fogón).
- * Solo los ve una app firmada con la misma llave (permiso de firma, ver RespaldoFogon.kt en core).
+ * Los datos de Fabs en el formato del respaldo de todo Fogón. No va en el manifiesto: Fabs sale de Google Play,
+ * firmada con otra llave, y no comparte el permiso de firma de las otras apps (ver AndroidManifest.xml).
  * Las claves de los servicios externos no van: quedan cifradas en este teléfono.
  */
 class DatosCajon : ProveedorDatosFogon() {

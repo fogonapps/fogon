@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Fabs sale de Google Play, que la firma con otra llave: no puede compartir el permiso de firma de las otras
+         apps de Fogón (Android rechaza instalarla si una de ellas ya lo declaró: INSTALL_FAILED_DUPLICATE_PERMISSION).
+         Por eso no lo declara ni expone sus datos; su respaldo es el propio, en Ajustes. -->
+    <permission android:name="io.github.fogonapps.permiso.DATOS" tools:node="remove" />
+    <uses-permission android:name="io.github.fogonapps.permiso.DATOS" tools:node="remove" />
 
     <!-- Internet para buscar películas, series, libros y discos (TMDB, Open Library, MusicBrainz), traer sus
          portadas y usar las funciones opcionales de Fogón Social. -->
@@ -73,12 +80,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-        <!-- Sus datos para las otras apps de Fogón (respaldo de todo Fogón); solo con la misma firma. -->
-        <provider
-            android:name=".DatosCajon"
-            android:authorities="${applicationId}.datos"
-            android:exported="true"
-            android:permission="io.github.fogonapps.permiso.DATOS" />
     </application>
 
 </manifest>
