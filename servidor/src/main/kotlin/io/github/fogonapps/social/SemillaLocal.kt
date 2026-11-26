@@ -91,6 +91,29 @@ internal fun sembrarSocialLocal(carpeta: File): String {
                 social.escaparates.guardar(id, repisas)
             }
         }
+        // Para probar «En común contigo»: lo que publicó cada vecino (reseñas y diario de obras de dominio público, con las
+        // mismas fuentes ficticias que la colección de prueba de la app) y los artistas que escucha. Muestra dos coincide
+        // en varias (y opina distinto en una); Muestra uno, en una sola: «todavía no hay suficiente».
+        fun obra(clave: String, tipo: String, titulo: String, tipoObra: String, fuente: String, estrellas: Double, cuando: Long) =
+            PublicacionSubida(clave, Vis.PUBLICA, cuando, tipo, buildJsonObject {
+                put("titulo", titulo); put("tipoObra", tipoObra); put("portada", ""); put("fuente", fuente); put("estrellas", estrellas)
+                if (tipo == "resena") { put("nota", (estrellas * 2).toInt()); put("texto", "Reseña de muestra."); put("parte", ""); put("spoiler", false) }
+                put("fecha", java.time.LocalDate.now().toString())
+            })
+        social.subirPublicaciones(vecinos[1], listOf(
+            obra("s1", "resena", "Nosferatu", "pelicula", "tmdb:movie:00", 4.5, ahora - 1_000),
+            obra("s2", "diario", "Metrópolis", "pelicula", "tmdb:movie:00000", 5.0, ahora - 2_000),
+            obra("s3", "resena", "El maquinista de La General", "pelicula", "tmdb:movie:0000000", 4.0, ahora - 3_000),
+            obra("s4", "diario", "Viaje a la Luna", "pelicula", "tmdb:movie:000000000", 1.5, ahora - 4_000),
+            obra("s5", "resena", "Arias de Caruso", "album", "mb:rg:0000000000000000000", 4.5, ahora - 5_000),
+            obra("s6", "resena", "Amanecer", "pelicula", "tmdb:movie:631", 5.0, ahora - 6_000),
+            obra("s7", "diario", "El acorazado Potemkin", "pelicula", "tmdb:movie:643", 4.5, ahora - 7_000),
+        ))
+        social.subirPublicaciones(vecinos[0], listOf(obra("u1", "diario", "Frankenstein", "libro", "ol:OL00000000000000", 4.0, ahora - 1_000)))
+        social.subirPerfil(vecinos[1], PerfilSubido(nombre = "Muestra dos", bio = "Cine, discos y una libreta de recetas.", partes = mapOf(
+            "insignias" to insignias("cine", "discos", "critico", "explorador"),
+            "musica" to Parte(Vis.PUBLICA, JsonArray(listOf(buildJsonObject {
+                put("nombre", "Enrico Caruso"); put("foto", ""); put("fuente", "mb:artist:e4d389bb-fe8f-472d-8ffd-c2cb02a7b2b7") }))))))
         // Como el adaptador Android: una portada solo local se publica sin imagen.
         val portada = ""
         val albumes = buildJsonObject {

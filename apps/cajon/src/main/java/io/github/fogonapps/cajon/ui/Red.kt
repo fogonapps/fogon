@@ -685,6 +685,11 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
             // Como en el tuyo: la canción, sus favoritas, la que le marcó y sus repisas (lo vacío no se ve).
             (p.partes["cancion"] as? JsonObject)?.let { c -> Box(Modifier.padding(vertical = 4.dp)) { TarjetaCancion(c.texto("cancion"), c.texto("creador"), c.texto("titulo"), c.texto("portada"), audio = c.texto("audio"), enlace = c.texto("enlace"), sonar = !propio, buscar = { vm.red.canciones(it) }) } }
             if (!p.cerrada) FavoritasDeLaRed(vm, p)
+            // Cuánto tienen en común (solo en el teléfono de quien mira, con lo público de esa persona).
+            if (!p.cerrada && !propio && yo != null) {
+                val mio by vm.estado.collectAsStateWithLifecycle()
+                mio?.let { CompatibilidadConmigo(vm, it, p) }
+            }
             if (!p.cerrada) io.github.fogonapps.social.ui.EscaparatesEnPerfil(interfazSocial(vm), usuario)
             // Bloquear o reportar (desde los tres puntos): la confirmación o el motivo, abajo.
             hoja?.let { h ->

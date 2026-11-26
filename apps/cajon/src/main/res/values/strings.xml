@@ -2090,4 +2090,24 @@
     <item quantity="one">game finished</item>
     <item quantity="other">games finished</item>
   </plurals>
+  <string name="compat_titulo">In common with you</string>
+  <string name="compat_en_comun_con">in common with @%1$s</string>
+  <string name="compat_poco">Not enough yet to compare.</string>
+  <string name="compat_poco_pista">It shows up once you share at least 3 things between what this person shares and your collection.</string>
+  <string name="compat_los_dos">You both have</string>
+  <string name="compat_te_gustarian">From @%1$s you might like</string>
+  <string name="compat_tu_nota">You %1$s</string>
+  <string name="compat_su_nota">Theirs %1$s</string>
+  <string name="compat_favorita">A favorite</string>
+  <string name="compat_artistas">You both listen to: %1$s</string>
+  <string name="compat_mas">See more</string>
+  <string name="compat_menos">See less</string>
+  <plurals name="compat_obras">
+    <item quantity="one">%1$d title in common</item>
+    <item quantity="other">%1$d titles in common</item>
+  </plurals>
+  <plurals name="compat_artistas_n">
+    <item quantity="one">%1$d artist</item>
+    <item quantity="other">%1$d artists</item>
+  </plurals>
 </resources>
