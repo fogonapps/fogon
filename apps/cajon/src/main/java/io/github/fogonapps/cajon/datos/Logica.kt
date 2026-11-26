@@ -220,7 +220,7 @@ object Logica {
         },
         resenas = e.resenas.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
         borradoresResena = e.borradoresResena.groupBy { it.id }.values.map { xs -> xs.maxBy { it.cambio } },
-        ajustes = conJuegosEnBarra(e.ajustes).let { it.copy(favoritas = it.favoritas.distinct().take(4)) },
+        ajustes = conJuegosEnBarra(e.ajustes).let { it.copy(favoritas = it.favoritas.distinct()) },
     ) }.let(::favoritasDeDestacados))
 
     /**
@@ -452,9 +452,9 @@ object Logica {
             cambiada.copy(registros = o.registros + Registro(idRegistro, hoy.toString(), visibilidad = Visibilidad.PRIVADA)) else cambiada
     }
 
+    /** Marca o desmarca una favorita (la estrella de la ficha), sin tope: ser favorita no la pone en el perfil. */
     fun favorita(e: Estado, id: String, cambio: Long): Estado {
         val favoritas = e.ajustes.favoritas
-        if (id !in favoritas && favoritas.size >= 4) return e
         if (id in favoritas) return quitarDestacadosDe(e.copy(ajustes = e.ajustes.copy(favoritas = favoritas - id, cambio = cambio)), id, cambio)
         return e.copy(ajustes = e.ajustes.copy(favoritas = favoritas + id, cambio = cambio))
     }
@@ -476,11 +476,50 @@ object Logica {
     fun favoritasPara(e: Estado, tipo: String): List<Obra> =
         e.ajustes.favoritas.mapNotNull { id -> e.vivas.firstOrNull { it.id == id && it.tipo == tipo } }
 
-    /** Una obra que deja de ser favorita (o se borra) sale también de su destacado. */
+    /** Una obra que deja de ser favorita (o se borra) sale también de su destacado y de la vitrina del perfil. */
     fun quitarDestacadosDe(e: Estado, id: String, cambio: Long): Estado {
         val quitar = e.perfil.destacados.filter { (hueco, obra) -> hueco in HUECOS_DE_FAVORITAS && obra == id }.keys
-        if (quitar.isEmpty()) return e
-        return e.copy(perfil = e.perfil.copy(destacados = e.perfil.destacados - quitar, porQue = e.perfil.porQue - quitar, cambio = cambio))
+        val enVitrina = id in vitrina(e)
+        if (quitar.isEmpty() && !enVitrina) return e
+        return e.copy(perfil = e.perfil.copy(destacados = e.perfil.destacados - quitar, porQue = e.perfil.porQue - quitar,
+            vitrina = if (enVitrina) vitrina(e) - id else e.perfil.vitrina, cambio = cambio))
+    }
+
+    /** Cuántas favoritas caben en el perfil (tres filas de cuatro). */
+    const val MAX_VITRINA = 12
+
+    /**
+     * Las favoritas del perfil, en orden y solo las que siguen existiendo (obras o artistas). Sin vitrina propia, las
+     * de los huecos de antes (una por tipo), para no perder lo que la persona ya había elegido.
+     */
+    fun vitrina(e: Estado): List<String> {
+        val ids = e.perfil.vitrina ?: Destacados.FAVORITOS.mapNotNull { e.perfil.destacados[it] }
+        val obras = e.vivas.map { it.id }.toSet()
+        val artistas = e.artistasVivos.map { it.id }.toSet()
+        return ids.distinct().filter { it in obras || it in artistas }.take(MAX_VITRINA)
+    }
+
+    /**
+     * Pone o quita algo de la vitrina. Una obra que entra queda también como favorita (la estrella), para no tener que
+     * marcarla antes; la que sale sigue siendo favorita. Llena, no entra nada.
+     */
+    fun alternarEnVitrina(e: Estado, id: String, cambio: Long): Estado {
+        val actual = vitrina(e)
+        if (id in actual) return e.copy(perfil = e.perfil.copy(vitrina = actual - id, cambio = cambio))
+        if (actual.size >= MAX_VITRINA) return e
+        val conPerfil = e.copy(perfil = e.perfil.copy(vitrina = actual + id, cambio = cambio))
+        val esObra = e.vivas.any { it.id == id }
+        return if (esObra && id !in e.ajustes.favoritas) conPerfil.copy(ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas + id, cambio = cambio))
+        else conPerfil
+    }
+
+    /** Mueve una favorita del perfil un lugar ([paso] -1 a la izquierda, +1 a la derecha). */
+    fun moverEnVitrina(e: Estado, id: String, paso: Int, cambio: Long): Estado {
+        val l = vitrina(e).toMutableList()
+        val i = l.indexOf(id); val j = i + paso
+        if (i < 0 || j !in l.indices) return e
+        l[i] = l[j]; l[j] = id
+        return e.copy(perfil = e.perfil.copy(vitrina = l, cambio = cambio))
     }
 
     /**
@@ -490,9 +529,8 @@ object Logica {
     fun favoritasDeDestacados(e: Estado): Estado {
         val faltan = e.perfil.destacados.filter { (hueco, id) -> hueco in HUECOS_DE_FAVORITAS && id !in e.ajustes.favoritas && e.vivas.any { it.id == id } }
             .values.distinct()
-        val lugar = 4 - e.ajustes.favoritas.size
-        if (faltan.isEmpty() || lugar <= 0) return e
-        return e.copy(ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas + faltan.take(lugar), cambio = e.ajustes.cambio + 1))
+        if (faltan.isEmpty()) return e
+        return e.copy(ajustes = e.ajustes.copy(favoritas = e.ajustes.favoritas + faltan, cambio = e.ajustes.cambio + 1))
     }
 
     /* ----- Estadísticas ----- */

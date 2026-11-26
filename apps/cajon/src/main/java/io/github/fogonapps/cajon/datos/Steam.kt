@@ -54,6 +54,31 @@ object Steam {
     /** El enlace del perfil, también con lo que venga después: `/games/?tab=all`, `/` o `?l=spanish`. */
     private val ENLACE = Regex("(?:https?://)?(?:www\\.)?steamcommunity\\.com/(id|profiles)/([^/?#\\s]{1,64})(?:/[^?#\\s]*)?(?:[?#]\\S*)?", RegexOption.IGNORE_CASE)
 
+    /** La vuelta de «Entrar con Steam», en el servidor de Fogón: Android la abre en Fabs (assetlinks). */
+    const val RUTA_VUELTA = "/steam/vuelta"
+    private const val SITIO = "https://fogonapps.duckdns.org"
+    private val CUENTA_OPENID = Regex("https://steamcommunity\\.com/openid/id/(7656119[0-9]{10})")
+
+    /**
+     * «Entrar con Steam»: la página oficial de Steam (OpenID 2.0). La persona entra allá, con su contraseña y su
+     * verificación, y Steam solo le dice a Fabs el número de su cuenta. [estado] es un valor al azar de este teléfono:
+     * la vuelta se acepta solo si lo trae, para que un enlace ajeno no meta juegos de otra cuenta.
+     */
+    fun inicioSesion(estado: String): String {
+        fun c(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
+        val ns = "http://specs.openid.net/auth/2.0"
+        return "https://steamcommunity.com/openid/login?" + listOf(
+            "openid.ns" to ns, "openid.mode" to "checkid_setup", "openid.return_to" to "$SITIO$RUTA_VUELTA?estado=$estado",
+            "openid.realm" to SITIO, "openid.identity" to "$ns/identifier_select", "openid.claimed_id" to "$ns/identifier_select",
+        ).joinToString("&") { (k, v) -> "$k=${c(v)}" }
+    }
+
+    /** El número de la cuenta que volvió de Steam, o null si no se completó o no es la vuelta que pidió este teléfono. */
+    fun cuentaDeVuelta(estado: String?, modo: String?, cuenta: String?, esperado: String?): String? {
+        if (esperado.isNullOrBlank() || estado != esperado || modo != "id_res") return null
+        return CUENTA_OPENID.matchEntire(cuenta.orEmpty())?.groupValues?.get(1)
+    }
+
     /** Si [texto] tiene la forma de un perfil (el enlace, el número de 17 cifras o el nombre), como lo revisa el servidor. */
     fun perfilValido(texto: String): Boolean {
         val t = texto.trim()

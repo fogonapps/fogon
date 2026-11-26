@@ -899,6 +899,27 @@ class RedSocial(
         private fun https(s: String) = s.takeIf { it.startsWith("https://") }.orEmpty()
 
         /** Lo justo de una obra para mostrarla y abrirla en otro teléfono (perfil, listas en común). */
+        /**
+         * Los destacados que se suben: «La que me marcó» y «Mi descubrimiento» con sus palabras, la vitrina entera (en
+         * orden, obras y artistas) y, para las versiones de antes que solo leen un hueco por tipo, la primera de cada tipo.
+         */
+        internal fun destacadosParaLaRed(e: Estado, porId: Map<String, Obra>): Map<String, kotlinx.serialization.json.JsonElement> {
+            val p = e.perfil
+            val conPalabras = listOf(io.github.fogonapps.cajon.datos.Destacados.MARCO, io.github.fogonapps.cajon.datos.Destacados.DESCUBRIMIENTO)
+                .mapNotNull { h -> p.destacados[h]?.let(porId::get)?.let { o -> h to JsonObject(obraBreve(o) + (p.porQue[h]?.let { mapOf("porQue" to JsonPrimitive(it)) } ?: emptyMap())) } }
+            val artistas = e.artistasVivos.associateBy { it.id }
+            val vitrina = io.github.fogonapps.cajon.datos.Logica.vitrina(e).mapNotNull { id ->
+                porId[id]?.let { o -> id to obraBreve(o) } ?: artistas[id]?.let { a -> id to buildJsonObject {
+                    put("titulo", a.nombre); put("nombre", a.nombre); put("artista", "true")
+                    if (a.foto.isNotBlank()) put("foto", io.github.fogonapps.cajon.datos.Imagenes.paraRed(a.foto))
+                    if (a.fuente.isNotBlank()) put("fuente", a.fuente)
+                } }
+            }
+            val primeraPorTipo = vitrina.map { (_, j) -> (if (j["artista"] != null) "artista" else (j["tipoObra"] as? JsonPrimitive)?.content.orEmpty()) to j }
+                .filter { it.first.isNotBlank() }.distinctBy { it.first }
+            return primeraPorTipo.toMap() + conPalabras.toMap() + listOfNotNull(("vitrina" to kotlinx.serialization.json.JsonArray(vitrina.map { it.second })).takeIf { vitrina.isNotEmpty() })
+        }
+
         fun obraBreve(o: Obra) = buildJsonObject {
             put("titulo", o.titulo); put("tipoObra", o.tipo); put("portada", io.github.fogonapps.cajon.datos.Imagenes.paraRed(o.portada))
             o.anio?.let { put("anio", it) }
@@ -1084,9 +1105,7 @@ class RedSocial(
                 ))),
                 parte(PartesPerfil.GUARDADAS, JsonPrimitive("")),
                 parte(PartesPerfil.FAVORITAS, JsonArray(e.ajustes.favoritas.mapNotNull { porId[it]?.let(::obraBreve) })),
-                parte(PartesPerfil.DESTACADOS, JsonObject(p.destacados.mapNotNull { (hueco, id) ->
-                    porId[id]?.let { o -> hueco to JsonObject(obraBreve(o) + (p.porQue[hueco]?.let { mapOf("porQue" to JsonPrimitive(it)) } ?: emptyMap())) }
-                }.toMap())),
+                parte(PartesPerfil.DESTACADOS, JsonObject(destacadosParaLaRed(e, porId))),
             ).toMap() + listOfNotNull(cancionDe(e)?.let { c ->
                 "cancion" to ParteSubida(Visibilidad.PUBLICA, buildJsonObject {
                     put("cancion", c.titulo); put("creador", c.artista); put("titulo", c.album); put("portada", https(c.portada))

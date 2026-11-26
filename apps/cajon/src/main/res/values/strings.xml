@@ -86,8 +86,8 @@
   <string name="compartir">Share</string>
   <string name="corregir_datos">Edit details</string>
   <string name="tu_nota">Your rating</string>
-  <string name="quitar_favorita">Remove from your 4 profile favorites</string>
-  <string name="poner_favorita">Add to your 4 profile favorites</string>
+  <string name="quitar_favorita">Remove from your favorites</string>
+  <string name="poner_favorita">Mark as favorite</string>
   <string name="agregar_a_lista">Add to a list</string>
   <string name="tu_resena">Your review</string>
   <string name="resena_pista">What you thought (only you see it unless you share it)</string>
@@ -147,7 +147,7 @@
   <string name="borrar_lista_pregunta">Delete the list “%1$s”?</string>
   <string name="borrar_lista_texto">What’s in it stays in your collection.</string>
   <string name="diario_vacio">Your diary is empty. On any title, tap “Log it”.</string>
-  <string name="parte_cuatro_favoritas">Top four favorites</string>
+  <string name="parte_cuatro_favoritas">Favorites</string>
   <string name="favoritas_pista">On any title, tap Favorite under the stars to put it here.</string>
   <string name="siempre">All time</string>
   <string name="en_el_anio">In %1$d</string>
@@ -641,7 +641,7 @@
   <string name="nombre_usuario">Username</string>
   <string name="bio">A few words about you</string>
   <string name="enlaces">Links</string>
-  <string name="enlaces_pista">One per line, up to 5 (your Letterboxd, your blog…).</string>
+  <string name="enlaces_pista">One per line, up to 5: your Instagram, TikTok, Letterboxd, YouTube or blog. Known networks show their logo.</string>
   <string name="quien_lo_ve">Who can see each part of your profile</string>
   <string name="cifras_a_mostrar">Numbers shown</string>
   <string name="perfil_guardado">Profile saved.</string>
@@ -1421,7 +1421,7 @@
   <string name="lastfm_error">Could not query Last.fm. Check that the profile is public and exists. If the service is busy or has not been configured, try later. Retrying does not duplicate listens.</string>
   <string name="lastfm_fecha_error">Enter a valid date between 1970 and today (YYYY-MM-DD).</string>
   <string name="steam_titulo">Steam</string>
-  <string name="steam_pista">Bring your Steam games with your playtime. Paste your profile link: it is sent only when you tap “Import” and is not stored. You can repeat it without duplicates: games you already have only get their hours updated, and games you deleted don’t come back. New games don’t show on your profile until you touch them.</string>
+  <string name="steam_pista">Bring your Steam games with your hours played. Sign in on Steam’s own page: Fabs only gets your account number, never your password. You can repeat it without duplicates.</string>
   <string name="steam_privacidad_pista">Your game details must be public on Steam: Profile → Edit Profile → Privacy Settings → Game details: Public.</string>
   <string name="steam_abrir_privacidad">Open Steam privacy settings</string>
   <string name="steam_perfil">Your Steam profile link</string>
@@ -1804,12 +1804,11 @@
     <string name="imagen_de_obra">Image %1$d of %2$s</string>
   <string name="detener_enlace">Stop</string>
     <string name="red_califico">Rated %1$s</string>
-    <string name="aviso_favoritas_llenas">You already have your 4 profile favorites. Remove one to add this.</string>
     <string name="tipo_calificacion">Rating</string>
     <string name="resena_filtro_todas">All</string>
     <string name="resena_filtro_buenas">Good</string>
     <string name="resena_filtro_malas">Bad</string>
-    <string name="destacado_desde_favoritas">First give it the star on its page: these highlights come from your top 4.</string>
+    <string name="destacado_desde_favoritas">First star it on its page.</string>
   <string name="album_oido_descripcion">%1$s, %2$s</string>
   <string name="agregar_album_oido">Add %1$s</string>
   <string name="descartar_album_oido">Dismiss %1$s</string>
@@ -1911,12 +1910,12 @@
   <string name="fogon_estilo_contraste_texto">Pure black with white text: the easiest to read.</string>
   <!-- Perfil: favoritas protagonistas y portada -->
   <string name="perfil_favoritas">Favorites</string>
-  <string name="perfil_elegir_favoritas">Pick your four favorites</string>
-  <string name="perfil_elegir_favoritas_pista">A film, a series, an album… whatever says the most about you.</string>
+  <string name="perfil_elegir_favoritas">Choose your profile favorites</string>
+  <string name="perfil_elegir_favoritas_pista">As many as you like, several of the same kind: whatever says the most about you.</string>
   <string name="perfil_elegir_hueco">Choose: %1$s</string>
   <string name="perfil_cambiar">Change</string>
   <string name="perfil_cambiar_portada">Change banner</string>
-  <string name="perfil_tus_favoritas_pista">They show big on your profile. They come from your four favorites (“Favorite” on each page).</string>
+  <string name="perfil_tus_favoritas_pista">They show up big on your profile, in the order you choose. Marking something as a favorite doesn’t put it here.</string>
   <string name="perfil_cancion">Profile song</string>
   <!-- Year in review and importing from the first minute -->
   <string name="resumen_titulo">Your %1$d in Fabs</string>
@@ -2060,4 +2059,20 @@
   <string name="tut_muestra_peli_portada">https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg</string>
   <string name="tut_muestra_anime_portada">https://image.tmdb.org/t/p/w500/jUo8cNmU400WtZiJss45HNXlQ2e.jpg</string>
   <string name="tut_muestra_libro_portada">https://covers.openlibrary.org/b/id/15272476-L.jpg</string>
+  <string name="vitrina_titulo">Profile favorites</string>
+  <string name="vitrina_pista">Up to %1$d, of any kind and several of the same. What you star stays in your favorites even if it’s not shown here.</string>
+  <string name="vitrina_elegidas">On your profile (%1$d of %2$d)</string>
+  <string name="vitrina_vacia">Nothing yet. Pick below what you want to show.</string>
+  <string name="vitrina_quitar">Remove from profile</string>
+  <string name="vitrina_mover">Move left</string>
+  <string name="vitrina_como_ordenar">Tap one to remove it. Long-press it to move it left.</string>
+  <string name="vitrina_agregar">Add</string>
+  <string name="vitrina_agregar_corto">Add</string>
+  <string name="vitrina_todo">All</string>
+  <string name="vitrina_editar">Edit profile favorites</string>
+  <string name="vitrina_llena">Your profile already shows %1$d favorites. Remove one to add this.</string>
+  <string name="steam_entrar">Sign in with Steam</string>
+  <string name="steam_o_enlace">Or paste your profile link</string>
+  <string name="steam_entrar_trayendo">Steam recognized you. Bringing your games…</string>
+  <string name="steam_entrar_fallo">Steam sign-in wasn’t completed. Try again from Settings.</string>
 </resources>

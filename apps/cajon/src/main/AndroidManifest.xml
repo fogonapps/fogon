@@ -52,6 +52,7 @@
                 <data android:scheme="https" android:host="fogonapps.duckdns.org" />
                 <data android:pathPrefix="/@" />
                 <data android:pathPrefix="/p/" />
+                <data android:path="/steam/vuelta" />
             </intent-filter>
         </activity>
 

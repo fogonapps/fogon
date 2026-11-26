@@ -370,6 +370,9 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
             }
         }
 
+        // Lo de antes, sin conectar nada: el historial completo que da Spotify, para todos (no solo en «Avanzado»).
+        Text(stringResource(R.string.spotify_historial_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
+
         // Spotify: pide crear una app de desarrollador y Premium, así que va escondido en «Avanzado» (salvo si ya está conectado).
         var avanzado by rememberSaveable { mutableStateOf(conectado) }
         if (!avanzado) androidx.compose.material3.TextButton({ avanzado = true }) { Text(stringResource(R.string.aj_avanzado), color = f.textoSuave) }
@@ -386,7 +389,6 @@ fun MusicaQueEscuchas(vm: CajonViewModel) {
                 Text(stringResource(R.string.spotify_resumen), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
                 BotonRiso(stringResource(R.string.spotify_conectar), { vm.abrir(Pantalla.ConectarSpotify) }, Modifier.fillMaxWidth())
             }
-            Text(stringResource(R.string.spotify_historial_pista), style = MaterialTheme.typography.bodySmall, color = f.textoSuave)
         }
     }
 }
@@ -406,8 +408,11 @@ private fun ImportacionSteam(vm: CajonViewModel) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.steam_titulo), style = MaterialTheme.typography.titleMedium, color = f.texto)
         Pista(stringResource(R.string.steam_pista))
+        // Lo fácil primero: entrar en la página de Steam y volver. Pegar el enlace queda como otra forma.
+        BotonRiso(stringResource(R.string.steam_entrar), { runCatching { uri.openUri(vm.entrarConSteam()) } }, habilitado = !trabajando)
         Pista(stringResource(R.string.steam_privacidad_pista))
         BotonSecundario(stringResource(R.string.steam_abrir_privacidad), { runCatching { uri.openUri(io.github.fogonapps.cajon.datos.Steam.PRIVACIDAD) } })
+        Text(stringResource(R.string.steam_o_enlace), style = MaterialTheme.typography.labelLarge, color = f.textoSuave)
         OutlinedTextField(perfil, { perfil = it; vm.editarSteam() }, label = { Text(stringResource(R.string.steam_perfil)) },
             supportingText = { Text(stringResource(if (perfil.isNotBlank() && !valido) R.string.steam_perfil_no_valido else R.string.steam_perfil_ejemplo)) },
             isError = perfil.isNotBlank() && !valido, enabled = !trabajando, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -424,7 +429,9 @@ private fun ImportacionSteam(vm: CajonViewModel) {
                 // Región viva: el lector de pantalla lo dice apenas aparece.
                 Text(stringResource(errorSteam(p.error)), color = f.texto,
                     modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite })
-                BotonRiso(stringResource(R.string.steam_reintentar), { vm.importarSteam(perfil) }, habilitado = valido)
+                val reintento = perfil.ifBlank { vm.ultimoPerfilSteam }
+                BotonRiso(stringResource(R.string.steam_reintentar), { vm.importarSteam(reintento) },
+                    habilitado = io.github.fogonapps.cajon.datos.Steam.perfilValido(reintento))
             }
             else -> BotonRiso(stringResource(R.string.steam_importar), { vm.importarSteam(perfil) }, habilitado = valido)
         }

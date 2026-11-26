@@ -25,6 +25,20 @@ fun Routing.paginasWeb(social: Social) {
     get("/seguridad-infantil") { call.respondText(pagina("Seguridad infantil", recurso("seguridad-infantil.html") + PIE), ContentType.Text.Html) }
     get("/child-safety") { call.respondText(pagina("Child safety", recurso("child-safety.html") + PIE_EN), ContentType.Text.Html) }
     get("/borrar-cuenta") { call.respondText(pagina("Borrar tu cuenta", recurso("borrar-cuenta.html") + PIE), ContentType.Text.Html) }
+    // La vuelta de «Entrar con Steam»: con Fabs instalado, Android la abre en la app (assetlinks); si el navegador se
+    // queda aquí, un botón la manda a Fabs con la misma dirección. No se guarda nada: el número de la cuenta va a la app.
+    get("/steam/vuelta") {
+        val cuenta = call.request.queryParameters["openid.claimed_id"]?.let { STEAM_CUENTA.matchEntire(it)?.groupValues?.get(1) }
+        val cuerpo = if (cuenta == null || call.request.queryParameters["openid.mode"] != "id_res")
+            "<h1>Steam</h1><p class=\"suave\">No se completó el inicio de sesión. Vuelve a Fabs e inténtalo otra vez.</p><p class=\"suave\">Sign-in wasn’t completed. Go back to Fabs and try again.</p>"
+        else {
+            val consulta = call.request.queryParameters.entries().flatMap { (k, v) -> v.map { "${java.net.URLEncoder.encode(k, "UTF-8")}=${java.net.URLEncoder.encode(it, "UTF-8")}" } }.joinToString("&").takeIf { Regex("[A-Za-z0-9._~%&=+:/-]{1,4000}").matches(it) }.orEmpty()
+            val destino = "intent://fogonapps.duckdns.org/steam/vuelta?$consulta#Intent;scheme=https;package=io.github.fogonapps.cajon;end"
+            "<h1>Steam</h1><p class=\"suave\">Listo. Vuelve a Fabs para traer tus juegos.</p><p class=\"suave\">Done. Go back to Fabs to bring your games.</p>" +
+                "<p class=\"botones\"><a class=\"boton\" href=\"${e(destino)}\">Volver a Fabs</a></p>"
+        }
+        call.respondText(pagina("Steam", cuerpo), ContentType.Text.Html)
+    }
     get("/delete-account") { call.respondText(pagina("Delete your account", recurso("delete-account.html") + PIE_EN), ContentType.Text.Html) }
 
     get("/{arroba}") {
@@ -198,6 +212,9 @@ article::after{content:"";display:block;clear:both}.botones{text-align:center;ma
 .numero{font-size:2.4em;font-weight:700;margin:0}.galeria{display:flex;gap:8px;padding:8px}.galeria img{flex:1;min-width:0;aspect-ratio:4/3;object-fit:cover;border-radius:14px}
 .elementos{display:flex;gap:10px;overflow-x:auto}.elementos div{width:112px;flex:none;display:flex;flex-direction:column;gap:4px;font-size:14px}.elementos img{width:112px;aspect-ratio:1;object-fit:cover;border-radius:12px}.legal h2{font-size:1.1em;margin-top:1.4em}
 </style></head><body><main>$cuerpo</main></body></html>"""
+
+/** El número de la cuenta que Steam devuelve en `openid.claimed_id` (OpenID 2.0). */
+private val STEAM_CUENTA = Regex("https://steamcommunity\\.com/openid/id/(7656119[0-9]{10})")
 
 /** Para que Android abra los enlaces (/@usuario, /p/…) directo en Fabs: el paquete y las huellas de firma: la de subida y la de Google Play, que re-firma lo que se instala desde la tienda. */
 private const val ASSETLINKS = """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"io.github.fogonapps.cajon","sha256_cert_fingerprints":["CE:54:06:88:2E:36:1C:F1:8E:3E:CE:18:FA:34:87:69:E3:4D:8F:A6:CC:8D:D5:3F:74:A7:72:89:A9:93:D8:E5","A2:BB:DA:64:05:82:54:1E:FD:F0:2B:8F:58:76:1E:33:F4:81:22:41:B4:3A:4C:11:66:AD:2A:71:74:BF:40:A2"]}}]"""

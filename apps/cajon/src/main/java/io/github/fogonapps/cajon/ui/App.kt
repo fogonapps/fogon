@@ -261,6 +261,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
                             Pantalla.Perfil -> Perfil(vm, estado)
                             Pantalla.EditarPerfil -> EditarPerfil(vm, estado)
                             is Pantalla.ElegirDestacado -> ElegirDestacado(vm, estado, p.hueco)
+                            Pantalla.EditarVitrina -> EditarVitrina(vm, estado)
                             Pantalla.PortadaPerfil -> PortadaPerfil(vm, estado)
                             is Pantalla.AjustarImagenPerfil -> AjustarImagenPerfil(vm, estado, p.portada)
                             Pantalla.Sesiones -> Sesiones(vm)

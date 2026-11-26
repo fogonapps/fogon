@@ -510,6 +510,13 @@ class SocialTest {
             // La instalación desde Play lleva la firma de Google: sin su huella, los enlaces no abren Fabs.
             assertTrue("A2:BB:DA:64:05:82:54:1E" in enlaces)
         }
+        // La vuelta de «Entrar con Steam»: con un número válido, el botón a Fabs; sin él (o cancelado), solo el aviso.
+        val id = "76561197960287930"
+        client.get("/steam/vuelta?estado=abc&openid.mode=id_res&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F$id").bodyAsText().let {
+            assertTrue("intent://fogonapps.duckdns.org/steam/vuelta?" in it && "package=io.github.fogonapps.cajon" in it && id in it)
+        }
+        client.get("/steam/vuelta?openid.mode=cancel").bodyAsText().let { assertTrue("intent://" !in it && "No se completó" in it) }
+        client.get("/steam/vuelta?openid.mode=id_res&openid.claimed_id=https%3A%2F%2Fotro.com%2Fopenid%2Fid%2F$id").bodyAsText().let { assertTrue("intent://" !in it) }
         assertEquals(HttpStatusCode.OK, client.get("/privacidad").status)
         // La política y los términos también en inglés, con el enlace al otro idioma.
         assertTrue("Privacy policy" in client.get("/privacy").bodyAsText() && "/privacidad" in client.get("/privacy").bodyAsText())

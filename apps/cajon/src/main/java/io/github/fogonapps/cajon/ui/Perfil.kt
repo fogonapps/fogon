@@ -304,7 +304,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             }
         },
 
-        enlace = { u -> EnlacePerfil(Logica.enlaceCorto(u)) { runCatching { uri.openUri(u) } } },
+        enlace = { u -> EnlacePerfil(u) { runCatching { uri.openUri(u) } } },
         acciones = {
             // Dos estilos solamente: la píldora en tinta (lo principal) y la de borde.
             BotonPildoraBorde(stringResource(R.string.editar_perfil), { vm.abrir(Pantalla.EditarPerfil) }, Modifier.weight(1f))
@@ -322,7 +322,7 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
             io.github.fogonapps.cajon.RedSocial.cancionDe(e)?.let { c ->
                 Box(Modifier.padding(vertical = 4.dp)) { TarjetaCancion(c.titulo, c.artista, c.album, c.portada, audio = c.audio, enlace = c.enlace, onCambiar = { vm.abrir(Pantalla.ElegirCancion) }) }
             }
-            FavoritasDelPerfil(favoritasPropias(vm, e)) { vm.abrir(Pantalla.EditarPerfil) }
+            FavoritasDelPerfil(favoritasPropias(vm, e)) { vm.abrir(Pantalla.EditarVitrina) }
             obra(p.destacados[Destacados.MARCO])?.let { o ->
                 DestacadoConPalabras(nombreHueco(Destacados.MARCO), o.titulo, p.porQue[Destacados.MARCO], { vm.abrir(Pantalla.Ficha(o.id)) },
                     { vm.abrir(Pantalla.ElegirDestacado(Destacados.MARCO)) }) { m -> Portada(o.portada, o.tipo, o.titulo, m, esquina = 10.dp, conTitulo = false) }
@@ -331,15 +331,14 @@ fun Perfil(vm: CajonViewModel, e: Estado) {
         })
 }
 
-/** Tus favoritas elegidas, en el orden de los huecos (película, serie, anime, álbum, libro, juego, artista). */
+/** Las favoritas de tu perfil (la vitrina), en el orden que elegiste; mantener presionada una abre la edición. */
 @Composable
-private fun favoritasPropias(vm: CajonViewModel, e: Estado): List<Favorita> = Destacados.FAVORITOS.mapNotNull { h ->
-    val id = e.perfil.destacados[h] ?: return@mapNotNull null
-    val cambiar = { vm.abrir(Pantalla.ElegirDestacado(h)) }
-    if (h == Destacados.ARTISTA) e.artistasVivos.firstOrNull { it.id == id }?.let { a ->
-        Favorita(nombreTipo(h, plural = false), a.nombre, { vm.abrir(Pantalla.VerArtista(a.id)) }, cambiar) { m -> FotoEnMarco(a.foto, a.nombre, a.tipo, m) }
-    } else e.vivas.firstOrNull { it.id == id }?.let { o ->
-        Favorita(nombreTipo(h, plural = false), o.titulo, { vm.abrir(Pantalla.Ficha(o.id)) }, cambiar) { m -> Portada(o.portada, o.tipo, o.titulo, m, esquina = 10.dp, conTitulo = false) }
+private fun favoritasPropias(vm: CajonViewModel, e: Estado): List<Favorita> = Logica.vitrina(e).mapNotNull { id ->
+    val cambiar = { vm.abrir(Pantalla.EditarVitrina) }
+    e.vivas.firstOrNull { it.id == id }?.let { o ->
+        Favorita(nombreTipo(o.tipo, plural = false), o.titulo, { vm.abrir(Pantalla.Ficha(o.id)) }, cambiar) { m -> Portada(o.portada, o.tipo, o.titulo, m, esquina = 10.dp, conTitulo = false) }
+    } ?: e.artistasVivos.firstOrNull { it.id == id }?.let { a ->
+        Favorita(nombreTipo("artista", plural = false), a.nombre, { vm.abrir(Pantalla.VerArtista(a.id)) }, cambiar) { m -> FotoEnMarco(a.foto, a.nombre, a.tipo, m) }
     }
 }
 
@@ -500,6 +499,11 @@ fun EditarPerfil(vm: CajonViewModel, e: Estado) {
             supportingText = { Text("${bio.length}/200") })
         OutlinedTextField(enlaces, { enlaces = it.take(1000) }, Modifier.fillMaxWidth(), minLines = 2, label = { Text(stringResource(R.string.enlaces)) },
             supportingText = { Text(stringResource(R.string.enlaces_pista)) })
+        // Así se verán: con el logo de cada red (o la dirección, si no es una red conocida).
+        val validos = enlaces.lines().map { it.trim() }.filter { it.startsWith("https://") || it.startsWith("http://") }.take(5)
+        if (validos.isNotEmpty()) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            validos.forEach { u -> EnlacePerfil(u) {} }
+        }
         BotonPildora(stringResource(R.string.guardar), { vm.guardarIdentidad(nombre, usuario, bio, enlaces.lines()) }, Modifier.fillMaxWidth())
     }
 
@@ -533,26 +537,29 @@ private fun TusFavoritasEnEditar(vm: CajonViewModel, e: Estado) {
     fun obra(id: String?) = id?.let { i -> e.vivas.firstOrNull { it.id == i } }
     Seccion(stringResource(R.string.perfil_favoritas))
     Pista(stringResource(R.string.perfil_tus_favoritas_pista))
-    val conJuegos = Tipos.JUEGO in io.github.fogonapps.cajon.Secciones.tiposVisibles(e)
-    val huecos = Logica.huecosFavoritos(e, conJuegos)
+    val vitrina = Logica.vitrina(e)
+    val editar = stringResource(R.string.vitrina_editar)
     androidx.compose.foundation.lazy.LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(huecos.size) { i ->
-            val h = huecos[i]
-            val id = p.destacados[h]
-            val a = if (h == Destacados.ARTISTA) id?.let { x -> e.artistasVivos.firstOrNull { it.id == x } } else null
-            val o = if (h != Destacados.ARTISTA) obra(id) else null
-            val nombre = nombreHueco(h)
-            val elegir = stringResource(R.string.perfil_elegir_hueco, nombre)
-            Column(Modifier.width(96.dp).clip(forma(10.dp)).clickable(role = Role.Button) { vm.abrir(Pantalla.ElegirDestacado(h)) }
-                .semantics(mergeDescendants = true) { contentDescription = if (a == null && o == null) elegir else "$nombre: ${a?.nombre ?: o?.titulo}" },
+        items(vitrina.size) { i ->
+            val id = vitrina[i]
+            val o = obra(id)
+            val a = if (o == null) e.artistasVivos.firstOrNull { it.id == id } else null
+            Column(Modifier.width(96.dp).clip(forma(10.dp)).clickable(role = Role.Button, onClickLabel = editar) { vm.abrir(Pantalla.EditarVitrina) }
+                .semantics(mergeDescendants = true) { contentDescription = o?.titulo ?: a?.nombre.orEmpty() },
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 when {
-                    a != null -> FotoEnMarco(a.foto, a.nombre, a.tipo, Modifier.fillMaxWidth())
                     o != null -> Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
-                    else -> HuecoVacio(if (h == Destacados.ARTISTA) Iconos.Artista else Iconos.de(h), null, Modifier.fillMaxWidth(), esquina = 10.dp)
+                    a != null -> FotoEnMarco(a.foto, a.nombre, a.tipo, Modifier.fillMaxWidth())
                 }
-                Text(nombre, style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 2)
+                Text(o?.titulo ?: a?.nombre.orEmpty(), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        if (vitrina.size < Logica.MAX_VITRINA) item {
+            Column(Modifier.width(96.dp).clip(forma(10.dp)).clickable(role = Role.Button) { vm.abrir(Pantalla.EditarVitrina) }
+                .semantics(mergeDescendants = true) { contentDescription = editar }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                HuecoVacio(Iconos.Mas, null, Modifier.fillMaxWidth(), esquina = 10.dp)
+                Text(stringResource(R.string.vitrina_agregar_corto), style = MaterialTheme.typography.labelSmall, color = f.textoSuave, maxLines = 2)
             }
         }
     }

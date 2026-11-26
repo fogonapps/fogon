@@ -137,9 +137,9 @@ class ResenasTest {
         assertEquals(obra.registros, Logica.cambiarEstadoConRegistro(obra, Estados.EN_CURSO, hoy, "otro").registros)
     }
 
-    @Test fun quintaFavoritaNoReemplazaNingunaDelPerfil() {
+    @Test fun lasFavoritasSeSumanYSeQuitanSinTope() {
         val e = Estado(ajustes = Ajustes(favoritas = listOf("a", "b", "c", "d")))
-        assertEquals(e, Logica.favorita(e, "e", 100))
+        assertEquals(listOf("a", "b", "c", "d", "e"), Logica.favorita(e, "e", 100).ajustes.favoritas)
         val sinUna = Logica.favorita(e, "b", 100)
         assertEquals(listOf("a", "c", "d"), sinUna.ajustes.favoritas)
         assertEquals(listOf("a", "c", "d", "e"), Logica.favorita(sinUna, "e", 200).ajustes.favoritas)

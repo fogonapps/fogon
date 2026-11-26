@@ -101,8 +101,14 @@ class MainActivity : ComponentActivity() {
             intent.getStringExtra(android.content.Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }?.let { vm.recibirCompartido(it) }
             return
         }
-        val ruta = intent?.takeIf { it.action == android.content.Intent.ACTION_VIEW }?.data?.path ?: return
+        val datos = intent?.takeIf { it.action == android.content.Intent.ACTION_VIEW }?.data ?: return
+        val ruta = datos.path ?: return
         when {
+            ruta == io.github.fogonapps.cajon.datos.Steam.RUTA_VUELTA -> {
+                vm.vueltaDeSteam(datos.getQueryParameter("estado"), datos.getQueryParameter("openid.mode"), datos.getQueryParameter("openid.claimed_id"))
+                // Que un giro de pantalla no la procese otra vez.
+                intent?.data = null
+            }
             ruta.startsWith("/@") -> ruta.removePrefix("/@").trim('/').takeIf { it.isNotBlank() }?.let { vm.abrir(Pantalla.PerfilRed(it.lowercase())) }
             ruta.startsWith("/p/") -> ruta.removePrefix("/p/").trim('/').toLongOrNull()?.let { vm.abrir(Pantalla.PublicacionRed(it)) }
         }

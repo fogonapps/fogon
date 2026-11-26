@@ -13,41 +13,66 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Una sola forma de marcar favoritos: los destacados de obras salen de las cuatro favoritas. */
+/**
+ * Favoritas y perfil por separado: la estrella marca favoritas sin tope y no las pone en el perfil; la vitrina del
+ * perfil muestra las que la persona elige (varias del mismo tipo, obras o artistas, en orden).
+ */
 class FavoritasDestacadosTest {
     private fun obra(id: String, tipo: String = Tipos.PELICULA) = Obra(id = id, tipo = tipo, titulo = id)
     private val obras = listOf(obra("a"), obra("b"), obra("c"), obra("d"), obra("e"), obra("s", Tipos.SERIE))
 
-    @Test fun laQuintaFavoritaNoEntraNiReemplaza() {
+    @Test fun lasFavoritasNoTienenTopeNiVanAlPerfil() {
         val e = Estado(obras = obras, ajustes = Ajustes(favoritas = listOf("a", "b", "c", "d")))
-        assertEquals(listOf("a", "b", "c", "d"), Logica.favorita(e, "e", 1).ajustes.favoritas)
+        val m = Logica.favorita(e, "e", 1)
+        assertEquals(listOf("a", "b", "c", "d", "e"), m.ajustes.favoritas)
+        assertTrue(Logica.vitrina(m).isEmpty())
     }
 
-    @Test fun soloSeEligenFavoritasDelTipoDelHueco() {
-        val e = Estado(obras = obras, ajustes = Ajustes(favoritas = listOf("a", "s")))
-        assertEquals(listOf("a"), Logica.favoritasPara(e, Tipos.PELICULA).map { it.id })
-        assertEquals(listOf("s"), Logica.favoritasPara(e, Tipos.SERIE).map { it.id })
-        assertTrue(Logica.favoritasPara(e, Tipos.LIBRO).isEmpty())
+    @Test fun variasDelMismoTipoEnElPerfilYQuedanComoFavoritas() {
+        var e = Estado(obras = obras)
+        listOf("a", "b", "s").forEach { e = Logica.alternarEnVitrina(e, it, 2) }
+        assertEquals(listOf("a", "b", "s"), Logica.vitrina(e))
+        // Ponerla en el perfil la deja como favorita, sin marcarla antes.
+        assertEquals(listOf("a", "b", "s"), e.ajustes.favoritas)
+        // Quitarla del perfil no le quita la estrella.
+        e = Logica.alternarEnVitrina(e, "b", 3)
+        assertEquals(listOf("a", "s"), Logica.vitrina(e))
+        assertTrue("b" in e.ajustes.favoritas)
+        assertEquals(listOf("s", "a"), Logica.vitrina(Logica.moverEnVitrina(e, "s", -1, 4)))
     }
 
-    @Test fun quitarLaEstrellaVaciaSuDestacado() {
+    @Test fun llenaNoEntraNada() {
+        val muchas = (1..Logica.MAX_VITRINA + 1).map { obra("o$it") }
+        var e = Estado(obras = muchas)
+        muchas.forEach { e = Logica.alternarEnVitrina(e, it.id, 1) }
+        assertEquals(Logica.MAX_VITRINA, Logica.vitrina(e).size)
+        assertFalse("o${Logica.MAX_VITRINA + 1}" in Logica.vitrina(e))
+    }
+
+    @Test fun quitarLaEstrellaLaSacaDelPerfilPeroNoDeLaQueMeMarco() {
         val e = Estado(obras = obras, ajustes = Ajustes(favoritas = listOf("a")),
-            perfil = Perfil(destacados = mapOf(Destacados.PELICULA to "a", Destacados.MARCO to "a")))
-        val d = Logica.favorita(e, "a", 5).perfil.destacados
-        assertFalse(Destacados.PELICULA in d)
-        // "La obra que me marcó" no sale de las favoritas: se queda.
-        assertEquals("a", d[Destacados.MARCO])
+            perfil = Perfil(vitrina = listOf("a"), destacados = mapOf(Destacados.MARCO to "a")))
+        val m = Logica.favorita(e, "a", 5)
+        assertTrue(Logica.vitrina(m).isEmpty())
+        assertEquals("a", m.perfil.destacados[Destacados.MARCO])
     }
 
-    @Test fun losDestacadosViejosPasanAFavoritasSiHayLugar() {
-        val e = Estado(obras = obras, ajustes = Ajustes(favoritas = listOf("a", "b", "c")),
-            perfil = Perfil(destacados = mapOf(Destacados.PELICULA to "d", Destacados.SERIE to "s")))
-        val m = Logica.favoritasDeDestacados(e)
-        assertEquals(4, m.ajustes.favoritas.size)
-        assertTrue("d" in m.ajustes.favoritas || "s" in m.ajustes.favoritas)
-        // Sin lugar, el destacado se queda como estaba.
-        assertEquals(e.perfil.destacados, m.perfil.destacados)
-        assertEquals(m, Logica.favoritasDeDestacados(m))
+    @Test fun sinVitrinaPropiaSeVenLosHuecosDeAntes() {
+        val e = Estado(obras = obras, perfil = Perfil(destacados = mapOf(Destacados.SERIE to "s", Destacados.PELICULA to "a", Destacados.MARCO to "d")))
+        // En el orden de los huecos de antes, sin «la que me marcó».
+        assertEquals(listOf("a", "s"), Logica.vitrina(e))
+        // Lo borrado no se muestra.
+        assertEquals(listOf("s"), Logica.vitrina(e.copy(obras = obras.map { if (it.id == "a") it.copy(borrada = true) else it })))
+    }
+
+    @Test fun laRedRecibeLaVitrinaYLaPrimeraDeCadaTipoParaLasVersionesDeAntes() {
+        var e = Estado(obras = obras)
+        listOf("b", "a", "s").forEach { e = Logica.alternarEnVitrina(e, it, 1) }
+        val subido = RedSocial.destacadosParaLaRed(e, e.vivas.associateBy { it.id })
+        val vitrina = subido["vitrina"] as kotlinx.serialization.json.JsonArray
+        assertEquals(listOf("b", "a", "s"), vitrina.map { (it as kotlinx.serialization.json.JsonObject)["titulo"].toString().trim('"') })
+        assertEquals("\"b\"", (subido[Destacados.PELICULA] as kotlinx.serialization.json.JsonObject)["titulo"].toString())
+        assertEquals("\"s\"", (subido[Destacados.SERIE] as kotlinx.serialization.json.JsonObject)["titulo"].toString())
     }
 
     @Test fun filtroDeResenasPorNota() {

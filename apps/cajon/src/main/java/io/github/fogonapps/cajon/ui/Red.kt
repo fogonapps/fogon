@@ -662,7 +662,7 @@ fun PerfilRed(vm: CajonViewModel, usuario: String) {
         foto = { io.github.fogonapps.social.ui.AvatarPerfilConHistorias(interfazSocial(vm), p.persona) { Box(Modifier.clip(CircleShape).border(4.dp, FogonTema.actual.fondo, CircleShape)) { AvatarRed(p.persona, 96.dp) } } },
         bajoNombre = { if (p.meSigue && !propio) Text(stringResource(R.string.red_te_sigue), style = MaterialTheme.typography.bodySmall, color = FogonTema.actual.textoSuave) },
         antesBio = { io.github.fogonapps.social.ui.MercadoEnPerfil(interfazSocial(vm), p) },
-        enlace = { u -> EnlacePerfil(io.github.fogonapps.cajon.datos.Logica.enlaceCorto(u)) { runCatching { uri.openUri(u) } } },
+        enlace = { u -> EnlacePerfil(u) { runCatching { uri.openUri(u) } } },
         acciones = {
             val f = FogonTema.actual // los colores del fondo del perfil, no los de la app
             when {
@@ -815,9 +815,12 @@ private fun FavoritasDeLaRed(vm: CajonViewModel, p: io.github.fogonapps.cajon.da
     val destacados = (p.partes["destacados"] as? JsonObject)?.entries?.mapNotNull { (h, v) -> (v as? JsonObject)?.let { h to it } }.orEmpty().toMap()
     fun abrir(o: JsonObject) = vm.abrirObraDePerfil(o.texto("titulo"), o.texto("tipoObra").ifBlank { "pelicula" }, o.texto("portada"), o.texto("fuente"),
         o.texto("anio").toIntOrNull(), o.texto("creador"))
-    // En el orden de los huecos; el artista abre su ficha y va con su foto redonda.
-    val favoritas = io.github.fogonapps.cajon.datos.Destacados.FAVORITOS.mapNotNull { h ->
-        val o = destacados[h] ?: return@mapNotNull null
+    // La vitrina (varias por tipo, en su orden) si la trae; si no, la de antes en el orden de los huecos. El artista
+    // abre su ficha y va con su foto.
+    val vitrina = ((p.partes["destacados"] as? JsonObject)?.get("vitrina") as? kotlinx.serialization.json.JsonArray)?.mapNotNull { it as? JsonObject }
+    val enOrden = vitrina?.map { o -> (if (o.texto("artista") == "true") "artista" else o.texto("tipoObra").ifBlank { "pelicula" }) to o }
+        ?: io.github.fogonapps.cajon.datos.Destacados.FAVORITOS.mapNotNull { h -> destacados[h]?.let { h to it } }
+    val favoritas = enOrden.map { (h, o) ->
         val titulo = o.texto("titulo").ifBlank { o.texto("nombre") }
         if (h == "artista") Favorita(nombreTipo(h, plural = false), titulo, { vm.abrirArtistaDePerfil(titulo, o.texto("foto").ifBlank { o.texto("portada") }, o.texto("fuente")) }) { m ->
             FotoEnMarco(o.texto("foto").ifBlank { o.texto("portada") }, titulo, "", m)

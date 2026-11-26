@@ -194,6 +194,8 @@ sealed interface Pantalla {
     data object PrivacidadPerfil : Pantalla
     data object EditarPerfil : Pantalla
     data class ElegirDestacado(val hueco: String) : Pantalla
+    /** Elegir las favoritas que muestra el perfil (varias de cada tipo, en orden). */
+    data object EditarVitrina : Pantalla
     data object PortadaPerfil : Pantalla
     /** Ajustar el tamaño y la posición de la foto ([portada] = false) o de la portada del perfil. */
     data class AjustarImagenPerfil(val portada: Boolean) : Pantalla
@@ -942,11 +944,16 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Pone o quita una obra de las cuatro favoritas del perfil. */
-    fun favorita(id: String) = cambiar { e ->
-        val f = e.ajustes.favoritas
-        if (id !in f && f.size >= 4) avisar(tx(R.string.aviso_favoritas_llenas))
-        L.favorita(e, id, ahora())
+    fun favorita(id: String) = cambiar { e -> L.favorita(e, id, ahora()) }
+
+    /** Pone o quita algo de las favoritas del perfil; llena, lo avisa. */
+    fun alternarVitrina(id: String) = cambiar { e ->
+        if (id !in L.vitrina(e) && L.vitrina(e).size >= io.github.fogonapps.cajon.datos.Logica.MAX_VITRINA)
+            avisar(tx(R.string.vitrina_llena, io.github.fogonapps.cajon.datos.Logica.MAX_VITRINA))
+        L.alternarEnVitrina(e, id, ahora())
     }
+
+    fun moverVitrina(id: String, paso: Int) = cambiar { e -> L.moverEnVitrina(e, id, paso, ahora()) }
 
     fun cambiarIdioma(codigo: String) {
         Idioma.elegir(getApplication(), codigo)
@@ -3366,9 +3373,34 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
      * repetirlos) y después [io.github.fogonapps.cajon.datos.Steam.sumar]. Al final dice cuántos trajo, cuántos
      * actualizó y cuántos quedaron sin ficha.
      */
+    private val prefsSteam = cajonApp.getSharedPreferences("steam-entrar", android.content.Context.MODE_PRIVATE)
+
+    /** La dirección de «Entrar con Steam», con un valor al azar que la vuelta debe traer (vale 20 minutos). */
+    fun entrarConSteam(): String {
+        val estado = java.util.UUID.randomUUID().toString().replace("-", "")
+        prefsSteam.edit().putString("estado", estado).putLong("cuando", System.currentTimeMillis()).apply()
+        return io.github.fogonapps.cajon.datos.Steam.inicioSesion(estado)
+    }
+
+    /** Steam volvió: si es la vuelta que se pidió aquí, se traen los juegos de esa cuenta; si no, se dice. */
+    fun vueltaDeSteam(estado: String?, modo: String?, cuenta: String?) {
+        val vigente = System.currentTimeMillis() - prefsSteam.getLong("cuando", 0) < 20 * 60_000
+        val esperado = prefsSteam.getString("estado", null)?.takeIf { vigente }
+        val numero = io.github.fogonapps.cajon.datos.Steam.cuentaDeVuelta(estado, modo, cuenta, esperado)
+        if (estado != null && estado == esperado) prefsSteam.edit().clear().apply()
+        if (numero == null) { avisar(tx(R.string.steam_entrar_fallo)); return }
+        avisar(tx(R.string.steam_entrar_trayendo))
+        importarSteam(numero)
+    }
+
+    /** El último perfil que se importó (también el que volvió de «Entrar con Steam»), para «Reintentar». */
+    var ultimoPerfilSteam: String = ""
+        private set
+
     fun importarSteam(perfil: String) {
         val S = io.github.fogonapps.cajon.datos.Steam
         if (_steam.value?.trabajando == true || !S.perfilValido(perfil)) return
+        ultimoPerfilSteam = perfil
         steamTrabajo = viewModelScope.launch {
             _steam.value = PasoSteam(trabajando = true)
             try {

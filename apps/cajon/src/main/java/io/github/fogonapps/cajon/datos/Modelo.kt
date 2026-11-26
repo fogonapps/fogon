@@ -364,6 +364,11 @@ data class Perfil(
     val enlaces: List<String> = emptyList(),
     /** Hueco de [Destacados] → id de una obra (o de un artista en [Destacados.ARTISTA]). */
     val destacados: Map<String, String> = emptyMap(),
+    /**
+     * Las favoritas que muestra el perfil, en orden: obras o artistas, de cualquier tipo y varias del mismo, hasta
+     * [Logica.MAX_VITRINA]. null = las de [destacados] de antes (una por tipo).
+     */
+    val vitrina: List<String>? = null,
     /** Unas palabras de por qué, para [Destacados.MARCO] y [Destacados.DESCUBRIMIENTO]. */
     val porQue: Map<String, String> = emptyMap(),
     /** Las cifras que muestra ([PartesPerfil].C_…); null = [PartesPerfil.CIFRAS_DE_SIEMPRE]. */

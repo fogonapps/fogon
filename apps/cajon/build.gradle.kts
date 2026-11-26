@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.fogonapps.cajon"
         minSdk = 26
         targetSdk = 37
-        versionCode = 139
-        versionName = "4.0.7"
+        versionCode = 140
+        versionName = "4.0.8"
     }
 
     // Llave de firma: fuera del repo, en ~/.fogon/firma (o donde diga la propiedad fogonFirma).

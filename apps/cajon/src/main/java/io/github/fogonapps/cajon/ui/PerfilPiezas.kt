@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
@@ -279,13 +281,30 @@ internal fun ChipPerfil(texto: String, elegido: Boolean, modifier: Modifier = Mo
     }
 }
 
-/** Un enlace del perfil: el ícono y la dirección corta, sin caja. */
+/**
+ * Un enlace del perfil, sin caja: de una red conocida, su logo y el usuario («@marina»); de cualquier otra, el ícono
+ * de enlace y la dirección corta, para que se vea a dónde lleva.
+ */
 @Composable
-internal fun EnlacePerfil(texto: String, onClick: () -> Unit) {
+internal fun EnlacePerfil(url: String, onClick: () -> Unit) {
     val f = FogonTema.actual
-    Row(Modifier.clip(forma(8.dp)).clickable(role = Role.Button, onClick = onClick).heightIn(min = 48.dp).padding(end = 6.dp),
+    val marca = Marcas.de(url)
+    val texto = Marcas.texto(url) ?: io.github.fogonapps.cajon.datos.Logica.enlaceCorto(url)
+    Row(Modifier.clip(forma(8.dp)).clickable(role = Role.Button, onClick = onClick)
+        .semantics(mergeDescendants = true) { if (marca != null) contentDescription = "${marca.nombre}: $texto" }
+        .heightIn(min = 48.dp).padding(end = 6.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        IconoRiso(Iconos.Enlace, null, tamano = 16.dp, tinta = f.texto)
+        if (marca != null) LogoMarca(marca, 18.dp, f.texto) else IconoRiso(Iconos.Enlace, null, tamano = 16.dp, tinta = f.texto)
         Text(texto, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = f.texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** El logo de una red, relleno y en un solo color (sin el contorno de los íconos de la app, que lo emborronaría). */
+@Composable
+internal fun LogoMarca(marca: Marca, tamano: androidx.compose.ui.unit.Dp, tinta: Color) {
+    val camino = androidx.compose.runtime.remember(marca.clave) { androidx.compose.ui.graphics.vector.PathParser().parsePathString(marca.trazo).toPath() }
+    androidx.compose.foundation.Canvas(Modifier.size(tamano)) {
+        val escala = size.minDimension / 24f
+        scale(escala, escala, pivot = androidx.compose.ui.geometry.Offset.Zero) { drawPath(camino, tinta) }
     }
 }
