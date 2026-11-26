@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /*
- * Modelo de datos de El Cajón. Todo se guarda en un JSON (datastore/estado.json) con el mismo formato que los respaldos.
+ * Modelo de datos de Fabs. Todo se guarda en un JSON (datastore/estado.json) con el mismo formato que los respaldos.
  * Reglas:
  *  - Las migraciones son solo aditivas (campos nuevos con valor por defecto).
  *  - Cada obra, artista y lista lleva [cambio] (milisegundos): al sincronizar gana el más reciente.
@@ -104,7 +104,7 @@ data class Obra(
     val formato: String = "",
     /** En qué se juega (juegos): "PC", "Nintendo Switch"…, como lo dice la fuente o la persona. */
     val plataformas: List<String> = emptyList(),
-    /** El id del artista en El Cajón (álbumes), si está. */
+    /** El id del artista en Fabs (álbumes), si está. */
     val artista: String? = null,
     /** La nota del público en su fuente (TMDB e IGDB de 0 a 10; Open Library y MusicBrainz de 0 a 5) y cuántos votaron. */
     val publica: Double? = null,

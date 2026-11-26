@@ -115,7 +115,7 @@ fun IconoRiso(
 
 /** Los íconos que comparten todas las apps. Cada app suma los suyos en su `Iconos`. */
 object IconosFogon {
-    // Compartidos por todas las apps (D-028: los mismos iconos que El Cajón en ajustes y perfil).
+    // Compartidos por todas las apps (D-028: los mismos iconos que Fabs en ajustes y perfil).
     val Lista = dibujo("lista", trazo("M9.4 6.4h10.2M9.4 12h10.2M9.4 17.6h10.2", 2.6f), relleno("M5.2 5a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 10.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zM5.2 16.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"))
     val Imagen = dibujo("imagen", relleno("M3.6 5h16.8v14H3.6z"), hueco("M5.6 17l4.4-5.4 3 3.4 2.2-2.4 3.2 4.4z"), hueco("M15.6 7.6a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z"))
     val Estrella = dibujo("estrella", relleno("M12 3.4l2.6 5.2 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"))

@@ -1,7 +1,7 @@
 package io.github.fogonapps.cajon.datos
 
 /**
- * La cara de El Cajón según lo que estás viendo, leyendo o escuchando: se mira la obra de la frase del saludo (si
+ * La cara de Fabs según lo que estás viendo, leyendo o escuchando: se mira la obra de la frase del saludo (si
  * habla de una) o, si no, lo último que tocaste en curso o terminado. Devuelve el nombre de la cara (`normal`,
  * `feliz`, `enamorado`, `sorpresa`, `triste`, `miedo`, `decidido`, `guino`), y la pantalla la convierte en imagen.
  */

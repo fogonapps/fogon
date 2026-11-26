@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
 
 /**
- * Las páginas web: lo que ve quien abre un enlace compartido sin tener El Cajón (con El Cajón instalado, Android abre
+ * Las páginas web: lo que ve quien abre un enlace compartido sin tener Fabs (con Fabs instalado, Android abre
  * la app directo gracias a `assetlinks.json`), y la política de privacidad, los términos, los estándares de seguridad infantil y cómo borrar la cuenta. Solo muestran lo público.
  */
 fun Routing.paginasWeb(social: Social) {
@@ -148,11 +148,11 @@ private fun recurso(nombre: String): String =
 /** Escapa el texto para HTML. */
 private fun e(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
 
-private const val DESCARGA = "https://github.com/fogonapps/el-cajon/releases/latest"
+private const val DESCARGA = "https://play.google.com/store/apps/details?id=io.github.fogonapps.cajon"
 /** El pie con las páginas legales, en español y en inglés. */
 private const val PIE = "<p class=\"pie\"><a href=\"/privacidad\">Privacidad</a> · <a href=\"/terminos\">Términos</a> · <a href=\"/seguridad-infantil\">Seguridad infantil</a> · <a href=\"/borrar-cuenta\">Borrar tu cuenta</a></p>"
 private const val PIE_EN = "<p class=\"pie\"><a href=\"/privacy\">Privacy</a> · <a href=\"/terms\">Terms</a> · <a href=\"/child-safety\">Child safety</a> · <a href=\"/delete-account\">Delete your account</a></p>"
-private val BOTONES = "<p class=\"botones\"><a class=\"boton\" href=\"$DESCARGA\">Descargar El Cajón</a></p>" + PIE
+private val BOTONES = "<p class=\"botones\"><a class=\"boton\" href=\"$DESCARGA\">Descargar Fabs</a></p>" + PIE
 
 private const val SERVIDOR_WEB = "https://fogonapps.duckdns.org"
 
@@ -199,5 +199,5 @@ article::after{content:"";display:block;clear:both}.botones{text-align:center;ma
 .elementos{display:flex;gap:10px;overflow-x:auto}.elementos div{width:112px;flex:none;display:flex;flex-direction:column;gap:4px;font-size:14px}.elementos img{width:112px;aspect-ratio:1;object-fit:cover;border-radius:12px}.legal h2{font-size:1.1em;margin-top:1.4em}
 </style></head><body><main>$cuerpo</main></body></html>"""
 
-/** Para que Android abra los enlaces (/@usuario, /p/…) directo en El Cajón: el paquete y la huella del certificado de firma. */
+/** Para que Android abra los enlaces (/@usuario, /p/…) directo en Fabs: el paquete y la huella del certificado de firma. */
 private const val ASSETLINKS = """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"io.github.fogonapps.cajon","sha256_cert_fingerprints":["CE:54:06:88:2E:36:1C:F1:8E:3E:CE:18:FA:34:87:69:E3:4D:8F:A6:CC:8D:D5:3F:74:A7:72:89:A9:93:D8:E5"]}}]"""

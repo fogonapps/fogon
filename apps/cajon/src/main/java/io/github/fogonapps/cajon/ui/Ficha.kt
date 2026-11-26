@@ -420,7 +420,7 @@ fun Ficha(vm: CajonViewModel, e: Estado, id: String) {
         { vm.ponerGenerosObra(o.id, it) }, { vm.buscarEtiqueta(it, Secciones.de(o.tipo)) }, textoAgregar,
         textoVisible = { vm.generoVisible(o, it) }, editable = o.fuente.isEmpty())
 
-    // El estado, como píldoras. Al pasarla a terminada, El Cajón celebra (da una vuelta en el aire).
+    // El estado, como píldoras. Al pasarla a terminada, Fabs celebra (da una vuelta en el aire).
     var celebrando by remember(id) { mutableStateOf(false) }
     SegmentosEstado(Estados.TODOS.map { it to nombreEstado(it, o.tipo) }, o.estado) {
         if (it == Estados.TERMINADO && o.estado != Estados.TERMINADO) celebrando = true

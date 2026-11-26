@@ -76,7 +76,7 @@ class EquipoTest {
         e.s.verificar(a.id, CambioInsignia("vela", "auto", "Revisado"), a.token)
         assertEquals("verificada", insignia(v))
         val sp = e.inscribir(p).first; e.elevar(p, sp)
-        e.s.verificar(p.id, CambioInsignia("vela", "fogon", "Cuenta de El Cajón"), p.token)
+        e.s.verificar(p.id, CambioInsignia("vela", "fogon", "Cuenta de Fabs"), p.token)
         assertEquals("fogon", insignia(v))
     }
 

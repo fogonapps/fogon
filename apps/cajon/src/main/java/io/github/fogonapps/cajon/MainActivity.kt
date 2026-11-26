@@ -204,7 +204,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 App(vm, Acciones(
-                    exportar = { perfilOperacion = vm.recursos.id; exportar.launch("el-cajon-respaldo-${vm.hoy()}.json") },
+                    exportar = { perfilOperacion = vm.recursos.id; exportar.launch("fabs-respaldo-${vm.hoy()}.json") },
                     importar = { perfilOperacion = vm.recursos.id; importar.launch(TIPOS_JSON) },
                     deOtraApp = { perfilOperacion = vm.recursos.id; deOtraApp.launch(TIPOS_OTRAS) },
                     compartir = ::compartir,
@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
         runCatching {
             val dir = File(cacheDir, "compartir/${vm.recursos.id}").apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
-            val f = File(dir, "el-cajon.png")
+            val f = File(dir, "fabs.png")
             f.outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
             val uri = FileProvider.getUriForFile(this, "$packageName.compartir", f)
             val i = Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri)

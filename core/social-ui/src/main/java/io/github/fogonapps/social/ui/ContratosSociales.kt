@@ -72,18 +72,18 @@ interface InterfazSocial {
     suspend fun completarAdjunto(a: kotlinx.serialization.json.JsonObject): kotlinx.serialization.json.JsonObject = a
     /** Los stickers propios de la app (WebP en base64), para ponerlos en una historia. */
     fun stickersApp(): List<String> = emptyList()
-    /** Buscar en las fuentes de la app algo para adjuntar (El Cajón: películas, series, animes, libros y álbumes de cualquier lado). */
+    /** Buscar en las fuentes de la app algo para adjuntar (Fabs: películas, series, animes, libros y álbumes de cualquier lado). */
     suspend fun buscarAdjuntos(q: String): List<kotlinx.serialization.json.JsonObject> = emptyList()
     /** Lo que dice el buscador de adjuntos, si la app busca más que canciones. */
     @Composable fun textoBuscarAdjunto(): String? = null
-    /** Si la app ofrece fotos de obras o personas para el fondo de una historia (El Cajón: pósteres, escenas, portadas, retratos). */
+    /** Si la app ofrece fotos de obras o personas para el fondo de una historia (Fabs: pósteres, escenas, portadas, retratos). */
     val fotosDeObras: Boolean get() = false
     /**
      * Si la app usa historias de 24 horas. Con false no se ven en ningún lado: ni la barra, ni el aro de las fotos de
      * perfil, ni crear o ver historias, ni sus avisos. El chat, sus notas y las publicaciones siguen igual.
      */
     val conHistorias: Boolean get() = true
-    /** Responder una historia por mensaje (solo si la app tiene chat, como El Cajón). */
+    /** Responder una historia por mensaje (solo si la app tiene chat, como Fabs). */
     val respondeHistorias: Boolean get() = false
     fun responderHistoria(usuario: String, texto: String) {}
     /** Lo que hay dentro de un adjunto para elegir uno (las canciones de un álbum o de un artista). */

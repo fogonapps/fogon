@@ -183,7 +183,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             if ((ruta.startsWith("/v1/") || ruta.startsWith("/v2/")) && ruta !in setOf("/v1/cuenta", "/v1/cuenta/conservar", "/v1/cuenta/borrar", "/v1/salir") && !ruta.startsWith("/v1/acceso"))
                 social.cuentaDe(token)?.let { social.revisarBorrado(it) }
             val appDeclarada = call.request.header("X-Fogon-App")?.let(AppsSocial::validar)
-            // El chat ya es de las cuatro apps (cada sesión lleva su propio punto de lectura); /v1/cajon sigue siendo de El Cajón.
+            // El chat ya es de las cuatro apps (cada sesión lleva su propio punto de lectura); /v1/cajon sigue siendo de Fabs.
             val esChat = ruta == "/v1/cajon" || ruta.startsWith("/v1/cajon/")
             if (esChat && (social.appSesion(token) != "cajon" || (appDeclarada != null && appDeclarada != "cajon"))) throw Problema(403, "solo_cajon")
             // Por cuenta si la sesión es válida; si no, por la dirección real. Antes se contaba por el texto del token
@@ -380,7 +380,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             delete("/foto") { social.quitarFoto(call.yo()); call.respond(HttpStatusCode.NoContent) }
             get("/fotos/{usuario}") { call.respondBytes(social.foto(call.lector(), call.usuario()), ContentType.Image.JPEG) }
             get("/perfiles/{usuario}") { call.respond(social.verPerfil(call.lector(), call.usuario())) }
-            // Cuándo cambió el perfil por última vez (desde cualquier app): El Cajón lo mira para traerse los cambios.
+            // Cuándo cambió el perfil por última vez (desde cualquier app): Fabs lo mira para traerse los cambios.
             get("/perfil/revision") { call.respond(mapOf("revision" to social.revisionPerfil(call.yo()))) }
             get("/buscar") { call.respond(social.buscar(call.lector(), call.request.queryParameters["q"] ?: "")) }
 
@@ -507,7 +507,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
                 call.respond(mapOf("cambio" to social.guardarCajon(call.yo(), call.receive(), antes)))
             }
             put("/cajon/llave") { social.guardarLlave(call.yo(), call.receive<CajonCifrado>().llave); call.respond(HttpStatusCode.NoContent) }
-            // Historias de 24 horas (El Cajón por v1; las otras apps por /v2/apps/{app}/historias).
+            // Historias de 24 horas (Fabs por v1; las otras apps por /v2/apps/{app}/historias).
             get("/historias") { call.respond(social.historias(call.yo(), "cajon")) }
             post("/historias") { call.respond(HttpStatusCode.Created, social.subirHistoria(call.yo(), "cajon", call.receive())) }
             get("/historias/de/{usuario}") { call.respond(social.historiasDe(call.yo(), call.usuario(), "cajon") ?: GrupoHistorias(Persona("", "", false), emptyList())) }
@@ -643,7 +643,7 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
         route("/v2/apps/{app}") {
             fun ApplicationCall.app() = AppsSocial.validar(parameters["app"].orEmpty())
             fun ApplicationCall.cucha() { if (app() != "cucha") throw Problema(400, "tipo_app") }
-            // D-033: la copia cifrada de cada app y la llave común de la cuenta (El Cajón sigue con /v1/cajon).
+            // D-033: la copia cifrada de cada app y la llave común de la cuenta (Fabs sigue con /v1/cajon).
             get("/respaldo") { if (call.app() == "cajon") throw Problema(400, "tipo_app"); call.respond(social.respaldo(call.yo(), call.app())) }
             put("/respaldo") {
                 if (call.app() == "cajon") throw Problema(400, "tipo_app")

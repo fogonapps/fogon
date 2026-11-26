@@ -11,7 +11,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ClienteSocialTest {
-    private val configuracion = ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon")
+    private val configuracion = ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon")
     private fun cliente(
         token: String? = "credencial-de-prueba",
         permiso: () -> Boolean = { true },

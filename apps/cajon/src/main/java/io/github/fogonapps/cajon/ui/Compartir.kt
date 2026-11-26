@@ -118,7 +118,7 @@ private fun Marca() {
 }
 
 /**
- * La tarjeta de una reseña, editable antes de compartirla: el fondo (el de El Cajón o los de la tienda que tengas),
+ * La tarjeta de una reseña, editable antes de compartirla: el fondo (el de Fabs o los de la tienda que tengas),
  * el formato (cuadrado o de historia), la frase que quieres destacar y si va la nota. Lo que se ve es lo que se comparte.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)

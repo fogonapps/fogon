@@ -9,7 +9,7 @@ import java.util.Base64
 
 /**
  * La base de datos de Fogón Social: un archivo SQLite. Guarda solo lo que cada persona decidió compartir desde El
- * Cajón (su perfil filtrado y sus publicaciones públicas o para sus seguidores), a quién sigue, me gusta,
+ * Fabs (su perfil filtrado y sus publicaciones públicas o para sus seguidores), a quién sigue, me gusta,
  * comentarios, guardados, avisos, imágenes de sus publicaciones, bloqueos y reportes. Nada de lo privado ni de lo que la app aprende de sus gustos llega aquí.
  * Una sola conexión, con todo pasando por [usar] (SQLite escribe de a uno).
  */
@@ -199,7 +199,7 @@ class Base(ruta: String) {
                     cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(item, cuenta)) WITHOUT ROWID""")
                 s.execute("""CREATE TABLE IF NOT EXISTS historias_silenciadas(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
                     silenciada INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, PRIMARY KEY(cuenta, silenciada)) WITHOUT ROWID""")
-                // Las frases del saludo de El Cajón que gustan (1) o no (-1): una por cuenta; se van con la cuenta.
+                // Las frases del saludo de Fabs que gustan (1) o no (-1): una por cuenta; se van con la cuenta.
                 s.execute("""CREATE TABLE IF NOT EXISTS frases(
                     clave TEXT NOT NULL, cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, valor INTEGER NOT NULL,
                     cuando INTEGER NOT NULL, PRIMARY KEY(clave, cuenta)) WITHOUT ROWID""")
@@ -211,7 +211,7 @@ class Base(ruta: String) {
                 s.execute("CREATE TABLE IF NOT EXISTS frases_ocultas(clave TEXT PRIMARY KEY)")
                 // En qué momento del día sale cada frase de la gente: todo, manana, tarde, noche o madrugada.
                 columna(s, "frases_propuestas", "franja TEXT NOT NULL DEFAULT 'todo'")
-                // De qué app es cada frase de la gente (las de antes, de El Cajón). Las claves de las frases propias de
+                // De qué app es cada frase de la gente (las de antes, de Fabs). Las claves de las frases propias de
                 // cada app ya llevan su prefijo (fz_, al_, cu_), así los votos y las ocultas no se mezclan.
                 columna(s, "frases_propuestas", "app TEXT NOT NULL DEFAULT 'cajon'")
                 columna(s, "cuentas", "privada INTEGER NOT NULL DEFAULT 0")

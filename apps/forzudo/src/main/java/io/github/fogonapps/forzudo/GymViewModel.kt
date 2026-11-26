@@ -101,7 +101,7 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
 
     val perfiles get() = gymApp.perfiles
-    /** Las frases del saludo, como en El Cajón: las propias (fz_), las de la gente de El Forzudo y los votos. */
+    /** Las frases del saludo, como en Fabs: las propias (fz_), las de la gente de El Forzudo y los votos. */
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
     val red = RedForzudo(gymApp, sesionForzudo(app, perfiles, idPerfil), viewModelScope,
         { avisar(tx(it)) }, ::cambiarPerfil)

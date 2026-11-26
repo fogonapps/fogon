@@ -81,7 +81,7 @@ val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("cucha", 
 
 class CuchaViewModel(app: Application) : AndroidViewModel(app) {
     private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
-    /** Las frases del saludo, como en El Cajón: las propias (cu_) y, con red, las de la gente de La Cucha. */
+    /** Las frases del saludo, como en Fabs: las propias (cu_) y, con red, las de la gente de La Cucha. */
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) { red.clienteFrases() }
     private val cuchaApp = app as CuchaApp
     val idPerfil = cuchaApp.perfiles.lista.activo

@@ -36,7 +36,7 @@ fun PestanasFeedSocial(pestana: Int, usuario: String?, cambiarPestana: (Int) -> 
 @Composable
 fun <M> ListaFeedSocial(
     lista: List<Pair<PublicacionSocial, M>>?, pestana: Int, mas: () -> Unit, pie: String,
-    /** Lo que dice el feed vacío; el de El Cajón habla de ver, leer, escuchar y jugar, las demás apps usan uno general. */
+    /** Lo que dice el feed vacío; el de Fabs habla de ver, leer, escuchar y jugar, las demás apps usan uno general. */
     vacio: Int = R.string.social_red_feed_vacio,
     tarjeta: @Composable (PublicacionSocial, M) -> Unit,
 ) {

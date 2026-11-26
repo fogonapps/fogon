@@ -4,7 +4,7 @@ import kotlinx.coroutines.launch
 
 /*
  * El chat cifrado vive en lo común (`core/social/ChatSocial.kt`) y es el mismo en las cuatro apps. Aquí quedan los
- * nombres de siempre de El Cajón (mismo archivo `chats.json` y mismas llaves de la caja fuerte).
+ * nombres de siempre de Fabs (mismo archivo `chats.json` y mismas llaves de la caja fuerte).
  */
 typealias Chat = io.github.fogonapps.social.ChatSocial
 typealias MensajeChat = io.github.fogonapps.social.MensajeChat
@@ -17,7 +17,7 @@ internal fun decidirSobres(ultimo: Long, sobres: List<io.github.fogonapps.social
     io.github.fogonapps.social.decidirSobres(ultimo, sobres, conversaciones)
 internal fun agregarMensajeChat(lista: List<MensajeChat>, mensaje: MensajeChat) = io.github.fogonapps.social.agregarMensajeChat(lista, mensaje)
 
-/** El chat de un perfil de El Cajón: su archivo, sus llaves en la caja fuerte y la llave de la cuenta para compartirlas. */
+/** El chat de un perfil de Fabs: su archivo, sus llaves en la caja fuerte y la llave de la cuenta para compartirlas. */
 fun chatDeCajon(app: CajonApp, scope: kotlinx.coroutines.CoroutineScope, caja: io.github.fogonapps.cajon.datos.CajaFuerte, red: RedSocial, decir: (Int) -> Unit) =
     Chat(app, scope, java.io.File(app.recursos(caja.perfilId).directorio, "chats.json"), object : io.github.fogonapps.social.AlmacenChat {
         override var chatLlaves: String?

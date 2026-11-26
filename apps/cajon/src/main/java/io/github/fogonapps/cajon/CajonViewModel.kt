@@ -496,7 +496,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     /** Lo último que esta pantalla escribió en el disco, para distinguirlo de un cambio de afuera. */
     @Volatile private var ultimoGuardado: Estado? = null
 
-    /** La red de El Cajón (Fogón Social), opcional. */
+    /** La red de Fabs (Fogón Social), opcional. */
     val red = RedSocial(app, viewModelScope, caja, { _estado.value }, { f -> cambiar(f) }, { avisar(tx(it)) }, { sincronizarCuenta() }, recursos.directorio, { acceso -> cuentaDuplicada(acceso) }, { idCuenta ->
         if (vigenciaPerfil.vigente()) cajonApp.perfiles.completarIdCuenta(recursos.id, idCuenta)
     }, { cajonApp.perfiles.lista.perfiles.firstOrNull { it.id == recursos.id }?.idCuenta.orEmpty() })
@@ -3017,7 +3017,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Los géneros para tocar en el buscador sin escribir (en todas las secciones): los del cajón de esa
+     * Los géneros para tocar en el buscador sin escribir (en todas las secciones): los dla colección de esa
      * sección primero y después los comunes de la sección ([cine], [anime], [musica], [libros], en el idioma de la app).
      * En Animes, los del anime antes que los de cine (sin "Animación", que ya lo son todos); en Todo, una mezcla.
      */
@@ -3412,7 +3412,7 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             ?: Importar.goodreads(bytes.decodeToString(), ::nuevoId, ahora())
             ?: Importar.storygraph(bytes.decodeToString(), ::nuevoId, ahora())
         if (r == null || r.obras.isEmpty()) {
-            // Una copia de El Cajón ("Descargar una copia de tus datos"): se junta con lo que hay, como un respaldo.
+            // Una copia de Fabs ("Descargar una copia de tus datos"): se junta con lo que hay, como un respaldo.
             leerRespaldoCajon(bytes.decodeToString())?.let { importar(it); return }
             avisar(tx(R.string.aviso_no_es_de_otra_app)); return
         }

@@ -135,7 +135,7 @@ object Avisos {
 
     /**
      * Prende o apaga la revisión cada 15 minutos (prendida si hay cuenta y algo activo). [trabajador] es la clase de
-     * la revisión (El Cajón conserva la suya).
+     * la revisión (Fabs conserva la suya).
      */
     fun programar(c: Context, trabajador: Class<out AvisosFondo> = AvisosFondo::class.java) {
         val wm = WorkManager.getInstance(c)
@@ -201,5 +201,5 @@ object Avisos {
     }
 }
 
-/** Para El Cajón, que conserva el nombre de su revisión (WorkManager guarda la clase de los trabajos ya programados). */
+/** Para Fabs, que conserva el nombre de su revisión (WorkManager guarda la clase de los trabajos ya programados). */
 interface AppConTrabajador { val trabajadorAvisos: Class<out AvisosFondo> }

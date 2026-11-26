@@ -48,7 +48,7 @@ fun FotoPerfilLocal(imagen: String, modifier: Modifier = Modifier, tamano: Dp = 
     }
 }
 
-/** El «+» sobre la foto, igual que en El Cajón. */
+/** El «+» sobre la foto, igual que en Fabs. */
 @Composable
 fun BotonMasFoto(descripcion: String, modifier: Modifier, onClick: () -> Unit) {
     val f = FogonTema.actual

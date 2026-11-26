@@ -54,7 +54,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Los mensajes (el chat cifrado de extremo a extremo) para las apps que no tienen pantallas propias: la lista con
  * amigos arriba y buscador, la conversación (stickers con editor y tamaños, reacciones, responder, borrar) y la
  * información del chat (colores, letra, apodo, silenciar, vaciar). La lógica y el cifrado son los de [ChatSocial],
- * los mismos de El Cajón: las conversaciones llegan a las cuatro apps.
+ * los mismos de Fabs: las conversaciones llegan a las cuatro apps.
  */
 
 /** Adónde llevan los mensajes (lo resuelve cada app). */
@@ -196,7 +196,7 @@ private fun coloresBurbuja(estilo: EstiloChat): Pair<Color, Color> {
 private fun Color.luminance() = 0.2126f * red + 0.7152f * green + 0.0722f * blue
 
 /**
- * Lo que una app suma a la conversación común: El Cajón manda obras (con su tarjeta, que abre la ficha o la busca) y
+ * Lo que una app suma a la conversación común: Fabs manda obras (con su tarjeta, que abre la ficha o la busca) y
  * comparte imágenes con su propia hoja.
  */
 class ExtrasChat(

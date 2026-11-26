@@ -9,7 +9,7 @@ import java.time.Duration
 
 /**
  * TMDB a través del servidor: la app pide aquí lo mismo que le pediría a TMDB y el servidor le suma la clave de
- * Fogón (`TMDB_API_KEY`, solo en el servidor). Solo pasan las rutas que usa El Cajón; las respuestas se guardan 6
+ * Fogón (`TMDB_API_KEY`, solo en el servidor). Solo pasan las rutas que usa Fabs; las respuestas se guardan 6
  * horas (menos pedidos a TMDB y más rápido); las imágenes siguen yendo directo a image.tmdb.org (no piden clave).
  */
 class Cine(private val clave: String?, private val ahora: () -> Long = System::currentTimeMillis) {
@@ -20,7 +20,7 @@ class Cine(private val clave: String?, private val ahora: () -> Long = System::c
 
     val lista get() = !clave.isNullOrBlank()
 
-    /** Las rutas que El Cajón usa (búsquedas, fichas, tendencias, plataformas, personas, géneros, episodios). */
+    /** Las rutas que Fabs usa (búsquedas, fichas, tendencias, plataformas, personas, géneros, episodios). */
     fun permitida(ruta: String): Boolean = Regex(
         "(search/(multi|movie|tv|person)|(movie|tv)/[0-9]+(/(recommendations|alternative_titles|credits|external_ids|images|videos|season/[0-9]+|watch/providers))?|" +
             "person/[0-9]+(/(combined_credits|movie_credits|tv_credits|external_ids))?|discover/(movie|tv)|trending/(all|movie|tv)/(day|week)|" +

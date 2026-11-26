@@ -9,7 +9,7 @@ object AppsSocial {
         "forzudo" -> "El Forzudo"
         "cucha" -> "La Cucha"
         "alcancia" -> "La Alcancía"
-        else -> "El Cajón"
+        else -> "Fabs"
     }
 }
 

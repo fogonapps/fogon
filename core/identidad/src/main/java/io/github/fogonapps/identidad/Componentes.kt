@@ -427,7 +427,7 @@ private val TIRAS = mapOf(
 private const val CUADROS = 24
 
 /**
- * El personaje celebra cuando terminas algo: salta con la cara feliz (El Forzudo levanta los bracitos, El Cajón da
+ * El personaje celebra cuando terminas algo: salta con la cara feliz (El Forzudo levanta los bracitos, Fabs da
  * una vuelta en el aire) un par de veces y después se queda feliz. Con "Menos movimiento", solo feliz.
  */
 @Composable

@@ -90,7 +90,7 @@ data class Paleta(
         )
 
         /**
-         * Fabs (antes El Cajón; rebranding 2026-11): el amarillo de su estrella como acento, el violeta como segunda
+         * Fabs: el amarillo de su estrella como acento, el violeta como segunda
          * tinta, sobre el casi negro violeta de su ícono.
          */
         val Cajon = Paleta(

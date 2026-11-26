@@ -42,7 +42,7 @@ class PreparacionPublicacionTest {
             Response.Builder().request(cadena.request()).protocol(Protocol.HTTP_1_1)
                 .code(200).message("prueba").body("".toResponseBody()).build()
         }.build()
-        val cliente = ClienteSocial(configuracion = ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon"), http = http, dispositivo = { "prueba" })
+        val cliente = ClienteSocial(configuracion = ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon"), http = http, dispositivo = { "prueba" })
         val aporte = object : AporteSocialApp {
             override suspend fun perfil() = PerfilSubido(nombre = "Ana")
             override fun publicaciones() = listOf(PublicacionSubida("nueva", "publica", 1, "foto", buildJsonObject {}))

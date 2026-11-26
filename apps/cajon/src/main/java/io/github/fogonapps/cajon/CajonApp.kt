@@ -17,7 +17,7 @@ import io.github.fogonapps.cajon.datos.limpiarClavesRetiradas
 
 /** Objetos únicos por proceso: DataStore exige una sola instancia por archivo. */
 class CajonApp : Application(), SingletonImageLoader.Factory, io.github.fogonapps.social.ui.AppConAvisos, io.github.fogonapps.social.ui.AppConTrabajador {
-    /* X-10: los avisos con la app cerrada (la revisión común; El Cajón conserva el nombre AvisosRed). */
+    /* X-10: los avisos con la app cerrada (la revisión común; Fabs conserva el nombre AvisosRed). */
     override val avisosConfiguracion = io.github.fogonapps.social.ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon")
     override val avisosConMensajes = true
     // Fabs no usa historias de 24 horas: sus avisos no suenan.

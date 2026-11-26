@@ -19,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * El recorrido de todas las pantallas de El Cajón con un cajón de ejemplo: cada una se abre y se revisa (botones
+ * El recorrido de todas las pantallas de Fabs con un cajón de ejemplo: cada una se abre y se revisa (botones
  * pegados o encimados, cosas difíciles de tocar o sin nombre para el lector de pantalla). La pantalla es muy alta para
  * que se vea todo lo de cada una sin desplazarse.
  */

@@ -220,7 +220,7 @@ fun App(vm: CajonViewModel, acciones: Acciones) {
             // Pantallas encima de las pestañas
             PilaAnimada(pila.lastOrNull(), pila.size, entraSuave = { it is Pantalla.Ficha && vuelos.hayTocada() }) { p ->
                 Box(Modifier.fillMaxSize().fondoFogon(f).safeDrawingPadding().imePadding()) {
-                    // Las que tienen lista propia (buscar, el cajón de una lista larga) manejan su scroll.
+                    // Las que tienen lista propia (buscar, la colección de una lista larga) manejan su scroll.
                     val conScroll = p !is Pantalla.Buscar && p !is Pantalla.Conversacion && p != Pantalla.OidosPendientes && p !is Pantalla.Resumen
                     Column(Modifier.fillMaxSize().then(if (conScroll) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         AvisoPolitica(vm)
@@ -396,7 +396,7 @@ private fun Aviso(mensaje: String) {
     }
 }
 
-/** El recorrido guiado de El Cajón: agregar, las secciones de la barra y el perfil. */
+/** El recorrido guiado de Fabs: agregar, las secciones de la barra y el perfil. */
 @Composable
 private fun pasosGuia(): List<io.github.fogonapps.identidad.PasoGuia> = listOf(
     "agregar" to (R.string.guia_agregar to R.string.guia_agregar_texto),

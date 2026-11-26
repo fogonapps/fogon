@@ -322,7 +322,7 @@ open class RedApp(
     }
     fun visibilidad(clave: String) = almacen.visibilidad(clave)
 
-    /** El chat cifrado de este perfil (el mismo de El Cajón: mismas llaves de la cuenta, compartidas cifradas). */
+    /** El chat cifrado de este perfil (el mismo de Fabs: mismas llaves de la cuenta, compartidas cifradas). */
     private var chatCreado: ChatSocial? = null
     fun chat(contexto: android.content.Context, decir: (String) -> Unit): ChatSocial = chatCreado ?: ChatSocial(contexto.applicationContext, scope,
         archivoChats, object : AlmacenChat {

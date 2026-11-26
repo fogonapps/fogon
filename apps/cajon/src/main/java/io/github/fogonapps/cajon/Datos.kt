@@ -7,12 +7,12 @@ import io.github.fogonapps.cajon.datos.Logica
 import io.github.fogonapps.identidad.ProveedorDatosFogon
 import kotlinx.coroutines.flow.first
 
-/** Lee un respaldo de El Cajón. Devuelve el estado si es válido (ya pasó por el tutorial). */
+/** Lee un respaldo de Fabs. Devuelve el estado si es válido (ya pasó por el tutorial). */
 fun leerRespaldoCajon(texto: String): Estado? =
     runCatching { JsonCajon.decodeFromString(Estado.serializer(), texto) }.getOrNull()?.takeIf { it.listo }
 
 /**
- * Los datos de El Cajón para las otras apps de Fogón (respaldo de todo Fogón).
+ * Los datos de Fabs para las otras apps de Fogón (respaldo de todo Fogón).
  * Solo los ve una app firmada con la misma llave (permiso de firma, ver RespaldoFogon.kt en core).
  * Las claves de los servicios externos no van: quedan cifradas en este teléfono.
  */

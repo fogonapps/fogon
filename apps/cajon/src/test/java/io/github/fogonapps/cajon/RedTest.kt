@@ -34,7 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Lo que El Cajón sube a la red: solo lo que la persona marcó como público o para sus seguidores. */
+/** Lo que Fabs sube a la red: solo lo que la persona marcó como público o para sus seguidores. */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class RedTest {
     @Test fun sinInternetResumeLosAvisos() {

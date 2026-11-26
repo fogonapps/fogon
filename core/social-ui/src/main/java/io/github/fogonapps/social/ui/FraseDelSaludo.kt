@@ -23,7 +23,7 @@ class FraseEnPantalla(val frase: FraseElegida, val gusta: Boolean, private val f
 }
 
 /**
- * Elige la frase del saludo como El Cajón (ver [elegirFraseSaludo]) y la deja toda la franja del día, aunque se cierre
+ * Elige la frase del saludo como Fabs (ver [elegirFraseSaludo]) y la deja toda la franja del día, aunque se cierre
  * la app. [base]: las frases propias de la app, con claves que llevan su prefijo.
  */
 @Composable

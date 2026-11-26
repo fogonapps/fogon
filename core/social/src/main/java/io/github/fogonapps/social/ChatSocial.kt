@@ -124,7 +124,7 @@ interface AlmacenChat {
 class ChatSocial(
     private val app: Context, private val scope: CoroutineScope, private val archivo: File, private val caja: AlmacenChat,
     private val cliente: () -> ClienteSocial, private val usuario: StateFlow<String?>,
-    /** Si esta app puede crear llaves nuevas aunque la cuenta ya tenga (El Cajón, como siempre: un teléfono nuevo). */
+    /** Si esta app puede crear llaves nuevas aunque la cuenta ya tenga (Fabs, como siempre: un teléfono nuevo). */
     private val creaLlaves: Boolean = false,
     private val decir: (String) -> Unit,
 ) {
@@ -248,7 +248,7 @@ class ChatSocial(
 
     /**
      * Llaves nuevas en esta app, cuando la cuenta tiene unas viejas que no se pueden traer (las de un teléfono que ya
-     * no está, o de El Cajón sin abrir): desde ahora se chatea; lo de antes cifrado con las viejas no se podrá leer.
+     * no está, o de Fabs sin abrir): desde ahora se chatea; lo de antes cifrado con las viejas no se podrá leer.
      */
     fun llavesNuevasAqui() = scope.launch { runCatching { asegurarLlaves(forzar = true) }; _listoChat.value = listo() }
 

@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
 
 /*
- * Lo de la red que El Cajón tiene en sus Ajustes, igual en las otras apps (D-028): notificaciones, cuentas bloqueadas,
+ * Lo de la red que Fabs tiene en sus Ajustes, igual en las otras apps (D-028): notificaciones, cuentas bloqueadas,
  * palabras ocultas, y la política y los términos en Privacidad.
  */
 

@@ -9,7 +9,7 @@ import io.github.fogonapps.identidad.huecoTrazo
 import io.github.fogonapps.identidad.relleno
 import io.github.fogonapps.identidad.trazo
 
-/** Los íconos de El Cajón, de línea redonda como los de todas las apps (los comunes están en [IconosFogon]). */
+/** Los íconos de Fabs, de línea redonda como los de todas las apps (los comunes están en [IconosFogon]). */
 object Iconos {
     val Inicio = IconosFogon.Inicio
     /** Reproducir un vídeo: un triángulo redondeado. */

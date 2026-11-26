@@ -51,7 +51,7 @@ typealias MotivoCodigo = io.github.fogonapps.social.MotivoCodigo
 typealias Acceso = io.github.fogonapps.social.EstadoAcceso
 
 /**
- * La red de El Cajón (Fogón Social): la cuenta, el feed, los perfiles de otras personas, seguir, me gusta,
+ * La red de Fabs (Fogón Social): la cuenta, el feed, los perfiles de otras personas, seguir, me gusta,
  * comentarios, guardados, avisos y lo que se publica. Todo es opcional: sin cuenta, nada de esto sale del teléfono.
  * Lo del cajón que la persona marcó como público o para sus seguidores se sube solo ([sincronizar]).
  */
@@ -794,7 +794,7 @@ class RedSocial(
 
     /**
      * Borrar una publicación propia desde su pantalla: se pide al servidor por su id, así se borra aunque la haya
-     * subido otro teléfono o el cajón de la cuenta esté sin abrir; después se quita de lo cargado y del cajón local.
+     * subido otro teléfono o la colección de la cuenta esté sin abrir; después se quita de lo cargado y del cajón local.
      */
     fun borrarPublicacion(id: Long, clave: String) = lanzar {
         cliente().borrarPublicacion(id)

@@ -140,7 +140,7 @@ fun Inicio(vm: AhorradorViewModel, e: Estado) {
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
     // La cabecera común (X-07): tu nombre y la frase; La Alcancía, en el círculo del perfil, con la cara del mes.
-    // La frase del saludo, como en El Cajón: las propias (al_), los votos y el menú al mantenerla pulsada.
+    // La frase del saludo, como en Fabs: las propias (al_), los votos y el menú al mantenerla pulsada.
     val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
     val base = androidx.compose.runtime.remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("al_${i + 1}", t) } }
     val idioma = java.util.Locale.getDefault().language.takeIf { it == "en" } ?: "es"

@@ -34,7 +34,7 @@ class HistoriasTest {
             val adj = h.datos["adjunto"]!!.jsonObject
             assertEquals(setOf("tipo", "titulo", "audio"), adj.keys)
             assertEquals(7, h.datos["fondo"]!!.jsonPrimitive.int)
-            // Por app: en El Cajón no sale; en El Forzudo, sí, para quien la sigue y no para quien no.
+            // Por app: en Fabs no sale; en El Forzudo, sí, para quien la sigue y no para quien no.
             assertTrue(s.historias(beto, "cajon").isEmpty())
             assertEquals(listOf(h.id), s.historias(beto, "forzudo").single().historias.map { it.id })
             assertFalse(s.historias(beto, "forzudo").single().historias.single().vista)
@@ -178,7 +178,7 @@ class HistoriasTest {
             b.usar { cambiar("INSERT INTO sesiones(huella, cuenta, creada, ultimo_uso, app) VALUES('cajon', ?, 0, 0, 'cajon'), ('forzudo', ?, 0, 0, 'forzudo')", ana, ana) }
             s.mensajesSinLeer(ana, "forzudo")
             s.mandar(beto, "anabel", SobreNuevo("x".repeat(40), "f".repeat(40)))
-            // El Cajón lo recibe y confirma; El Forzudo todavía lo encuentra.
+            // Fabs lo recibe y confirma; El Forzudo todavía lo encuentra.
             val id = s.recibir(ana, 0, "cajon").single().id
             assertTrue(s.recibir(ana, id, "cajon").isEmpty())
             assertEquals(1, s.mensajesSinLeer(ana, "forzudo"))

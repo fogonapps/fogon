@@ -16,7 +16,7 @@ data class FraseElegida(val clave: String, val texto: String)
 fun franjaDelDia(hora: Int) = when (hora) { in 0..4 -> "madrugada"; in 5..11 -> "manana"; in 12..18 -> "tarde"; else -> "noche" }
 
 /**
- * Elige la frase del saludo como El Cajón: las propias de la app y las de la gente (las de esta franja pesan más que
+ * Elige la frase del saludo como Fabs: las propias de la app y las de la gente (las de esta franja pesan más que
  * las de todo el día), mezcladas con los votos de la comunidad y lo que dijo la persona ([Frases.elegir]). Las de
  * noche también salen de madrugada.
  */
@@ -34,7 +34,7 @@ fun elegirFraseSaludo(
 }
 
 /**
- * Las frases del saludo de una app (fuera de El Cajón, que tiene su propia versión con obras): carga los votos, las
+ * Las frases del saludo de una app (fuera de Fabs, que tiene su propia versión con obras): carga los votos, las
  * de la gente de esta app y las que el equipo quitó; guarda lo que le gusta o no a la persona en este teléfono y
  * manda su voto si tiene cuenta. La frase elegida se queda toda la franja del día.
  */

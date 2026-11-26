@@ -300,7 +300,7 @@ fun AcercaDe(vm: CajonViewModel) {
         androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(R.drawable.logo_tmdb), "TMDB", Modifier.padding(top = 4.dp).height(16.dp))
         }
         Pista(stringResource(R.string.beta_aviso))
-        BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/el-cajon#problemas-conocidos") }, Modifier.padding(horizontal = 16.dp))
+        BotonSecundario(stringResource(R.string.beta_problemas), { uri.openUri("https://github.com/fogonapps/fogon/tree/main/apps/cajon#problemas-conocidos") }, Modifier.padding(horizontal = 16.dp))
         Pista(stringResource(R.string.tmdb_aviso))
         BotonSecundario(stringResource(R.string.lastfm_credito), { uri.openUri("https://www.last.fm") }, Modifier.padding(horizontal = 16.dp))
         BotonSecundario(stringResource(R.string.igdb_credito), { uri.openUri(io.github.fogonapps.cajon.datos.Igdb.SITIO) }, Modifier.padding(horizontal = 16.dp))

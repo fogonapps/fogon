@@ -73,7 +73,7 @@ class SocialTest {
         assertEquals(0, s.frasesComunidad("en").size)
         repeat(2) { s.proponerFrase(ana, FraseNueva("Otra frase más $it", "es")) }
         assertFailsWith<Problema> { s.proponerFrase(ana, FraseNueva("La cuarta del día", "es")) }    // 3 al día
-        // Cada app tiene sus frases de la gente: la de El Forzudo no sale en El Cajón, y el equipo ve de qué app es.
+        // Cada app tiene sus frases de la gente: la de El Forzudo no sale en Fabs, y el equipo ve de qué app es.
         val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
         s.proponerFrase(beto, FraseNueva("Hoy toca pierna, sin excusas", "es"), "forzudo")
         val deForzudo = s.frasesPendientes(jefa, tokenJefa).first { it.texto.startsWith("Hoy toca pierna") }

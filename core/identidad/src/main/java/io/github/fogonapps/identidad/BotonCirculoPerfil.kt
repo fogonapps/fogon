@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
 
-/** Botón redondo de la cabecera, como el ⚙ de El Cajón. */
+/** Botón redondo de la cabecera, como el ⚙ de Fabs. */
 @Composable
 fun BotonCirculoPerfil(icono: io.github.fogonapps.identidad.Dibujo, descripcion: String, onClick: () -> Unit) {
     val f = FogonTema.actual

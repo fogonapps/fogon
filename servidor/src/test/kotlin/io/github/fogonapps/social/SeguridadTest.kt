@@ -199,7 +199,7 @@ class SeguridadTest {
         e.s.ponerClave(yo, CambioClave("otra frase bastante larga", "una frase bastante larga"), token = a.token)
         assertEquals(yo, e.s.cuentaDe(a.token))
         assertNull(e.s.cuentaDe(b.token))
-        assertEquals("Tu contraseña de El Cajón cambió", e.buzon.single().first)
+        assertEquals("Tu contraseña de Fabs cambió", e.buzon.single().first)
         assertFalse(e.buzon.single().second.contains("otra frase"))
         val c = e.s.entrarConClave(EntradaClave("ana@correo.co", "otra frase bastante larga"))
         e.reloj += 60_000
@@ -208,7 +208,7 @@ class SeguridadTest {
         assertNull(e.s.cuentaDe(a.token))
         assertNull(e.s.cuentaDe(c.token))
         assertEquals(yo, e.s.cuentaDe(recuperada.token))
-        assertEquals("Tu contraseña de El Cajón cambió", e.buzon.last().first)
+        assertEquals("Tu contraseña de Fabs cambió", e.buzon.last().first)
         val d = e.s.entrarConClave(EntradaClave("ana@correo.co", "frase nueva recuperada"))
         e.s.ponerClave(yo, CambioClave("frase con codigo nueva"), conCodigo = true, token = recuperada.token)
         assertNull(e.s.cuentaDe(d.token))

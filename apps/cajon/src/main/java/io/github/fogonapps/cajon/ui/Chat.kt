@@ -184,7 +184,7 @@ private fun ImagenSticker(b64: String, modifier: Modifier = Modifier) {
 
 /**
  * Una conversación: la común de las cuatro apps (fotos, notas de voz, stickers, reacciones, «Visto»…) con lo de
- * El Cajón: mandar una obra (su tarjeta abre la ficha o la busca), los stickers con buscador y compartir imágenes.
+ * Fabs: mandar una obra (su tarjeta abre la ficha o la busca), los stickers con buscador y compartir imágenes.
  */
 @Composable
 fun Conversacion(vm: CajonViewModel, e: Estado, usuario: String) {

@@ -119,7 +119,7 @@ fun Inicio(vm: GymViewModel, e: Estado) {
         val usuario by vm.red.usuario.collectAsState()
         val fotoRemota by vm.red.foto.collectAsState()
         val foto = if (usuario != null) fotoRemota else e.foto
-        // La frase del saludo, como en El Cajón: las propias (fz_), las de la gente de El Forzudo, los votos y el menú.
+        // La frase del saludo, como en Fabs: las propias (fz_), las de la gente de El Forzudo, los votos y el menú.
         val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
         val base = remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("fz_${i + 1}", t) } }
         val idioma = java.util.Locale.getDefault().language.takeIf { it == "en" } ?: "es"

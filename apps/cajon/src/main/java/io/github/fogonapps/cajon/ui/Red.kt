@@ -483,7 +483,7 @@ internal fun FrasesDelEquipo(vm: CajonViewModel) {
     var nueva by rememberSaveable { mutableStateOf("") }
     var idioma by rememberSaveable { mutableStateOf("es") }
     var franja by rememberSaveable { mutableStateOf("todo") }
-    // Para qué app es la frase nueva: cada app tiene sus frases del saludo (las de El Cajón se listan abajo).
+    // Para qué app es la frase nueva: cada app tiene sus frases del saludo (las de Fabs se listan abajo).
     var app by rememberSaveable { mutableStateOf("cajon") }
     val franjas = listOf("todo" to R.string.franja_todo, "manana" to R.string.franja_manana, "tarde" to R.string.franja_tarde,
         "noche" to R.string.franja_noche, "madrugada" to R.string.franja_madrugada)

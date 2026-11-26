@@ -63,7 +63,7 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/compartir" />
         </provider>
         <!-- "Anotar lo que escucho": leer la canción que suena en cualquier app de música (sesiones de reproducción).
-             Solo funciona si la persona le da a El Cajón el acceso a notificaciones y lo activa en Ajustes. -->
+             Solo funciona si la persona le da a Fabs el acceso a notificaciones y lo activa en Ajustes. -->
         <service
             android:name=".EscuchaMusica"
             android:exported="true"

@@ -11,7 +11,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class TiendaPlayTest {
-    private val configuracion = ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon")
+    private val configuracion = ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon")
     private val catalogo = """{"productos":[{"id":"chispas_500","chispas":500},{"id":"chispas_1000","chispas":1000},
         {"id":"apoyo_fogon","chispas":5000,"unico":true}],"cuenta":"opaco"}"""
 

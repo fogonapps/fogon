@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 /**
- * La biblioteca de Steam de una persona, para importarla a El Cajón. La clave de Fogón (`STEAM_API_KEY`) vive solo
+ * La biblioteca de Steam de una persona, para importarla a Fabs. La clave de Fogón (`STEAM_API_KEY`) vive solo
  * aquí. Con el enlace del perfil (o su nombre o su número), se pide a Steam la lista de juegos y a IGDB la ficha de
  * cada uno ([Igdb.deSteam]); la respuesta va directo a la app. No se guarda nada: ni la lista, ni el perfil, ni el
  * número de Steam, y nada de eso (ni la clave) se escribe en los registros.

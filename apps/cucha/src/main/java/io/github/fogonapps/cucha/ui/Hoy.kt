@@ -105,7 +105,7 @@ fun Hoy(vm: CuchaViewModel, e: Estado) {
         else -> io.github.fogonapps.identidad.Cara.NORMAL
     }
     // La cabecera común (X-07): tu nombre y la frase; La Cucha, en el círculo del perfil.
-    // La frase del saludo, como en El Cajón: las propias (cu_), los votos y el menú al mantenerla pulsada.
+    // La frase del saludo, como en Fabs: las propias (cu_), los votos y el menú al mantenerla pulsada.
     val propias = androidx.compose.ui.res.stringArrayResource(R.array.frases_inicio)
     val base = androidx.compose.runtime.remember(propias.toList()) { propias.mapIndexed { i, t -> io.github.fogonapps.social.FraseBase("cu_${i + 1}", t) } }
     val frase = io.github.fogonapps.social.ui.rememberFraseDelSaludo(vm.frases, base, idioma)

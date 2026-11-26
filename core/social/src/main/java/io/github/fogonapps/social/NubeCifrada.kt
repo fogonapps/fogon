@@ -13,7 +13,7 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Lo de una app guardado en la cuenta (D-033), cifrado de extremo a extremo, igual que el cajón de El Cajón: el teléfono lo cifra con una llave al azar (AES-256-GCM,
+ * Lo de una app guardado en la cuenta (D-033), cifrado de extremo a extremo, igual que la colección de Fabs: el teléfono lo cifra con una llave al azar (AES-256-GCM,
  * comprimido antes) y esa llave viaja envuelta con la contraseña de la persona (PBKDF2-SHA256, 600 000 vueltas, sal
  * propia). El servidor guarda los dos sobres y no puede abrir ninguno: sin la contraseña, nadie lee el cajón.
  * Si la persona olvida la contraseña, lo guardado en el servidor no se puede recuperar (lo del teléfono sigue ahí).

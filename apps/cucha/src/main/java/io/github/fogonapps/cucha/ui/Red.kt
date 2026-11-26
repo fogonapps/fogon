@@ -501,7 +501,7 @@ fun FavoritosRed(partes: Map<String, JsonElement>, seccion: Int) {
     nombres.forEach { Text("· $it", Modifier.padding(horizontal = 16.dp, vertical = 2.dp), color = FogonTema.actual.texto) }
 }
 
-/** «Quién lo ve» de los favoritos, como las partes del perfil de El Cajón y El Forzudo. */
+/** «Quién lo ve» de los favoritos, como las partes del perfil de Fabs y El Forzudo. */
 @Composable
 fun PartesCucha(vm: CuchaViewModel) {
     val f = FogonTema.actual

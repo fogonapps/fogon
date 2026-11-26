@@ -34,7 +34,7 @@ No copiamos marcas ni hablamos mal de nadie. Hacemos las cosas a nuestra manera 
 | <img src="apps/cucha/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Ñom](apps/cucha/) | Calorías, recetas colombianas, menú de la semana y lista de mercado | [Última versión](https://github.com/fogonapps/la-cucha/releases/latest) |
 | <img src="apps/cajon/fastlane/metadata/android/en-US/images/icon.png" width="56" alt=""> | [Fabs](apps/cajon/) | Películas, series, animes, libros y música: tu nota, tu diario, tus listas y recomendaciones | [Google Play](https://play.google.com/store/apps/details?id=io.github.fogonapps.cajon) |
 
-Para Android. Con [Obtainium](https://github.com/ImranR98/Obtainium) las actualizaciones llegan solas: Añadir aplicación → pegar el enlace del repo de la app (por ejemplo `https://github.com/fogonapps/el-cajon`).
+Para Android. Con [Obtainium](https://github.com/ImranR98/Obtainium) las actualizaciones llegan solas: Añadir aplicación → pegar el enlace del repo de la app (por ejemplo `https://github.com/fogonapps/forzudo`); Fabs se instala desde Google Play.
 
 ## Contacto
 

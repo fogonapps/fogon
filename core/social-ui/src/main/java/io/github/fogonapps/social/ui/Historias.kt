@@ -57,7 +57,7 @@ import kotlinx.serialization.json.*
 /*
  * Historias y notas de 24 horas, como en Instagram, en todas las apps. Una historia lleva una foto, un texto o un
  * adjunto; una nota, unas palabras y, si quiere, un adjunto. El adjunto lo arma cada app con lo suyo (una canción u
- * obra en El Cajón, un entreno o un récord en El Forzudo, un plato en La Cucha, una meta en La Alcancía): ver
+ * obra en Fabs, un entreno o un récord en El Forzudo, un plato en La Cucha, una meta en La Alcancía): ver
  * [InterfazSocial.adjuntosApp]. La canción suena 30 segundos (el avance de Apple, junto al botón de Apple Music).
  */
 
@@ -943,7 +943,7 @@ private fun EditarTextoHistoria(c: Capa, onCerrar: () -> Unit, onListo: (Capa) -
         dismissButton = { TextButton(onCerrar) { Text(stringResource(R.string.sancion_cancelar), color = f.textoSuave) } })
 }
 
-/** Los stickers para la historia: los de Fogón y los tuyos (si la app los tiene, como El Cajón). */
+/** Los stickers para la historia: los de Fogón y los tuyos (si la app los tiene, como Fabs). */
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ElegirStickerHistoria(vm: InterfazSocial, onCerrar: () -> Unit, onElegir: (String?, Int?) -> Unit) {
@@ -1272,7 +1272,7 @@ fun TarjetaCancionPerfil(datos: JsonObject, onCambiar: (() -> Unit)? = null, son
     }
 }
 
-/** En el perfil propio de las apps sin canción propia de El Cajón: ponerla, cambiarla o quitarla. */
+/** En el perfil propio de las apps sin canción propia de Fabs: ponerla, cambiarla o quitarla. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CancionPerfilPropia(vm: InterfazSocial) {

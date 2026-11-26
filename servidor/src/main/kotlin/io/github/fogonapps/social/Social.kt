@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
 /**
- * Quién puede ver algo (los mismos valores que `Visibilidad` en El Cajón; lo privado nunca llega). [SEGUIDORES] se
+ * Quién puede ver algo (los mismos valores que `Visibilidad` en Fabs; lo privado nunca llega). [SEGUIDORES] se
  * guarda como "amigos" para que las versiones de la app que ya lo mandan sigan sirviendo.
  */
 object Vis {
@@ -693,7 +693,7 @@ class Social(
         return nuevo
     }
 
-    /** D-033: la copia cifrada de una app que no es El Cajón, con la llave común de la cuenta (envuelta con la contraseña). */
+    /** D-033: la copia cifrada de una app que no es Fabs, con la llave común de la cuenta (envuelta con la contraseña). */
     fun respaldo(yo: Long, app: String): CajonCifrado {
         require(app != "cajon")
         val llave = cajon(yo).llave
@@ -3358,7 +3358,7 @@ class Social(
         private const val SEMANA = 7L * 24 * 3600_000
         private val azar = java.security.SecureRandom()
         val CORREO = Regex("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}")
-        /** Igual que en El Cajón (`Logica.usuarioLimpio`): 3 a 30 de letras, números, punto y guion bajo. */
+        /** Igual que en Fabs (`Logica.usuarioLimpio`): 3 a 30 de letras, números, punto y guion bajo. */
         val USUARIO = Regex("[a-z0-9._]{3,30}")
         val RESERVADOS = setOf("admin", "elcajon", "cajon", "soporte", "api", "root", "moderacion", "explorar", "p", "privacidad", "terminos")
     }

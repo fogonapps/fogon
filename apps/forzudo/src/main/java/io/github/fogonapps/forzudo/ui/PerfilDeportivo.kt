@@ -12,7 +12,7 @@ import io.github.fogonapps.forzudo.R
 import io.github.fogonapps.forzudo.datos.partesDeportivas
 import io.github.fogonapps.identidad.*
 
-/** Qué partes deportivas se ven en el perfil de la red, como «Quién lo ve» de El Cajón. Nunca cifras del cuerpo. */
+/** Qué partes deportivas se ven en el perfil de la red, como «Quién lo ve» de Fabs. Nunca cifras del cuerpo. */
 @Composable
 fun PartesDeportivas(vm: GymViewModel) {
     val f = FogonTema.actual

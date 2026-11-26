@@ -134,7 +134,7 @@ class CajaFuerte(context: Context, val perfilId: String) {
         get() = prefs.getBoolean(prefijo + "diario_cuadricula", true)
         set(v) = prefs.edit { putBoolean(prefijo + "diario_cuadricula", v) }
 
-    /** La sesión en Fogón Social (la red de El Cajón): el token, cifrado; y el @usuario, que no es secreto. */
+    /** La sesión en Fogón Social (la red de Fabs): el token, cifrado; y el @usuario, que no es secreto. */
     var tokenSocial: String?
         get() = leer("social")
         set(v) = escribir("social", v, confirmar = true) { putBoolean(prefijo + "apariencia_cuenta_pendiente", v != null) }

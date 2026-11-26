@@ -1047,7 +1047,7 @@ fun EstadoCuenta(vm: InterfazSocial) {
     }
 }
 
-/** X-10: en las apps sin pantalla propia de notificaciones (todas menos El Cajón), los avisos con la app cerrada. */
+/** X-10: en las apps sin pantalla propia de notificaciones (todas menos Fabs), los avisos con la app cerrada. */
 @Composable
 internal fun AvisosEnCuenta() {
     val c = androidx.compose.ui.platform.LocalContext.current

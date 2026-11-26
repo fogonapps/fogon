@@ -19,7 +19,7 @@ import io.github.fogonapps.social.PersonaSocial
 import kotlinx.coroutines.delay
 import java.io.File
 
-/** La lupa (la misma de El Cajón). */
+/** La lupa (la misma de Fabs). */
 val IconoBuscar = dibujo("buscar", trazo("M10.6 4.4a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4zM15.2 15.2l4.6 4.6", 2.8f))
 
 /**

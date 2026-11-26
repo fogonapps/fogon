@@ -36,7 +36,7 @@ class ControladorCuentaSocialTest {
         override suspend fun llaveNueva(clave: String) { pasos += "recuperar" }
     }
     private fun cliente(responder: (Request) -> Pair<Int, String>) = ClienteSocial(
-        configuracion = ConfiguracionSocial("cajon", "El Cajón", "ElCajon-Fogon"),
+        configuracion = ConfiguracionSocial("cajon", "Fabs", "ElCajon-Fogon"),
         http = OkHttpClient.Builder().addInterceptor { cadena ->
             val (codigo, cuerpo) = responder(cadena.request())
             Response.Builder().request(cadena.request()).protocol(Protocol.HTTP_1_1)

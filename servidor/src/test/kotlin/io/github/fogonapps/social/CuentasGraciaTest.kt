@@ -145,7 +145,7 @@ class CuentasGraciaTest {
         assertTrue(e.buzon.any { it.para == "ana@correo.co" && it.asunto == "Solicitud de cambio de correo" })
         e.s.confirmarCorreo(yo, CambioCorreo(" NUEVA@correo.co ", codigo = codigo))
         assertEquals("nueva@correo.co", e.s.miCuenta(yo).correo)
-        assertEquals(setOf("ana@correo.co", "nueva@correo.co"), e.buzon.filter { it.asunto == "Tu correo de El Cajón cambió" }.map { it.para }.toSet())
+        assertEquals(setOf("ana@correo.co", "nueva@correo.co"), e.buzon.filter { it.asunto == "Tu correo de Fabs cambió" }.map { it.para }.toSet())
         e.error("sin_codigo") { e.s.confirmarCorreo(yo, CambioCorreo("nueva@correo.co", codigo = codigo)) }
         e.reloj += 60_000
         e.s.cambiarCorreo(yo, CambioCorreo("beto@correo.co", clave = e.clave))

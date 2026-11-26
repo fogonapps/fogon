@@ -213,7 +213,7 @@ class AppsTest {
             assertEquals(HttpStatusCode.NoContent, client.put("/v1/publicaciones") { bearerAuth(e.token); contentType(ContentType.Application.Json); setBody("[]") }.status)
             assertEquals("[]", client.get("/v1/actividad") { bearerAuth(e.token) }.bodyAsText())
             assertTrue(client.get("/v2/apps/forzudo/actividad") { bearerAuth(forzudo) }.bodyAsText().contains("entreno"))
-            // El chat es de las cuatro apps; la copia del cajón sigue siendo solo de El Cajón.
+            // El chat es de las cuatro apps; la copia del cajón sigue siendo solo de Fabs.
             assertEquals(HttpStatusCode.OK, client.get("/v1/mensajes/sin-leer") { bearerAuth(forzudo) }.status)
             assertEquals(HttpStatusCode.Forbidden, client.get("/v1/cajon") { bearerAuth(forzudo) }.status)
             assertEquals(HttpStatusCode.OK, client.get("/v1/mensajes") { bearerAuth(e.token) }.status)

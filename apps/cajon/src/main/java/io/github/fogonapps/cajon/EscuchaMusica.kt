@@ -112,7 +112,7 @@ class EscuchaMusica : NotificationListenerService() {
         fun activar(c: Context, si: Boolean) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean("anotar", si) }
         fun agregarSolos(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("solos", false)
         fun ponerAgregarSolos(c: Context, si: Boolean) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean("solos", si) }
-        /** Si la persona le dio a El Cajón el acceso a notificaciones (lo que permite leer lo que suena). */
+        /** Si la persona le dio a Fabs el acceso a notificaciones (lo que permite leer lo que suena). */
         fun conPermiso(c: Context): Boolean =
             androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(c).contains(c.packageName)
     }

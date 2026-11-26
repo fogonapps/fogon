@@ -83,7 +83,7 @@ val CONFIGURACION_RED = io.github.fogonapps.social.ConfiguracionSocial("alcancia
 
 class AhorradorViewModel(app: Application) : AndroidViewModel(app) {
     private val contadores by lazy { io.github.fogonapps.social.Contadores.de(app) }
-    /** Las frases del saludo, como en El Cajón: las propias (al_), las de la gente de La Alcancía y los votos. */
+    /** Las frases del saludo, como en Fabs: las propias (al_), las de la gente de La Alcancía y los votos. */
     val frases = io.github.fogonapps.social.FrasesSaludo(app.getSharedPreferences("frases", android.content.Context.MODE_PRIVATE), viewModelScope) {
         // Sin cuenta, La Alcancía no se conecta a nada (ni para las frases de la comunidad).
         if (red.usuario.value != null) red.clienteFrases() else null
