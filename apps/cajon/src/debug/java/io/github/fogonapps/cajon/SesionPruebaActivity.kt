@@ -26,6 +26,8 @@ class SesionPruebaActivity : ComponentActivity() {
                 // Conserva las cuentas del emulador y reutiliza un perfil exclusivo de pruebas.
                 val perfil = app.perfiles.lista.perfiles.firstOrNull { it.usuario == cuenta.usuario &&
                     app.recursos(it.id).caja.tokenSocial == token }
+                    // El perfil abierto sin sesión (cerró sesión): entra en ese mismo, como haría la persona.
+                    ?: app.perfiles.lista.perfiles.firstOrNull { it.id == app.recursos().id && app.recursos(it.id).caja.tokenSocial == null }
                     ?: app.perfiles.agregar(provisional = false)
                     ?: error("No hay espacio para el perfil de pruebas")
                 app.perfiles.cambiar(perfil.id)

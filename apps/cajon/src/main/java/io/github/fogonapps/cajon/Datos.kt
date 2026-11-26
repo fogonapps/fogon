@@ -2,34 +2,7 @@ package io.github.fogonapps.cajon
 
 import io.github.fogonapps.cajon.datos.Estado
 import io.github.fogonapps.cajon.datos.JsonCajon
-import io.github.fogonapps.cajon.datos.Resenas
-import io.github.fogonapps.cajon.datos.Logica
-import io.github.fogonapps.identidad.ProveedorDatosFogon
-import kotlinx.coroutines.flow.first
 
 /** Lee un respaldo de Fabs. Devuelve el estado si es válido (ya pasó por el tutorial). */
 fun leerRespaldoCajon(texto: String): Estado? =
     runCatching { JsonCajon.decodeFromString(Estado.serializer(), texto) }.getOrNull()?.takeIf { it.listo }
-
-/**
- * Los datos de Fabs en el formato del respaldo de todo Fogón. No va en el manifiesto: Fabs sale de Google Play,
- * firmada con otra llave, y no comparte el permiso de firma de las otras apps (ver AndroidManifest.xml).
- * Las claves de los servicios externos no van: quedan cifradas en este teléfono.
- */
-class DatosCajon : ProveedorDatosFogon() {
-    private val app get() = context!!.applicationContext as CajonApp
-
-    override suspend fun leer(): String {
-        val perfil = app.recursos()
-        return JsonCajon.encodeToString(Estado.serializer(), Resenas.paraGuardar(perfil.almacen.data.first().copy(escuchas = io.github.fogonapps.cajon.datos.RegistroEscuchas.paraExportar(perfil.escuchas.oidos.value))))
-    }
-
-    override suspend fun restaurar(texto: String): Boolean {
-        val e = leerRespaldoCajon(texto) ?: return false
-        val perfil = app.recursos()
-        perfil.escuchas.unir(e.escuchas)
-        perfil.almacen.updateData { Logica.normalizar(e.copy(escuchas = null)) }
-        WidgetCurso.actualizar(app)
-        return true
-    }
-}

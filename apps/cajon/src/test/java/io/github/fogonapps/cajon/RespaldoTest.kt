@@ -60,21 +60,8 @@ class RespaldoTest {
         assertNull(RespaldoFogon.partes("{\"fogon\":2,\"apps\":{\"cajon\":$texto}}"))
     }
 
-    @Test fun proveedorRechazaDanadosSinBorrarDatos() = runBlocking {
-        val app = RuntimeEnvironment.getApplication() as CajonApp
-        val almacen = app.recursos().almacen
-        almacen.updateData { Logica.normalizar(original) }
-        val proveedor = Robolectric.buildContentProvider(DatosCajon::class.java).create().get()
-        val antes = almacen.data.first()
-        for (texto in listOf("", "{", "[]", "null", "{}", "{\"Title\":\"Netflix\"}", JsonCajon.encodeToString(Estado.serializer(), original).dropLast(5))) {
+    @Test fun respaldoDanadoNoSeLee() {
+        for (texto in listOf("", "{", "[]", "null", "{}", "{\"Title\":\"Netflix\"}", JsonCajon.encodeToString(Estado.serializer(), original).dropLast(5)))
             assertNull(leerRespaldoCajon(texto))
-            assertFalse(proveedor.restaurar(texto))
-            assertEquals(antes, almacen.data.first())
-        }
-        val exportado = leerRespaldoCajon(proveedor.leer())!!
-        assertEquals(original.obras, exportado.obras)
-        assertTrue(proveedor.restaurar(proveedor.leer()))
-        val restaurado = leerRespaldoCajon(proveedor.leer())!!
-        assertEquals(exportado, restaurado)
     }
 }

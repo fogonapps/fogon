@@ -199,5 +199,5 @@ article::after{content:"";display:block;clear:both}.botones{text-align:center;ma
 .elementos{display:flex;gap:10px;overflow-x:auto}.elementos div{width:112px;flex:none;display:flex;flex-direction:column;gap:4px;font-size:14px}.elementos img{width:112px;aspect-ratio:1;object-fit:cover;border-radius:12px}.legal h2{font-size:1.1em;margin-top:1.4em}
 </style></head><body><main>$cuerpo</main></body></html>"""
 
-/** Para que Android abra los enlaces (/@usuario, /p/…) directo en Fabs: el paquete y la huella del certificado de firma. */
-private const val ASSETLINKS = """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"io.github.fogonapps.cajon","sha256_cert_fingerprints":["CE:54:06:88:2E:36:1C:F1:8E:3E:CE:18:FA:34:87:69:E3:4D:8F:A6:CC:8D:D5:3F:74:A7:72:89:A9:93:D8:E5"]}}]"""
+/** Para que Android abra los enlaces (/@usuario, /p/…) directo en Fabs: el paquete y las huellas de firma: la de subida y la de Google Play, que re-firma lo que se instala desde la tienda. */
+private const val ASSETLINKS = """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"io.github.fogonapps.cajon","sha256_cert_fingerprints":["CE:54:06:88:2E:36:1C:F1:8E:3E:CE:18:FA:34:87:69:E3:4D:8F:A6:CC:8D:D5:3F:74:A7:72:89:A9:93:D8:E5","A2:BB:DA:64:05:82:54:1E:FD:F0:2B:8F:58:76:1E:33:F4:81:22:41:B4:3A:4C:11:66:AD:2A:71:74:BF:40:A2"]}}]"""

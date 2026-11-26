@@ -55,14 +55,16 @@ import kotlin.concurrent.thread
 /** El permiso de firma que protege los datos de cada app (declarado en el manifiesto de core). */
 const val PERMISO_DATOS = "io.github.fogonapps.permiso.DATOS"
 
-/** Las apps de Fogón: la clave en el archivo, el paquete y el nombre que se muestra. */
+/**
+ * Las apps de Fogón: la clave en el archivo, el paquete y el nombre que se muestra. Fabs no está: sale de Google Play
+ * con la firma de Google y no comparte el permiso de firma; tiene su propio respaldo.
+ */
 data class AppFogon(val clave: String, val paquete: String, val nombre: Int)
 
 val APPS_FOGON = listOf(
     AppFogon("forzudo", "io.github.fogonapps.forzudo", R.string.fogon_app_forzudo),
     AppFogon("ahorrador", "io.github.fogonapps.ahorrador", R.string.fogon_app_ahorrador),
     AppFogon("cucha", "io.github.fogonapps.cucha", R.string.fogon_app_cucha),
-    AppFogon("cajon", "io.github.fogonapps.cajon", R.string.fogon_app_cajon),
 )
 
 private fun uriDatos(paquete: String): Uri = "content://$paquete.datos/estado".toUri()

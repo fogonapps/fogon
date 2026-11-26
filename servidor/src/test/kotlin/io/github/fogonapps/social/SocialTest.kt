@@ -505,7 +505,11 @@ class SocialTest {
         assertEquals(HttpStatusCode.OK, web.status)
         assertTrue("@eva" in web.bodyAsText() && "Cine" in web.bodyAsText())
         assertEquals(HttpStatusCode.NotFound, client.get("/@nadie").status)
-        assertTrue("io.github.fogonapps.cajon" in client.get("/.well-known/assetlinks.json").bodyAsText())
+        client.get("/.well-known/assetlinks.json").bodyAsText().let { enlaces ->
+            assertTrue("io.github.fogonapps.cajon" in enlaces)
+            // La instalación desde Play lleva la firma de Google: sin su huella, los enlaces no abren Fabs.
+            assertTrue("A2:BB:DA:64:05:82:54:1E" in enlaces)
+        }
         assertEquals(HttpStatusCode.OK, client.get("/privacidad").status)
         // La política y los términos también en inglés, con el enlace al otro idioma.
         assertTrue("Privacy policy" in client.get("/privacy").bodyAsText() && "/privacidad" in client.get("/privacy").bodyAsText())

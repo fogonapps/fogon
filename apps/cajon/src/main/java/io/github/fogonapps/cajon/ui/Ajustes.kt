@@ -51,7 +51,6 @@ import io.github.fogonapps.identidad.FogonTema
 import io.github.fogonapps.identidad.Idioma
 import io.github.fogonapps.identidad.Licencia
 import io.github.fogonapps.identidad.LicenciasFogon
-import io.github.fogonapps.identidad.RespaldoTodoFogon
 import io.github.fogonapps.identidad.pedirWidget
 import kotlinx.coroutines.launch
 import io.github.fogonapps.social.ui.R as SocialR
