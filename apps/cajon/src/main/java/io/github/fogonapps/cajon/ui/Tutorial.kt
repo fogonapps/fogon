@@ -127,17 +127,21 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                         Text(stringResource(texto), style = MaterialTheme.typography.bodyLarge, color = f.texto, modifier = Modifier.weight(1f))
                     }
                 }
-                // Cómo se ve: portadas, estrellas, una entrada del diario y una reseña. Las portadas son las inventadas de la
-                // app (la tapa gris con el título): en el tutorial no se pide nada a TMDB ni a Open Library por mostrar un ejemplo.
-                val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true)
-                val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true)
-                val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8)
+                // Cómo se ve: portadas, estrellas, una entrada del diario y una reseña. Las portadas son las de verdad, de las
+                // mismas fuentes que usa la app (TMDB y Open Library): con la tapa gris de reserva parecía que no cargaban.
+                // Sin internet queda esa tapa gris con el título.
+                val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true,
+                    portada = "https://image.tmdb.org/t/p/w500/oBvINgU5r10WHvG6VSopCOlWtJP.jpg")
+                val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true,
+                    portada = "https://image.tmdb.org/t/p/w500/4TfZdXABpM0j0FIyRSUQDUXxVwV.jpg")
+                val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8,
+                    portada = "https://covers.openlibrary.org/b/id/1055707-L.jpg")
                 val descripcion = stringResource(R.string.tut_muestra_descripcion)
                 Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         listOf(peli, anime, libro).forEach { o ->
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Portada("", o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
+                                Portada(o.portada, o.tipo, o.titulo, Modifier.fillMaxWidth(), esquina = 10.dp, conTitulo = false)
                                 Text(o.titulo, style = MaterialTheme.typography.labelMedium, color = f.texto, maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                 Estrellas(o.nota ?: 0)
