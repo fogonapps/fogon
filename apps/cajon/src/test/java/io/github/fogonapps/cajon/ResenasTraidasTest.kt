@@ -85,5 +85,8 @@ class ResenasTraidasTest {
         assertEquals(setOf(Visibilidad.PRIVADA), estado.value!!.resenas.filter { !it.borrada }.map { Visibilidad.de(it.visibilidad) }.toSet())
         // Espera a que la persona entre con su cuenta.
         assertEquals(2, vm.resenasTraidas.value?.ids?.size)
+        // Y sigue esperando aunque la app se cierre (otro ViewModel, el mismo perfil).
+        val otro = CajonViewModel(ApplicationProvider.getApplicationContext<CajonApp>())
+        assertEquals(vm.resenasTraidas.value, otro.resenasTraidas.value)
     }
 }

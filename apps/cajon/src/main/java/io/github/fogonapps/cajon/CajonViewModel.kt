@@ -489,17 +489,25 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
     fun olvidarImportado() { _recienImportado.value = null }
 
     /**
-     * Las reseñas que trajo la última importación (entran privadas) y de qué app vienen: con cuenta, se ofrece una vez
-     * compartirlas todas juntas. Sin cuenta esperan aquí hasta que la persona entre.
+     * Las reseñas que trajo una importación (entran privadas) y de qué app vienen: con cuenta, se ofrece una vez
+     * compartirlas todas juntas. Sin cuenta esperan guardadas en el teléfono (por perfil) hasta que la persona entre,
+     * aunque cierre la app entretanto.
      */
     data class ResenasTraidas(val ids: List<String>, val deDonde: String)
-    private val _resenasTraidas = MutableStateFlow<ResenasTraidas?>(null)
+    private val prefsTraidas = cajonApp.getSharedPreferences("resenas-traidas", android.content.Context.MODE_PRIVATE)
+    private val claveTraidas get() = "traidas.${recursos.id}"
+    private val _resenasTraidas = MutableStateFlow(prefsTraidas.getString(claveTraidas, null)?.split('\n')
+        ?.let { p -> ResenasTraidas(p.drop(1).filter { it.isNotBlank() }, p.first()).takeIf { it.ids.isNotEmpty() } })
     val resenasTraidas: StateFlow<ResenasTraidas?> = _resenasTraidas
+    private fun guardarTraidas(t: ResenasTraidas?) {
+        prefsTraidas.edit().apply { if (t == null) remove(claveTraidas) else putString(claveTraidas, (listOf(t.deDonde) + t.ids).joinToString("\n")) }.apply()
+        _resenasTraidas.value = t
+    }
 
     /** Comparte las reseñas traídas con [visibilidad] (amigos o pública), o las deja privadas con null. */
     fun compartirResenasTraidas(visibilidad: String?) {
         val traidas = _resenasTraidas.value ?: return
-        _resenasTraidas.value = null
+        guardarTraidas(null)
         val vis = visibilidad?.let { Visibilidad.de(it) }?.takeIf { it != Visibilidad.PRIVADA } ?: return
         if (red.usuario.value == null) return
         val t = ahora()
@@ -3442,7 +3450,8 @@ class CajonViewModel(app: Application) : AndroidViewModel(app) {
             resenasNuevas = x.resenas.filter { it.id !in antes && !it.borrada && it.texto.isNotBlank() }.map { it.id }
             x
         }
-        if (resenasNuevas.isNotEmpty()) _resenasTraidas.value = ResenasTraidas(resenasNuevas, r.deDonde)
+        // Si ya había unas esperando (otra importación sin cuenta), se suman.
+        if (resenasNuevas.isNotEmpty()) guardarTraidas(ResenasTraidas(((_resenasTraidas.value?.ids ?: emptyList()) + resenasNuevas).distinct(), r.deDonde))
         avisar(txPlural(R.plurals.aviso_importadas, r.obras.size, r.obras.size, r.deDonde, nuevas))
         _recienImportado.value = r.obras.size
         buscarPortadas()

@@ -282,9 +282,13 @@ fun TarjetaResena(texto: String, nota: Int?) {
 internal fun CompartirResenasTraidas(vm: CajonViewModel) {
     val traidas by vm.resenasTraidas.collectAsStateWithLifecycle()
     val usuario by vm.red.usuario.collectAsStateWithLifecycle()
+    val estado by vm.estado.collectAsStateWithLifecycle()
     val t = traidas ?: return
     if (usuario == null) return
-    val n = t.ids.size
+    // Solo cuentan las que siguen ahí y privadas (pudo borrar o compartir alguna mientras tanto).
+    val ids = t.ids.toSet()
+    val n = estado?.resenas?.count { it.id in ids && !it.borrada && Visibilidad.de(it.visibilidad) == Visibilidad.PRIVADA } ?: return
+    if (n == 0) { androidx.compose.runtime.LaunchedEffect(Unit) { vm.compartirResenasTraidas(null) }; return }
     AlertDialog(onDismissRequest = { vm.compartirResenasTraidas(null) },
         title = { Text(pluralStringResource(R.plurals.traidas_resenas_titulo, n, n, t.deDonde)) },
         text = { Text(stringResource(R.string.traidas_resenas_texto)) },

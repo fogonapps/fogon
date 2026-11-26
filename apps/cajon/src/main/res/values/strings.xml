@@ -2056,4 +2056,8 @@
   <string name="traidas_resenas_publicas">Share with everyone</string>
   <string name="traidas_resenas_amigos">Friends only</string>
   <string name="traidas_resenas_privadas">Keep them private</string>
+  <!-- La portada de cada ejemplo del tutorial, en la edición de este idioma. -->
+  <string name="tut_muestra_peli_portada">https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg</string>
+  <string name="tut_muestra_anime_portada">https://image.tmdb.org/t/p/w500/jUo8cNmU400WtZiJss45HNXlQ2e.jpg</string>
+  <string name="tut_muestra_libro_portada">https://covers.openlibrary.org/b/id/15272476-L.jpg</string>
 </resources>

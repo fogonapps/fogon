@@ -129,13 +129,13 @@ fun Tutorial(vm: CajonViewModel, acciones: Acciones) {
                 }
                 // Cómo se ve: portadas, estrellas, una entrada del diario y una reseña. Las portadas son las de verdad, de las
                 // mismas fuentes que usa la app (TMDB y Open Library): con la tapa gris de reserva parecía que no cargaban.
-                // Sin internet queda esa tapa gris con el título.
+                // Sin internet queda esa tapa gris con el título. Cada idioma con su edición (las direcciones van en strings.xml).
                 val peli = Obra("muestra-peli", Tipos.PELICULA, stringResource(R.string.tut_muestra_peli), anio = 2014, nota = 9, meGusta = true,
-                    portada = "https://image.tmdb.org/t/p/w500/oBvINgU5r10WHvG6VSopCOlWtJP.jpg")
+                    portada = stringResource(R.string.tut_muestra_peli_portada))
                 val anime = Obra("muestra-anime", Tipos.ANIME, stringResource(R.string.tut_muestra_anime), anio = 2001, nota = 10, meGusta = true,
-                    portada = "https://image.tmdb.org/t/p/w500/4TfZdXABpM0j0FIyRSUQDUXxVwV.jpg")
+                    portada = stringResource(R.string.tut_muestra_anime_portada))
                 val libro = Obra("muestra-libro", Tipos.LIBRO, stringResource(R.string.tut_muestra_libro), anio = 1967, nota = 8,
-                    portada = "https://covers.openlibrary.org/b/id/1055707-L.jpg")
+                    portada = stringResource(R.string.tut_muestra_libro_portada))
                 val descripcion = stringResource(R.string.tut_muestra_descripcion)
                 Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = descripcion }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
