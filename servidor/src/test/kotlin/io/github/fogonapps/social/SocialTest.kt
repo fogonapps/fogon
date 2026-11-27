@@ -102,6 +102,30 @@ class SocialTest {
         assertNull(s.frases()["frase_2"])                                                       // se va con la cuenta
     }
 
+    @Test fun coleccionParaComparar() {
+        val s = nuevo()
+        val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
+        val beto = s.cuentaDe(s.crearCuenta(NuevaCuenta("beto")).token)!!
+        // Sin subir todavía: vacía para ella misma.
+        assertEquals(emptyList(), s.coleccionDe(ana, "ana").obras)
+        s.subirColeccion(ana, Coleccion(listOf(
+            ObraColeccion("tmdb:movie:1", "pelicula", "Alien", 9, true), ObraColeccion("tmdb:movie:1", "pelicula", "Alien repetida", 3),
+            ObraColeccion("", "otro", "No es un tipo", 5), ObraColeccion("ol:1", "libro", "x".repeat(500), 40))))
+        val propia = s.coleccionDe(ana, "ana").obras
+        assertEquals(listOf("tmdb:movie:1", "ol:1"), propia.map { it.fuente })
+        assertEquals(200, propia[1].titulo.length)
+        assertEquals(10, propia[1].nota)
+        // Quien no la sigue no la ve; al seguirla, sí; con bloqueo, no.
+        assertFailsWith<Problema> { s.coleccionDe(beto, "ana") }
+        s.seguir(beto, "ana")
+        assertEquals(2, s.coleccionDe(beto, "ana").obras.size)
+        s.bloquear(ana, "beto", true)
+        assertFailsWith<Problema> { s.coleccionDe(beto, "ana") }
+        // Una vez por minuto y con tope de obras.
+        assertEquals(429, assertFailsWith<Problema> { s.subirColeccion(ana, Coleccion()) }.codigo)
+        assertEquals(413, assertFailsWith<Problema> { s.subirColeccion(beto, Coleccion(List(Social.MAX_COLECCION + 1) { ObraColeccion("f$it", "pelicula", "t") })) }.codigo)
+    }
+
     @Test fun seguirVisibilidadYBloqueos() {
         val s = nuevo()
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!

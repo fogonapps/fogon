@@ -25,7 +25,7 @@ class PrivacidadTest {
         val ana = s.cuentaDe(s.crearCuenta(NuevaCuenta("ana")).token)!!
         base.usar { cambiar("UPDATE cuentas SET acepto = '2026-11-23' WHERE id = ?", ana) }
         // La app compara lo aceptado con la versión de /v1/estado y, si difieren, muestra la hoja para aceptar.
-        assertEquals("2026-11-25", Social.POLITICA)
+        assertEquals("2026-11-26", Social.POLITICA)
         assertEquals("2026-11-23", s.miCuenta(ana).politica)
         assertEquals("politica", assertFailsWith<Problema> { s.aceptarPolitica(ana, "2026-11-23") }.mensaje)
         s.aceptarPolitica(ana, Social.POLITICA)

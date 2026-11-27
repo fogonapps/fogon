@@ -248,6 +248,16 @@ object TemasPerfil {
 class Problema(val codigo: Int, val mensaje: String, val desde: Long = 0) : Exception(mensaje)
 
 /**
+ * Una obra de la colección para comparar gustos: de dónde es, qué es, su título, la nota (0 = sin nota, 1 a 10), si le
+ * encanta y, solo entonces, su portada (para mostrarla como recomendación).
+ */
+@Serializable
+data class ObraColeccion(val fuente: String = "", val tipo: String, val titulo: String, val nota: Int = 0, val encanta: Boolean = false, val portada: String = "")
+
+@Serializable
+data class Coleccion(val obras: List<ObraColeccion> = emptyList(), val cuando: Long = 0)
+
+/**
  * La fila de la revisión automática de fotos: un hilo y como mucho [tope] fotos esperando (cada una guarda sus bytes
  * en memoria). Si llegan más, las que no caben se descartan y quedan sin revisar, como sin el modelo.
  */
@@ -897,6 +907,37 @@ class Social(
         java.io.File(dirFotos, "$yo.jpg").delete()
         imagenes.forEach { java.io.File(dirImagenes, "$it.jpg").delete(); java.io.File(dirImagenes, "$it.png").delete() }
         videos.forEach { java.io.File(dirVideos, "$it.mp4").delete() }
+    }
+
+    /**
+     * Guarda la lista corta de la colección de [yo] (la reemplaza entera). Solo obra, tipo, título y nota: nada de
+     * reseñas, notas personales ni fechas. Hasta [MAX_COLECCION] obras y una vez por minuto.
+     */
+    fun subirColeccion(yo: Long, c: Coleccion) {
+        if (c.obras.size > MAX_COLECCION) throw Problema(413, "muy_grande")
+        val tipos = setOf("pelicula", "serie", "anime", "libro", "album", "juego")
+        val limpias = c.obras.filter { it.tipo in tipos && it.titulo.isNotBlank() }.map {
+            ObraColeccion(it.fuente.take(80), it.tipo, it.titulo.take(200), it.nota.coerceIn(0, 10), it.encanta,
+                it.portada.takeIf { p -> p.startsWith("https://") && p.length <= 300 }.orEmpty())
+        }.distinctBy { it.fuente.ifBlank { it.tipo + "|" + it.titulo.lowercase() } }
+        val ahora = ahora()
+        b.usar {
+            val antes = leer("SELECT cuando FROM colecciones WHERE cuenta = ?", yo) { it.getLong(1) }.firstOrNull()
+            if (antes != null && ahora - antes < 60_000) throw Problema(429, "despacio")
+            cambiar("INSERT INTO colecciones(cuenta, datos, cuando) VALUES(?,?,?) ON CONFLICT(cuenta) DO UPDATE SET datos = excluded.datos, cuando = excluded.cuando",
+                yo, JsonSocial.encodeToString(kotlinx.serialization.builtins.ListSerializer(ObraColeccion.serializer()), limpias), ahora)
+        }
+    }
+
+    /**
+     * La lista corta de [usuario] para quien la sigue (o la propia); a nadie más, ni con bloqueo de por medio. Vacía si
+     * todavía no subió ninguna.
+     */
+    fun coleccionDe(lector: Long, usuario: String): Coleccion {
+        val id = idDe(usuario)
+        if (lector != id && (hayBloqueo(lector, id) || !sigue(lector, id))) throw Problema(403, "privada")
+        return b.usar { leer("SELECT datos, cuando FROM colecciones WHERE cuenta = ?", id) {
+            Coleccion(JsonSocial.decodeFromString(kotlinx.serialization.builtins.ListSerializer(ObraColeccion.serializer()), it.getString(1)), it.getLong(2)) }.firstOrNull() } ?: Coleccion()
     }
 
     private fun idDe(usuario: String): Long =
@@ -3328,9 +3369,11 @@ class Social(
         /** La versión de la política de privacidad y los términos: si cambian, se sube y la app vuelve a pedir que se acepten. */
         const val FALLOS_CODIGO_DIA = 15
         const val MAX_VIDEOS_DIA = 20
-        const val POLITICA = "2026-11-25"
+        const val POLITICA = "2026-11-26"
         /** Cuántas obras puede marcar una cuenta en «Juntos» con cada persona. */
         const val MAX_VOTOS_JUNTOS = 2000
+        /** Las obras de la lista corta para comparar gustos (unos 80 bytes cada una: 5000 son unos 400 KB). */
+        const val MAX_COLECCION = 5000
         /** Quién puede abrirle un chat nuevo a una cuenta: se siguen los dos (lo predeterminado), personas que sigue o nadie. */
         val ESCRIBIR = setOf("mutuos", "sigo", "nadie")
         /** Cuánto vale la regla de antes en el chat tras llegar «Quién puede escribirme» (ver [puedeEscribirle]). */

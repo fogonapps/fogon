@@ -315,3 +315,10 @@ data class CambioInsignia(val usuario: String, val insignia: String, val motivo:
 @kotlinx.serialization.Serializable data class EscaparateSocial(val tipo: String, val datos: kotlinx.serialization.json.JsonObject)
 @kotlinx.serialization.Serializable data class CupoEscaparates(val nivel: Int = 0, val gratis: Int = 2, val comprados: Int = 0, val total: Int = 2, val insignias: List<String> = emptyList())
 @kotlinx.serialization.Serializable data class FotoEscaparate(val publicacion: Long? = null, val nombre: String)
+
+/** Una obra de la lista corta para comparar gustos (`/v1/coleccion`): sin reseñas, notas personales ni fechas. */
+@Serializable
+data class ObraColeccion(val fuente: String = "", val tipo: String, val titulo: String, val nota: Int = 0, val encanta: Boolean = false, val portada: String = "")
+
+@Serializable
+data class Coleccion(val obras: List<ObraColeccion> = emptyList(), val cuando: Long = 0)

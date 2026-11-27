@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.fogonapps.cajon.CajonViewModel
 import io.github.fogonapps.cajon.R
 import io.github.fogonapps.cajon.datos.Estado
@@ -65,8 +66,11 @@ internal object Compatibilidad {
     /** Una nota de 1 a 10 es «le encanta» desde 8 (cuatro estrellas). */
     private const val ENCANTA = 8
 
-    /** Lo suyo, sin repetir: la misma obra en el diario, una reseña y sus favoritas se junta (la nota más alta). */
-    fun suyas(p: PerfilSocial): List<SuyaConNota> {
+    /**
+     * Lo suyo, sin repetir: su colección (la lista corta, si la sigues), su diario, sus reseñas, sus favoritas y lo que
+     * está viendo; la misma obra se junta (la nota más alta, la portada que haya).
+     */
+    fun suyas(p: PerfilSocial, coleccion: List<io.github.fogonapps.social.ObraColeccion> = emptyList()): List<SuyaConNota> {
         fun t(o: JsonObject, k: String) = (o[k] as? JsonPrimitive)?.content.orEmpty()
         fun parte(o: JsonObject) = ObraParte(t(o, "titulo"), t(o, "tipoObra").ifBlank { Tipos.PELICULA }, t(o, "portada"), t(o, "fuente"),
             t(o, "anio").toIntOrNull(), t(o, "creador"), o)
@@ -80,9 +84,16 @@ internal object Compatibilidad {
             ((p.partes["destacados"] as? JsonObject)?.get("vitrina") as? JsonArray)?.mapNotNull { it as? JsonObject }
                 ?.filter { t(it, "artista") != "true" && t(it, "titulo").isNotBlank() }?.forEach { add(SuyaConNota(parte(it), null, true)) }
             obrasDe(p.partes["viendo"]).forEach { add(SuyaConNota(it, null, false)) }
+            coleccion.filter { it.titulo.isNotBlank() }.forEach { c ->
+                add(SuyaConNota(ObraParte(c.titulo, c.tipo.ifBlank { Tipos.PELICULA }, c.portada, c.fuente, null, "", JsonObject(emptyMap())),
+                    c.nota.takeIf { it in 1..10 }, c.encanta))
+            }
         }
         return todas.groupBy { Juntos.clave(it.obra.tipo, it.obra.titulo, it.obra.fuente) }.values.map { l ->
-            SuyaConNota(l.firstOrNull { it.obra.fuente.isNotBlank() }?.obra ?: l.first().obra, l.mapNotNull { it.nota }.maxOrNull(), l.any { it.favorita })
+            val base = l.firstOrNull { it.obra.fuente.isNotBlank() && it.obra.portada.isNotBlank() }?.obra
+                ?: l.firstOrNull { it.obra.fuente.isNotBlank() }?.obra ?: l.first().obra
+            SuyaConNota(base.copy(portada = base.portada.ifBlank { l.firstOrNull { it.obra.portada.isNotBlank() }?.obra?.portada.orEmpty() }),
+                l.mapNotNull { it.nota }.maxOrNull(), l.any { it.favorita })
         }
     }
 
@@ -99,10 +110,10 @@ internal object Compatibilidad {
         }
     }
 
-    fun calcular(e: Estado, p: PerfilSocial): Compatible {
+    fun calcular(e: Estado, p: PerfilSocial, coleccion: List<io.github.fogonapps.social.ObraColeccion> = emptyList()): Compatible {
         val mias = e.vivas
         val misFavoritas = (e.ajustes.favoritas + Logica.vitrina(e)).toSet()
-        val suyas = suyas(p)
+        val suyas = suyas(p, coleccion)
         val enComun = suyas.mapNotNull { s ->
             val mia = mias.firstOrNull { it.esLaMisma(s.obra) } ?: return@mapNotNull null
             EnComun(mia, s, parecido(mia, s, misFavoritas))
@@ -133,7 +144,12 @@ internal object Compatibilidad {
 @Composable
 internal fun CompatibilidadConmigo(vm: CajonViewModel, e: Estado, p: PerfilSocial) {
     val f = FogonTema.actual
-    val c = remember(e, p) { Compatibilidad.calcular(e, p) }
+    val usuarioPerfil = p.persona.usuario
+    // Su colección entera (la lista corta) solo llega si la sigues; si no, se compara con lo que publicó.
+    androidx.compose.runtime.LaunchedEffect(usuarioPerfil, p.relacion) { if (p.relacion == "sigo") vm.red.verColeccion(usuarioPerfil) }
+    val colecciones by vm.red.colecciones.collectAsStateWithLifecycle()
+    val suya = colecciones[usuarioPerfil].orEmpty()
+    val c = remember(e, p, suya) { Compatibilidad.calcular(e, p, suya) }
     if (c.cuantas == 0 && c.teGustarian.isEmpty()) return
     val usuario = p.persona.usuario
     var abierta by rememberSaveable(usuario) { mutableStateOf(false) }

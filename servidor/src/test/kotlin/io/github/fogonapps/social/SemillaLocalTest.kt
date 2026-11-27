@@ -38,7 +38,7 @@ class SemillaLocalTest {
                 assertEquals(2, s.mercado.listar(yo).articulos.size)
                 b.usar {
                     assertEquals(50000, leer("SELECT SUM(cantidad) FROM chispas WHERE cuenta=?", yo) { it.getInt(1) }.single())
-                    assertEquals(2, leer("SELECT COUNT(*) FROM seguir WHERE de=?", yo) { it.getInt(1) }.single())
+                    assertEquals(3, leer("SELECT COUNT(*) FROM seguir WHERE de=?", yo) { it.getInt(1) }.single())
                 }
             } finally { b.cerrar() }
         } finally { raiz.deleteRecursively() }

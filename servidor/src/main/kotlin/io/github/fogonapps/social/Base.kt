@@ -343,6 +343,8 @@ class Base(ruta: String) {
                     s.execute("UPDATE avisos SET app = COALESCE((SELECT app FROM publicaciones WHERE CAST(id AS TEXT) = avisos.objeto), 'cajon') WHERE app IS NULL AND tipo IN ('publico','megusta','comentario','respuesta')")
                     s.execute("CREATE TABLE IF NOT EXISTS partes_perfil(cuenta INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE, app TEXT NOT NULL, clave TEXT NOT NULL, visibilidad TEXT NOT NULL, datos TEXT NOT NULL, PRIMARY KEY(cuenta, app, clave))")
                     s.execute("CREATE TABLE IF NOT EXISTS migraciones(nombre TEXT PRIMARY KEY)")
+                    // La lista corta de la colección de cada cuenta (obra y nota), para «En común contigo».
+                    s.execute("CREATE TABLE IF NOT EXISTS colecciones(cuenta INTEGER PRIMARY KEY REFERENCES cuentas(id) ON DELETE CASCADE, datos TEXT NOT NULL, cuando INTEGER NOT NULL)")
                     if (leer("SELECT 1 FROM migraciones WHERE nombre = 'partes_apps'") { 1 }.isEmpty()) {
                         leer("SELECT id, perfil FROM cuentas") { it.getLong(1) to it.getString(2) }.forEach { (id, json) ->
                             val perfil = JsonSocial.decodeFromString<PerfilSubido>(json)

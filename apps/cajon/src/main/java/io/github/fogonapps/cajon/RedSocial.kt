@@ -582,6 +582,33 @@ class RedSocial(
                 }
             }
             if (sesion.vigente(marca)) runCatching { caja.revisionPerfilVista = cliente.revisionPerfil() }
+            if (sesion.vigente(marca)) subirColeccionSiCambio(e, cliente)
+        }
+    }
+
+    /* ----- La lista corta de la colección, para «En común contigo» ----- */
+
+    private var coleccionSubida: Int? = null
+    private var coleccionCuando = 0L
+    private val _colecciones = kotlinx.coroutines.flow.MutableStateFlow<Map<String, List<io.github.fogonapps.social.ObraColeccion>>>(emptyMap())
+    /** Las listas cortas de quienes sigues que ya se pidieron (usuario → obras). */
+    val colecciones: kotlinx.coroutines.flow.StateFlow<Map<String, List<io.github.fogonapps.social.ObraColeccion>>> = _colecciones
+
+    /** Sube la lista si cambió (y no en el mismo minuto: el servidor acepta una por minuto; la que falta sale en la próxima). */
+    private suspend fun subirColeccionSiCambio(e: Estado, cliente: ClienteSocial) {
+        val obras = coleccionDe(e)
+        val huella = obras.hashCode()
+        if (huella == coleccionSubida || System.currentTimeMillis() - coleccionCuando < 61_000) return
+        runCatching { cliente.subirColeccion(io.github.fogonapps.social.Coleccion(obras)) }.onSuccess {
+            coleccionSubida = huella; coleccionCuando = System.currentTimeMillis()
+        }
+    }
+
+    /** Pide la lista de [usuario] (si no la sigues, el servidor no la da y no pasa nada). */
+    fun verColeccion(usuario: String) = scope.launch {
+        val marca = sesion.actual()
+        runCatching { cliente().coleccionDe(usuario) }.onSuccess { c ->
+            if (sesion.vigente(marca)) _colecciones.value = _colecciones.value + (usuario to c.obras)
         }
     }
 
@@ -918,6 +945,23 @@ class RedSocial(
             val primeraPorTipo = vitrina.map { (_, j) -> (if (j["artista"] != null) "artista" else (j["tipoObra"] as? JsonPrimitive)?.content.orEmpty()) to j }
                 .filter { it.first.isNotBlank() }.distinctBy { it.first }
             return primeraPorTipo.toMap() + conPalabras.toMap() + listOfNotNull(("vitrina" to kotlinx.serialization.json.JsonArray(vitrina.map { it.second })).takeIf { vitrina.isNotEmpty() })
+        }
+
+        /**
+         * La lista corta de la colección que se sube para comparar gustos: lo que la persona vio, está viendo, dejó o
+         * calificó (no lo que solo quiere ver ni lo que entró en silencio sin jugarse), con su nota y si le encanta;
+         * la portada solo de lo que le encanta. Nada de reseñas, notas personales ni fechas.
+         */
+        fun coleccionDe(e: Estado): List<io.github.fogonapps.social.ObraColeccion> {
+            val favoritas = (e.ajustes.favoritas + io.github.fogonapps.cajon.datos.Logica.vitrina(e)).toSet()
+            return e.vivas.filter { o ->
+                o.estado in setOf(io.github.fogonapps.cajon.datos.Estados.TERMINADO, io.github.fogonapps.cajon.datos.Estados.EN_CURSO,
+                    io.github.fogonapps.cajon.datos.Estados.ABANDONADO) || o.nota > 0 || o.meGusta || o.id in favoritas
+            }.map { o ->
+                val encanta = o.nota >= 8 || o.meGusta || o.id in favoritas
+                io.github.fogonapps.social.ObraColeccion(o.fuente, o.tipo, o.titulo.take(200), o.nota, encanta,
+                    if (encanta) io.github.fogonapps.cajon.datos.Imagenes.paraRed(o.portada).takeIf { it.startsWith("https://") }.orEmpty() else "")
+            }.take(5000)
         }
 
         fun obraBreve(o: Obra) = buildJsonObject {

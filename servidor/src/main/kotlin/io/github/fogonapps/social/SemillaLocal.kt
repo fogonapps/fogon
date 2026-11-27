@@ -29,7 +29,7 @@ internal fun sembrarSocialLocal(carpeta: File): String {
             return b.usar { leer("SELECT id FROM cuentas WHERE usuario=?", usuario) { it.getLong(1) }.single() }
         }
         val yo = cuenta("prueba")
-        val vecinos = listOf(cuenta("muestrauno"), cuenta("muestrados"))
+        val vecinos = listOf(cuenta("muestrauno"), cuenta("muestrados"), cuenta("muestratres"))
         val ahora = System.currentTimeMillis()
         b.transaccion {
             cambiar("INSERT OR IGNORE INTO sesiones(huella,cuenta,creada,ultimo_uso) VALUES(?,?,?,?)", Base.huella(token), yo, ahora, ahora)
@@ -114,6 +114,18 @@ internal fun sembrarSocialLocal(carpeta: File): String {
             "insignias" to insignias("cine", "discos", "critico", "explorador"),
             "musica" to Parte(Vis.PUBLICA, JsonArray(listOf(buildJsonObject {
                 put("nombre", "Enrico Caruso"); put("foto", ""); put("fuente", "mb:artist:e4d389bb-fe8f-472d-8ffd-c2cb02a7b2b7") }))))))
+        // Muestra tres no publica nada: solo su colección (la lista corta), como quien usa Fabs sin compartir.
+        social.subirPerfil(vecinos[2], PerfilSubido(nombre = "Muestra tres", bio = "No publico, solo anoto."))
+        runCatching { social.subirColeccion(vecinos[2], Coleccion(listOf(
+            ObraColeccion("tmdb:movie:00", "pelicula", "Nosferatu", 10, true),
+            ObraColeccion("tmdb:movie:00000", "pelicula", "Metrópolis", 9, true),
+            ObraColeccion("tmdb:movie:00000000000", "pelicula", "El gabinete del doctor Caligari", 8, true),
+            ObraColeccion("ol:OL00000000000000", "libro", "Frankenstein", 9, true),
+            ObraColeccion("ol:OL14860424W", "libro", "Rayuela", 7),
+            ObraColeccion("mb:rg:0000000000000000000", "album", "Arias de Caruso", 0),
+            ObraColeccion("ol:OL27448W", "libro", "El señor de los anillos", 10, true),
+            ObraColeccion("tmdb:movie:3082", "pelicula", "Tiempos modernos", 9, true),
+        ))) } // Una vez por minuto: al volver a sembrar enseguida, queda la de antes.
         // Como el adaptador Android: una portada solo local se publica sin imagen.
         val portada = ""
         val albumes = buildJsonObject {

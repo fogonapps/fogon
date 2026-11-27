@@ -54,6 +54,25 @@ class CompatibilidadTest {
         assertEquals(listOf("Ran"), c.teGustarian.map { it.obra.titulo })
     }
 
+    @Test fun sinPublicacionesUsaSuColeccion() {
+        val e = Estado(obras = (1..4).map { mia("$it", "P$it", "tmdb:movie:$it", 8) })
+        val coleccion = (1..4).map { io.github.fogonapps.social.ObraColeccion("tmdb:movie:$it", Tipos.PELICULA, "P$it", 8, true) } +
+            io.github.fogonapps.social.ObraColeccion("tmdb:movie:9", Tipos.PELICULA, "Nueva", 10, true, "https://imagen/x.jpg")
+        val c = Compatibilidad.calcular(e, perfil(), coleccion)
+        assertEquals(4, c.enComun.size)
+        assertTrue(c.porcentaje!! >= 70)
+        assertEquals("https://imagen/x.jpg", c.teGustarian.single().obra.portada)
+    }
+
+    @Test fun laColeccionQueSeSubeNoLlevaLoQueSoloQuieresVer() {
+        val e = Estado(obras = listOf(mia("1", "Vista", "tmdb:movie:1", 9).copy(portada = "https://p/1.jpg"), mia("2", "Por ver", "tmdb:movie:2", estado = Estados.QUIERO),
+            mia("3", "Sin nota", "tmdb:movie:3", estado = Estados.TERMINADO)))
+        val c = RedSocial.coleccionDe(e)
+        assertEquals(listOf("Vista", "Sin nota"), c.map { it.titulo })
+        assertTrue(c[0].encanta); assertEquals("https://p/1.jpg", c[0].portada)
+        assertFalse(c[1].encanta); assertEquals("", c[1].portada)
+    }
+
     @Test fun losArtistasEnComunCuentan() {
         val e = Estado(obras = listOf(mia("1", "Alien", "tmdb:movie:1", 8), mia("2", "Ran", "tmdb:movie:2", 8)),
             artistas = listOf(Artista("a", "Björk"), Artista("c", "Caruso")))

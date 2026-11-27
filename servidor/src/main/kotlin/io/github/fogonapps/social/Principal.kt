@@ -102,7 +102,7 @@ private class Limite(private val porMinuto: Int, private val ventana: Long = 60_
     }
 }
 
-const val VERSION = "0.54"
+const val VERSION = "0.55"
 
 /**
  * La dirección de quien llama. Caddy escribe X-Forwarded-For con la dirección de la conexión (no confía en el que
@@ -390,6 +390,17 @@ fun Application.fogonSocial(social: Social, cine: Cine = Cine(System.getenv("TMD
             get("/explorar") { call.respond(social.explorar(call.lector(), call.request.queryParameters["antes"]?.toLongOrNull())) }
             get("/guardados") { call.respond(social.guardados(call.yo())) }
             get("/perfiles/{usuario}/guardadas") { call.respond(social.guardadasDe(call.lector(), call.usuario())) }
+            // La lista corta de la colección (obra y nota) para «En común contigo»: la propia se sube; la de otro, si lo sigues.
+            put("/coleccion") {
+                val yo = call.yo()
+                // Con tope al leer: la lista entera cabe holgada en 800 KB.
+                val bytes = call.receiveChannel().readRemaining(800_001).readByteArray()
+                if (bytes.size > 800_000) throw Problema(413, "muy_grande")
+                val c = runCatching { JsonSocial.decodeFromString(Coleccion.serializer(), bytes.decodeToString()) }.getOrElse { throw Problema(400, "coleccion") }
+                social.subirColeccion(yo, c)
+                call.respond(HttpStatusCode.NoContent)
+            }
+            get("/coleccion/{usuario}") { call.respond(social.coleccionDe(call.yo(), call.usuario())) }
             get("/etiquetas/{etiqueta}") { call.respond(social.conEtiqueta(call.lector(), call.parameters["etiqueta"] ?: "", call.request.queryParameters["antes"]?.toLongOrNull())) }
             put("/imagenes") {
                 val yo = call.yo()

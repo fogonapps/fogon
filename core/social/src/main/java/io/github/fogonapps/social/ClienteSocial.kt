@@ -256,6 +256,10 @@ open class ClienteSocial(
     suspend fun crearLugar(nuevo: LugarNuevo) = leer(Lugar.serializer(), pedir("/lugares", "POST", json(LugarNuevo.serializer(), nuevo)))
     suspend fun explorar(antes: Long? = null) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/explorar" + (antes?.let { "?antes=$it" } ?: "")))
     suspend fun publicacion(id: Long) = leer(PublicacionSocial.serializer(), pedir("/publicaciones/$id"))
+    /** La lista corta de tu colección para «En común contigo» (la reemplaza entera; el servidor acepta una por minuto). */
+    suspend fun subirColeccion(c: Coleccion) { pedir("/coleccion", "PUT", json(Coleccion.serializer(), c)) }
+    /** La de [usuario], si lo sigues (si no, 403). */
+    suspend fun coleccionDe(usuario: String): Coleccion = leer(Coleccion.serializer(), pedir("/coleccion/${cod(usuario)}"))
     suspend fun guardadasDe(usuario: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/perfiles/${cod(usuario)}/guardadas"))
     suspend fun conEtiqueta(etiqueta: String) = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/etiquetas/${cod(etiqueta.removePrefix("#"))}"))
     suspend fun guardados() = leer(ListSerializer(PublicacionSocial.serializer()), pedir("/guardados"))
